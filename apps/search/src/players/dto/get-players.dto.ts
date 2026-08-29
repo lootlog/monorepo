@@ -1,5 +1,5 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
-import { parseSearchTermsQuery } from "src/shared/query-list.utils";
+import { parseSearchTermsQuery } from "#src/shared/query-list.utils";
 import { z } from "zod";
 
 export const getPlayersQuerySchema = z.object({

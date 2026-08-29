@@ -8,13 +8,13 @@ import {
   type MapPingSendPayload,
 } from "@lootlog/types";
 import type { Server } from "socket.io";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import type { Socket } from "src/gateway/types/socket-user.type";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import type { Socket } from "#src/gateway/types/socket-user.type";
 import {
   buildRoomName,
   canViewOnlinePlayers,
-} from "src/gateway/utils/room-utils";
+} from "#src/gateway/utils/room-utils";
 
 const RATE_LIMIT = 5;
 const RATE_LIMIT_WINDOW_MS = 15_000;

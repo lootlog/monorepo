@@ -12,9 +12,9 @@ import {
   type GuildBasedChannel,
   type Role,
 } from "discord.js";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { DiscordSyncService } from "./discord-sync.service";
-import { RoutingKey } from "./enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { DiscordSyncService } from "./discord-sync.service.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
 
 const REQUIRED_NOTIFICATION_PERMISSION_FLAGS = [
   PermissionsBitField.Flags.ViewChannel,

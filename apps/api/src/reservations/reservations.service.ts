@@ -1,15 +1,15 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { MyReservationsQueryDto } from "./dto/reservation-query.dto";
-import { ReservationCatalogService } from "./reservation-catalog.service";
-import { presentReservation } from "./reservation-presentation";
-import { parseReservationWindow } from "./reservation-policy";
-import { ReservationSharingService } from "./reservation-sharing.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import type { MyReservationsQueryDto } from "./dto/reservation-query.dto.js";
+import { ReservationCatalogService } from "./reservation-catalog.service.js";
+import { presentReservation } from "./reservation-presentation.js";
+import { parseReservationWindow } from "./reservation-policy.js";
+import { ReservationSharingService } from "./reservation-sharing.service.js";
 import {
   canModerateReservations,
   type ReservationViewerContext,
-} from "./reservation-viewer";
+} from "./reservation-viewer.js";
 
 @Injectable()
 export class ReservationsService {

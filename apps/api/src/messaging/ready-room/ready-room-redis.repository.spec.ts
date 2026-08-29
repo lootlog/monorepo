@@ -1,7 +1,7 @@
 import type { PartyReadyRoomParticipant } from "@lootlog/types";
 import { describe, expect, it, vi } from "vitest";
-import { ReadyRoomRedisRepository } from "src/messaging/ready-room/ready-room-redis.repository";
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+import { ReadyRoomRedisRepository } from "#src/messaging/ready-room/ready-room-redis.repository";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 const now = Date.parse("2026-07-13T10:00:00.000Z");
 

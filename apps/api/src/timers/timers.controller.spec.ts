@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import { TimersController } from "./timers.controller";
-import { TimersService } from "./timers.service";
+import { mockFn } from "#src/test/mock-fn";
+import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
+import { TimersController } from "./timers.controller.js";
+import { TimersService } from "./timers.service.js";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 describe("TimersController", () => {
   let controller: TimersController;

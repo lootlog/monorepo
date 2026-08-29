@@ -4,9 +4,9 @@ import {
   type NpcRoutingData,
   type NpcRoutingTier,
 } from "@lootlog/types";
-import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
-import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
-import { Platform } from "src/gateway/enums/platform.enum";
+import type { UserGuildData, GuildRole } from "#src/guilds/types/guild.types";
+import { isAdministrativeUserFromRoles } from "#src/guilds/utils/is-administrative-user";
+import { Platform } from "#src/gateway/enums/platform.enum";
 
 const FEATURE_NAMES = ["chat", "timers", "notifications", "loots"] as const;
 const TIER_NAMES = [

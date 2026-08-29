@@ -3,8 +3,8 @@ import { Keyv } from "keyv";
 import KeyvRedis from "@keyv/redis";
 import { CacheableMemory } from "cacheable";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { redisConfig } from "src/config/redis.config";
-import { serviceConfig } from "src/config/service.config";
+import { redisConfig } from "#src/config/redis.config";
+import { serviceConfig } from "#src/config/service.config";
 
 const isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
 

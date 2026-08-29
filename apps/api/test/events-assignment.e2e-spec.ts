@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { PrismaService } from "../src/db/prisma.service.js";
+import { Permission } from "../src/generated/prisma/client.js";
 import {
   closeE2EApp,
   createE2EApp,
@@ -14,7 +14,7 @@ import {
   FORBIDDEN_AUTH,
   resetEventsTimersState,
   withAuth,
-} from "./events-timers-e2e-helpers";
+} from "./events-timers-e2e-helpers.js";
 
 describe("Events Assignment E2E", () => {
   let app: INestApplication;

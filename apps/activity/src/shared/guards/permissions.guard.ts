@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { REQUIRED_PERMISSIONS_KEY } from "@lootlog/nest-shared";
-import { PermissionsService } from "src/permissions/permissions.service";
+import { PermissionsService } from "#src/permissions/permissions.service";
 import { Permission } from "@lootlog/types";
 
 @Injectable()

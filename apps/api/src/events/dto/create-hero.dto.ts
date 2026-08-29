@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { HeroMapSchema } from "./create-event.dto";
+import { HeroMapSchema } from "./create-event.dto.js";
 
 const CreateHeroSchema = z.object({
   npcId: z.number().int().optional(),

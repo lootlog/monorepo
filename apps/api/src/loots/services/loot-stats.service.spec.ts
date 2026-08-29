@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Permission, type Role } from "src/generated/prisma/client";
-import { LootStatsService } from "./loot-stats.service";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { LootStatsService } from "./loot-stats.service.js";
 
 function role(id: string, permissions: Permission[]): Role {
   return {

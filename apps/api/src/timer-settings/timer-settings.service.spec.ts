@@ -1,6 +1,6 @@
-import type { SettingsDocumentsResponse } from "src/settings-documents/settings-documents.service";
+import type { SettingsDocumentsResponse } from "#src/settings-documents/settings-documents.service";
 import { describe, expect, it, vi } from "vitest";
-import { TimerSettingsService } from "./timer-settings.service";
+import { TimerSettingsService } from "./timer-settings.service.js";
 
 const createResponse = (
   appearance: Record<string, unknown> = {},

@@ -1,5 +1,5 @@
 import type pg from "pg";
-import { initializeAuthMigrations } from "./migrations";
+import { initializeAuthMigrations } from "./migrations.js";
 
 describe("initializeAuthMigrations", () => {
   it("marks baseline migrations using the standard Drizzle migration columns", async () => {

@@ -1,6 +1,6 @@
 import type { SettingsDomainResolution } from "@lootlog/types";
 import { describe, expect, it, vi } from "vitest";
-import { SoundSettingsService } from "./sound-settings.service";
+import { SoundSettingsService } from "./sound-settings.service.js";
 
 const createResolution = (
   effective: Record<string, unknown> = {},

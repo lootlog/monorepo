@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { NpcsHandlers } from "./npcs.handlers";
-import { NpcsService } from "./npcs.service";
+import { NpcsHandlers } from "./npcs.handlers.js";
+import { NpcsService } from "./npcs.service.js";
 
 describe("NpcsHandlers", () => {
   let handler: NpcsHandlers;

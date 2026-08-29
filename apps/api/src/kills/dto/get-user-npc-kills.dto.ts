@@ -4,8 +4,8 @@ import {
   commaSeparatedArray,
   intFromString,
 } from "@lootlog/nest-shared/validators/query-helpers";
-import { NpcType } from "src/generated/prisma/client";
-import { KillStatsPeriodSchema } from "../utils/kill-stats-period";
+import { NpcType } from "#src/generated/prisma/client";
+import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
 
 const GetUserNpcKillsSchema = z
   .object({

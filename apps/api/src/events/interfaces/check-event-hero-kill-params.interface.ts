@@ -1,4 +1,4 @@
-import type { KillTimerData } from "./kill-timer-data.interface";
+import type { KillTimerData } from "./kill-timer-data.interface.js";
 
 export interface CheckEventHeroKillParams {
   guildId: string;

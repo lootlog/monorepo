@@ -8,24 +8,24 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { DiscordService } from "src/discord/discord.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { DiscordService } from "#src/discord/discord.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   getMemberReadCachePattern,
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
-} from "src/shared/constants/cache.constant";
-import { MEMBER_LAST_DISCORD_STATUS } from "./constants/member-discord-status.constant";
-import { ErrorKey } from "./enum/error-key.enum";
+} from "#src/shared/constants/cache.constant";
+import { MEMBER_LAST_DISCORD_STATUS } from "./constants/member-discord-status.constant.js";
+import { ErrorKey } from "./enum/error-key.enum.js";
 import type {
   DeactivateMembersMissingFromDiscordGuildsOptions,
   DeleteMembersByGuildIdOptions,
   DeleteMembersByGuildIdResult,
   MemberRemovalNotificationTarget,
   MemberWithRoles,
-} from "./member.types";
+} from "./member.types.js";
 
 @Injectable()
 export class MemberRemovalService {

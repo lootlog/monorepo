@@ -1,8 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { ITEMS_INDEX } from "./constants/meilisearch";
-import { ItemsService } from "./items.service";
-import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
+import { ITEMS_INDEX } from "./constants/meilisearch.js";
+import { ItemsService } from "./items.service.js";
+import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
 
 describe("ItemsService", () => {
   let service: ItemsService;

@@ -7,22 +7,22 @@ import {
   Profession,
   type Guild,
   type Role,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { mockFn } from "src/test/mock-fn";
-import { CreateCommentDto } from "./dto/create-comment-dto";
-import { CreateLootDto } from "./dto/create-loot.dto";
-import { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto";
-import { LootStatsQueryDto } from "./dto/loot-stats.dto";
-import { ResolveLootItemParamsDto } from "./dto/resolve-loot-item-params.dto";
-import { UpdateLootDto } from "./dto/update-loot.dto";
-import { ErrorKey } from "./enum/error-key.enum";
-import { LootAllocationService } from "./loot-allocation.service";
-import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service";
-import { LootsController } from "./loots.controller";
-import { LootsService } from "./loots.service";
-import { LootStatsService } from "./services/loot-stats.service";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { mockFn } from "#src/test/mock-fn";
+import { CreateCommentDto } from "./dto/create-comment-dto.js";
+import { CreateLootDto } from "./dto/create-loot.dto.js";
+import { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto.js";
+import { LootStatsQueryDto } from "./dto/loot-stats.dto.js";
+import { ResolveLootItemParamsDto } from "./dto/resolve-loot-item-params.dto.js";
+import { UpdateLootDto } from "./dto/update-loot.dto.js";
+import { ErrorKey } from "./enum/error-key.enum.js";
+import { LootAllocationService } from "./loot-allocation.service.js";
+import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service.js";
+import { LootsController } from "./loots.controller.js";
+import { LootsService } from "./loots.service.js";
+import { LootStatsService } from "./services/loot-stats.service.js";
 
 describe("LootsController", () => {
   let controller: LootsController;

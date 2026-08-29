@@ -1,5 +1,5 @@
 import type { RabbitMQConfig } from "@golevelup/nestjs-rabbitmq";
-import { env } from "src/config/env";
+import { env } from "#src/config/env";
 
 export const DEFAULT_EXCHANGE_NAME = "default";
 const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";

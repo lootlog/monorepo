@@ -1,5 +1,5 @@
-import { ActivitiesQueryService } from "./activities-query.service";
-import type { PrismaService } from "src/shared/db/prisma.service";
+import { ActivitiesQueryService } from "./activities-query.service.js";
+import type { PrismaService } from "#src/shared/db/prisma.service";
 
 describe("ActivitiesQueryService", () => {
   const activityFindManyMock = vi.fn();

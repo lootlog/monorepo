@@ -7,10 +7,10 @@ import {
   ApiResponse,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
-import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
-import { NotificationResponseDto } from "src/messaging/dto/messaging-response.dto";
-import { MessagingService } from "src/messaging/messaging.service";
+import { CreateNotificationDto } from "#src/messaging/dto/create-notification.dto";
+import { CreateVolunteerDto } from "#src/messaging/dto/create-volunteer.dto";
+import { NotificationResponseDto } from "#src/messaging/dto/messaging-response.dto";
+import { MessagingService } from "#src/messaging/messaging.service";
 import { AuthGuard } from "@lootlog/nest-shared";
 
 @ApiTags("messaging")

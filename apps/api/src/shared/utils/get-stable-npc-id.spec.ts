@@ -1,5 +1,5 @@
-import { NpcType } from "src/generated/prisma/client";
-import { getStableNpcId } from "./get-stable-npc-id";
+import { NpcType } from "#src/generated/prisma/client";
+import { getStableNpcId } from "./get-stable-npc-id.js";
 
 describe("getStableNpcId", () => {
   describe("COLOSSUS type NPCs", () => {

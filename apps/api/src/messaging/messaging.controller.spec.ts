@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { MessagingController } from "./messaging.controller";
-import { MessagingService } from "./messaging.service";
+import { mockFn } from "#src/test/mock-fn";
+import { MessagingController } from "./messaging.controller.js";
+import { MessagingService } from "./messaging.service.js";
 
 vi.mock("uuid", () => ({
   v4: () => "mock-uuid",

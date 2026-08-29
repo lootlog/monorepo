@@ -9,24 +9,24 @@ import {
   resolveReservationSettings,
   type ReservationSettings,
 } from "@lootlog/reservations";
-import { PrismaService } from "src/db/prisma.service";
-import { Prisma, type Reservation } from "src/generated/prisma/client";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { CreateReservationDto } from "./dto/create-reservation.dto";
-import type { UpdateReservationDto } from "./dto/update-reservation.dto";
-import { ReservationCatalogService } from "./reservation-catalog.service";
-import { ReservationEventsPublisher } from "./reservation-events.publisher";
+import { PrismaService } from "#src/db/prisma.service";
+import { Prisma, type Reservation } from "#src/generated/prisma/client";
+import { GuildsService } from "#src/guilds/guilds.service";
+import type { CreateReservationDto } from "./dto/create-reservation.dto.js";
+import type { UpdateReservationDto } from "./dto/update-reservation.dto.js";
+import { ReservationCatalogService } from "./reservation-catalog.service.js";
+import { ReservationEventsPublisher } from "./reservation-events.publisher.js";
 import {
   getDiscordAvatarUrl,
   presentReservation,
-} from "./reservation-presentation";
-import { validateReservationTime } from "./reservation-policy";
-import { ReservationReminderService } from "./reservation-reminder.service";
-import { ReservationSharingService } from "./reservation-sharing.service";
+} from "./reservation-presentation.js";
+import { validateReservationTime } from "./reservation-policy.js";
+import { ReservationReminderService } from "./reservation-reminder.service.js";
+import { ReservationSharingService } from "./reservation-sharing.service.js";
 import {
   canModerateReservations,
   type ReservationViewerContext,
-} from "./reservation-viewer";
+} from "./reservation-viewer.js";
 
 type ReservationRange = {
   startsAt: Date;

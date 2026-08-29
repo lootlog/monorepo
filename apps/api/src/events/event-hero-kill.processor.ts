@@ -3,10 +3,10 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
-import { EventsService } from "./events.service";
-import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface";
-import { deserializeKillTimerData } from "./utils/event-hero-kill-job";
+import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
+import { EventsService } from "./events.service.js";
+import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface.js";
+import { deserializeKillTimerData } from "./utils/event-hero-kill-job.js";
 
 @Injectable()
 @Processor(EVENT_HERO_KILL_QUEUE)

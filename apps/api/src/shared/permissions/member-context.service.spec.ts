@@ -1,16 +1,16 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "#src/generated/prisma/client";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { PrismaService } from "src/db/prisma.service";
-import { MembersService } from "src/members/members.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { MembersService } from "#src/members/members.service";
 import {
   getGuildCacheKey,
   getPermissionsCacheKey,
-} from "src/shared/constants/cache.constant";
+} from "#src/shared/constants/cache.constant";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { MemberContextService } from "./member-context.service";
+import { mockFn } from "#src/test/mock-fn";
+import { MemberContextService } from "./member-context.service.js";
 
 describe("MemberContextService", () => {
   let service: MemberContextService;

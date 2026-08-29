@@ -3,8 +3,8 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
-import { NotificationJobService } from "src/notifications/notification-job.service";
+import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
 
 export interface NotificationDispatchJobData {
   notificationJobId: string;

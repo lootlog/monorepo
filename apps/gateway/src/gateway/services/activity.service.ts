@@ -1,17 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { ActivityType } from "src/gateway/enums/activity-type.enum";
-import { ActivitySource } from "src/gateway/enums/activity-source.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import type { UserGuildData } from "src/guilds/types/guild.types";
-import { env } from "src/config/env";
+import { ActivityType } from "#src/gateway/enums/activity-type.enum";
+import { ActivitySource } from "#src/gateway/enums/activity-source.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { RoutingKey } from "#src/gateway/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import type { Socket } from "#src/gateway/types/socket-user.type";
+import type { UserGuildData } from "#src/guilds/types/guild.types";
+import { env } from "#src/config/env";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   signActivityEvent,
-} from "src/gateway/utils/activity-event-signature";
+} from "#src/gateway/utils/activity-event-signature";
 
 type ActivityPlayer = NonNullable<Socket["data"]["player"]>;
 type ActivityClient = Pick<Socket, "data"> &

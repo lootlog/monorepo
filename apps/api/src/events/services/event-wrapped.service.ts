@@ -4,16 +4,16 @@ import type {
   ItemRarity,
   Permission,
   Role,
-} from "src/generated/prisma/client";
-import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
-import { LootsService } from "src/loots/loots.service";
-import { PrismaService } from "src/db/prisma.service";
+} from "#src/generated/prisma/client";
+import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
+import { LootsService } from "#src/loots/loots.service";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { clipToWindowSeconds } from "../utils/tracking-window.util";
+import { clipToWindowSeconds } from "../utils/tracking-window.util.js";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,
   getEventWrappedCacheKey,
-} from "src/shared/constants/cache.constant";
+} from "#src/shared/constants/cache.constant";
 import type {
   EventWrappedCoverageDto,
   EventWrappedHeroCoverageDto,
@@ -21,8 +21,8 @@ import type {
   EventWrappedLootHeroDto,
   EventWrappedRarityTotalsDto,
   EventWrappedResponseDto,
-} from "../dto/event-wrapped.dto";
-import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader";
+} from "../dto/event-wrapped.dto.js";
+import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader.js";
 
 type RankingRow = {
   memberId: number;

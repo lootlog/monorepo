@@ -19,14 +19,14 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { MyReservationsQueryDto } from "./dto/reservation-query.dto";
+import { MyReservationsQueryDto } from "./dto/reservation-query.dto.js";
 import {
   MyReservationsResponseDto,
   ReservationResponseDto,
-} from "./dto/reservation-response.dto";
-import { UpdateReservationDto } from "./dto/update-reservation.dto";
-import { ReservationMutationsService } from "./reservation-mutations.service";
-import { ReservationsService } from "./reservations.service";
+} from "./dto/reservation-response.dto.js";
+import { UpdateReservationDto } from "./dto/update-reservation.dto.js";
+import { ReservationMutationsService } from "./reservation-mutations.service.js";
+import { ReservationsService } from "./reservations.service.js";
 
 @ApiTags("reservations")
 @ApiBearerAuth()

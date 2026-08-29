@@ -1,0 +1,139 @@
+diff --git a/lib/compiler/compiler.js b/lib/compiler/compiler.js
+index d84098d7b45f5a5076678ed9f29ef09f5f6d6dec..e02be7d6146487bdc57aa4f0e61025ac546a88a5 100644
+--- a/lib/compiler/compiler.js
++++ b/lib/compiler/compiler.js
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { BaseCompiler } from './base-compiler.js';
+ import { tsconfigPathsBeforeHookFactory } from './hooks/tsconfig-paths.hook.js';
+ export class Compiler extends BaseCompiler {
+diff --git a/lib/compiler/defaults/rspack-defaults.d.ts b/lib/compiler/defaults/rspack-defaults.d.ts
+index 237acd4525bb5e77c9e9a282ccb2a112ecfd617e..788b2fa567f47c87893208d5c30e61c9ec6ba4fd 100644
+--- a/lib/compiler/defaults/rspack-defaults.d.ts
++++ b/lib/compiler/defaults/rspack-defaults.d.ts
+@@ -1,3 +1,3 @@
+-import type * as ts from 'typescript';
++import type * as ts from 'typescript-legacy';
+ import { MultiNestCompilerPlugins } from '../plugins/plugins-loader.js';
+ export declare const rspackDefaultsFactory: (sourceRoot: string, relativeSourceRoot: string, entryFilename: string, isDebugEnabled: boolean | undefined, tsConfigFile: string | undefined, plugins: MultiNestCompilerPlugins, isEsm?: boolean, tsOptions?: ts.CompilerOptions) => Record<string, any>;
+diff --git a/lib/compiler/helpers/delete-out-dir.d.ts b/lib/compiler/helpers/delete-out-dir.d.ts
+index 160c8c5bc9dd72ec9f7f2bb7de63d1e97b3b64cd..9d0a275f210bfc3a2c4a90008a0b58d39d585294 100644
+--- a/lib/compiler/helpers/delete-out-dir.d.ts
++++ b/lib/compiler/helpers/delete-out-dir.d.ts
+@@ -1,3 +1,3 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { Configuration } from '../../configuration/index.js';
+ export declare function deleteOutDirIfEnabled(configuration: Required<Configuration>, appName: string | undefined, dirPath: string, tsOptions?: ts.CompilerOptions): Promise<void>;
+diff --git a/lib/compiler/helpers/delete-out-dir.js b/lib/compiler/helpers/delete-out-dir.js
+index 705538828c58da64cb998f97b8b71dce3cc1207e..b565df49e50497a4d4330cbb35b16ce8bfe7a2ab 100644
+--- a/lib/compiler/helpers/delete-out-dir.js
++++ b/lib/compiler/helpers/delete-out-dir.js
+@@ -1,5 +1,5 @@
+ import { rm } from 'fs/promises';
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { getValueOrDefault } from './get-value-or-default.js';
+ import { areOutsidePathsAllowed, assertPathInsideProject, } from './path-confinement.js';
+ /**
+diff --git a/lib/compiler/helpers/tsconfig-provider.d.ts b/lib/compiler/helpers/tsconfig-provider.d.ts
+index 4ae6d4f68907961e3663ee18980753048a06fc4e..550d7241d5e9b528a9c7139c63001424386a8eb3 100644
+--- a/lib/compiler/helpers/tsconfig-provider.d.ts
++++ b/lib/compiler/helpers/tsconfig-provider.d.ts
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { TypeScriptBinaryLoader } from '../typescript-loader.js';
+ export type TsConfigProviderOutput = Pick<ts.ParsedCommandLine, 'options' | 'fileNames' | 'projectReferences'> & {
+     exclude: string[];
+diff --git a/lib/compiler/hooks/tsconfig-paths.hook.d.ts b/lib/compiler/hooks/tsconfig-paths.hook.d.ts
+index 0b3dfbb0b69ebf9e33f824ead290565946bebae0..7f291a9de180727f3f46b5548a0a3f2c42f25b8c 100644
+--- a/lib/compiler/hooks/tsconfig-paths.hook.d.ts
++++ b/lib/compiler/hooks/tsconfig-paths.hook.d.ts
+@@ -1,2 +1,2 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ export declare function tsconfigPathsBeforeHookFactory(compilerOptions: ts.CompilerOptions): (ctx: ts.TransformationContext) => ts.Transformer<any>;
+diff --git a/lib/compiler/interfaces/readonly-visitor.interface.d.ts b/lib/compiler/interfaces/readonly-visitor.interface.d.ts
+index 2ef43f9c29320269c05e40be4b10aaab3f52fd33..af11946f3d81274e6e1c120cab1a9760a91f8e33 100644
+--- a/lib/compiler/interfaces/readonly-visitor.interface.d.ts
++++ b/lib/compiler/interfaces/readonly-visitor.interface.d.ts
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ export type DeepPluginMeta = ts.ObjectLiteralExpression | {
+     [key: string]: DeepPluginMeta;
+ };
+diff --git a/lib/compiler/plugins/plugin-metadata-generator.d.ts b/lib/compiler/plugins/plugin-metadata-generator.d.ts
+index 818a2c2b9a3bf34dd92da360474e6704d59a65c7..6528858de977f05c2c7b6cd5c0f6f852d35e5e13 100644
+--- a/lib/compiler/plugins/plugin-metadata-generator.d.ts
++++ b/lib/compiler/plugins/plugin-metadata-generator.d.ts
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { DeepPluginMeta, ReadonlyVisitor } from '../interfaces/readonly-visitor.interface.js';
+ /**
+  * Returns `true` when the consuming project uses an ESM-style module
+diff --git a/lib/compiler/plugins/plugin-metadata-printer.d.ts b/lib/compiler/plugins/plugin-metadata-printer.d.ts
+index f9a8a3d3dedd989adaf12f8cc83720d89f2453d1..923c1eb7b6c59fced660b7a5710fddeb2d5944ca 100644
+--- a/lib/compiler/plugins/plugin-metadata-printer.d.ts
++++ b/lib/compiler/plugins/plugin-metadata-printer.d.ts
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { DeepPluginMeta } from '../interfaces/readonly-visitor.interface.js';
+ export interface PluginMetadataPrintOptions {
+     outputDir: string;
+diff --git a/lib/compiler/plugins/plugins-loader.d.ts b/lib/compiler/plugins/plugins-loader.d.ts
+index 64a0d92c423cdfa19c1c6923611b308dd0e97bff..e0f8304763478e7741f93678c37bf6c8be668fda 100644
+--- a/lib/compiler/plugins/plugins-loader.d.ts
++++ b/lib/compiler/plugins/plugins-loader.d.ts
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ import { ReadonlyVisitor } from '../interfaces/readonly-visitor.interface.js';
+ type Transformer = ts.TransformerFactory<any> | ts.CustomTransformerFactory;
+ type PluginEntry = string | PluginAndOptions;
+diff --git a/lib/compiler/rspack-compiler.d.ts b/lib/compiler/rspack-compiler.d.ts
+index a47ec1d1326a1cbbd66ee8b05ee1eafedda1a379..00067ebcb03d8f3dcdd10adadbbdfb7f903fcd88 100644
+--- a/lib/compiler/rspack-compiler.d.ts
++++ b/lib/compiler/rspack-compiler.d.ts
+@@ -1,4 +1,4 @@
+-import type * as ts from 'typescript';
++import type * as ts from 'typescript-legacy';
+ import { Configuration } from '../configuration/index.js';
+ import { AssetsManager } from './assets-manager.js';
+ import { BaseCompiler } from './base-compiler.js';
+diff --git a/lib/compiler/typescript-loader.d.ts b/lib/compiler/typescript-loader.d.ts
+index 9dfa61d81795b5cbae58b7859918e3c8f50929bb..572b5b6b752ec3514f4e1ea2ab959e18158f3355 100644
+--- a/lib/compiler/typescript-loader.d.ts
++++ b/lib/compiler/typescript-loader.d.ts
+@@ -1,4 +1,4 @@
+-import * as ts from 'typescript';
++import * as ts from 'typescript-legacy';
+ export declare class TypeScriptBinaryLoader {
+     private tsBinary?;
+     load(): typeof ts;
+diff --git a/lib/compiler/typescript-loader.js b/lib/compiler/typescript-loader.js
+index 3437af601d15957bf3421381ccf60e57d3c8c1a2..2b67136060f686d19afa5bca3e2c878c30472a01 100644
+--- a/lib/compiler/typescript-loader.js
++++ b/lib/compiler/typescript-loader.js
+@@ -9,7 +9,7 @@ export class TypeScriptBinaryLoader {
+         }
+         let tsBinary;
+         try {
+-            const tsBinaryPath = require.resolve('typescript', {
++            const tsBinaryPath = require.resolve('typescript-legacy', {
+                 paths: [process.cwd(), ...this.getModulePaths()],
+             });
+             tsBinary = require(tsBinaryPath);
+@@ -27,7 +27,7 @@ export class TypeScriptBinaryLoader {
+         }
+     }
+     getModulePaths() {
+-        const modulePaths = require.resolve.paths('typescript') ?? [];
++        const modulePaths = require.resolve.paths('typescript-legacy') ?? [];
+         const packageDeps = modulePaths.slice(0, 3);
+         return [
+             ...packageDeps.reverse(),

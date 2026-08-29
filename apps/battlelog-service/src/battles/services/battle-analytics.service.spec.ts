@@ -1,17 +1,17 @@
 import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
-import { BattleAnalyticsService } from "./battle-analytics.service";
-import { BattleAnalyticsCacheService } from "./battle-analytics-cache.service";
-import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service";
-import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service";
-import { BattleAnalyticsQueryService } from "./battle-analytics-query.service";
-import { AbyssSeasonCalculatorService } from "./abyss-season-calculator.service";
-import { BattleSummaryCalculatorService } from "./battle-summary-calculator.service";
-import { CombatProfileCalculatorService } from "./combat-profile-calculator.service";
-import { HeadToHeadCalculatorService } from "./head-to-head-calculator.service";
-import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { BattleAnalyticsService } from "./battle-analytics.service.js";
+import { BattleAnalyticsCacheService } from "./battle-analytics-cache.service.js";
+import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service.js";
+import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service.js";
+import { BattleAnalyticsQueryService } from "./battle-analytics-query.service.js";
+import { AbyssSeasonCalculatorService } from "./abyss-season-calculator.service.js";
+import { BattleSummaryCalculatorService } from "./battle-summary-calculator.service.js";
+import { CombatProfileCalculatorService } from "./combat-profile-calculator.service.js";
+import { HeadToHeadCalculatorService } from "./head-to-head-calculator.service.js";
+import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service.js";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattleAnalyticsService", () => {

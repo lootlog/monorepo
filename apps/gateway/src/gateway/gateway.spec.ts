@@ -1,7 +1,7 @@
-import { Gateway } from "./gateway";
-import { GatewayEvent } from "./enums/gateway-event.enum";
-import { Platform } from "./enums/platform.enum";
-import { UserPresenceStatus } from "./enums/user-presence-status.enum";
+import { Gateway } from "./gateway.js";
+import { GatewayEvent } from "./enums/gateway-event.enum.js";
+import { Platform } from "./enums/platform.enum.js";
+import { UserPresenceStatus } from "./enums/user-presence-status.enum.js";
 
 describe("Gateway", () => {
   const mockPresenceService = {

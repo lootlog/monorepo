@@ -7,15 +7,15 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
-import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { UpdateLootlogConfigNpcDto } from "#src/lootlog-config/dto/update-lootlog-config-npc.dto";
+import { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { NullableLootlogConfigResponseDto } from "src/shared/dto/lootlog-config-response.dto";
-import { LootlogConfigNpcResponseDto } from "src/shared/dto/lootlog-config-npc-response.dto";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { NullableLootlogConfigResponseDto } from "#src/shared/dto/lootlog-config-response.dto";
+import { LootlogConfigNpcResponseDto } from "#src/shared/dto/lootlog-config-npc-response.dto";
 
 @ApiTags("lootlog-config")
 @ApiBearerAuth()

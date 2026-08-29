@@ -1,7 +1,7 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { mockFn } from "src/test/mock-fn";
-import { EventsMonitoringController } from "./events-monitoring.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { mockFn } from "#src/test/mock-fn";
+import { EventsMonitoringController } from "./events-monitoring.controller.js";
 
 describe("EventsMonitoringController", () => {
   const mockEventsService = {

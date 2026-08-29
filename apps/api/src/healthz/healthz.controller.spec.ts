@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { HealthzController } from "./healthz.controller";
-import { HealthzService } from "./healthz.service";
+import { mockFn } from "#src/test/mock-fn";
+import { HealthzController } from "./healthz.controller.js";
+import { HealthzService } from "./healthz.service.js";
 
 describe("HealthzController", () => {
   let controller: HealthzController;

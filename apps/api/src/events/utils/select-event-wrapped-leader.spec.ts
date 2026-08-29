@@ -1,4 +1,4 @@
-import { selectEventWrappedLeader } from "./select-event-wrapped-leader";
+import { selectEventWrappedLeader } from "./select-event-wrapped-leader.js";
 
 const candidate = (
   memberId: number,

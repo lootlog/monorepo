@@ -7,7 +7,7 @@ import {
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { gzipSync, gunzipSync } from "node:zlib";
-import { r2Config, type R2Config } from "src/config/r2.config";
+import { r2Config, type R2Config } from "#src/config/r2.config";
 
 @Injectable()
 export class R2Service {

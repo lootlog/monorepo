@@ -8,8 +8,8 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/Activity'
-export type * from './models/ActivityActorSnapshot'
-export type * from './models/MemberActivityStats'
-export type * from './models/MemberActivitySession'
-export type * from './commonInputTypes'
+export type * from './models/Activity.ts'
+export type * from './models/ActivityActorSnapshot.ts'
+export type * from './models/MemberActivityStats.ts'
+export type * from './models/MemberActivitySession.ts'
+export type * from './commonInputTypes.ts'

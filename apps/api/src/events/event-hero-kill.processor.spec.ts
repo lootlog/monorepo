@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { EventHeroKillProcessor } from "./event-hero-kill.processor";
-import { EventsService } from "./events.service";
-import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface";
+import { EventHeroKillProcessor } from "./event-hero-kill.processor.js";
+import { EventsService } from "./events.service.js";
+import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface.js";
 
 describe("EventHeroKillProcessor", () => {
   let processor: EventHeroKillProcessor;

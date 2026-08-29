@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { ActivityType, Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/shared/db/prisma.service";
-import { CreateActivityDto } from "./dto/create-activity.dto";
-import { mapActivityDetails } from "./utils/map-activity-details";
+import { ActivityType, Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/shared/db/prisma.service";
+import { CreateActivityDto } from "./dto/create-activity.dto.js";
+import { mapActivityDetails } from "./utils/map-activity-details.js";
 
 @Injectable()
 export class ActivitiesService {

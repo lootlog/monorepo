@@ -1,5 +1,5 @@
-import { GatewayQueueHandler } from "./gateway-queue.handler";
-import { RoutingKey } from "./enums/routing-key.enum";
+import { GatewayQueueHandler } from "./gateway-queue.handler.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
 
 describe("GatewayQueueHandler", () => {
   const mockGatewayService = {

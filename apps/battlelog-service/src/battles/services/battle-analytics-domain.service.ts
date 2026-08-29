@@ -2,12 +2,12 @@ import { Injectable } from "@nestjs/common";
 import {
   inflateBattleWarriorsInBattles,
   type InflatedBattleWarrior,
-} from "src/battles/battle-warrior-stats";
+} from "#src/battles/battle-warrior-stats";
 import type {
   BattleResult,
   InflatedBattleWithWarriors,
   StoredBattleWithWarriors,
-} from "src/battles/services/battle-analytics.types";
+} from "#src/battles/services/battle-analytics.types";
 
 const EMPTY_PLAYER_VS_PLAYER_WARRIOR = {
   name: "",

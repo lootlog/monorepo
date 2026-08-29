@@ -18,19 +18,19 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
-import { UserGuildListResponseDto } from "src/guilds/dto/user-guild-list-response.dto";
-import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
-import { GuildsService } from "src/guilds/guilds.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { DiscordGuildSyncStateResponseDto } from "src/shared/dto/discord-guild-sync-response.dto";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { UpdateGuildConfigDto } from "#src/guilds/dto/update-guild-config.dto";
+import { UserGuildListResponseDto } from "#src/guilds/dto/user-guild-list-response.dto";
+import { UserGuildPermissionsDto } from "#src/guilds/dto/user-guild-permissions.dto";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { DiscordGuildSyncStateResponseDto } from "#src/shared/dto/discord-guild-sync-response.dto";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
-import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
+import { GuildResponseDto } from "#src/shared/dto/guild-response.dto";
 
 @ApiTags("guilds")
 @ApiBearerAuth()

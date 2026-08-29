@@ -1,9 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { EventEmitterService } from "./event-emitter.service";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 describe("EventEmitterService", () => {
   let service: EventEmitterService;

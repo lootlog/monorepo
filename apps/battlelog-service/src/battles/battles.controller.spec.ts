@@ -1,11 +1,11 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { BattlesController } from "./battles.controller";
-import { BattlesService } from "./battles.service";
-import { BattleAnalyticsService } from "./services/battle-analytics.service";
+import { BattlesController } from "./battles.controller.js";
+import { BattlesService } from "./battles.service.js";
+import { BattleAnalyticsService } from "./services/battle-analytics.service.js";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
-import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
-import type { QueryBattleStatisticsDto } from "./dto/query-battle-statistics.dto";
+import { BattleAccessGuard } from "#src/shared/guards/battle-access.guard";
+import { BattleOwnerGuard } from "#src/shared/guards/battle-owner.guard";
+import type { QueryBattleStatisticsDto } from "./dto/query-battle-statistics.dto.js";
 
 describe("BattlesController", () => {
   let controller: BattlesController;

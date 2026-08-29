@@ -4,9 +4,6 @@
     "outDir": "./dist",
     "declaration": false,
     "rootDir": ".",
-    "strict": true,
-    "paths": {
-      "src/*": ["./src/*"]
-    }
+    "strict": true
   }
 }

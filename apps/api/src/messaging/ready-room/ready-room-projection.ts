@@ -5,7 +5,7 @@ import type {
   PartyReadyRoomProjection,
   PartyReadyRoomProjectionBase,
 } from "@lootlog/types";
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 function cloneCharacter(
   character: PartyReadyRoomCharacter,

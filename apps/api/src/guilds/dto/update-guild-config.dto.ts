@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/reservations";
-import { ErrorKey } from "src/guilds/enum/error-key.enum";
+import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 
 const UpdateGuildConfigSchema = z.object({
   vanityUrl: z.string().min(1).nullable().optional(),

@@ -19,22 +19,26 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission, type Role } from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
-import { TimerResponseDto } from "src/shared/dto/timer-response.dto";
+import {
+  type Guild,
+  Permission,
+  type Role,
+} from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
+import { TimerResponseDto } from "#src/shared/dto/timer-response.dto";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
-import { CreateAutoTimerResponseDto } from "src/timers/dto/create-auto-timer-response.dto";
-import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
-import { SearchTimersNpcResponseDto } from "src/timers/dto/search-timers-npcs-response.dto";
-import { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
-import { TimerHistoryResponseDto } from "src/timers/dto/timer-history-response.dto";
-import { TimersService } from "src/timers/timers.service";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { CreateManualTimerDto } from "#src/timers/dto/create-manual-timer.dto";
+import { CreateAutoTimerResponseDto } from "#src/timers/dto/create-auto-timer-response.dto";
+import { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
+import { ResetTimerDto } from "#src/timers/dto/reset-timer.dto";
+import { SearchTimersNpcResponseDto } from "#src/timers/dto/search-timers-npcs-response.dto";
+import { SearchTimersNpcsDto } from "#src/timers/dto/search-timers-npcs.dto";
+import { TimerHistoryResponseDto } from "#src/timers/dto/timer-history-response.dto";
+import { TimersService } from "#src/timers/timers.service";
 
 @ApiTags("timers")
 @ApiBearerAuth()

@@ -1,3 +1,3 @@
-export { RedisModule } from "./redis.module";
-export { RedisService } from "./redis.service";
-export type { RedisModuleOptions } from "./redis.service";
+export { RedisModule } from "./redis.module.js";
+export { RedisService } from "./redis.service.js";
+export type { RedisModuleOptions } from "./redis.service.js";

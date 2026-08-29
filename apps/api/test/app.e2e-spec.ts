@@ -1,7 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import request from "supertest";
-import { AppModule } from "./../src/app.module";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
+import { AppModule } from "./../src/app.module.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 
 describe("HealthzController (e2e)", () => {
   let app: INestApplication;

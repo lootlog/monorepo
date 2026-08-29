@@ -1,4 +1,4 @@
-import { normalizePresenceLevel } from "src/gateway/utils/normalize-presence-level";
+import { normalizePresenceLevel } from "#src/gateway/utils/normalize-presence-level";
 
 describe("normalizePresenceLevel", () => {
   it("returns numeric levels and parses string levels", () => {

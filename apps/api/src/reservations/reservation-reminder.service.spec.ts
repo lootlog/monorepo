@@ -1,7 +1,7 @@
 import { UnprocessableEntityException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NotificationTargetType } from "src/generated/prisma/client";
-import { ReservationReminderService } from "./reservation-reminder.service";
+import { NotificationTargetType } from "#src/generated/prisma/client";
+import { ReservationReminderService } from "./reservation-reminder.service.js";
 
 describe("ReservationReminderService", () => {
   const target = {

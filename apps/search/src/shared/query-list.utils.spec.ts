@@ -1,7 +1,7 @@
 import {
   parseCommaSeparatedQueryList,
   parseSearchTermsQuery,
-} from "./query-list.utils";
+} from "./query-list.utils.js";
 
 describe("query list utils", () => {
   describe("parseCommaSeparatedQueryList", () => {

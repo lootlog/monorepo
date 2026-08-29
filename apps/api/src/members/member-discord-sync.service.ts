@@ -10,22 +10,22 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import type { APIGuildMember } from "discord-api-types/v10";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { DiscordService } from "src/discord/discord.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
+import { DiscordService } from "#src/discord/discord.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   getMemberReadCachePattern,
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
-} from "src/shared/constants/cache.constant";
+} from "#src/shared/constants/cache.constant";
 import {
   getTransientMemberSyncStatus,
   MEMBER_DISCORD_SYNC_STATUS,
-} from "./member-discord-sync-status";
-import { MemberRemovalService } from "./member-removal.service";
-import type { MemberSyncResult, MemberWithRoles } from "./member.types";
+} from "./member-discord-sync-status.js";
+import { MemberRemovalService } from "./member-removal.service.js";
+import type { MemberSyncResult, MemberWithRoles } from "./member.types.js";
 
 @Injectable()
 export class MemberDiscordSyncService {

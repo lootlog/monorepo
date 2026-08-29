@@ -6,7 +6,7 @@ import {
   type OnModuleInit,
   type OnModuleDestroy,
 } from "@nestjs/common";
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 
 export const REDIS_MODULE_OPTIONS = Symbol("REDIS_MODULE_OPTIONS");
 

@@ -1,10 +1,10 @@
-import { env } from "src/config/env";
-import { createApp } from "src/app.factory";
+import { env } from "#src/config/env";
+import { createApp } from "#src/app.factory";
 import {
   createOpenApiDocument,
   setupOpenApi,
-} from "src/openapi/openapi-document";
-import { registerNodeWarningDiagnostics } from "src/shared/diagnostics/node-warning-diagnostics";
+} from "#src/openapi/openapi-document";
+import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
 
 async function bootstrap() {
   registerNodeWarningDiagnostics();

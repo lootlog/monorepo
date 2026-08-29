@@ -1,9 +1,9 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { GetNpcsDto } from "./dto/get-npcs.dto";
-import { NpcHitDto } from "./dto/npc-hit.schema";
-import { NpcsService } from "./npcs.service";
+import { GetNpcsDto } from "./dto/get-npcs.dto.js";
+import { NpcHitDto } from "./dto/npc-hit.schema.js";
+import { NpcsService } from "./npcs.service.js";
 
 @ApiTags("NPCs")
 @Controller("npcs")

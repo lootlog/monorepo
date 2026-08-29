@@ -1,22 +1,22 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { HttpService } from "@nestjs/axios";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { AuthService } from "src/auth/auth.service";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { MembersService } from "src/members/members.service";
-import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
+import { AuthService } from "#src/auth/auth.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { MembersService } from "#src/members/members.service";
+import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   defaultDetectorSettings,
   defaultNotificationsSettings,
 } from "@lootlog/types";
-import { UsersService } from "./users.service";
+import { UsersService } from "./users.service.js";
 
-vi.mock("src/config/battlelog.config", () => ({
+vi.mock("#src/config/battlelog.config", () => ({
   battlelogConfig: { serviceUrl: "http://battlelog-service:4000" },
 }));
 

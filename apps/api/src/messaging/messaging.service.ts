@@ -8,16 +8,16 @@ import {
 import { getNpcTypeByWt } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { NpcType, Permission } from "src/generated/prisma/client";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
-import type { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
-import { Error } from "src/messaging/enum/error.enum";
+import { NpcType, Permission } from "#src/generated/prisma/client";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { GuildsService } from "#src/guilds/guilds.service";
+import type { CreateNotificationDto } from "#src/messaging/dto/create-notification.dto";
+import type { CreateVolunteerDto } from "#src/messaging/dto/create-volunteer.dto";
+import { Error } from "#src/messaging/enum/error.enum";
 import { v4 as uuid } from "uuid";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
+import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 

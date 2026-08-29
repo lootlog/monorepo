@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { and, eq, inArray } from "drizzle-orm";
-import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
+import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
 import type {
   QueryAbyssSeasonsDto,
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
-} from "src/battles/dto/query-battle-statistics.dto";
+} from "#src/battles/dto/query-battle-statistics.dto";
 import type {
   AbyssSeasonDto,
   BattleAnalyticsDto,
@@ -18,23 +18,23 @@ import type {
   RatingDeltaByOpponentDto,
   RatingGrowthDataPointDto,
   StreakDto,
-} from "src/battles/dto/battle-statistics-response.dto";
-import { BattleAnalyticsCacheService } from "src/battles/services/battle-analytics-cache.service";
-import { BattleAnalyticsDomainService } from "src/battles/services/battle-analytics-domain.service";
-import { BattleAnalyticsPagingService } from "src/battles/services/battle-analytics-paging.service";
-import { BattleAnalyticsQueryService } from "src/battles/services/battle-analytics-query.service";
+} from "#src/battles/dto/battle-statistics-response.dto";
+import { BattleAnalyticsCacheService } from "#src/battles/services/battle-analytics-cache.service";
+import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
+import { BattleAnalyticsPagingService } from "#src/battles/services/battle-analytics-paging.service";
+import { BattleAnalyticsQueryService } from "#src/battles/services/battle-analytics-query.service";
 import type {
   AnalyticsBattleOrderBy,
   DateRangeQuery,
   InflatedBattleWithWarriors,
-} from "src/battles/services/battle-analytics.types";
-import { BattleSummaryCalculatorService } from "src/battles/services/battle-summary-calculator.service";
-import { CombatProfileCalculatorService } from "src/battles/services/combat-profile-calculator.service";
-import { HeadToHeadCalculatorService } from "src/battles/services/head-to-head-calculator.service";
-import { PlayerVsPlayerCalculatorService } from "src/battles/services/player-vs-player-calculator.service";
-import { AbyssSeasonCalculatorService } from "src/battles/services/abyss-season-calculator.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { battleWarriors, battles } from "src/shared/modules/drizzle/schema";
+} from "#src/battles/services/battle-analytics.types";
+import { BattleSummaryCalculatorService } from "#src/battles/services/battle-summary-calculator.service";
+import { CombatProfileCalculatorService } from "#src/battles/services/combat-profile-calculator.service";
+import { HeadToHeadCalculatorService } from "#src/battles/services/head-to-head-calculator.service";
+import { PlayerVsPlayerCalculatorService } from "#src/battles/services/player-vs-player-calculator.service";
+import { AbyssSeasonCalculatorService } from "#src/battles/services/abyss-season-calculator.service";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import { battleWarriors, battles } from "#src/shared/modules/drizzle/schema";
 
 type AnalyticsBattleFilters = DateRangeQuery & {
   world?: string;

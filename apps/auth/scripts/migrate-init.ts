@@ -1,7 +1,7 @@
-import { initializeAuthMigrations } from "../src/database/migrations";
+import { initializeAuthMigrations } from "../src/database/migrations.js";
 
 async function main() {
-  const { drizzlePool } = await import("../src/database/drizzle");
+  const { drizzlePool } = await import("../src/database/drizzle.js");
 
   try {
     await initializeAuthMigrations();

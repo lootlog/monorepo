@@ -6,8 +6,8 @@ import {
 import { Reflector } from "@nestjs/core";
 import { REQUIRED_PERMISSIONS_KEY } from "@lootlog/nest-shared";
 import { Permission } from "@lootlog/types";
-import { PermissionsService } from "src/permissions/permissions.service";
-import { PermissionsGuard } from "./permissions.guard";
+import { PermissionsService } from "#src/permissions/permissions.service";
+import { PermissionsGuard } from "./permissions.guard.js";
 
 class TestPermissionsController {
   @SetMetadata(REQUIRED_PERMISSIONS_KEY, [Permission.ADMIN])

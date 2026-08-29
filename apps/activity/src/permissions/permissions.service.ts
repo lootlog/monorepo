@@ -3,7 +3,7 @@ import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { catchError, firstValueFrom, map } from "rxjs";
 import { Permission, type UserGuildPermissionsDto } from "@lootlog/types";
-import { apiServiceConfig } from "src/config/api-service.config";
+import { apiServiceConfig } from "#src/config/api-service.config";
 import type { Cache } from "cache-manager";
 
 type ResolvedGuildDto = {

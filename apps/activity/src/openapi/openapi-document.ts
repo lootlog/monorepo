@@ -6,7 +6,7 @@ import {
 } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { sanitizeOpenApiDocument } from "@lootlog/nest-shared/openapi";
-import { swaggerConfig } from "src/config/swagger.config";
+import { swaggerConfig } from "#src/config/swagger.config";
 
 type OpenApiParameter = {
   in?: string;

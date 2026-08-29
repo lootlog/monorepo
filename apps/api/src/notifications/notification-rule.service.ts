@@ -13,30 +13,30 @@ import {
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTriggerType as DbNotificationTriggerType,
   Prisma,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
-import { NotificationContentService } from "src/notifications/notification-content.service";
-import { NotificationFiltersResponseDto } from "src/notifications/dto/notification-response.dto";
-import { NotificationJobService } from "src/notifications/notification-job.service";
-import { NotificationTargetService } from "src/notifications/notification-target.service";
-import { Error } from "src/notifications/enum/error.enum";
-import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
-import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/constants/notification-schedule-timezone.constant";
+import { NotificationContentService } from "#src/notifications/notification-content.service";
+import { NotificationFiltersResponseDto } from "#src/notifications/dto/notification-response.dto";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
+import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { Error } from "#src/notifications/enum/error.enum";
+import type { CreateNotificationRuleDto } from "#src/notifications/dto/create-notification-rule.dto";
+import type { UpdateNotificationRuleDto } from "#src/notifications/dto/update-notification-rule.dto";
 import {
   calculateFirstOccurrenceInTimeZone,
   isRecurringScheduleInterval,
   isValidTimeZone,
-} from "src/notifications/utils/notification-schedule-time.util";
-import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
-import { hasOwnField } from "src/shared/utils/has-own-field";
+} from "#src/notifications/utils/notification-schedule-time.util";
+import { ensureLimitNotExceeded } from "#src/notifications/utils/ensure-limit-not-exceeded.util";
+import { hasOwnField } from "#src/shared/utils/has-own-field";
 import {
   type TestTriggerUsage,
   computeTestTriggerUsage,
   getDefaultTestTriggerUsage,
   getWorstTestTriggerUsage,
-} from "src/notifications/utils/test-trigger-usage.util";
+} from "#src/notifications/utils/test-trigger-usage.util";
 
 const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;

@@ -7,18 +7,18 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ExecutionError } from "redlock";
-import { CoverageGapType } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+import { CoverageGapType } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { RedlockService } from "src/lib/redlock/redlock.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { EventEmitterService } from "./event-emitter.service";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { buildActiveEventWhere } from "../utils/event-activity.util";
-import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
-import { buildTimerKey } from "src/timers/utils/timer-key";
-import { TimersService } from "src/timers/timers.service";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { buildActiveEventWhere } from "../utils/event-activity.util.js";
+import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
+import { buildTimerKey } from "#src/timers/utils/timer-key";
+import { TimersService } from "#src/timers/timers.service";
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {

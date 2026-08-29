@@ -1,5 +1,5 @@
 import pg from "pg";
-import { BATTLE_WARRIOR_STATS_KEYS } from "../src/battles/battle-warrior-stats.types";
+import { BATTLE_WARRIOR_STATS_KEYS } from "../src/battles/battle-warrior-stats.types.js";
 
 const databaseUrl = process.env.POSTGRESQL_CONNECTION_URI;
 if (!databaseUrl) {

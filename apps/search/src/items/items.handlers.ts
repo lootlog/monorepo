@@ -2,11 +2,11 @@ import { RabbitPayload, RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { indexItemsPayloadSchema } from "./dto/index-items.dto";
-import { Queue } from "./enum/queue.enum";
-import { RoutingKey } from "./enum/routing-key.enum";
-import { ItemsService } from "./items.service";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { indexItemsPayloadSchema } from "./dto/index-items.dto.js";
+import { Queue } from "./enum/queue.enum.js";
+import { RoutingKey } from "./enum/routing-key.enum.js";
+import { ItemsService } from "./items.service.js";
 
 @Injectable()
 export class ItemsHandlers {

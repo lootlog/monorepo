@@ -6,12 +6,12 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
-import type { DiscordRateLimiterService } from "./discord-rate-limiter.service";
-import type { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service";
+import type { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
+import type { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,
-} from "./discord.types";
+} from "./discord.types.js";
 
 type DiscordHttpError = {
   status: number;

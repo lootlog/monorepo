@@ -1,9 +1,9 @@
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Injectable } from "@nestjs/common";
 import type { DiscordNotificationSendCommand } from "@lootlog/types";
-import { DiscordDeliveryService } from "src/bot/discord-delivery.service";
-import { RoutingKey } from "src/bot/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { DiscordDeliveryService } from "#src/bot/discord-delivery.service";
+import { RoutingKey } from "#src/bot/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 
 @Injectable()
 export class BotNotificationsConsumer {

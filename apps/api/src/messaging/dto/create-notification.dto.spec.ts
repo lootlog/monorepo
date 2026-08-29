@@ -1,4 +1,4 @@
-import { CreateNotificationDto } from "./create-notification.dto";
+import { CreateNotificationDto } from "./create-notification.dto.js";
 
 describe("CreateNotificationDto", () => {
   it("keeps npc coordinates when present", () => {

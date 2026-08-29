@@ -11,14 +11,14 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { battles } from "src/shared/modules/drizzle/schema";
-import type { StoredBattleWithWarriors } from "./battle-analytics.types";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import { battles } from "#src/shared/modules/drizzle/schema";
+import type { StoredBattleWithWarriors } from "./battle-analytics.types.js";
 import type {
   CursorPagination,
   PaginationOptions,
   PaginationResult,
-} from "../interfaces/pagination.interface";
+} from "../interfaces/pagination.interface.js";
 
 type WhereBuilder = (table: typeof battles) => SQL | undefined;
 

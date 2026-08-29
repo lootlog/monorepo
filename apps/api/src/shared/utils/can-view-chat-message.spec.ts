@@ -1,7 +1,7 @@
-import { Permission, type Role } from "src/generated/prisma/client";
-import { MessageType } from "src/chat/dto/send-message.dto";
-import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
-import { canViewChatMessage } from "./can-view-chat-message";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { MessageType } from "#src/chat/dto/send-message.dto";
+import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
+import { canViewChatMessage } from "./can-view-chat-message.js";
 
 function createRole(
   permissions: Permission[],

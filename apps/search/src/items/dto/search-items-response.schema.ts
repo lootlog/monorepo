@@ -1,6 +1,6 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { itemHitSchema } from "./item-hit.schema";
+import { itemHitSchema } from "./item-hit.schema.js";
 
 const facetDistributionSchema = z.record(
   z.string(),

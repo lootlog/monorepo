@@ -1,8 +1,8 @@
 import type { NecordModuleOptions } from "necord";
 import { IntentsBitField } from "discord.js";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { env } from "./env";
-import { serviceConfig } from "./service.config";
+import { env } from "./env.js";
+import { serviceConfig } from "./service.config.js";
 
 export interface DiscordConfig {
   discordBotToken: string;

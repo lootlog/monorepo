@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import type { APIGuildMember } from "discord-api-types/v10";
-import type { Member } from "src/generated/prisma/client";
-import { MemberBulkRefreshService } from "./member-bulk-refresh.service";
-import { MemberDiscordAccessService } from "./member-discord-access.service";
-import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
-import { MemberDiscordSyncService } from "./member-discord-sync.service";
-import type { MemberRefreshScheduleResult } from "./member-refresh-scheduler.service";
-import { MemberReadService } from "./member-read.service";
-import { MemberRemovalService } from "./member-removal.service";
+import type { Member } from "#src/generated/prisma/client";
+import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
+import { MemberDiscordAccessService } from "./member-discord-access.service.js";
+import { MemberDiscordRefreshService } from "./member-discord-refresh.service.js";
+import { MemberDiscordSyncService } from "./member-discord-sync.service.js";
+import type { MemberRefreshScheduleResult } from "./member-refresh-scheduler.service.js";
+import { MemberReadService } from "./member-read.service.js";
+import { MemberRemovalService } from "./member-removal.service.js";
 import type {
   DeactivateMembersMissingFromDiscordGuildsOptions,
   DeleteMembersByGuildIdOptions,
@@ -20,7 +20,7 @@ import type {
   MemberSyncResult,
   MemberWithRoles,
   RefreshJobWithCooldown,
-} from "./member.types";
+} from "./member.types.js";
 
 @Injectable()
 export class MembersService {

@@ -9,18 +9,18 @@ import {
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
-} from "src/generated/prisma/client";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { NotificationJobService } from "src/notifications/notification-job.service";
-import { NotificationMatchingService } from "src/notifications/notification-matching.service";
-import { NotificationTargetService } from "src/notifications/notification-target.service";
-import { GuildsService } from "src/guilds/guilds.service";
+} from "#src/generated/prisma/client";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
+import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
+import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { GuildsService } from "#src/guilds/guilds.service";
 import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
-} from "src/notifications/constants/notification-messages.constant";
+} from "#src/notifications/constants/notification-messages.constant";
 
 @Injectable()
 export class NotificationsEventsHandler {

@@ -8,9 +8,9 @@ import {
 } from "@lootlog/types";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ChannelType, Client, DiscordAPIError } from "discord.js";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { DiscordDeliveryService } from "./discord-delivery.service";
-import { RoutingKey } from "./enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { DiscordDeliveryService } from "./discord-delivery.service.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
 
 describe("DiscordDeliveryService", () => {
   let service: DiscordDeliveryService;

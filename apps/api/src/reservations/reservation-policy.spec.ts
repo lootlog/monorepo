@@ -3,7 +3,7 @@ import type { ReservationSettings } from "@lootlog/reservations";
 import {
   parseReservationWindow,
   validateReservationTime,
-} from "./reservation-policy";
+} from "./reservation-policy.js";
 
 const settings: ReservationSettings = {
   reservationMaxDurationMinutes: 180,

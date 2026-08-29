@@ -3,6 +3,13 @@
   "version": "1.0.9",
   "private": true,
   "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#src/*": {
+      "types": "./src/*.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
   "scripts": {
     "dev": "nest start --watch",
     "prebuild": "node ../../tools/clean-swagger-metadata.mjs",
@@ -29,7 +36,7 @@
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "dotenv": "^17.4.2",
-    "fastify": "5.11.3",
+    "fastify": "5.12.1",
     "meilisearch": "^0.60.0",
     "nest-winston": "catalog:",
     "nestjs-zod": "catalog:",
@@ -41,13 +48,10 @@
   "devDependencies": {
     "@nestjs/cli": "catalog:",
     "@nestjs/testing": "catalog:",
-    "@swc/cli": "catalog:",
-    "@swc/core": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "unplugin-swc": "catalog:",
     "vitest": "catalog:"
   }
 }

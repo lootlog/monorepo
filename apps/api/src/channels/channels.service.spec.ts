@@ -1,15 +1,15 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { ChannelsService } from "./channels.service";
-import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { ChannelsService } from "./channels.service.js";
+import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 
-vi.mock("src/config/discord-bot.config", () => ({
+vi.mock("#src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
 }));
 

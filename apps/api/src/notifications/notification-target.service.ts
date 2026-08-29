@@ -16,22 +16,22 @@ import {
   NotificationTargetType as DbNotificationTargetType,
   NotificationTriggerType as DbNotificationTriggerType,
   Prisma,
-} from "src/generated/prisma/client";
-import { ChannelsService } from "src/channels/channels.service";
-import { PrismaService } from "src/db/prisma.service";
-import { NotificationJobService } from "src/notifications/notification-job.service";
-import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
-import { Error } from "src/notifications/enum/error.enum";
+} from "#src/generated/prisma/client";
+import { ChannelsService } from "#src/channels/channels.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
+import type { CreateNotificationTargetDto } from "#src/notifications/dto/create-notification-target.dto";
+import type { UpdateNotificationTargetDto } from "#src/notifications/dto/update-notification-target.dto";
+import { Error } from "#src/notifications/enum/error.enum";
 import {
   USER_DM_TEST_MESSAGE,
   USER_DM_TEST_RULE_NAME,
-} from "src/notifications/constants/user-dm.constant";
+} from "#src/notifications/constants/user-dm.constant";
 import {
   computeTestTriggerUsage,
   getDefaultTestTriggerUsage,
-} from "src/notifications/utils/test-trigger-usage.util";
-import { hasOwnField } from "src/shared/utils/has-own-field";
+} from "#src/notifications/utils/test-trigger-usage.util";
+import { hasOwnField } from "#src/shared/utils/has-own-field";
 
 const USER_DM_TEST_TRIGGER_LIMIT = 5;
 const USER_DM_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;

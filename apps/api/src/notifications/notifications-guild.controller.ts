@@ -17,27 +17,27 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Guild } from "src/generated/prisma/client";
-import { ChannelsService } from "src/channels/channels.service";
-import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import { Permission, type Guild } from "#src/generated/prisma/client";
+import { ChannelsService } from "#src/channels/channels.service";
+import { CreateNotificationRuleDto } from "#src/notifications/dto/create-notification-rule.dto";
 import {
   GuildAvailableNotificationTargetsResponseDto,
   GuildNotificationRulesResponseDto,
   NotificationJobsResponseDto,
   NotificationRuleResponseDto,
   NotificationTargetResponseDto,
-} from "src/notifications/dto/notification-response.dto";
-import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
-import { SuccessResponseDto } from "src/shared/dto/common-response.dto";
-import { NotificationJobService } from "src/notifications/notification-job.service";
-import { NotificationRuleService } from "src/notifications/notification-rule.service";
-import { NotificationTargetService } from "src/notifications/notification-target.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
+} from "#src/notifications/dto/notification-response.dto";
+import { CreateNotificationTargetDto } from "#src/notifications/dto/create-notification-target.dto";
+import { UpdateNotificationRuleDto } from "#src/notifications/dto/update-notification-rule.dto";
+import { UpdateNotificationTargetDto } from "#src/notifications/dto/update-notification-target.dto";
+import { SuccessResponseDto } from "#src/shared/dto/common-response.dto";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
+import { NotificationRuleService } from "#src/notifications/notification-rule.service";
+import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("notifications")
 @ApiBearerAuth()

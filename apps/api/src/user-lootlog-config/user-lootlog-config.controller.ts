@@ -18,14 +18,14 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
-import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import { CreateOrUpdateLootlogCharacterConfigDto } from "#src/user-lootlog-config/dto/create-user-account-config.dto";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import {
   UserLootlogConfigAccountResponseDto,
   UserLootlogPlayersCatchingGuildsRequestDto,
   UserLootlogPlayersCatchingGuildsResponseDto,
   UserLootlogConfigResponseDto,
-} from "src/shared/dto/user-lootlog-config-response.dto";
+} from "#src/shared/dto/user-lootlog-config-response.dto";
 
 @ApiTags("user-lootlog-config")
 @ApiBearerAuth()

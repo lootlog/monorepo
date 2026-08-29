@@ -5,13 +5,13 @@ import type {
   UserGuildData,
   GetUserGuildsOptions,
   CachedGuildData,
-} from "src/guilds/types/guild.types";
+} from "#src/guilds/types/guild.types";
 import {
   getUserGuildsCacheKey,
   CACHE_TTL,
-} from "src/guilds/utils/cache-keys.util";
+} from "#src/guilds/utils/cache-keys.util";
 import { firstValueFrom } from "rxjs";
-import { apiConfig } from "src/config/api.config";
+import { apiConfig } from "#src/config/api.config";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000];

@@ -1,6 +1,6 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { DocsController } from "./docs.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { DocsController } from "./docs.controller.js";
 
 describe("DocsController", () => {
   const mockDocsService = {

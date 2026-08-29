@@ -8,7 +8,7 @@ import {
   RedisService,
   REDIS_MODULE_OPTIONS,
   type RedisModuleOptions,
-} from "./redis.service";
+} from "./redis.service.js";
 
 @Module({})
 export class RedisModule {

@@ -5,9 +5,9 @@ import { sanitizeOpenApiDocument } from "@lootlog/nest-shared/openapi";
 import {
   NotificationAllowedMentionsResponseDto,
   NotificationJobPayloadSnapshotResponseDto,
-} from "src/notifications/dto/notification-response.dto";
-import { LootShareResponseDto } from "src/shared/dto/loot-response.dto";
-import { TimerNpcResponseDto } from "src/shared/dto/timer-npc-response.dto";
+} from "#src/notifications/dto/notification-response.dto";
+import { LootShareResponseDto } from "#src/shared/dto/loot-response.dto";
+import { TimerNpcResponseDto } from "#src/shared/dto/timer-npc-response.dto";
 
 export function createOpenApiDocument(app: NestFastifyApplication) {
   const config = new DocumentBuilder()

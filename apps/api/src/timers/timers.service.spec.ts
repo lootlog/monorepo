@@ -1,29 +1,29 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { TimersService } from "./timers.service";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
+import { TimersService } from "./timers.service.js";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
 import { BadRequestException, ConflictException } from "@nestjs/common";
-import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
-import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
+import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
+import { validateAndCalculateSpawnTimes } from "#src/timers/utils/validate-spawn-times";
+import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { RedlockService } from "src/lib/redlock/redlock.service";
-import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
-import { buildTimerKey } from "src/timers/utils/timer-key";
-import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
-import { ErrorKey } from "src/timers/enum/error-key.enum";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
+import { getSyntheticNpcId } from "#src/events/utils/get-synthetic-npc-id";
+import { buildTimerKey } from "#src/timers/utils/timer-key";
+import { EventTimerHooksService } from "#src/events/services/event-timer-hooks.service";
+import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
-import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   NpcType,
   Permission,
   Profession,
   TimerHistoryAction,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 
 describe("TimersService", () => {
   let service: TimersService;

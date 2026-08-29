@@ -20,6 +20,9 @@ coverage
 .turbo
 **/.tanstack/
 
+# Wrangler
+**/.wrangler/
+
 # Build Outputs
 build
 dist

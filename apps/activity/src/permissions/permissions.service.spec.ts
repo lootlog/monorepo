@@ -3,8 +3,8 @@ import { HttpService } from "@nestjs/axios";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { of, throwError } from "rxjs";
 import { Permission } from "@lootlog/types";
-import { PermissionsService } from "./permissions.service";
-import { apiServiceConfig } from "src/config/api-service.config";
+import { PermissionsService } from "./permissions.service.js";
+import { apiServiceConfig } from "#src/config/api-service.config";
 
 describe("PermissionsService", () => {
   let service: PermissionsService;

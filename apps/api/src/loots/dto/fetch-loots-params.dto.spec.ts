@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FetchLootsParamsDto } from "./fetch-loots-params.dto";
+import { FetchLootsParamsDto } from "./fetch-loots-params.dto.js";
 
 describe("FetchLootsParamsDto", () => {
   it.each([

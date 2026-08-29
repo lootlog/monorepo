@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -18,24 +19,28 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Guild, type Role } from "src/generated/prisma/client";
-import { CreateEventDto } from "./dto/create-event.dto";
+import {
+  Permission,
+  type Guild,
+  type Role,
+} from "#src/generated/prisma/client";
+import { CreateEventDto } from "./dto/create-event.dto.js";
 import {
   EventListItemResponseDto,
   EventMapsResponseDto,
   EventMutationResponseDto,
   EventOverviewResponseDto,
   SuccessResponseDto,
-} from "./dto/event-response.dto";
-import { EventWrappedApiResponseDto } from "./dto/event-wrapped-response.dto";
-import { UpdateEventDto } from "./dto/update-event.dto";
-import { EventsService } from "./events.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
+} from "./dto/event-response.dto.js";
+import { EventWrappedApiResponseDto } from "./dto/event-wrapped-response.dto.js";
+import { UpdateEventDto } from "./dto/update-event.dto.js";
+import { EventsService } from "./events.service.js";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
 @ApiBearerAuth()
@@ -267,6 +272,7 @@ export class EventsCatalogController {
   @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/recalculate-points")
+  @HttpCode(200)
   @ApiOperation({
     operationId: "recalculateEventPoints",
     summary: "Recalculate event points",

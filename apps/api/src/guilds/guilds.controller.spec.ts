@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { GuildsController } from "./guilds.controller";
-import { GuildsService } from "./guilds.service";
+import { mockFn } from "#src/test/mock-fn";
+import { GuildsController } from "./guilds.controller.js";
+import { GuildsService } from "./guilds.service.js";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
 import type { CallHandler, ExecutionContext } from "@nestjs/common";
 
 describe("GuildsController", () => {

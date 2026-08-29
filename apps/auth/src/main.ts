@@ -1,5 +1,5 @@
-import { env } from "src/config/env";
-import { createApp } from "src/app.factory";
+import { env } from "#src/config/env";
+import { createApp } from "#src/app.factory";
 
 async function bootstrap() {
   const app = await createApp();

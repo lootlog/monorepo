@@ -3,10 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { EventKillPoint, Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { EventEmitterService } from "./event-emitter.service";
-import { EventReadCacheService } from "./event-read-cache.service";
+import type { EventKillPoint, Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   evaluateEventScoring,
@@ -16,11 +16,11 @@ import {
   type EventScoringMode,
   type EventScoringRules,
 } from "@lootlog/scoring";
-import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
+import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util.js";
 import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
-} from "../utils/tracking-window.util";
+} from "../utils/tracking-window.util.js";
 
 type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;

@@ -1,5 +1,5 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   HttpStatus,
@@ -9,22 +9,22 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RateLimitError } from "@discordjs/rest";
-import { DiscordGuildMemberClient } from "./discord-guild-member.client";
-import { DiscordRestClientFactory } from "./discord-rest-client.factory";
-import { DiscordService } from "./discord.service";
-import { DiscordUserGuildsClient } from "./discord-user-guilds.client";
-import { AuthService } from "src/auth/auth.service";
+import { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
+import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
+import { DiscordService } from "./discord.service.js";
+import { DiscordUserGuildsClient } from "./discord-user-guilds.client.js";
+import { AuthService } from "#src/auth/auth.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
-import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service";
-import { RedlockService } from "src/lib/redlock/redlock.service";
-import { AuthServiceUnavailableError } from "src/auth/errors/auth-service-unavailable.error";
-import { InvalidScopesError } from "src/auth/errors/invalid-scopes.error";
-import { TokenExpiredError } from "src/auth/errors/token-expired.error";
+import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
+import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
+import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
+import { InvalidScopesError } from "#src/auth/errors/invalid-scopes.error";
+import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
-vi.mock("src/config/service.config", () => ({
+vi.mock("#src/config/service.config", () => ({
   serviceConfig: { env: "local" },
 }));
 

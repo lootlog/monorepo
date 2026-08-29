@@ -5,8 +5,8 @@ import {
   intFromString,
   optionalFromQuery,
 } from "@lootlog/nest-shared/validators/query-helpers";
-import { NpcType } from "src/generated/prisma/client";
-import { KillStatsPeriodSchema } from "../utils/kill-stats-period";
+import { NpcType } from "#src/generated/prisma/client";
+import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
 
 const GetMemberKillsSchema = z.object({
   minLvl: optionalFromQuery(intFromString({ min: 0, max: 500 })),
