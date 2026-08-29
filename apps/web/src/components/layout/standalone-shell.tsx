@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/layout/page-header";
+import { AppTopBar } from "@/components/layout/app-top-bar";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -17,7 +17,7 @@ export const StandaloneShell = ({ children }: StandaloneShellProps) => {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <PageHeader>
+      <AppTopBar>
         <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"
@@ -43,7 +43,7 @@ export const StandaloneShell = ({ children }: StandaloneShellProps) => {
             </span>
           </div>
         </div>
-      </PageHeader>
+      </AppTopBar>
       <ScrollArea className="min-h-0 flex-1 [&>[data-radix-scroll-area-viewport]>div]:!h-full [&>[data-radix-scroll-area-viewport]>div]:!w-full">
         <main className="flex min-h-full w-full items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
           {children}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
-import { Search, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -10,7 +10,6 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Input } from "@lootlog/ui/components/input";
 import {
   Select,
   SelectContent,
@@ -29,6 +28,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { SearchInput } from "@/components/ui/search-input";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
@@ -305,15 +305,12 @@ export const MemberStatsPage: React.FC = () => {
 
           <Card className="border-border bg-card p-3  gap-3">
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("kills.memberStats.searchPlaceholder")}
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-9 w-full"
-                />
-              </div>
+              <SearchInput
+                placeholder={t("kills.memberStats.searchPlaceholder")}
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                wrapperClassName="flex-1"
+              />
               <NpcStatsFiltersMobile
                 world={settings.world}
                 npcType={settings.npcType}
@@ -328,15 +325,12 @@ export const MemberStatsPage: React.FC = () => {
               />
             </div>
             <div className="hidden lg:flex items-center gap-2 flex-wrap">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("kills.memberStats.searchPlaceholder")}
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-9 w-[200px]"
-                />
-              </div>
+              <SearchInput
+                placeholder={t("kills.memberStats.searchPlaceholder")}
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                wrapperClassName="w-[200px]"
+              />
               <LevelFilters
                 minLvl={settings.minLvl}
                 maxLvl={settings.maxLvl}

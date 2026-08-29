@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { formatDurationHuman } from "../../utils/format-duration";
 import { getMapCoverageColorClassName } from "../../utils/get-map-coverage-color-class-name";
 import type { KillMapTimelineDiagnostics } from "../../utils/kill-map-timeline-data";

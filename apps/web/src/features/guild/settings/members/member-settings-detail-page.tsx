@@ -1,5 +1,9 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, UserRoundX } from "lucide-react";
@@ -130,6 +134,7 @@ const MemberSettingsDetailPageContent = () => {
               <AvatarImage
                 src={getDiscordAvatarUrl(member.userId, member.avatar)}
               />
+              <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">

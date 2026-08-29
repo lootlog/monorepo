@@ -12,6 +12,7 @@ import {
 } from "@lootlog/ui/components/dropdown-menu";
 import { ChevronUp, LogOut, Settings, User2 } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useLogout } from "@/hooks/auth/use-logout";
 import { useNavigate } from "@tanstack/react-router";
@@ -38,11 +39,11 @@ export const UserMenu = () => {
             </AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="h-2.5 w-12 animate-pulse rounded bg-muted/60" />
-            <div className="h-3.5 w-20 animate-pulse rounded bg-muted" />
+            <Skeleton className="h-2.5 w-12" />
+            <Skeleton className="h-3.5 w-20" />
           </div>
           <div className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border">
-            <div className="size-3.5 animate-pulse rounded bg-muted/60" />
+            <Skeleton className="size-3.5" />
           </div>
         </div>
       )}

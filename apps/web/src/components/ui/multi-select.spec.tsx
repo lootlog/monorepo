@@ -5,7 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MultiSelect } from "./multi-select";
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, values?: { label?: string }) =>
+      key === "common.removeOption"
+        ? `Usuń ${values?.label ?? ""}`.trim()
+        : key,
+  }),
 }));
 
 afterEach(() => {
@@ -129,5 +134,78 @@ describe("MultiSelect", () => {
 
     expect(searchInput.value).toBe("Quet");
     expect(onSearchChange).toHaveBeenCalledWith("Quet");
+  });
+
+  it("selects an option through the Base UI control", () => {
+    const onValueChange = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <MultiSelect
+        commandSearch
+        onClose={onClose}
+        onValueChange={onValueChange}
+        options={[
+          { label: "Alpha", value: "alpha" },
+          { label: "Beta", value: "beta" },
+        ]}
+        value={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("option", { name: "Alpha" }));
+
+    expect(onValueChange).toHaveBeenCalledWith(["alpha"]);
+  });
+
+  it("labels chip removal with the selected option", () => {
+    render(
+      <MultiSelect
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[{ label: "Alpha", value: "alpha" }]}
+        value={["alpha"]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Usuń Alpha" })).toBeTruthy();
+  });
+
+  it("clears selected options and reports the close once", () => {
+    const onValueChange = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <MultiSelect
+        onClose={onClose}
+        onValueChange={onValueChange}
+        options={[{ label: "Alpha", value: "alpha" }]}
+        value={["alpha"]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "common.clear" }));
+
+    expect(onValueChange).toHaveBeenCalledWith([]);
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledWith([]);
+  });
+
+  it("does not open when disabled", () => {
+    render(
+      <MultiSelect
+        disabled
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[{ label: "Alpha", value: "alpha" }]}
+        value={[]}
+      />,
+    );
+
+    const input = screen.getByRole("combobox");
+    fireEvent.click(input);
+
+    expect(input.getAttribute("aria-expanded")).toBe("false");
   });
 });

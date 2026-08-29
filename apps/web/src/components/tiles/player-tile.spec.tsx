@@ -56,17 +56,15 @@ describe("PlayerTile", () => {
 
     expect(trigger).not.toBeNull();
 
-    fireEvent.pointerMove(trigger as Element, { pointerType: "mouse" });
+    fireEvent.pointerEnter(trigger as Element, { pointerType: "mouse" });
+    fireEvent.mouseEnter(trigger as Element);
+    fireEvent.mouseMove(trigger as Element);
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip.textContent).toBe("Tester (123w)");
 
-    fireEvent.pointerLeave(trigger as Element);
-    fireEvent.pointerMove(document.body, {
-      clientX: 100,
-      clientY: 100,
-      pointerType: "mouse",
-    });
+    fireEvent.mouseLeave(trigger as Element);
+    fireEvent.mouseOut(trigger as Element, { relatedTarget: document.body });
 
     await waitFor(() => {
       expect(screen.queryByRole("tooltip")).toBeNull();
@@ -97,9 +95,11 @@ describe("PlayerTile", () => {
 
     expect(tooltipTrigger).not.toBeNull();
 
-    fireEvent.pointerMove(tooltipTrigger as Element, {
+    fireEvent.pointerEnter(tooltipTrigger as Element, {
       pointerType: "mouse",
     });
+    fireEvent.mouseEnter(tooltipTrigger as Element);
+    fireEvent.mouseMove(tooltipTrigger as Element);
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip.textContent).toBe("Tester (123w)");

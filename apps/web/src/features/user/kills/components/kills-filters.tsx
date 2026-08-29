@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Globe, Search } from "lucide-react";
+import { Globe } from "lucide-react";
 import { Input } from "@lootlog/ui/components/input";
 import {
   Select,
@@ -20,6 +20,7 @@ import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
+import { SearchInput } from "@/components/ui/search-input";
 
 export type KillsFiltersState = {
   world?: string;
@@ -82,15 +83,13 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   return (
     <div className="sticky top-0 z-10 w-full max-w-full overflow-hidden border-b bg-background px-3 py-3 md:px-4">
       <div className="flex min-w-0 flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center">
-        <div className="relative min-w-0 md:w-[200px]">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("kills.ranking.search")}
-            value={filters.search ?? ""}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-8 h-9"
-          />
-        </div>
+        <SearchInput
+          placeholder={t("kills.ranking.search")}
+          value={filters.search ?? ""}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="h-9"
+          wrapperClassName="min-w-0 md:w-[200px]"
+        />
 
         <Select
           value={filters.world ?? "all"}

@@ -9,7 +9,7 @@ import {
 } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
 import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
 import { BattlePanelH2hCard } from "@/features/user/battle-panel/components/battle-panel-h2h-card";
-import { BattlePanelMobileFiltersDrawer } from "@/features/user/battle-panel/components/battle-panel-mobile-filters-drawer";
+import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
 import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-status";
@@ -457,14 +457,15 @@ export function HeadToHeadPageVariant({
   return (
     <>
       {isMobile && (
-        <BattlePanelMobileFiltersDrawer
+        <MobileFiltersDrawer
           open={isMobileFiltersOpen}
           onOpenChange={setIsMobileFiltersOpen}
-          contentClassName="p-0"
+          trigger={null}
+          childrenClassName="p-0"
           title={t("battlePanel.filters.headToHeadTitle")}
         >
           {filtersContent}
-        </BattlePanelMobileFiltersDrawer>
+        </MobileFiltersDrawer>
       )}
 
       <div className="flex h-full w-full flex-col overflow-hidden bg-background">

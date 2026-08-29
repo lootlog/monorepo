@@ -11,7 +11,7 @@ import {
 } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
-import { BattlePanelMobileFiltersDrawer } from "@/features/user/battle-panel/components/battle-panel-mobile-filters-drawer";
+import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
@@ -359,14 +359,15 @@ export function PlayerVsPlayerFullPage() {
   return (
     <>
       {isMobile && (
-        <BattlePanelMobileFiltersDrawer
+        <MobileFiltersDrawer
           open={isMobileFiltersOpen}
           onOpenChange={setIsMobileFiltersOpen}
-          contentClassName="p-0"
+          trigger={null}
+          childrenClassName="p-0"
           title={t("battlePanel.filters.title")}
         >
           {filtersContent}
-        </BattlePanelMobileFiltersDrawer>
+        </MobileFiltersDrawer>
       )}
 
       <div className="flex h-full w-full flex-col overflow-hidden bg-background">

@@ -27,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
+import { SearchInput } from "@/components/ui/search-input";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -660,15 +661,12 @@ export const MapManageDialog = ({
                 </div>
               )}
 
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t("events.maps.searchPlaceholder")}
-                  className="pl-9 h-9 text-sm"
-                />
-              </div>
+              <SearchInput
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("events.maps.searchPlaceholder")}
+                className="h-9 text-sm"
+              />
 
               <ScrollArea className="h-[180px] rounded-lg border relative">
                 {addMap.isPending && (

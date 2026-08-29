@@ -1,8 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ChangeEvent, FC } from "react";
 import { useTranslation } from "react-i18next";
+import { SearchInput } from "@/components/ui/search-input";
 
 export type BattleLogSearchToolbarProps = {
   query: string;
@@ -32,16 +32,14 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
   return (
     <div className="min-h-[49px] border-b bg-background px-3 py-2">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={handleQueryChange}
-            aria-label={t("battlePanel.single.log.search.label")}
-            placeholder={t("battlePanel.single.log.search.placeholder")}
-            className="h-8 pl-9"
-          />
-        </div>
+        <SearchInput
+          value={query}
+          onChange={handleQueryChange}
+          aria-label={t("battlePanel.single.log.search.label")}
+          placeholder={t("battlePanel.single.log.search.placeholder")}
+          className="h-8"
+          wrapperClassName="min-w-0 flex-1"
+        />
         <div className="flex items-center justify-between gap-2 sm:justify-end">
           <span
             className="min-w-14 text-center text-xs font-medium tabular-nums text-muted-foreground"
