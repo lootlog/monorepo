@@ -7,6 +7,10 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
+import {
+  resolveReservationSettings,
+  type ReservationSettings,
+} from "@lootlog/reservations";
 
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -74,14 +78,6 @@ type GuildPermissionMember = {
 
 const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
 const CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS = 30;
-const DEFAULT_RESERVATION_SETTINGS = {
-  reservationMaxDurationMinutes: 180,
-  reservationMinDurationMinutes: 30,
-  reservationTimeGranularityMinutes: 15,
-  reservationMaxAdvanceDays: 7,
-  reservationActiveLimitPerSpot: 3,
-} as const;
-
 @Injectable()
 export class GuildsService {
   private readonly staleAfterMs: number;
@@ -379,26 +375,12 @@ export class GuildsService {
     return guild;
   }
 
-  private withReservationSettingsDefaults<T extends Record<string, unknown>>(
-    guild: T,
-  ) {
+  private withReservationSettingsDefaults<
+    T extends Record<string, unknown> & Partial<ReservationSettings>,
+  >(guild: T) {
     return {
       ...guild,
-      reservationMaxDurationMinutes:
-        guild.reservationMaxDurationMinutes ??
-        DEFAULT_RESERVATION_SETTINGS.reservationMaxDurationMinutes,
-      reservationMinDurationMinutes:
-        guild.reservationMinDurationMinutes ??
-        DEFAULT_RESERVATION_SETTINGS.reservationMinDurationMinutes,
-      reservationTimeGranularityMinutes:
-        guild.reservationTimeGranularityMinutes ??
-        DEFAULT_RESERVATION_SETTINGS.reservationTimeGranularityMinutes,
-      reservationMaxAdvanceDays:
-        guild.reservationMaxAdvanceDays ??
-        DEFAULT_RESERVATION_SETTINGS.reservationMaxAdvanceDays,
-      reservationActiveLimitPerSpot:
-        guild.reservationActiveLimitPerSpot ??
-        DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot,
+      ...resolveReservationSettings(guild),
     };
   }
 
@@ -1029,9 +1011,9 @@ export class GuildsService {
       nextMaxDuration !== undefined &&
       nextMinDuration > nextMaxDuration
     ) {
-      throw new BadRequestException(
-        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
-      );
+      throw new BadRequestException({
+        message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
+      });
     }
 
     const oldGuild = await this.prisma.guild.findUnique({
@@ -1049,9 +1031,9 @@ export class GuildsService {
       nextMaxDuration === undefined &&
       nextMinDuration > oldGuild.reservationMaxDurationMinutes
     ) {
-      throw new BadRequestException(
-        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
-      );
+      throw new BadRequestException({
+        message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
+      });
     }
 
     if (
@@ -1060,9 +1042,9 @@ export class GuildsService {
       nextMinDuration === undefined &&
       oldGuild.reservationMinDurationMinutes > nextMaxDuration
     ) {
-      throw new BadRequestException(
-        "Maksymalna długość rezerwacji nie może być mniejsza niż minimalna.",
-      );
+      throw new BadRequestException({
+        message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
+      });
     }
 
     const guild = await this.prisma.guild.update({

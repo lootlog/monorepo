@@ -5,6 +5,7 @@ import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
+import { resolveReservationSettings } from "@lootlog/reservations";
 import {
   getListReservationSpotsQueryKey,
   getListSpotReservationsQueryKey,
@@ -41,7 +42,6 @@ import { ReservationDetails } from "./reservation-details";
 import { ReservationFormDialog } from "./reservation-form-dialog";
 import {
   ceilDateToReservationStep,
-  getReservationSettings,
   isReservationStartSelectable,
 } from "./reservation-settings";
 import { ScheduleHeader } from "./schedule-header";
@@ -77,7 +77,7 @@ export function ReservationsSchedule() {
   const swipePreviewEnd = addDays(weekEnd, 1);
   const dayIndex = differenceInCalendarDays(date, weekStart);
   const guildQuery = useGuildsControllerGetGuildById({ guildId });
-  const settings = getReservationSettings(guildQuery.data);
+  const settings = resolveReservationSettings(guildQuery.data);
   const reservationsQuery = useListSpotReservations(
     { guildId, spotId },
     {

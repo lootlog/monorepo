@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
+import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/reservations";
+import { ErrorKey } from "src/guilds/enum/error-key.enum";
 
 const UpdateGuildConfigSchema = z.object({
   vanityUrl: z.string().min(1).nullable().optional(),
@@ -9,9 +11,15 @@ const UpdateGuildConfigSchema = z.object({
   reservationTimeGranularityMinutes: z
     .number()
     .int()
-    .refine((value) => [5, 10, 15, 30, 60].includes(value), {
-      message: "Nieprawidłowy krok siatki rezerwacji.",
-    })
+    .refine(
+      (value) =>
+        RESERVATION_TIME_GRANULARITY_OPTIONS.some(
+          (granularity) => granularity === value,
+        ),
+      {
+        message: ErrorKey.GUILDS_RESERVATION_TIME_GRANULARITY_INVALID,
+      },
+    )
     .optional(),
   reservationMaxAdvanceDays: z.number().int().min(1).max(30).optional(),
   reservationActiveLimitPerSpot: z.number().int().min(1).max(10).optional(),

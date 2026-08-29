@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { resolveReservationSettings } from "@lootlog/reservations";
 import { toast } from "sonner";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/api-client/models/main/my-reservations-response-dto-items-item";
 import {
@@ -25,7 +26,6 @@ import { getReservationErrorMessage } from "@/features/guild/reservations/get-re
 import {
   getReservationEarliestStartDate,
   getReservationLatestStartDate,
-  getReservationSettings,
   validateReservationDateRange,
 } from "@/features/guild/reservations/schedule/reservation-settings";
 import { getReservationValidationMessage } from "@/features/guild/reservations/schedule/reservation-validation-message";
@@ -64,7 +64,7 @@ export function EditMyReservationForm({
   const [reminder, setReminder] = useState<ReminderValue>(
     toReminderValue(reservation.reminderMinutesBefore),
   );
-  const settings = getReservationSettings(reservation.editingConstraints);
+  const settings = resolveReservationSettings(reservation.editingConstraints);
   const targetsQuery = useNotificationsUserControllerGetUserTargets();
   const hasActiveDm = Boolean(
     targetsQuery.data?.some(
