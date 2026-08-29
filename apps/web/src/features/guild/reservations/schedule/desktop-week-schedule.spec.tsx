@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ReservationSettings } from "@lootlog/reservations";
 import { HEADER_HEIGHT, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { DesktopWeekSchedule } from "./desktop-week-schedule";
 import type { ReservationSegment } from "./types";
@@ -15,6 +16,14 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
 });
+
+const settings = {
+  reservationMaxDurationMinutes: 180,
+  reservationMinDurationMinutes: 30,
+  reservationTimeGranularityMinutes: 15,
+  reservationMaxAdvanceDays: 7,
+  reservationActiveLimitPerSpot: 3,
+} satisfies ReservationSettings;
 
 const createSegment = (dayIdx = 3): ReservationSegment => {
   const startsAt = new Date(2026, 0, 8, 10, 0);
@@ -58,13 +67,62 @@ const createSegment = (dayIdx = 3): ReservationSegment => {
   };
 };
 
+const renderEmptySchedule = () => {
+  const onRangeSelect = vi.fn();
+  const { container } = render(
+    <DesktopWeekSchedule
+      weekStart={new Date(2026, 0, 5)}
+      segments={[]}
+      settings={settings}
+      onRangeSelect={onRangeSelect}
+      onReservationSelect={vi.fn()}
+    />,
+  );
+  const grid = container.querySelector(".grid");
+  expect(grid).toBeInstanceOf(HTMLDivElement);
+  if (!(grid instanceof HTMLDivElement)) {
+    throw new TypeError("Expected the desktop schedule grid to render");
+  }
+  vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(
+      0,
+      0,
+      LABEL_COLUMN_WIDTH + 700,
+      HEADER_HEIGHT + 24 * MIN_ROW_HEIGHT,
+    ),
+  );
+  return { container, grid, onRangeSelect };
+};
+
+const moveSelection = (
+  grid: HTMLDivElement,
+  start: { day: number; minutes: number },
+  end: { day: number; minutes: number },
+) => {
+  const toPointerCoordinates = (point: { day: number; minutes: number }) => ({
+    clientX: LABEL_COLUMN_WIDTH + point.day * 100 + 10,
+    clientY: HEADER_HEIGHT + (point.minutes / 60) * MIN_ROW_HEIGHT + 1,
+  });
+  fireEvent.pointerDown(grid, {
+    button: 0,
+    ...toPointerCoordinates(start),
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerMove(grid, {
+    ...toPointerCoordinates(end),
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+};
+
 describe("DesktopWeekSchedule", () => {
   it("renders only segments from the visible week", () => {
     const { container } = render(
       <DesktopWeekSchedule
         weekStart={new Date(2026, 0, 5)}
         segments={[createSegment(-1), createSegment(3), createSegment(7)]}
-        minuteStep={15}
+        settings={settings}
         onRangeSelect={vi.fn()}
         onReservationSelect={vi.fn()}
       />,
@@ -81,7 +139,7 @@ describe("DesktopWeekSchedule", () => {
       <DesktopWeekSchedule
         weekStart={new Date(2026, 0, 5)}
         segments={[]}
-        minuteStep={15}
+        settings={settings}
         onRangeSelect={vi.fn()}
         onReservationSelect={vi.fn()}
       />,
@@ -120,7 +178,7 @@ describe("DesktopWeekSchedule", () => {
       <DesktopWeekSchedule
         weekStart={new Date(2026, 0, 5)}
         segments={[createSegment()]}
-        minuteStep={15}
+        settings={settings}
         onRangeSelect={onRangeSelect}
         onReservationSelect={vi.fn()}
       />,
@@ -165,5 +223,73 @@ describe("DesktopWeekSchedule", () => {
     });
 
     expect(onRangeSelect).not.toHaveBeenCalled();
+  });
+
+  it("selects the maximum allowed range across midnight", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
+    const { container, grid, onRangeSelect } = renderEmptySchedule();
+    moveSelection(
+      grid,
+      { day: 0, minutes: 23 * 60 },
+      { day: 1, minutes: 23 * 60 },
+    );
+
+    expect(
+      container.querySelectorAll(
+        ".pointer-events-none.absolute.z-20.rounded-md",
+      ),
+    ).toHaveLength(2);
+
+    fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
+
+    expect(onRangeSelect).toHaveBeenCalledWith({
+      startsAt: new Date(2026, 0, 5, 23, 0),
+      endsAt: new Date(2026, 0, 6, 2, 0),
+    });
+  });
+
+  it("selects a range across midnight when dragging backwards", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
+    const { container, grid, onRangeSelect } = renderEmptySchedule();
+    moveSelection(grid, { day: 1, minutes: 60 }, { day: 0, minutes: 23 * 60 });
+
+    expect(
+      container.querySelectorAll(
+        ".pointer-events-none.absolute.z-20.rounded-md",
+      ),
+    ).toHaveLength(2);
+
+    fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
+
+    expect(onRangeSelect).toHaveBeenCalledWith({
+      startsAt: new Date(2026, 0, 5, 23, 0),
+      endsAt: new Date(2026, 0, 6, 1, 15),
+    });
+  });
+
+  it("keeps same-day range selection unchanged", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
+    const { container, grid, onRangeSelect } = renderEmptySchedule();
+    moveSelection(
+      grid,
+      { day: 0, minutes: 10 * 60 },
+      { day: 0, minutes: 10 * 60 + 45 },
+    );
+
+    expect(
+      container.querySelectorAll(
+        ".pointer-events-none.absolute.z-20.rounded-md",
+      ),
+    ).toHaveLength(1);
+
+    fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
+
+    expect(onRangeSelect).toHaveBeenCalledWith({
+      startsAt: new Date(2026, 0, 5, 10, 0),
+      endsAt: new Date(2026, 0, 5, 11, 0),
+    });
   });
 });

@@ -272,7 +272,7 @@ export function ReservationsSchedule() {
         <DesktopWeekSchedule
           weekStart={weekStart}
           segments={segments}
-          minuteStep={settings.reservationTimeGranularityMinutes}
+          settings={settings}
           onRangeSelect={openSelectedRange}
           onReservationSelect={setSelectedReservationId}
           onReservationCancel={(reservationId) =>
