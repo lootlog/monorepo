@@ -116,6 +116,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       redis.deleteByPattern("kill:dedup:*"),
       redis.deleteByPattern("perms:*"),
       redis.deleteByPattern("guild:*"),
+      redis.deleteByPattern("user-lootlog-config:*"),
     ]);
   });
 

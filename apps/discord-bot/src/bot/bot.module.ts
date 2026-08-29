@@ -7,8 +7,10 @@ import { DiscordDeliveryService } from "#src/bot/discord-delivery.service";
 import { DiscordSyncService } from "#src/bot/discord-sync.service";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 
+export const botRabbitMqModule = RabbitMQModule.forRoot(rabbitmqConfig);
+
 @Module({
-  imports: [RabbitMQModule.forRoot(rabbitmqConfig)],
+  imports: [botRabbitMqModule],
   controllers: [BotInternalController],
   providers: [
     DiscordSyncService,

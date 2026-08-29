@@ -1,6 +1,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { HttpService } from "@nestjs/axios";
-import { Test, type ModuleMetadata } from "@nestjs/testing";
+import type { ModuleMetadata } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
 import {
   WINSTON_MODULE_NEST_PROVIDER,
   WINSTON_MODULE_PROVIDER,

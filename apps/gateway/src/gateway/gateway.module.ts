@@ -18,11 +18,13 @@ import { MapPingService } from "./services/map-ping.service.js";
 import { AirTagService } from "./services/air-tag.service.js";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 
+export const gatewayRabbitMqModule = RabbitMQModule.forRoot(rabbitmqConfig);
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     HttpModule,
-    RabbitMQModule.forRoot(rabbitmqConfig),
+    gatewayRabbitMqModule,
     GuildsModule,
     RedisModule,
   ],
