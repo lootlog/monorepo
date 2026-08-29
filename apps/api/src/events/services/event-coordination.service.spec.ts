@@ -1,10 +1,10 @@
 import { NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { TimersService } from "src/timers/timers.service";
-import { buildTimerKey } from "src/timers/utils/timer-key";
-import { mockFn } from "src/test/mock-fn";
-import { EventCoordinationService } from "./event-coordination.service";
+import { CoverageGapType } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { TimersService } from "#src/timers/timers.service";
+import { buildTimerKey } from "#src/timers/utils/timer-key";
+import { mockFn } from "#src/test/mock-fn";
+import { EventCoordinationService } from "./event-coordination.service.js";
 
 describe("EventCoordinationService", () => {
   const now = new Date("2026-06-19T12:00:00.000Z");

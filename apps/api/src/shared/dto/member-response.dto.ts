@@ -1,11 +1,11 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { MemberType } from "src/generated/prisma/client";
+import { MemberType } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
-import { RoleResponseDto } from "./role-response.dto";
+} from "#src/shared/dto/zod-response-codecs";
+import { RoleResponseDto } from "./role-response.dto.js";
 
 const MemberResponseSchema = z.object({
   id: z.number(),

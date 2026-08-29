@@ -1,18 +1,18 @@
-import { ActivitySource } from "src/gateway/enums/activity-source.enum";
-import { ActivityType } from "src/gateway/enums/activity-type.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { ActivitySource } from "#src/gateway/enums/activity-source.enum";
+import { ActivityType } from "#src/gateway/enums/activity-type.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { RoutingKey } from "#src/gateway/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { Logger } from "@nestjs/common";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import type { UserGuildData } from "src/guilds/types/guild.types";
-import { ActivityService } from "./activity.service";
+import type { Socket } from "#src/gateway/types/socket-user.type";
+import type { UserGuildData } from "#src/guilds/types/guild.types";
+import { ActivityService } from "./activity.service.js";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   signActivityEvent,
-} from "src/gateway/utils/activity-event-signature";
-import { env } from "src/config/env";
+} from "#src/gateway/utils/activity-event-signature";
+import { env } from "#src/config/env";
 
 const createGuild = (guildId: string): UserGuildData =>
   ({

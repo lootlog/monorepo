@@ -1,7 +1,7 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { isoDatetimeCodec } from "src/shared/dto/zod-response-codecs";
-import { GuildDocumentContentSchema } from "./guild-document-content.schema";
+import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
+import { GuildDocumentContentSchema } from "./guild-document-content.schema.js";
 
 const GuildDocumentEditorSchema = z.object({
   memberId: z.string(),

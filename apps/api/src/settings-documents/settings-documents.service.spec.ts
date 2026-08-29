@@ -1,5 +1,5 @@
-import { SettingsDocumentsService } from "./settings-documents.service";
-import type { PrismaService } from "src/db/prisma.service";
+import { SettingsDocumentsService } from "./settings-documents.service.js";
+import type { PrismaService } from "#src/db/prisma.service";
 import { describe, expect, it, vi } from "vitest";
 
 const createPrismaMock = () => {

@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { ReservationEventsPublisher } from "./reservation-events.publisher";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { ReservationEventsPublisher } from "./reservation-events.publisher.js";
 
 describe("ReservationEventsPublisher", () => {
   it("publishes a PII-free v2 invalidation alongside the rollout event", async () => {

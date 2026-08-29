@@ -1,8 +1,8 @@
 import { Logger } from "@nestjs/common";
 import { redisStorage } from "@better-auth/redis-storage";
-import Redis from "ioredis";
-import { env } from "src/config/env";
-import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open";
+import { Redis } from "ioredis";
+import { env } from "#src/config/env";
+import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js";
 
 const AUTH_REDIS_KEY_PREFIX = "auth:better-auth:";
 

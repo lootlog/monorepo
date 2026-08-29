@@ -4,16 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+import type { Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,
   GUILD_DOCUMENT_TITLE_MAX_LENGTH,
-} from "./constants/docs-limits";
-import type { CreateGuildDocumentDto } from "./dto/create-guild-document.dto";
-import type { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto";
-import type { GuildDocumentContent } from "./dto/guild-document-content.schema";
+} from "./constants/docs-limits.js";
+import type { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
+import type { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto.js";
+import type { GuildDocumentContent } from "./dto/guild-document-content.schema.js";
 
 const EMPTY_DOCUMENT_CONTENT = {
   root: {

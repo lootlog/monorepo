@@ -1,19 +1,19 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { KillsService } from "./kills.service";
-import { PrismaService } from "src/db/prisma.service";
+import { KillsService } from "./kills.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
-import type { CreateKillDto } from "./dto/create-kill.dto";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
+import type { CreateKillDto } from "./dto/create-kill.dto.js";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from "./dto/get-kill-stats.dto";
-import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
+} from "./dto/get-kill-stats.dto.js";
+import { GetMemberKillsDto } from "./dto/get-member-kills.dto.js";
 
 describe("KillsService", () => {
   let service: KillsService;

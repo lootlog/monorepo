@@ -1,6 +1,6 @@
 import type { RedisService } from "@lootlog/nest-shared/redis";
-import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto";
-import { EventReadCacheService } from "./event-read-cache.service";
+import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
 
 type CachedPayload = {
   createdAt: Date | string;

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
-import { TimerActorCharacterSchema } from "src/timers/dto/timer-actor-character.schema";
+import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
+import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
 
 const NpcSchema = z.object({
   id: z.number(),

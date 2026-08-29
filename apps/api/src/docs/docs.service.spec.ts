@@ -3,7 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from "@nestjs/common";
-import { DocsService } from "./docs.service";
+import { DocsService } from "./docs.service.js";
 
 const baseContent = {
   root: {

@@ -16,12 +16,12 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { PinnedEventResponseDto } from "./dto/pinned-event-response.dto";
-import { PinnedEventsService } from "./services/pinned-events.service";
+import { Permission } from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { PinnedEventResponseDto } from "./dto/pinned-event-response.dto.js";
+import { PinnedEventsService } from "./services/pinned-events.service.js";
 
 @ApiTags("events")
 @ApiBearerAuth()

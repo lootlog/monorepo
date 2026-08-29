@@ -1,8 +1,8 @@
 import { of, from, throwError } from "rxjs";
 import { HttpService } from "@nestjs/axios";
-import { GuildsService } from "./guilds.service";
-import type { UserGuildData } from "./types/guild.types";
-import { getUserGuildsCacheKey, CACHE_TTL } from "./utils/cache-keys.util";
+import { GuildsService } from "./guilds.service.js";
+import type { UserGuildData } from "./types/guild.types.js";
+import { getUserGuildsCacheKey, CACHE_TTL } from "./utils/cache-keys.util.js";
 import { Permission } from "@lootlog/types";
 
 function createGuilds(): UserGuildData[] {

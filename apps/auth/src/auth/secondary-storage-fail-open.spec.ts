@@ -2,7 +2,7 @@ import type { SecondaryStorage } from "better-auth";
 import {
   createFailOpenSecondaryStorage,
   type SecondaryStorageErrorHandler,
-} from "./secondary-storage-fail-open";
+} from "./secondary-storage-fail-open.js";
 
 type SecondaryStorageGetAndDelete = NonNullable<
   SecondaryStorage["getAndDelete"]

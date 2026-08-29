@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { MapTemplateMapsResponseSchema } from "src/shared/dto/map-template-response.dto";
-import type { CreateMapTemplateDto } from "./dto/create-map-template.dto";
+import type { Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { MapTemplateMapsResponseSchema } from "#src/shared/dto/map-template-response.dto";
+import type { CreateMapTemplateDto } from "./dto/create-map-template.dto.js";
 
 @Injectable()
 export class MapTemplatesService {

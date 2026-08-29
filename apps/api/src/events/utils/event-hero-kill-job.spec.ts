@@ -3,7 +3,7 @@ import {
   buildEventHeroKillHeroDedupKey,
   buildEventHeroKillJobId,
   buildEventHeroKillRecentDedupKey,
-} from "./event-hero-kill-job";
+} from "./event-hero-kill-job.js";
 
 describe("event-hero-kill-job", () => {
   it("builds a timer update job id with sanitized parts", () => {

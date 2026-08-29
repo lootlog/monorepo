@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Post } from "@nestjs/common";
-import { DiscordSyncService } from "src/bot/discord-sync.service";
+import { DiscordSyncService } from "#src/bot/discord-sync.service";
 
 @Controller("internal/guilds/:guildId")
 export class BotInternalController {

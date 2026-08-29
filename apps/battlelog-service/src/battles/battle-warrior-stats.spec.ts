@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildBattleWarriorStats,
   inflateBattleWarrior,
-} from "./battle-warrior-stats";
-import type { BattleWarrior } from "src/shared/modules/drizzle/schema";
+} from "./battle-warrior-stats.js";
+import type { BattleWarrior } from "#src/shared/modules/drizzle/schema";
 
 const createBattleWarriorRow = (
   overrides: Partial<Omit<BattleWarrior, "stats">> & {

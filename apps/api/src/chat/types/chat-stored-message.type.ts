@@ -1,4 +1,4 @@
-import type { SendMessageDto } from "src/chat/dto/send-message.dto";
+import type { SendMessageDto } from "#src/chat/dto/send-message.dto";
 
 export type ChatStoredMessage = SendMessageDto & {
   id: string;

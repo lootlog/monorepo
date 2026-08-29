@@ -3,11 +3,11 @@ import type { APIGuild } from "discord-api-types/v10";
 import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DiscordService } from "src/discord/discord.service";
-import { PrismaService } from "src/db/prisma.service";
-import type { Guild } from "src/generated/prisma/client";
-import { MEMBER_LAST_DISCORD_STATUS } from "src/members/constants/member-discord-status.constant";
-import { MembersService } from "src/members/members.service";
+import { DiscordService } from "#src/discord/discord.service";
+import { PrismaService } from "#src/db/prisma.service";
+import type { Guild } from "#src/generated/prisma/client";
+import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
+import { MembersService } from "#src/members/members.service";
 
 export interface GuildRefreshCandidate {
   guild: Guild;

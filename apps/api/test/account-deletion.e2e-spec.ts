@@ -6,10 +6,10 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import request from "supertest";
 import { vi } from "vitest";
-import { NpcType } from "../src/generated/prisma/client";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/db/prisma.service";
-import { createMockAmqpConnection } from "./test-module-helpers";
+import { NpcType } from "../src/generated/prisma/client.js";
+import { AppModule } from "../src/app.module.js";
+import { PrismaService } from "../src/db/prisma.service.js";
+import { createMockAmqpConnection } from "./test-module-helpers.js";
 
 describe("Account Deletion E2E", () => {
   let app: INestApplication;

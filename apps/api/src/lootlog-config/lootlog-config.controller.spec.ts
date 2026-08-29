@@ -1,9 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { LootlogConfigController } from "./lootlog-config.controller";
-import { LootlogConfigService } from "./lootlog-config.service";
+import { mockFn } from "#src/test/mock-fn";
+import { LootlogConfigController } from "./lootlog-config.controller.js";
+import { LootlogConfigService } from "./lootlog-config.service.js";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 describe("LootlogConfigController", () => {
   let controller: LootlogConfigController;

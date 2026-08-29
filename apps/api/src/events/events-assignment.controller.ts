@@ -20,24 +20,24 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "src/generated/prisma/client";
-import { AssignMemberDto } from "./dto/assign-member.dto";
-import { AssignMapLocationDto } from "./dto/assign-map-location.dto";
-import { CreateHeroDto } from "./dto/create-hero.dto";
-import { CreateLocationDto } from "./dto/create-location.dto";
-import { CreateMapDto } from "./dto/create-map.dto";
-import { EventMapResponseDto } from "./dto/event-response.dto";
-import { ReorderLocationsDto } from "./dto/reorder-locations.dto";
-import { UpdateHeroDto } from "./dto/update-hero.dto";
-import { UpdateLocationDto } from "./dto/update-location.dto";
-import { EventsService } from "./events.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { GuildMember } from "src/shared/decorators/member.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { AssignMemberDto } from "./dto/assign-member.dto.js";
+import { AssignMapLocationDto } from "./dto/assign-map-location.dto.js";
+import { CreateHeroDto } from "./dto/create-hero.dto.js";
+import { CreateLocationDto } from "./dto/create-location.dto.js";
+import { CreateMapDto } from "./dto/create-map.dto.js";
+import { EventMapResponseDto } from "./dto/event-response.dto.js";
+import { ReorderLocationsDto } from "./dto/reorder-locations.dto.js";
+import { UpdateHeroDto } from "./dto/update-hero.dto.js";
+import { UpdateLocationDto } from "./dto/update-location.dto.js";
+import { EventsService } from "./events.service.js";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { GuildMember } from "#src/shared/decorators/member.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
 @ApiBearerAuth()

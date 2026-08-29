@@ -7,9 +7,9 @@ import {
   type DiscordNotificationSendCommand,
 } from "@lootlog/types";
 import { ChannelType, Client, DiscordAPIError } from "discord.js";
-import { RoutingKey } from "src/bot/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./constants/non-retryable-discord-error-codes.constant";
+import { RoutingKey } from "#src/bot/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./constants/non-retryable-discord-error-codes.constant.js";
 
 @Injectable()
 export class DiscordDeliveryService {

@@ -1,4 +1,4 @@
-import { RedisService } from "../../../../packages/nest-shared/src/redis/redis.service";
+import { RedisService } from "../../../../packages/nest-shared/src/redis/redis.service.js";
 
 type RedisCommandMock = ReturnType<
   typeof vi.fn<(...args: unknown[]) => unknown>

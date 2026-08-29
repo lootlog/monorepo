@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service";
+import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service.js";
 
 describe("BattleAnalyticsPagingService", () => {
   const service = new BattleAnalyticsPagingService();

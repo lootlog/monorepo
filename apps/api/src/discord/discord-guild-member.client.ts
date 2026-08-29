@@ -18,19 +18,19 @@ import {
   getLegacyGuildMemberCacheKeys,
   isApiGuildMember,
   type DiscordGuildMemberCacheKeys,
-} from "./discord-cache.util";
-import { serviceConfig } from "src/config/service.config";
-import { RedlockService } from "src/lib/redlock/redlock.service";
+} from "./discord-cache.util.js";
+import { serviceConfig } from "#src/config/service.config";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {
   isDiscordNotFoundError,
   recordInvalidDiscordRequest,
   toDiscordRequestException,
   throwIfDiscordRateLimited,
-} from "./discord-error.util";
-import { DiscordRestClientFactory } from "./discord-rest-client.factory";
-import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service";
+} from "./discord-error.util.js";
+import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
+import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 
 @Injectable()
 export class DiscordGuildMemberClient implements OnModuleInit {

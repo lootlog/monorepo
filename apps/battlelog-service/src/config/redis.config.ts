@@ -1,5 +1,5 @@
 import type { RedisModuleOptions } from "@lootlog/nest-shared/redis";
-import { env } from "src/config/env";
+import { env } from "#src/config/env";
 
 export const redisConfig: RedisModuleOptions = {
   host: env.REDIS_HOST,

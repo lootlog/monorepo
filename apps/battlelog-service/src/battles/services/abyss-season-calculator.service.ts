@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import type { AbyssSeasonDto } from "src/battles/dto/battle-statistics-response.dto";
-import { BattleAnalyticsDomainService } from "src/battles/services/battle-analytics-domain.service";
-import type { InflatedBattleWithWarriors } from "src/battles/services/battle-analytics.types";
+import type { AbyssSeasonDto } from "#src/battles/dto/battle-statistics-response.dto";
+import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
+import type { InflatedBattleWithWarriors } from "#src/battles/services/battle-analytics.types";
 
 const ABYSS_SEASON_GAP_MS = 14 * 24 * 60 * 60 * 1000;
 

@@ -1,4 +1,4 @@
-import { Controller, Param, Post, UseGuards } from "@nestjs/common";
+import { Controller, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -7,12 +7,12 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "#src/generated/prisma/client";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { RefreshStatsCardResponseDto } from "./dto/refresh-stats-card-response.dto";
-import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { RefreshStatsCardResponseDto } from "./dto/refresh-stats-card-response.dto.js";
+import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 
 @ApiTags("guild-stats-card")
 @ApiBearerAuth()
@@ -24,6 +24,7 @@ export class AuthenticatedGuildStatsCardController {
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":guildId/stats-card/refresh")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Refresh public guild stats card",
     description:

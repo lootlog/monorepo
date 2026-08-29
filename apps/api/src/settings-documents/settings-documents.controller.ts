@@ -7,8 +7,8 @@ import {
   GetSettingsDocumentsQueryDto,
   PatchSettingsDocumentsDto,
   SettingsDocumentsResponseDto,
-} from "./dto/settings-documents.dto";
-import { SettingsDocumentsService } from "./settings-documents.service";
+} from "./dto/settings-documents.dto.js";
+import { SettingsDocumentsService } from "./settings-documents.service.js";
 
 @ApiTags("preferences")
 @ApiBearerAuth()

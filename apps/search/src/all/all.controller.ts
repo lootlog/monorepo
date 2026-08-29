@@ -1,9 +1,9 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AllService } from "./all.service";
-import { SearchAllResponseDto } from "./dto/search-all-response.schema";
-import { SearchAllDto } from "./dto/search-all.dto";
+import { AllService } from "./all.service.js";
+import { SearchAllResponseDto } from "./dto/search-all-response.schema.js";
+import { SearchAllDto } from "./dto/search-all.dto.js";
 
 @ApiTags("All")
 @Controller("all")

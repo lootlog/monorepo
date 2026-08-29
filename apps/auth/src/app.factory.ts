@@ -4,12 +4,12 @@ import {
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
-import { auth } from "src/auth/better-auth";
+import { auth } from "#src/auth/better-auth";
 import {
   buildBetterAuthRequest,
   sendBetterAuthResponse,
-} from "./app.factory.helpers";
-import { AppModule } from "./app.module";
+} from "./app.factory.helpers.js";
+import { AppModule } from "./app.module.js";
 
 export async function createApp(): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(

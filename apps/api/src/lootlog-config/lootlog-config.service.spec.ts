@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { LootlogConfigService } from "./lootlog-config.service";
-import { PrismaService } from "src/db/prisma.service";
+import { mockFn } from "#src/test/mock-fn";
+import { LootlogConfigService } from "./lootlog-config.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 
 describe("LootlogConfigService", () => {
   let service: LootlogConfigService;

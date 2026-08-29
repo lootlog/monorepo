@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { LootlogConfigNpcResponseDto } from "./lootlog-config-npc-response.dto";
+import { LootlogConfigNpcResponseDto } from "./lootlog-config-npc-response.dto.js";
 
 const LootlogConfigResponseSchema = z.object({
   id: z.string(),

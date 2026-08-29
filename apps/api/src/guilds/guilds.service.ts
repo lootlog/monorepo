@@ -15,39 +15,39 @@ import {
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { ChannelsService } from "src/channels/channels.service";
-import { discordBotConfig } from "src/config/discord-bot.config";
+import { ChannelsService } from "#src/channels/channels.service";
+import { discordBotConfig } from "#src/config/discord-bot.config";
 import {
   type Guild,
   ItemRarity,
   NpcType,
   Permission,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
-import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";
-import type { UpdateGuildDto } from "src/guilds/dto/update-guild.dto";
-import type { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
-import type { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
-import { ErrorKey } from "src/guilds/enum/error-key.enum";
-import { MembersService } from "src/members/members.service";
-import { RolesService } from "src/roles/roles.service";
-import { generateSlug } from "src/shared/utils/generate-slug";
-import { hasOwnField } from "src/shared/utils/has-own-field";
-import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
-import { DiscordService } from "src/discord/discord.service";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
+import type { DeleteGuildDto } from "#src/guilds/dto/delete-guild.dto";
+import type { UpdateGuildDto } from "#src/guilds/dto/update-guild.dto";
+import type { UpdateGuildConfigDto } from "#src/guilds/dto/update-guild-config.dto";
+import type { UserGuildPermissionsDto } from "#src/guilds/dto/user-guild-permissions.dto";
+import { ErrorKey } from "#src/guilds/enum/error-key.enum";
+import { MembersService } from "#src/members/members.service";
+import { RolesService } from "#src/roles/roles.service";
+import { generateSlug } from "#src/shared/utils/generate-slug";
+import { hasOwnField } from "#src/shared/utils/has-own-field";
+import { RESTRICTED_VANITY_URLS } from "#src/guilds/constants/restricted-vanity-urls";
+import { DiscordService } from "#src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   getPermissionsCachePattern,
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,
-} from "src/shared/constants/cache.constant";
-import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
+} from "#src/shared/constants/cache.constant";
+import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import {
   UserGuildAccessResolver,
   type GuildRefreshCandidate,
-} from "./user-guild-access-resolver.service";
+} from "./user-guild-access-resolver.service.js";
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,

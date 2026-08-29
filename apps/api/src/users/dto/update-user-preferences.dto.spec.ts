@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UpdateUserPreferencesDto } from "./update-user-preferences.dto";
+import { UpdateUserPreferencesDto } from "./update-user-preferences.dto.js";
 
 describe("UpdateUserPreferencesDto", () => {
   it("accepts an empty hidden guild list", () => {

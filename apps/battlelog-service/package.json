@@ -5,6 +5,13 @@
   "description": "",
   "license": "MIT",
   "author": "",
+  "type": "module",
+  "imports": {
+    "#src/*": {
+      "types": "./src/*.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
@@ -35,7 +42,7 @@
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
-    "@nestjs/bullmq": "^11.0.5",
+    "@nestjs/bullmq": "catalog:",
     "@nestjs/common": "catalog:",
     "@nestjs/core": "catalog:",
     "@nestjs/platform-express": "catalog:",
@@ -57,8 +64,6 @@
   "devDependencies": {
     "@nestjs/cli": "catalog:",
     "@nestjs/testing": "catalog:",
-    "@swc/cli": "catalog:",
-    "@swc/core": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
@@ -66,7 +71,6 @@
     "drizzle-kit": "1.0.0-beta.20",
     "supertest": "^7.2.2",
     "typescript": "catalog:",
-    "unplugin-swc": "catalog:",
     "vitest": "catalog:"
   }
 }

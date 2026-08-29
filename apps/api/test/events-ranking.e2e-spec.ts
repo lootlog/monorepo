@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { PrismaService } from "../src/db/prisma.service.js";
+import { Permission } from "../src/generated/prisma/client.js";
 import {
   closeE2EApp,
   createE2EApp,
@@ -16,7 +16,7 @@ import {
   TEST_AUTH,
   TEST_WORLD,
   withAuth,
-} from "./events-timers-e2e-helpers";
+} from "./events-timers-e2e-helpers.js";
 
 describe("Events Ranking E2E", () => {
   let app: INestApplication;

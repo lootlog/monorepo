@@ -11,23 +11,23 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "src/generated/prisma/client";
-import { GuildsService } from "src/guilds/guilds.service";
-import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
-import { PartyReadyRoomApplicationDto } from "src/messaging/ready-room/dto/party-ready-room-application.dto";
-import { PartyReadyRoomResolveInvitationTargetsDto } from "src/messaging/ready-room/dto/party-ready-room-invitation.dto";
-import { PartyReadyRoomObservationDto } from "src/messaging/ready-room/dto/party-ready-room-observation.dto";
+import { Permission } from "#src/generated/prisma/client";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { CreatePartyGatheringDto } from "#src/messaging/dto/create-party-gathering.dto";
+import { PartyReadyRoomApplicationDto } from "#src/messaging/ready-room/dto/party-ready-room-application.dto";
+import { PartyReadyRoomResolveInvitationTargetsDto } from "#src/messaging/ready-room/dto/party-ready-room-invitation.dto";
+import { PartyReadyRoomObservationDto } from "#src/messaging/ready-room/dto/party-ready-room-observation.dto";
 import {
   PartyReadyRoomExpectedRevisionDto,
   PartyReadyRoomParticipantActionDto,
   PartyReadyRoomParticipantIdentityDto,
-} from "src/messaging/ready-room/dto/party-ready-room-participant-action.dto";
+} from "#src/messaging/ready-room/dto/party-ready-room-participant-action.dto";
 import {
   PartyReadyRoomClientUpdateDto,
   PartyReadyRoomInvitationTargetsDto,
   PartyReadyRoomProjectionDto,
-} from "src/messaging/ready-room/dto/party-ready-room-projection.dto";
-import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
+} from "#src/messaging/ready-room/dto/party-ready-room-projection.dto";
+import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { AuthGuard } from "@lootlog/nest-shared";
 
 const READY_ROOM_PERMISSIONS = [

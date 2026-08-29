@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { CharacterSchema } from "src/messaging/dto/shared-character.dto";
+import { CharacterSchema } from "#src/messaging/dto/shared-character.dto";
 
 const ParticipantSchema = z.object({
   participantId: z.string(),

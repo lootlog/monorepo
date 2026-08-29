@@ -1,22 +1,22 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
-import { NpcType, Permission, Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
-import { Error as NotificationError } from "src/notifications/enum/error.enum";
-import { ChannelsService } from "src/channels/channels.service";
-import { WatchedItemResponseDto } from "src/notifications/dto/notification-response.dto";
-import { NotificationContentService } from "./notification-content.service";
-import { NotificationJobService } from "./notification-job.service";
-import { NotificationMatchingService } from "./notification-matching.service";
-import { NotificationRuleService } from "./notification-rule.service";
-import { NotificationTargetService } from "./notification-target.service";
-import { NotificationsEventsHandler } from "./notifications-events.handler";
-import { WatchedItemService } from "./watched-item.service";
+import { NpcType, Permission, Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
+import { Error as NotificationError } from "#src/notifications/enum/error.enum";
+import { ChannelsService } from "#src/channels/channels.service";
+import { WatchedItemResponseDto } from "#src/notifications/dto/notification-response.dto";
+import { NotificationContentService } from "./notification-content.service.js";
+import { NotificationJobService } from "./notification-job.service.js";
+import { NotificationMatchingService } from "./notification-matching.service.js";
+import { NotificationRuleService } from "./notification-rule.service.js";
+import { NotificationTargetService } from "./notification-target.service.js";
+import { NotificationsEventsHandler } from "./notifications-events.handler.js";
+import { WatchedItemService } from "./watched-item.service.js";
 
 describe("Notification Services", () => {
   let targetService: NotificationTargetService;

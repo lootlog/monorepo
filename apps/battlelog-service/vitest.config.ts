@@ -1,17 +1,9 @@
-import swc from "unplugin-swc";
 import { defineConfig } from "vitest/config";
-import {
-  createNestVitestConfig,
-  nestSwcPluginOptions,
-} from "../../tools/vitest/create-nest-vitest-config";
-
-const swcPluginOptions = nestSwcPluginOptions satisfies Parameters<
-  typeof swc.vite
->[0];
+import { createNestVitestConfig } from "../../tools/vitest/create-nest-vitest-config.mjs";
 
 export default defineConfig({
   ...createNestVitestConfig({
-    rootDir: __dirname,
+    rootDir: import.meta.dirname,
     include: ["src/**/*.spec.ts"],
     alias: {
       "@lootlog/battle-processor":
@@ -25,5 +17,4 @@ export default defineConfig({
     },
     setupFiles: ["./vitest.setup.ts"],
   }),
-  plugins: [swc.vite(swcPluginOptions)],
 });

@@ -7,7 +7,7 @@ import {
   Permission,
   type Prisma,
   type Role,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 
 export function toLootVisibilityRoles(
   roles: readonly Role[],

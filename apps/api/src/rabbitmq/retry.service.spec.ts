@@ -1,9 +1,9 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import type { Logger } from "winston";
-import { RETRY_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RetryService } from "./retry.service";
+import { RETRY_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RetryService } from "./retry.service.js";
 
 describe("RetryService", () => {
   let service: RetryService;

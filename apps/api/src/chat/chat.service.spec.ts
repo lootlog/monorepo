@@ -1,9 +1,9 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "src/generated/prisma/client";
-import { MessageType } from "src/chat/dto/send-message.dto";
-import { ChatService } from "./chat.service";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { MessageType } from "#src/chat/dto/send-message.dto";
+import { ChatService } from "./chat.service.js";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 function createRole(
   permissions: Permission[],

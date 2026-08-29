@@ -1,11 +1,11 @@
 import { MiddlewareConsumer, Module } from "@nestjs/common";
 import { APP_PIPE } from "@nestjs/core";
 import { ZodValidationPipe } from "nestjs-zod";
-import { HealthzModule } from "./healthz/healthz.module";
+import { HealthzModule } from "./healthz/healthz.module.js";
 import { WinstonModule } from "nest-winston";
 import { LoggerMiddleware } from "@lootlog/nest-shared";
-import { GatewayModule } from "./gateway/gateway.module";
-import { winstonConfig } from "src/config/winston.config";
+import { GatewayModule } from "./gateway/gateway.module.js";
+import { winstonConfig } from "#src/config/winston.config";
 
 @Module({
   imports: [WinstonModule.forRoot(winstonConfig), HealthzModule, GatewayModule],

@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "#src/generated/prisma/client";
 import { z } from "zod";
 
 export const PermissionResponseSchema = z.nativeEnum(Permission);

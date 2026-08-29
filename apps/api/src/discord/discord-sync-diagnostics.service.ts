@@ -5,7 +5,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,
-} from "./discord.types";
+} from "./discord.types.js";
 
 export type DiscordMemberRefreshMetricOutcome =
   | "queued"

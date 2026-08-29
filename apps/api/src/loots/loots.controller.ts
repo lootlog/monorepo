@@ -19,35 +19,39 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission, type Role } from "src/generated/prisma/client";
-import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
-import { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import {
+  type Guild,
+  Permission,
+  type Role,
+} from "#src/generated/prisma/client";
+import { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
+import { CreateLootDto } from "#src/loots/dto/create-loot.dto";
+import { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
 import {
   CreateLootResponseDto,
   LootStatsResponseDto,
-} from "src/loots/dto/loot-response.dto";
-import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
-import { ResolveLootItemParamsDto } from "src/loots/dto/resolve-loot-item-params.dto";
-import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
-import { LootAllocationService } from "src/loots/loot-allocation.service";
-import { LootSubmissionAcceptanceService } from "src/loots/loot-submission-acceptance.service";
-import { LootsService } from "src/loots/loots.service";
-import { LootStatsService } from "src/loots/services/loot-stats.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
-import { CountResponseDto } from "src/shared/dto/common-response.dto";
-import { LootCommentResponseDto } from "src/shared/dto/loot-comment-response.dto";
+} from "#src/loots/dto/loot-response.dto";
+import { LootStatsQueryDto } from "#src/loots/dto/loot-stats.dto";
+import { ResolveLootItemParamsDto } from "#src/loots/dto/resolve-loot-item-params.dto";
+import { UpdateLootDto } from "#src/loots/dto/update-loot.dto";
+import { LootAllocationService } from "#src/loots/loot-allocation.service";
+import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
+import { LootsService } from "#src/loots/loots.service";
+import { LootStatsService } from "#src/loots/services/loot-stats.service";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
+import { CountResponseDto } from "#src/shared/dto/common-response.dto";
+import { LootCommentResponseDto } from "#src/shared/dto/loot-comment-response.dto";
 import {
   LootShareResponseDto,
   NullableLootItemResponseDto,
   LootResponseDto,
   NullableLootResponseDto,
-} from "src/shared/dto/loot-response.dto";
+} from "#src/shared/dto/loot-response.dto";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("loots")
 @ApiBearerAuth()

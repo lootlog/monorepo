@@ -6,12 +6,12 @@ import {
   type Member,
   MemberType,
   Permission,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { mockFn } from "src/test/mock-fn";
-import { MembersController } from "./members.controller";
-import { MembersService } from "./members.service";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { mockFn } from "#src/test/mock-fn";
+import { MembersController } from "./members.controller.js";
+import { MembersService } from "./members.service.js";
 
 describe("MembersController", () => {
   let controller: MembersController;

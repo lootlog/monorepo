@@ -1,8 +1,8 @@
 import { Controller, Get } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { GameMapResponseDto } from "src/shared/dto/game-map-response.dto";
-import { MapsService } from "./maps.service";
+import { GameMapResponseDto } from "#src/shared/dto/game-map-response.dto";
+import { MapsService } from "./maps.service.js";
 
 @ApiTags("maps")
 @Controller("maps")

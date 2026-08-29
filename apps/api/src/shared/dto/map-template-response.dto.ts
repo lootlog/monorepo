@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { isoDatetimeCodec } from "./zod-response-codecs";
+import { isoDatetimeCodec } from "./zod-response-codecs.js";
 
 const MapTemplateMapItemResponseSchema = z.object({
   id: z.number().int(),

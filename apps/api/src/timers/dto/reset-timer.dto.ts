@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { TimerActorCharacterSchema } from "src/timers/dto/timer-actor-character.schema";
+import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
 
 const ResetTimerSchema = z.object({
   world: z.string().min(1),

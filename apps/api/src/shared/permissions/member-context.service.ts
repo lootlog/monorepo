@@ -7,19 +7,19 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { MembersService } from "src/members/members.service";
-import { ErrorKey } from "src/guilds/enum/error-key.enum";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { MembersService } from "#src/members/members.service";
+import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getPermissionsCacheKey,
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
-} from "src/shared/constants/cache.constant";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
-import { PermissionResolver } from "./permission-resolver";
+} from "#src/shared/constants/cache.constant";
+import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
+import { PermissionResolver } from "./permission-resolver.js";
 
 type GuildLookupResult = {
   guild: Guild;

@@ -17,18 +17,18 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { ChatService } from "src/chat/chat.service";
+import { ChatService } from "#src/chat/chat.service";
 import {
   ChatMessageActionResponseDto,
   ChatMessageResponseDto,
-} from "src/chat/dto/chat-message-response.dto";
-import { SendMessageDto } from "src/chat/dto/send-message.dto";
-import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
+} from "#src/chat/dto/chat-message-response.dto";
+import { SendMessageDto } from "#src/chat/dto/send-message.dto";
+import { UpdateMessageDto } from "#src/chat/dto/update-message.dto";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("chat")
 @ApiBearerAuth()

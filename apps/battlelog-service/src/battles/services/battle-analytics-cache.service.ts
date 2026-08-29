@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
-import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
+import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
+import type { QueryBattleStatisticsDto } from "#src/battles/dto/query-battle-statistics.dto";
 
 @Injectable()
 export class BattleAnalyticsCacheService {

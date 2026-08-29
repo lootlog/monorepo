@@ -1,9 +1,9 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { Profession, TimerHistoryAction } from "src/generated/prisma/client";
-import { MemberResponseDto } from "src/shared/dto/member-response.dto";
-import { TimerNpcResponseDto } from "src/shared/dto/timer-npc-response.dto";
-import { isoDatetimeCodec } from "src/shared/dto/zod-response-codecs";
+import { Profession, TimerHistoryAction } from "#src/generated/prisma/client";
+import { MemberResponseDto } from "#src/shared/dto/member-response.dto";
+import { TimerNpcResponseDto } from "#src/shared/dto/timer-npc-response.dto";
+import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
 
 const TimerHistoryActorCharacterSchema = z
   .object({

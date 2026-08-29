@@ -2,14 +2,14 @@ import type { Job } from "bullmq";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
-import { mockFn } from "src/test/mock-fn";
-import { MemberRefreshProcessor } from "./member-refresh.processor";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
+import { mockFn } from "#src/test/mock-fn";
+import { MemberRefreshProcessor } from "./member-refresh.processor.js";
 import {
   MemberRefreshSchedulerService,
   type MemberRefreshJobData,
-} from "./member-refresh-scheduler.service";
-import { MembersService } from "./members.service";
+} from "./member-refresh-scheduler.service.js";
+import { MembersService } from "./members.service.js";
 
 describe("MemberRefreshProcessor", () => {
   let processor: MemberRefreshProcessor;

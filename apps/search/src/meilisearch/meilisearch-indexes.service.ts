@@ -6,11 +6,11 @@ import {
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { Meilisearch } from "meilisearch";
-import { ITEMS_INDEX } from "src/items/constants/meilisearch";
-import { NPCS_INDEX } from "src/npcs/constants/meilisearch";
-import { PLAYERS_INDEX } from "src/players/constants/meilisearch";
-import { MEILISEARCH_CLIENT } from "./meilisearch.constants";
-import { getMeilisearchErrorCode } from "./meilisearch.utils";
+import { ITEMS_INDEX } from "#src/items/constants/meilisearch";
+import { NPCS_INDEX } from "#src/npcs/constants/meilisearch";
+import { PLAYERS_INDEX } from "#src/players/constants/meilisearch";
+import { MEILISEARCH_CLIENT } from "./meilisearch.constants.js";
+import { getMeilisearchErrorCode } from "./meilisearch.utils.js";
 
 const itemFilterableAttributes = [
   "world",

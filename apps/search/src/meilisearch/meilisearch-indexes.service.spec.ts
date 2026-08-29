@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { ITEMS_INDEX } from "src/items/constants/meilisearch";
-import { NPCS_INDEX } from "src/npcs/constants/meilisearch";
-import { PLAYERS_INDEX } from "src/players/constants/meilisearch";
-import { MeilisearchIndexesService } from "./meilisearch-indexes.service";
-import { MEILISEARCH_CLIENT } from "./meilisearch.constants";
+import { ITEMS_INDEX } from "#src/items/constants/meilisearch";
+import { NPCS_INDEX } from "#src/npcs/constants/meilisearch";
+import { PLAYERS_INDEX } from "#src/players/constants/meilisearch";
+import { MeilisearchIndexesService } from "./meilisearch-indexes.service.js";
+import { MEILISEARCH_CLIENT } from "./meilisearch.constants.js";
 
 describe("MeilisearchIndexesService", () => {
   let service: MeilisearchIndexesService;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto, type ZodDto } from "nestjs-zod";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { ActivitySource, ActivityType } from "#src/generated/prisma/client";
 
 const GAME_SOURCE_REQUIRED_FIELDS = [
   "accountId",

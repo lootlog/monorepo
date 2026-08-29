@@ -3,9 +3,9 @@ import { UserId } from "@lootlog/nest-shared/decorators";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
-import { SoundSettingsService } from "src/sound-settings/sound-settings.service";
-import { SoundSettingsResponseDto } from "./dto/sound-settings-response.dto";
+import { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto.js";
+import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
+import { SoundSettingsResponseDto } from "./dto/sound-settings-response.dto.js";
 
 @ApiTags("sound-settings")
 @ApiBearerAuth()

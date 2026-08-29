@@ -1,15 +1,15 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { MessagingService } from "./messaging.service";
-import { GuildsService } from "src/guilds/guilds.service";
+import { MessagingService } from "./messaging.service.js";
+import { GuildsService } from "#src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { NpcType } from "src/generated/prisma/client";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { NpcType } from "#src/generated/prisma/client";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
+import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 
 vi.mock("uuid", () => ({
   v4: () => "mock-uuid",

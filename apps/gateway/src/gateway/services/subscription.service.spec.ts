@@ -1,16 +1,16 @@
 import { Logger } from "@nestjs/common";
 import { Permission } from "@lootlog/types";
-import { SubscriptionService } from "./subscription.service";
-import { Platform } from "../enums/platform.enum";
-import { ResponseStatus } from "../enums/response-status.enum";
-import { ErrorMessages } from "../constants/error-messages.constant";
-import { ActivityType } from "../enums/activity-type.enum";
-import { UserPresenceStatus } from "../enums/user-presence-status.enum";
-import { buildRoomName } from "../utils/room-utils";
-import type { MargonemAccountProofDto } from "../dto/join-gateway.dto";
-import type { SocketUserPlayer } from "../types/socket-user.type";
-import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
-import { env } from "src/config/env";
+import { SubscriptionService } from "./subscription.service.js";
+import { Platform } from "../enums/platform.enum.js";
+import { ResponseStatus } from "../enums/response-status.enum.js";
+import { ErrorMessages } from "../constants/error-messages.constant.js";
+import { ActivityType } from "../enums/activity-type.enum.js";
+import { UserPresenceStatus } from "../enums/user-presence-status.enum.js";
+import { buildRoomName } from "../utils/room-utils.js";
+import type { MargonemAccountProofDto } from "../dto/join-gateway.dto.js";
+import type { SocketUserPlayer } from "../types/socket-user.type.js";
+import type { UserGuildData, GuildRole } from "#src/guilds/types/guild.types";
+import { env } from "#src/config/env";
 
 function createRole(
   permissions: Permission[],

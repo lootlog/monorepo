@@ -2,7 +2,7 @@ import { createZodDto, type ZodDto } from "nestjs-zod";
 import {
   parseCommaSeparatedQueryList,
   parseSearchTermsQuery,
-} from "src/shared/query-list.utils";
+} from "#src/shared/query-list.utils";
 import { z } from "zod";
 
 export const getNpcsQuerySchema = z.object({

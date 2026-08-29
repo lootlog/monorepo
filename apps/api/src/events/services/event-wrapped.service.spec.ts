@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import type { Guild } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+import { mockFn } from "#src/test/mock-fn";
+import type { Guild } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { LootsService } from "src/loots/loots.service";
-import { EventWrappedService } from "./event-wrapped.service";
+import { LootsService } from "#src/loots/loots.service";
+import { EventWrappedService } from "./event-wrapped.service.js";
 
 describe("EventWrappedService", () => {
   let service: EventWrappedService;

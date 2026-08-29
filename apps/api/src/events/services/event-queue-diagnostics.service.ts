@@ -1,9 +1,9 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { PrismaService } from "src/db/prisma.service";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
+import { PrismaService } from "#src/db/prisma.service";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 
 @Injectable()
 export class EventQueueDiagnosticsService {

@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { ItemRarity, NpcType } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import type { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
-import type { UpdateLootlogConfigDto } from "src/lootlog-config/dto/update-lootlog-config.dto";
+import { ItemRarity, NpcType } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import type { UpdateLootlogConfigNpcDto } from "#src/lootlog-config/dto/update-lootlog-config-npc.dto";
+import type { UpdateLootlogConfigDto } from "#src/lootlog-config/dto/update-lootlog-config.dto";
 
 @Injectable()
 export class LootlogConfigService {

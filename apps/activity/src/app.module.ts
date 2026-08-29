@@ -2,10 +2,10 @@ import { MiddlewareConsumer, Module } from "@nestjs/common";
 import { APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
 import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { WinstonModule } from "nest-winston";
-import { HealthzModule } from "src/healthz/healthz.module";
-import { ActivitiesModule } from "./activities/activities.module";
+import { HealthzModule } from "#src/healthz/healthz.module";
+import { ActivitiesModule } from "./activities/activities.module.js";
 import { LoggerMiddleware } from "@lootlog/nest-shared";
-import { winstonConfig } from "src/config/winston.config";
+import { winstonConfig } from "#src/config/winston.config";
 
 @Module({
   imports: [

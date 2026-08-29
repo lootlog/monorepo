@@ -16,18 +16,18 @@ import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
 } from "@lootlog/types";
-import { ChatService } from "src/chat/chat.service";
+import { ChatService } from "#src/chat/chat.service";
 import {
   createReadyRoomClientUpdate,
   createReadyRoomProjection,
   getReadyRoomActiveRecipientDiscordIds,
-} from "src/messaging/ready-room/ready-room-projection";
-import { ReadyRoomPublisher } from "src/messaging/ready-room/ready-room-publisher";
+} from "#src/messaging/ready-room/ready-room-projection";
+import { ReadyRoomPublisher } from "#src/messaging/ready-room/ready-room-publisher";
 import {
   READY_ROOM_REPOSITORY,
   type ReadyRoomRepository,
-} from "src/messaging/ready-room/ready-room.repository";
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+} from "#src/messaging/ready-room/ready-room.repository";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 type Clock = () => number;
 type IdGenerator = () => string;

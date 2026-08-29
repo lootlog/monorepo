@@ -4,14 +4,14 @@ import type { Job } from "bullmq";
 import { setTimeout as sleep } from "node:timers/promises";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
-import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
+import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import {
   MemberRefreshSchedulerService,
   type MemberRefreshJobData,
-} from "./member-refresh-scheduler.service";
-import { MembersService } from "./members.service";
-import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status";
+} from "./member-refresh-scheduler.service.js";
+import { MembersService } from "./members.service.js";
+import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js";
 
 @Injectable()
 @Processor(MEMBER_REFRESH_QUEUE, {

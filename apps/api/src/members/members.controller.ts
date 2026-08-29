@@ -2,6 +2,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  HttpCode,
   Param,
   ParseIntPipe,
   Post,
@@ -19,25 +20,25 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { MembersService } from "./members.service";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { MembersService } from "./members.service.js";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
 import {
   MemberRefreshJobResponseDto,
   NullableMemberRefreshJobResponseDto,
-} from "src/shared/dto/member-refresh-job-response.dto";
+} from "#src/shared/dto/member-refresh-job-response.dto";
 import {
   MemberResponseDto,
   NullableMemberResponseDto,
-} from "src/shared/dto/member-response.dto";
-import { MemberSummaryResponseDto } from "src/shared/dto/member-summary-response.dto";
-import { MemberLootlogConfigSummaryResponseDto } from "src/shared/dto/member-lootlog-config-summary-response.dto";
-import { MemberReferenceResponseDto } from "src/shared/dto/member-reference-response.dto";
-import { ErrorKey } from "./enum/error-key.enum";
+} from "#src/shared/dto/member-response.dto";
+import { MemberSummaryResponseDto } from "#src/shared/dto/member-summary-response.dto";
+import { MemberLootlogConfigSummaryResponseDto } from "#src/shared/dto/member-lootlog-config-summary-response.dto";
+import { MemberReferenceResponseDto } from "#src/shared/dto/member-reference-response.dto";
+import { ErrorKey } from "./enum/error-key.enum.js";
 
 @ApiTags("members")
 @ApiBearerAuth()
@@ -73,6 +74,7 @@ export class MembersController {
   }
 
   @Post("@me/refresh")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Refresh current member",
     description:
@@ -101,6 +103,7 @@ export class MembersController {
   @Permissions(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Post("/:discordId/refresh")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Refresh specific member",
     description:

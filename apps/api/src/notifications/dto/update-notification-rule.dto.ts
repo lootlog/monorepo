@@ -6,7 +6,7 @@ import {
 } from "@lootlog/types";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { Error } from "src/notifications/enum/error.enum";
+import { Error } from "#src/notifications/enum/error.enum";
 
 const UpdateNotificationRuleSchema = z
   .object({

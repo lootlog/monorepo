@@ -1,7 +1,7 @@
 import { Permission } from "@lootlog/types";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { AirTagService } from "./air-tag.service";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { AirTagService } from "./air-tag.service.js";
 
 const createGuild = (id: string, canView = true) => ({
   guild: { id, ownerId: "owner" },

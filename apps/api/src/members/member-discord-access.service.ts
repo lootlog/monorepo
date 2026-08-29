@@ -5,25 +5,25 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
-import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
-import type { Member } from "src/generated/prisma/client";
-import { serviceConfig } from "src/config/service.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
+import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
+import type { Member } from "#src/generated/prisma/client";
+import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/types";
 import {
   getMemberCacheSoftTtl,
   getRefreshPermissionsTtl,
-} from "./constants/member-cache.constant";
-import { MEMBER_REFRESH_PRIORITY } from "./constants/member-refresh-queue.constant";
-import { ErrorKey } from "./enum/error-key.enum";
-import { isTransientMemberSyncStatus } from "./member-discord-sync-status";
-import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
+} from "./constants/member-cache.constant.js";
+import { MEMBER_REFRESH_PRIORITY } from "./constants/member-refresh-queue.constant.js";
+import { ErrorKey } from "./enum/error-key.enum.js";
+import { isTransientMemberSyncStatus } from "./member-discord-sync-status.js";
+import { MemberDiscordRefreshService } from "./member-discord-refresh.service.js";
 import type {
   MemberRefreshAttempt,
   MemberWithRoles,
   StoredMemberWithRoles,
-} from "./member.types";
+} from "./member.types.js";
 
 const valueOrDefault = <T>(value: T | undefined, defaultValue: T): T =>
   value ?? defaultValue;

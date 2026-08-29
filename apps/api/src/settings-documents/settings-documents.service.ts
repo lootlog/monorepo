@@ -16,10 +16,13 @@ import {
 import {
   Prisma,
   type SettingsScopeType as PrismaSettingsScopeType,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto";
-import { applySettingsPatch, resolveSettingsDomain } from "./settings-resolver";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto.js";
+import {
+  applySettingsPatch,
+  resolveSettingsDomain,
+} from "./settings-resolver.js";
 
 type JsonRecord = Record<string, unknown>;
 

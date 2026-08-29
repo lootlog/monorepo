@@ -7,14 +7,14 @@ import {
   JOIN_READY_ROOM_SCRIPT,
   PRUNE_READY_ROOM_USER_INDEX_SCRIPT,
   TERMINATE_READY_ROOM_SCRIPT,
-} from "src/messaging/ready-room/ready-room-redis-scripts";
+} from "#src/messaging/ready-room/ready-room-redis-scripts";
 import type {
   CommitReadyRoomResult,
   CreateReadyRoomResult,
   JoinReadyRoomResult,
   ReadyRoomRepository,
-} from "src/messaging/ready-room/ready-room.repository";
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+} from "#src/messaging/ready-room/ready-room.repository";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 type Clock = () => number;
 

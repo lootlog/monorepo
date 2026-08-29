@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { Injectable, type NestMiddleware } from "@nestjs/common";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { PerfDiagnosticsService } from "./perf-diagnostics.service";
-import { requestDiagnosticsStorage } from "./request-diagnostics-context";
+import { PerfDiagnosticsService } from "./perf-diagnostics.service.js";
+import { requestDiagnosticsStorage } from "./request-diagnostics-context.js";
 
 type RawRequest = FastifyRequest["raw"] & {
   method?: string;

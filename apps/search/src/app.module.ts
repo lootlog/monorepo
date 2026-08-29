@@ -3,14 +3,14 @@ import { APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
 import { WinstonModule } from "nest-winston";
 import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { LoggerMiddleware } from "@lootlog/nest-shared";
-import { winstonConfig } from "src/config/winston.config";
-import { HealthzModule } from "src/healthz/healthz.module";
-import { MeilisearchModule } from "src/meilisearch/meilisearch.module";
-import { PlayersModule } from "src/players/players.module";
-import { NpcsModule } from "src/npcs/npcs.module";
-import { ItemsModule } from "src/items/items.module";
-import { AllModule } from "src/all/all.module";
-import { UserMetadataMiddleware } from "src/shared/user-metadata.middleware";
+import { winstonConfig } from "#src/config/winston.config";
+import { HealthzModule } from "#src/healthz/healthz.module";
+import { MeilisearchModule } from "#src/meilisearch/meilisearch.module";
+import { PlayersModule } from "#src/players/players.module";
+import { NpcsModule } from "#src/npcs/npcs.module";
+import { ItemsModule } from "#src/items/items.module";
+import { AllModule } from "#src/all/all.module";
+import { UserMetadataMiddleware } from "#src/shared/user-metadata.middleware";
 
 @Module({
   imports: [

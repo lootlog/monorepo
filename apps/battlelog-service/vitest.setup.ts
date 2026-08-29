@@ -1,6 +1,6 @@
 import { afterEach, vi } from "vitest";
 
-vi.mock("src/config/env", () => ({
+vi.mock("#src/config/env", () => ({
   env: {
     ENV: "local",
     PORT: 4000,

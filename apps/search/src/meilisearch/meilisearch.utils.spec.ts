@@ -2,7 +2,7 @@ import {
   buildMeilisearchSearchTermFilter,
   buildMeilisearchStringInFilter,
   getMeilisearchErrorCode,
-} from "./meilisearch.utils";
+} from "./meilisearch.utils.js";
 
 describe("getMeilisearchErrorCode", () => {
   it("returns the string code from the error cause", () => {

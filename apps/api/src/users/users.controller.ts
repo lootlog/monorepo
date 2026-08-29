@@ -17,13 +17,13 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { StatusOkResponseDto } from "src/shared/dto/common-response.dto";
-import { UserGameAccountPreferencesResponseDto } from "src/shared/dto/user-account-preferences-response.dto";
-import { UserPreferencesResponseDto } from "src/shared/dto/user-preferences-response.dto";
-import { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
-import { UserCurrentGuildResponseDto } from "src/users/dto/user-current-guild-response.dto";
-import { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
-import { UsersService } from "src/users/users.service";
+import { StatusOkResponseDto } from "#src/shared/dto/common-response.dto";
+import { UserGameAccountPreferencesResponseDto } from "#src/shared/dto/user-account-preferences-response.dto";
+import { UserPreferencesResponseDto } from "#src/shared/dto/user-preferences-response.dto";
+import { UpdateUserGameAccountPreferencesDto } from "#src/users/dto/update-user-account-preferences.dto";
+import { UserCurrentGuildResponseDto } from "#src/users/dto/user-current-guild-response.dto";
+import { UpdateUserPreferencesDto } from "#src/users/dto/update-user-preferences.dto";
+import { UsersService } from "#src/users/users.service";
 
 @ApiTags("users")
 @ApiBearerAuth()

@@ -1,8 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { CoverageGapType } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { EventSummaryService } from "./event-summary.service";
+import { mockFn } from "#src/test/mock-fn";
+import { CoverageGapType } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { EventSummaryService } from "./event-summary.service.js";
 
 describe("EventSummaryService", () => {
   let service: EventSummaryService;

@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { UsersController } from "./users.controller";
-import { UsersService } from "./users.service";
+import { mockFn } from "#src/test/mock-fn";
+import { UsersController } from "./users.controller.js";
+import { UsersService } from "./users.service.js";
 import { AuthGuard } from "@lootlog/nest-shared";
 
 describe("UserController", () => {

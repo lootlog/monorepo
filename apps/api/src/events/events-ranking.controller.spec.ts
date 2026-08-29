@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { EventsRankingController } from "./events-ranking.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { EventsRankingController } from "./events-ranking.controller.js";
 
 describe("EventsRankingController", () => {
   const mockEventsService = {

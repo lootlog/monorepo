@@ -1,5 +1,5 @@
-import type { Prisma } from "src/generated/prisma/client";
-import { jsonValueSchema } from "src/shared/dto/zod-response-codecs";
+import type { Prisma } from "#src/generated/prisma/client";
+import { jsonValueSchema } from "#src/shared/dto/zod-response-codecs";
 
 export const GuildDocumentContentSchema = jsonValueSchema.refine(
   (value) => {

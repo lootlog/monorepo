@@ -4,17 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Permission, type Prisma } from "src/generated/prisma/client";
+import { Permission, type Prisma } from "#src/generated/prisma/client";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { PrismaService } from "src/db/prisma.service";
-import type { GuildRoleDto } from "src/guilds/dto/create-guild.dto";
-import type { CreateRoleDto } from "src/roles/dto/create-role.dto";
-import type { DeleteRoleDto } from "src/roles/dto/delete-role.dto";
-import type { UpdateRolePermissionsDto } from "src/roles/dto/update-role-permissions.dto";
+import { PrismaService } from "#src/db/prisma.service";
+import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
+import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
+import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
+import type { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { getPermissionsCachePattern } from "src/shared/constants/cache.constant";
-import { PermissionResolver } from "src/shared/permissions/permission-resolver";
+import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
+import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
 @Injectable()
 export class RolesService {

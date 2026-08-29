@@ -1,4 +1,4 @@
-import { hasOwnField } from "./has-own-field";
+import { hasOwnField } from "./has-own-field.js";
 
 describe("hasOwnField", () => {
   it("detects nullable fields explicitly present in partial update data", () => {

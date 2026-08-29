@@ -1,7 +1,7 @@
 import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
-} from "./kill-dedup-key";
+} from "./kill-dedup-key.js";
 
 describe("kill-dedup-key", () => {
   it("builds a user-scoped dedup key", () => {

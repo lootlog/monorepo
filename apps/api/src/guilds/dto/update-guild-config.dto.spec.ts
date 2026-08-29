@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ErrorKey } from "src/guilds/enum/error-key.enum";
-import { UpdateGuildConfigDto } from "./update-guild-config.dto";
+import { ErrorKey } from "#src/guilds/enum/error-key.enum";
+import { UpdateGuildConfigDto } from "./update-guild-config.dto.js";
 
 describe("UpdateGuildConfigDto", () => {
   it("returns a translation key instead of localized backend copy", () => {

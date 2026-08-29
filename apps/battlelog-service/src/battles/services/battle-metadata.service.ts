@@ -1,12 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { and, desc, eq, ilike } from "drizzle-orm";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
 import {
   battles,
   battleWarriors,
   userCharacters,
-} from "src/shared/modules/drizzle/schema";
+} from "#src/shared/modules/drizzle/schema";
 
 type UserCharactersResponse = {
   characters: Array<{

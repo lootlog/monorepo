@@ -1,16 +1,20 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/db/prisma.service";
-import { createTestLootPayload, TEST_GUILDS, TEST_USERS } from "./test-helpers";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
+import { AppModule } from "../src/app.module.js";
+import { PrismaService } from "../src/db/prisma.service.js";
+import {
+  createTestLootPayload,
+  TEST_GUILDS,
+  TEST_USERS,
+} from "./test-helpers.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 import {
   LootShareSource,
   Permission,
   NpcType,
   ItemRarity,
-} from "../src/generated/prisma/client";
+} from "../src/generated/prisma/client.js";
 
 describe("Loots E2E Tests (Whitelist)", () => {
   let app: INestApplication;

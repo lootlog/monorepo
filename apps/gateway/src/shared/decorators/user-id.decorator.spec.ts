@@ -1,5 +1,5 @@
 import { WsException } from "@nestjs/websockets";
-import { getRequiredSocketIdentity } from "./user-id.decorator";
+import { getRequiredSocketIdentity } from "./user-id.decorator.js";
 
 describe("websocket identity decorators", () => {
   it.each([

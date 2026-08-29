@@ -1,7 +1,7 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { isoDatetimeCodec } from "src/shared/dto/zod-response-codecs";
-import { reservationReminderMinutesSchema } from "./create-reservation.dto";
+import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
+import { reservationReminderMinutesSchema } from "./create-reservation.dto.js";
 
 const ReservationAuthorSchema = z.object({
   displayName: z.string(),

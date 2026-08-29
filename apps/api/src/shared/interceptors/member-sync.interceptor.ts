@@ -9,10 +9,10 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
-import { PrismaService } from "src/db/prisma.service";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { MembersService } from "src/members/members.service";
-import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
+import { MembersService } from "#src/members/members.service";
+import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {

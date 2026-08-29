@@ -7,14 +7,14 @@ import { HttpService } from "@nestjs/axios";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger as WinstonLogger } from "winston";
 import { firstValueFrom } from "rxjs";
-import { PrismaService } from "src/db/prisma.service";
-import { AuthService } from "src/auth/auth.service";
-import { battlelogConfig } from "src/config/battlelog.config";
-import { MEMBER_LAST_DISCORD_STATUS } from "src/members/constants/member-discord-status.constant";
-import { MembersService } from "src/members/members.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { AuthService } from "#src/auth/auth.service";
+import { battlelogConfig } from "#src/config/battlelog.config";
+import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
+import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { Prisma } from "src/generated/prisma/client";
-import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
+import type { Prisma } from "#src/generated/prisma/client";
+import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   DETECTOR_NPC_TYPES,
@@ -42,13 +42,13 @@ import {
   type UserGameAccountPreferences,
   type UserPreferences,
 } from "@lootlog/types";
-import { applySettingsPatch } from "src/settings-documents/settings-resolver";
+import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
 import {
   GuildsService,
   type CurrentUserGuildAccessSummary,
-} from "src/guilds/guilds.service";
-import type { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
-import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
+} from "#src/guilds/guilds.service";
+import type { UpdateUserGameAccountPreferencesDto } from "#src/users/dto/update-user-account-preferences.dto";
+import type { UpdateUserPreferencesDto } from "#src/users/dto/update-user-preferences.dto";
 
 type DeleteAccountParams = {
   authUserId: string;

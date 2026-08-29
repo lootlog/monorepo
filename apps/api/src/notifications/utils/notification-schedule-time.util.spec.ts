@@ -1,10 +1,10 @@
-import { NotificationScheduleIntervalType } from "src/generated/prisma/client";
+import { NotificationScheduleIntervalType } from "#src/generated/prisma/client";
 import {
   calculateFirstOccurrenceInTimeZone,
   calculateNextOccurrenceInTimeZone,
   isRecurringScheduleInterval,
   isValidTimeZone,
-} from "./notification-schedule-time.util";
+} from "./notification-schedule-time.util.js";
 
 describe("notification-schedule-time.util", () => {
   const timeZone = "Europe/Warsaw";

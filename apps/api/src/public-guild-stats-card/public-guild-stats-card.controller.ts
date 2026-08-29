@@ -7,9 +7,9 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import type { FastifyReply } from "fastify";
-import { serviceConfig } from "src/config/service.config";
+import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
+import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 
 const CACHE_CONTROL_HEADER = "public, max-age=300, must-revalidate";
 const LOCAL_CACHE_CONTROL_HEADER = "no-store";
