@@ -476,20 +476,40 @@ const formatDuration: StatValueFormatter = (key, value) => {
   return { key: `${key}.${unit}`, value: duration };
 };
 
+const formatBag: StatValueFormatter = (key, value) => {
+  const rawValue = toStringValue(value);
+  const amount = Number.parseInt(rawValue, 10);
+  if (amount === 1) {
+    return { key: `${key}.one`, value: rawValue };
+  }
+
+  const lastDigit = Math.abs(amount) % 10;
+  const lastTwoDigits = Math.abs(amount) % 100;
+  const usesFewForm =
+    [2, 3, 4].includes(lastDigit) &&
+    !(lastTwoDigits >= 12 && lastTwoDigits <= 14);
+  return {
+    key: usesFewForm ? `${key}.few` : `${key}.many`,
+    value: rawValue,
+  };
+};
+
 const formatOutfit: StatValueFormatter = (key, value) => {
   const [duration = "0", , location = ""] = toStringValue(value).split(",");
+  const locationSuffix = location ? ` w ${location}` : "";
   const durationMinutes = Number.parseInt(duration, 10);
   if (!Number.isFinite(durationMinutes) || durationMinutes < 1) {
-    return { key: `${key}.permanent`, value: location };
+    return { key: `${key}.permanent`, value: locationSuffix };
   }
 
   if (durationMinutes < 99) {
-    return { key: `${key}.minutes`, value: [duration, location] };
+    return { key: `${key}.minutes`, value: [duration, locationSuffix] };
   }
 
+  const roundedHours = Math.round(durationMinutes / 60);
   return {
-    key: `${key}.hours`,
-    value: [formatNumber(durationMinutes / 60), location],
+    key: roundedHours < 5 ? `${key}.hoursFew` : `${key}.hours`,
+    value: [roundedHours.toString(), locationSuffix],
   };
 };
 
@@ -557,7 +577,7 @@ const formatBtype: StatValueFormatter = (key, value) => {
     .split(",")
     .map((entry) => ITEM_CLASS_KEYS[Number.parseInt(entry, 10)])
     .filter(isPresentItemClassKey);
-  return { key, translateKey: "itemStats.class", value: classKeys };
+  return { key, translateKey: "itemStats.classLower", value: classKeys };
 };
 
 const formatAmount: StatValueFormatter = (key, value) => ({
@@ -616,6 +636,7 @@ const STAT_VALUE_FORMATTERS: Readonly<Record<string, StatValueFormatter>> = {
   afterheal2: formatListStat,
   amount: formatAmount,
   artisanbon: formatSignedStat,
+  bag: formatBag,
   binds: formatBindingMetadata,
   bonus: formatNestedBonus,
   btype: formatBtype,
@@ -832,14 +853,13 @@ const STAT_SECTIONS = [
   },
   {
     block: "descriptionBlock",
-    keys: [
-      "teleport",
-      "custom_teleport",
-      "opis",
-      "etiquette",
-      "pumpkin_weight",
-    ],
+    keys: ["teleport", "custom_teleport", "opis"],
     sectionIndex: 7,
+  },
+  {
+    block: "descriptionBlock",
+    keys: ["etiquette", "pumpkin_weight"],
+    sectionIndex: 7.5,
   },
   {
     block: "metadataBlock",

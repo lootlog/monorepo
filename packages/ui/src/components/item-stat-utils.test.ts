@@ -39,6 +39,42 @@ function getTranslatedValuePaths(displayValue: ItemDisplayValue): string[] {
 }
 
 describe("item stat utilities", () => {
+  it("uses the canonical Margonem wording for damage modifiers", () => {
+    expect(itemStats).toMatchObject({
+      combo_multiplier: "Obrażenia nieuchronne <value>{{value}}%</value>",
+      dmgmul: "Wszystkie obrażenia <value>{{value}}%</value>",
+      dmgmulabsolute: "Obrażenia nieuchronne <value>{{value}}%</value>",
+      dmgmulfire: "Obrażenia od ognia <value>{{value}}%</value>",
+      dmgmulfrost: "Obrażenia od zimna <value>{{value}}%</value>",
+      dmgmullight: "Obrażenia od błyskawic <value>{{value}}%</value>",
+      dmgmulphysical: "Obrażenia fizyczne <value>{{value}}%</value>",
+      dmgmulpoison: "Obrażenia od trucizny <value>{{value}}%</value>",
+      dmgmulwound: "Obrażenia od głębokiej rany <value>{{value}}%</value>",
+    });
+  });
+
+  it("keeps source wording for actions, metadata and legendary bonuses", () => {
+    expect(itemStats).toMatchObject({
+      action: {
+        auction: "Akcja: Wywołanie aukcji",
+        flee: "Akcja walki: Przerwanie walki - ucieczka",
+      },
+      add_battleset: "Akcja: Odblokowanie zestawu do walki",
+      noauction: "Tego przedmiotu nie można wystawić na aukcję",
+      nodepo: "Przedmiotu nie można przechowywać w depozycie",
+      townlimit: "Działa tylko w wybranych lokacjach",
+      custom_teleport: {
+        set: "<description>Teleportuje Postać na mapę:\n{{value4}} ({{value2}}, {{value3}}).</description>",
+      },
+      legbon: {
+        dmgred:
+          "<legbon>Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o <value>{{value}}%</value>.</legbon>",
+        retaliation:
+          "<legbon>Aura odwetu: przyjęcie ataku ma <value>{{value}}%</value> szansy na odbicie w przeciwnika otrzymanych obrażeń.</legbon>",
+      },
+    });
+  });
+
   it("preserves stat formatting and semantic block assignment", () => {
     const blocks = mapStatsToDisplayValues(
       parseItemStats(
@@ -87,10 +123,49 @@ describe("item stat utilities", () => {
     ]);
   });
 
+  it("keeps etiquette in a separate section after the item description", () => {
+    const sections = mapStatsToDisplaySections(
+      parseItemStats(
+        "permbound;etiquette=event|Wakacje 2026 r.;opis=Opis przedmiotu",
+      ),
+    );
+
+    expect(sections).toEqual([
+      { index: 7, values: [{ key: "opis", value: "Opis przedmiotu" }] },
+      {
+        index: 7.5,
+        values: [{ key: "etiquette", value: "Wakacje 2026 r." }],
+      },
+      { index: 8, values: [{ key: "permbound", value: true }] },
+    ]);
+  });
+
+  it("uses source class casing and Polish bag inflection", () => {
+    const blocks = mapStatsToDisplayValues(
+      parseItemStats("bag=1;btype=1,8;target_class=1,8"),
+    );
+
+    expect(blocks.baseStatsBlock).toEqual([{ key: "bag.one", value: "1" }]);
+    expect(blocks.enhancementStatsBlock).toEqual([
+      {
+        key: "btype",
+        translateKey: "itemStats.classLower",
+        value: ["oneHanded", "armor"],
+      },
+    ]);
+    expect(blocks.requirementsBlock).toEqual([
+      {
+        key: "target_class",
+        translateKey: "itemStats.class",
+        value: ["oneHanded", "armor"],
+      },
+    ]);
+  });
+
   it("formats missing combat, enhancement, action and metadata families", () => {
     const blocks = mapStatsToDisplayValues(
       parseItemStats(
-        "dmgmul=-5;afterheal2=10,250;resmanaendest=9;leczy=-120;bonus=sa,250;action=fightperheal,10,20;expire_duration=2d;expire_date=1767225600;target_class=WEAPONS;cansplit=0;enhancement_refund=3;custom_teleport=id,12,34,Tuzmer;socket_content=0;nodepoclan",
+        "dmgmul=-5;afterheal2=10,250;resmanaendest=9;leczy=-120;bonus=sa,250;action=fightperheal,10,20;expire_duration=2d;expire_date=1767225600;target_class=WEAPONS;cansplit=0;enhancement_refund=3;custom_teleport=id,12,34,Tuzmer;socket_content=0;enhancement_upgrade_lvl=4;nodepoclan",
       ),
     );
 
@@ -120,7 +195,10 @@ describe("item stat utilities", () => {
     expect(blocks.descriptionBlock).toEqual([
       { key: "custom_teleport.set", value: ["id", "12", "34", "Tuzmer"] },
     ]);
-    expect(blocks.metadataBlock).toEqual([{ key: "nodepoclan", value: true }]);
+    expect(blocks.metadataBlock).toEqual([
+      { key: "enhancement_upgrade_lvl", value: "4" },
+      { key: "nodepoclan", value: true },
+    ]);
     expect(blocks.requirementsBlock).toEqual([
       {
         key: "target_class",
@@ -142,6 +220,16 @@ describe("item stat utilities", () => {
         key: "opis",
         value: "01.01.2025, 00:30|2025|2024|2026",
       },
+    ]);
+  });
+
+  it("selects the outfit hour form from the rounded hour count", () => {
+    const blocks = mapStatsToDisplayValues(
+      parseItemStats("outfit=299,x,Tuzmer"),
+    );
+
+    expect(blocks.baseStatsBlock).toEqual([
+      { key: "outfit.hours", value: ["5", " w Tuzmer"] },
     ]);
   });
 

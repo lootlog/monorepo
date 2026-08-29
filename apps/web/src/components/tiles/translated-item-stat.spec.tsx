@@ -12,7 +12,7 @@ describe("TranslatedItemStat", () => {
     );
 
     expect(markup).toContain("Aura odwetu");
-    expect(markup).toContain("text-green-500");
+    expect(markup).toContain("block w-full text-green-500");
     expect(markup).toContain("font-bold text-primary");
     expect(markup).not.toContain("&lt;value&gt;");
   });
@@ -34,5 +34,16 @@ describe("TranslatedItemStat", () => {
     );
 
     expect(markup).toContain("12 345");
+  });
+
+  it("renders etiquette with the item description typography", () => {
+    const markup = renderToStaticMarkup(
+      <TranslatedItemStat
+        displayValue={{ key: "etiquette", value: "Wakacje 2026 r." }}
+      />,
+    );
+
+    expect(markup).toContain("text-center text-muted-foreground");
+    expect(markup).toContain("Ostatnio dostępny podczas:");
   });
 });

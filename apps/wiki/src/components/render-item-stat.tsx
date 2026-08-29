@@ -11,7 +11,7 @@ interface TranslationTree {
 const tagClassNames = {
   description: "block text-center text-muted-foreground",
   gold: "text-primary",
-  legbon: "text-green-500",
+  legbon: "block w-full text-green-500",
   value: "font-bold text-primary",
 } as const;
 
