@@ -18,21 +18,23 @@ import { LootStatsQueryDto } from "./dto/loot-stats.dto";
 import { ResolveLootItemParamsDto } from "./dto/resolve-loot-item-params.dto";
 import { UpdateLootDto } from "./dto/update-loot.dto";
 import { ErrorKey } from "./enum/error-key.enum";
+import { LootAllocationService } from "./loot-allocation.service";
+import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service";
 import { LootsController } from "./loots.controller";
 import { LootsService } from "./loots.service";
 import { LootStatsService } from "./services/loot-stats.service";
 
 describe("LootsController", () => {
   let controller: LootsController;
+  let allocation: { confirmFromChat: Mock };
+  let acceptance: { accept: Mock };
   let service: {
-    createLoot: Mock;
     fetchLootsByGuildId: Mock;
     resolveLootItemByHid: Mock;
     fetchLootById: Mock;
     getComments: Mock;
     createComment: Mock;
     archiveLoot: Mock;
-    updateLoot: Mock;
   };
 
   const mockGuild: Guild = {
@@ -109,15 +111,15 @@ describe("LootsController", () => {
 
   beforeEach(async () => {
     const mockLootsService = {
-      createLoot: mockFn(),
       fetchLootsByGuildId: mockFn(),
       resolveLootItemByHid: mockFn(),
       fetchLootById: mockFn(),
       getComments: mockFn(),
       createComment: mockFn(),
       archiveLoot: mockFn(),
-      updateLoot: mockFn(),
     };
+    const mockLootAllocation = { confirmFromChat: mockFn() };
+    const mockLootSubmissionAcceptance = { accept: mockFn() };
 
     const mockLootStatsService = {
       getLootStats: mockFn(),
@@ -126,6 +128,11 @@ describe("LootsController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LootsController],
       providers: [
+        { provide: LootAllocationService, useValue: mockLootAllocation },
+        {
+          provide: LootSubmissionAcceptanceService,
+          useValue: mockLootSubmissionAcceptance,
+        },
         { provide: LootsService, useValue: mockLootsService },
         { provide: LootStatsService, useValue: mockLootStatsService },
       ],
@@ -137,6 +144,8 @@ describe("LootsController", () => {
       .compile();
 
     controller = module.get<LootsController>(LootsController);
+    allocation = module.get(LootAllocationService);
+    acceptance = module.get(LootSubmissionAcceptanceService);
     service = module.get(LootsService);
   });
 
@@ -185,7 +194,7 @@ describe("LootsController", () => {
 
       expect(fetchLootsParamTypes[3]).toBe(FetchLootsParamsDto);
       expect(getLootStatsParamTypes[3]).toBe(LootStatsQueryDto);
-      expect(createLootParamTypes[2]).toBe(CreateLootDto);
+      expect(createLootParamTypes[1]).toBe(CreateLootDto);
       expect(createCommentParamTypes[2]).toBe(CreateCommentDto);
       expect(resolveLootItemParamTypes[3]).toBe(ResolveLootItemParamsDto);
       expect(updateLootParamTypes[1]).toBe(UpdateLootDto);
@@ -194,7 +203,6 @@ describe("LootsController", () => {
 
   describe("createLoot", () => {
     const discordId = "discord123";
-    const userId = "user123";
     const mockResult = {
       id: 1,
       submittedGuilds: [
@@ -207,44 +215,39 @@ describe("LootsController", () => {
     };
 
     it("should create a new loot", async () => {
-      service.createLoot.mockResolvedValue(mockResult);
+      acceptance.accept.mockResolvedValue(mockResult);
 
-      const result = await controller.createLoot(
-        discordId,
-        userId,
-        mockCreateLootDto,
-      );
+      const result = await controller.createLoot(discordId, mockCreateLootDto);
 
-      expect(service.createLoot).toHaveBeenCalledWith(
+      expect(acceptance.accept).toHaveBeenCalledWith({
         discordId,
-        userId,
-        mockCreateLootDto,
-      );
+        submission: mockCreateLootDto,
+      });
       expect(result).toEqual(mockResult);
     });
 
     it("should handle service errors", async () => {
-      service.createLoot.mockRejectedValue(
+      acceptance.accept.mockRejectedValue(
         new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
       );
 
       await expect(
-        controller.createLoot(discordId, userId, mockCreateLootDto),
+        controller.createLoot(discordId, mockCreateLootDto),
       ).rejects.toThrow(BadRequestException);
     });
 
     it("should handle concurrent requests correctly", async () => {
-      service.createLoot.mockResolvedValue(mockResult);
+      acceptance.accept.mockResolvedValue(mockResult);
 
       const requests = Array(5)
         .fill(null)
-        .map(() => controller.createLoot(discordId, userId, mockCreateLootDto));
+        .map(() => controller.createLoot(discordId, mockCreateLootDto));
 
       const results = await Promise.all(requests);
 
       expect(results).toHaveLength(5);
       results.forEach((result) => expect(result).toEqual(mockResult));
-      expect(service.createLoot).toHaveBeenCalledTimes(5);
+      expect(acceptance.accept).toHaveBeenCalledTimes(5);
     });
   });
 
@@ -482,11 +485,15 @@ describe("LootsController", () => {
     };
 
     it("should update a loot", async () => {
-      service.updateLoot.mockResolvedValue({});
+      allocation.confirmFromChat.mockResolvedValue({});
 
       const result = await controller.updateLoot(userId, body, lootId);
 
-      expect(service.updateLoot).toHaveBeenCalledWith(userId, lootId, body);
+      expect(allocation.confirmFromChat).toHaveBeenCalledWith({
+        actorUserId: userId,
+        lootId,
+        message: body.msg,
+      });
       expect(result).toEqual({});
     });
   });
