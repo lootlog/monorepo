@@ -1,5 +1,17 @@
 # @lootlog/ui
 
+## 3.1.0
+
+### Minor Changes
+
+- a78ba7b: Add Base UI shadcn primitives for alerts, breadcrumbs, comboboxes, fields, input groups, items, and progress with Lootlog signal variants.
+
+### Patch Changes
+
+- 3e53f4e: Support the complete set of item tooltip stats derivable from Margonem item data, preserve the game's tooltip ordering, and share one Polish item-stat dictionary between Web and Wiki.
+- 25ff0b8: Align item tooltip wording with the canonical Margonem translations.
+- a49b02c: Polish the reservation list and calendar layouts, add the shared button group, and adopt alliance terminology across reservation sharing.
+
 ## 3.0.2
 
 ### Patch Changes

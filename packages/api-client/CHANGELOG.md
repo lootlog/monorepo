@@ -1,5 +1,13 @@
 # @lootlog/api-client
 
+## 5.0.4
+
+### Patch Changes
+
+- 87c9155: Prevent duplicate manual notification submissions in the Game client and rate
+  limit notification creation to five attempts per five seconds per authenticated
+  user with an atomic Redis limiter and a typed HTTP 429 response.
+
 ## 5.0.3
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @lootlog/auth
 
+## 1.0.10
+
+### Patch Changes
+
+- 42a49c1: Upgrade backend services to NestJS 12 and native ESM builds and tests without SWC.
+- Updated dependencies [bf625a4]
+- Updated dependencies [42a49c1]
+  - @lootlog/types@3.0.2
+  - @lootlog/nest-shared@1.0.9
+  - @lootlog/api-helpers@1.0.3
+  - @lootlog/instrumentation@0.0.3
+
 ## 1.0.9
 
 ### Patch Changes
