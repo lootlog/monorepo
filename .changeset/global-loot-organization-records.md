@@ -8,5 +8,5 @@
 
 Introduce Organization-owned Loot records while retaining one global Loot and
 allocation. Apply one all-NPC visibility policy to API reads, statistics,
-comments, archives, and real-time events, and add an action-specific loot
-archive permission.
+comments, archives, real-time events, and watched-item notifications, and add
+an action-specific loot archive permission.

@@ -3,7 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
-import { Prisma } from "src/generated/prisma/client";
+import { NpcType, Permission, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
@@ -1021,6 +1021,15 @@ describe("Notification Services", () => {
       {
         guildId: "guild-1",
         userId: "user-1",
+        guild: { ownerId: "owner-1" },
+        roles: [
+          {
+            id: "loot-reader",
+            permissions: [Permission.LOOTLOG_LOOTS_READ],
+            lvlRangeFrom: 1,
+            lvlRangeTo: 500,
+          },
+        ],
       },
     ]);
     mockPrisma.watchedItem.findMany.mockResolvedValueOnce([
@@ -1059,6 +1068,8 @@ describe("Notification Services", () => {
       itemIds: [123, 456],
       itemNames: ["Legendarny Miecz"],
       guildIds: ["guild-1"],
+      npcType: NpcType.ELITE,
+      npcLvl: 100,
     });
 
     expect(mockPrisma.watchedItem.findMany).toHaveBeenCalledWith({
@@ -1104,6 +1115,19 @@ describe("Notification Services", () => {
       select: {
         userId: true,
         guildId: true,
+        guild: {
+          select: {
+            ownerId: true,
+          },
+        },
+        roles: {
+          select: {
+            id: true,
+            permissions: true,
+            lvlRangeFrom: true,
+            lvlRangeTo: true,
+          },
+        },
       },
     });
     expect(mockPrisma.notificationJob.create).toHaveBeenCalledWith({
@@ -1116,6 +1140,72 @@ describe("Notification Services", () => {
         sourceEventId: "loot:999",
       }),
     });
+  });
+
+  it("does not notify when one NPC in mixed-tier loot is outside the owner's visibility", async () => {
+    mockPrisma.member.findMany.mockResolvedValueOnce([
+      {
+        userId: "user-1",
+        guildId: "guild-1",
+        guild: { ownerId: "owner-1" },
+        roles: [
+          {
+            id: "titan-reader",
+            permissions: [
+              Permission.LOOTLOG_LOOTS_READ,
+              Permission.LOOTLOG_LOOTS_TITANS_READ,
+            ],
+            lvlRangeFrom: 1,
+            lvlRangeTo: 500,
+          },
+        ],
+      },
+    ]);
+    mockPrisma.watchedItem.findMany.mockResolvedValueOnce([
+      {
+        notificationRuleId: 91,
+        world: "berufs",
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          guildId: null,
+          world: "berufs",
+          triggerType: "WATCHED_ITEM_DROPPED",
+          filters: {
+            itemIds: [123],
+            guildIds: ["guild-1"],
+          },
+          targets: [
+            {
+              target: {
+                id: 51,
+                externalId: "dm-user-1",
+                targetType: "DM",
+                active: true,
+                canSend: true,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    await eventsHandler.handleLootCreated({
+      lootId: 1000,
+      world: "berufs",
+      itemIds: [123],
+      itemNames: ["Legendarny Miecz"],
+      guildIds: ["guild-1"],
+      npcs: [
+        { type: NpcType.TITAN, lvl: 300 },
+        { type: NpcType.HERO, lvl: 120 },
+      ],
+      npcType: NpcType.TITAN,
+      npcLvl: 300,
+    });
+
+    expect(mockPrisma.notificationJob.create).not.toHaveBeenCalled();
   });
 
   it("skips watched-item notifications when the owner no longer has access to matching guilds", async () => {

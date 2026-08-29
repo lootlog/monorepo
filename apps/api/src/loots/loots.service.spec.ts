@@ -423,6 +423,19 @@ describe("LootsService", () => {
           world: "testworld",
         },
       ]);
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        expect.any(String),
+        RoutingKey.NOTIFICATIONS_LOOT_CREATED,
+        expect.objectContaining({
+          lootId: 1,
+          npcs: [
+            {
+              lvl: 50,
+              type: NpcType.ELITE,
+            },
+          ],
+        }),
+      );
       expect(service["redlock"].acquire).toHaveBeenCalledWith(
         [expect.stringMatching(/^loot:lock:/)],
         30_000,
