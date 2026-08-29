@@ -27,6 +27,7 @@
     "@lexical/table": "0.48.0",
     "@lootlog/api-client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
+    "@lootlog/reservations": "workspace:*",
     "@lootlog/scoring": "workspace:*",
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/types": "workspace:*",

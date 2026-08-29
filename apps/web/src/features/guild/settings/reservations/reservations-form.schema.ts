@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/reservations";
 
 export const reservationsSettingsFormSchema = z
   .object({
@@ -7,7 +8,11 @@ export const reservationsSettingsFormSchema = z
     reservationTimeGranularityMinutes: z
       .number()
       .int()
-      .refine((value) => [5, 10, 15, 30, 60].includes(value)),
+      .refine((value) =>
+        RESERVATION_TIME_GRANULARITY_OPTIONS.some(
+          (granularity) => granularity === value,
+        ),
+      ),
     reservationMaxAdvanceDays: z.number().int().min(1).max(30),
     reservationActiveLimitPerSpot: z.number().int().min(1).max(10),
   })

@@ -5,6 +5,10 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
+import {
+  resolveReservationSettings,
+  type ReservationSettings,
+} from "@lootlog/reservations";
 import { PrismaService } from "src/db/prisma.service";
 import { Permission, Prisma } from "src/generated/prisma/client";
 import { GuildsService } from "src/guilds/guilds.service";
@@ -21,18 +25,9 @@ import {
 import {
   parseReservationWindow,
   validateReservationTime,
-  type ReservationSettings,
 } from "./reservation-policy";
 import { ReservationReminderService } from "./reservation-reminder.service";
 import { ReservationSharingService } from "./reservation-sharing.service";
-
-const DEFAULT_RESERVATION_SETTINGS: ReservationSettings = {
-  reservationMaxDurationMinutes: 180,
-  reservationMinDurationMinutes: 30,
-  reservationTimeGranularityMinutes: 15,
-  reservationMaxAdvanceDays: 7,
-  reservationActiveLimitPerSpot: 3,
-};
 
 type ViewerContext = {
   guildId: string;
@@ -596,7 +591,7 @@ export class ReservationsService {
       },
     });
 
-    return guild ?? DEFAULT_RESERVATION_SETTINGS;
+    return resolveReservationSettings(guild);
   }
 
   private toPresentationViewer(context: ViewerContext) {
