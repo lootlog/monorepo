@@ -25,6 +25,7 @@ import {
   ReservationResponseDto,
 } from "./dto/reservation-response.dto";
 import { UpdateReservationDto } from "./dto/update-reservation.dto";
+import { ReservationMutationsService } from "./reservation-mutations.service";
 import { ReservationsService } from "./reservations.service";
 
 @ApiTags("reservations")
@@ -32,7 +33,10 @@ import { ReservationsService } from "./reservations.service";
 @UseGuards(AuthGuard)
 @Controller("users/@me/reservations")
 export class UserReservationsController {
-  constructor(private readonly reservationsService: ReservationsService) {}
+  constructor(
+    private readonly reservationsService: ReservationsService,
+    private readonly reservationMutationsService: ReservationMutationsService,
+  ) {}
 
   @Get()
   @ApiOperation({
@@ -60,7 +64,7 @@ export class UserReservationsController {
     @Param("reservationId", ParseIntPipe) reservationId: number,
     @Body() data: UpdateReservationDto,
   ) {
-    return this.reservationsService.updateMine({
+    return this.reservationMutationsService.updateOwned({
       userId,
       discordId,
       reservationId,
@@ -80,7 +84,7 @@ export class UserReservationsController {
     @DiscordId() discordId: string,
     @Param("reservationId", ParseIntPipe) reservationId: number,
   ) {
-    await this.reservationsService.deleteMine({
+    await this.reservationMutationsService.deleteOwned({
       userId,
       discordId,
       reservationId,

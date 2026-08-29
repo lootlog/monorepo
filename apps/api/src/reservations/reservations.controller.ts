@@ -32,10 +32,9 @@ import {
   ReservationSpotsResponseDto,
   ReservationWindowResponseDto,
 } from "./dto/reservation-response.dto";
-import {
-  ReservationsService,
-  type ViewerContext,
-} from "./reservations.service";
+import type { ReservationViewerContext } from "./reservation-viewer";
+import { ReservationMutationsService } from "./reservation-mutations.service";
+import { ReservationsService } from "./reservations.service";
 
 type ReservationRequest = {
   permissions?: Permission[];
@@ -47,7 +46,7 @@ function createViewerContext(options: {
   userId: string;
   discordId: string;
   request: ReservationRequest;
-}): ViewerContext {
+}): ReservationViewerContext {
   return {
     guildId: options.guild.id,
     userId: options.userId,
@@ -62,7 +61,10 @@ function createViewerContext(options: {
 @UseGuards(AuthGuard)
 @Controller()
 export class ReservationsController {
-  constructor(private readonly reservationsService: ReservationsService) {}
+  constructor(
+    private readonly reservationsService: ReservationsService,
+    private readonly reservationMutationsService: ReservationMutationsService,
+  ) {}
 
   @Permissions(Permission.LOOTLOG_RESERVATIONS_READ)
   @UseGuards(PermissionsGuard)
@@ -123,7 +125,7 @@ export class ReservationsController {
     @Param("spotId") spotId: string,
     @Body() data: CreateReservationDto,
   ) {
-    return this.reservationsService.createReservation({
+    return this.reservationMutationsService.create({
       context: createViewerContext({ guild, userId, discordId, request }),
       spotId,
       data,
@@ -146,7 +148,7 @@ export class ReservationsController {
     @Req() request: ReservationRequest,
     @Param("reservationId", ParseIntPipe) reservationId: number,
   ) {
-    await this.reservationsService.deleteReservation({
+    await this.reservationMutationsService.deleteVisible({
       context: createViewerContext({ guild, userId, discordId, request }),
       reservationId,
     });
