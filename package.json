@@ -93,12 +93,12 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "11.17.0",
+      "version": "12.1.0",
       "onFail": "ignore"
     }
   },
   "engines": {
-    "node": ">=24.15 <25"
+    "node": ">=26.8.1 <27"
   },
-  "packageManager": "pnpm@11.17.0"
+  "packageManager": "pnpm@12.1.0"
 }
