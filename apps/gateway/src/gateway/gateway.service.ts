@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { canViewLoot } from "@lootlog/loot-visibility";
 import type { PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
 import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
@@ -160,27 +161,97 @@ export class GatewayService {
   }
 
   handleGuildsLootCreate(data: LootCreateEventDto) {
-    const routing = this.getNpcFeatureRouting(data.npc);
-    this.emitToFeatureRoom({
-      guildId: data.guildId,
-      feature: "loots",
-      tier: routing.tier,
-      event: GatewayEvent.LOOTS_CREATE,
-      data,
-      npcLevel: routing.npcLevel,
-    });
+    this.emitLootEvent(data, GatewayEvent.LOOTS_CREATE);
   }
 
   handleGuildsLootShareUpdate(data: LootShareUpdateEventDto) {
-    const routing = this.getNpcFeatureRouting(data.npc);
-    this.emitToFeatureRoom({
-      guildId: data.guildId,
-      feature: "loots",
-      tier: routing.tier,
-      event: GatewayEvent.LOOTS_SHARE_UPDATE,
-      data,
-      npcLevel: routing.npcLevel,
-    });
+    this.emitLootEvent(data, GatewayEvent.LOOTS_SHARE_UPDATE);
+  }
+
+  private emitLootEvent(
+    data: LootCreateEventDto,
+    event: GatewayEvent.LOOTS_CREATE | GatewayEvent.LOOTS_SHARE_UPDATE,
+  ) {
+    const npcs = data.npcs ?? (data.npc ? [data.npc] : []);
+    const rooms = [
+      ...new Set(
+        npcs.map((npc) =>
+          buildRoomName(
+            data.guildId,
+            "loots",
+            this.getNpcFeatureRouting(npc).tier,
+          ),
+        ),
+      ),
+    ];
+
+    if (rooms.length === 0) {
+      rooms.push(buildRoomName(data.guildId, "loots", "base"));
+    }
+
+    void this.fetchSocketsSafely(
+      () => this.gateway.server.in(rooms).fetchSockets(),
+      `loot rooms ${rooms.join(",")}`,
+    )
+      .then((sockets) => {
+        sockets.forEach((socket) => {
+          const guildData = socket.data.guilds?.find(
+            (guild) => guild.guild.id === data.guildId,
+          );
+          if (!guildData) {
+            return;
+          }
+
+          const isOwner = guildData.guild.ownerId === socket.data.discordId;
+          const permissions: string[] = guildData.roles.flatMap(
+            (role) => role.permissions,
+          );
+          if (isOwner) {
+            permissions.push("OWNER");
+          }
+
+          if (
+            canViewLoot({
+              permissions,
+              roles: guildData.roles.map((role) => ({
+                id: role.id,
+                levelFrom: role.lvlRangeFrom,
+                levelTo: role.lvlRangeTo,
+                permissions: role.permissions,
+              })),
+              npcs: npcs.map((npc) => ({
+                level: npc.lvl ?? null,
+                type: this.getLootVisibilityNpcType(npc),
+              })),
+            })
+          ) {
+            socket.emit(event, data);
+          }
+        });
+      })
+      .catch((error) => {
+        this.logger.error(
+          `Failed to emit loot event for guild ${data.guildId}: ${error.message}`,
+          error.stack,
+        );
+      });
+  }
+
+  private getLootVisibilityNpcType(
+    npc: LootCreateEventDto["npc"],
+  ): string | null {
+    if (!npc || npc.type === null || npc.type === undefined) {
+      return null;
+    }
+
+    const routing = this.getNpcFeatureRouting(npc);
+    if (routing.tier === "titans") {
+      return "TITAN";
+    }
+    if (routing.tier === "heroes") {
+      return "HERO";
+    }
+    return String(npc.type);
   }
 
   handleGuildsReservationCreate(data: ReservationCreateEventDto) {

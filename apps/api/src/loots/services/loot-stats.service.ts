@@ -1,7 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { NpcType, type ItemRarity } from "src/generated/prisma/client";
+import {
+  NpcType,
+  type ItemRarity,
+  type Permission,
+  type Role,
+} from "src/generated/prisma/client";
+import { createHash } from "node:crypto";
+import { createLootAccessFingerprint } from "@lootlog/loot-visibility";
+import {
+  buildLootNpcVisibilitySql,
+  toLootVisibilityRoles,
+} from "src/loots/loot-visibility.prisma";
 import type {
   Period,
   LootStatsResponse,
@@ -43,6 +54,8 @@ export class LootStatsService {
 
   async getLootStats(
     guildId: string,
+    permissions: Permission[],
+    roles: Role[],
     period: Period = "7d",
     world?: string,
     npcTypes?: string[],
@@ -50,6 +63,8 @@ export class LootStatsService {
   ): Promise<LootStatsResponse> {
     const cacheKey = this.buildCacheKey(
       guildId,
+      permissions,
+      roles,
       period,
       world,
       npcTypes,
@@ -68,6 +83,10 @@ export class LootStatsService {
       key: cacheKey,
       ttlSeconds: CACHE_TTL_SECONDS,
       factory: async () => {
+        const visibilityCondition = buildLootNpcVisibilitySql(
+          permissions,
+          roles,
+        );
         const dateFrom = this.getDateFromPeriod(period);
         const npcTypeFilter = npcTypes?.length
           ? npcTypes.filter((t): t is NpcType =>
@@ -89,6 +108,7 @@ export class LootStatsService {
             world,
             npcTypeFilter,
             excludeColossus,
+            visibilityCondition,
           ),
           this.getByRarity(
             guildId,
@@ -96,6 +116,7 @@ export class LootStatsService {
             world,
             npcTypeFilter,
             excludeColossus,
+            visibilityCondition,
           ),
           this.getTimeline(
             guildId,
@@ -104,6 +125,7 @@ export class LootStatsService {
             world,
             npcTypeFilter,
             excludeColossus,
+            visibilityCondition,
           ),
           this.getTopNpcs(
             guildId,
@@ -111,6 +133,7 @@ export class LootStatsService {
             world,
             npcTypeFilter,
             excludeColossus,
+            visibilityCondition,
           ),
           this.getTopContributors(
             guildId,
@@ -118,6 +141,7 @@ export class LootStatsService {
             world,
             npcTypeFilter,
             excludeColossus,
+            visibilityCondition,
           ),
           this.getTopLegendaryItems(
             guildId,
@@ -125,6 +149,7 @@ export class LootStatsService {
             world,
             npcTypeFilter,
             excludeColossus,
+            visibilityCondition,
           ),
         ]);
 
@@ -142,12 +167,23 @@ export class LootStatsService {
 
   private buildCacheKey(
     guildId: string,
+    permissions: Permission[],
+    roles: Role[],
     period: Period,
     world?: string,
     npcTypes?: string[],
     excludeColossus?: boolean,
   ): string {
-    const parts = ["loot-stats", guildId, period];
+    const accessFingerprint = createHash("sha256")
+      .update(
+        createLootAccessFingerprint({
+          organizationId: guildId,
+          permissions,
+          roles: toLootVisibilityRoles(roles),
+        }),
+      )
+      .digest("base64url");
+    const parts = ["loot-stats", guildId, accessFingerprint, period];
     if (world) parts.push(world);
     if (npcTypes?.length) parts.push(npcTypes.sort().join(","));
     if (excludeColossus) parts.push("no-colossus");
@@ -250,6 +286,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    visibilityCondition = "",
   ): Promise<LootStatsOverview> {
     const {
       dateCondition,
@@ -274,10 +311,12 @@ export class LootStatsService {
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
           FROM "Loot" l
-          INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE olr."guildId" = $1
+            AND olr."archivedAt" IS NULL
+          ${visibilityCondition}
             AND ns.type != 'COMMON'
           ${dateCondition}
           ${worldCondition}
@@ -303,10 +342,12 @@ export class LootStatsService {
           COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic_items,
           AVG(isnap.lvl)::numeric as avg_item_level
         FROM "Loot" l
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
         ${dateCondition}
         ${worldCondition}
       `,
@@ -331,6 +372,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    visibilityCondition = "",
   ): Promise<Partial<Record<ItemRarity, RarityStats>>> {
     const {
       dateCondition,
@@ -352,10 +394,12 @@ export class LootStatsService {
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
           FROM "Loot" l
-          INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE olr."guildId" = $1
+            AND olr."archivedAt" IS NULL
+          ${visibilityCondition}
             AND ns.type != 'COMMON'
           ${dateCondition}
           ${worldCondition}
@@ -377,10 +421,12 @@ export class LootStatsService {
           isnap.rarity,
           COUNT(*) as count
         FROM "Loot" l
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
           AND isnap.rarity IS NOT NULL
         ${dateCondition}
         ${worldCondition}
@@ -410,6 +456,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    visibilityCondition = "",
   ): Promise<TimelinePoint[]> {
     const {
       dateCondition,
@@ -433,10 +480,12 @@ export class LootStatsService {
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id, l."createdAt"
           FROM "Loot" l
-          INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE olr."guildId" = $1
+            AND olr."archivedAt" IS NULL
+          ${visibilityCondition}
             AND ns.type != 'COMMON'
           ${dateCondition}
           ${worldCondition}
@@ -459,10 +508,12 @@ export class LootStatsService {
           isnap.rarity,
           COUNT(*) as count
         FROM "Loot" l
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
         ${dateCondition}
         ${worldCondition}
         GROUP BY date_trunc('${truncUnit}', l."createdAt"), isnap.rarity
@@ -524,6 +575,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    visibilityCondition = "",
     limit = 10,
   ): Promise<TopNpc[]> {
     const {
@@ -573,10 +625,12 @@ export class LootStatsService {
               END
           ) as rn
         FROM "Loot" l
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
         INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
         INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
           AND ns.type != 'COMMON'
         ${dateCondition}
         ${worldCondition}
@@ -625,6 +679,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    visibilityCondition = "",
     limit = 10,
   ): Promise<TopContributor[]> {
     const {
@@ -657,10 +712,12 @@ export class LootStatsService {
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
           FROM "Loot" l
-          INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE olr."guildId" = $1
+            AND olr."archivedAt" IS NULL
+          ${visibilityCondition}
             AND ns.type != 'COMMON'
           ${dateCondition}
           ${worldCondition}
@@ -679,11 +736,14 @@ export class LootStatsService {
           COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UPGRADED') as upgraded
         FROM valid_loots vl
         INNER JOIN "Loot" l ON l.id = vl.loot_id
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
+        INNER JOIN "LootSubmission" ls ON ls."organizationLootRecordId" = olr.id
         INNER JOIN "Member" m ON m.id = ls."memberId"
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
         GROUP BY m.id, m.name, m.avatar, m."userId"
         ORDER BY count DESC
         LIMIT $${limitParamIndex}
@@ -700,11 +760,14 @@ export class LootStatsService {
           COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UNIQUE') as unique,
           COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UPGRADED') as upgraded
         FROM "Loot" l
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
+        INNER JOIN "LootSubmission" ls ON ls."organizationLootRecordId" = olr.id
         INNER JOIN "Member" m ON m.id = ls."memberId"
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
         ${dateCondition}
         ${worldCondition}
         GROUP BY m.id, m.name, m.avatar, m."userId"
@@ -735,6 +798,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    visibilityCondition = "",
     limit = 10,
   ): Promise<TopItem[]> {
     const {
@@ -778,10 +842,12 @@ export class LootStatsService {
               END
           ) as rn
         FROM "Loot" l
-        INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
+        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
         INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
         INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE olr."guildId" = $1
+          AND olr."archivedAt" IS NULL
+        ${visibilityCondition}
           AND ns.type != 'COMMON'
         ${dateCondition}
         ${worldCondition}

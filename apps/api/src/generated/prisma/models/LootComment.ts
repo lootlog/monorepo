@@ -28,21 +28,20 @@ export type AggregateLootComment = {
 
 export type LootCommentAvgAggregateOutputType = {
   id: number | null
-  lootId: number | null
+  organizationLootRecordId: number | null
   memberId: number | null
 }
 
 export type LootCommentSumAggregateOutputType = {
   id: number | null
-  lootId: number | null
+  organizationLootRecordId: number | null
   memberId: number | null
 }
 
 export type LootCommentMinAggregateOutputType = {
   id: number | null
-  lootId: number | null
+  organizationLootRecordId: number | null
   memberId: number | null
-  guildId: string | null
   content: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -50,9 +49,8 @@ export type LootCommentMinAggregateOutputType = {
 
 export type LootCommentMaxAggregateOutputType = {
   id: number | null
-  lootId: number | null
+  organizationLootRecordId: number | null
   memberId: number | null
-  guildId: string | null
   content: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -60,9 +58,8 @@ export type LootCommentMaxAggregateOutputType = {
 
 export type LootCommentCountAggregateOutputType = {
   id: number
-  lootId: number
+  organizationLootRecordId: number
   memberId: number
-  guildId: number
   content: number
   createdAt: number
   updatedAt: number
@@ -72,21 +69,20 @@ export type LootCommentCountAggregateOutputType = {
 
 export type LootCommentAvgAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
 }
 
 export type LootCommentSumAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
 }
 
 export type LootCommentMinAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
-  guildId?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -94,9 +90,8 @@ export type LootCommentMinAggregateInputType = {
 
 export type LootCommentMaxAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
-  guildId?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -104,9 +99,8 @@ export type LootCommentMaxAggregateInputType = {
 
 export type LootCommentCountAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
-  guildId?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -201,9 +195,8 @@ export type LootCommentGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 
 export type LootCommentGroupByOutputType = {
   id: number
-  lootId: number
+  organizationLootRecordId: number
   memberId: number
-  guildId: string
   content: string
   createdAt: Date
   updatedAt: Date
@@ -234,25 +227,23 @@ export type LootCommentWhereInput = {
   OR?: Prisma.LootCommentWhereInput[]
   NOT?: Prisma.LootCommentWhereInput | Prisma.LootCommentWhereInput[]
   id?: Prisma.IntFilter<"LootComment"> | number
-  lootId?: Prisma.IntFilter<"LootComment"> | number
+  organizationLootRecordId?: Prisma.IntFilter<"LootComment"> | number
   memberId?: Prisma.IntFilter<"LootComment"> | number
-  guildId?: Prisma.StringFilter<"LootComment"> | string
   content?: Prisma.StringFilter<"LootComment"> | string
   createdAt?: Prisma.DateTimeFilter<"LootComment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LootComment"> | Date | string
-  loot?: Prisma.XOR<Prisma.LootScalarRelationFilter, Prisma.LootWhereInput>
+  organizationLootRecord?: Prisma.XOR<Prisma.OrganizationLootRecordScalarRelationFilter, Prisma.OrganizationLootRecordWhereInput>
   member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
 }
 
 export type LootCommentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  loot?: Prisma.LootOrderByWithRelationInput
+  organizationLootRecord?: Prisma.OrganizationLootRecordOrderByWithRelationInput
   member?: Prisma.MemberOrderByWithRelationInput
 }
 
@@ -261,21 +252,19 @@ export type LootCommentWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.LootCommentWhereInput | Prisma.LootCommentWhereInput[]
   OR?: Prisma.LootCommentWhereInput[]
   NOT?: Prisma.LootCommentWhereInput | Prisma.LootCommentWhereInput[]
-  lootId?: Prisma.IntFilter<"LootComment"> | number
+  organizationLootRecordId?: Prisma.IntFilter<"LootComment"> | number
   memberId?: Prisma.IntFilter<"LootComment"> | number
-  guildId?: Prisma.StringFilter<"LootComment"> | string
   content?: Prisma.StringFilter<"LootComment"> | string
   createdAt?: Prisma.DateTimeFilter<"LootComment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LootComment"> | Date | string
-  loot?: Prisma.XOR<Prisma.LootScalarRelationFilter, Prisma.LootWhereInput>
+  organizationLootRecord?: Prisma.XOR<Prisma.OrganizationLootRecordScalarRelationFilter, Prisma.OrganizationLootRecordWhereInput>
   member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
 }, "id">
 
 export type LootCommentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -291,47 +280,42 @@ export type LootCommentScalarWhereWithAggregatesInput = {
   OR?: Prisma.LootCommentScalarWhereWithAggregatesInput[]
   NOT?: Prisma.LootCommentScalarWhereWithAggregatesInput | Prisma.LootCommentScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"LootComment"> | number
-  lootId?: Prisma.IntWithAggregatesFilter<"LootComment"> | number
+  organizationLootRecordId?: Prisma.IntWithAggregatesFilter<"LootComment"> | number
   memberId?: Prisma.IntWithAggregatesFilter<"LootComment"> | number
-  guildId?: Prisma.StringWithAggregatesFilter<"LootComment"> | string
   content?: Prisma.StringWithAggregatesFilter<"LootComment"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LootComment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"LootComment"> | Date | string
 }
 
 export type LootCommentCreateInput = {
-  guildId: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  loot: Prisma.LootCreateNestedOneWithoutCommentsInput
+  organizationLootRecord: Prisma.OrganizationLootRecordCreateNestedOneWithoutCommentsInput
   member: Prisma.MemberCreateNestedOneWithoutCommentsInput
 }
 
 export type LootCommentUncheckedCreateInput = {
   id?: number
-  lootId: number
+  organizationLootRecordId: number
   memberId: number
-  guildId: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type LootCommentUpdateInput = {
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  loot?: Prisma.LootUpdateOneRequiredWithoutCommentsNestedInput
+  organizationLootRecord?: Prisma.OrganizationLootRecordUpdateOneRequiredWithoutCommentsNestedInput
   member?: Prisma.MemberUpdateOneRequiredWithoutCommentsNestedInput
 }
 
 export type LootCommentUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -339,16 +323,14 @@ export type LootCommentUncheckedUpdateInput = {
 
 export type LootCommentCreateManyInput = {
   id?: number
-  lootId: number
+  organizationLootRecordId: number
   memberId: number
-  guildId: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type LootCommentUpdateManyMutationInput = {
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -356,9 +338,8 @@ export type LootCommentUpdateManyMutationInput = {
 
 export type LootCommentUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,9 +357,8 @@ export type LootCommentOrderByRelationAggregateInput = {
 
 export type LootCommentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -386,15 +366,14 @@ export type LootCommentCountOrderByAggregateInput = {
 
 export type LootCommentAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
 }
 
 export type LootCommentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -402,9 +381,8 @@ export type LootCommentMaxOrderByAggregateInput = {
 
 export type LootCommentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -412,7 +390,7 @@ export type LootCommentMinOrderByAggregateInput = {
 
 export type LootCommentSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
 }
 
@@ -458,60 +436,58 @@ export type LootCommentUncheckedUpdateManyWithoutMemberNestedInput = {
   deleteMany?: Prisma.LootCommentScalarWhereInput | Prisma.LootCommentScalarWhereInput[]
 }
 
-export type LootCommentCreateNestedManyWithoutLootInput = {
-  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutLootInput, Prisma.LootCommentUncheckedCreateWithoutLootInput> | Prisma.LootCommentCreateWithoutLootInput[] | Prisma.LootCommentUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutLootInput | Prisma.LootCommentCreateOrConnectWithoutLootInput[]
-  createMany?: Prisma.LootCommentCreateManyLootInputEnvelope
+export type LootCommentCreateNestedManyWithoutOrganizationLootRecordInput = {
+  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootCommentCreateWithoutOrganizationLootRecordInput[] | Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootCommentCreateManyOrganizationLootRecordInputEnvelope
   connect?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
 }
 
-export type LootCommentUncheckedCreateNestedManyWithoutLootInput = {
-  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutLootInput, Prisma.LootCommentUncheckedCreateWithoutLootInput> | Prisma.LootCommentCreateWithoutLootInput[] | Prisma.LootCommentUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutLootInput | Prisma.LootCommentCreateOrConnectWithoutLootInput[]
-  createMany?: Prisma.LootCommentCreateManyLootInputEnvelope
+export type LootCommentUncheckedCreateNestedManyWithoutOrganizationLootRecordInput = {
+  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootCommentCreateWithoutOrganizationLootRecordInput[] | Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootCommentCreateManyOrganizationLootRecordInputEnvelope
   connect?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
 }
 
-export type LootCommentUpdateManyWithoutLootNestedInput = {
-  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutLootInput, Prisma.LootCommentUncheckedCreateWithoutLootInput> | Prisma.LootCommentCreateWithoutLootInput[] | Prisma.LootCommentUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutLootInput | Prisma.LootCommentCreateOrConnectWithoutLootInput[]
-  upsert?: Prisma.LootCommentUpsertWithWhereUniqueWithoutLootInput | Prisma.LootCommentUpsertWithWhereUniqueWithoutLootInput[]
-  createMany?: Prisma.LootCommentCreateManyLootInputEnvelope
+export type LootCommentUpdateManyWithoutOrganizationLootRecordNestedInput = {
+  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootCommentCreateWithoutOrganizationLootRecordInput[] | Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput[]
+  upsert?: Prisma.LootCommentUpsertWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootCommentUpsertWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootCommentCreateManyOrganizationLootRecordInputEnvelope
   set?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
   disconnect?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
   delete?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
   connect?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
-  update?: Prisma.LootCommentUpdateWithWhereUniqueWithoutLootInput | Prisma.LootCommentUpdateWithWhereUniqueWithoutLootInput[]
-  updateMany?: Prisma.LootCommentUpdateManyWithWhereWithoutLootInput | Prisma.LootCommentUpdateManyWithWhereWithoutLootInput[]
+  update?: Prisma.LootCommentUpdateWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootCommentUpdateWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  updateMany?: Prisma.LootCommentUpdateManyWithWhereWithoutOrganizationLootRecordInput | Prisma.LootCommentUpdateManyWithWhereWithoutOrganizationLootRecordInput[]
   deleteMany?: Prisma.LootCommentScalarWhereInput | Prisma.LootCommentScalarWhereInput[]
 }
 
-export type LootCommentUncheckedUpdateManyWithoutLootNestedInput = {
-  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutLootInput, Prisma.LootCommentUncheckedCreateWithoutLootInput> | Prisma.LootCommentCreateWithoutLootInput[] | Prisma.LootCommentUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutLootInput | Prisma.LootCommentCreateOrConnectWithoutLootInput[]
-  upsert?: Prisma.LootCommentUpsertWithWhereUniqueWithoutLootInput | Prisma.LootCommentUpsertWithWhereUniqueWithoutLootInput[]
-  createMany?: Prisma.LootCommentCreateManyLootInputEnvelope
+export type LootCommentUncheckedUpdateManyWithoutOrganizationLootRecordNestedInput = {
+  create?: Prisma.XOR<Prisma.LootCommentCreateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootCommentCreateWithoutOrganizationLootRecordInput[] | Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootCommentCreateOrConnectWithoutOrganizationLootRecordInput[]
+  upsert?: Prisma.LootCommentUpsertWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootCommentUpsertWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootCommentCreateManyOrganizationLootRecordInputEnvelope
   set?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
   disconnect?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
   delete?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
   connect?: Prisma.LootCommentWhereUniqueInput | Prisma.LootCommentWhereUniqueInput[]
-  update?: Prisma.LootCommentUpdateWithWhereUniqueWithoutLootInput | Prisma.LootCommentUpdateWithWhereUniqueWithoutLootInput[]
-  updateMany?: Prisma.LootCommentUpdateManyWithWhereWithoutLootInput | Prisma.LootCommentUpdateManyWithWhereWithoutLootInput[]
+  update?: Prisma.LootCommentUpdateWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootCommentUpdateWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  updateMany?: Prisma.LootCommentUpdateManyWithWhereWithoutOrganizationLootRecordInput | Prisma.LootCommentUpdateManyWithWhereWithoutOrganizationLootRecordInput[]
   deleteMany?: Prisma.LootCommentScalarWhereInput | Prisma.LootCommentScalarWhereInput[]
 }
 
 export type LootCommentCreateWithoutMemberInput = {
-  guildId: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  loot: Prisma.LootCreateNestedOneWithoutCommentsInput
+  organizationLootRecord: Prisma.OrganizationLootRecordCreateNestedOneWithoutCommentsInput
 }
 
 export type LootCommentUncheckedCreateWithoutMemberInput = {
   id?: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -548,78 +524,72 @@ export type LootCommentScalarWhereInput = {
   OR?: Prisma.LootCommentScalarWhereInput[]
   NOT?: Prisma.LootCommentScalarWhereInput | Prisma.LootCommentScalarWhereInput[]
   id?: Prisma.IntFilter<"LootComment"> | number
-  lootId?: Prisma.IntFilter<"LootComment"> | number
+  organizationLootRecordId?: Prisma.IntFilter<"LootComment"> | number
   memberId?: Prisma.IntFilter<"LootComment"> | number
-  guildId?: Prisma.StringFilter<"LootComment"> | string
   content?: Prisma.StringFilter<"LootComment"> | string
   createdAt?: Prisma.DateTimeFilter<"LootComment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LootComment"> | Date | string
 }
 
-export type LootCommentCreateWithoutLootInput = {
-  guildId: string
+export type LootCommentCreateWithoutOrganizationLootRecordInput = {
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
   member: Prisma.MemberCreateNestedOneWithoutCommentsInput
 }
 
-export type LootCommentUncheckedCreateWithoutLootInput = {
+export type LootCommentUncheckedCreateWithoutOrganizationLootRecordInput = {
   id?: number
   memberId: number
-  guildId: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
-export type LootCommentCreateOrConnectWithoutLootInput = {
+export type LootCommentCreateOrConnectWithoutOrganizationLootRecordInput = {
   where: Prisma.LootCommentWhereUniqueInput
-  create: Prisma.XOR<Prisma.LootCommentCreateWithoutLootInput, Prisma.LootCommentUncheckedCreateWithoutLootInput>
+  create: Prisma.XOR<Prisma.LootCommentCreateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput>
 }
 
-export type LootCommentCreateManyLootInputEnvelope = {
-  data: Prisma.LootCommentCreateManyLootInput | Prisma.LootCommentCreateManyLootInput[]
+export type LootCommentCreateManyOrganizationLootRecordInputEnvelope = {
+  data: Prisma.LootCommentCreateManyOrganizationLootRecordInput | Prisma.LootCommentCreateManyOrganizationLootRecordInput[]
   skipDuplicates?: boolean
 }
 
-export type LootCommentUpsertWithWhereUniqueWithoutLootInput = {
+export type LootCommentUpsertWithWhereUniqueWithoutOrganizationLootRecordInput = {
   where: Prisma.LootCommentWhereUniqueInput
-  update: Prisma.XOR<Prisma.LootCommentUpdateWithoutLootInput, Prisma.LootCommentUncheckedUpdateWithoutLootInput>
-  create: Prisma.XOR<Prisma.LootCommentCreateWithoutLootInput, Prisma.LootCommentUncheckedCreateWithoutLootInput>
+  update: Prisma.XOR<Prisma.LootCommentUpdateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedUpdateWithoutOrganizationLootRecordInput>
+  create: Prisma.XOR<Prisma.LootCommentCreateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedCreateWithoutOrganizationLootRecordInput>
 }
 
-export type LootCommentUpdateWithWhereUniqueWithoutLootInput = {
+export type LootCommentUpdateWithWhereUniqueWithoutOrganizationLootRecordInput = {
   where: Prisma.LootCommentWhereUniqueInput
-  data: Prisma.XOR<Prisma.LootCommentUpdateWithoutLootInput, Prisma.LootCommentUncheckedUpdateWithoutLootInput>
+  data: Prisma.XOR<Prisma.LootCommentUpdateWithoutOrganizationLootRecordInput, Prisma.LootCommentUncheckedUpdateWithoutOrganizationLootRecordInput>
 }
 
-export type LootCommentUpdateManyWithWhereWithoutLootInput = {
+export type LootCommentUpdateManyWithWhereWithoutOrganizationLootRecordInput = {
   where: Prisma.LootCommentScalarWhereInput
-  data: Prisma.XOR<Prisma.LootCommentUpdateManyMutationInput, Prisma.LootCommentUncheckedUpdateManyWithoutLootInput>
+  data: Prisma.XOR<Prisma.LootCommentUpdateManyMutationInput, Prisma.LootCommentUncheckedUpdateManyWithoutOrganizationLootRecordInput>
 }
 
 export type LootCommentCreateManyMemberInput = {
   id?: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type LootCommentUpdateWithoutMemberInput = {
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  loot?: Prisma.LootUpdateOneRequiredWithoutCommentsNestedInput
+  organizationLootRecord?: Prisma.OrganizationLootRecordUpdateOneRequiredWithoutCommentsNestedInput
 }
 
 export type LootCommentUncheckedUpdateWithoutMemberInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -627,43 +597,38 @@ export type LootCommentUncheckedUpdateWithoutMemberInput = {
 
 export type LootCommentUncheckedUpdateManyWithoutMemberInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type LootCommentCreateManyLootInput = {
+export type LootCommentCreateManyOrganizationLootRecordInput = {
   id?: number
   memberId: number
-  guildId: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
-export type LootCommentUpdateWithoutLootInput = {
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+export type LootCommentUpdateWithoutOrganizationLootRecordInput = {
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   member?: Prisma.MemberUpdateOneRequiredWithoutCommentsNestedInput
 }
 
-export type LootCommentUncheckedUpdateWithoutLootInput = {
+export type LootCommentUncheckedUpdateWithoutOrganizationLootRecordInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type LootCommentUncheckedUpdateManyWithoutLootInput = {
+export type LootCommentUncheckedUpdateManyWithoutOrganizationLootRecordInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -673,75 +638,70 @@ export type LootCommentUncheckedUpdateManyWithoutLootInput = {
 
 export type LootCommentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  lootId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
-  guildId?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lootComment"]>
 
 export type LootCommentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  lootId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
-  guildId?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lootComment"]>
 
 export type LootCommentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  lootId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
-  guildId?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lootComment"]>
 
 export type LootCommentSelectScalar = {
   id?: boolean
-  lootId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
-  guildId?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LootCommentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "lootId" | "memberId" | "guildId" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["lootComment"]>
+export type LootCommentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationLootRecordId" | "memberId" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["lootComment"]>
 export type LootCommentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
 }
 export type LootCommentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
 }
 export type LootCommentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
 }
 
 export type $LootCommentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "LootComment"
   objects: {
-    loot: Prisma.$LootPayload<ExtArgs>
+    organizationLootRecord: Prisma.$OrganizationLootRecordPayload<ExtArgs>
     member: Prisma.$MemberPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
-    lootId: number
+    organizationLootRecordId: number
     memberId: number
-    guildId: string
     content: string
     createdAt: Date
     updatedAt: Date
@@ -1139,7 +1099,7 @@ readonly fields: LootCommentFieldRefs;
  */
 export interface Prisma__LootCommentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  loot<T extends Prisma.LootDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LootDefaultArgs<ExtArgs>>): Prisma.Prisma__LootClient<runtime.Types.Result.GetResult<Prisma.$LootPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  organizationLootRecord<T extends Prisma.OrganizationLootRecordDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationLootRecordClient<runtime.Types.Result.GetResult<Prisma.$OrganizationLootRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   member<T extends Prisma.MemberDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MemberDefaultArgs<ExtArgs>>): Prisma.Prisma__MemberClient<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1171,9 +1131,8 @@ export interface Prisma__LootCommentClient<T, Null = never, ExtArgs extends runt
  */
 export interface LootCommentFieldRefs {
   readonly id: Prisma.FieldRef<"LootComment", 'Int'>
-  readonly lootId: Prisma.FieldRef<"LootComment", 'Int'>
+  readonly organizationLootRecordId: Prisma.FieldRef<"LootComment", 'Int'>
   readonly memberId: Prisma.FieldRef<"LootComment", 'Int'>
-  readonly guildId: Prisma.FieldRef<"LootComment", 'String'>
   readonly content: Prisma.FieldRef<"LootComment", 'String'>
   readonly createdAt: Prisma.FieldRef<"LootComment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"LootComment", 'DateTime'>

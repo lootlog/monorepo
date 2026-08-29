@@ -1,4 +1,5 @@
 import { type INestApplication } from "@nestjs/common";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
@@ -14,6 +15,7 @@ import {
 describe("Loots E2E Tests (Whitelist)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let redis: RedisService;
 
   beforeAll(async () => {
     const moduleFixture = await createTestingModuleWithMocks({
@@ -26,6 +28,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
     await app.listen(0);
 
     prisma = app.get<PrismaService>(PrismaService);
+    redis = app.get<RedisService>(RedisService);
   });
 
   afterAll(async () => {
@@ -39,7 +42,10 @@ describe("Loots E2E Tests (Whitelist)", () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Loot", "LootSubmission", "UserCharactersLootlogSettings", "LootlogConfig" CASCADE`;
+    await Promise.all([
+      prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Loot", "LootSubmission", "UserCharactersLootlogSettings", "LootlogConfig" CASCADE`,
+      redis.getClient().flushall(),
+    ]);
   });
 
   const createLootWriter = async (npcType: NpcType) => {
@@ -164,9 +170,11 @@ describe("Loots E2E Tests (Whitelist)", () => {
       ]);
       expect(response.body.rejectedGuilds).toEqual([]);
 
-      const lootSubmissions = await prisma.lootSubmission.findMany();
+      const lootSubmissions = await prisma.lootSubmission.findMany({
+        include: { organizationLootRecord: true },
+      });
       expect(lootSubmissions).toHaveLength(1);
-      expect(lootSubmissions[0].guildId).toBe(guild1.id);
+      expect(lootSubmissions[0].organizationLootRecord.guildId).toBe(guild1.id);
     });
 
     it("should not create loot for guilds not in whitelist", async () => {
@@ -283,9 +291,11 @@ describe("Loots E2E Tests (Whitelist)", () => {
         ],
       });
 
-      const lootSubmissions = await prisma.lootSubmission.findMany();
+      const lootSubmissions = await prisma.lootSubmission.findMany({
+        include: { organizationLootRecord: true },
+      });
       expect(lootSubmissions).toHaveLength(1);
-      expect(lootSubmissions[0].guildId).toBe(guild1.id);
+      expect(lootSubmissions[0].organizationLootRecord.guildId).toBe(guild1.id);
     });
 
     it("should not create any loot when whitelist is empty", async () => {
@@ -630,7 +640,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
   });
 
   describe("PATCH /loots/:id", () => {
-    it("should acknowledge a repeated update without returning the stored share", async () => {
+    it("should acknowledge an identical repeated update without returning the stored share", async () => {
       await createLootWriter(NpcType.HERO);
       const createResponse = await request(app.getHttpServer())
         .post("/loots")
@@ -670,7 +680,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .patch(`/loots/${createResponse.body.id}`)
         .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send({ msg: "already handled" })
+        .send(updatePayload)
         .expect(200);
 
       expect(firstResponse.body).toEqual({});

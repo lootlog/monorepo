@@ -663,6 +663,7 @@ paths:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -1893,7 +1894,7 @@ paths:
       tags:
         - loots
     delete:
-      description: Delete a loot entry
+      description: Archive an Organization Loot record
       operationId: LootsController_deleteLoot
       parameters:
         - name: lootId
@@ -1911,14 +1912,14 @@ paths:
             example: guild_123
       responses:
         "200":
-          description: Loot deleted successfully
+          description: Loot archived successfully
         "403":
-          description: Forbidden - admin or manage permission required
+          description: Forbidden - archive permission required
         "404":
           description: Loot not found
       security:
         - bearer: []
-      summary: Delete loot
+      summary: Archive loot
       tags:
         - loots
   /loots:
@@ -7244,6 +7245,7 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7376,6 +7378,7 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7701,6 +7704,7 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7942,6 +7946,7 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -8001,6 +8006,7 @@ components:
               - LOOTLOG_ACCESS
               - LOOTLOG_LOOTS_READ
               - LOOTLOG_LOOTS_WRITE
+              - LOOTLOG_LOOTS_ARCHIVE
               - LOOTLOG_LOOTS_TITANS_READ
               - LOOTLOG_LOOTS_HEROES_READ
               - LOOTLOG_TIMERS_READ
@@ -8052,6 +8058,7 @@ components:
               - LOOTLOG_ACCESS
               - LOOTLOG_LOOTS_READ
               - LOOTLOG_LOOTS_WRITE
+              - LOOTLOG_LOOTS_ARCHIVE
               - LOOTLOG_LOOTS_TITANS_READ
               - LOOTLOG_LOOTS_HEROES_READ
               - LOOTLOG_TIMERS_READ
@@ -8239,6 +8246,7 @@ components:
                         - LOOTLOG_ACCESS
                         - LOOTLOG_LOOTS_READ
                         - LOOTLOG_LOOTS_WRITE
+                        - LOOTLOG_LOOTS_ARCHIVE
                         - LOOTLOG_LOOTS_TITANS_READ
                         - LOOTLOG_LOOTS_HEROES_READ
                         - LOOTLOG_TIMERS_READ
@@ -8450,6 +8458,7 @@ components:
                         - LOOTLOG_ACCESS
                         - LOOTLOG_LOOTS_READ
                         - LOOTLOG_LOOTS_WRITE
+                        - LOOTLOG_LOOTS_ARCHIVE
                         - LOOTLOG_LOOTS_TITANS_READ
                         - LOOTLOG_LOOTS_HEROES_READ
                         - LOOTLOG_TIMERS_READ

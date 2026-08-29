@@ -2,10 +2,15 @@ import { Permission } from "src/generated/prisma/client";
 import { PermissionResolver } from "./permission-resolver";
 
 describe("PermissionResolver", () => {
-  it("returns all permissions for administrative users", () => {
+  it("expands ADMIN capabilities without granting the OWNER recovery marker", () => {
     expect(PermissionResolver.resolve([Permission.ADMIN])).toEqual(
-      Object.values(Permission),
+      Object.values(Permission).filter(
+        (permission) => permission !== Permission.OWNER,
+      ),
     );
+  });
+
+  it("returns all permissions for OWNER", () => {
     expect(PermissionResolver.resolve([Permission.OWNER])).toEqual(
       Object.values(Permission),
     );

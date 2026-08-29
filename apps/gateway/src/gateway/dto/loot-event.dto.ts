@@ -11,6 +11,7 @@ export type LootCreateEventDto = {
   guildId: string;
   lootId: number;
   npc?: LootSocketNpcDto;
+  npcs?: LootSocketNpcDto[];
 };
 
 export type LootShareUpdateEventDto = LootCreateEventDto & {

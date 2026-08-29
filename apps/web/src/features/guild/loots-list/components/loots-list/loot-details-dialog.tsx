@@ -27,7 +27,7 @@ import {
 } from "@lootlog/api-client/react-query/main/loots";
 import { buildLootShareMaps } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
-const MANAGE_LOOTS_PERMISSIONS = ["LOOTLOG_MANAGE", "ADMIN"] as const;
+const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";
 
 const LoadingState: FC = () => (
   <div className="flex h-64 items-center justify-center">
@@ -137,11 +137,7 @@ export const LootDetailsDialog: FC = () => {
   const loot = cachedLoot ?? fetchedLoot;
 
   const canManageLoots =
-    permissions?.some((permission) =>
-      MANAGE_LOOTS_PERMISSIONS.includes(
-        permission as (typeof MANAGE_LOOTS_PERMISSIONS)[number],
-      ),
-    ) || isOwner;
+    permissions?.includes(ARCHIVE_LOOTS_PERMISSION) || isOwner;
 
   const renderContent = () => {
     if (loot) {

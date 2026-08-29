@@ -12,8 +12,11 @@ export class LootCommentService {
 
     const comments = await this.prisma.lootComment.findMany({
       where: {
-        guildId,
-        lootId,
+        organizationLootRecord: {
+          guildId,
+          lootId,
+          archivedAt: null,
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -37,7 +40,15 @@ export class LootCommentService {
       },
     });
 
-    return comments;
+    return comments.map((comment) => ({
+      id: comment.id,
+      lootId,
+      guildId,
+      content: comment.content,
+      member: comment.member,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+    }));
   }
 
   async createComment(options: {
@@ -47,25 +58,25 @@ export class LootCommentService {
     body: CreateCommentDto;
   }) {
     const { discordId, lootId, body, guildId } = options;
-    const loot = await this.prisma.loot.findFirst({
-      where: {
-        id: lootId,
-        lootSubmissions: { some: { guildId } },
-      },
-    });
+    const organizationLootRecord =
+      await this.prisma.organizationLootRecord.findFirst({
+        where: {
+          lootId,
+          guildId,
+          archivedAt: null,
+        },
+        select: { id: true },
+      });
 
-    if (!loot) {
+    if (!organizationLootRecord) {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
 
     const comment = await this.prisma.lootComment.create({
       data: {
         content: body.content,
-        guildId,
-        loot: {
-          connect: {
-            id: lootId,
-          },
+        organizationLootRecord: {
+          connect: { id: organizationLootRecord.id },
         },
         member: {
           connect: {
@@ -95,6 +106,14 @@ export class LootCommentService {
       },
     });
 
-    return comment;
+    return {
+      id: comment.id,
+      lootId,
+      guildId,
+      content: comment.content,
+      member: comment.member,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+    };
   }
 }
