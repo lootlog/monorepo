@@ -23,6 +23,10 @@ import {
 } from "@lootlog/ui/components/select";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  RESERVATION_TIME_GRANULARITY_OPTIONS,
+  resolveReservationSettings,
+} from "@lootlog/reservations";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
@@ -34,10 +38,6 @@ import {
   reservationsSettingsFormSchema,
   type ReservationsSettingsFormValues,
 } from "./reservations-form.schema";
-import {
-  getReservationSettings,
-  RESERVATION_GRANULARITY_OPTIONS,
-} from "@/features/guild/reservations/schedule/reservation-settings";
 import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 
 type ReservationsSettingsFormProps = {
@@ -51,7 +51,7 @@ export const ReservationsSettingsForm = ({
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const { mutate: updateGuildConfig } = useGuildsControllerUpdateGuildConfig();
-  const settings = getReservationSettings(guild);
+  const settings = resolveReservationSettings(guild);
 
   const form = useForm<ReservationsSettingsFormValues>({
     resolver: zodResolver(reservationsSettingsFormSchema),
@@ -59,7 +59,7 @@ export const ReservationsSettingsForm = ({
   });
 
   useEffect(() => {
-    form.reset(getReservationSettings(guild));
+    form.reset(resolveReservationSettings(guild));
   }, [
     form,
     guild.reservationActiveLimitPerSpot,
@@ -209,13 +209,15 @@ export const ReservationsSettingsForm = ({
                     <Select
                       value={String(field.value)}
                       onValueChange={(value) => field.onChange(Number(value))}
-                      items={RESERVATION_GRANULARITY_OPTIONS.map((value) => ({
-                        value: String(value),
-                        label: t(
-                          "settings.reservations.fields.granularity.option",
-                          { minutes: value },
-                        ),
-                      }))}
+                      items={RESERVATION_TIME_GRANULARITY_OPTIONS.map(
+                        (value) => ({
+                          value: String(value),
+                          label: t(
+                            "settings.reservations.fields.granularity.option",
+                            { minutes: value },
+                          ),
+                        }),
+                      )}
                     >
                       <FormControl
                         render={
@@ -225,7 +227,7 @@ export const ReservationsSettingsForm = ({
                         }
                       />
                       <SelectContent>
-                        {RESERVATION_GRANULARITY_OPTIONS.map((value) => (
+                        {RESERVATION_TIME_GRANULARITY_OPTIONS.map((value) => (
                           <SelectItem key={value} value={String(value)}>
                             {t(
                               "settings.reservations.fields.granularity.option",

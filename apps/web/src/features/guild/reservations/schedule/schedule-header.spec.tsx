@@ -8,7 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_RESERVATION_SETTINGS } from "./reservation-settings";
+import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/reservations";
 import { ScheduleHeader } from "./schedule-header";
 
 const navigate = vi.fn<(options: { to: string }) => void>();

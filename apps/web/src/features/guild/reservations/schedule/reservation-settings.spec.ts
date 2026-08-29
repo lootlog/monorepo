@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   clampReservationEndDate,
   getDurationMinutes,
-  getReservationSettings,
   isReservationStartSelectable,
   snapMinutesToStep,
   validateReservationDateRange,
@@ -17,16 +16,6 @@ describe("reservation settings helpers", () => {
     reservationActiveLimitPerSpot: 3,
   };
   const now = new Date(2026, 0, 1, 12, 0, 0, 0);
-
-  it("falls back to default settings when guild config is missing", () => {
-    expect(getReservationSettings(undefined)).toEqual({
-      reservationMaxDurationMinutes: 180,
-      reservationMinDurationMinutes: 30,
-      reservationTimeGranularityMinutes: 15,
-      reservationMaxAdvanceDays: 7,
-      reservationActiveLimitPerSpot: 3,
-    });
-  });
 
   it("snaps minutes down to the configured step", () => {
     expect(snapMinutesToStep(37, 15)).toBe(30);
@@ -102,6 +91,17 @@ describe("reservation settings helpers", () => {
       validateReservationDateRange({
         fromDate: new Date(2026, 0, 1, 10, 45),
         toDate: new Date(2026, 0, 1, 11, 30),
+        settings,
+        now,
+      }),
+    ).toBe("startTooOld");
+  });
+
+  it("matches the authoritative 60-second grace for a past start", () => {
+    expect(
+      validateReservationDateRange({
+        fromDate: new Date(2026, 0, 1, 11, 45),
+        toDate: new Date(2026, 0, 1, 12, 30),
         settings,
         now,
       }),
