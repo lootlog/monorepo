@@ -26,7 +26,7 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "test:watch": "vitest --config ./vitest.config.ts",
     "openapi:generate": "OPENAPI_GENERATION=true pnpm api:generate && OPENAPI_GENERATION=true nest build --config nest-cli.openapi.json && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
-    "api:generate": "prisma generate",
+    "api:generate": "prisma generate && node ../../tools/normalize-generated-prisma.mjs src/generated/prisma",
     "api:migrate:dev": "prisma migrate dev",
     "api:studio": "prisma studio"
   },
