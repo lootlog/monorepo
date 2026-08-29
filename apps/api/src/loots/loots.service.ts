@@ -16,6 +16,9 @@ import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import {
   getNpcTypeByWt,
+  type GuildLootCreatedEventV2,
+  type GuildLootEventNpc,
+  type GuildLootShareUpdatedEventV2,
   type LootCreatedNotificationEventV2,
 } from "@lootlog/types";
 import { ErrorKey } from "./enum/error-key.enum";
@@ -68,13 +71,6 @@ type LootNpcWithSocketSnapshot = {
     type: NpcType | null;
     wt: number | null;
   };
-};
-
-type LootSocketNpcPayload = {
-  lvl?: number | null;
-  prof?: string | null;
-  type?: string | null;
-  wt?: number | null;
 };
 
 type CreateLootOutcome = {
@@ -172,23 +168,10 @@ export class LootsService implements OnModuleInit {
     });
   }
 
-  private getPrimarySocketNpcPayload(
-    npcData: ReturnType<LootMappingService["processNpcs"]>,
-    npcType: NpcType,
-  ): LootSocketNpcPayload {
-    return {
-      lvl: npcData.highest.lvl ?? null,
-      prof: npcData.highest.prof ?? null,
-      type: npcType,
-      wt: npcData.highest.wt ?? null,
-    };
-  }
-
   private async publishLootCreateEvents(
     lootId: number,
     submissions: LootSubmissionData[],
-    npc: LootSocketNpcPayload,
-    npcs: LootSocketNpcPayload[],
+    npcs: GuildLootEventNpc[],
   ) {
     await Promise.all(
       submissions.map((submission) =>
@@ -196,11 +179,11 @@ export class LootsService implements OnModuleInit {
           DEFAULT_EXCHANGE_NAME,
           RoutingKey.GUILDS_LOOTS_CREATE,
           {
+            version: 2,
             guildId: submission.guildId,
             lootId,
-            npc,
             npcs,
-          },
+          } satisfies GuildLootCreatedEventV2,
         ),
       ),
     );
@@ -348,34 +331,9 @@ export class LootsService implements OnModuleInit {
     }));
   }
 
-  private getSocketNpcPayloadFromLootNpcs(
-    lootNpcs: LootNpcWithSocketSnapshot[],
-  ): LootSocketNpcPayload {
-    const primaryNpc = [...lootNpcs].sort(
-      (a, b) => (b.npcSnapshot.wt ?? 0) - (a.npcSnapshot.wt ?? 0),
-    )[0]?.npcSnapshot;
-
-    if (!primaryNpc) {
-      return {};
-    }
-
-    return {
-      lvl: primaryNpc.lvl,
-      prof: primaryNpc.prof,
-      type:
-        primaryNpc.type ??
-        getNpcTypeByWt(
-          NpcType,
-          primaryNpc.wt ?? 0,
-          primaryNpc.prof ?? undefined,
-        ),
-      wt: primaryNpc.wt,
-    };
-  }
-
   private getSocketNpcPayloadsFromLootNpcs(
     lootNpcs: LootNpcWithSocketSnapshot[],
-  ): LootSocketNpcPayload[] {
+  ): GuildLootEventNpc[] {
     return lootNpcs.map(({ npcSnapshot }) => ({
       lvl: npcSnapshot.lvl,
       prof: npcSnapshot.prof,
@@ -567,10 +525,6 @@ export class LootsService implements OnModuleInit {
         npcData.highest.prof,
         npcData.highest.type,
       );
-      const socketNpc = this.getPrimarySocketNpcPayload(
-        npcData,
-        highestWtNpcType,
-      );
       const socketNpcs = npcData.mapped.map((npc) => ({
         lvl: npc.lvl,
         prof: npc.prof,
@@ -681,49 +635,53 @@ export class LootsService implements OnModuleInit {
         );
 
         if (newSubmissions.length > 0) {
-          await this.prisma.organizationLootRecord.createMany({
-            data: this.getUniqueGuildSubmissions(newSubmissions).map(
-              (submission) => ({
-                guildId: submission.guildId,
-                lootId: existingLoot.id,
-              }),
-            ),
-            skipDuplicates: true,
-          });
-          const organizationRecords =
-            await this.prisma.organizationLootRecord.findMany({
-              where: {
-                lootId: existingLoot.id,
-                guildId: {
-                  in: newSubmissions.map((submission) => submission.guildId),
+          const organizationRecords = await this.prisma.$transaction(
+            async (tx) => {
+              await tx.organizationLootRecord.createMany({
+                data: this.getUniqueGuildSubmissions(newSubmissions).map(
+                  (submission) => ({
+                    guildId: submission.guildId,
+                    lootId: existingLoot.id,
+                  }),
+                ),
+                skipDuplicates: true,
+              });
+              const records = await tx.organizationLootRecord.findMany({
+                where: {
+                  lootId: existingLoot.id,
+                  guildId: {
+                    in: newSubmissions.map((submission) => submission.guildId),
+                  },
                 },
-              },
-              select: { id: true, guildId: true, archivedAt: true },
-            });
-          const recordIdByGuildId = new Map(
-            organizationRecords.map((record) => [record.guildId, record.id]),
-          );
-
-          const submissionRows = newSubmissions.map((submission) => {
-            const organizationLootRecordId = recordIdByGuildId.get(
-              submission.guildId,
-            );
-            if (organizationLootRecordId === undefined) {
-              throw new ServiceUnavailableException(
-                "Failed to resolve Organization Loot record",
+                select: { id: true, guildId: true, archivedAt: true },
+              });
+              const recordIdByGuildId = new Map(
+                records.map((record) => [record.guildId, record.id]),
               );
-            }
+              const submissionRows = newSubmissions.map((submission) => {
+                const organizationLootRecordId = recordIdByGuildId.get(
+                  submission.guildId,
+                );
+                if (organizationLootRecordId === undefined) {
+                  throw new ServiceUnavailableException(
+                    "Failed to resolve Organization Loot record",
+                  );
+                }
 
-            return {
-              organizationLootRecordId,
-              memberId: submission.memberId,
-            };
-          });
+                return {
+                  organizationLootRecordId,
+                  memberId: submission.memberId,
+                };
+              });
 
-          await this.prisma.lootSubmission.createMany({
-            data: submissionRows,
-            skipDuplicates: true,
-          });
+              await tx.lootSubmission.createMany({
+                data: submissionRows,
+                skipDuplicates: true,
+              });
+
+              return records;
+            },
+          );
 
           const archivedGuildIds = new Set(
             organizationRecords
@@ -743,7 +701,6 @@ export class LootsService implements OnModuleInit {
           await this.publishLootCreateEvents(
             existingLoot.id,
             activeNewSubmissions,
-            socketNpc,
             socketNpcs,
           );
         }
@@ -809,7 +766,6 @@ export class LootsService implements OnModuleInit {
       await this.publishLootCreateEvents(
         loot.id,
         outcome.submissionData,
-        socketNpc,
         socketNpcs,
       );
 
@@ -1084,7 +1040,6 @@ export class LootsService implements OnModuleInit {
       );
     }
 
-    const socketNpc = this.getSocketNpcPayloadFromLootNpcs(loot.lootNpcs);
     const socketNpcs = this.getSocketNpcPayloadsFromLootNpcs(loot.lootNpcs);
     const uniqueGuildSubmissions = this.getUniqueGuildSubmissions(
       loot.organizationLootRecords,
@@ -1099,12 +1054,12 @@ export class LootsService implements OnModuleInit {
           DEFAULT_EXCHANGE_NAME,
           RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
           {
+            version: 2,
             guildId: submission.guildId,
             lootId,
             lootShare: mappedLootShare,
-            npc: socketNpc,
             npcs: socketNpcs,
-          },
+          } satisfies GuildLootShareUpdatedEventV2,
         ),
       ),
     );

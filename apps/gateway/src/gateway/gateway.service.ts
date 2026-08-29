@@ -8,8 +8,8 @@ import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.d
 import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
 import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
 import type {
-  LootCreateEventDto,
-  LootShareUpdateEventDto,
+  LootCreateEventV2Dto,
+  LootShareUpdateEventV2Dto,
 } from "src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
@@ -160,19 +160,19 @@ export class GatewayService {
     });
   }
 
-  handleGuildsLootCreate(data: LootCreateEventDto) {
+  handleGuildsLootCreate(data: LootCreateEventV2Dto) {
     this.emitLootEvent(data, GatewayEvent.LOOTS_CREATE);
   }
 
-  handleGuildsLootShareUpdate(data: LootShareUpdateEventDto) {
+  handleGuildsLootShareUpdate(data: LootShareUpdateEventV2Dto) {
     this.emitLootEvent(data, GatewayEvent.LOOTS_SHARE_UPDATE);
   }
 
   private emitLootEvent(
-    data: LootCreateEventDto,
+    data: LootCreateEventV2Dto,
     event: GatewayEvent.LOOTS_CREATE | GatewayEvent.LOOTS_SHARE_UPDATE,
   ) {
-    const npcs = data.npcs ?? (data.npc ? [data.npc] : []);
+    const npcs = data.npcs;
     const rooms = [
       ...new Set(
         npcs.map((npc) =>
@@ -184,10 +184,6 @@ export class GatewayService {
         ),
       ),
     ];
-
-    if (rooms.length === 0) {
-      rooms.push(buildRoomName(data.guildId, "loots", "base"));
-    }
 
     void this.fetchSocketsSafely(
       () => this.gateway.server.in(rooms).fetchSockets(),
@@ -238,9 +234,13 @@ export class GatewayService {
   }
 
   private getLootVisibilityNpcType(
-    npc: LootCreateEventDto["npc"],
+    npc: LootCreateEventV2Dto["npcs"][number],
   ): string | null {
-    if (!npc || npc.type === null || npc.type === undefined) {
+    if (
+      npc.type === null ||
+      npc.type === undefined ||
+      (typeof npc.type === "string" && npc.type.trim() === "")
+    ) {
       return null;
     }
 

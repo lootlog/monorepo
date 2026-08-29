@@ -10,6 +10,7 @@ export * from "./common/npc-routing.types.js";
 export * from "./common/discord-auth-scopes.js";
 export * from "./common/discord.js";
 export * from "./common/notifications.types.js";
+export * from "./common/loot-events.types.js";
 export * from "./common/map-ping.types.js";
 export * from "./common/air-tag.types.js";
 export * from "./common/party-ready-room.types.js";

@@ -54,8 +54,15 @@ is rejected as a conflict and diagnostics retain hashes rather than chat text.
   designed for active tenant pagination and aggregation.
 - The backfill rewrites all submissions and comments and requires capacity for
   temporary indexes, WAL, and table bloat during rollout.
-- The maintenance cutover must stop API loot publishers and notification
-  consumers, purge the `backend-notifications-loot-created` queue, and then
-  start API instances that use `LootCreatedNotificationEventV2`. V1 notification
-  events are not accepted after the cutover.
+- The maintenance cutover must stop API loot publishers, gateway loot
+  consumers, and notification consumers. Purge
+  `backend-notifications-loot-created`, plus the main, retry, and dead-letter
+  queues for both gateway loot event families:
+  `gateway-guilds-loots-create`, `gateway-guilds-loots-create.retry`,
+  `gateway-guilds-loots-create.dlq`, `gateway-guilds-loots-share-update`,
+  `gateway-guilds-loots-share-update.retry`, and
+  `gateway-guilds-loots-share-update.dlq`. Then start API instances publishing
+  `LootCreatedNotificationEventV2`, `GuildLootCreatedEventV2`, and
+  `GuildLootShareUpdatedEventV2`, followed by their consumers. V1 events are not
+  accepted after the cutover.
 - Removing unassociated global loot is a separate, auditable maintenance task.

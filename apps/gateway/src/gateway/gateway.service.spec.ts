@@ -565,13 +565,9 @@ describe("GatewayService", () => {
   describe("handleGuildsLootCreate", () => {
     it("emits a loot event only to sockets that can view every NPC", async () => {
       const payload = {
+        version: 2 as const,
         guildId: "guild-123",
         lootId: 42,
-        npc: {
-          type: "ELITE",
-          lvl: 100,
-          wt: 10,
-        },
         npcs: [
           { type: "ELITE", lvl: 100 },
           { type: "TITAN", lvl: 150 },
@@ -615,9 +611,9 @@ describe("GatewayService", () => {
 
     it("does not let ADMIN bypass loot visibility, but OWNER still can", async () => {
       const payload = {
+        version: 2 as const,
         guildId: "guild-123",
         lootId: 42,
-        npc: { type: "TITAN", lvl: 150 },
         npcs: [{ type: "TITAN", lvl: 150 }],
       };
       const adminSocket = createSocketForGuild({
@@ -640,19 +636,35 @@ describe("GatewayService", () => {
         payload,
       );
     });
+
+    it("fails closed when an NPC type is blank", async () => {
+      const payload = {
+        version: 2 as const,
+        guildId: "guild-123",
+        lootId: 42,
+        npcs: [{ type: "", lvl: 100 }],
+      };
+      const baseSocket = createSocketForGuild({
+        discordId: "base-reader",
+        roles: [{ permissions: [Permission.LOOTLOG_LOOTS_READ] }],
+      });
+      mockServer.fetchSockets.mockResolvedValue([baseSocket]);
+
+      service.handleGuildsLootCreate(payload);
+      await flushPromises();
+
+      expect(baseSocket.emit).not.toHaveBeenCalled();
+    });
   });
 
   describe("handleGuildsLootShareUpdate", () => {
     it("should emit loot share update event to an eligible socket", async () => {
       const payload = {
+        version: 2 as const,
         guildId: "guild-123",
         lootId: 42,
         lootShare: { player: ["item"] },
-        npc: {
-          type: "ELITE",
-          lvl: 100,
-          wt: 10,
-        },
+        npcs: [{ type: "ELITE", lvl: 100, wt: 10 }],
       };
       const readerSocket = createSocketForGuild({
         discordId: "reader",
