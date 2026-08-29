@@ -845,6 +845,10 @@ export class LootsService implements OnModuleInit {
           ),
           itemIds: items.map((item) => item.id),
           itemNames: items.map((item) => item.name),
+          npcs: socketNpcs.map((npc) => ({
+            type: npc.type,
+            lvl: npc.lvl,
+          })),
           npcType: highestWtNpcType,
           npcLvl: npcData.highest.lvl ?? null,
         },

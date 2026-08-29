@@ -4,6 +4,7 @@ import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
 } from "@lootlog/types";
+import type { LootVisibilityNpc } from "@lootlog/loot-visibility";
 import {
   type NpcType,
   NotificationJobKind as DbNotificationJobKind,
@@ -21,6 +22,20 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "src/notifications/constants/notification-messages.constant";
+
+type LootCreatedEvent = {
+  lootId: number;
+  world: string;
+  guildIds: string[];
+  itemIds: number[];
+  itemNames: string[];
+  npcs?: Array<{
+    type?: NpcType | null;
+    lvl?: number | null;
+  }>;
+  npcType?: NpcType | null;
+  npcLvl?: number | null;
+};
 
 @Injectable()
 export class NotificationsEventsHandler {
@@ -121,15 +136,7 @@ export class NotificationsEventsHandler {
       durable: true,
     },
   })
-  async handleLootCreated(event: {
-    lootId: number;
-    world: string;
-    guildIds: string[];
-    itemIds: number[];
-    itemNames: string[];
-    npcType?: NpcType | null;
-    npcLvl?: number | null;
-  }) {
+  async handleLootCreated(event: LootCreatedEvent) {
     const watchedItems = await this.prisma.watchedItem.findMany({
       where: {
         enabled: true,
@@ -166,31 +173,14 @@ export class NotificationsEventsHandler {
     );
     const guildNamesMap = new Map(guilds.map((g) => [g.id, g.name]));
 
-    const hasNpcData =
-      (event.npcType !== null && event.npcType !== undefined) ||
-      (event.npcLvl !== null && event.npcLvl !== undefined);
-
-    const membershipsByOwner = hasNpcData
-      ? await this.matchingService.getActiveMembershipsWithRoles(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
-          event.guildIds,
-        )
-      : null;
-
-    const activeGuildIdsByOwnerId = membershipsByOwner
-      ? null
-      : await this.matchingService.getActiveMembershipGuildIdsByOwner(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
-          event.guildIds,
-        );
+    const lootVisibilityNpcs = this.getLootVisibilityNpcs(event);
+    const membershipsByOwner =
+      await this.matchingService.getActiveMembershipsWithRoles(
+        watchedItems
+          .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+          .filter((ownerId): ownerId is string => typeof ownerId === "string"),
+        event.guildIds,
+      );
 
     await Promise.all(
       watchedItems.map(async (watchedItem) => {
@@ -216,36 +206,22 @@ export class NotificationsEventsHandler {
             return;
           }
 
-          let visibleGuildIds: string[];
+          const ownerMemberships =
+            membershipsByOwner.get(notificationRule.ownerId) ?? [];
+          const visibleGuildIds = matchedGuildIds.filter((guildId) => {
+            const membership = ownerMemberships.find(
+              (candidate) => candidate.guildId === guildId,
+            );
+            if (!membership) {
+              return false;
+            }
 
-          if (membershipsByOwner) {
-            const ownerMemberships =
-              membershipsByOwner.get(notificationRule.ownerId) ?? [];
-            const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
-              ownerMemberships.some((m) => m.guildId === guildId),
+            return this.matchingService.canRolesViewLoot(
+              membership.roles,
+              lootVisibilityNpcs,
+              membership.isGuildOwner,
             );
-            visibleGuildIds = authorizedGuildIds.filter((guildId) => {
-              const membership = ownerMemberships.find(
-                (m) => m.guildId === guildId,
-              );
-              if (!membership) {
-                return false;
-              }
-              return this.matchingService.canRolesViewNpc(
-                membership.roles,
-                event.npcType,
-                event.npcLvl,
-                membership.isGuildOwner,
-              );
-            });
-          } else {
-            const activeOwnerGuildIds =
-              activeGuildIdsByOwnerId?.get(notificationRule.ownerId) ??
-              new Set();
-            visibleGuildIds = matchedGuildIds.filter((guildId) =>
-              activeOwnerGuildIds.has(guildId),
-            );
-          }
+          });
 
           if (visibleGuildIds.length === 0) {
             return;
@@ -304,6 +280,29 @@ export class NotificationsEventsHandler {
         }
       }),
     );
+  }
+
+  private getLootVisibilityNpcs(event: LootCreatedEvent): LootVisibilityNpc[] {
+    if (event.npcs && event.npcs.length > 0) {
+      return event.npcs.map((npc) => ({
+        type: npc.type ?? null,
+        level: npc.lvl ?? null,
+      }));
+    }
+
+    const hasLegacyNpcData =
+      (event.npcType !== null && event.npcType !== undefined) ||
+      (event.npcLvl !== null && event.npcLvl !== undefined);
+    if (!hasLegacyNpcData) {
+      return [];
+    }
+
+    return [
+      {
+        type: event.npcType ?? null,
+        level: event.npcLvl ?? null,
+      },
+    ];
   }
 
   @RabbitSubscribe({
