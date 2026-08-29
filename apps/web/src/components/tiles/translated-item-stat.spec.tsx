@@ -16,4 +16,23 @@ describe("TranslatedItemStat", () => {
     expect(markup).toContain("font-bold text-primary");
     expect(markup).not.toContain("&lt;value&gt;");
   });
+
+  it("does not group digits in formatted dates", () => {
+    const markup = renderToStaticMarkup(
+      <TranslatedItemStat
+        displayValue={{ key: "expire_date", value: "01.01.2026, 01:00" }}
+      />,
+    );
+
+    expect(markup).toContain("01.01.2026, 01:00");
+    expect(markup).not.toContain("2 026");
+  });
+
+  it("still groups numeric stat values", () => {
+    const markup = renderToStaticMarkup(
+      <TranslatedItemStat displayValue={{ key: "hp", value: "12345" }} />,
+    );
+
+    expect(markup).toContain("12 345");
+  });
 });

@@ -182,6 +182,17 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
   hour: "2-digit",
   minute: "2-digit",
   month: "2-digit",
+  timeZone: "Europe/Warsaw",
+  year: "numeric",
+});
+const datePartsFormatter = new Intl.DateTimeFormat("en-CA", {
+  day: "numeric",
+  month: "numeric",
+  timeZone: "Europe/Warsaw",
+  year: "numeric",
+});
+const yearFormatter = new Intl.DateTimeFormat("pl-PL", {
+  timeZone: "Europe/Warsaw",
   year: "numeric",
 });
 
@@ -206,16 +217,29 @@ function getShiftedYear(
   const date = getCreatedDate(stats);
   const parsedOffset = Number.parseInt(offset, 10);
   if (!Number.isFinite(parsedOffset)) {
-    return date.getFullYear().toString();
+    return yearFormatter.format(date);
   }
 
+  const dateParts = Object.fromEntries(
+    datePartsFormatter
+      .formatToParts(date)
+      .map(({ type, value }) => [type, value]),
+  );
+  const year = Number.parseInt(dateParts.year ?? "", 10);
+  const month = Number.parseInt(dateParts.month ?? "", 10);
+  const day = Number.parseInt(dateParts.day ?? "", 10);
+  if (![year, month, day].every(Number.isFinite)) {
+    return yearFormatter.format(date);
+  }
+
+  const shiftedDate = new Date(Date.UTC(year, month - 1, day, 12));
   if (unit === "D") {
-    date.setDate(date.getDate() + parsedOffset);
+    shiftedDate.setUTCDate(shiftedDate.getUTCDate() + parsedOffset);
   } else if (unit === "M") {
-    date.setMonth(date.getMonth() + parsedOffset);
+    shiftedDate.setUTCMonth(shiftedDate.getUTCMonth() + parsedOffset);
   }
 
-  return date.getFullYear().toString();
+  return shiftedDate.getUTCFullYear().toString();
 }
 
 const formatDefaultStat: StatValueFormatter = (key, value) => ({ key, value });
@@ -258,7 +282,7 @@ const formatDescription: StatValueFormatter = (key, value, stats) => {
   const description = toStringValue(value)
     .replace(/\[br\]/g, "\n")
     .replace(/#DATE#/g, dateTimeFormatter.format(createdDate))
-    .replace(/#YEAR#/g, createdDate.getFullYear().toString())
+    .replace(/#YEAR#/g, yearFormatter.format(createdDate))
     .replace(/#YEAR,([-0-9]+),(D|M)#/g, (_match, offset, unit) =>
       getShiftedYear(stats, offset, unit),
     );

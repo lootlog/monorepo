@@ -130,6 +130,21 @@ describe("item stat utilities", () => {
     ]);
   });
 
+  it("formats description dates in the Warsaw timezone", () => {
+    const blocks = mapStatsToDisplayValues(
+      parseItemStats(
+        "created=1735687800;opis=#DATE#|#YEAR#|#YEAR,-1,D#|#YEAR,12,M#",
+      ),
+    );
+
+    expect(blocks.descriptionBlock).toEqual([
+      {
+        key: "opis",
+        value: "01.01.2025, 00:30|2025|2024|2026",
+      },
+    ]);
+  });
+
   it("supports every legendary bonus and an explicit unknown fallback", () => {
     const bonusNames = [
       "anguish",
