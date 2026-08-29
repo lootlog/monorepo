@@ -7,17 +7,22 @@ describe("ReservationsController", () => {
   const reservationsService = {
     listSpots: vi.fn(),
     listWindow: vi.fn(),
-    createReservation: vi.fn(),
-    deleteReservation: vi.fn(),
     pinSpot: vi.fn(),
     unpinSpot: vi.fn(),
+  };
+  const reservationMutationsService = {
+    create: vi.fn(),
+    deleteVisible: vi.fn(),
   };
 
   let controller: ReservationsController;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    controller = new ReservationsController(reservationsService as never);
+    controller = new ReservationsController(
+      reservationsService as never,
+      reservationMutationsService as never,
+    );
   });
 
   it("declares read and write permissions on the new resources", () => {
@@ -51,7 +56,7 @@ describe("ReservationsController", () => {
       },
     );
 
-    expect(reservationsService.createReservation).toHaveBeenCalledWith({
+    expect(reservationMutationsService.create).toHaveBeenCalledWith({
       context: {
         guildId: "guild-1",
         userId: "user-1",
