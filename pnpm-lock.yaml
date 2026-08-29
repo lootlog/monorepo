@@ -144,7 +144,7 @@ overrides:
 packageExtensionsChecksum: sha256-jWFOq+RHPzguqnjYeeN2vs7N/7hT8gK0bFJ4w5m9zsE=
 
 patchedDependencies:
-  '@nestjs/cli@12.0.0': b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b
+  '@nestjs/cli@12.0.0': 1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8
   '@nestjs/swagger@12.0.1': d648265a857b11337e8ca0bae44d980caefdac9eb651e993f16f095dc7146a23
 
 importers:
@@ -277,7 +277,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/schematics':
         specifier: 'catalog:'
         version: 12.0.0(chokidar@5.0.0)(prettier@3.9.6)(typescript@7.0.2)
@@ -428,7 +428,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/testing':
         specifier: 'catalog:'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
@@ -531,7 +531,7 @@ importers:
         version: link:../../packages/typescript-config
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/testing':
         specifier: 'catalog:'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
@@ -628,7 +628,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/testing':
         specifier: 'catalog:'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
@@ -756,7 +756,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/testing':
         specifier: 'catalog:'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
@@ -1080,7 +1080,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/testing':
         specifier: 'catalog:'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
@@ -1238,7 +1238,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: 'catalog:'
-        version: 12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)
+        version: 12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)
       '@nestjs/testing':
         specifier: 'catalog:'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
@@ -14138,7 +14138,7 @@ snapshots:
       keyv: 5.6.0
       rxjs: 7.8.2
 
-  '@nestjs/cli@12.0.0(patch_hash=b6a5340b4abb3ce1dda15b74c1a4e00933252771bfd75f4ac9a7d448154bc72b)(@types/node@26.4.0)(prettier@3.9.6)':
+  '@nestjs/cli@12.0.0(patch_hash=1248b784d96cfb9cf7e692444b1b426db8f20f68b30d6b24594f9e8302f78eb8)(@types/node@26.4.0)(prettier@3.9.6)':
     dependencies:
       '@angular-devkit/core': 22.1.5(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.1.5(chokidar@5.0.0)

@@ -17,16 +17,6 @@ index 237acd4525bb5e77c9e9a282ccb2a112ecfd617e..788b2fa567f47c87893208d5c30e61c9
 +import type * as ts from 'typescript-legacy';
  import { MultiNestCompilerPlugins } from '../plugins/plugins-loader.js';
  export declare const rspackDefaultsFactory: (sourceRoot: string, relativeSourceRoot: string, entryFilename: string, isDebugEnabled: boolean | undefined, tsConfigFile: string | undefined, plugins: MultiNestCompilerPlugins, isEsm?: boolean, tsOptions?: ts.CompilerOptions) => Record<string, any>;
-diff --git a/lib/compiler/defaults/swc-defaults.d.ts b/lib/compiler/defaults/swc-defaults.d.ts
-index 0d21a0ca3420c7b4fa7ebf9620eb902197a19ab2..6568573ab74372038ab6f74f8f03df7603e4023c 100644
---- a/lib/compiler/defaults/swc-defaults.d.ts
-+++ b/lib/compiler/defaults/swc-defaults.d.ts
-@@ -1,4 +1,4 @@
--import * as ts from 'typescript';
-+import * as ts from 'typescript-legacy';
- import { Configuration } from '../../configuration/index.js';
- export declare const swcDefaultsFactory: (tsOptions?: ts.CompilerOptions, configuration?: Configuration, tsConfigExclude?: string[]) => {
-     swcOptions: {
 diff --git a/lib/compiler/helpers/delete-out-dir.d.ts b/lib/compiler/helpers/delete-out-dir.d.ts
 index 160c8c5bc9dd72ec9f7f2bb7de63d1e97b3b64cd..9d0a275f210bfc3a2c4a90008a0b58d39d585294 100644
 --- a/lib/compiler/helpers/delete-out-dir.d.ts
@@ -115,28 +105,6 @@ index a47ec1d1326a1cbbd66ee8b05ee1eafedda1a379..00067ebcb03d8f3dcdd10adadbbdfb7f
  import { Configuration } from '../configuration/index.js';
  import { AssetsManager } from './assets-manager.js';
  import { BaseCompiler } from './base-compiler.js';
-diff --git a/lib/compiler/swc/type-checker-host.d.ts b/lib/compiler/swc/type-checker-host.d.ts
-index 7a85bb466e847e13fc152ba8b992a2d09363183a..c844641649cd0a43d6996caaae0eabbfe4606d50 100644
---- a/lib/compiler/swc/type-checker-host.d.ts
-+++ b/lib/compiler/swc/type-checker-host.d.ts
-@@ -1,4 +1,4 @@
--import * as ts from 'typescript';
-+import * as ts from 'typescript-legacy';
- export interface TypeCheckerHostRunOptions {
-     watch?: boolean;
-     onTypeCheck?: (program: ts.Program) => void;
-diff --git a/lib/compiler/swc/type-checker-host.js b/lib/compiler/swc/type-checker-host.js
-index ffa24f2e2a91d71d7849b36fcd282b53d14a7043..169e84b99bed946c76d7b05a4ccdc8e83f4e3c0d 100644
---- a/lib/compiler/swc/type-checker-host.js
-+++ b/lib/compiler/swc/type-checker-host.js
-@@ -1,6 +1,6 @@
- import { red } from 'ansis';
- import ora from 'ora';
--import * as ts from 'typescript';
-+import * as ts from 'typescript-legacy';
- import { TsConfigProvider } from '../helpers/tsconfig-provider.js';
- import { TypeScriptBinaryLoader } from '../typescript-loader.js';
- import { INITIALIZING_TYPE_CHECKER, TSC_LOG_ERROR_PREFIX, TSC_NO_ERRORS_MESSAGE, } from './constants.js';
 diff --git a/lib/compiler/typescript-loader.d.ts b/lib/compiler/typescript-loader.d.ts
 index 9dfa61d81795b5cbae58b7859918e3c8f50929bb..572b5b6b752ec3514f4e1ea2ab959e18158f3355 100644
 --- a/lib/compiler/typescript-loader.d.ts
