@@ -6,9 +6,9 @@ import type {
   CreateReadyRoomResult,
   JoinReadyRoomResult,
   ReadyRoomRepository,
-} from "src/messaging/ready-room/ready-room.repository";
-import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+} from "#src/messaging/ready-room/ready-room.repository";
+import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 const now = Date.parse("2026-07-13T10:00:00.000Z");
 

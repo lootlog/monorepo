@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { InflatedBattleWithWarriors } from "./battle-analytics.types";
-import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service";
+import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
+import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service.js";
 
 type TestWarriorInput = {
   originalId: string;

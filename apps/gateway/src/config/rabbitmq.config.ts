@@ -1,7 +1,7 @@
 import type { RabbitMQConfig } from "@golevelup/nestjs-rabbitmq";
-import { Queue } from "src/gateway/enums/queue.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { env } from "src/config/env";
+import { Queue } from "#src/gateway/enums/queue.enum";
+import { RoutingKey } from "#src/gateway/enums/routing-key.enum";
+import { env } from "#src/config/env";
 
 export const DEFAULT_EXCHANGE_NAME = "default";
 export const DEAD_LETTER_EXCHANGE_NAME = "dlx";

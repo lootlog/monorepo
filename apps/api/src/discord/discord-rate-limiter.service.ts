@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { DiscordEndpoint } from "./discord.types";
+import type { DiscordEndpoint } from "./discord.types.js";
 
 interface UserRateLimitData {
   bucket?: string | null;

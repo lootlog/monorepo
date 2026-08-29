@@ -1,15 +1,19 @@
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { PrismaService } from "src/db/prisma.service";
-import { Permission, type Guild, type Role } from "src/generated/prisma/client";
-import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
-import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
-import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
-import { ErrorKey } from "src/loots/enum/error-key.enum";
-import { LootCommentService } from "src/loots/services/loot-comment.service";
-import { LootQueryService } from "src/loots/services/loot-query.service";
-import { LootStatsService } from "src/loots/services/loot-stats.service";
+import { PrismaService } from "#src/db/prisma.service";
+import {
+  Permission,
+  type Guild,
+  type Role,
+} from "#src/generated/prisma/client";
+import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
+import type { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
+import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
+import { ErrorKey } from "#src/loots/enum/error-key.enum";
+import { LootCommentService } from "#src/loots/services/loot-comment.service";
+import { LootQueryService } from "#src/loots/services/loot-query.service";
+import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import type { Logger } from "winston";
 
 type CachedLootQueryResult = Omit<

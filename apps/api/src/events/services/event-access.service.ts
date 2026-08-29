@@ -3,9 +3,9 @@ import type {
   EventHeroNpc,
   Permission,
   Role,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { filterHeroesByLevel } from "src/shared/utils/can-view-event-hero";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
 
 @Injectable()
 export class EventAccessService {

@@ -8,36 +8,39 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import type { Server } from "socket.io";
-import type { JoinGatewayDto } from "src/gateway/dto/join-gateway.dto";
-import type { RequestOnlinePlayersPresenceDto } from "src/gateway/dto/request-online-players-presence.dto";
-import type { RequestMemberWebPresenceDto } from "src/gateway/dto/request-member-web-presence.dto";
-import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
-import type { RequestEventPresenceDto } from "src/gateway/dto/request-event-presence.dto";
+import type { JoinGatewayDto } from "#src/gateway/dto/join-gateway.dto";
+import type { RequestOnlinePlayersPresenceDto } from "#src/gateway/dto/request-online-players-presence.dto";
+import type { RequestMemberWebPresenceDto } from "#src/gateway/dto/request-member-web-presence.dto";
+import type { PlayerPresenceUpdateDto } from "#src/gateway/dto/player-presence-update.dto";
+import type { RequestEventPresenceDto } from "#src/gateway/dto/request-event-presence.dto";
 import type {
   AirTagObservationAck,
   AirTagObservationBatch,
   AirTagSubscriptionAck,
   MapPingAck,
 } from "@lootlog/types";
-import type { MapPingSendDto } from "src/gateway/dto/map-ping-send.dto";
-import type { AirTagObservationBatchDto } from "src/gateway/dto/air-tag-observation.dto";
-import type { AirTagSubscriptionDto } from "src/gateway/dto/air-tag-subscription.dto";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
-import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
-import { WsDiscordId, WsUserId } from "src/shared/decorators/user-id.decorator";
+import type { MapPingSendDto } from "#src/gateway/dto/map-ping-send.dto";
+import type { AirTagObservationBatchDto } from "#src/gateway/dto/air-tag-observation.dto";
+import type { AirTagSubscriptionDto } from "#src/gateway/dto/air-tag-subscription.dto";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { GatewayConfig } from "#src/gateway/constants/gateway-config.constant";
+import { UserPresenceStatus } from "#src/gateway/enums/user-presence-status.enum";
+import {
+  WsDiscordId,
+  WsUserId,
+} from "#src/shared/decorators/user-id.decorator";
 import type {
   Socket,
   PlayerPresence,
-} from "src/gateway/types/socket-user.type";
+} from "#src/gateway/types/socket-user.type";
 import {
   type MemberWebPresenceFetchResponse,
   type PresenceFetchResponse,
   PresenceService,
-} from "./services/presence.service";
-import { SubscriptionService } from "./services/subscription.service";
-import { MapPingService } from "./services/map-ping.service";
-import { AirTagService } from "./services/air-tag.service";
+} from "./services/presence.service.js";
+import { SubscriptionService } from "./services/subscription.service.js";
+import { MapPingService } from "./services/map-ping.service.js";
+import { AirTagService } from "./services/air-tag.service.js";
 
 @WebSocketGateway({
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,

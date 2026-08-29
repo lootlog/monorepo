@@ -19,43 +19,43 @@ import {
   type Timer,
   type Guild,
   type Role,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import { getNpcRoutingTier, getNpcTypeByWt } from "@lootlog/types";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
-import { ErrorKey } from "src/timers/enum/error-key.enum";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { GetTimersDto } from "src/timers/dto/get-timers.dto";
-import type { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "src/timers/constants/respawn";
-import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
-import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
+import { ErrorKey } from "#src/timers/enum/error-key.enum";
+import { GuildsService } from "#src/guilds/guilds.service";
+import type { GetTimersDto } from "#src/timers/dto/get-timers.dto";
+import type { ResetTimerDto } from "#src/timers/dto/reset-timer.dto";
+import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/constants/respawn";
+import type { CreateManualTimerDto } from "#src/timers/dto/create-manual-timer.dto";
+import { generateUniqueIntId } from "#src/shared/utils/generate-unique-int-id";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
 import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
-import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
-import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
+import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
+import { validateAndCalculateSpawnTimes } from "#src/timers/utils/validate-spawn-times";
+import { TIMER_LIMITS, TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { ExecutionError } from "redlock";
-import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
-import { RedlockService } from "src/lib/redlock/redlock.service";
+import { getSyntheticNpcId } from "#src/events/utils/get-synthetic-npc-id";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
 import {
   buildTimerKey,
   isLegacyNpcIdIdentifier,
-} from "src/timers/utils/timer-key";
-import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
-import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { MemberResponseDto } from "src/shared/dto/member-response.dto";
+} from "#src/timers/utils/timer-key";
+import { EventTimerHooksService } from "#src/events/services/event-timer-hooks.service";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
+import { MemberResponseDto } from "#src/shared/dto/member-response.dto";
 import type {
   CreateAutoTimerRejectedGuild,
   CreateAutoTimerRejectedGuildReason,
   CreateAutoTimerResponse,
   CreateAutoTimerSubmittedGuild,
-} from "src/timers/dto/create-auto-timer-response.dto";
+} from "#src/timers/dto/create-auto-timer-response.dto";
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;

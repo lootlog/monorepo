@@ -1,9 +1,9 @@
 import { NpcTypeEnum } from "@lootlog/types";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
-import { NPCS_INDEX } from "./constants/meilisearch";
-import { NpcsService } from "./npcs.service";
+import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
+import { NPCS_INDEX } from "./constants/meilisearch.js";
+import { NpcsService } from "./npcs.service.js";
 
 describe("NpcsService", () => {
   let service: NpcsService;

@@ -10,32 +10,32 @@ import {
 } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { and, eq, lt } from "drizzle-orm";
-import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
-import type { BattleTimelineResponseInput } from "src/battles/dto/battle-response.dto";
-import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
-import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
-import type { PaginationOptions } from "src/battles/interfaces/pagination.interface";
-import { BATTLE_WARRIOR_STATS_VERSION } from "src/battles/battle-warrior-stats.types";
+import type { CreateBattleDto } from "#src/battles/dto/create-battle.dto";
+import type { BattleTimelineResponseInput } from "#src/battles/dto/battle-response.dto";
+import type { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
+import type { UpdateBattleDto } from "#src/battles/dto/update-battle.dto";
+import type { PaginationOptions } from "#src/battles/interfaces/pagination.interface";
+import { BATTLE_WARRIOR_STATS_VERSION } from "#src/battles/battle-warrior-stats.types";
 import {
   buildBattleWarriorStats,
   inflateBattleWarriorsInBattle,
   inflateBattleWarriorsInBattles,
-} from "src/battles/battle-warrior-stats";
-import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
-import { BattleListFilterService } from "src/battles/services/battle-list-filter.service";
-import { BattleMetadataService } from "src/battles/services/battle-metadata.service";
-import { PaginationService } from "src/battles/services/pagination.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+} from "#src/battles/battle-warrior-stats";
+import { BattleAnalyticsService } from "#src/battles/services/battle-analytics.service";
+import { BattleListFilterService } from "#src/battles/services/battle-list-filter.service";
+import { BattleMetadataService } from "#src/battles/services/battle-metadata.service";
+import { PaginationService } from "#src/battles/services/pagination.service";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
 import {
   battles,
   battleWarriors,
   userCharacters,
-} from "src/shared/modules/drizzle/schema";
-import { R2Service } from "src/shared/modules/r2/r2.service";
+} from "#src/shared/modules/drizzle/schema";
+import { R2Service } from "#src/shared/modules/r2/r2.service";
 import {
   createBattleSemanticFingerprint,
   normalizeBattleSubmission,
-} from "src/battles/battle-submission";
+} from "#src/battles/battle-submission";
 import {
   BattleProcessor,
   type Warrior,
@@ -51,7 +51,7 @@ import type {
   GetAllBattlesResult,
   IBattlesService,
   RawBattleData,
-} from "./interfaces/battle-service.interface";
+} from "./interfaces/battle-service.interface.js";
 
 const BATTLE_DEDUPLICATION_TTL_SECONDS = 10;
 const BATTLE_DEDUPLICATION_LOCK_TTL_SECONDS = 30;

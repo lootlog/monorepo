@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ActivitiesService } from "./activities.service";
-import { PrismaService } from "src/shared/db/prisma.service";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { ActivitiesService } from "./activities.service.js";
+import { PrismaService } from "#src/shared/db/prisma.service";
+import { ActivitySource, ActivityType } from "#src/generated/prisma/client";
 
 describe("ActivitiesService", () => {
   let service: ActivitiesService;

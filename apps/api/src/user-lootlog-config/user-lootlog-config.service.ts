@@ -1,15 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { Permission } from "src/generated/prisma/client";
-import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
-import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { Permission } from "#src/generated/prisma/client";
+import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
+import type { CreateOrUpdateLootlogCharacterConfigDto } from "#src/user-lootlog-config/dto/create-user-account-config.dto";
 import {
   toUserLootlogConfigResponse,
   type UserLootlogPlayersCatchingGuildsRequest,
   type UserLootlogPlayersCatchingGuildsResponse,
-} from "src/shared/dto/user-lootlog-config-response.dto";
+} from "#src/shared/dto/user-lootlog-config-response.dto";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
 

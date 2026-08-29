@@ -1,18 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   NpcType,
   type ItemRarity,
   type Permission,
   type Role,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import { createHash } from "node:crypto";
 import { createLootAccessFingerprint } from "@lootlog/loot-visibility";
 import {
   buildLootNpcVisibilitySql,
   toLootVisibilityRoles,
-} from "src/loots/loot-visibility.prisma";
+} from "#src/loots/loot-visibility.prisma";
 import type {
   Period,
   LootStatsResponse,
@@ -22,7 +22,7 @@ import type {
   TopNpc,
   TopContributor,
   TopItem,
-} from "../dto/loot-stats.dto";
+} from "../dto/loot-stats.dto.js";
 
 const CACHE_TTL_SECONDS = 60;
 

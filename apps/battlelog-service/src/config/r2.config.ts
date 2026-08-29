@@ -1,4 +1,4 @@
-import { env } from "src/config/env";
+import { env } from "#src/config/env";
 
 export interface R2Config {
   accessKeyId: string;

@@ -1,15 +1,15 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { EventTrackingService } from "./event-tracking.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { EventEmitterService } from "./event-emitter.service";
-import { PrismaService } from "src/db/prisma.service";
+import { EventTrackingService } from "./event-tracking.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { RedlockService } from "src/lib/redlock/redlock.service";
-import { CoverageGapType } from "src/generated/prisma/client";
-import { TimersService } from "src/timers/timers.service";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
+import { CoverageGapType } from "#src/generated/prisma/client";
+import { TimersService } from "#src/timers/timers.service";
 
 describe("EventTrackingService", () => {
   let service: EventTrackingService;

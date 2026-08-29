@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Context, On, type ContextOf } from "necord";
 import { Events } from "discord.js";
-import { DiscordSyncService } from "src/bot/discord-sync.service";
+import { DiscordSyncService } from "#src/bot/discord-sync.service";
 
 @Injectable()
 export class BotDiscordEventsHandler {

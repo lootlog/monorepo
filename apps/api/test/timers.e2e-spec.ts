@@ -1,18 +1,18 @@
 import { type INestApplication } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/db/prisma.service";
+import { AppModule } from "../src/app.module.js";
+import { PrismaService } from "../src/db/prisma.service.js";
 import {
   createTestTimerPayload,
   TEST_GUILDS,
   TEST_USERS,
-} from "./test-helpers";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission } from "../src/generated/prisma/client";
+} from "./test-helpers.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
+import { Permission } from "../src/generated/prisma/client.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { buildTimerKey } from "../src/timers/utils/timer-key";
-import { RoutingKey } from "../src/enum/routing-key.enum";
+import { buildTimerKey } from "../src/timers/utils/timer-key.js";
+import { RoutingKey } from "../src/enum/routing-key.enum.js";
 import {
   createMemberFixture,
   createTimerFixture,
@@ -21,7 +21,7 @@ import {
   TEST_NPC,
   TEST_WORLD,
   withAuth,
-} from "./events-timers-e2e-helpers";
+} from "./events-timers-e2e-helpers.js";
 
 async function truncateTimersState(
   prisma: PrismaService,

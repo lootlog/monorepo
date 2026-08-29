@@ -1,4 +1,4 @@
-import { getGuildIds } from "./get-guild-ids";
+import { getGuildIds } from "./get-guild-ids.js";
 
 describe("getGuildIds", () => {
   it("should extract guild IDs from guilds array", () => {

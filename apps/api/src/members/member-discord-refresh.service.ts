@@ -1,16 +1,16 @@
 import { Injectable } from "@nestjs/common";
-import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
+import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import {
   isRetryableMemberRefreshStatus,
   MEMBER_DISCORD_SYNC_STATUS,
-} from "./member-discord-sync-status";
-import { MemberDiscordSyncService } from "./member-discord-sync.service";
+} from "./member-discord-sync-status.js";
+import { MemberDiscordSyncService } from "./member-discord-sync.service.js";
 import {
   MemberRefreshSchedulerService,
   type MemberRefreshScheduleResult,
-} from "./member-refresh-scheduler.service";
-import type { MemberRefreshAttempt } from "./member.types";
+} from "./member-refresh-scheduler.service.js";
+import type { MemberRefreshAttempt } from "./member.types.js";
 
 @Injectable()
 export class MemberDiscordRefreshService {

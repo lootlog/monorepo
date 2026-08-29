@@ -5,7 +5,7 @@ import {
   intFromString,
   optionalFromQuery,
 } from "@lootlog/nest-shared/validators/query-helpers";
-import { MAX_PAGE_LIMIT } from "../config/pagination";
+import { MAX_PAGE_LIMIT } from "../config/pagination.js";
 
 const FetchLootsParamsSchema = z.object({
   limit: optionalFromQuery(z.coerce.number().int().min(1).max(MAX_PAGE_LIMIT)),

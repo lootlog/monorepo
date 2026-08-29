@@ -1,5 +1,5 @@
-import type { InflatedBattleWarrior } from "src/battles/battle-warrior-stats";
-import type { Battle, BattleWarrior } from "src/shared/modules/drizzle/schema";
+import type { InflatedBattleWarrior } from "#src/battles/battle-warrior-stats";
+import type { Battle, BattleWarrior } from "#src/shared/modules/drizzle/schema";
 
 export type StoredBattleWithWarriors = Battle & { warriors: BattleWarrior[] };
 

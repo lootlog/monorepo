@@ -13,9 +13,9 @@ import {
   or,
   type SQL,
 } from "drizzle-orm";
-import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { battles, battleWarriors } from "src/shared/modules/drizzle/schema";
+import type { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import { battles, battleWarriors } from "#src/shared/modules/drizzle/schema";
 
 export type BattleListWhereBuilder = (
   battlesRef: typeof battles,

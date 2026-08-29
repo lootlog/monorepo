@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "#src/generated/prisma/client";
 import {
   SettingsDocumentsService,
   type SettingsDocumentsResponse,
-} from "src/settings-documents/settings-documents.service";
-import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
-import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
-import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
+} from "#src/settings-documents/settings-documents.service";
+import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto.js";
+import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto.js";
+import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto.js";
 
 const APPEARANCE_FIELDS = [
   "displayConfig",

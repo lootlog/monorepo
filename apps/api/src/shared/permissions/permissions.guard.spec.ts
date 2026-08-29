@@ -1,7 +1,7 @@
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { Permission } from "src/generated/prisma/client";
-import { PermissionsGuard } from "./permissions.guard";
+import { Permission } from "#src/generated/prisma/client";
+import { PermissionsGuard } from "./permissions.guard.js";
 
 describe("PermissionsGuard", () => {
   const mockReflector = {

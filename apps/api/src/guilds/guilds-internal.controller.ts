@@ -7,9 +7,9 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
-import { GuildsService } from "src/guilds/guilds.service";
-import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
+import { UserGuildPermissionsDto } from "#src/guilds/dto/user-guild-permissions.dto";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { GuildResponseDto } from "#src/shared/dto/guild-response.dto";
 
 @ApiTags("internal")
 @Controller("internal/guilds")

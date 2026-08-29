@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { isoDatetimeCodec } from "./zod-response-codecs";
+import { isoDatetimeCodec } from "./zod-response-codecs.js";
 
 const LootCommentMemberRoleResponseSchema = z.object({
   color: z.number().nullable().optional(),

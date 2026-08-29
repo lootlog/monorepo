@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ReservationSharingService } from "./reservation-sharing.service";
+import { ReservationSharingService } from "./reservation-sharing.service.js";
 
 const future = () => new Date(Date.now() + 60_000);
 

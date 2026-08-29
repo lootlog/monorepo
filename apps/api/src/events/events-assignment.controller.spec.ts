@@ -1,7 +1,7 @@
 import { ForbiddenException } from "@nestjs/common";
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { EventsAssignmentController } from "./events-assignment.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { EventsAssignmentController } from "./events-assignment.controller.js";
 
 describe("EventsAssignmentController", () => {
   const mockEventsService = {

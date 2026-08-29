@@ -1,4 +1,4 @@
-import { createItemSearchFields } from "./create-item-search-fields";
+import { createItemSearchFields } from "./create-item-search-fields.js";
 
 describe("createItemSearchFields", () => {
   it("normalizes scalar stat values and keeps default required professions", () => {

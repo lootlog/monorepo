@@ -1,38 +1,38 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { canViewLoot } from "@lootlog/loot-visibility";
 import type { PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
-import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
-import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
-import type { ChatMessageEnvelopeDto } from "src/gateway/dto/chat-message-envelope.dto";
-import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.dto";
-import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
-import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
+import { CreateTimerDto } from "#src/gateway/dto/create-timer.dto";
+import type { ChatMessageDeleteDto } from "#src/gateway/dto/chat-message-delete.dto";
+import type { ChatMessageEnvelopeDto } from "#src/gateway/dto/chat-message-envelope.dto";
+import type { ChatMessagesClearDto } from "#src/gateway/dto/chat-messages-clear.dto";
+import type { ChatMessageUpdateDto } from "#src/gateway/dto/chat-message-update.dto";
+import type { DeleteTimerDto } from "#src/gateway/dto/delete-timer.dto";
 import type {
   LootCreateEventV2Dto,
   LootShareUpdateEventV2Dto,
-} from "src/gateway/dto/loot-event.dto";
-import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
+} from "#src/gateway/dto/loot-event.dto";
+import type { RefreshJobUpdateDto } from "#src/gateway/dto/refresh-job-update.dto";
 import type {
   ReservationChangedEventV2Dto,
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
-} from "src/gateway/dto/reservation-event.dto";
-import { MessageType, SendMessageDto } from "src/gateway/dto/send-message.dto";
-import { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
-import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
-import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { Gateway } from "src/gateway/gateway";
-import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
+} from "#src/gateway/dto/reservation-event.dto";
+import { MessageType, SendMessageDto } from "#src/gateway/dto/send-message.dto";
+import { SendNotificationDto } from "#src/gateway/dto/send-notification.dto";
+import type { SendPartyGatheringDto } from "#src/gateway/dto/send-party-gathering.dto";
+import type { VolunteerNotificationDto } from "#src/gateway/dto/volunteer-notification.dto";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { Gateway } from "#src/gateway/gateway";
+import { isAdministrativeUserFromRoles } from "#src/guilds/utils/is-administrative-user";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+import { GuildsService } from "#src/guilds/guilds.service";
+import type { UserGuildData } from "#src/guilds/types/guild.types";
 import type {
   EventHeroKilledPayload,
   EventRankingUpdatePayload,
   EventRespawnWindowPayload,
   EventMapStatusUpdatePayload,
-} from "src/gateway/types/margo-event.types";
+} from "#src/gateway/types/margo-event.types";
 import {
   buildRoomName,
   buildUserGuildRoomName,
@@ -41,12 +41,12 @@ import {
   hasFeatureRoomAccess,
   type FeatureName,
   type TierName,
-} from "src/gateway/utils/room-utils";
-import { ActivityService } from "src/gateway/services/activity.service";
-import { PresenceService } from "src/gateway/services/presence.service";
-import { ActivityType } from "src/gateway/enums/activity-type.enum";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import { AirTagService } from "src/gateway/services/air-tag.service";
+} from "#src/gateway/utils/room-utils";
+import { ActivityService } from "#src/gateway/services/activity.service";
+import { PresenceService } from "#src/gateway/services/presence.service";
+import { ActivityType } from "#src/gateway/enums/activity-type.enum";
+import type { Socket } from "#src/gateway/types/socket-user.type";
+import { AirTagService } from "#src/gateway/services/air-tag.service";
 
 type FetchedSocket = Awaited<
   ReturnType<Gateway["server"]["fetchSockets"]>

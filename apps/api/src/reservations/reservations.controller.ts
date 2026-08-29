@@ -21,20 +21,20 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { CreateReservationDto } from "./dto/create-reservation.dto";
-import { ReservationWindowQueryDto } from "./dto/reservation-query.dto";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { CreateReservationDto } from "./dto/create-reservation.dto.js";
+import { ReservationWindowQueryDto } from "./dto/reservation-query.dto.js";
 import {
   ReservationResponseDto,
   ReservationSpotsResponseDto,
   ReservationWindowResponseDto,
-} from "./dto/reservation-response.dto";
-import type { ReservationViewerContext } from "./reservation-viewer";
-import { ReservationMutationsService } from "./reservation-mutations.service";
-import { ReservationsService } from "./reservations.service";
+} from "./dto/reservation-response.dto.js";
+import type { ReservationViewerContext } from "./reservation-viewer.js";
+import { ReservationMutationsService } from "./reservation-mutations.service.js";
+import { ReservationsService } from "./reservations.service.js";
 
 type ReservationRequest = {
   permissions?: Permission[];

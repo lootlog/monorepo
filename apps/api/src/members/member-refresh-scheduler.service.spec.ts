@@ -1,16 +1,16 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
+import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
+import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import {
   type MemberRefreshJobData,
   MemberRefreshSchedulerService,
-} from "./member-refresh-scheduler.service";
+} from "./member-refresh-scheduler.service.js";
 
 describe("MemberRefreshSchedulerService", () => {
   let service: MemberRefreshSchedulerService;

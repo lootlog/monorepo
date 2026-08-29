@@ -14,7 +14,7 @@ if (!databaseUrl) {
   throw new Error("POSTGRESQL_CONNECTION_URI is required");
 }
 
-const migrationsFolder = path.resolve(__dirname, "../drizzle");
+const migrationsFolder = path.resolve(import.meta.dirname, "../drizzle");
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
 

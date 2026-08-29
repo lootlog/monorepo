@@ -1,28 +1,27 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import type { Server } from "socket.io";
-import { omit, groupBy } from "lodash";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { getGuildIds } from "src/gateway/utils/get-guild-ids";
-import { normalizePresenceLevel } from "src/gateway/utils/normalize-presence-level";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { UserPresenceStatus } from "#src/gateway/enums/user-presence-status.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { RoutingKey } from "#src/gateway/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { getGuildIds } from "#src/gateway/utils/get-guild-ids";
+import { normalizePresenceLevel } from "#src/gateway/utils/normalize-presence-level";
 import {
   buildRoomName,
   hasOnlinePlayersAccess,
   parseRoomName,
-} from "src/gateway/utils/room-utils";
-import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
+} from "#src/gateway/utils/room-utils";
+import { isAdministrativeUserFromRoles } from "#src/guilds/utils/is-administrative-user";
 import type {
   Socket,
   SocketUser,
   SocketUserPlayer,
   PlayerPresence,
-} from "src/gateway/types/socket-user.type";
-import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+} from "#src/gateway/types/socket-user.type";
+import type { PlayerPresenceUpdateDto } from "#src/gateway/dto/player-presence-update.dto";
+import type { UserGuildData } from "#src/guilds/types/guild.types";
 
 export const ONLINE_PLAYERS_ACCESS_DENIED_CODE = "ONLINE_PLAYERS_ACCESS_DENIED";
 
@@ -65,7 +64,12 @@ export class PresenceService {
     },
     event: GatewayEvent,
   ): void {
-    const preparedUser = omit(user, ["sessionId", "guilds", "userId"]);
+    const {
+      sessionId: _sessionId,
+      guilds: _guilds,
+      userId: _userId,
+      ...preparedUser
+    } = user;
 
     client.rooms.forEach((room) => {
       const parsed = parseRoomName(room);
@@ -437,7 +441,7 @@ export class PresenceService {
     client: Socket,
     guildId: string,
     world: string,
-  ): Promise<PresenceFetchResponse<Record<string, unknown[]>>> {
+  ): Promise<PresenceFetchResponse<Partial<Record<string, unknown[]>>>> {
     const presenceRoom = buildRoomName(guildId, "presence");
     const onlinePlayersRoom = buildRoomName(guildId, "online-players");
 
@@ -470,7 +474,16 @@ export class PresenceService {
 
     const currentCharacterId = client.data.player?.characterId;
     const users = filteredSockets
-      .map((s) => omit(s.data, ["sessionId", "userId", "guilds"]))
+      .map(({ data }) => {
+        const {
+          sessionId: _sessionId,
+          userId: _userId,
+          guilds: _guilds,
+          ...publicData
+        } = data;
+
+        return publicData;
+      })
       .sort((a, b) => {
         const isCurrentPlayerA =
           currentCharacterId !== undefined &&
@@ -491,7 +504,7 @@ export class PresenceService {
 
     return {
       status: "success",
-      players: groupBy(users, "discordId"),
+      players: Object.groupBy(users, (user) => user.discordId),
     };
   }
 

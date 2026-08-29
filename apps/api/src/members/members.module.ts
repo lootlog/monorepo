@@ -1,26 +1,26 @@
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
-import { MembersService } from "./members.service";
-import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
-import { MemberBulkRefreshService } from "./member-bulk-refresh.service";
-import { MemberRefreshProcessor } from "./member-refresh.processor";
-import { MembersController } from "./members.controller";
+import { MembersService } from "./members.service.js";
+import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor.js";
+import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
+import { MemberRefreshProcessor } from "./member-refresh.processor.js";
+import { MembersController } from "./members.controller.js";
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
-import { rabbitmqConfig } from "src/config/rabbitmq.config";
-import { DiscordModule } from "src/discord/discord.module";
-import { PrismaModule } from "src/db/prisma.module";
-import { RedisModule } from "src/lib/redis/redis.module";
+import { rabbitmqConfig } from "#src/config/rabbitmq.config";
+import { DiscordModule } from "#src/discord/discord.module";
+import { PrismaModule } from "#src/db/prisma.module";
+import { RedisModule } from "#src/lib/redis/redis.module";
 import {
   MEMBER_BULK_REFRESH_QUEUE,
   MEMBER_REFRESH_QUEUE,
-} from "./constants/member-refresh-queue.constant";
-import { MemberDiscordAccessService } from "./member-discord-access.service";
-import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
-import { MemberDiscordSyncService } from "./member-discord-sync.service";
-import { MemberReadService } from "./member-read.service";
-import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
-import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
-import { MemberRemovalService } from "./member-removal.service";
+} from "./constants/member-refresh-queue.constant.js";
+import { MemberDiscordAccessService } from "./member-discord-access.service.js";
+import { MemberDiscordRefreshService } from "./member-discord-refresh.service.js";
+import { MemberDiscordSyncService } from "./member-discord-sync.service.js";
+import { MemberReadService } from "./member-read.service.js";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
+import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service.js";
+import { MemberRemovalService } from "./member-removal.service.js";
 
 @Module({
   imports: [

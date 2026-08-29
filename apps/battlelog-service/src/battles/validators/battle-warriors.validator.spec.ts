@@ -1,7 +1,7 @@
 import {
   CreateBattleSchema,
   WarriorsRecordSchema,
-} from "../dto/create-battle.dto";
+} from "../dto/create-battle.dto.js";
 
 describe("WarriorsRecordSchema", () => {
   it("should accept valid warriors record with two teams", () => {

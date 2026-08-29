@@ -15,21 +15,21 @@ import {
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   LootShareSource,
   NpcType,
   type Prisma,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
-} from "src/loots/constants/loot-share-msg-regex";
-import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import { ErrorKey } from "src/loots/enum/error-key.enum";
-import type { LootShare } from "src/shared/dto/loot-response.dto";
+} from "#src/loots/constants/loot-share-msg-regex";
+import type { CreateLootDto } from "#src/loots/dto/create-loot.dto";
+import { ErrorKey } from "#src/loots/enum/error-key.enum";
+import type { LootShare } from "#src/shared/dto/loot-response.dto";
 import type { Logger } from "winston";
 
 type LootNpcWithSocketSnapshot = {

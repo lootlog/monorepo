@@ -1,8 +1,8 @@
-import type { Prisma } from "src/generated/prisma/client";
-import type { LootItemDto } from "./loot-item.dto";
-import type { LootNpcDto } from "./loot-npc.dto";
-import type { LootPlayerDto } from "./loot-player.dto";
-import type { LootShare } from "src/shared/dto/loot-response.dto";
+import type { Prisma } from "#src/generated/prisma/client";
+import type { LootItemDto } from "./loot-item.dto.js";
+import type { LootNpcDto } from "./loot-npc.dto.js";
+import type { LootPlayerDto } from "./loot-player.dto.js";
+import type { LootShare } from "#src/shared/dto/loot-response.dto";
 
 export type SubmissionWithMember = {
   guildId: string;

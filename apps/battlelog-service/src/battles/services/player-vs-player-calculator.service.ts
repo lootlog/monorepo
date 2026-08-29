@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import type { PlayerVsPlayerBattleDto } from "src/battles/dto/battle-statistics-response.dto";
-import type { QueryPlayerVsPlayerDto } from "src/battles/dto/query-battle-statistics.dto";
-import { BattleAnalyticsDomainService } from "src/battles/services/battle-analytics-domain.service";
-import type { InflatedBattleWithWarriors } from "src/battles/services/battle-analytics.types";
+import type { PlayerVsPlayerBattleDto } from "#src/battles/dto/battle-statistics-response.dto";
+import type { QueryPlayerVsPlayerDto } from "#src/battles/dto/query-battle-statistics.dto";
+import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
+import type { InflatedBattleWithWarriors } from "#src/battles/services/battle-analytics.types";
 
 @Injectable()
 export class PlayerVsPlayerCalculatorService {

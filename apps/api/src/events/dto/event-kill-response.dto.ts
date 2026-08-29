@@ -6,7 +6,7 @@ import {
   isoDatetimeCodec,
   jsonValueSchema,
   nullableFlexibleIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 
 const EventKillHeroNpcResponseSchema = z.object({
   id: z.string(),

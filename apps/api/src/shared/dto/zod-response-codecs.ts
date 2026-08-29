@@ -1,4 +1,4 @@
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "#src/generated/prisma/client";
 import { z } from "zod";
 
 export const isoDatetimeCodec = z.codec(z.iso.datetime(), z.date(), {

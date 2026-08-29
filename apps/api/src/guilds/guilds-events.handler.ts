@@ -5,16 +5,16 @@ import {
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
-import { Queue } from "src/enum/queue.enum";
-import { GuildsService } from "src/guilds/guilds.service";
+import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
+import { Queue } from "#src/enum/queue.enum";
+import { GuildsService } from "#src/guilds/guilds.service";
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from "src/config/rabbitmq.config";
-import { RetryService } from "src/rabbitmq/retry.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+} from "#src/config/rabbitmq.config";
+import { RetryService } from "#src/rabbitmq/retry.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 interface AmqpMessage {
   properties: {

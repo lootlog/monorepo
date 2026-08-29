@@ -1,11 +1,11 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { BattlesService } from "./battles.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { R2Service } from "src/shared/modules/r2/r2.service";
-import { PaginationService } from "./services/pagination.service";
-import { BattleAnalyticsService } from "./services/battle-analytics.service";
-import { BattleListFilterService } from "./services/battle-list-filter.service";
-import { BattleMetadataService } from "./services/battle-metadata.service";
+import { BattlesService } from "./battles.service.js";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import { R2Service } from "#src/shared/modules/r2/r2.service";
+import { PaginationService } from "./services/pagination.service.js";
+import { BattleAnalyticsService } from "./services/battle-analytics.service.js";
+import { BattleListFilterService } from "./services/battle-list-filter.service.js";
+import { BattleMetadataService } from "./services/battle-metadata.service.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattlesService", () => {

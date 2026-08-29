@@ -3,11 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
+import { PrismaService } from "#src/db/prisma.service";
 import {
   attachComputedEventActive,
   buildActiveEventWhere,
-} from "../utils/event-activity.util";
+} from "../utils/event-activity.util.js";
 
 const pinnedEventSelect = {
   id: true,

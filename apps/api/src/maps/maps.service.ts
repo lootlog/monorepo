@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { env } from "src/config/env";
+import { env } from "#src/config/env";
 
 interface GameMap {
   id: number;

@@ -1,5 +1,5 @@
-import { Permission, type Role } from "src/generated/prisma/client";
-import { filterHeroesByLevel } from "./can-view-event-hero";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { filterHeroesByLevel } from "./can-view-event-hero.js";
 
 function createRole(
   permissions: Permission[],

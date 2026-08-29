@@ -4,9 +4,9 @@ import { Redis } from "ioredis";
 import type { INestApplication } from "@nestjs/common";
 import type { Server, ServerOptions } from "socket.io";
 import { msgpackParser } from "@lootlog/socket-parser";
-import { redisConfig } from "src/config/redis.config";
-import { GatewayAuthService } from "src/gateway/services/gateway-auth.service";
-import type { Socket } from "src/gateway/types/socket-user.type";
+import { redisConfig } from "#src/config/redis.config";
+import { GatewayAuthService } from "#src/gateway/services/gateway-auth.service";
+import type { Socket } from "#src/gateway/types/socket-user.type";
 
 const SOCKET_IO_REDIS_REQUESTS_TIMEOUT = 30000;
 

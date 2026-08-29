@@ -5,7 +5,7 @@ import {
   type CanActivate,
   type ExecutionContext,
 } from "@nestjs/common";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
 
 @Injectable()
 export class BattleOwnerGuard implements CanActivate {

@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { GuildsInternalController } from "./guilds-internal.controller";
-import { GuildsService } from "./guilds.service";
+import { mockFn } from "#src/test/mock-fn";
+import { GuildsInternalController } from "./guilds-internal.controller.js";
+import { GuildsService } from "./guilds.service.js";
 
 describe("GuildsInternalController", () => {
   let controller: GuildsInternalController;

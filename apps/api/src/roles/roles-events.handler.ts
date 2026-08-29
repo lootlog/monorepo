@@ -5,18 +5,18 @@ import {
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import type { CreateRoleDto } from "src/roles/dto/create-role.dto";
-import type { DeleteRoleDto } from "src/roles/dto/delete-role.dto";
-import type { UpdateRoleDto } from "src/roles/dto/update-role.dto";
-import { Queue } from "src/enum/queue.enum";
-import { RolesService } from "src/roles/roles.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
+import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
+import type { UpdateRoleDto } from "#src/roles/dto/update-role.dto";
+import { Queue } from "#src/enum/queue.enum";
+import { RolesService } from "#src/roles/roles.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   DEFAULT_EXCHANGE_NAME,
   DEAD_LETTER_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from "src/config/rabbitmq.config";
-import { RetryService } from "src/rabbitmq/retry.service";
+} from "#src/config/rabbitmq.config";
+import { RetryService } from "#src/rabbitmq/retry.service";
 
 interface AmqpMessage {
   properties: {

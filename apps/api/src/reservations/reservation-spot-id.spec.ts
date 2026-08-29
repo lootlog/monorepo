@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeReservationSpotId } from "./reservation-spot-id";
+import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
 describe("normalizeReservationSpotId", () => {
   it.each([

@@ -1,6 +1,6 @@
 import { Global, Module } from "@nestjs/common";
-import { PerfDiagnosticsMiddleware } from "./perf-diagnostics.middleware";
-import { PerfDiagnosticsService } from "./perf-diagnostics.service";
+import { PerfDiagnosticsMiddleware } from "./perf-diagnostics.middleware.js";
+import { PerfDiagnosticsService } from "./perf-diagnostics.service.js";
 
 @Global()
 @Module({

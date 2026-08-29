@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
-import { ItemsService } from "./items.service";
+import { ItemsService } from "./items.service.js";
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
-import { rabbitmqConfig } from "src/config/rabbitmq.config";
+import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 
 @Module({
   imports: [RabbitMQModule.forRoot(rabbitmqConfig)],

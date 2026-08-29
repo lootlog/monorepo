@@ -9,7 +9,7 @@ process.on("unhandledRejection", (reason) => {
   throw reason;
 });
 
-vi.mock("src/config/env", () => ({
+vi.mock("#src/config/env", () => ({
   env: {
     ENV: process.env.ENV ?? "local",
     PORT: Number(process.env.PORT ?? 4000),

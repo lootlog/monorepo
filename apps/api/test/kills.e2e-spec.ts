@@ -1,11 +1,11 @@
 import { type INestApplication } from "@nestjs/common";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/db/prisma.service";
+import { AppModule } from "../src/app.module.js";
+import { PrismaService } from "../src/db/prisma.service.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission, NpcType } from "../src/generated/prisma/client";
+import { TEST_GUILDS, TEST_USERS } from "./test-helpers.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
+import { Permission, NpcType } from "../src/generated/prisma/client.js";
 
 const TEST_USERS_EXTENDED = {
   ...TEST_USERS,

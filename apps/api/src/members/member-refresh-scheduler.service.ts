@@ -3,10 +3,10 @@ import { InjectQueue } from "@nestjs/bullmq";
 import type { Job, Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
+import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
+import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 
 export interface MemberRefreshJobData {
   discordId: string;

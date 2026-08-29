@@ -1,5 +1,5 @@
-import { ConnectionService } from "./connection.service";
-import { Platform } from "../enums/platform.enum";
+import { ConnectionService } from "./connection.service.js";
+import { Platform } from "../enums/platform.enum.js";
 
 describe("ConnectionService", () => {
   let service: ConnectionService;

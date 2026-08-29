@@ -3,19 +3,19 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { firstValueFrom } from "rxjs";
-import type { GetIdpTokenResponse } from "src/auth/types/get-idp-token-response.type";
-import { AccountNotFoundError } from "src/auth/errors/account-not-found.error";
-import { AuthBadRequestError } from "src/auth/errors/auth-bad-request.error";
-import { AuthServiceUnavailableError } from "src/auth/errors/auth-service-unavailable.error";
-import { TokenExpiredError } from "src/auth/errors/token-expired.error";
-import { authConfig } from "src/config/auth.config";
+import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
+import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
+import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
+import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
+import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
+import { authConfig } from "#src/config/auth.config";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getAuthTokenCacheKey,
   getAuthTokenCachePattern,
   getLegacyAuthTokenCacheKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,
-} from "src/shared/constants/cache.constant";
+} from "#src/shared/constants/cache.constant";
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
 

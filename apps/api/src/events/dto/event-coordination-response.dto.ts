@@ -1,9 +1,9 @@
 import { createZodDto } from "nestjs-zod";
-import { CoverageGapType } from "src/generated/prisma/client";
+import { CoverageGapType } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 import { z } from "zod";
 
 const EventCoordinationPrioritySchema = z.enum([

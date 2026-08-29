@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 type OpenApiDictionary = Record<string, unknown>;
 
@@ -39,8 +39,106 @@ export function sanitizeOpenApiDocument<TDocument>(document: TDocument) {
   stripTypedObjectAdditionalProperties(document);
   stripUnsupportedOpenApiKeywords(document);
   ensurePathParameters(document);
+  preserveLegacyQueryParameterSchemas(document);
+  preserveLegacyArraySchemaKeyOrder(document);
 
   return document;
+}
+
+function preserveLegacyQueryParameterSchemas(document: unknown) {
+  visitOpenApiDictionaries(document, (value) => {
+    if (Array.isArray(value.parameters)) {
+      const limitParameterIndex = value.parameters.findIndex(
+        (parameter) =>
+          isLegacyLimitQueryParameter(parameter) &&
+          parameter.required === false,
+      );
+
+      if (
+        limitParameterIndex >= 0 &&
+        limitParameterIndex < value.parameters.length - 1
+      ) {
+        const [limitParameter] = value.parameters.splice(
+          limitParameterIndex,
+          1,
+        );
+        value.parameters.push(limitParameter);
+      }
+    }
+
+    if (isLegacyLimitQueryParameter(value) && value.required === false) {
+      value.schema = {};
+    }
+  });
+}
+
+function isLegacyLimitQueryParameter(
+  value: unknown,
+): value is OpenApiDictionary {
+  return (
+    isOpenApiDictionary(value) &&
+    value.in === "query" &&
+    value.name === "limit" &&
+    value.description === "Result limit"
+  );
+}
+
+function preserveLegacyArraySchemaKeyOrder(document: unknown) {
+  visitOpenApiDictionaries(document, (value) => {
+    if (
+      value.type !== "array" ||
+      (!("minItems" in value) && !("maxItems" in value))
+    ) {
+      return;
+    }
+
+    const entries = Object.entries(value);
+    const arrayKeywordOrder = new Map([
+      ["minItems", 0],
+      ["maxItems", 1],
+      ["type", 2],
+    ]);
+
+    entries.sort(([leftKey], [rightKey]) => {
+      const leftOrder = arrayKeywordOrder.get(leftKey);
+      const rightOrder = arrayKeywordOrder.get(rightKey);
+
+      if (leftOrder === undefined && rightOrder === undefined) {
+        return 0;
+      }
+      if (leftOrder === undefined) {
+        return 1;
+      }
+      if (rightOrder === undefined) {
+        return -1;
+      }
+      return leftOrder - rightOrder;
+    });
+
+    for (const key of Object.keys(value)) {
+      delete value[key];
+    }
+    Object.assign(value, Object.fromEntries(entries));
+  });
+}
+
+function visitOpenApiDictionaries(
+  value: unknown,
+  visitor: (value: OpenApiDictionary) => void,
+) {
+  if (Array.isArray(value)) {
+    value.forEach((entry) => visitOpenApiDictionaries(entry, visitor));
+    return;
+  }
+
+  if (!isOpenApiDictionary(value)) {
+    return;
+  }
+
+  Object.values(value).forEach((entry) =>
+    visitOpenApiDictionaries(entry, visitor),
+  );
+  visitor(value);
 }
 
 function isOpenApiDictionary(value: unknown): value is OpenApiDictionary {

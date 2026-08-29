@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { canViewLoot, type LootVisibilityNpc } from "@lootlog/loot-visibility";
 import type { NotificationFilters } from "@lootlog/types";
-import { Permission, type Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+import { Permission, type Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 
 type LootCreatedEvent = {
   lootId: number;

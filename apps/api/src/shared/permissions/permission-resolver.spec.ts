@@ -1,5 +1,5 @@
-import { Permission } from "src/generated/prisma/client";
-import { PermissionResolver } from "./permission-resolver";
+import { Permission } from "#src/generated/prisma/client";
+import { PermissionResolver } from "./permission-resolver.js";
 
 describe("PermissionResolver", () => {
   it("expands ADMIN capabilities without granting the OWNER recovery marker", () => {

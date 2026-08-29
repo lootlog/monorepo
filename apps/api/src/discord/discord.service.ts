@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
-import { DiscordGuildMemberClient } from "./discord-guild-member.client";
+import { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
 import {
   DiscordUserGuildsClient,
   type FreshCompleteUserGuildsResult,
-} from "./discord-user-guilds.client";
+} from "./discord-user-guilds.client.js";
 
 export type { FreshCompleteUserGuildsResult };
 

@@ -13,10 +13,10 @@
  * 🟢 You can import this file directly.
  */
 
-import * as Prisma from './internal/prismaNamespaceBrowser'
+import * as Prisma from './internal/prismaNamespaceBrowser.ts'
 export { Prisma }
-export * as $Enums from './enums'
-export * from './enums';
+export * as $Enums from './enums.ts'
+export * from './enums.ts';
 /**
  * Model Guild
  * 
@@ -79,7 +79,7 @@ export type NpcSnapshot = Prisma.NpcSnapshotModel
 export type LootNpc = Prisma.LootNpcModel
 /**
  * Model OrganizationLootRecord
- *
+ * 
  */
 export type OrganizationLootRecord = Prisma.OrganizationLootRecordModel
 /**

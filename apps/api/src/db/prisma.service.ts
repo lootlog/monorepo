@@ -5,9 +5,9 @@ import {
   type OnModuleInit,
 } from "@nestjs/common";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, type Prisma } from "src/generated/prisma/client";
-import { env } from "src/config/env";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
+import { PrismaClient, type Prisma } from "#src/generated/prisma/client";
+import { env } from "#src/config/env";
+import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
 
 const isDev = process.env.ENV === "local" || process.env.ENV === "dev";
 

@@ -1,9 +1,9 @@
 import {
   isAdministrativeUser,
   isAdministrativeUserFromRoles,
-} from "./is-administrative-user";
+} from "./is-administrative-user.js";
 import { Permission } from "@lootlog/types";
-import type { GuildRole } from "../types/guild.types";
+import type { GuildRole } from "../types/guild.types.js";
 
 const createRole = (permissions: Permission[]): GuildRole => ({
   id: "role-id",

@@ -1,9 +1,9 @@
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
-import { Queue } from "src/enum/queue.enum";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { EventsService } from "./events.service";
+import { Queue } from "#src/enum/queue.enum";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { EventsService } from "./events.service.js";
 
 interface PlayerPresenceChangePayload {
   guildId: string;

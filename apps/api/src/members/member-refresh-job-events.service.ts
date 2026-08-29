@@ -2,9 +2,9 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 export type MemberRefreshJobUpdateDetails = {
   refreshedIds?: string[];

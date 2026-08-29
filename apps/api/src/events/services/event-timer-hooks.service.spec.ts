@@ -1,9 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
-import { mockFn } from "src/test/mock-fn";
-import { PrismaService } from "src/db/prisma.service";
-import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant";
-import { EventTimerHooksService } from "./event-timer-hooks.service";
+import { mockFn } from "#src/test/mock-fn";
+import { PrismaService } from "#src/db/prisma.service";
+import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant.js";
+import { EventTimerHooksService } from "./event-timer-hooks.service.js";
 
 describe("EventTimerHooksService", () => {
   let service: EventTimerHooksService;

@@ -1,7 +1,7 @@
 import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
-} from "./update-points.dto";
+} from "./update-points.dto.js";
 
 describe("Update points DTO validation", () => {
   describe("UpdateRankingPointsDto", () => {

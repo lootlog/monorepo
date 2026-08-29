@@ -1,6 +1,6 @@
 import { writeOpenApiDocumentToYamlFile } from "@lootlog/nest-shared/openapi";
-import { createApp } from "src/app.factory";
-import { createOpenApiDocument } from "./openapi-document";
+import { createApp } from "#src/app.factory";
+import { createOpenApiDocument } from "./openapi-document.js";
 
 async function generateOpenApi() {
   const app = await createApp();

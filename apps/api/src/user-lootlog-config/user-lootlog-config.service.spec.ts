@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { Permission } from "src/generated/prisma/client";
-import { mockFn } from "src/test/mock-fn";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { Permission } from "#src/generated/prisma/client";
+import { mockFn } from "#src/test/mock-fn";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { UserLootlogConfigService } from "./user-lootlog-config.service";
+import { UserLootlogConfigService } from "./user-lootlog-config.service.js";
 
 describe("UserLootlogConfigService", () => {
   let service: UserLootlogConfigService;

@@ -1,5 +1,5 @@
-import { MyReservationsQueryDto } from "./dto/reservation-query.dto";
-import { ReservationsService } from "./reservations.service";
+import { MyReservationsQueryDto } from "./dto/reservation-query.dto.js";
+import { ReservationsService } from "./reservations.service.js";
 
 describe("ReservationsService", () => {
   const guild = {

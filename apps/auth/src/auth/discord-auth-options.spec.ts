@@ -1,6 +1,6 @@
 import type { DiscordProfile } from "better-auth/social-providers";
 import { getTestInstance } from "better-auth/test";
-import { createDiscordAuthOptions } from "./discord-auth-options";
+import { createDiscordAuthOptions } from "./discord-auth-options.js";
 
 const DISCORD_ID = "123456789012345678";
 const DISCORD_EMAIL = "discord-user@example.com";

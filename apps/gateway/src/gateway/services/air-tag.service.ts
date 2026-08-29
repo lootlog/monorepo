@@ -15,16 +15,16 @@ import {
   type AirTagUpdateEvent,
 } from "@lootlog/types";
 import type { Server } from "socket.io";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
 import {
   type AirTagSocketScope,
   type Socket,
-} from "src/gateway/types/socket-user.type";
+} from "#src/gateway/types/socket-user.type";
 import {
   buildAirTagRoomName,
   canViewOnlinePlayers,
-} from "src/gateway/utils/room-utils";
+} from "#src/gateway/utils/room-utils";
 
 const AIR_TAG_TARGET_TTL_MS = 10_000;
 const AIR_TAG_ROOM_IDLE_TTL_SECONDS = 20;

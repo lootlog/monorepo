@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stableStringify } from "./stable-stringify";
+import { stableStringify } from "./stable-stringify.js";
 
 describe("stableStringify", () => {
   it("sorts object keys recursively", () => {

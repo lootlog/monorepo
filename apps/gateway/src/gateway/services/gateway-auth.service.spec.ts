@@ -1,9 +1,9 @@
 import { of, throwError } from "rxjs";
 import type { HttpService } from "@nestjs/axios";
-import { GatewayAuthService } from "./gateway-auth.service";
-import { env } from "src/config/env";
-import { ConnectionService } from "./connection.service";
-import { Platform } from "../enums/platform.enum";
+import { GatewayAuthService } from "./gateway-auth.service.js";
+import { env } from "#src/config/env";
+import { ConnectionService } from "./connection.service.js";
+import { Platform } from "../enums/platform.enum.js";
 
 describe("GatewayAuthService", () => {
   const get = vi.fn();

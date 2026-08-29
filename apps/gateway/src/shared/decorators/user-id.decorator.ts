@@ -1,6 +1,6 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
 import { WsException } from "@nestjs/websockets";
-import type { Socket } from "src/gateway/types/socket-user.type";
+import type { Socket } from "#src/gateway/types/socket-user.type";
 
 type IdentityField = "discordId" | "userId";
 

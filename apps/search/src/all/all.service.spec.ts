@@ -1,8 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { ItemsService } from "src/items/items.service";
-import { NpcsService } from "src/npcs/npcs.service";
-import { PlayersService } from "src/players/players.service";
-import { AllService } from "./all.service";
+import { ItemsService } from "#src/items/items.service";
+import { NpcsService } from "#src/npcs/npcs.service";
+import { PlayersService } from "#src/players/players.service";
+import { AllService } from "./all.service.js";
 
 describe("AllService", () => {
   let service: AllService;

@@ -1,16 +1,16 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
+import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { mockFn } from "src/test/mock-fn";
-import type { CreateKillDto } from "./dto/create-kill.dto";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { mockFn } from "#src/test/mock-fn";
+import type { CreateKillDto } from "./dto/create-kill.dto.js";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from "./dto/get-kill-stats.dto";
-import { KillsController } from "./kills.controller";
-import { KillsService } from "./kills.service";
+} from "./dto/get-kill-stats.dto.js";
+import { KillsController } from "./kills.controller.js";
+import { KillsService } from "./kills.service.js";
 
 describe("KillsController", () => {
   let controller: KillsController;

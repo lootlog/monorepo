@@ -8,7 +8,7 @@ import {
   isRetryableMemberRefreshStatus,
   isTransientMemberSyncStatus,
   MEMBER_DISCORD_SYNC_STATUS,
-} from "./member-discord-sync-status";
+} from "./member-discord-sync-status.js";
 
 describe("member-discord-sync-status", () => {
   it("should treat dynamic Discord HTTP statuses as retryable refresh failures", () => {

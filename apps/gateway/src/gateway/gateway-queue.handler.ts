@@ -3,45 +3,45 @@ import {
   RabbitSubscribe,
 } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
-import type { AddMemberRoleDto } from "src/gateway/dto/add-member-role.dto";
-import type { AddMemberDto } from "src/gateway/dto/add-member.dto";
-import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
-import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.dto";
-import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
-import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
-import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
-import type { DeleteMemberDto } from "src/gateway/dto/delete-member.dto";
-import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
+import type { AddMemberRoleDto } from "#src/gateway/dto/add-member-role.dto";
+import type { AddMemberDto } from "#src/gateway/dto/add-member.dto";
+import type { ChatMessageDeleteDto } from "#src/gateway/dto/chat-message-delete.dto";
+import type { ChatMessagesClearDto } from "#src/gateway/dto/chat-messages-clear.dto";
+import type { ChatMessageUpdateDto } from "#src/gateway/dto/chat-message-update.dto";
+import type { CreateTimerDto } from "#src/gateway/dto/create-timer.dto";
+import type { DeleteMemberRoleDto } from "#src/gateway/dto/delete-member-role.dto";
+import type { DeleteMemberDto } from "#src/gateway/dto/delete-member.dto";
+import type { DeleteTimerDto } from "#src/gateway/dto/delete-timer.dto";
 import {
   LootCreateEventV2Dto,
   LootShareUpdateEventV2Dto,
-} from "src/gateway/dto/loot-event.dto";
-import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
+} from "#src/gateway/dto/loot-event.dto";
+import type { RefreshJobUpdateDto } from "#src/gateway/dto/refresh-job-update.dto";
 import {
   ReservationChangedEventV2Dto,
   type ReservationCreateEventDto,
   type ReservationDeleteEventDto,
-} from "src/gateway/dto/reservation-event.dto";
-import type { SendMessageDto } from "src/gateway/dto/send-message.dto";
-import type { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
-import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
-import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
-import { parsePartyReadyRoomUpdateEnvelope } from "src/gateway/dto/party-ready-room-update.dto";
+} from "#src/gateway/dto/reservation-event.dto";
+import type { SendMessageDto } from "#src/gateway/dto/send-message.dto";
+import type { SendNotificationDto } from "#src/gateway/dto/send-notification.dto";
+import type { SendPartyGatheringDto } from "#src/gateway/dto/send-party-gathering.dto";
+import type { VolunteerNotificationDto } from "#src/gateway/dto/volunteer-notification.dto";
+import { parsePartyReadyRoomUpdateEnvelope } from "#src/gateway/dto/party-ready-room-update.dto";
 import type {
   EventMapStatusUpdatePayload,
   EventHeroKilledPayload,
   EventRankingUpdatePayload,
   EventRespawnWindowPayload,
-} from "src/gateway/types/margo-event.types";
-import { Queue } from "src/gateway/enums/queue.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { GatewayService } from "src/gateway/gateway.service";
+} from "#src/gateway/types/margo-event.types";
+import { Queue } from "#src/gateway/enums/queue.enum";
+import { RoutingKey } from "#src/gateway/enums/routing-key.enum";
+import { GatewayService } from "#src/gateway/gateway.service";
 import {
   DEFAULT_EXCHANGE_NAME,
   DEAD_LETTER_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from "src/config/rabbitmq.config";
-import { RetryService } from "src/gateway/retry.service";
+} from "#src/config/rabbitmq.config";
+import { RetryService } from "#src/gateway/retry.service";
 
 interface AmqpMessage {
   properties: {

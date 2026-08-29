@@ -2,10 +2,10 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, bearer, jwt } from "better-auth/plugins";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
-import { env } from "src/config/env";
-import { betterAuthSchema, db } from "src/database/drizzle";
-import { authRedisSecondaryStorage } from "./auth-redis-storage";
-import { createDiscordAuthOptions } from "./discord-auth-options";
+import { env } from "#src/config/env";
+import { betterAuthSchema, db } from "#src/database/drizzle";
+import { authRedisSecondaryStorage } from "./auth-redis-storage.js";
+import { createDiscordAuthOptions } from "./discord-auth-options.js";
 
 const discordAuthOptions = createDiscordAuthOptions({
   clientId: env.DISCORD_CLIENT_ID,

@@ -1,10 +1,10 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { ActivitySource, ActivityType } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   unknownRecordSchema,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 
 const ActivityActorSnapshotResponseSchema = z.object({
   id: z.string(),

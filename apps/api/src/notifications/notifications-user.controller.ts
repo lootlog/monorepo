@@ -18,24 +18,24 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import { CreateNotificationRuleDto } from "#src/notifications/dto/create-notification-rule.dto";
 import {
   NotificationJobsResponseDto,
   NotificationRuleResponseDto,
   NotificationTargetResponseDto,
   NotificationTargetWithTestTriggerResponseDto,
   WatchedItemResponseDto,
-} from "src/notifications/dto/notification-response.dto";
-import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
-import { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
-import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
-import { NotificationJobService } from "src/notifications/notification-job.service";
-import { NotificationRuleService } from "src/notifications/notification-rule.service";
-import { NotificationTargetService } from "src/notifications/notification-target.service";
-import { WatchedItemService } from "src/notifications/watched-item.service";
-import { SuccessResponseDto } from "src/shared/dto/common-response.dto";
+} from "#src/notifications/dto/notification-response.dto";
+import { CreateNotificationTargetDto } from "#src/notifications/dto/create-notification-target.dto";
+import { CreateWatchedItemQuickAddDto } from "#src/notifications/dto/create-watched-item-quick-add.dto";
+import { CreateWatchedItemDto } from "#src/notifications/dto/create-watched-item.dto";
+import { UpdateNotificationRuleDto } from "#src/notifications/dto/update-notification-rule.dto";
+import { UpdateNotificationTargetDto } from "#src/notifications/dto/update-notification-target.dto";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
+import { NotificationRuleService } from "#src/notifications/notification-rule.service";
+import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { WatchedItemService } from "#src/notifications/watched-item.service";
+import { SuccessResponseDto } from "#src/shared/dto/common-response.dto";
 import { AuthGuard } from "@lootlog/nest-shared";
 
 @ApiTags("notifications")

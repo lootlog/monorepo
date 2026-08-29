@@ -1,8 +1,8 @@
 import type {
   EventHeroKillJobData,
   SerializedKillTimerData,
-} from "../interfaces/check-event-hero-kill-params.interface";
-import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
+} from "../interfaces/check-event-hero-kill-params.interface.js";
+import type { KillTimerData } from "../interfaces/kill-timer-data.interface.js";
 
 export const EVENT_HERO_KILL_JOB_NAME = "process-event-hero-kill";
 const MANUAL_CLOSE_SUFFIX = "manual";

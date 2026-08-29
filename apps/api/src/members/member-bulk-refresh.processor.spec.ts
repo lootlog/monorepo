@@ -1,12 +1,12 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
-import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
-import { MembersService } from "./members.service";
-import { PrismaService } from "src/db/prisma.service";
+import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor.js";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
+import { MembersService } from "./members.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 
 describe("MemberBulkRefreshProcessor", () => {
   let processor: MemberBulkRefreshProcessor;

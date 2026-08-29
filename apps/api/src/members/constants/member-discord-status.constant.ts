@@ -1,4 +1,4 @@
-import { MEMBER_DISCORD_SYNC_STATUS } from "../member-discord-sync-status";
+import { MEMBER_DISCORD_SYNC_STATUS } from "../member-discord-sync-status.js";
 
 export const MEMBER_LAST_DISCORD_STATUS = {
   ...MEMBER_DISCORD_SYNC_STATUS,

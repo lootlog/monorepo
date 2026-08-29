@@ -1,4 +1,4 @@
-import { EventKillHistoryResponseDto } from "./event-kill-response.dto";
+import { EventKillHistoryResponseDto } from "./event-kill-response.dto.js";
 
 describe("EventKillHistoryResponseDto", () => {
   it("encodes cached map data dates as ISO strings", () => {

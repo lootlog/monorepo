@@ -1,11 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
-import { PermissionsGuard } from "src/shared/guards/permissions.guard";
-import { ActivitiesController } from "./activities.controller";
-import { QueryActivitiesDto } from "./dto/query-activities.dto";
-import { ActivitiesService } from "./activities.service";
-import { ActivitiesQueryService } from "./services/activities-query.service";
+import { ActivitySource, ActivityType } from "#src/generated/prisma/client";
+import { PermissionsGuard } from "#src/shared/guards/permissions.guard";
+import { ActivitiesController } from "./activities.controller.js";
+import { QueryActivitiesDto } from "./dto/query-activities.dto.js";
+import { ActivitiesService } from "./activities.service.js";
+import { ActivitiesQueryService } from "./services/activities-query.service.js";
 
 describe("ActivitiesController", () => {
   let controller: ActivitiesController;

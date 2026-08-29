@@ -1,8 +1,8 @@
 import { BadRequestException } from "@nestjs/common";
-import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import { ErrorKey } from "src/timers/enum/error-key.enum";
-import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "src/timers/constants/respawn";
+import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
+import { ErrorKey } from "#src/timers/enum/error-key.enum";
+import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
+import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/constants/respawn";
 
 interface SpawnTimes {
   minSpawnTime: Date;

@@ -4,12 +4,12 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
-import { buildMeilisearchSearchTermFilter } from "src/meilisearch/meilisearch.utils";
-import type { GetNpcsDto } from "./dto/get-npcs.dto";
-import { NPCS_INDEX } from "./constants/meilisearch";
-import type { IndexNpcsDto } from "./dto/index-npcs.dto";
-import type { npcHitSchema } from "./dto/npc-hit.schema";
+import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
+import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
+import { NPCS_INDEX } from "./constants/meilisearch.js";
+import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
+import type { npcHitSchema } from "./dto/npc-hit.schema.js";
 
 type NpcHit = z.infer<typeof npcHitSchema>;
 type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {

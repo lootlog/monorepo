@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CoverageGapType, type Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { clipToWindow } from "../utils/tracking-window.util";
+import { CoverageGapType, type Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { clipToWindow } from "../utils/tracking-window.util.js";
 
 interface MemberStat {
   memberId: number;

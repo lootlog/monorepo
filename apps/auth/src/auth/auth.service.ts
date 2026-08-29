@@ -12,8 +12,8 @@ import {
 import { APIError } from "better-auth/api";
 import { fromNodeHeaders } from "better-auth/node";
 import type { IncomingHttpHeaders } from "node:http";
-import { env } from "src/config/env";
-import { auth, type AppUserSession } from "./better-auth";
+import { env } from "#src/config/env";
+import { auth, type AppUserSession } from "./better-auth.js";
 
 type VerifiedIdentity = {
   userId: string;

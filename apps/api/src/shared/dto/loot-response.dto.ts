@@ -5,8 +5,8 @@ import {
   LootSource,
   NpcType,
   Profession,
-} from "src/generated/prisma/client";
-import { isoDatetimeCodec } from "./zod-response-codecs";
+} from "#src/generated/prisma/client";
+import { isoDatetimeCodec } from "./zod-response-codecs.js";
 
 const LootItemResponseSchema = z
   .object({

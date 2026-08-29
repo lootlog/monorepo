@@ -3,13 +3,13 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
-import { getMeilisearchErrorCode } from "src/meilisearch/meilisearch.utils";
-import type { GetItemsDto } from "./dto/get-items.dto";
-import { ITEMS_INDEX } from "./constants/meilisearch";
-import type { IndexItemsDto } from "./dto/index-items.dto";
-import type { itemHitSchema } from "./dto/item-hit.schema";
-import { createItemSearchFields } from "./utils/create-item-search-fields";
+import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
+import { getMeilisearchErrorCode } from "#src/meilisearch/meilisearch.utils";
+import type { GetItemsDto } from "./dto/get-items.dto.js";
+import { ITEMS_INDEX } from "./constants/meilisearch.js";
+import type { IndexItemsDto } from "./dto/index-items.dto.js";
+import type { itemHitSchema } from "./dto/item-hit.schema.js";
+import { createItemSearchFields } from "./utils/create-item-search-fields.js";
 
 type ItemHit = z.infer<typeof itemHitSchema>;
 type SearchItemsResponse = {

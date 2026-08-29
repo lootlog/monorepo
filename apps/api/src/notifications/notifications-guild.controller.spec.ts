@@ -1,6 +1,6 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { NotificationsGuildController } from "./notifications-guild.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { NotificationsGuildController } from "./notifications-guild.controller.js";
 
 describe("NotificationsGuildController", () => {
   const mockTargetService = {

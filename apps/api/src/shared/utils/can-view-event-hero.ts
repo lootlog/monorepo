@@ -1,5 +1,5 @@
-import type { Permission, Role } from "src/generated/prisma/client";
-import { PermissionResolver } from "src/shared/permissions/permission-resolver";
+import type { Permission, Role } from "#src/generated/prisma/client";
+import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
 interface EventHeroWithLevel {
   npcLvl: number | null;

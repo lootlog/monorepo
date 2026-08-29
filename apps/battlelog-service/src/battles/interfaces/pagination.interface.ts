@@ -1,4 +1,4 @@
-import type { SortOrder } from "../dto/query-battles.dto";
+import type { SortOrder } from "../dto/query-battles.dto.js";
 
 export interface CursorPagination {
   size: number;

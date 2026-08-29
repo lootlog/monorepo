@@ -1,10 +1,10 @@
 import { NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { serviceConfig } from "src/config/service.config";
-import { PrismaService } from "src/db/prisma.service";
-import { mockFn } from "src/test/mock-fn";
+import { serviceConfig } from "#src/config/service.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
+import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 
 describe("PublicGuildStatsCardService", () => {
   let service: PublicGuildStatsCardService;

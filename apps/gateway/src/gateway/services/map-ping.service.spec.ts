@@ -1,7 +1,7 @@
 import { MAP_PING_TYPES, Permission } from "@lootlog/types";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { MapPingService } from "./map-ping.service";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { MapPingService } from "./map-ping.service.js";
 
 describe("MapPingService", () => {
   const createGuild = (id: string, canView = true) => ({

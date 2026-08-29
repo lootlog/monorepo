@@ -17,9 +17,9 @@ import {
 import { createHash } from "node:crypto";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { ExecutionError } from "redlock";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   NpcType,
   Permission,
@@ -28,26 +28,26 @@ import {
   type ItemRarity,
   type LootlogConfigNpc,
   type Prisma,
-} from "src/generated/prisma/client";
-import { GuildsService } from "src/guilds/guilds.service";
-import { ItemsService } from "src/items/items.service";
-import { RedlockService } from "src/lib/redlock/redlock.service";
-import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
-import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
+} from "#src/generated/prisma/client";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { ItemsService } from "#src/items/items.service";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
+import { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
+import type { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import type {
   CreateLootRejectedGuild,
   CreateLootRejectedGuildReason,
   CreateLootResponse,
   CreateLootSubmittedGuild,
-} from "src/loots/dto/loot-response.dto";
-import { ErrorKey } from "src/loots/enum/error-key.enum";
-import { LootAllocationService } from "src/loots/loot-allocation.service";
-import { LootStatsService } from "src/loots/services/loot-stats.service";
-import { NpcsService } from "src/npcs/npcs.service";
-import { PlayersService } from "src/players/players.service";
-import { getItemTypeByCl } from "src/shared/utils/get-item-type-by-cl";
-import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
-import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+} from "#src/loots/dto/loot-response.dto";
+import { ErrorKey } from "#src/loots/enum/error-key.enum";
+import { LootAllocationService } from "#src/loots/loot-allocation.service";
+import { LootStatsService } from "#src/loots/services/loot-stats.service";
+import { NpcsService } from "#src/npcs/npcs.service";
+import { PlayersService } from "#src/players/players.service";
+import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
+import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import type { Logger } from "winston";
 
 type LootSubmissionData = {

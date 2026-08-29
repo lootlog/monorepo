@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { RedlockService } from "./redlock.service";
+import { RedlockService } from "./redlock.service.js";
 
 @Module({
   providers: [RedlockService],

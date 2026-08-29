@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { env } from "src/config/env";
-import { betterAuthSchema } from "./drizzle.schema";
+import { env } from "#src/config/env";
+import { betterAuthSchema } from "./drizzle.schema.js";
 
 export const drizzlePool = new pg.Pool({
   host: env.POSTGRESQL_HOST,

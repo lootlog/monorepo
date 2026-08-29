@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/db/prisma.service";
+import { AppModule } from "../src/app.module.js";
+import { PrismaService } from "../src/db/prisma.service.js";
 import {
   type Event,
   type EventHeroKill,
@@ -14,9 +14,9 @@ import {
   type Member,
   Permission,
   type Role,
-} from "../src/generated/prisma/client";
-import { buildTimerKey } from "../src/timers/utils/timer-key";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
+} from "../src/generated/prisma/client.js";
+import { buildTimerKey } from "../src/timers/utils/timer-key.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 
 export const TEST_AUTH = {
   userId: "e2e-user",

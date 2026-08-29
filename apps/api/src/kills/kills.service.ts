@@ -2,29 +2,29 @@ import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { getStableNpcId } from "src/shared/utils/get-stable-npc-id";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { CreateKillDto } from "./dto/create-kill.dto";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
+import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
+import { getStableNpcId } from "#src/shared/utils/get-stable-npc-id";
+import { GuildsService } from "#src/guilds/guilds.service";
+import type { CreateKillDto } from "./dto/create-kill.dto.js";
 import type {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from "./dto/get-kill-stats.dto";
-import type { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
-import type { GetMemberKillsDto } from "./dto/get-member-kills.dto";
+} from "./dto/get-kill-stats.dto.js";
+import type { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto.js";
+import type { GetMemberKillsDto } from "./dto/get-member-kills.dto.js";
 import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
-} from "./utils/kill-dedup-key";
+} from "./utils/kill-dedup-key.js";
 import {
   getKillStatsBucketStart,
   getKillStatsPeriodStart,
   type KillStatsPeriod,
-} from "./utils/kill-stats-period";
+} from "./utils/kill-stats-period.js";
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 const KILL_STATS_CACHE_TTL_SECONDS = 30;

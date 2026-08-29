@@ -1,12 +1,12 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { Permission } from "../src/generated/prisma/client";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/db/prisma.service";
-import { buildTimerKey } from "../src/timers/utils/timer-key";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
+import { Permission } from "../src/generated/prisma/client.js";
+import { AppModule } from "../src/app.module.js";
+import { PrismaService } from "../src/db/prisma.service.js";
+import { buildTimerKey } from "../src/timers/utils/timer-key.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
+import { TEST_GUILDS, TEST_USERS } from "./test-helpers.js";
 
 const eventNpc = {
   id: 123,

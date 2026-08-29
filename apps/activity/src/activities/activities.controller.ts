@@ -15,7 +15,7 @@ import {
 import { AuthGuard, RequiredPermissions } from "@lootlog/nest-shared";
 import { Permission } from "@lootlog/types";
 import { ZodResponse } from "nestjs-zod";
-import { PermissionsGuard } from "src/shared/guards/permissions.guard";
+import { PermissionsGuard } from "#src/shared/guards/permissions.guard";
 import {
   ActivityResponseDto,
   ActorNameSuggestionsResponseDto,
@@ -23,14 +23,14 @@ import {
   DeleteActivityResponseDto,
   PaginatedActivitiesResponseDto,
   WorldSuggestionsResponseDto,
-} from "./dto/activity-response.dto";
-import { MemberActivityStatsResponseDto } from "./dto/member-activity-stats-response.dto";
-import { QueryActivitiesDto } from "./dto/query-activities.dto";
-import { SuggestActorNamesDto } from "./dto/suggest-actor-names.dto";
-import { SuggestClanNamesDto } from "./dto/suggest-clan-names.dto";
-import { SuggestWorldsDto } from "./dto/suggest-worlds.dto";
-import { ActivitiesService } from "./activities.service";
-import { ActivitiesQueryService } from "./services/activities-query.service";
+} from "./dto/activity-response.dto.js";
+import { MemberActivityStatsResponseDto } from "./dto/member-activity-stats-response.dto.js";
+import { QueryActivitiesDto } from "./dto/query-activities.dto.js";
+import { SuggestActorNamesDto } from "./dto/suggest-actor-names.dto.js";
+import { SuggestClanNamesDto } from "./dto/suggest-clan-names.dto.js";
+import { SuggestWorldsDto } from "./dto/suggest-worlds.dto.js";
+import { ActivitiesService } from "./activities.service.js";
+import { ActivitiesQueryService } from "./services/activities-query.service.js";
 
 @ApiTags("guilds")
 @ApiBearerAuth()

@@ -14,18 +14,21 @@ import {
 import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   ChannelType,
-  Client,
+  Client as DiscordClient,
   DiscordAPIError,
   PermissionsBitField,
-  type Collection,
-  type Guild,
-  type GuildBasedChannel,
-  type GuildMember,
-  type Role,
 } from "discord.js";
-import { RoutingKey } from "src/bot/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant";
+import type {
+  Client,
+  Collection,
+  Guild,
+  GuildBasedChannel,
+  GuildMember,
+  Role,
+} from "discord.js" with { "resolution-mode": "require" };
+import { RoutingKey } from "#src/bot/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant.js";
 
 type ChannelPermissionsState = {
   canView: boolean;
@@ -70,7 +73,7 @@ export class DiscordSyncService {
 
   constructor(
     private readonly amqpConnection: AmqpConnection,
-    @Inject(Client) private readonly client: Client,
+    @Inject(DiscordClient) private readonly client: Client,
   ) {}
 
   async handleClientReady(client: Client) {

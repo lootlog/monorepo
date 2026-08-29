@@ -9,7 +9,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import pg from "pg";
 
-import { relations } from "./relations";
+import { relations } from "./relations.js";
 
 @Injectable()
 export class DrizzleService implements OnModuleInit, OnModuleDestroy {

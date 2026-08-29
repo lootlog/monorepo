@@ -7,10 +7,10 @@ import {
   NotificationTargetType,
   NotificationTriggerType,
   type Prisma,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { NotificationJobService } from "src/notifications/notification-job.service";
-import { formatDiscordRelativeTimestamp } from "src/notifications/utils/discord-timestamp.util";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
+import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
 
 const RESERVATION_REMINDER_RULE_NAME = "__system:reservation-reminder__";
 const RESERVATION_SOURCE_ENTITY_TYPE = "reservation";

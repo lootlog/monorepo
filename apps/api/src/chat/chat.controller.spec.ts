@@ -1,6 +1,6 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { ChatController } from "./chat.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { ChatController } from "./chat.controller.js";
 
 describe("ChatController", () => {
   const mockChatService = {

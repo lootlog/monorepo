@@ -1,4 +1,7 @@
-import { applySettingsPatch, resolveSettingsDomain } from "./settings-resolver";
+import {
+  applySettingsPatch,
+  resolveSettingsDomain,
+} from "./settings-resolver.js";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   migrateSettingsDocument,

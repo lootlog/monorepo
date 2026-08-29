@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "src/db/prisma.service";
-import { env } from "src/config/env";
+import { PrismaService } from "#src/db/prisma.service";
+import { env } from "#src/config/env";
 
 @Injectable()
 export class ReservationsCleanupService {

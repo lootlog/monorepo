@@ -10,16 +10,16 @@ import {
   NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
   nullableIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 import {
   DiscordGuildChannelSnapshotResponseDto,
   DiscordGuildSyncStateResponseDto,
-} from "src/shared/dto/discord-guild-sync-response.dto";
+} from "#src/shared/dto/discord-guild-sync-response.dto";
 
 const NotificationTestTriggerUsageResponseSchema = z.object({
   limit: z.number().int(),

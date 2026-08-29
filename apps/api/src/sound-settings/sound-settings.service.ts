@@ -3,9 +3,9 @@ import type {
   NpcTypeSoundConfig,
   SettingsDomainResolution,
 } from "@lootlog/types";
-import type { Prisma } from "src/generated/prisma/client";
-import { SettingsDocumentsService } from "src/settings-documents/settings-documents.service";
-import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
+import type { Prisma } from "#src/generated/prisma/client";
+import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
+import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto.js";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;

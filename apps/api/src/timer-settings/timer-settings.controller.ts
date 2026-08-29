@@ -17,14 +17,14 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { TimerSettingsService } from "./timer-settings.service";
-import { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
-import { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
-import { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
+import { TimerSettingsService } from "./timer-settings.service.js";
+import { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto.js";
+import { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto.js";
+import { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto.js";
 import {
   GuildTimerSettingsResponseDto,
   TimerSettingsResponseDto,
-} from "./dto/timer-settings-response.dto";
+} from "./dto/timer-settings-response.dto.js";
 
 @ApiTags("timer-settings")
 @ApiBearerAuth()

@@ -1,7 +1,7 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { CreateReservationDto } from "./dto/create-reservation.dto";
-import { ReservationsController } from "./reservations.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { CreateReservationDto } from "./dto/create-reservation.dto.js";
+import { ReservationsController } from "./reservations.controller.js";
 
 describe("ReservationsController", () => {
   const reservationsService = {

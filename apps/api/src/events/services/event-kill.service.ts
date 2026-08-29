@@ -6,39 +6,39 @@ import type {
   Event,
   EventHeroNpc,
   Prisma,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { EventEmitterService } from "./event-emitter.service";
-import { EventPointsService } from "./event-points.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { EventTrackingService } from "./event-tracking.service";
-import { EventSummaryService } from "./event-summary.service";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
-import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { EventPointsService } from "./event-points.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { EventTrackingService } from "./event-tracking.service.js";
+import { EventSummaryService } from "./event-summary.service.js";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
+import type { KillTimerData } from "../interfaces/kill-timer-data.interface.js";
 import {
   buildEventHeroKillDedupKey,
   buildEventHeroKillHeroDedupKey,
   buildEventHeroKillRecentDedupKey,
   getEventHeroKillWindowKey,
-} from "../utils/event-hero-kill-job";
+} from "../utils/event-hero-kill-job.js";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/scoring";
-import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
+import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util.js";
 import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
   getTrackingWindowDurationSeconds,
   getTrackingWindowStartTime,
-} from "../utils/tracking-window.util";
-import { TimersService } from "src/timers/timers.service";
+} from "../utils/tracking-window.util.js";
+import { TimersService } from "#src/timers/timers.service";
 import {
   findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc,
   type ActiveEventHeroMatch,
-} from "../utils/find-active-event-heroes-by-npc";
+} from "../utils/find-active-event-heroes-by-npc.js";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;

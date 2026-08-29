@@ -1,8 +1,8 @@
 import type { Logger } from "winston";
-import { env } from "src/config/env";
-import { mockFn } from "src/test/mock-fn";
-import { PerfDiagnosticsService } from "./perf-diagnostics.service";
-import { requestDiagnosticsStorage } from "./request-diagnostics-context";
+import { env } from "#src/config/env";
+import { mockFn } from "#src/test/mock-fn";
+import { PerfDiagnosticsService } from "./perf-diagnostics.service.js";
+import { requestDiagnosticsStorage } from "./request-diagnostics-context.js";
 
 describe("PerfDiagnosticsService", () => {
   const diagnosticsEnv = env as typeof env & {

@@ -6,8 +6,8 @@ import {
   MemoryHealthIndicator,
   DiskHealthIndicator,
 } from "@nestjs/terminus";
-import { HealthzController } from "./healthz.controller";
-import { PrismaService } from "src/shared/db/prisma.service";
+import { HealthzController } from "./healthz.controller.js";
+import { PrismaService } from "#src/shared/db/prisma.service";
 
 describe("HealthzController", () => {
   let controller: HealthzController;

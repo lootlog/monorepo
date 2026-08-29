@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { NpcsController } from "./npcs.controller";
-import { NpcsService } from "./npcs.service";
+import { NpcsController } from "./npcs.controller.js";
+import { NpcsService } from "./npcs.service.js";
 
 describe("NpcsController", () => {
   let controller: NpcsController;
