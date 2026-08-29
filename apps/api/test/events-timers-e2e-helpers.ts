@@ -122,6 +122,7 @@ export async function createMemberFixture(
       id: params.roleId ?? `${auth.discordId}-role`,
       guildId: params.guildId,
       name: `${auth.discordId} role`,
+      position: 1,
       permissions: params.permissions ?? [],
       lvlRangeFrom: params.lvlRangeFrom,
       lvlRangeTo: params.lvlRangeTo,

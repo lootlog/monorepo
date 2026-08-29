@@ -1370,7 +1370,12 @@ export class BattleProcessor {
       ? context.targetId
       : context.actorId;
     if (context.actorId && appliesPressure) {
-      this.applyTimelineResourcePressure(context, accumulator);
+      this.applyTimelineResourcePressure(
+        context.actorId,
+        context.actionType,
+        context.value,
+        accumulator,
+      );
     }
     if (resourceTargetId) {
       this.addTimelineDelta(
@@ -1385,34 +1390,32 @@ export class BattleProcessor {
   }
 
   private applyTimelineResourcePressure(
-    context: TimelineActionContext & { actorId: string },
+    actorId: string,
+    actionType: TimelineActionContext["actionType"],
+    value: number,
     accumulator: TimelineActionAccumulator,
   ): void {
     this.addTimelineDelta(
       accumulator.byWarrior,
-      context.actorId,
+      actorId,
       "resourcePressure",
-      context.value,
+      value,
     );
-    const pressureField = this.getResourcePressureField(context.actionType);
+    const pressureField = this.getResourcePressureField(actionType);
     if (pressureField) {
       this.addTimelineDelta(
         accumulator.byWarrior,
-        context.actorId,
+        actorId,
         pressureField,
-        context.value,
+        value,
       );
     }
-    this.trackResourcePressure(
-      context.actorId,
-      context.actionType,
-      context.value,
-    );
-    accumulator.resourcePressure += context.value;
+    this.trackResourcePressure(actorId, actionType, value);
+    accumulator.resourcePressure += value;
     if (pressureField === "energyPressure") {
-      accumulator.energyPressure += context.value;
+      accumulator.energyPressure += value;
     } else if (pressureField === "manaPressure") {
-      accumulator.manaPressure += context.value;
+      accumulator.manaPressure += value;
     }
   }
 

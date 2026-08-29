@@ -762,7 +762,10 @@ describe("Timers E2E Tests (Whitelist)", () => {
       const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
       const { member } = await createMemberFixture(prisma, {
         guildId: guild.id,
-        permissions: [Permission.LOOTLOG_MANAGE],
+        permissions: [
+          Permission.LOOTLOG_MANAGE,
+          Permission.LOOTLOG_TIMERS_READ,
+        ],
       });
       const timer = await createTimerFixture(prisma, {
         guildId: guild.id,
@@ -777,9 +780,24 @@ describe("Timers E2E Tests (Whitelist)", () => {
           .query({ world: TEST_WORLD }),
       ).expect(200);
 
-      await expect(
-        prisma.timer.count({ where: { guildId: guild.id } }),
-      ).resolves.toBe(0);
+      const deletedTimer = await prisma.timer.findUniqueOrThrow({
+        where: {
+          timerId: {
+            guildId: guild.id,
+            world: TEST_WORLD,
+            timerKey: timer.timerKey,
+          },
+        },
+      });
+      expect(deletedTimer.deletedAt).toBeInstanceOf(Date);
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .get(`/guilds/${guild.id}/timers`)
+          .query({ world: TEST_WORLD }),
+      ).expect(200);
+
+      expect(response.body).toEqual([]);
     });
 
     it("should return 404 for syntactically valid but missing timer", async () => {
