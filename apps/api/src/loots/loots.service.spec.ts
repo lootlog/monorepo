@@ -18,8 +18,8 @@ import { GuildsService } from "../guilds/guilds.service";
 import { PrismaService } from "../db/prisma.service";
 import { LootlogConfigService } from "../lootlog-config/lootlog-config.service";
 import { UserLootlogConfigService } from "../user-lootlog-config/user-lootlog-config.service";
-import { LootMappingService } from "./services/loot-mapping.service";
-import { LootValidationService } from "./services/loot-validation.service";
+import { LootAllocationService } from "./loot-allocation.service";
+import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
 import { LootStatsService } from "./services/loot-stats.service";
@@ -42,8 +42,10 @@ import {
 import { ErrorKey } from "./enum/error-key.enum";
 import { RoutingKey } from "src/enum/routing-key.enum";
 
-describe("LootsService", () => {
+describe("Loot modules", () => {
   let service: LootsService;
+  let acceptance: LootSubmissionAcceptanceService;
+  let allocation: LootAllocationService;
   let prismaService: {
     loot: {
       findUnique: Mock;
@@ -270,9 +272,9 @@ describe("LootsService", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        LootAllocationService,
+        LootSubmissionAcceptanceService,
         LootsService,
-        LootMappingService,
-        LootValidationService,
         LootQueryService,
         LootCommentService,
         { provide: LootStatsService, useValue: mockLootStatsService },
@@ -299,13 +301,15 @@ describe("LootsService", () => {
     }).compile();
 
     service = module.get<LootsService>(LootsService);
-    await service.onModuleInit();
+    acceptance = module.get(LootSubmissionAcceptanceService);
+    allocation = module.get(LootAllocationService);
+    acceptance.onModuleInit();
 
     const mockLock = {
       release: mockFn().mockResolvedValue(undefined),
     };
 
-    vi.spyOn(service["redlock"], "acquire").mockResolvedValue(
+    vi.spyOn(acceptance["redlock"], "acquire").mockResolvedValue(
       mockLock as never,
     );
 
@@ -331,9 +335,43 @@ describe("LootsService", () => {
     });
   });
 
-  describe("createLoot", () => {
+  describe("LootSubmissionAcceptanceService", () => {
     const discordId = "discord123";
-    const userId = "user123";
+    const createLootItem = (
+      hid: string,
+      own?: number,
+    ): CreateLootDto["loots"][number] => ({
+      id: Number(hid.replace(/\D/g, "")) || 1,
+      hid,
+      name: `Item ${hid}`,
+      icon: "item.png",
+      pr: 1,
+      prc: "unique",
+      stat: "lvl=50;rarity=UNIQUE",
+      cl: 1,
+      own,
+    });
+    const createPlayer = (
+      id: number,
+      accountId: number,
+    ): CreateLootDto["players"][number] => ({
+      id,
+      accountId,
+      name: `Player ${id}`,
+      lvl: 50,
+      prof: "w",
+      icon: "player.png",
+    });
+    const standardColossus = {
+      id: 173_890,
+      name: "Wernoradzki Drakolisz",
+      location: "Katakumby Antycznego Gniewu",
+      lvl: 279,
+      prof: "b",
+      wt: 90,
+      icon: "kol/kolos-drakolisz.gif",
+      type: 2,
+    } satisfies CreateLootDto["npcs"][number];
     const expectedSuccessResponse = {
       id: 1,
       submittedGuilds: [
@@ -385,7 +423,7 @@ describe("LootsService", () => {
       guildsService.getGuildsForRequiredPermissions.mockResolvedValue([]);
 
       await expect(
-        service.createLoot(discordId, userId, mockCreateLootDto),
+        acceptance.accept({ discordId, submission: mockCreateLootDto }),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -394,11 +432,10 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(
+      const result = await acceptance.accept({
         discordId,
-        userId,
-        mockCreateLootDto,
-      );
+        submission: mockCreateLootDto,
+      });
 
       expect(prismaService.loot.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -447,7 +484,7 @@ describe("LootsService", () => {
           ],
         },
       );
-      expect(service["redlock"].acquire).toHaveBeenCalledWith(
+      expect(acceptance["redlock"].acquire).toHaveBeenCalledWith(
         [expect.stringMatching(/^loot:lock:/)],
         30_000,
         {
@@ -490,7 +527,7 @@ describe("LootsService", () => {
       prismaService.npcSnapshot.findFirst.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue({ id: 1 });
 
-      await service.createLoot(discordId, userId, standardColossusDto);
+      await acceptance.accept({ discordId, submission: standardColossusDto });
 
       expect(prismaService.npcSnapshot.findFirst).toHaveBeenCalledWith({
         where: {
@@ -502,6 +539,43 @@ describe("LootsService", () => {
       expect(prismaService.loot.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           lootShare: { "1123": ["item1"] },
+          lootShareSource: "ITEM_OWNER",
+        }),
+      });
+    });
+
+    it("creates a complete one-to-one allocation for a standard colossus", async () => {
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: "guild1",
+          npcs: [
+            {
+              npcType: NpcType.COLOSSUS,
+              allowedRarities: [ItemRarity.UNIQUE],
+            },
+          ],
+        },
+      ]);
+      prismaService.loot.findUnique.mockResolvedValue(null);
+      prismaService.npcSnapshot.findFirst.mockResolvedValue(null);
+      prismaService.loot.create.mockResolvedValue({ id: 1 });
+
+      await acceptance.accept({
+        discordId,
+        submission: {
+          ...mockCreateLootDto,
+          loots: [createLootItem("item-1", 11), createLootItem("item-2", 22)],
+          players: [createPlayer(11, 101), createPlayer(22, 202)],
+          npcs: [standardColossus],
+        },
+      });
+
+      expect(prismaService.loot.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          lootShare: {
+            "11101": ["item-1"],
+            "22202": ["item-2"],
+          },
           lootShareSource: "ITEM_OWNER",
         }),
       });
@@ -538,7 +612,7 @@ describe("LootsService", () => {
       prismaService.npcSnapshot.findFirst.mockResolvedValue({ id: 114_998 });
       prismaService.loot.create.mockResolvedValue({ id: 1 });
 
-      await service.createLoot(discordId, userId, eventColossusDto);
+      await acceptance.accept({ discordId, submission: eventColossusDto });
 
       expect(prismaService.loot.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -578,7 +652,7 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue({ id: 1 });
 
-      await service.createLoot(discordId, userId, heroDto);
+      await acceptance.accept({ discordId, submission: heroDto });
 
       expect(prismaService.npcSnapshot.findFirst).not.toHaveBeenCalled();
       expect(prismaService.loot.create).toHaveBeenCalledWith({
@@ -621,7 +695,7 @@ describe("LootsService", () => {
       prismaService.npcSnapshot.findFirst.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue({ id: 1 });
 
-      await service.createLoot(discordId, userId, ambiguousColossusDto);
+      await acceptance.accept({ discordId, submission: ambiguousColossusDto });
 
       expect(prismaService.loot.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -631,13 +705,76 @@ describe("LootsService", () => {
       });
     });
 
+    it.each([
+      {
+        name: "an item has no owner",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2")],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+      {
+        name: "an owner does not match a player",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2", 999)],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+      {
+        name: "two items point to the same owner",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2", 11)],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+      {
+        name: "player ids are duplicated",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2", 22)],
+        players: [createPlayer(11, 101), createPlayer(11, 202)],
+      },
+      {
+        name: "the item and player counts differ",
+        loots: [createLootItem("item-1", 11)],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+    ])(
+      "keeps the initial allocation empty when $name",
+      async ({ loots, players }) => {
+        lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+          {
+            id: "guild1",
+            npcs: [
+              {
+                npcType: NpcType.COLOSSUS,
+                allowedRarities: [ItemRarity.UNIQUE],
+              },
+            ],
+          },
+        ]);
+        prismaService.loot.findUnique.mockResolvedValue(null);
+        prismaService.npcSnapshot.findFirst.mockResolvedValue(null);
+        prismaService.loot.create.mockResolvedValue({ id: 1 });
+
+        await acceptance.accept({
+          discordId,
+          submission: {
+            ...mockCreateLootDto,
+            loots,
+            players,
+            npcs: [standardColossus],
+          },
+        });
+
+        expect(prismaService.loot.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            lootShare: {},
+            lootShareSource: "NONE",
+          }),
+        });
+      },
+    );
+
     it("should return a retryable error when loot lock contention outlasts the wait", async () => {
-      vi.spyOn(service["redlock"], "acquire").mockRejectedValue(
+      vi.spyOn(acceptance["redlock"], "acquire").mockRejectedValue(
         new ExecutionError("Lock contention", []),
       );
 
       await expect(
-        service.createLoot(discordId, userId, mockCreateLootDto),
+        acceptance.accept({ discordId, submission: mockCreateLootDto }),
       ).rejects.toThrow(ServiceUnavailableException);
     });
 
@@ -645,11 +782,10 @@ describe("LootsService", () => {
       const mockLoot = { id: 1, uniqueId: "unique123" };
       prismaService.loot.findUnique.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(
+      const result = await acceptance.accept({
         discordId,
-        userId,
-        mockCreateLootDto,
-      );
+        submission: mockCreateLootDto,
+      });
 
       expect(prismaService.loot.findUnique).toHaveBeenCalled();
       expect(prismaService.loot.create).not.toHaveBeenCalled();
@@ -670,7 +806,7 @@ describe("LootsService", () => {
         },
       ]);
 
-      await service.createLoot(discordId, userId, mockCreateLootDto);
+      await acceptance.accept({ discordId, submission: mockCreateLootDto });
 
       expect(prismaService.lootSubmission.createMany).not.toHaveBeenCalled();
       expect(amqpConnection.publish).not.toHaveBeenCalledWith(
@@ -738,7 +874,7 @@ describe("LootsService", () => {
         ])
         .mockResolvedValueOnce([{ id: 20, guildId: "guild2" }]);
 
-      await service.createLoot(discordId, userId, mockCreateLootDto);
+      await acceptance.accept({ discordId, submission: mockCreateLootDto });
 
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
         data: [
@@ -785,7 +921,7 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.createLoot(discordId, userId, mockCreateLootDto),
+        acceptance.accept({ discordId, submission: mockCreateLootDto }),
       ).rejects.toMatchObject({
         response: {
           message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
@@ -828,7 +964,7 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.createLoot(discordId, userId, mockCreateLootDto),
+        acceptance.accept({ discordId, submission: mockCreateLootDto }),
       ).rejects.toMatchObject({
         response: {
           message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
@@ -919,11 +1055,10 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(
+      const result = await acceptance.accept({
         discordId,
-        userId,
-        mockCreateLootDto,
-      );
+        submission: mockCreateLootDto,
+      });
 
       expect(prismaService.loot.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1011,11 +1146,10 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(
+      const result = await acceptance.accept({
         discordId,
-        userId,
-        mockCreateLootDto,
-      );
+        submission: mockCreateLootDto,
+      });
 
       expect(
         lootlogConfigService.getMultipleLootlogConfigs,
@@ -1124,11 +1258,10 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(
+      const result = await acceptance.accept({
         discordId,
-        userId,
-        mockCreateLootDto,
-      );
+        submission: mockCreateLootDto,
+      });
 
       expect(prismaService.loot.create).toHaveBeenCalled();
       expect(prismaService.loot.create).toHaveBeenCalledWith(
@@ -1169,7 +1302,7 @@ describe("LootsService", () => {
       } as never);
 
       await expect(
-        service.createLoot(discordId, userId, mockCreateLootDto),
+        acceptance.accept({ discordId, submission: mockCreateLootDto }),
       ).rejects.toMatchObject({
         response: {
           message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
@@ -1367,7 +1500,7 @@ describe("LootsService", () => {
     });
   });
 
-  describe("updateLoot", () => {
+  describe("LootAllocationService", () => {
     const actorUserId = "user123";
     const lootId = 1;
     const updateData: UpdateLootDto = {
@@ -1430,7 +1563,11 @@ describe("LootsService", () => {
       };
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
-      const result = await service.updateLoot(actorUserId, lootId, updateData);
+      const result = await allocation.confirmFromChat({
+        actorUserId,
+        lootId,
+        message: updateData.msg,
+      });
 
       expect(prismaService.loot.updateMany).toHaveBeenCalledWith({
         where: {
@@ -1509,7 +1646,11 @@ describe("LootsService", () => {
         organizationLootRecords: [{ guildId: "guild1" }],
       });
 
-      const result = await service.updateLoot(actorUserId, lootId, updateData);
+      const result = await allocation.confirmFromChat({
+        actorUserId,
+        lootId,
+        message: updateData.msg,
+      });
 
       expect(result).toEqual({});
       expect(prismaService.loot.findFirst.mock.calls[0]?.[0]?.where).toEqual({
@@ -1566,7 +1707,11 @@ describe("LootsService", () => {
       });
 
       await expect(
-        service.updateLoot(actorUserId, lootId, updateData),
+        allocation.confirmFromChat({
+          actorUserId,
+          lootId,
+          message: updateData.msg,
+        }),
       ).rejects.toThrow(ConflictException);
 
       expect(prismaService.loot.updateMany).not.toHaveBeenCalled();
@@ -1615,7 +1760,11 @@ describe("LootsService", () => {
         });
       prismaService.loot.updateMany.mockResolvedValue({ count: 0 });
 
-      const result = await service.updateLoot(actorUserId, lootId, updateData);
+      const result = await allocation.confirmFromChat({
+        actorUserId,
+        lootId,
+        message: updateData.msg,
+      });
 
       expect(result).toEqual({});
       expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
@@ -1662,7 +1811,11 @@ describe("LootsService", () => {
       prismaService.loot.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
-        service.updateLoot(actorUserId, lootId, updateData),
+        allocation.confirmFromChat({
+          actorUserId,
+          lootId,
+          message: updateData.msg,
+        }),
       ).rejects.toThrow(ServiceUnavailableException);
 
       expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
@@ -1725,7 +1878,11 @@ describe("LootsService", () => {
 
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
-      await service.updateLoot(actorUserId, lootId, updateData);
+      await allocation.confirmFromChat({
+        actorUserId,
+        lootId,
+        message: updateData.msg,
+      });
 
       expect(amqpConnection.publish).toHaveBeenCalledTimes(1);
       expect(amqpConnection.publish).toHaveBeenCalledWith(
@@ -1802,7 +1959,11 @@ describe("LootsService", () => {
 
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
-      await service.updateLoot(actorUserId, lootId, updateData);
+      await allocation.confirmFromChat({
+        actorUserId,
+        lootId,
+        message: updateData.msg,
+      });
 
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
@@ -1820,7 +1981,11 @@ describe("LootsService", () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateLoot(actorUserId, lootId, updateData),
+        allocation.confirmFromChat({
+          actorUserId,
+          lootId,
+          message: updateData.msg,
+        }),
       ).rejects.toThrow(new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT));
     });
 
@@ -1836,7 +2001,11 @@ describe("LootsService", () => {
       const invalidUpdateData = { msg: "Invalid message" };
 
       await expect(
-        service.updateLoot(actorUserId, lootId, invalidUpdateData),
+        allocation.confirmFromChat({
+          actorUserId,
+          lootId,
+          message: invalidUpdateData.msg,
+        }),
       ).rejects.toThrow(new BadRequestException(ErrorKey.MISSING_LOOT_SHARE));
     });
   });

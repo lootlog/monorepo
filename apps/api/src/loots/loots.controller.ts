@@ -30,6 +30,8 @@ import {
 import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
 import { ResolveLootItemParamsDto } from "src/loots/dto/resolve-loot-item-params.dto";
 import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
+import { LootAllocationService } from "src/loots/loot-allocation.service";
+import { LootSubmissionAcceptanceService } from "src/loots/loot-submission-acceptance.service";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
@@ -53,6 +55,8 @@ import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 @Controller()
 export class LootsController {
   constructor(
+    private readonly lootAllocation: LootAllocationService,
+    private readonly lootSubmissionAcceptance: LootSubmissionAcceptanceService,
     private readonly lootsService: LootsService,
     private readonly lootStatsService: LootStatsService,
   ) {}
@@ -230,12 +234,11 @@ export class LootsController {
     description: "Loot created successfully",
     type: CreateLootResponseDto,
   })
-  createLoot(
-    @DiscordId() discordId: string,
-    @UserId() userId: string,
-    @Body() body: CreateLootDto,
-  ) {
-    return this.lootsService.createLoot(discordId, userId, body);
+  createLoot(@DiscordId() discordId: string, @Body() body: CreateLootDto) {
+    return this.lootSubmissionAcceptance.accept({
+      discordId,
+      submission: body,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)
@@ -359,6 +362,10 @@ export class LootsController {
     @Body() body: UpdateLootDto,
     @Param("id", new ParseIntPipe()) lootId: number,
   ) {
-    return this.lootsService.updateLoot(userId, lootId, body);
+    return this.lootAllocation.confirmFromChat({
+      actorUserId: userId,
+      lootId,
+      message: body.msg,
+    });
   }
 }

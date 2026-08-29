@@ -13,8 +13,8 @@ import { UserLootlogConfigModule } from "src/user-lootlog-config/user-lootlog-co
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { RedlockModule } from "src/lib/redlock/redlock.module";
-import { LootMappingService } from "./services/loot-mapping.service";
-import { LootValidationService } from "./services/loot-validation.service";
+import { LootAllocationService } from "./loot-allocation.service";
+import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
 import { LootStatsService } from "./services/loot-stats.service";
@@ -35,9 +35,9 @@ import { LootStatsService } from "./services/loot-stats.service";
   ],
   controllers: [LootsController],
   providers: [
+    LootAllocationService,
+    LootSubmissionAcceptanceService,
     LootsService,
-    LootMappingService,
-    LootValidationService,
     LootQueryService,
     LootCommentService,
     LootStatsService,
