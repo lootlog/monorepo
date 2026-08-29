@@ -1,4 +1,4 @@
-import { UseFilters, Logger } from "@nestjs/common";
+import { UseFilters } from "@nestjs/common";
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -30,14 +30,12 @@ import type {
   Socket,
   PlayerPresence,
 } from "src/gateway/types/socket-user.type";
-import { ConnectionService } from "./services/connection.service";
 import {
   type MemberWebPresenceFetchResponse,
   type PresenceFetchResponse,
   PresenceService,
 } from "./services/presence.service";
 import { SubscriptionService } from "./services/subscription.service";
-import { GatewayAuthService } from "./services/gateway-auth.service";
 import { MapPingService } from "./services/map-ping.service";
 import { AirTagService } from "./services/air-tag.service";
 
@@ -46,13 +44,9 @@ import { AirTagService } from "./services/air-tag.service";
   pingTimeout: GatewayConfig.SOCKET_PING_TIMEOUT_MS,
 })
 export class Gateway {
-  private readonly logger = new Logger(Gateway.name);
-
   constructor(
-    private connectionService: ConnectionService,
     private presenceService: PresenceService,
     private subscriptionService: SubscriptionService,
-    private gatewayAuthService: GatewayAuthService,
     private mapPingService: MapPingService,
     private airTagService: AirTagService,
   ) {}
@@ -60,29 +54,7 @@ export class Gateway {
   @WebSocketServer()
   server: Server;
 
-  async handleConnection(client: Socket) {
-    const identity = await this.gatewayAuthService.verifyConnectionIdentity(
-      client.request,
-    );
-    const { platform } = this.connectionService.getConnectionMetadata(
-      client.request,
-    );
-
-    const validation = this.connectionService.validateConnection(
-      identity?.discordId ?? null,
-      platform,
-    );
-    if (!validation.valid) {
-      return client.disconnect();
-    }
-
-    client.data = this.connectionService.initializeSocketData(
-      identity!.discordId,
-      identity!.userId,
-      client.id,
-      platform,
-    );
-
+  handleConnection(client: Socket) {
     client.on(GatewayEvent.DISCONNECTING, async () => {
       if (client.data) {
         this.presenceService.emitDisconnectPresence(this.server, client);
