@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -17,6 +16,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/api-client/react-query/main/members";
+import { SearchInput } from "@/components/ui/search-input";
 interface MemberAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -147,15 +147,12 @@ export const MemberAssignmentModal = ({
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.addMember")}
               </Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <Input
-                  placeholder={t("events.maps.searchMember")}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 h-9 text-sm"
-                />
-              </div>
+              <SearchInput
+                placeholder={t("events.maps.searchMember")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 text-sm"
+              />
 
               <ScrollArea className="h-[220px] rounded-lg border relative">
                 {isActionLoading && (

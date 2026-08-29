@@ -13,14 +13,14 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/api-client/react-query/main/users";
-import { EyeOff, RotateCcw, Search, Server } from "lucide-react";
+import { EyeOff, RotateCcw, Server } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SearchInput } from "@/components/ui/search-input";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
@@ -160,15 +160,13 @@ export const ServerVisibilitySettings = () => {
             <Card className="gap-0 overflow-hidden border-border bg-card p-0">
               <div className="flex flex-col gap-3 border-b border-border p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="relative min-w-0 flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder={t("settings.servers.searchPlaceholder")}
-                      className="h-9 pl-9"
-                    />
-                  </div>
+                  <SearchInput
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={t("settings.servers.searchPlaceholder")}
+                    className="h-9"
+                    wrapperClassName="min-w-0 flex-1"
+                  />
                   <Button
                     size="sm"
                     variant="outline"
@@ -204,7 +202,7 @@ export const ServerVisibilitySettings = () => {
                     {t("settings.servers.visibleCount", {
                       count: visibleCount,
                     })}
-                    {" ·"}
+                    {" · "}
                     {t("settings.servers.hiddenCount", { count: hiddenCount })}
                   </span>
                 </div>

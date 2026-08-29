@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 const RukiaIceSpinner = lazy(() =>
   import("./rukia-ice-spinner").then((module) => ({

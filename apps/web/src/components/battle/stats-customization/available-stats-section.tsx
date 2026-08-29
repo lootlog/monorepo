@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Search, X, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
 import type { BattleStatDefinition } from "@/types/stats-customization.types";
+import { SearchInput } from "@/components/ui/search-input";
 
 interface AvailableStatsSectionProps {
   availableStats: BattleStatDefinition[];
@@ -32,25 +32,26 @@ export const AvailableStatsSection = ({
       <div className="text-xs text-muted-foreground mb-2 font-medium">
         {t("battleUi.customization.availableStats")}
       </div>
-      <div className="relative mb-2">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-        <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t("battleUi.customization.searchStat")}
-          className="h-7 pl-7 pr-7 text-xs"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0 hover:bg-transparent"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder={t("battleUi.customization.searchStat")}
+        className="h-7 text-xs"
+        wrapperClassName="mb-2"
+        endAdornment={
+          searchQuery ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchQuery("")}
+              className="size-6 hover:bg-transparent"
+              aria-label={t("common.clear")}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          ) : null
+        }
+      />
       <ScrollArea className="h-48">
         <div className="space-y-1 pr-4">
           {filteredAvailableStats.length > 0 ? (

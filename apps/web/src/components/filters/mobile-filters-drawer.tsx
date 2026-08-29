@@ -9,13 +9,19 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Filter } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type MobileFiltersDrawerProps = {
   title: string;
-  closeLabel: string;
+  closeLabel?: string;
   children: ReactNode;
-  trigger?: "floating" | "inline";
+  trigger?: "floating" | "inline" | ReactElement | null;
+  footer?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  contentClassName?: string;
+  childrenClassName?: string;
 };
 
 export const MobileFiltersDrawer = ({
@@ -23,42 +29,64 @@ export const MobileFiltersDrawer = ({
   closeLabel,
   children,
   trigger = "inline",
+  footer,
+  open,
+  onOpenChange,
+  contentClassName,
+  childrenClassName,
 }: MobileFiltersDrawerProps) => {
+  const isPresetTrigger = trigger === "floating" || trigger === "inline";
   const triggerClassName =
     trigger === "floating"
-      ? "fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
+      ? "fixed bottom-4 right-4 size-14 rounded-full shadow-lg z-20"
       : "shrink-0";
-  const iconClassName = trigger === "floating" ? "h-5 w-5" : "h-4 w-4";
 
   return (
-    <Drawer>
-      <DrawerTrigger
-        render={
-          <Button
-            variant={trigger === "inline" ? "outline" : undefined}
-            size="icon"
-            className={triggerClassName}
-          >
-            <Filter className={iconClassName} />
-          </Button>
-        }
-      />
-      <DrawerContent className="flex max-h-[85vh] flex-col p-4">
-        <DrawerHeader className="mb-4 shrink-0">
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      {trigger !== null ? (
+        <DrawerTrigger
+          render={
+            isPresetTrigger ? (
+              <Button
+                variant={trigger === "inline" ? "outline" : undefined}
+                size="icon"
+                className={triggerClassName}
+              >
+                <Filter />
+              </Button>
+            ) : (
+              trigger
+            )
+          }
+        />
+      ) : null}
+      <DrawerContent
+        className={cn(
+          "flex max-h-[85vh] flex-col overflow-hidden p-0",
+          contentClassName,
+        )}
+      >
+        <DrawerHeader className="shrink-0 border-b px-4 py-3">
           <DrawerTitle>{title}</DrawerTitle>
         </DrawerHeader>
         <ScrollArea className="min-h-0 flex-1">
-          <div className="space-y-4 pr-2">{children}</div>
+          <div className={cn("flex flex-col gap-4 p-4", childrenClassName)}>
+            {children}
+          </div>
         </ScrollArea>
-        <div className="mt-6 shrink-0">
-          <DrawerClose
-            render={
-              <Button variant="outline" className="w-full">
-                {closeLabel}
-              </Button>
-            }
-          />
-        </div>
+        {footer ? (
+          <div className="shrink-0 border-t p-4">{footer}</div>
+        ) : closeLabel ? (
+          <div className="shrink-0 border-t p-4">
+            <DrawerClose
+              render={
+                <Button variant="outline" className="w-full">
+                  {closeLabel}
+                </Button>
+              }
+            />
+          </div>
+        ) : null}
       </DrawerContent>
     </Drawer>
   );

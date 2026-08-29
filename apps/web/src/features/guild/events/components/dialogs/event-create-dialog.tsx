@@ -35,6 +35,7 @@ import {
 } from "@lootlog/scoring";
 import { getApiErrorMessage } from "../../utils/get-api-error-message";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
+import { ScoringModeSelector } from "../scoring/scoring-mode-selector";
 
 interface EventCreateDialogProps {
   open: boolean;
@@ -216,43 +217,15 @@ export const EventCreateDialog = ({
             <p className="text-sm text-muted-foreground">
               {t("events.scoring.modeHint")}
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => form.setValue("scoringMode", "SIMPLE")}
-                className={`rounded-lg border p-4 text-left transition-colors ${
-                  scoringMode === "SIMPLE"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted/30"
-                }`}
-              >
-                <p className="font-medium text-sm">
-                  {t("events.scoring.modeSimpleTitle", "Tryb prosty")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("events.scoring.modeSimpleDescription")}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => form.setValue("scoringMode", "ADVANCED")}
-                className={`rounded-lg border p-4 text-left transition-colors ${
-                  scoringMode === "ADVANCED"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-muted/30"
-                }`}
-              >
-                <p className="font-medium text-sm">
-                  {t("events.scoring.modeAdvancedTitle", "Tryb zaawansowany")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t(
-                    "events.scoring.modeAdvancedDescription",
-                    "Reguły JEŻELI/WTEDY z akcjami punktowymi budowanymi z klocków.",
-                  )}
-                </p>
-              </button>
-            </div>
+            <ScoringModeSelector
+              value={scoringMode}
+              onChange={(nextMode) =>
+                form.setValue("scoringMode", nextMode, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </div>
         ) : (
           <form

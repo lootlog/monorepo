@@ -1,7 +1,7 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Pause, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 interface WrappedProgressProps {
   slides: Array<{ id: string }>;

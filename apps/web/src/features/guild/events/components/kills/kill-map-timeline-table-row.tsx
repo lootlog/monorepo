@@ -4,7 +4,7 @@ import { flexRender, type Cell, type Row } from "@tanstack/react-table";
 import { AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { TableCell, TableRow } from "@lootlog/ui/components/table";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { MapTimelineData } from "../../types/api";
 import { formatTime } from "../../utils/format-date";
 import { getKillMapTimelineDiagnostics } from "../../utils/kill-map-timeline-data";

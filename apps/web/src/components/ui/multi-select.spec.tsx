@@ -130,4 +130,44 @@ describe("MultiSelect", () => {
     expect(searchInput.value).toBe("Quet");
     expect(onSearchChange).toHaveBeenCalledWith("Quet");
   });
+
+  it("selects multiple options and clears them through Base UI controls", () => {
+    const onValueChange = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <MultiSelect
+        commandSearch
+        onClose={onClose}
+        onValueChange={onValueChange}
+        options={[
+          { label: "Alpha", value: "alpha" },
+          { label: "Beta", value: "beta" },
+        ]}
+        value={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("option", { name: "Alpha" }));
+
+    expect(onValueChange).toHaveBeenCalledWith(["alpha"]);
+  });
+
+  it("does not open when disabled", () => {
+    render(
+      <MultiSelect
+        disabled
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[{ label: "Alpha", value: "alpha" }]}
+        value={[]}
+      />,
+    );
+
+    const input = screen.getByRole("combobox");
+    fireEvent.click(input);
+
+    expect(input.getAttribute("aria-expanded")).toBe("false");
+  });
 });

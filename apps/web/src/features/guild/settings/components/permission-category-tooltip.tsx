@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { Permission } from "@lootlog/types";
 import type { MouseEventHandler } from "react";
 import { useTranslation } from "react-i18next";

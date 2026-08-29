@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 const RiasMagicSpinner = lazy(() =>
   import("./rias-magic-spinner").then((module) => ({

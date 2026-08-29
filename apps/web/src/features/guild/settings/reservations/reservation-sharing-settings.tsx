@@ -17,6 +17,12 @@ import { Card } from "@lootlog/ui/components/card";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@lootlog/ui/components/alert";
 import type { CreateReservationShareInvitationResponseDto } from "@lootlog/api-client/models/main/create-reservation-share-invitation-response-dto";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
@@ -137,25 +143,25 @@ export function ReservationSharingSettings() {
       )}
 
       {sharesQuery.isError ? (
-        <div className="flex items-start gap-3 p-4" role="alert">
-          <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">
-              {t("settings.reservations.sharing.loadError")}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("settings.reservations.sharing.loadErrorDescription")}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => sharesQuery.refetch()}
-          >
-            {t("common.actions.retry")}
-          </Button>
-        </div>
+        <Alert variant="destructive" className="m-4 w-auto">
+          <CircleAlert />
+          <AlertTitle>
+            {t("settings.reservations.sharing.loadError")}
+          </AlertTitle>
+          <AlertDescription>
+            {t("settings.reservations.sharing.loadErrorDescription")}
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => sharesQuery.refetch()}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          </AlertAction>
+        </Alert>
       ) : (
         <div className="grid md:grid-cols-2" aria-busy={sharesQuery.isPending}>
           <section
