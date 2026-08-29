@@ -16,13 +16,46 @@ import { useWindowsStore } from "@/store/windows.store";
 
 const EMPTY_TIMERS: Timer[] = [];
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 interface TimersViewProps {
   isOpen: boolean;
   isUnderBag: boolean;
 }
+
+type TimersStoreState = ReturnType<typeof useTimersStore.getState>;
+
+const getTimersViewState = ({
+  settingsKey,
+  timersFilters,
+  hiddenTimers,
+  pinnedTimers,
+  timerFiltersSearchText,
+  timerFiltersEnabled,
+  colorFiltersEnabled,
+  timersSortOrder,
+  allowWorldSelection,
+  timers,
+}: {
+  settingsKey: string;
+  timersFilters: TimersStoreState["timersFilters"];
+  hiddenTimers: TimersStoreState["hiddenTimers"];
+  pinnedTimers: TimersStoreState["pinnedTimers"];
+  timerFiltersSearchText: TimersStoreState["timerFiltersSearchText"];
+  timerFiltersEnabled: TimersStoreState["timerFiltersEnabled"];
+  colorFiltersEnabled: TimersStoreState["colorFiltersEnabled"];
+  timersSortOrder: TimersStoreState["timersSortOrder"];
+  allowWorldSelection: boolean | undefined;
+  timers: Timer[] | undefined;
+}) => ({
+  filters: timersFilters[settingsKey] ?? DEFAULT_TIMERS_FILTERS,
+  hiddenTimers: hiddenTimers[settingsKey] ?? [],
+  pinnedTimers: pinnedTimers[settingsKey] ?? [],
+  searchText: timerFiltersSearchText ?? "",
+  timerFiltersEnabled: timerFiltersEnabled ?? false,
+  colorFiltersEnabled: colorFiltersEnabled ?? false,
+  sortOrder: timersSortOrder ?? "asc",
+  allowWorldSelection: allowWorldSelection ?? false,
+  timers: timers ?? EMPTY_TIMERS,
+});
 
 export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
@@ -99,40 +132,59 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
-  const filters = valueOr(timersFilters[settingsKey], DEFAULT_TIMERS_FILTERS);
-  const hiddenTimersForSettings = valueOr(hiddenTimers[settingsKey], []);
-  const pinnedTimersForSettings = valueOr(pinnedTimers[settingsKey], []);
+  const {
+    filters,
+    hiddenTimers: hiddenTimersForSettings,
+    pinnedTimers: pinnedTimersForSettings,
+    searchText,
+    timerFiltersEnabled: resolvedTimerFiltersEnabled,
+    colorFiltersEnabled: resolvedColorFiltersEnabled,
+    sortOrder,
+    allowWorldSelection: resolvedAllowWorldSelection,
+    timers: resolvedTimers,
+  } = getTimersViewState({
+    settingsKey,
+    timersFilters,
+    hiddenTimers,
+    pinnedTimers,
+    timerFiltersSearchText,
+    timerFiltersEnabled,
+    colorFiltersEnabled,
+    timersSortOrder,
+    allowWorldSelection,
+    timers,
+  });
   const {
     areFiltersActive,
     colorStatistics,
     timers: sortedTimers,
   } = useTimerListProjection({
     context: {
-      guildId: valueOr(guildId, ""),
+      guildId: guildId ?? "",
       isGrouping: generalConfig.timersGrouping,
     },
     enabled: isUnderBag || isOpen,
     filters: {
       maxLvl: filters.maxLvl,
       minLvl: filters.minLvl,
-      searchText: valueOr(timerFiltersSearchText, ""),
+      searchText,
       selectedColors: filters.selectedColors,
       selectedNpcTypes: filters.selectedNpcTypes,
       showHiddenTimers,
     },
     preferences: {
       alwaysVisibleExpiredTimers,
-      colorFiltersEnabled: valueOr(colorFiltersEnabled, false),
+      colorFiltersEnabled: resolvedColorFiltersEnabled,
       customColors,
       defaultColorNames: defaultColorNames as Record<string, string>,
       hiddenTimers: hiddenTimersForSettings,
       overriddenDefaultColors,
       pinnedTimers: pinnedTimersForSettings,
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
-      sortOrder: valueOr(timersSortOrder, "asc"),
+      sortOrder,
       timersColors: timersColors as Record<string, string>,
     },
-    timers: valueOr(timers, EMPTY_TIMERS),
+    timers: resolvedTimers,
   });
   const handleAddTimer = () => {
     setOpen("add-timer", true, { guildId });
@@ -151,11 +203,11 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     return (
       <UnderBagTimers>
         <TimersUnderBagActions
-          timerFiltersEnabled={valueOr(timerFiltersEnabled, false)}
+          timerFiltersEnabled={resolvedTimerFiltersEnabled}
           toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-          colorFiltersEnabled={valueOr(colorFiltersEnabled, false)}
+          colorFiltersEnabled={resolvedColorFiltersEnabled}
           toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-          timersSortOrder={valueOr(timersSortOrder, "asc")}
+          timersSortOrder={sortOrder}
           setTimersSortOrder={setTimersSortOrder}
           showHiddenTimers={showHiddenTimers}
           setShowHiddenTimers={setShowHiddenTimers}
@@ -173,8 +225,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           colorStatistics={colorStatistics}
           guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
-          allowWorldSelection={valueOr(allowWorldSelection, false)}
-          timerFiltersEnabled={valueOr(timerFiltersEnabled, false)}
+          allowWorldSelection={resolvedAllowWorldSelection}
+          timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={handleAddTimer}
@@ -209,7 +261,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
             colorFiltersEnabled={colorFiltersEnabled}
             toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-            timersSortOrder={valueOr(timersSortOrder, "asc")}
+            timersSortOrder={sortOrder}
             setTimersSortOrder={setTimersSortOrder}
             showHiddenTimers={showHiddenTimers}
             setShowHiddenTimers={setShowHiddenTimers}
@@ -226,8 +278,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           colorStatistics={colorStatistics}
           guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
-          allowWorldSelection={valueOr(allowWorldSelection, false)}
-          timerFiltersEnabled={valueOr(timerFiltersEnabled, false)}
+          allowWorldSelection={resolvedAllowWorldSelection}
+          timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag={false}
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={handleAddTimer}

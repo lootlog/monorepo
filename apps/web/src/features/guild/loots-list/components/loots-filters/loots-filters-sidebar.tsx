@@ -80,9 +80,6 @@ type LootsFiltersSidebarProps = {
 
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const embeddedValue = <Value,>(
   embedded: boolean,
   embeddedValue: Value,
@@ -120,7 +117,7 @@ const getHidQueryState = (
 const toFilterOptions = <Item extends { name: string }>(
   items: Item[] | undefined,
 ) =>
-  valueOr(items, []).map((item) => ({
+  (items ?? []).map((item) => ({
     value: item.name,
     label: item.name,
   }));
@@ -152,6 +149,15 @@ const getFilterSectionState = (filters: LootFilters) => {
   };
 };
 
+const getLootFilterInputValues = (filters: LootFilters) => ({
+  npcLevelMin: filters.npcLevelMin ?? "",
+  npcLevelMax: filters.npcLevelMax ?? "",
+  itemLevelMin: filters.itemLevelMin ?? "",
+  itemLevelMax: filters.itemLevelMax ?? "",
+  playerLevelMin: filters.playerLevelMin ?? "",
+  playerLevelMax: filters.playerLevelMax ?? "",
+});
+
 export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   className,
   embedded = false,
@@ -167,6 +173,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   const guildId = useGuildId();
   const { filters, setFilters, hasActiveFilters, clearFilters } =
     useLootsFilters();
+  const filterInputValues = getLootFilterInputValues(filters);
   const [customFilters, setCustomFilters] = useLocalStorage<SavedFilter[]>(
     CUSTOM_FILTERS_STORAGE_KEY,
     [],
@@ -227,12 +234,12 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     fallbackQueryParams: hidItemFallbackQueryParams,
   } = getHidQueryState(filters.hid, world);
   const { data: hidItem } = useLootsControllerResolveLootItemByHid(
-    { guildId: valueOr(guildId, "") },
+    { guildId: guildId ?? "" },
     hidItemFallbackQueryParams,
     {
       query: {
         queryKey: getLootsControllerResolveLootItemByHidQueryKey(
-          { guildId: valueOr(guildId, "") },
+          { guildId: guildId ?? "" },
           hidItemFallbackQueryParams,
         ),
         enabled: !!guildId && !!hidItemQueryParams,
@@ -557,7 +564,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="0"
-                            value={valueOr(filters.npcLevelMin, "")}
+                            value={filterInputValues.npcLevelMin}
                             onChange={(e) =>
                               updateFilters({ npcLevelMin: e.target.value })
                             }
@@ -572,7 +579,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="500"
-                            value={valueOr(filters.npcLevelMax, "")}
+                            value={filterInputValues.npcLevelMax}
                             onChange={(e) =>
                               updateFilters({ npcLevelMax: e.target.value })
                             }
@@ -705,10 +712,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                             <ItemImage
                               icon={hidItem.icon}
-                              rarity={valueOr(
-                                hidItem.rarity,
-                                ItemRarity.COMMON,
-                              )}
+                              rarity={hidItem.rarity ?? ItemRarity.COMMON}
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">
@@ -740,7 +744,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="0"
-                            value={valueOr(filters.itemLevelMin, "")}
+                            value={filterInputValues.itemLevelMin}
                             onChange={(e) =>
                               updateFilters({ itemLevelMin: e.target.value })
                             }
@@ -755,7 +759,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="500"
-                            value={valueOr(filters.itemLevelMax, "")}
+                            value={filterInputValues.itemLevelMax}
                             onChange={(e) =>
                               updateFilters({ itemLevelMax: e.target.value })
                             }
@@ -806,7 +810,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="0"
-                            value={valueOr(filters.playerLevelMin, "")}
+                            value={filterInputValues.playerLevelMin}
                             onChange={(e) =>
                               updateFilters({ playerLevelMin: e.target.value })
                             }
@@ -821,7 +825,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="500"
-                            value={valueOr(filters.playerLevelMax, "")}
+                            value={filterInputValues.playerLevelMax}
                             onChange={(e) =>
                               updateFilters({ playerLevelMax: e.target.value })
                             }

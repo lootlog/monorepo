@@ -65,9 +65,6 @@ const NO_SEASON_VALUE = "no-season";
 const isAbyssTab = (value: string): value is AbyssTab =>
   value === "battles" || value === "analytics" || value === "seasons";
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const getCharacterFilter = (characterId: string | undefined) =>
   characterId ? [characterId] : undefined;
 
@@ -76,6 +73,26 @@ const getSeasonLabel = (
   index: number,
   latestSeasonLabel: string,
 ) => (index === 0 ? latestSeasonLabel : getAbyssSeasonRangeLabel(season));
+
+const getAbyssSeasonSelection = ({
+  seasons,
+  seasonId,
+  startDate,
+  endDate,
+}: {
+  seasons: AbyssSeason[];
+  seasonId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}) => {
+  const selectedSeason =
+    seasons.find((season) => season.id === seasonId) ?? seasons[0];
+  return {
+    selectedSeason,
+    startDate: startDate ?? selectedSeason?.startedAt,
+    endDate: endDate ?? selectedSeason?.endedAt,
+  };
+};
 
 export function AbyssHub() {
   const { t } = useTranslation();
@@ -123,24 +140,24 @@ export function AbyssHub() {
   const { data: seasons = [], isLoading: isLoadingSeasons } =
     useBattlesControllerGetAbyssSeasons(
       {
-        characterId: valueOr(selectedCharacterId, ""),
+        characterId: selectedCharacterId ?? "",
       },
       {
         query: {
           enabled: Boolean(selectedCharacterId),
           queryKey: getBattlesControllerGetAbyssSeasonsQueryKey({
-            characterId: valueOr(selectedCharacterId, ""),
+            characterId: selectedCharacterId ?? "",
           }),
         },
       },
     );
 
-  const selectedSeason = valueOr(
-    seasons.find((season) => season.id === queryState.seasonId),
-    seasons[0],
-  );
-  const startDate = valueOr(queryState.startDate, selectedSeason?.startedAt);
-  const endDate = valueOr(queryState.endDate, selectedSeason?.endedAt);
+  const { selectedSeason, startDate, endDate } = getAbyssSeasonSelection({
+    seasons,
+    seasonId: queryState.seasonId,
+    startDate: queryState.startDate,
+    endDate: queryState.endDate,
+  });
   const isStatsEnabled = Boolean(selectedCharacterId);
   const isBattlesTab = activeTab === "battles";
   const isAnalyticsTab = activeTab === "analytics";
