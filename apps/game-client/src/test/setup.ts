@@ -50,6 +50,9 @@ const localStorageMock = {
   clear: vi.fn(() => {
     storageState.clear();
   }),
+  get length() {
+    return storageState.size;
+  },
   getItem: vi.fn((key: string) => {
     return storageState.get(key) ?? null;
   }),
