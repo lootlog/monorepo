@@ -9,8 +9,8 @@
     "all": "Wszystkie",
     "available": "Wolne teraz",
     "pinned": "Przypięte",
-    "partners": "Rezerwacje partnerów",
-    "partnersCompact": "Partnerzy"
+    "partners": "Sojusz",
+    "partnersCompact": "Sojusz"
   },
   "pin": {
     "error": "Nie udało się zmienić przypięcia expowiska."
@@ -32,7 +32,7 @@
     "freeNow": "Wolne teraz",
     "freeUntil": "Wolne do {{time}}",
     "level": "Poziom {{level}}",
-    "partnerBadge": "Partner",
+    "partnerBadge": "Sojusz",
     "pin": "Przypnij expowisko {{name}}",
     "unpin": "Odepnij expowisko {{name}}"
   },
@@ -131,7 +131,7 @@
     },
     "block": {
       "open": "{{name}}, {{time}}, organizacja {{organization}}. Otwórz szczegóły rezerwacji.",
-      "partner": "Rezerwacja organizacji partnerskiej: {{organization}}"
+      "partner": "Rezerwacja organizacji z sojuszu: {{organization}}"
     },
     "mobile": {
       "addAt": "Dodaj rezerwację o {{time}}"
@@ -212,7 +212,7 @@
     "invalidDescription": "Link wygasł, został wycofany albo użyto go wcześniej."
   },
   "errors": {
-    "RESERVATION_OVERLAP": "Ten termin koliduje z rezerwacją Twojej organizacji lub partnera.",
+    "RESERVATION_OVERLAP": "Ten termin koliduje z rezerwacją Twojej organizacji lub organizacji z sojuszu.",
     "ACTIVE_LIMIT_REACHED": "Osiągnięto limit aktywnych rezerwacji na tym expowisku.",
     "INVALID_TIME_GRID": "Początek i koniec muszą pasować do kroku kalendarza.",
     "DM_TARGET_REQUIRED": "Najpierw skonfiguruj aktywny cel powiadomień DM.",

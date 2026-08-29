@@ -1,9 +1,7 @@
 import { useTranslation } from "react-i18next";
+import { Button } from "@lootlog/ui/components/button";
+import { ButtonGroup } from "@lootlog/ui/components/button-group";
 import { cn } from "@lootlog/ui/lib/utils";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@lootlog/ui/components/toggle-group";
 
 export type ReservationFilter = "all" | "available" | "pinned" | "partners";
 
@@ -23,10 +21,7 @@ export function ReservationFilters({
   const { t } = useTranslation();
 
   return (
-    <ToggleGroup
-      variant="outline"
-      size="sm"
-      spacing={0}
+    <ButtonGroup
       aria-label={t("reservations.filters.label")}
       className={cn(
         "w-full max-w-full overflow-x-auto xl:w-fit xl:overflow-visible",
@@ -34,27 +29,19 @@ export function ReservationFilters({
       )}
     >
       {FILTERS.map((filter) => (
-        <ToggleGroupItem
+        <Button
           key={filter}
-          pressed={value === filter}
-          onPressedChange={() => onChange(filter)}
+          type="button"
+          size="sm"
+          variant="outline"
+          aria-pressed={value === filter}
+          onClick={() => onChange(filter)}
           aria-label={t(`reservations.filters.${filter}`)}
-          className="h-9 min-w-max flex-1 xl:flex-none"
+          className="min-w-max flex-1 aria-pressed:bg-secondary aria-pressed:text-secondary-foreground aria-pressed:hover:bg-secondary/80 xl:flex-none"
         >
-          {filter === "partners" ? (
-            <>
-              <span className="sm:hidden">
-                {t("reservations.filters.partnersCompact")}
-              </span>
-              <span className="hidden sm:inline">
-                {t("reservations.filters.partners")}
-              </span>
-            </>
-          ) : (
-            t(`reservations.filters.${filter}`)
-          )}
-        </ToggleGroupItem>
+          {t(`reservations.filters.${filter}`)}
+        </Button>
       ))}
-    </ToggleGroup>
+    </ButtonGroup>
   );
 }
