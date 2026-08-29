@@ -1,6 +1,6 @@
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
+import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import type { ReactNode } from "react";
-import itemStats from "@/i18n/translations/item-stats.json";
 
 type TranslationValue = string | TranslationTree;
 
@@ -88,7 +88,7 @@ function renderTaggedTemplate(template: string) {
   let match: RegExpExecArray | null;
 
   while ((match = tagPattern.exec(template))) {
-    const [rawMatch, tagName, tagContent] = match;
+    const [rawMatch = "", tagName = "", tagContent = ""] = match;
 
     if (match.index > currentIndex) {
       nodes.push(template.slice(currentIndex, match.index));
@@ -99,7 +99,7 @@ function renderTaggedTemplate(template: string) {
         className={tagClassNames[tagName as keyof typeof tagClassNames]}
         key={`${tagName}-${match.index}`}
       >
-        {tagContent}
+        {renderTaggedTemplate(tagContent)}
       </span>,
     );
     currentIndex = match.index + rawMatch.length;
