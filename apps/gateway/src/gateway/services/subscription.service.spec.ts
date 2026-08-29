@@ -145,6 +145,9 @@ describe("SubscriptionService", () => {
   });
 
   it("returns an error when the user has no guilds", async () => {
+    const warnSpy = vi
+      .spyOn(Logger.prototype, "warn")
+      .mockImplementation(() => undefined);
     const client = {
       data: {
         platform: Platform.WEB_APP,
@@ -170,6 +173,9 @@ describe("SubscriptionService", () => {
     expect(client.join).not.toHaveBeenCalled();
     expect(mockPresenceService.emitInitialPresence).not.toHaveBeenCalled();
     expect(mockMargonemAccountProofService.verifyProof).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "No guilds found for discordId=discord-1 userId=user-1. User may not have LOOTLOG_READ permission in any guild.",
+    );
   });
 
   it("allows game joins without a valid Margonem account proof during the grace period", async () => {
