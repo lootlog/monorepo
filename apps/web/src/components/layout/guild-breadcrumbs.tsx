@@ -8,15 +8,9 @@ import {
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Breadcrumb,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@lootlog/ui/components/breadcrumb";
-import { ArrowLeft, Ellipsis } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { AnimatePresence, motion } from "framer-motion";
+import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { getNavigationInfo } from "./get-navigation-info";
 import {
@@ -149,22 +143,6 @@ const useBreadcrumbLookupData = ({
   };
 };
 
-const getBreadcrumbVisibilityClassName = (
-  index: number,
-  breadcrumbsCount: number,
-) => {
-  if (index === breadcrumbsCount - 1) {
-    return "flex min-w-0";
-  }
-  if (index === breadcrumbsCount - 2) {
-    return "hidden shrink-0 sm:flex";
-  }
-  if (index === breadcrumbsCount - 3) {
-    return "hidden shrink-0 xl:flex";
-  }
-  return "hidden shrink-0 2xl:flex";
-};
-
 export const GuildBreadcrumbs: FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -289,79 +267,10 @@ export const GuildBreadcrumbs: FC = () => {
           )}
         </div>
 
-        <Breadcrumb
-          aria-label={t("common.breadcrumbs.navigationLabel")}
-          className="min-w-0 max-w-full flex-1 overflow-hidden"
-        >
-          <BreadcrumbList className="flex-nowrap justify-center overflow-hidden px-1">
-            <AnimatePresence mode="popLayout">
-              {navInfo.breadcrumbs.length > 2 && (
-                <motion.li
-                  key="collapsed-breadcrumbs"
-                  className={`mr-1.5 hidden size-6 shrink-0 items-center justify-center text-muted-foreground/50 sm:flex 2xl:hidden ${navInfo.breadcrumbs.length === 3 ? "xl:hidden" : ""}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  aria-hidden="true"
-                >
-                  <Ellipsis className="size-4" />
-                </motion.li>
-              )}
-              {navInfo.breadcrumbs.map((crumb, index) => {
-                const isLast = index === navInfo.breadcrumbs.length - 1;
-                const visibilityClassName = getBreadcrumbVisibilityClassName(
-                  index,
-                  navInfo.breadcrumbs.length,
-                );
-
-                return (
-                  <motion.li
-                    key={`${crumb.label}-${crumb.path ?? "current"}`}
-                    className={`${visibilityClassName} items-center`}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 8 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {index > 0 && (
-                      <span
-                        className={`mx-1.5 select-none text-xs text-muted-foreground/30 ${isLast ? "hidden sm:inline" : ""}`}
-                      >
-                        /
-                      </span>
-                    )}
-                    {crumb.path ? (
-                      <BreadcrumbLink
-                        render={
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate({ to: crumb.path as string })
-                            }
-                          />
-                        }
-                        className="min-h-8 max-w-48 cursor-pointer truncate whitespace-nowrap rounded px-1 text-xs text-muted-foreground/70 transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background 2xl:max-w-56"
-                        title={crumb.label}
-                      >
-                        {crumb.label}
-                      </BreadcrumbLink>
-                    ) : (
-                      <BreadcrumbPage
-                        className="block min-w-0 truncate whitespace-nowrap text-sm font-bold text-foreground"
-                        title={crumb.label}
-                      >
-                        {crumb.label}
-                      </BreadcrumbPage>
-                    )}
-                  </motion.li>
-                );
-              })}
-            </AnimatePresence>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <AppBreadcrumbs
+          breadcrumbs={navInfo.breadcrumbs}
+          onNavigate={(breadcrumbPath) => navigate({ to: breadcrumbPath })}
+        />
         <div
           className={
             navInfo.showBack && navInfo.backPath ? "w-[4.5rem]" : "w-8"
