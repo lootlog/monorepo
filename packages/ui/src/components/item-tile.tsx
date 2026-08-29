@@ -1,9 +1,8 @@
 import { ItemImage, ItemRarity } from "@lootlog/ui/components/item-image";
 import {
-  mapStatsToDisplayValues,
+  mapStatsToDisplaySections,
   parseItemStats,
   type ItemDisplayValue,
-  type StatBlocks,
 } from "@lootlog/ui/components/item-stat-utils";
 import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 import {
@@ -92,10 +91,7 @@ const ItemTileTooltipBody: FC<
     "text-primary text-sm": rarity === ItemRarity.UPGRADED,
   });
 
-  const values = mapStatsToDisplayValues(parseItemStats(stat));
-  const statGroups = Object.entries(values) as Array<
-    [keyof StatBlocks, ItemDisplayValue[]]
-  >;
+  const statSections = mapStatsToDisplaySections(parseItemStats(stat));
 
   return (
     <>
@@ -113,19 +109,15 @@ const ItemTileTooltipBody: FC<
         <ItemImage color={color} icon={icon} rarity={rarity} />
       </div>
       <div className="flex flex-col gap-2 pt-2 text-xs">
-        {statGroups.map(([key, value], index) => {
-          if (value.length === 0) {
-            return null;
-          }
-
+        {statSections.map(({ index: sectionIndex, values }, index) => {
           return (
             <div
-              key={key}
+              key={sectionIndex}
               className={cn("flex flex-col gap-0.5 pb-2", {
-                "border-b border-border/50": index < statGroups.length - 1,
+                "border-b border-border/50": index < statSections.length - 1,
               })}
             >
-              {value.map((displayValue) => (
+              {values.map((displayValue) => (
                 <div
                   key={`${displayValue.key}-${formatFallbackValue(
                     displayValue.value,

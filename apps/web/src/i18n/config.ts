@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-import itemStats from "./translations/item-stats.json";
+import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import itemRarity from "./translations/item-rarity.json";
 import itemType from "./translations/item-type.json";
 import npcType from "./translations/npc-type.json";

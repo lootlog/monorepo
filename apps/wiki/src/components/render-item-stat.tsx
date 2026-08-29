@@ -1,6 +1,6 @@
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
+import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import type { ReactNode } from "react";
-import itemStats from "@/i18n/translations/item-stats.json";
 
 type TranslationValue = string | TranslationTree;
 
@@ -16,17 +16,22 @@ const tagClassNames = {
 } as const;
 
 function resolveTranslation(path: string) {
-  const value = path.split(".").reduce<unknown>((currentValue, segment) => {
-    if (
-      currentValue &&
-      typeof currentValue === "object" &&
-      segment in currentValue
-    ) {
-      return (currentValue as TranslationTree)[segment];
-    }
+  const normalizedPath = path.startsWith("itemStats.")
+    ? path.slice("itemStats.".length)
+    : path;
+  const value = normalizedPath
+    .split(".")
+    .reduce<unknown>((currentValue, segment) => {
+      if (
+        currentValue &&
+        typeof currentValue === "object" &&
+        segment in currentValue
+      ) {
+        return (currentValue as TranslationTree)[segment];
+      }
 
-    return undefined;
-  }, itemStats);
+      return undefined;
+    }, itemStats);
 
   return typeof value === "string" ? value : undefined;
 }
@@ -39,10 +44,19 @@ function formatValue(
   }
 
   if (typeof rawValue === "string") {
-    return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return formatNumericText(rawValue);
   }
 
   return String(rawValue ?? "");
+}
+
+const numericTextPattern =
+  /^[+-]?\d+(?:[.,]\d+)?(?:\s+-\s+[+-]?\d+(?:[.,]\d+)?)*$/;
+
+function formatNumericText(rawValue: string) {
+  return numericTextPattern.test(rawValue)
+    ? rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+    : rawValue;
 }
 
 function getTemplateValues(displayValue: ItemDisplayValue) {
@@ -88,7 +102,7 @@ function renderTaggedTemplate(template: string) {
   let match: RegExpExecArray | null;
 
   while ((match = tagPattern.exec(template))) {
-    const [rawMatch, tagName, tagContent] = match;
+    const [rawMatch = "", tagName = "", tagContent = ""] = match;
 
     if (match.index > currentIndex) {
       nodes.push(template.slice(currentIndex, match.index));
@@ -99,7 +113,7 @@ function renderTaggedTemplate(template: string) {
         className={tagClassNames[tagName as keyof typeof tagClassNames]}
         key={`${tagName}-${match.index}`}
       >
-        {tagContent}
+        {renderTaggedTemplate(tagContent)}
       </span>,
     );
     currentIndex = match.index + rawMatch.length;

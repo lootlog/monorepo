@@ -15,6 +15,7 @@
     "./hooks/*": "./src/hooks/*.ts",
     "./i18n/battle-i18n": "./src/i18n/battle-i18n.ts",
     "./i18n/translations/battle.json": "./src/i18n/translations/battle.json",
+    "./i18n/translations/item-stats.json": "./src/i18n/translations/item-stats.json",
     "./postcss.config.mjs": "./postcss.config.mjs"
   },
   "scripts": {

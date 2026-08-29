@@ -2,7 +2,8 @@ import { ItemTile as SharedItemTile } from "@lootlog/ui/components/item-tile";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
 import { ItemRarity, type Item } from "@/lib/loots/loot-types";
 import type { FC } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import { TranslatedItemStat } from "./translated-item-stat";
 
 export type ItemTileProps = {
   color?: string;
@@ -11,36 +12,9 @@ export type ItemTileProps = {
   shareNickname?: string;
 };
 
-const STAT_VALUE_SEPARATOR = ",\u00A0";
-
-const formatStringValue = (rawValue: string) => {
-  return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-};
-
-const formatValue = (
-  rawValue: string | string[] | number | boolean | undefined,
-) => {
-  if (Array.isArray(rawValue)) {
-    return rawValue.join(STAT_VALUE_SEPARATOR);
-  }
-
-  if (typeof rawValue === "string") {
-    return formatStringValue(rawValue);
-  }
-
-  return rawValue;
-};
-
-const mapUntranslatedArrayValues = (rawValues: string[]) => {
-  return rawValues.reduce<Record<string, string>>(
-    (acc, rawValue, valueIndex) => {
-      acc[`value${valueIndex + 1}`] = formatStringValue(rawValue);
-
-      return acc;
-    },
-    {},
-  );
-};
+const renderStat = (displayValue: ItemDisplayValue) => (
+  <TranslatedItemStat displayValue={displayValue} />
+);
 
 export const ItemTile: FC<ItemTileProps> = ({
   color = "",
@@ -63,47 +37,6 @@ export const ItemTile: FC<ItemTileProps> = ({
     },
     type: typeLabels,
     typePrefix: t("itemType.prefix"),
-  };
-
-  const getTranslatedValues = (displayValue: ItemDisplayValue) => {
-    if (!Array.isArray(displayValue.value)) {
-      return { value: formatValue(displayValue.value) };
-    }
-
-    if (!displayValue.translateKey) {
-      return mapUntranslatedArrayValues(displayValue.value);
-    }
-
-    return {
-      value: displayValue.value
-        .map((translationKey) =>
-          t(`${displayValue.translateKey}.${translationKey}`),
-        )
-        .join(STAT_VALUE_SEPARATOR),
-    };
-  };
-
-  const renderStat = (displayValue: ItemDisplayValue) => {
-    if (!displayValue.key) {
-      return null;
-    }
-
-    const translatedValues = getTranslatedValues(displayValue);
-
-    return (
-      <Trans
-        components={{
-          description: <div className="text-center text-muted-foreground" />,
-          gold: <span className="text-primary" />,
-          legbon: <span className="text-green-500" />,
-          value: <span className="font-bold text-primary" />,
-        }}
-        i18nKey={`itemStats.${displayValue.key}`}
-        values={translatedValues}
-      >
-        {displayValue.value}
-      </Trans>
-    );
   };
 
   return (
