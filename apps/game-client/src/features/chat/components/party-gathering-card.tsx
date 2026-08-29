@@ -30,11 +30,6 @@ type PartyGatheringCardProps = {
   showTimestamp?: boolean;
 };
 
-const valueOrDefault = <Value,>(
-  value: Value | undefined,
-  defaultValue: Value,
-): Value => value ?? defaultValue;
-
 const resolveSenderName = (
   member: MemberSummaryResponseDtoOutput | undefined,
   message: ChatMessageResponseDtoOutput,
@@ -75,10 +70,25 @@ const isVolunteerDisabled = (
   hasCurrentReadyRoom: boolean,
 ): boolean => isPending || !meetsLevelRequirement || hasCurrentReadyRoom;
 
+const getPartyGatheringCardState = (
+  partyGathering: ChatMessageResponseDtoOutput["partyGathering"],
+  heroLevel: number,
+  showGuildLabel: boolean | undefined,
+  showTimestamp: boolean | undefined,
+) => {
+  const minLvl = partyGathering?.minLvl ?? 1;
+  const maxLvl = partyGathering?.maxLvl ?? 500;
+  return {
+    showGuildLabel: showGuildLabel ?? true,
+    showTimestamp: showTimestamp ?? true,
+    minLvl,
+    maxLvl,
+    meetsLevelRequirement: heroLevel >= minLvl && heroLevel <= maxLvl,
+  };
+};
+
 export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
   const { message, member, guildName, all, isMsgYesterday } = props;
-  const showGuildLabel = valueOrDefault(props.showGuildLabel, true);
-  const showTimestamp = valueOrDefault(props.showTimestamp, true);
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
   const applyToReadyRoom = usePartyReadyRoomControllerApply();
@@ -104,6 +114,18 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
     String(message.characterData.acc) === heroAccountId &&
     String(message.characterData.id) === heroCharacterId;
   const partyGathering = message.partyGathering;
+  const {
+    showGuildLabel,
+    showTimestamp,
+    minLvl,
+    maxLvl,
+    meetsLevelRequirement: meetsLevelReq,
+  } = getPartyGatheringCardState(
+    partyGathering,
+    heroLvl,
+    props.showGuildLabel,
+    props.showTimestamp,
+  );
 
   if (!partyGathering) {
     return (
@@ -174,9 +196,6 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
     );
   };
 
-  const minLvl = valueOrDefault(partyGathering.minLvl, 1);
-  const maxLvl = valueOrDefault(partyGathering.maxLvl, 500);
-  const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
   const isJoinedToThisGathering =
     currentReadyRoom?.viewer === "PARTICIPANT" &&
     currentReadyRoom.notificationId === partyGathering.notificationId;

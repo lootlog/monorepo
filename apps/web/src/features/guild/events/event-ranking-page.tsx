@@ -22,9 +22,6 @@ import {
   useMembersControllerGetMe,
 } from "@lootlog/api-client/react-query/main/members";
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const getRankingSelection = <
   Hero extends { npcName: string },
   Ranking extends { heroNpcName: string },
@@ -59,8 +56,8 @@ export const EventRankingPage = () => {
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
   const hasEventRouteParams = Boolean(guildId && eventId);
-  const queryGuildId = valueOr(guildId, "");
-  const queryEventId = valueOr(eventId, "");
+  const queryGuildId = guildId ?? "";
+  const queryEventId = eventId ?? "";
 
   const { data: permissions } = useGuildPermissions();
   const { data: currentMember } = useMembersControllerGetMe(
@@ -140,7 +137,7 @@ export const EventRankingPage = () => {
     );
   }
 
-  const heroes = valueOr(event.heroNpcs, []);
+  const heroes = event.heroNpcs ?? [];
   const { effectiveSelectedHeroName, filteredRankings } = getRankingSelection(
     heroes,
     rankings,

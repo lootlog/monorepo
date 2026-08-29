@@ -56,31 +56,58 @@ interface LiquidEtherWebGL {
 
 const defaultColors = ["#5227FF", "#FF9FFC", "#B19EEF"];
 
-const valueOrDefault = <T,>(value: T | undefined, defaultValue: T): T =>
-  value ?? defaultValue;
+const getLiquidEtherSimulationOptions = (props: LiquidEtherProps) => ({
+  mouseForce: props.mouseForce ?? 20,
+  cursorSize: props.cursorSize ?? 100,
+  isViscous: props.isViscous ?? false,
+  viscous: props.viscous ?? 30,
+  iterationsViscous: props.iterationsViscous ?? 32,
+  iterationsPoisson: props.iterationsPoisson ?? 32,
+  dt: props.dt ?? 0.014,
+  BFECC: props.BFECC ?? true,
+  resolution: props.resolution ?? 0.5,
+  isBounce: props.isBounce ?? false,
+});
+
+const getLiquidEtherPresentationOptions = (props: LiquidEtherProps) => ({
+  colors: props.colors ?? defaultColors,
+  style: props.style ?? {},
+  className: props.className ?? "",
+});
+
+const getLiquidEtherAutoDemoOptions = (props: LiquidEtherProps) => ({
+  autoDemo: props.autoDemo ?? true,
+  autoSpeed: props.autoSpeed ?? 0.5,
+  autoIntensity: props.autoIntensity ?? 2.2,
+  takeoverDuration: props.takeoverDuration ?? 0.25,
+  autoResumeDelay: props.autoResumeDelay ?? 1000,
+  autoRampDuration: props.autoRampDuration ?? 0.6,
+});
 
 export default function LiquidEther(
   props: LiquidEtherProps,
 ): React.ReactElement {
-  const mouseForce = valueOrDefault(props.mouseForce, 20);
-  const cursorSize = valueOrDefault(props.cursorSize, 100);
-  const isViscous = valueOrDefault(props.isViscous, false);
-  const viscous = valueOrDefault(props.viscous, 30);
-  const iterationsViscous = valueOrDefault(props.iterationsViscous, 32);
-  const iterationsPoisson = valueOrDefault(props.iterationsPoisson, 32);
-  const dt = valueOrDefault(props.dt, 0.014);
-  const BFECC = valueOrDefault(props.BFECC, true);
-  const resolution = valueOrDefault(props.resolution, 0.5);
-  const isBounce = valueOrDefault(props.isBounce, false);
-  const colors = valueOrDefault(props.colors, defaultColors);
-  const style = valueOrDefault(props.style, {});
-  const className = valueOrDefault(props.className, "");
-  const autoDemo = valueOrDefault(props.autoDemo, true);
-  const autoSpeed = valueOrDefault(props.autoSpeed, 0.5);
-  const autoIntensity = valueOrDefault(props.autoIntensity, 2.2);
-  const takeoverDuration = valueOrDefault(props.takeoverDuration, 0.25);
-  const autoResumeDelay = valueOrDefault(props.autoResumeDelay, 1000);
-  const autoRampDuration = valueOrDefault(props.autoRampDuration, 0.6);
+  const {
+    mouseForce,
+    cursorSize,
+    isViscous,
+    viscous,
+    iterationsViscous,
+    iterationsPoisson,
+    dt,
+    BFECC,
+    resolution,
+    isBounce,
+  } = getLiquidEtherSimulationOptions(props);
+  const { colors, style, className } = getLiquidEtherPresentationOptions(props);
+  const {
+    autoDemo,
+    autoSpeed,
+    autoIntensity,
+    takeoverDuration,
+    autoResumeDelay,
+    autoRampDuration,
+  } = getLiquidEtherAutoDemoOptions(props);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const webglRef = useRef<LiquidEtherWebGL | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);

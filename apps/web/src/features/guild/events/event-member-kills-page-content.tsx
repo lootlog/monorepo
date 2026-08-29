@@ -79,9 +79,6 @@ type EventMemberKillsPageContentProps = {
   initialHeroId?: string;
 };
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 export const EventMemberKillsPageContent = ({
   guildId,
   eventId,
@@ -96,9 +93,9 @@ export const EventMemberKillsPageContent = ({
     null,
   );
   const hasEventRouteParams = Boolean(guildId && eventId);
-  const queryGuildId = valueOr(guildId, "");
-  const queryEventId = valueOr(eventId, "");
-  const queryMemberId = valueOr(memberId, "");
+  const queryGuildId = guildId ?? "";
+  const queryEventId = eventId ?? "";
+  const queryMemberId = memberId ?? "";
 
   const {
     data: event,
@@ -171,11 +168,8 @@ export const EventMemberKillsPageContent = ({
     );
   }
 
-  const heroes = valueOr(event.heroNpcs, []);
-  const allKills = valueOr(
-    killsData?.pages.flatMap((page) => page.data),
-    [],
-  );
+  const heroes = event.heroNpcs ?? [];
+  const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
   const member = killsData?.pages[0]?.member;
   const memberIdNumber = Number.parseInt(queryMemberId, 10);
   const selectedHero = selectedHeroId
@@ -214,7 +208,7 @@ export const EventMemberKillsPageContent = ({
               guildId={queryGuildId}
               eventId={queryEventId}
               scrollElement={scrollElement}
-              resetKey={valueOr(selectedHeroId, "all")}
+              resetKey={selectedHeroId ?? "all"}
               allKills={allKills}
               isLoading={killsLoading}
               hasError={Boolean(killsError)}

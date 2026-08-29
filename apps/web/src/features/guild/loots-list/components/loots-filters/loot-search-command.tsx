@@ -80,9 +80,6 @@ const allTrue = (...values: boolean[]) => values.every(Boolean);
 const anyTrue = (...values: boolean[]) => values.some(Boolean);
 const renderIf = (condition: boolean, content: ReactNode) =>
   condition ? content : null;
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 export const LootSearchCommand = ({
   open,
   onOpenChange,
@@ -197,9 +194,9 @@ export const LootSearchCommand = ({
     setSearchQuery("");
   };
 
-  const npcResults = valueOr(searchResults?.npcs, []);
-  const itemResults = valueOr(searchResults?.items, []);
-  const playerResults = valueOr(searchResults?.players, []);
+  const npcResults = searchResults?.npcs ?? [];
+  const itemResults = searchResults?.items ?? [];
+  const playerResults = searchResults?.players ?? [];
   const hasSearchResults = anyTrue(
     npcResults.length > 0,
     itemResults.length > 0,

@@ -263,9 +263,6 @@ type GuildSelection = {
   guildId: string;
 };
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const getPreferredGuildId = (
   initialGuildId: string | undefined,
   savedGuildId: string | undefined,
@@ -282,7 +279,7 @@ const getPreferredGuildId = (
   if (currentGuildId && availableGuildIds.has(currentGuildId)) {
     return currentGuildId;
   }
-  return valueOr(firstVisibleGuildId, "");
+  return firstVisibleGuildId ?? "";
 };
 
 const resolveStoredGuildIds = (
@@ -339,6 +336,12 @@ const getSelectedNpcType = (npcType: FormValues["type"]) =>
 
 const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
 
+const getNpcSearchParams = (world: string | undefined, search: string) => ({
+  limit: 10,
+  search,
+  world: world ?? "",
+});
+
 export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   initialGuildId,
 }) => {
@@ -369,7 +372,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     guildIdByCharId,
     selectedGuildIdsForTimersByCharId,
   );
-  const guildSelectionContextKey = `${characterId}:${valueOr(initialGuildId, "")}:${valueOr(savedGuildId, "")}`;
+  const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
   const availableGuildIds = new Set(visibleGuilds.map((guild) => guild.id));
   const preferredGuildId = getPreferredGuildId(
     initialGuildId,
@@ -386,6 +389,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   );
 
   const searchGuildId = selectedGuildId;
+  const npcSearchParams = getNpcSearchParams(world, debouncedSearch);
 
   const {
     data: npcResults,
@@ -394,20 +398,12 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     refetch: retryNpcSearch,
   } = useTimersControllerSearchNpcsWithTimerData(
     { guildId: searchGuildId },
-    {
-      limit: 10,
-      search: debouncedSearch,
-      world: valueOr(world, ""),
-    },
+    npcSearchParams,
     {
       query: {
         queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
           { guildId: searchGuildId },
-          {
-            world: valueOr(world, ""),
-            search: debouncedSearch,
-            limit: 10,
-          },
+          getNpcSearchParams(world, debouncedSearch),
         ),
         enabled: debouncedSearch.length >= 2 && !!searchGuildId,
         staleTime: 60000,

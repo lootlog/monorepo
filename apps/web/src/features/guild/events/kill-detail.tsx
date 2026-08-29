@@ -28,9 +28,6 @@ const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   return formatDurationHuman(differenceSeconds);
 };
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
@@ -39,10 +36,10 @@ export const KillDetail = () => {
   const canEditPoints =
     Boolean(permissions?.includes(Permission.OWNER)) ||
     Boolean(permissions?.includes(Permission.ADMIN));
-  const queryGuildId = valueOr(guildId, "");
-  const queryEventId = valueOr(eventId, "");
-  const queryHeroId = valueOr(heroId, "");
-  const queryKillId = valueOr(killId, "");
+  const queryGuildId = guildId ?? "";
+  const queryEventId = eventId ?? "";
+  const queryHeroId = heroId ?? "";
+  const queryKillId = killId ?? "";
   const { data, isLoading, error } = useKillDetail({
     guildId: queryGuildId,
     eventId: queryEventId,
@@ -51,12 +48,12 @@ export const KillDetail = () => {
   });
   const { data: matchingLoots, isLoading: isLootsLoading } = useMatchingLoots({
     guildId: queryGuildId,
-    world: valueOr(data?.kill.heroNpc.event.world, ""),
-    killedAt: valueOr(data?.kill.killedAt, ""),
-    npcName: valueOr(data?.kill.heroNpc.npcName, ""),
+    world: data?.kill.heroNpc.event.world ?? "",
+    killedAt: data?.kill.killedAt ?? "",
+    npcName: data?.kill.heroNpc.npcName ?? "",
     enabled: Boolean(data),
   });
-  const loots = valueOr(matchingLoots, []);
+  const loots = matchingLoots ?? [];
 
   if (isLoading) {
     return (
@@ -120,7 +117,7 @@ export const KillDetail = () => {
   }
 
   const { kill, eventConfig } = data;
-  const participants = valueOr(kill.points, []);
+  const participants = kill.points ?? [];
   const getMemberRoleColors = () => {
     const colors = new Map<number, string>();
     for (const participant of participants) {

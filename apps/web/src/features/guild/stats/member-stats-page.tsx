@@ -36,6 +36,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useKillsControllerGetMemberKills } from "@lootlog/api-client/react-query/main/kills";
 import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
+import type { MemberKillsResponseDtoOutput } from "@lootlog/api-client/models/main/member-kills-response-dto-output";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
@@ -65,9 +66,6 @@ const NPC_TYPE_ORDER: NpcType[] = [
 ];
 
 type StatsSettings = ReturnType<typeof useStatsSettings>["settings"];
-
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
 
 const getNpcTypeFilter = (npcType: StatsSettings["npcType"]) =>
   npcType && npcType !== "ALL" ? [npcType] : undefined;
@@ -106,6 +104,15 @@ const hasMemberStatsFilters = (
   settings.period !== "all" ||
   settings.npcType !== "ALL" ||
   Boolean(debouncedSearch);
+
+const getMemberStatsResponseView = (
+  data: MemberKillsResponseDtoOutput | undefined,
+) => ({
+  npcs: data?.npcs ?? [],
+  total: data?.pagination?.total ?? 0,
+  hasNext: data?.pagination?.hasNext ?? false,
+  totalParticipations: data?.overview?.totalParticipations ?? 0,
+});
 
 export const MemberStatsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -244,11 +251,9 @@ export const MemberStatsPage: React.FC = () => {
   }
 
   const overview = data?.overview;
-  const npcs = valueOr(data?.npcs, []);
   const hasActiveFilters = hasMemberStatsFilters(settings, debouncedSearch);
-  const pagination = data?.pagination;
-  const total = valueOr(pagination?.total, 0);
-  const hasNext = valueOr(pagination?.hasNext, false);
+  const { npcs, total, hasNext, totalParticipations } =
+    getMemberStatsResponseView(data);
   const hasPrev = cursor > 0;
 
   const activeTypes = NPC_TYPE_ORDER.filter(
@@ -282,7 +287,7 @@ export const MemberStatsPage: React.FC = () => {
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {t("kills.memberStats.totalParticipations", {
-                    count: valueOr(overview?.totalParticipations, 0),
+                    count: totalParticipations,
                   })}
                 </p>
               </div>
@@ -349,7 +354,7 @@ export const MemberStatsPage: React.FC = () => {
                 onValueChange={handlePeriodChange}
               />
               <Select
-                value={valueOr(settings.npcType, "ALL")}
+                value={settings.npcType ?? "ALL"}
                 onValueChange={handleNpcTypeChange}
                 items={[
                   { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },

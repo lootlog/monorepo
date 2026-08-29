@@ -3,7 +3,7 @@ import { PrismaClient as BattlelogPrismaClient } from "../../../../../apps/battl
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
-import { BattleProcessor } from "@lootlog/battle-processor";
+import { BattleProcessor, type Warrior } from "@lootlog/battle-processor";
 import { SEED_CONFIG } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -37,9 +37,6 @@ interface SeedOptions {
   battlesCount?: number;
   clean?: boolean;
 }
-
-const valueOr = <T>(value: T | null | undefined, fallback: T): T =>
-  value ?? fallback;
 
 async function cleanDatabase() {
   console.log("🧹 Cleaning database...");
@@ -351,6 +348,124 @@ async function seedTimers(guilds: any[]) {
   console.log(`✅ Created ${totalTimers} timers`);
 }
 
+const getSeedWarriorCore = (warrior: Warrior) => ({
+  originalId: warrior.originalId.toString(),
+  name: warrior.name,
+  lvl: warrior.lvl,
+  prof: warrior.prof,
+  icon: warrior.icon,
+  team: warrior.team,
+  turns: warrior.turns,
+  turnsLost: warrior.turnsLost ?? 0,
+  steps: warrior.steps ?? 0,
+  normalAttacks: warrior.normalAttacks ?? 0,
+  spellsUsed: warrior.spellsUsed ?? 0,
+  spellsUsedMap: warrior.spellsUsedMap ?? {},
+  isDead: warrior.isDead,
+  surrendered: warrior.surrendered ?? false,
+  fled: warrior.fled ?? false,
+  maxHp: warrior.maxHp ?? 0,
+  damageDealt: warrior.damageDealt,
+});
+
+const getSeedWarriorDealtDamage = (warrior: Warrior) => ({
+  distanceDamage: warrior.distanceDamage ?? 0,
+  meleeDamage: warrior.meleeDamage ?? 0,
+  auxiliaryDamage: warrior.auxiliaryDamage ?? 0,
+  fireDamage: warrior.fireDamage ?? 0,
+  frostDamage: warrior.frostDamage ?? 0,
+  lightningDamage: warrior.lightningDamage ?? 0,
+  thirdAttDamage: warrior.thirdAttDamage ?? 0,
+  damageDealtAfterDefensive: warrior.damageDealtAfterDefensive ?? 0,
+  damageDealtAfterDefensivePercentage:
+    warrior.damageDealtAfterDefensivePercentage ?? 0,
+});
+
+const getSeedWarriorTakenDamage = (warrior: Warrior) => ({
+  damageTaken: warrior.damageTaken,
+  distanceDamageTaken: warrior.distanceDamageTaken ?? 0,
+  meleeDamageTaken: warrior.meleeDamageTaken ?? 0,
+  auxiliaryDamageTaken: warrior.auxiliaryDamageTaken ?? 0,
+  fireDamageTaken: warrior.fireDamageTaken ?? 0,
+  frostDamageTaken: warrior.frostDamageTaken ?? 0,
+  lightningDamageTaken: warrior.lightningDamageTaken ?? 0,
+  thirdAttDamageTaken: warrior.thirdAttDamageTaken ?? 0,
+  flatDamageTaken: warrior.flatDamageTaken ?? 0,
+});
+
+const getSeedWarriorCombatEffects = (warrior: Warrior) => ({
+  rageDamageDealt: warrior.rageDamageDealt ?? 0,
+  trueDamageDealt: warrior.trueDamageDealt ?? 0,
+  trueDamageTaken: warrior.trueDamageTaken ?? 0,
+  stigmaDamageDealt: warrior.stigmaDamageDealt ?? 0,
+  stigmaDamageTaken: warrior.stigmaDamageTaken ?? 0,
+  passiveHealing: warrior.passiveHealing ?? 0,
+  activeHealing: warrior.activeHealing ?? 0,
+  armorPierces: warrior.armorPierces ?? 0,
+  criticalHits: warrior.criticalHits ?? 0,
+  reducedArmor: warrior.reducedArmor ?? 0,
+  reducedPoisonResistance: warrior.reducedPoisonResistance ?? 0,
+  magicResistanceDestroyed: warrior.magicResistanceDestroyed ?? 0,
+});
+
+const getSeedWarriorDefense = (warrior: Warrior) => ({
+  evasions: warrior.evasions ?? 0,
+  attacksEvaded: warrior.attacksEvaded ?? 0,
+  counters: warrior.counters ?? 0,
+  fastArrows: warrior.fastArrows ?? 0,
+  blocks: warrior.blocks ?? 0,
+  attacksBlocked: warrior.attacksBlocked ?? 0,
+  blockedDamage: warrior.blockedDamage ?? 0,
+});
+
+const getSeedWarriorPersistentDamage = (warrior: Warrior) => ({
+  woundDamageTaken: warrior.woundDamageTaken ?? 0,
+  poisonDamageTaken: warrior.poisonDamageTaken ?? 0,
+  injureDamageTaken: warrior.injureDamageTaken ?? 0,
+  injures: warrior.injures ?? 0,
+  critWoundDamageTaken: warrior.critWoundDamageTaken ?? 0,
+  firePassiveDamageTaken: warrior.firePassiveDamageTaken ?? 0,
+  lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken ?? 0,
+});
+
+const getSeedWarriorResources = (warrior: Warrior) => ({
+  destroyedEnergy: warrior.destroyedEnergy ?? 0,
+  destroyedMana: warrior.destroyedMana ?? 0,
+  regeneratedEnergy: warrior.regeneratedEnergy ?? 0,
+  regeneratedMana: warrior.regeneratedMana ?? 0,
+  reflectedDamage: warrior.reflectedDamage ?? 0,
+  reflectedDamageTaken: warrior.reflectedDamageTaken ?? 0,
+});
+
+const getSeedWarriorLegendaryEffects = (warrior: Warrior) => ({
+  legbons: warrior.legbons ?? 0,
+  legbonCurse: warrior.legbonCurse ?? 0,
+  legbonCleanse: warrior.legbonCleanse ?? 0,
+  legbonLastheal: warrior.legbonLastheal ?? 0,
+  legbonLasthealValue: warrior.legbonLasthealValue ?? 0,
+  legbonGlare: warrior.legbonGlare ?? 0,
+  legbonHolytouch: warrior.legbonHolytouch ?? 0,
+  legbonHolytouchValue: warrior.legbonHolytouchValue ?? 0,
+  legbonCritredValue: warrior.legbonCritredValue ?? 0,
+  legbonFacadeValue: warrior.legbonFacadeValue ?? 0,
+  legbonVerycrit: warrior.legbonVerycrit ?? 0,
+  legbonAnguish: warrior.legbonAnguish ?? 0,
+  legbonPunctureValue: warrior.legbonPunctureValue ?? 0,
+  legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken ?? 0,
+  ph: warrior.ph ?? 0,
+});
+
+const toSeedBattleWarrior = (warrior: Warrior) => ({
+  ...getSeedWarriorCore(warrior),
+  ...getSeedWarriorDealtDamage(warrior),
+  ...getSeedWarriorTakenDamage(warrior),
+  ...getSeedWarriorCombatEffects(warrior),
+  ...getSeedWarriorDefense(warrior),
+  ...getSeedWarriorPersistentDamage(warrior),
+  ...getSeedWarriorResources(warrior),
+  ...getSeedWarriorLegendaryEffects(warrior),
+});
+
 async function seedBattles(count: number) {
   console.log(`⚔️  Seeding ${count} battles...`);
 
@@ -402,111 +517,7 @@ async function seedBattles(count: number) {
           hasFlee: analysis.outcome.hasFlee,
           statistics: analysis.statistics as any,
           warriors: {
-            create: analysis.warriors.map((warrior) => ({
-              originalId: warrior.originalId.toString(),
-              name: warrior.name,
-              lvl: warrior.lvl,
-              prof: warrior.prof,
-              icon: warrior.icon,
-              team: warrior.team,
-              turns: warrior.turns,
-              turnsLost: valueOr(warrior.turnsLost, 0),
-              steps: valueOr(warrior.steps, 0),
-              normalAttacks: valueOr(warrior.normalAttacks, 0),
-              spellsUsed: valueOr(warrior.spellsUsed, 0),
-              spellsUsedMap: valueOr(warrior.spellsUsedMap, {}),
-              isDead: warrior.isDead,
-              surrendered: valueOr(warrior.surrendered, false),
-              fled: valueOr(warrior.fled, false),
-              maxHp: valueOr(warrior.maxHp, 0),
-              damageDealt: warrior.damageDealt,
-              distanceDamage: valueOr(warrior.distanceDamage, 0),
-              meleeDamage: valueOr(warrior.meleeDamage, 0),
-              auxiliaryDamage: valueOr(warrior.auxiliaryDamage, 0),
-              fireDamage: valueOr(warrior.fireDamage, 0),
-              frostDamage: valueOr(warrior.frostDamage, 0),
-              lightningDamage: valueOr(warrior.lightningDamage, 0),
-              thirdAttDamage: valueOr(warrior.thirdAttDamage, 0),
-              damageDealtAfterDefensive: valueOr(
-                warrior.damageDealtAfterDefensive,
-                0,
-              ),
-              damageDealtAfterDefensivePercentage: valueOr(
-                warrior.damageDealtAfterDefensivePercentage,
-                0,
-              ),
-              damageTaken: warrior.damageTaken,
-              distanceDamageTaken: valueOr(warrior.distanceDamageTaken, 0),
-              meleeDamageTaken: valueOr(warrior.meleeDamageTaken, 0),
-              auxiliaryDamageTaken: valueOr(warrior.auxiliaryDamageTaken, 0),
-              fireDamageTaken: valueOr(warrior.fireDamageTaken, 0),
-              frostDamageTaken: valueOr(warrior.frostDamageTaken, 0),
-              lightningDamageTaken: valueOr(warrior.lightningDamageTaken, 0),
-              thirdAttDamageTaken: valueOr(warrior.thirdAttDamageTaken, 0),
-              flatDamageTaken: valueOr(warrior.flatDamageTaken, 0),
-              rageDamageDealt: valueOr(warrior.rageDamageDealt, 0),
-              trueDamageDealt: valueOr(warrior.trueDamageDealt, 0),
-              trueDamageTaken: valueOr(warrior.trueDamageTaken, 0),
-              stigmaDamageDealt: valueOr(warrior.stigmaDamageDealt, 0),
-              stigmaDamageTaken: valueOr(warrior.stigmaDamageTaken, 0),
-              passiveHealing: valueOr(warrior.passiveHealing, 0),
-              activeHealing: valueOr(warrior.activeHealing, 0),
-              armorPierces: valueOr(warrior.armorPierces, 0),
-              criticalHits: valueOr(warrior.criticalHits, 0),
-              reducedArmor: valueOr(warrior.reducedArmor, 0),
-              reducedPoisonResistance: valueOr(
-                warrior.reducedPoisonResistance,
-                0,
-              ),
-              magicResistanceDestroyed: valueOr(
-                warrior.magicResistanceDestroyed,
-                0,
-              ),
-              evasions: valueOr(warrior.evasions, 0),
-              attacksEvaded: valueOr(warrior.attacksEvaded, 0),
-              counters: valueOr(warrior.counters, 0),
-              fastArrows: valueOr(warrior.fastArrows, 0),
-              blocks: valueOr(warrior.blocks, 0),
-              attacksBlocked: valueOr(warrior.attacksBlocked, 0),
-              blockedDamage: valueOr(warrior.blockedDamage, 0),
-              woundDamageTaken: valueOr(warrior.woundDamageTaken, 0),
-              poisonDamageTaken: valueOr(warrior.poisonDamageTaken, 0),
-              injureDamageTaken: valueOr(warrior.injureDamageTaken, 0),
-              injures: valueOr(warrior.injures, 0),
-              critWoundDamageTaken: valueOr(warrior.critWoundDamageTaken, 0),
-              firePassiveDamageTaken: valueOr(
-                warrior.firePassiveDamageTaken,
-                0,
-              ),
-              lightningPassiveDamageTaken: valueOr(
-                warrior.lightningPassiveDamageTaken,
-                0,
-              ),
-              destroyedEnergy: valueOr(warrior.destroyedEnergy, 0),
-              destroyedMana: valueOr(warrior.destroyedMana, 0),
-              regeneratedEnergy: valueOr(warrior.regeneratedEnergy, 0),
-              regeneratedMana: valueOr(warrior.regeneratedMana, 0),
-              reflectedDamage: valueOr(warrior.reflectedDamage, 0),
-              reflectedDamageTaken: valueOr(warrior.reflectedDamageTaken, 0),
-              legbons: valueOr(warrior.legbons, 0),
-              legbonCurse: valueOr(warrior.legbonCurse, 0),
-              legbonCleanse: valueOr(warrior.legbonCleanse, 0),
-              legbonLastheal: valueOr(warrior.legbonLastheal, 0),
-              legbonLasthealValue: valueOr(warrior.legbonLasthealValue, 0),
-              legbonGlare: valueOr(warrior.legbonGlare, 0),
-              legbonHolytouch: valueOr(warrior.legbonHolytouch, 0),
-              legbonHolytouchValue: valueOr(warrior.legbonHolytouchValue, 0),
-              legbonCritredValue: valueOr(warrior.legbonCritredValue, 0),
-              legbonFacadeValue: valueOr(warrior.legbonFacadeValue, 0),
-              legbonVerycrit: valueOr(warrior.legbonVerycrit, 0),
-              legbonAnguish: valueOr(warrior.legbonAnguish, 0),
-              legbonPunctureValue: valueOr(warrior.legbonPunctureValue, 0),
-              legbonAnguishDamageTaken: valueOr(
-                warrior.legbonAnguishDamageTaken,
-                0,
-              ),
-              ph: valueOr(warrior.ph, 0),
-            })),
+            create: analysis.warriors.map(toSeedBattleWarrior),
           },
         },
       });
