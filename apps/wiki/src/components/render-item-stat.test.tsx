@@ -26,4 +26,41 @@ describe("renderItemStat", () => {
 
     expect(markup).toContain("Tuzmer (12, 34)");
   });
+
+  it("resolves namespaced value translations from the shared dictionary", () => {
+    const markup = renderToStaticMarkup(
+      <>
+        {renderItemStat({
+          key: "target_rarity",
+          translateKey: "itemStats.rarity",
+          value: ["heroic"],
+        })}
+      </>,
+    );
+
+    expect(markup).toContain("heroiczny");
+    expect(markup).not.toContain(">heroic<");
+  });
+
+  it("does not group digits in formatted dates", () => {
+    const markup = renderToStaticMarkup(
+      <>
+        {renderItemStat({
+          key: "expire_date",
+          value: "01.01.2026, 01:00",
+        })}
+      </>,
+    );
+
+    expect(markup).toContain("01.01.2026, 01:00");
+    expect(markup).not.toContain("2 026");
+  });
+
+  it("still groups numeric stat values", () => {
+    const markup = renderToStaticMarkup(
+      <>{renderItemStat({ key: "hp", value: "12345" })}</>,
+    );
+
+    expect(markup).toContain("12 345");
+  });
 });

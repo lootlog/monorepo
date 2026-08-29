@@ -7,9 +7,13 @@ type TranslatedItemStatProps = {
 };
 
 const STAT_VALUE_SEPARATOR = ",\u00A0";
+const numericTextPattern =
+  /^[+-]?\d+(?:[.,]\d+)?(?:\s+-\s+[+-]?\d+(?:[.,]\d+)?)*$/;
 
 function formatStringValue(rawValue: string) {
-  return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return numericTextPattern.test(rawValue)
+    ? rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+    : rawValue;
 }
 
 function mapUntranslatedArrayValues(rawValues: string[]) {
