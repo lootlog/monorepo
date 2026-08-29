@@ -961,8 +961,8 @@ export const getLootsControllerDeleteLootUrl = ({ guildId, lootId }: LootsContro
 }
 
 /**
- * Delete a loot entry
- * @summary Delete loot
+ * Archive an Organization Loot record
+ * @summary Archive loot
  */
 export const lootsControllerDeleteLoot = async ({ guildId, lootId }: LootsControllerDeleteLootPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
@@ -1012,7 +1012,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type LootsControllerDeleteLootMutationVariables = {pathParams: LootsControllerDeleteLootPathParameters}
 
     /**
- * @summary Delete loot
+ * @summary Archive loot
  */
 export const useLootsControllerDeleteLoot = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>, TError,LootsControllerDeleteLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}

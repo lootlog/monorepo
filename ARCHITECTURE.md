@@ -55,8 +55,9 @@ type.
 Each data domain has one writer:
 
 - Auth owns users, sessions, and provider connections.
-- API owns organizations, membership projections, access configuration, loot
-  submissions, kills, timers, coordination, chat, notifications, and documents.
+- API owns organizations, membership projections, access configuration, global
+  loot facts, Organization Loot records and their submissions, kills, timers,
+  coordination, chat, notifications, and documents.
 - Battlelog owns battle payloads and derived battle statistics.
 - Activity owns durable activity and audit projections.
 - Search owns rebuildable public search indexes.
@@ -97,6 +98,13 @@ search results, comments, history, socket events, and notifications. Mutation
 permissions add to visibility; they do not bypass it. `OWNER` is the recovery
 authority. Administrative capability alone does not imply access to all
 strategic data.
+
+Loot drops and their item, NPC, player, and allocation facts are global and
+immutable across Organizations. A physical Organization Loot record is the
+tenant-owned visibility, archive, comment, submission, and future settlement
+boundary. A loot is visible only when it has an active Organization Loot record
+and every associated NPC is covered by at least one complete role grant. The
+same rule is shared by list, detail, aggregate, comment, and websocket paths.
 
 ## Durable delivery
 
@@ -243,11 +251,9 @@ compatibility by default.
 
 The target contracts above expose current work rather than hiding it:
 
-- timer and loot visibility is not applied consistently to all search,
-  aggregate, comment, history, and mutation paths;
+- timer visibility is not applied consistently to all search, aggregate,
+  comment, history, and mutation paths;
 - some timer action permissions differ between the UI/types and backend checks;
-- loot contains cross-organization mutable state that should become
-  organization-local;
 - presence is socket-lifetime state without the target heartbeat, expiry, and
   snapshot contract;
 - precise location and basic online state currently share one capability;

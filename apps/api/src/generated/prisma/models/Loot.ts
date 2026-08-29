@@ -247,8 +247,7 @@ export type LootWhereInput = {
   lootItems?: Prisma.LootItemListRelationFilter
   lootNpcs?: Prisma.LootNpcListRelationFilter
   lootPlayers?: Prisma.LootPlayerListRelationFilter
-  lootSubmissions?: Prisma.LootSubmissionListRelationFilter
-  comments?: Prisma.LootCommentListRelationFilter
+  organizationLootRecords?: Prisma.OrganizationLootRecordListRelationFilter
 }
 
 export type LootOrderByWithRelationInput = {
@@ -264,8 +263,7 @@ export type LootOrderByWithRelationInput = {
   lootItems?: Prisma.LootItemOrderByRelationAggregateInput
   lootNpcs?: Prisma.LootNpcOrderByRelationAggregateInput
   lootPlayers?: Prisma.LootPlayerOrderByRelationAggregateInput
-  lootSubmissions?: Prisma.LootSubmissionOrderByRelationAggregateInput
-  comments?: Prisma.LootCommentOrderByRelationAggregateInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordOrderByRelationAggregateInput
 }
 
 export type LootWhereUniqueInput = Prisma.AtLeast<{
@@ -284,8 +282,7 @@ export type LootWhereUniqueInput = Prisma.AtLeast<{
   lootItems?: Prisma.LootItemListRelationFilter
   lootNpcs?: Prisma.LootNpcListRelationFilter
   lootPlayers?: Prisma.LootPlayerListRelationFilter
-  lootSubmissions?: Prisma.LootSubmissionListRelationFilter
-  comments?: Prisma.LootCommentListRelationFilter
+  organizationLootRecords?: Prisma.OrganizationLootRecordListRelationFilter
 }, "id" | "uniqueId">
 
 export type LootOrderByWithAggregationInput = {
@@ -332,8 +329,7 @@ export type LootCreateInput = {
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutLootInput
 }
 
 export type LootUncheckedCreateInput = {
@@ -349,8 +345,7 @@ export type LootUncheckedCreateInput = {
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutLootInput
 }
 
 export type LootUpdateInput = {
@@ -365,8 +360,7 @@ export type LootUpdateInput = {
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutLootNestedInput
 }
 
 export type LootUncheckedUpdateInput = {
@@ -382,8 +376,7 @@ export type LootUncheckedUpdateInput = {
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutLootNestedInput
 }
 
 export type LootCreateManyInput = {
@@ -518,32 +511,18 @@ export type LootUpdateOneRequiredWithoutLootNpcsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.LootUpdateToOneWithWhereWithoutLootNpcsInput, Prisma.LootUpdateWithoutLootNpcsInput>, Prisma.LootUncheckedUpdateWithoutLootNpcsInput>
 }
 
-export type LootCreateNestedOneWithoutLootSubmissionsInput = {
-  create?: Prisma.XOR<Prisma.LootCreateWithoutLootSubmissionsInput, Prisma.LootUncheckedCreateWithoutLootSubmissionsInput>
-  connectOrCreate?: Prisma.LootCreateOrConnectWithoutLootSubmissionsInput
+export type LootCreateNestedOneWithoutOrganizationLootRecordsInput = {
+  create?: Prisma.XOR<Prisma.LootCreateWithoutOrganizationLootRecordsInput, Prisma.LootUncheckedCreateWithoutOrganizationLootRecordsInput>
+  connectOrCreate?: Prisma.LootCreateOrConnectWithoutOrganizationLootRecordsInput
   connect?: Prisma.LootWhereUniqueInput
 }
 
-export type LootUpdateOneRequiredWithoutLootSubmissionsNestedInput = {
-  create?: Prisma.XOR<Prisma.LootCreateWithoutLootSubmissionsInput, Prisma.LootUncheckedCreateWithoutLootSubmissionsInput>
-  connectOrCreate?: Prisma.LootCreateOrConnectWithoutLootSubmissionsInput
-  upsert?: Prisma.LootUpsertWithoutLootSubmissionsInput
+export type LootUpdateOneRequiredWithoutOrganizationLootRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.LootCreateWithoutOrganizationLootRecordsInput, Prisma.LootUncheckedCreateWithoutOrganizationLootRecordsInput>
+  connectOrCreate?: Prisma.LootCreateOrConnectWithoutOrganizationLootRecordsInput
+  upsert?: Prisma.LootUpsertWithoutOrganizationLootRecordsInput
   connect?: Prisma.LootWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.LootUpdateToOneWithWhereWithoutLootSubmissionsInput, Prisma.LootUpdateWithoutLootSubmissionsInput>, Prisma.LootUncheckedUpdateWithoutLootSubmissionsInput>
-}
-
-export type LootCreateNestedOneWithoutCommentsInput = {
-  create?: Prisma.XOR<Prisma.LootCreateWithoutCommentsInput, Prisma.LootUncheckedCreateWithoutCommentsInput>
-  connectOrCreate?: Prisma.LootCreateOrConnectWithoutCommentsInput
-  connect?: Prisma.LootWhereUniqueInput
-}
-
-export type LootUpdateOneRequiredWithoutCommentsNestedInput = {
-  create?: Prisma.XOR<Prisma.LootCreateWithoutCommentsInput, Prisma.LootUncheckedCreateWithoutCommentsInput>
-  connectOrCreate?: Prisma.LootCreateOrConnectWithoutCommentsInput
-  upsert?: Prisma.LootUpsertWithoutCommentsInput
-  connect?: Prisma.LootWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.LootUpdateToOneWithWhereWithoutCommentsInput, Prisma.LootUpdateWithoutCommentsInput>, Prisma.LootUncheckedUpdateWithoutCommentsInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LootUpdateToOneWithWhereWithoutOrganizationLootRecordsInput, Prisma.LootUpdateWithoutOrganizationLootRecordsInput>, Prisma.LootUncheckedUpdateWithoutOrganizationLootRecordsInput>
 }
 
 export type LootCreateWithoutLootItemsInput = {
@@ -557,8 +536,7 @@ export type LootCreateWithoutLootItemsInput = {
   lootShareSource?: $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutLootInput
 }
 
 export type LootUncheckedCreateWithoutLootItemsInput = {
@@ -573,8 +551,7 @@ export type LootUncheckedCreateWithoutLootItemsInput = {
   lootShareSource?: $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutLootInput
 }
 
 export type LootCreateOrConnectWithoutLootItemsInput = {
@@ -604,8 +581,7 @@ export type LootUpdateWithoutLootItemsInput = {
   lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutLootNestedInput
 }
 
 export type LootUncheckedUpdateWithoutLootItemsInput = {
@@ -620,8 +596,7 @@ export type LootUncheckedUpdateWithoutLootItemsInput = {
   lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutLootNestedInput
 }
 
 export type LootCreateWithoutLootPlayersInput = {
@@ -635,8 +610,7 @@ export type LootCreateWithoutLootPlayersInput = {
   lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutLootInput
 }
 
 export type LootUncheckedCreateWithoutLootPlayersInput = {
@@ -651,8 +625,7 @@ export type LootUncheckedCreateWithoutLootPlayersInput = {
   lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutLootInput
 }
 
 export type LootCreateOrConnectWithoutLootPlayersInput = {
@@ -682,8 +655,7 @@ export type LootUpdateWithoutLootPlayersInput = {
   lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutLootNestedInput
 }
 
 export type LootUncheckedUpdateWithoutLootPlayersInput = {
@@ -698,8 +670,7 @@ export type LootUncheckedUpdateWithoutLootPlayersInput = {
   lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutLootNestedInput
 }
 
 export type LootCreateWithoutLootNpcsInput = {
@@ -713,8 +684,7 @@ export type LootCreateWithoutLootNpcsInput = {
   lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutLootInput
 }
 
 export type LootUncheckedCreateWithoutLootNpcsInput = {
@@ -729,8 +699,7 @@ export type LootUncheckedCreateWithoutLootNpcsInput = {
   lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutLootInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutLootInput
 }
 
 export type LootCreateOrConnectWithoutLootNpcsInput = {
@@ -760,8 +729,7 @@ export type LootUpdateWithoutLootNpcsInput = {
   lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutLootNestedInput
 }
 
 export type LootUncheckedUpdateWithoutLootNpcsInput = {
@@ -776,11 +744,10 @@ export type LootUncheckedUpdateWithoutLootNpcsInput = {
   lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutLootNestedInput
+  organizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutLootNestedInput
 }
 
-export type LootCreateWithoutLootSubmissionsInput = {
+export type LootCreateWithoutOrganizationLootRecordsInput = {
   uniqueId: string
   world: string
   source: $Enums.LootSource
@@ -792,10 +759,9 @@ export type LootCreateWithoutLootSubmissionsInput = {
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentCreateNestedManyWithoutLootInput
 }
 
-export type LootUncheckedCreateWithoutLootSubmissionsInput = {
+export type LootUncheckedCreateWithoutOrganizationLootRecordsInput = {
   id?: number
   uniqueId: string
   world: string
@@ -808,26 +774,25 @@ export type LootUncheckedCreateWithoutLootSubmissionsInput = {
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
-  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutLootInput
 }
 
-export type LootCreateOrConnectWithoutLootSubmissionsInput = {
+export type LootCreateOrConnectWithoutOrganizationLootRecordsInput = {
   where: Prisma.LootWhereUniqueInput
-  create: Prisma.XOR<Prisma.LootCreateWithoutLootSubmissionsInput, Prisma.LootUncheckedCreateWithoutLootSubmissionsInput>
+  create: Prisma.XOR<Prisma.LootCreateWithoutOrganizationLootRecordsInput, Prisma.LootUncheckedCreateWithoutOrganizationLootRecordsInput>
 }
 
-export type LootUpsertWithoutLootSubmissionsInput = {
-  update: Prisma.XOR<Prisma.LootUpdateWithoutLootSubmissionsInput, Prisma.LootUncheckedUpdateWithoutLootSubmissionsInput>
-  create: Prisma.XOR<Prisma.LootCreateWithoutLootSubmissionsInput, Prisma.LootUncheckedCreateWithoutLootSubmissionsInput>
+export type LootUpsertWithoutOrganizationLootRecordsInput = {
+  update: Prisma.XOR<Prisma.LootUpdateWithoutOrganizationLootRecordsInput, Prisma.LootUncheckedUpdateWithoutOrganizationLootRecordsInput>
+  create: Prisma.XOR<Prisma.LootCreateWithoutOrganizationLootRecordsInput, Prisma.LootUncheckedCreateWithoutOrganizationLootRecordsInput>
   where?: Prisma.LootWhereInput
 }
 
-export type LootUpdateToOneWithWhereWithoutLootSubmissionsInput = {
+export type LootUpdateToOneWithWhereWithoutOrganizationLootRecordsInput = {
   where?: Prisma.LootWhereInput
-  data: Prisma.XOR<Prisma.LootUpdateWithoutLootSubmissionsInput, Prisma.LootUncheckedUpdateWithoutLootSubmissionsInput>
+  data: Prisma.XOR<Prisma.LootUpdateWithoutOrganizationLootRecordsInput, Prisma.LootUncheckedUpdateWithoutOrganizationLootRecordsInput>
 }
 
-export type LootUpdateWithoutLootSubmissionsInput = {
+export type LootUpdateWithoutOrganizationLootRecordsInput = {
   uniqueId?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLootSourceFieldUpdateOperationsInput | $Enums.LootSource
@@ -839,10 +804,9 @@ export type LootUpdateWithoutLootSubmissionsInput = {
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUpdateManyWithoutLootNestedInput
 }
 
-export type LootUncheckedUpdateWithoutLootSubmissionsInput = {
+export type LootUncheckedUpdateWithoutOrganizationLootRecordsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   uniqueId?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
@@ -855,85 +819,6 @@ export type LootUncheckedUpdateWithoutLootSubmissionsInput = {
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
-  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutLootNestedInput
-}
-
-export type LootCreateWithoutCommentsInput = {
-  uniqueId: string
-  world: string
-  source: $Enums.LootSource
-  location: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  lootShareSource?: $Enums.LootShareSource
-  lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
-  lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
-  lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
-}
-
-export type LootUncheckedCreateWithoutCommentsInput = {
-  id?: number
-  uniqueId: string
-  world: string
-  source: $Enums.LootSource
-  location: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  lootShareSource?: $Enums.LootShareSource
-  lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
-  lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
-  lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
-}
-
-export type LootCreateOrConnectWithoutCommentsInput = {
-  where: Prisma.LootWhereUniqueInput
-  create: Prisma.XOR<Prisma.LootCreateWithoutCommentsInput, Prisma.LootUncheckedCreateWithoutCommentsInput>
-}
-
-export type LootUpsertWithoutCommentsInput = {
-  update: Prisma.XOR<Prisma.LootUpdateWithoutCommentsInput, Prisma.LootUncheckedUpdateWithoutCommentsInput>
-  create: Prisma.XOR<Prisma.LootCreateWithoutCommentsInput, Prisma.LootUncheckedCreateWithoutCommentsInput>
-  where?: Prisma.LootWhereInput
-}
-
-export type LootUpdateToOneWithWhereWithoutCommentsInput = {
-  where?: Prisma.LootWhereInput
-  data: Prisma.XOR<Prisma.LootUpdateWithoutCommentsInput, Prisma.LootUncheckedUpdateWithoutCommentsInput>
-}
-
-export type LootUpdateWithoutCommentsInput = {
-  uniqueId?: Prisma.StringFieldUpdateOperationsInput | string
-  world?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumLootSourceFieldUpdateOperationsInput | $Enums.LootSource
-  location?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
-  lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
-  lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
-  lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
-}
-
-export type LootUncheckedUpdateWithoutCommentsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  uniqueId?: Prisma.StringFieldUpdateOperationsInput | string
-  world?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumLootSourceFieldUpdateOperationsInput | $Enums.LootSource
-  location?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
-  lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
-  lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
-  lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
-  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
 }
 
 
@@ -945,16 +830,14 @@ export type LootCountOutputType = {
   lootItems: number
   lootNpcs: number
   lootPlayers: number
-  lootSubmissions: number
-  comments: number
+  organizationLootRecords: number
 }
 
 export type LootCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lootItems?: boolean | LootCountOutputTypeCountLootItemsArgs
   lootNpcs?: boolean | LootCountOutputTypeCountLootNpcsArgs
   lootPlayers?: boolean | LootCountOutputTypeCountLootPlayersArgs
-  lootSubmissions?: boolean | LootCountOutputTypeCountLootSubmissionsArgs
-  comments?: boolean | LootCountOutputTypeCountCommentsArgs
+  organizationLootRecords?: boolean | LootCountOutputTypeCountOrganizationLootRecordsArgs
 }
 
 /**
@@ -991,15 +874,8 @@ export type LootCountOutputTypeCountLootPlayersArgs<ExtArgs extends runtime.Type
 /**
  * LootCountOutputType without action
  */
-export type LootCountOutputTypeCountLootSubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.LootSubmissionWhereInput
-}
-
-/**
- * LootCountOutputType without action
- */
-export type LootCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.LootCommentWhereInput
+export type LootCountOutputTypeCountOrganizationLootRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrganizationLootRecordWhereInput
 }
 
 
@@ -1016,8 +892,7 @@ export type LootSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   lootItems?: boolean | Prisma.Loot$lootItemsArgs<ExtArgs>
   lootNpcs?: boolean | Prisma.Loot$lootNpcsArgs<ExtArgs>
   lootPlayers?: boolean | Prisma.Loot$lootPlayersArgs<ExtArgs>
-  lootSubmissions?: boolean | Prisma.Loot$lootSubmissionsArgs<ExtArgs>
-  comments?: boolean | Prisma.Loot$commentsArgs<ExtArgs>
+  organizationLootRecords?: boolean | Prisma.Loot$organizationLootRecordsArgs<ExtArgs>
   _count?: boolean | Prisma.LootCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["loot"]>
 
@@ -1062,8 +937,7 @@ export type LootInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   lootItems?: boolean | Prisma.Loot$lootItemsArgs<ExtArgs>
   lootNpcs?: boolean | Prisma.Loot$lootNpcsArgs<ExtArgs>
   lootPlayers?: boolean | Prisma.Loot$lootPlayersArgs<ExtArgs>
-  lootSubmissions?: boolean | Prisma.Loot$lootSubmissionsArgs<ExtArgs>
-  comments?: boolean | Prisma.Loot$commentsArgs<ExtArgs>
+  organizationLootRecords?: boolean | Prisma.Loot$organizationLootRecordsArgs<ExtArgs>
   _count?: boolean | Prisma.LootCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type LootIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1075,8 +949,7 @@ export type $LootPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     lootItems: Prisma.$LootItemPayload<ExtArgs>[]
     lootNpcs: Prisma.$LootNpcPayload<ExtArgs>[]
     lootPlayers: Prisma.$LootPlayerPayload<ExtArgs>[]
-    lootSubmissions: Prisma.$LootSubmissionPayload<ExtArgs>[]
-    comments: Prisma.$LootCommentPayload<ExtArgs>[]
+    organizationLootRecords: Prisma.$OrganizationLootRecordPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1485,8 +1358,7 @@ export interface Prisma__LootClient<T, Null = never, ExtArgs extends runtime.Typ
   lootItems<T extends Prisma.Loot$lootItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Loot$lootItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lootNpcs<T extends Prisma.Loot$lootNpcsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Loot$lootNpcsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootNpcPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lootPlayers<T extends Prisma.Loot$lootPlayersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Loot$lootPlayersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootPlayerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  lootSubmissions<T extends Prisma.Loot$lootSubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Loot$lootSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootSubmissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  comments<T extends Prisma.Loot$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Loot$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  organizationLootRecords<T extends Prisma.Loot$organizationLootRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Loot$organizationLootRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationLootRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1990,51 +1862,27 @@ export type Loot$lootPlayersArgs<ExtArgs extends runtime.Types.Extensions.Intern
 }
 
 /**
- * Loot.lootSubmissions
+ * Loot.organizationLootRecords
  */
-export type Loot$lootSubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Loot$organizationLootRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the LootSubmission
+   * Select specific fields to fetch from the OrganizationLootRecord
    */
-  select?: Prisma.LootSubmissionSelect<ExtArgs> | null
+  select?: Prisma.OrganizationLootRecordSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the LootSubmission
+   * Omit specific fields from the OrganizationLootRecord
    */
-  omit?: Prisma.LootSubmissionOmit<ExtArgs> | null
+  omit?: Prisma.OrganizationLootRecordOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.LootSubmissionInclude<ExtArgs> | null
-  where?: Prisma.LootSubmissionWhereInput
-  orderBy?: Prisma.LootSubmissionOrderByWithRelationInput | Prisma.LootSubmissionOrderByWithRelationInput[]
-  cursor?: Prisma.LootSubmissionWhereUniqueInput
+  include?: Prisma.OrganizationLootRecordInclude<ExtArgs> | null
+  where?: Prisma.OrganizationLootRecordWhereInput
+  orderBy?: Prisma.OrganizationLootRecordOrderByWithRelationInput | Prisma.OrganizationLootRecordOrderByWithRelationInput[]
+  cursor?: Prisma.OrganizationLootRecordWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.LootSubmissionScalarFieldEnum | Prisma.LootSubmissionScalarFieldEnum[]
-}
-
-/**
- * Loot.comments
- */
-export type Loot$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the LootComment
-   */
-  select?: Prisma.LootCommentSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the LootComment
-   */
-  omit?: Prisma.LootCommentOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.LootCommentInclude<ExtArgs> | null
-  where?: Prisma.LootCommentWhereInput
-  orderBy?: Prisma.LootCommentOrderByWithRelationInput | Prisma.LootCommentOrderByWithRelationInput[]
-  cursor?: Prisma.LootCommentWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.LootCommentScalarFieldEnum | Prisma.LootCommentScalarFieldEnum[]
+  distinct?: Prisma.OrganizationLootRecordScalarFieldEnum | Prisma.OrganizationLootRecordScalarFieldEnum[]
 }
 
 /**
