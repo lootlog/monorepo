@@ -1,5 +1,5 @@
 const generatedSourcePattern =
-  /(?:^|\/)apps\/(?:(?:web|game-client)\/src\/lib\/api\/generated|api\/src\/generated\/prisma)\//;
+  /(?:^|\/)apps\/(?:(?:web|game-client)\/src\/lib\/api\/generated|(?:api|activity)\/src\/generated\/prisma)\//;
 
 const quote = (file) => JSON.stringify(file);
 

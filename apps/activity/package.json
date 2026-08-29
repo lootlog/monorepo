@@ -26,7 +26,7 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "test:watch": "vitest --config ./vitest.config.ts",
     "openapi:generate": "OPENAPI_GENERATION=true APP_VERSION=$(node -p \"require('./package.json').version\") pnpm build && OPENAPI_GENERATION=true APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/openapi/generate-openapi.js",
-    "activity:generate": "prisma generate && node ../../tools/normalize-generated-prisma.mjs src/generated/prisma",
+    "activity:generate": "prisma generate",
     "activity:migrate:dev": "prisma migrate dev",
     "activity:studio": "prisma studio"
   },
