@@ -3347,6 +3347,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationResponseDto_Output"
+        "429":
+          description: Notification rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRateLimitResponseDto"
       security:
         - bearer: []
       summary: Send notification
@@ -13834,6 +13840,21 @@ components:
       required:
         - notificationId
         - guildIds
+    NotificationRateLimitResponseDto:
+      type: object
+      properties:
+        message:
+          type: string
+          enum:
+            - NOTIFICATION_RATE_LIMITED
+        retryAfterMs:
+          type: integer
+          exclusiveMinimum: true
+          maximum: 9007199254740991
+          minimum: 0
+      required:
+        - message
+        - retryAfterMs
     CreateVolunteerDto:
       type: object
       properties:

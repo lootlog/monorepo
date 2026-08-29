@@ -6,6 +6,11 @@ const NotificationResponseSchema = z.object({
   guildIds: z.array(z.string().min(1)),
 });
 
+const NotificationRateLimitResponseSchema = z.object({
+  message: z.literal("NOTIFICATION_RATE_LIMITED"),
+  retryAfterMs: z.number().int().positive(),
+});
+
 const CancelPartyGatheringResponseSchema = z.object({
   success: z.boolean(),
   guildIds: z.array(z.string().min(1)),
@@ -13,6 +18,10 @@ const CancelPartyGatheringResponseSchema = z.object({
 
 export class NotificationResponseDto extends createZodDto(
   NotificationResponseSchema,
+) {}
+
+export class NotificationRateLimitResponseDto extends createZodDto(
+  NotificationRateLimitResponseSchema,
 ) {}
 
 export class CancelPartyGatheringResponseDto extends createZodDto(

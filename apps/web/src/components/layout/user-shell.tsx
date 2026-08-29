@@ -1,3 +1,4 @@
+import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { ROUTES } from "@/config/routes";
 import { UserHeaderActionsContext } from "@/contexts/user-header-actions-context";
@@ -6,19 +7,11 @@ import {
   type BattleRouteLabelMatch,
 } from "@/lib/battle/battle-route-label";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@lootlog/ui/components/breadcrumb";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useLocation, useMatches, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { Fragment, useState, type FC, type ReactNode } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
 import { getUserNavigationInfo } from "./get-user-navigation-info";
@@ -84,61 +77,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                 )}
               </div>
 
-              <Breadcrumb
-                aria-label={t("common.breadcrumbs.navigationLabel")}
-                className="min-w-0 flex-1 overflow-hidden"
-              >
-                <BreadcrumbList className="flex-nowrap justify-center overflow-hidden">
-                  {navigationInfo.breadcrumbs.map((crumb, index) => {
-                    const isLast =
-                      index === navigationInfo.breadcrumbs.length - 1;
-                    return (
-                      <Fragment
-                        key={`${crumb.label}-${crumb.path ?? "current"}`}
-                      >
-                        <BreadcrumbItem className="min-w-0 shrink-0 last:shrink">
-                          {crumb.path ? (
-                            <div
-                              onMouseEnter={() =>
-                                setHoveredButton(`crumb-${index}`)
-                              }
-                              onMouseLeave={() => setHoveredButton(null)}
-                            >
-                              <ThemeInteractiveFrame
-                                isHovered={hoveredButton === `crumb-${index}`}
-                                isActive={false}
-                              >
-                                <BreadcrumbLink
-                                  render={
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() =>
-                                        navigate({ to: crumb.path as string })
-                                      }
-                                    />
-                                  }
-                                  className="min-h-8 cursor-pointer whitespace-nowrap rounded px-1 text-xs text-muted-foreground/70 transition-colors duration-200 hover:text-foreground"
-                                >
-                                  {crumb.label}
-                                </BreadcrumbLink>
-                              </ThemeInteractiveFrame>
-                            </div>
-                          ) : (
-                            <BreadcrumbPage className="truncate text-sm font-bold">
-                              {crumb.label}
-                            </BreadcrumbPage>
-                          )}
-                        </BreadcrumbItem>
-                        {!isLast && (
-                          <BreadcrumbSeparator className="text-muted-foreground/30" />
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </BreadcrumbList>
-              </Breadcrumb>
+              <AppBreadcrumbs
+                breadcrumbs={navigationInfo.breadcrumbs}
+                onNavigate={(path) => navigate({ to: path })}
+              />
 
               <div
                 ref={setHeaderActionsElement}

@@ -10,9 +10,14 @@ import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { NpcType } from "#src/generated/prisma/client";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
+import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
+
+const { mockUuid } = vi.hoisted(() => ({
+  mockUuid: vi.fn<() => string>(() => "mock-uuid"),
+}));
 
 vi.mock("uuid", () => ({
-  v4: () => "mock-uuid",
+  v4: mockUuid,
 }));
 
 describe("MessagingService", () => {
@@ -38,6 +43,10 @@ describe("MessagingService", () => {
     create: mockFn(),
   };
 
+  const mockNotificationRateLimiter = {
+    consume: mockFn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,15 +56,21 @@ describe("MessagingService", () => {
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: ReadyRoomService, useValue: mockReadyRoomService },
+        {
+          provide: NotificationRateLimiterService,
+          useValue: mockNotificationRateLimiter,
+        },
       ],
     }).compile();
 
     service = module.get<MessagingService>(MessagingService);
     vi.clearAllMocks();
+    mockNotificationRateLimiter.consume.mockResolvedValue({ accepted: true });
   });
 
   describe("sendNotification", () => {
     const discordId = "123456";
+    const userId = "user-1";
 
     it("keeps npc coordinates in published payloads", async () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
@@ -63,7 +78,7 @@ describe("MessagingService", () => {
         { id: "guild-2" },
       ]);
 
-      const result = await service.sendNotification(discordId, {
+      const result = await service.sendNotification(userId, discordId, {
         npc: {
           id: 911169,
           hpp: 0,
@@ -150,7 +165,7 @@ describe("MessagingService", () => {
         { id: "guild-1" },
       ]);
 
-      await service.sendNotification(discordId, {
+      await service.sendNotification(userId, discordId, {
         npc: {
           id: 911169,
           location: "Glusza Swistu",
@@ -187,6 +202,93 @@ describe("MessagingService", () => {
         guildIds: ["guild-1"],
         world: "gordion",
       });
+    });
+
+    it("rejects a rate-limited request before creating notification side effects", async () => {
+      mockNotificationRateLimiter.consume.mockResolvedValue({
+        accepted: false,
+        retryAfterMs: 1_250,
+      });
+
+      const error = await service
+        .sendNotification(userId, discordId, {
+          message: "alarm",
+          world: "gordion",
+          guildIds: ["guild-1", "guild-2"],
+        })
+        .catch((caughtError: unknown) => caughtError);
+
+      expect(error).toMatchObject({
+        status: 429,
+        response: {
+          message: "NOTIFICATION_RATE_LIMITED",
+          retryAfterMs: 1_250,
+        },
+      });
+      expect(mockNotificationRateLimiter.consume).toHaveBeenCalledWith(userId);
+      expect(mockUuid).not.toHaveBeenCalled();
+      expect(
+        mockGuildsService.getGuildsForRequiredPermissions,
+      ).not.toHaveBeenCalled();
+      expect(mockReadyRoomService.create).not.toHaveBeenCalled();
+      expect(mockRedisService.set).not.toHaveBeenCalled();
+      expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
+    });
+
+    it("creates no notification side effects when rate limiting is unavailable", async () => {
+      mockNotificationRateLimiter.consume.mockRejectedValue(
+        new Error("rate limiter unavailable"),
+      );
+
+      await expect(
+        service.sendNotification(userId, discordId, {
+          message: "alarm",
+          world: "gordion",
+          guildIds: ["guild-1"],
+        }),
+      ).rejects.toThrow("rate limiter unavailable");
+
+      expect(mockUuid).not.toHaveBeenCalled();
+      expect(
+        mockGuildsService.getGuildsForRequiredPermissions,
+      ).not.toHaveBeenCalled();
+      expect(mockReadyRoomService.create).not.toHaveBeenCalled();
+      expect(mockRedisService.set).not.toHaveBeenCalled();
+      expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
+    });
+
+    it("publishes one message event per allowed guild with one notification id", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild-1" },
+        { id: "guild-2" },
+        { id: "guild-3" },
+      ]);
+
+      await service.sendNotification(userId, discordId, {
+        message: "alarm",
+        world: "gordion",
+        guildIds: ["guild-1", "guild-2"],
+      });
+
+      expect(mockAmqpConnection.publish).toHaveBeenCalledTimes(2);
+      expect(mockAmqpConnection.publish).toHaveBeenNthCalledWith(
+        1,
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_NOTIFICATIONS_SEND,
+        expect.objectContaining({
+          guildId: "guild-1",
+          notificationId: "mock-uuid",
+        }),
+      );
+      expect(mockAmqpConnection.publish).toHaveBeenNthCalledWith(
+        2,
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_NOTIFICATIONS_SEND,
+        expect.objectContaining({
+          guildId: "guild-2",
+          notificationId: "mock-uuid",
+        }),
+      );
     });
   });
 });

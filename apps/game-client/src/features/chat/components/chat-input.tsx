@@ -27,7 +27,10 @@ import {
 } from "@/features/chat/components/chat-mention-suggestions";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
-import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
+import {
+  isNotificationRateLimitError,
+  useNotificationChatOrchestration,
+} from "@/features/chat/hooks/use-notification-chat-orchestration";
 import {
   filterCommandSuggestions,
   getCommandSuggestionInsertValue,
@@ -250,8 +253,13 @@ export const ChatInput: FC<ChatInputProps> = ({
     useState<TabCompletionSession | null>(null);
   const [clearConfirmRequested, setIsClearConfirmOpen] = useState(false);
   const pendingFocusCaretRef = useRef<number | null>(null);
+  const submissionInProgressRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isPending =
-    isSendingMessage || isCreatingNotificationMessage || isClearingChat;
+    isSubmitting ||
+    isSendingMessage ||
+    isCreatingNotificationMessage ||
+    isClearingChat;
   const resolvedGuildId = selectedGuildId ?? "";
   const activeMention = getActiveChatMention({
     message: messageValue,
@@ -582,6 +590,13 @@ export const ChatInput: FC<ChatInputProps> = ({
       return;
     }
 
+    if (submissionInProgressRef.current) {
+      return;
+    }
+
+    submissionInProgressRef.current = true;
+    setIsSubmitting(true);
+
     try {
       const response =
         submitAction.kind === "notification"
@@ -621,9 +636,19 @@ export const ChatInput: FC<ChatInputProps> = ({
       onMessageSent?.();
       resetInputState();
       focusEditorCaret(0);
-    } catch {
-      toast.error(t("errors.sendFailed"));
+    } catch (error) {
+      if (
+        submitAction.kind === "notification" &&
+        isNotificationRateLimitError(error)
+      ) {
+        toast.error(tCommand("errors.notificationRateLimited"));
+      } else {
+        toast.error(t("errors.sendFailed"));
+      }
       focusEditorCaret(currentCaretIndex);
+    } finally {
+      submissionInProgressRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
