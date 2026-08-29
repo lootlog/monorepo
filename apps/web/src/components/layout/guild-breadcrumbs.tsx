@@ -289,7 +289,10 @@ export const GuildBreadcrumbs: FC = () => {
           )}
         </div>
 
-        <Breadcrumb className="min-w-0 max-w-full flex-1 overflow-hidden">
+        <Breadcrumb
+          aria-label={t("common.breadcrumbs.navigationLabel")}
+          className="min-w-0 max-w-full flex-1 overflow-hidden"
+        >
           <BreadcrumbList className="flex-nowrap justify-center overflow-hidden px-1">
             <AnimatePresence mode="popLayout">
               {navInfo.breadcrumbs.length > 2 && (

@@ -88,16 +88,20 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
             const url = `${basePath}${item.href}`;
             const active = url === activeUrl;
             const isHovered = hoveredId === item.id;
+            let tabClassName =
+              "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50";
+
+            if (active && isRukiaTheme) {
+              tabClassName = "bg-primary/15 text-white font-semibold";
+            } else if (active) {
+              tabClassName = "bg-primary/15 text-primary";
+            }
 
             const tabContent = (
               <span
                 className={cn(
                   "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                  active
-                    ? isRukiaTheme
-                      ? "bg-primary/15 text-white font-semibold"
-                      : "bg-primary/15 text-primary"
-                    : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  tabClassName,
                 )}
               >
                 {item.label}

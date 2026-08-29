@@ -3,10 +3,12 @@
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const webRoot = new URL("../..", import.meta.url).pathname;
+const webRoot = fileURLToPath(new URL("../..", import.meta.url));
 const sourceRoot = join(webRoot, "src");
+const specPath = fileURLToPath(import.meta.url);
 
 const readSourceFiles = (directory: string): string[] =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -48,7 +50,7 @@ describe("shadcn conformance", () => {
       "battle-panel-mobile-filters-drawer",
     ];
     const violations = readSourceFiles(sourceRoot).flatMap((path) => {
-      if (path === new URL(import.meta.url).pathname) {
+      if (path === specPath) {
         return [];
       }
       const source = readFileSync(path, "utf8");
