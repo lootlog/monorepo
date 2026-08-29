@@ -852,14 +852,13 @@ const STAT_SECTIONS = [
   },
   {
     block: "descriptionBlock",
-    keys: [
-      "teleport",
-      "custom_teleport",
-      "opis",
-      "etiquette",
-      "pumpkin_weight",
-    ],
+    keys: ["teleport", "custom_teleport", "opis"],
     sectionIndex: 7,
+  },
+  {
+    block: "descriptionBlock",
+    keys: ["etiquette", "pumpkin_weight"],
+    sectionIndex: 7.5,
   },
   {
     block: "metadataBlock",

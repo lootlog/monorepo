@@ -63,4 +63,13 @@ describe("renderItemStat", () => {
 
     expect(markup).toContain("12 345");
   });
+
+  it("renders etiquette with the item description typography", () => {
+    const markup = renderToStaticMarkup(
+      <>{renderItemStat({ key: "etiquette", value: "Wakacje 2026 r." })}</>,
+    );
+
+    expect(markup).toContain("block text-center text-muted-foreground");
+    expect(markup).toContain("Ostatnio dostępny podczas:");
+  });
 });

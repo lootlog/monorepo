@@ -120,6 +120,23 @@ describe("item stat utilities", () => {
     ]);
   });
 
+  it("keeps etiquette in a separate section after the item description", () => {
+    const sections = mapStatsToDisplaySections(
+      parseItemStats(
+        "permbound;etiquette=event|Wakacje 2026 r.;opis=Opis przedmiotu",
+      ),
+    );
+
+    expect(sections).toEqual([
+      { index: 7, values: [{ key: "opis", value: "Opis przedmiotu" }] },
+      {
+        index: 7.5,
+        values: [{ key: "etiquette", value: "Wakacje 2026 r." }],
+      },
+      { index: 8, values: [{ key: "permbound", value: true }] },
+    ]);
+  });
+
   it("uses source class casing and Polish bag inflection", () => {
     const blocks = mapStatsToDisplayValues(
       parseItemStats("bag=1;btype=1,8;target_class=1,8"),
