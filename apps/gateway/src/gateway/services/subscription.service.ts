@@ -78,7 +78,7 @@ export class SubscriptionService {
 
       if (guilds.length === 0) {
         this.logger.warn(
-          `No guilds found for user ${discordId}. User may not have LOOTLOG_READ permission in any guild.`,
+          `No guilds found for discordId=${discordId} userId=${userId}. User may not have LOOTLOG_READ permission in any guild.`,
         );
         return {
           status: ResponseStatus.ERROR,
@@ -135,7 +135,7 @@ export class SubscriptionService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to join gateway for user ${discordId}: ${error.message}`,
+        `Failed to join gateway for discordId=${discordId} userId=${userId}: ${error.message}`,
         error.stack,
       );
 

@@ -28,13 +28,13 @@ export class ConnectionService {
 
   initializeSocketData(
     discordId: string,
-    userId: string | null,
+    userId: string,
     socketId: string,
     platform: Platform,
-  ): Partial<SocketUser> {
+  ): SocketUser {
     return {
       discordId,
-      userId: userId ?? undefined,
+      userId,
       sessionId: socketId,
       platform,
     };
