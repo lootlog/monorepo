@@ -122,11 +122,6 @@ const getMapCoverageCountClassName = (
 
 type EventOverview = EventOverviewResponseDto;
 
-const valueOr = <Value, Fallback>(
-  value: Value | null | undefined,
-  fallback: Fallback,
-): Value | Fallback => value ?? fallback;
-
 const canManageEvent = (
   permissions: ReturnType<typeof useGuildPermissions>["data"],
 ) =>
@@ -147,8 +142,8 @@ const getEventHero = (
   const heroMapsData = eventMaps?.heroNpcs?.find((hero) => hero.id === heroId);
   return {
     ...heroBase,
-    locations: valueOr(heroMapsData?.locations, []),
-    maps: valueOr(heroMapsData?.maps, []),
+    locations: heroMapsData?.locations ?? [],
+    maps: heroMapsData?.maps ?? [],
   };
 };
 
@@ -236,12 +231,40 @@ const getAssignmentDisabledMessage = (
   t: ReturnType<typeof useTranslation>["t"],
 ) => (reason === "OVERDUE" ? t("events.maps.assignmentDisabledOverdue") : null);
 
+const getHeroDetailRouteQuery = (
+  guildId: string | undefined,
+  eventId: string | undefined,
+  heroId: string | undefined,
+) => ({
+  guildId: guildId ?? "",
+  eventId: eventId ?? "",
+  heroId: heroId ?? "",
+});
+
+const getHeroTimerQuery = (world: string | null | undefined) => ({
+  world: world ?? "",
+});
+
+const getHeroTimerWindow = (timer: ReturnType<typeof findEventHeroTimer>) =>
+  [timer?.minSpawnTime ?? null, timer?.maxSpawnTime ?? null] as const;
+
+const getHeroAssignmentAvailability = (
+  event: EventOverview | undefined,
+  timer: ReturnType<typeof findEventHeroTimer>,
+) =>
+  getAssignmentAvailability({
+    assignmentTimeoutMinutes: event?.assignmentTimeoutMinutes ?? 5,
+    timer,
+  });
+
 export const HeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
-  const queryGuildId = valueOr(guildId, "");
-  const queryEventId = valueOr(eventId, "");
-  const queryHeroId = valueOr(heroId, "");
+  const {
+    guildId: queryGuildId,
+    eventId: queryEventId,
+    heroId: queryHeroId,
+  } = getHeroDetailRouteQuery(guildId, eventId, heroId);
   const queryClient = useQueryClient();
   const { hasGuildId, hasEventRouteParams, hasHeroRouteParams } =
     getHeroRouteAvailability(guildId, eventId, heroId);
@@ -437,9 +460,7 @@ export const HeroDetail = () => {
       guildId: queryGuildId,
       eventId: queryEventId,
     },
-    {
-      world: valueOr(event?.world, ""),
-    },
+    getHeroTimerQuery(event?.world),
     {
       query: {
         enabled: canLoadHeroTimers(hasEventRouteParams, event?.world),
@@ -448,9 +469,7 @@ export const HeroDetail = () => {
             guildId: queryGuildId,
             eventId: queryEventId,
           },
-          {
-            world: valueOr(event?.world, ""),
-          },
+          getHeroTimerQuery(event?.world),
         ),
       },
     },
@@ -464,10 +483,8 @@ export const HeroDetail = () => {
     heroName: hero?.npcName,
   });
 
-  const windowStatus = useWindowStatus(
-    valueOr(heroTimer?.minSpawnTime, null),
-    valueOr(heroTimer?.maxSpawnTime, null),
-  );
+  const heroTimerWindow = getHeroTimerWindow(heroTimer);
+  const windowStatus = useWindowStatus(...heroTimerWindow);
 
   if (isHeroDetailLoading(isLoading, isMapsLoading)) {
     return (
@@ -481,10 +498,7 @@ export const HeroDetail = () => {
     allowed: assignmentAllowed,
     enabledAt: assignmentEnabledAt,
     reason: assignmentDisabledReason,
-  } = getAssignmentAvailability({
-    assignmentTimeoutMinutes: valueOr(event?.assignmentTimeoutMinutes, 5),
-    timer: heroTimer,
-  });
+  } = getHeroAssignmentAvailability(event, heroTimer);
   const assignmentDisabledMessage = getAssignmentDisabledMessage(
     assignmentDisabledReason,
     t,
@@ -530,9 +544,9 @@ export const HeroDetail = () => {
 
     try {
       if (!assignmentAllowed) {
-        toast.error(
-          valueOr(assignmentDisabledMessage, t("events.maps.assignError")),
-        );
+        const assignmentErrorCandidate = assignmentDisabledMessage;
+        const assignmentErrorFallback = t("events.maps.assignError");
+        toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
         return;
       }
       await selfAssignMember.mutateAsync({
@@ -575,9 +589,9 @@ export const HeroDetail = () => {
 
     try {
       if (!assignmentAllowed) {
-        toast.error(
-          valueOr(assignmentDisabledMessage, t("events.maps.assignError")),
-        );
+        const assignmentErrorCandidate = assignmentDisabledMessage;
+        const assignmentErrorFallback = t("events.maps.assignError");
+        toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
         return;
       }
       await assignMember.mutateAsync({
@@ -696,7 +710,7 @@ export const HeroDetail = () => {
           <NpcTile
             className="flex w-10 shrink-0 items-center justify-center"
             npc={{
-              id: valueOr(hero.npcId, undefined),
+              id: hero.npcId ?? undefined,
               name: hero.npcName,
               icon: hero.npcIcon,
             }}
@@ -925,7 +939,7 @@ export const HeroDetail = () => {
           open={assignmentOpen}
           onOpenChange={setAssignmentOpen}
           mapName={selectedMap.mapName}
-          assignedMembers={valueOr(selectedMap.assignedMembers, [])}
+          assignedMembers={selectedMap.assignedMembers ?? []}
           onAssign={handleAssignFromModal}
           onUnassign={handleUnassignFromModal}
           disabled={!assignmentAllowed}

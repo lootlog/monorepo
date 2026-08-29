@@ -25,9 +25,6 @@ import type {
   StoredMemberWithRoles,
 } from "./member.types.js";
 
-const valueOrDefault = <T>(value: T | undefined, defaultValue: T): T =>
-  value ?? defaultValue;
-
 @Injectable()
 export class MemberDiscordAccessService {
   private readonly env: RuntimeEnvironment;
@@ -52,17 +49,11 @@ export class MemberDiscordAccessService {
     throwOnMemberUnauthorized?: boolean;
   }): Promise<MemberWithRoles | null> {
     const { discordId, guildId, userId } = options;
-    const refresh = valueOrDefault(options.refresh, false);
-    const standalone = valueOrDefault(options.standalone, false);
-    const skipTtlCheck = valueOrDefault(options.skipTtlCheck, false);
-    const returnDeactivatedMember = valueOrDefault(
-      options.returnDeactivatedMember,
-      false,
-    );
-    const throwOnMemberUnauthorized = valueOrDefault(
-      options.throwOnMemberUnauthorized,
-      true,
-    );
+    const refresh = options.refresh ?? false;
+    const standalone = options.standalone ?? false;
+    const skipTtlCheck = options.skipTtlCheck ?? false;
+    const returnDeactivatedMember = options.returnDeactivatedMember ?? false;
+    const throwOnMemberUnauthorized = options.throwOnMemberUnauthorized ?? true;
 
     const desiredGuildId = await this.resolveDesiredGuildId(
       guildId,

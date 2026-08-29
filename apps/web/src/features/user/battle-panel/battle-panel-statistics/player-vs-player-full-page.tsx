@@ -39,11 +39,29 @@ import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
+import type { PlayerVsPlayerPaginatedResponseDtoOutput } from "@lootlog/api-client/models/battlelog/player-vs-player-paginated-response-dto-output";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
+const getPlayerVsPlayerRequestIds = (
+  currentCharacterId: string | undefined,
+  ownCharacterId: string | undefined,
+  opponentId: string | undefined,
+) => ({
+  characterId: currentCharacterId ?? ownCharacterId,
+  opponentId: opponentId ?? "",
+});
+
+const getPlayerVsPlayerTableView = (
+  data: PlayerVsPlayerPaginatedResponseDtoOutput | undefined,
+  opponentNameCandidate: string | undefined,
+  opponentNameFallback: string,
+) => ({
+  opponentName: opponentNameCandidate ?? opponentNameFallback,
+  battles: data?.battles ?? [],
+  totalCount: data?.pagination?.total ?? 0,
+  visibleCount: data?.battles.length ?? 0,
+});
 
 export function PlayerVsPlayerFullPage() {
   const { t } = useTranslation();
@@ -55,7 +73,7 @@ export function PlayerVsPlayerFullPage() {
     opponentId?: string;
   };
 
-  const opponentId = valueOr(params.opponentId, params.myId);
+  const opponentId = params.opponentId ?? params.myId;
   const [queryState, setQueryState] = useQueryStates(
     battlePanelPlayerVsPlayerSearchParsers,
   );
@@ -85,6 +103,11 @@ export function PlayerVsPlayerFullPage() {
     cursor,
   } = resolvePageState();
   const pageSize = 20;
+  const requestIds = getPlayerVsPlayerRequestIds(
+    currentCharacterId,
+    params.myId,
+    opponentId,
+  );
 
   const applyFilterState = ({
     matchmaking: nextMatchmaking,
@@ -145,11 +168,11 @@ export function PlayerVsPlayerFullPage() {
     useBattlesControllerGetPlayerVsPlayerBattles({
       cursor,
       size: pageSize,
-      characterId: valueOr(currentCharacterId, params.myId),
+      characterId: requestIds.characterId,
       period,
       startDate,
       endDate,
-      opponentId: valueOr(opponentId, ""),
+      opponentId: requestIds.opponentId,
       minLevel,
       maxLevel,
       ph,
@@ -194,14 +217,20 @@ export function PlayerVsPlayerFullPage() {
     handleBattleOpen(battleId);
   };
 
-  const opponentName = valueOr(
-    data?.battles[0]?.opponentWarrior.name,
-    t("battlePanel.statistics.playerVsPlayer.opponentFallback"),
+  const opponentNameCandidate = data?.battles[0]?.opponentWarrior.name;
+  const opponentNameFallback = t(
+    "battlePanel.statistics.playerVsPlayer.opponentFallback",
   );
+  const { opponentName, battles, totalCount, visibleCount } =
+    getPlayerVsPlayerTableView(
+      data,
+      opponentNameCandidate,
+      opponentNameFallback,
+    );
   const myCharacter = data?.battles[0]?.userWarrior;
 
   const table = useReactTable({
-    data: valueOr(data?.battles, []),
+    data: battles,
     columns: playerVsPlayerColumns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -282,8 +311,8 @@ export function PlayerVsPlayerFullPage() {
       onNextPage={handleNextPage}
       pageIndex={pageIndex}
       pageSize={pageSize}
-      totalCount={valueOr(data?.pagination?.total, 0)}
-      visibleCount={valueOr(data?.battles.length, 0)}
+      totalCount={totalCount}
+      visibleCount={visibleCount}
     />
   );
 

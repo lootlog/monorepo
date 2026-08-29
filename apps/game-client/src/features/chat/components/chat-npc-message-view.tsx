@@ -29,10 +29,19 @@ type ChatNpcMessageViewProps = {
   wrapSender?: (sender: ReactElement) => ReactNode;
 };
 
-const valueOrDefault = <Value,>(
-  value: Value | undefined,
-  defaultValue: Value,
-): Value => value ?? defaultValue;
+const toChatGameNpc = (npc: NonNullable<ChatMessageType["npc"]>): GameNpc => ({
+  actions: 0,
+  icon: npc.icon,
+  id: npc.id,
+  lvl: npc.lvl,
+  nick: npc.name,
+  prof: npc.prof,
+  tpl: npc.id,
+  type: npc.type,
+  wt: npc.wt,
+  x: npc.x ?? 0,
+  y: npc.y ?? 0,
+});
 
 export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const {
@@ -44,11 +53,8 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
     senderName,
     wrapSender,
   } = props;
-  const appearance = valueOrDefault(
-    props.appearance,
-    CHAT_APPEARANCE_READABLE_PRESET,
-  );
-  const count = valueOrDefault(props.count, 1);
+  const appearance = props.appearance ?? CHAT_APPEARANCE_READABLE_PRESET;
+  const count = props.count ?? 1;
   const npc = message.npc;
   if (!npc) return null;
 
@@ -56,19 +62,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const npcLocationName = getChatNpcLocationName(npc);
   const npcCoordinatesLabel = getChatNpcCoordinatesLabel(npc);
   const npcTextColor = getChatNpcTextColor(npc, npcTypeColors);
-  const tileNpc: GameNpc = {
-    actions: 0,
-    icon: npc.icon,
-    id: npc.id,
-    lvl: npc.lvl,
-    nick: npc.name,
-    prof: npc.prof,
-    tpl: npc.id,
-    type: npc.type,
-    wt: npc.wt,
-    x: npc.x ?? 0,
-    y: npc.y ?? 0,
-  };
+  const tileNpc = toChatGameNpc(npc);
   const sender = (
     <span
       className={cn("ll:select-text ll:font-bold", {

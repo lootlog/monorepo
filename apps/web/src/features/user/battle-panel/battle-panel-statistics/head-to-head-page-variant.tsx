@@ -68,9 +68,6 @@ type HeadToHeadFilterPatch = {
   search?: string;
 };
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 export function HeadToHeadPageVariant({
   columns,
   emptyDescriptionKey,
@@ -291,7 +288,7 @@ export function HeadToHeadPageVariant({
   };
 
   const table = useReactTable({
-    data: valueOr(data?.records, []),
+    data: data?.records ?? [],
     columns,
     state: {
       sorting,
@@ -338,7 +335,7 @@ export function HeadToHeadPageVariant({
       period={period}
       minLevel={minLevel}
       maxLevel={maxLevel}
-      ph={valueOr(ph, false)}
+      ph={ph ?? false}
       matchmaking={matchmaking}
       selectedWarriors={selectedWarriors}
       showPhFilter={showPhFilter}
@@ -383,8 +380,8 @@ export function HeadToHeadPageVariant({
       onNextPage={handleNextPage}
       pageIndex={pageIndex}
       pageSize={pageSize}
-      totalCount={valueOr(data?.pagination?.total, 0)}
-      visibleCount={valueOr(data?.records.length, 0)}
+      totalCount={data?.pagination?.total ?? 0}
+      visibleCount={data?.records.length ?? 0}
     />
   );
 
