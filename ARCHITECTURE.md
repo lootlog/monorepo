@@ -104,7 +104,8 @@ immutable across Organizations. A physical Organization Loot record is the
 tenant-owned visibility, archive, comment, submission, and future settlement
 boundary. A loot is visible only when it has an active Organization Loot record
 and every associated NPC is covered by at least one complete role grant. The
-same rule is shared by list, detail, aggregate, comment, and websocket paths.
+same rule is shared by list, detail, aggregate, comment, websocket, and
+watched-item notification paths.
 
 ## Durable delivery
 

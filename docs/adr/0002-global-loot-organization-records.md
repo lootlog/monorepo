@@ -54,4 +54,8 @@ is rejected as a conflict and diagnostics retain hashes rather than chat text.
   designed for active tenant pagination and aggregation.
 - The backfill rewrites all submissions and comments and requires capacity for
   temporary indexes, WAL, and table bloat during rollout.
+- The maintenance cutover must stop API loot publishers and notification
+  consumers, purge the `backend-notifications-loot-created` queue, and then
+  start API instances that use `LootCreatedNotificationEventV2`. V1 notification
+  events are not accepted after the cutover.
 - Removing unassociated global loot is a separate, auditable maintenance task.

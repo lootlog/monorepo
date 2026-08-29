@@ -426,15 +426,20 @@ describe("LootsService", () => {
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
         RoutingKey.NOTIFICATIONS_LOOT_CREATED,
-        expect.objectContaining({
+        {
+          version: 2,
           lootId: 1,
+          world: "testworld",
+          guildIds: ["guild1"],
+          itemIds: [1],
+          itemNames: ["Test Item"],
           npcs: [
             {
               lvl: 50,
               type: NpcType.ELITE,
             },
           ],
-        }),
+        },
       );
       expect(service["redlock"].acquire).toHaveBeenCalledWith(
         [expect.stringMatching(/^loot:lock:/)],

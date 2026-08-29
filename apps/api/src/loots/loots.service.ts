@@ -14,7 +14,10 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
-import { getNpcTypeByWt } from "@lootlog/types";
+import {
+  getNpcTypeByWt,
+  type LootCreatedNotificationEventV2,
+} from "@lootlog/types";
 import { ErrorKey } from "./enum/error-key.enum";
 import { PlayersService } from "src/players/players.service";
 import { NpcsService } from "src/npcs/npcs.service";
@@ -834,24 +837,25 @@ export class LootsService implements OnModuleInit {
       }));
       this.itemsService.bulkIndexItems(indexItems);
 
+      const notificationEvent = {
+        version: 2,
+        lootId: loot.id,
+        world: body.world,
+        guildIds: outcome.submissionData.map(
+          (submission) => submission.guildId,
+        ),
+        itemIds: items.map((item) => item.id),
+        itemNames: items.map((item) => item.name),
+        npcs: socketNpcs.map((npc) => ({
+          type: npc.type ?? null,
+          lvl: npc.lvl ?? null,
+        })),
+      } satisfies LootCreatedNotificationEventV2;
+
       await this.amqpConnection.publish(
         DEFAULT_EXCHANGE_NAME,
         RoutingKey.NOTIFICATIONS_LOOT_CREATED,
-        {
-          lootId: loot.id,
-          world: body.world,
-          guildIds: outcome.submissionData.map(
-            (submission) => submission.guildId,
-          ),
-          itemIds: items.map((item) => item.id),
-          itemNames: items.map((item) => item.name),
-          npcs: socketNpcs.map((npc) => ({
-            type: npc.type,
-            lvl: npc.lvl,
-          })),
-          npcType: highestWtNpcType,
-          npcLvl: npcData.highest.lvl ?? null,
-        },
+        notificationEvent,
       );
 
       return this.createCreateLootResponse(loot.id, outcome);
