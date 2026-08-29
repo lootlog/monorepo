@@ -35,4 +35,15 @@ describe("TranslatedItemStat", () => {
 
     expect(markup).toContain("12 345");
   });
+
+  it("renders etiquette with the item description typography", () => {
+    const markup = renderToStaticMarkup(
+      <TranslatedItemStat
+        displayValue={{ key: "etiquette", value: "Wakacje 2026 r." }}
+      />,
+    );
+
+    expect(markup).toContain("text-center text-muted-foreground");
+    expect(markup).toContain("Ostatnio dostępny podczas:");
+  });
 });

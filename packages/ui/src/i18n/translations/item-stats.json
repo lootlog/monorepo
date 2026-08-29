@@ -223,7 +223,7 @@
     "set": "<description>Teleportuje Postać na mapę:\n{{value4}} ({{value2}},{{value3}}).</description>"
   },
   "opis": "<description>{{value}}</description>",
-  "etiquette": "Ostatnio dostępny podczas: <value>{{value}}</value>",
+  "etiquette": "<description>Ostatnio dostępny podczas:\n{{value}}</description>",
   "pumpkin_weight": "Waga dyni: <value>{{value}}</value> kg",
   "permbound": "Związany z właścicielem na stałe",
   "soulbound": "Związany z właścicielem",
