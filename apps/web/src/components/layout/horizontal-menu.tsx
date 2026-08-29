@@ -74,7 +74,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     <NavigationMenu
       viewport={false}
       aria-label={ariaLabel}
-      className="w-full max-w-none justify-start"
+      className="w-full max-w-none flex-none justify-start"
     >
       <div
         ref={scrollRef}
