@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { format } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { pl } from "date-fns/locale";
+import type { ReservationSettings } from "@lootlog/reservations";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
@@ -12,13 +13,16 @@ import {
 } from "./constants";
 import { isEventInsideElement } from "./is-event-inside-element";
 import { ReservationBlock } from "./reservation-block";
-import { isReservationStartSelectable } from "./reservation-settings";
+import {
+  clampReservationEndDate,
+  isReservationStartSelectable,
+} from "./reservation-settings";
 import type { ReservationRange, ReservationSegment } from "./types";
 
 type DesktopWeekScheduleProps = {
   weekStart: Date;
   segments: ReservationSegment[];
-  minuteStep: number;
+  settings: ReservationSettings;
   onRangeSelect: (range: ReservationRange) => void;
   onReservationSelect: (reservationId: number) => void;
   onReservationCancel?: (reservationId: number) => void;
@@ -30,12 +34,13 @@ type SelectionPoint = { day: number; minutes: number };
 export function DesktopWeekSchedule({
   weekStart,
   segments,
-  minuteStep,
+  settings,
   onRangeSelect,
   onReservationSelect,
   onReservationCancel,
   cancellingReservationId,
 }: DesktopWeekScheduleProps) {
+  const minuteStep = settings.reservationTimeGranularityMinutes;
   const gridRef = useRef<HTMLDivElement>(null);
   const contextMenuOpenRef = useRef(false);
   const suppressSelectionRef = useRef(false);
@@ -75,35 +80,66 @@ export function DesktopWeekSchedule({
     return date;
   };
 
-  const selectionStyle = (() => {
-    if (!selection || selection.anchor.day !== selection.current.day)
-      return null;
-    const startMinutes = Math.min(
-      selection.anchor.minutes,
-      selection.current.minutes,
-    );
-    const endMinutes =
-      Math.max(selection.anchor.minutes, selection.current.minutes) +
-      minuteStep;
-    const dayFraction = selection.anchor.day / DAYS.length;
-    return {
-      left: `calc(${dayFraction * 100}% + ${LABEL_COLUMN_WIDTH * (1 - dayFraction)}px)`,
-      width: `calc(${100 / DAYS.length}% - ${LABEL_COLUMN_WIDTH / DAYS.length}px)`,
-      top: HEADER_HEIGHT + (startMinutes / 60) * MIN_ROW_HEIGHT,
-      height: ((endMinutes - startMinutes) / 60) * MIN_ROW_HEIGHT,
-    };
-  })();
+  const pointFromDate = (date: Date): SelectionPoint => ({
+    day: differenceInCalendarDays(date, weekStart),
+    minutes: date.getHours() * 60 + date.getMinutes(),
+  });
 
-  const finishSelection = () => {
-    if (!selection) return;
+  const getSelectionRange = (): ReservationRange | null => {
+    if (!selection) return null;
     const first = dateFromPoint(selection.anchor);
     const second = dateFromPoint(selection.current);
     const startsAt = first < second ? first : second;
     const lastStart = first < second ? second : first;
     const endsAt = new Date(lastStart.getTime() + minuteStep * 60_000);
+    return { startsAt, endsAt };
+  };
+
+  const selectionStyles = (() => {
+    const range = getSelectionRange();
+    if (!range) return [];
+    const styles: Array<React.CSSProperties & { day: number }> = [];
+    let dayStart = new Date(range.startsAt);
+    dayStart.setHours(0, 0, 0, 0);
+
+    while (dayStart < range.endsAt) {
+      const nextDayStart = new Date(dayStart);
+      nextDayStart.setDate(nextDayStart.getDate() + 1);
+      const segmentStart =
+        range.startsAt > dayStart ? range.startsAt : dayStart;
+      const segmentEnd =
+        range.endsAt < nextDayStart ? range.endsAt : nextDayStart;
+      const day = differenceInCalendarDays(dayStart, weekStart);
+
+      if (day >= 0 && day < DAYS.length && segmentStart < segmentEnd) {
+        const startMinutes =
+          segmentStart.getHours() * 60 + segmentStart.getMinutes();
+        const endMinutes =
+          segmentEnd >= nextDayStart
+            ? 24 * 60
+            : segmentEnd.getHours() * 60 + segmentEnd.getMinutes();
+        const dayFraction = day / DAYS.length;
+        styles.push({
+          day,
+          left: `calc(${dayFraction * 100}% + ${LABEL_COLUMN_WIDTH * (1 - dayFraction)}px)`,
+          width: `calc(${100 / DAYS.length}% - ${LABEL_COLUMN_WIDTH / DAYS.length}px)`,
+          top: HEADER_HEIGHT + (startMinutes / 60) * MIN_ROW_HEIGHT,
+          height: ((endMinutes - startMinutes) / 60) * MIN_ROW_HEIGHT,
+        });
+      }
+
+      dayStart = nextDayStart;
+    }
+
+    return styles;
+  })();
+
+  const finishSelection = () => {
+    const range = getSelectionRange();
+    if (!range) return;
     setSelection(null);
-    if (!isReservationStartSelectable(startsAt)) return;
-    onRangeSelect({ startsAt, endsAt });
+    if (!isReservationStartSelectable(range.startsAt)) return;
+    onRangeSelect(range);
   };
 
   const now = new Date();
@@ -161,9 +197,15 @@ export function DesktopWeekSchedule({
               !isReservationStartSelectable(dateFromPoint(point)),
           );
           if (!selection || !point) return;
+          const anchorDate = dateFromPoint(selection.anchor);
+          const targetDate = clampReservationEndDate({
+            anchorDate,
+            targetDate: dateFromPoint(point),
+            settings,
+          });
           setSelection({
             anchor: selection.anchor,
-            current: { ...point, day: selection.anchor.day },
+            current: pointFromDate(targetDate),
           });
         }}
         onPointerUp={() => {
@@ -237,12 +279,13 @@ export function DesktopWeekSchedule({
           />
         )}
 
-        {selectionStyle && (
+        {selectionStyles.map(({ day, ...style }) => (
           <div
+            key={day}
             className="pointer-events-none absolute z-20 rounded-md border border-primary bg-primary/20"
-            style={selectionStyle}
+            style={style}
           />
-        )}
+        ))}
 
         {segments
           .filter(
