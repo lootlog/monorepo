@@ -1,5 +1,15 @@
 # @lootlog/developer
 
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [3e53f4e]
+- Updated dependencies [25ff0b8]
+- Updated dependencies [a78ba7b]
+- Updated dependencies [a49b02c]
+  - @lootlog/ui@3.1.0
+
 ## 0.0.8
 
 ### Patch Changes

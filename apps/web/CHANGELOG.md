@@ -1,5 +1,46 @@
 # @lootlog/web
 
+## 1.5.0
+
+### Minor Changes
+
+- a78ba7b: Replace duplicated search, feedback, navigation, filter drawer, scoring selection, view toggle, avatar fallback, and multi-select patterns with shared shadcn compositions.
+
+### Patch Changes
+
+- 0280107: Restore desktop Reservation range selection across midnight while respecting
+  the Organization's maximum duration and time granularity.
+- 3e53f4e: Support the complete set of item tooltip stats derivable from Margonem item data, preserve the game's tooltip ordering, and share one Polish item-stat dictionary between Web and Wiki.
+- 25ff0b8: Align item tooltip wording with the canonical Margonem translations.
+- fc87eab: Centralize Reservation settings defaults and time validation in a shared domain
+  module. Keep Organization settings in the API database while making the Web
+  form match the authoritative 60-second past-start grace and preserving existing
+  Reservation mutation error contracts. Replace localized Reservation settings
+  errors in the API with stable translation keys.
+- bf625a4: Introduce Organization-owned Loot records while retaining one global Loot and
+  allocation. Apply one all-NPC visibility policy to API reads, statistics,
+  comments, archives, real-time events, and watched-item notifications, and add
+  an action-specific loot archive permission. Require version 2 loot events with
+  the complete NPC list across API, gateway, and web consumers.
+- d7ac4b3: Use the same breadcrumb layout and interactions in guild and user navigation.
+- a78ba7b: Document shadcn-first UI rules and add automated checks that keep the web and shared UI configurations aligned.
+- 05ace89: Prevent horizontal navigation menus from expanding to fill the available page height.
+- a49b02c: Polish the reservation list and calendar layouts, add the shared button group, and adopt alliance terminology across reservation sharing.
+- Updated dependencies [3e53f4e]
+- Updated dependencies [25ff0b8]
+- Updated dependencies [a78ba7b]
+- Updated dependencies [fc87eab]
+- Updated dependencies [bf625a4]
+- Updated dependencies [87c9155]
+- Updated dependencies [a49b02c]
+  - @lootlog/ui@3.1.0
+  - @lootlog/reservations@1.0.1
+  - @lootlog/types@3.0.2
+  - @lootlog/api-client@5.0.4
+  - @lootlog/datetime@1.0.1
+  - @lootlog/scoring@1.0.1
+  - @lootlog/socket-parser@1.0.2
+
 ## 1.4.4
 
 ### Patch Changes
