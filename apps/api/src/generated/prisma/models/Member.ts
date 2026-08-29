@@ -295,6 +295,7 @@ export type MemberWhereInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
   lootSubmissions?: Prisma.LootSubmissionListRelationFilter
   comments?: Prisma.LootCommentListRelationFilter
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordListRelationFilter
   assignedEventMaps?: Prisma.EventMapListRelationFilter
   eventPresenceLogs?: Prisma.EventPresenceLogListRelationFilter
   eventKillPoints?: Prisma.EventKillPointListRelationFilter
@@ -327,6 +328,7 @@ export type MemberOrderByWithRelationInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryOrderByRelationAggregateInput
   lootSubmissions?: Prisma.LootSubmissionOrderByRelationAggregateInput
   comments?: Prisma.LootCommentOrderByRelationAggregateInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordOrderByRelationAggregateInput
   assignedEventMaps?: Prisma.EventMapOrderByRelationAggregateInput
   eventPresenceLogs?: Prisma.EventPresenceLogOrderByRelationAggregateInput
   eventKillPoints?: Prisma.EventKillPointOrderByRelationAggregateInput
@@ -363,6 +365,7 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<{
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
   lootSubmissions?: Prisma.LootSubmissionListRelationFilter
   comments?: Prisma.LootCommentListRelationFilter
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordListRelationFilter
   assignedEventMaps?: Prisma.EventMapListRelationFilter
   eventPresenceLogs?: Prisma.EventPresenceLogListRelationFilter
   eventKillPoints?: Prisma.EventKillPointListRelationFilter
@@ -435,6 +438,7 @@ export type MemberCreateInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -466,6 +470,7 @@ export type MemberUncheckedCreateInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -496,6 +501,7 @@ export type MemberUpdateInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -527,6 +533,7 @@ export type MemberUncheckedUpdateInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -802,6 +809,22 @@ export type MemberUpdateOneWithoutRestoredTimerHistoryEntriesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MemberUpdateToOneWithWhereWithoutRestoredTimerHistoryEntriesInput, Prisma.MemberUpdateWithoutRestoredTimerHistoryEntriesInput>, Prisma.MemberUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput>
 }
 
+export type MemberCreateNestedOneWithoutArchivedOrganizationLootRecordsInput = {
+  create?: Prisma.XOR<Prisma.MemberCreateWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUncheckedCreateWithoutArchivedOrganizationLootRecordsInput>
+  connectOrCreate?: Prisma.MemberCreateOrConnectWithoutArchivedOrganizationLootRecordsInput
+  connect?: Prisma.MemberWhereUniqueInput
+}
+
+export type MemberUpdateOneWithoutArchivedOrganizationLootRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.MemberCreateWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUncheckedCreateWithoutArchivedOrganizationLootRecordsInput>
+  connectOrCreate?: Prisma.MemberCreateOrConnectWithoutArchivedOrganizationLootRecordsInput
+  upsert?: Prisma.MemberUpsertWithoutArchivedOrganizationLootRecordsInput
+  disconnect?: Prisma.MemberWhereInput | boolean
+  delete?: Prisma.MemberWhereInput | boolean
+  connect?: Prisma.MemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MemberUpdateToOneWithWhereWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUpdateWithoutArchivedOrganizationLootRecordsInput>, Prisma.MemberUncheckedUpdateWithoutArchivedOrganizationLootRecordsInput>
+}
+
 export type MemberCreateNestedOneWithoutLootSubmissionsInput = {
   create?: Prisma.XOR<Prisma.MemberCreateWithoutLootSubmissionsInput, Prisma.MemberUncheckedCreateWithoutLootSubmissionsInput>
   connectOrCreate?: Prisma.MemberCreateOrConnectWithoutLootSubmissionsInput
@@ -987,6 +1010,7 @@ export type MemberCreateWithoutGuildInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1017,6 +1041,7 @@ export type MemberUncheckedCreateWithoutGuildInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1092,6 +1117,7 @@ export type MemberCreateWithoutRolesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1122,6 +1148,7 @@ export type MemberUncheckedCreateWithoutRolesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1172,6 +1199,7 @@ export type MemberCreateWithoutTimersInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1202,6 +1230,7 @@ export type MemberUncheckedCreateWithoutTimersInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1247,6 +1276,7 @@ export type MemberUpdateWithoutTimersInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -1277,6 +1307,7 @@ export type MemberUncheckedUpdateWithoutTimersInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -1306,6 +1337,7 @@ export type MemberCreateWithoutTimerHistoryEntriesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1336,6 +1368,7 @@ export type MemberUncheckedCreateWithoutTimerHistoryEntriesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1370,6 +1403,7 @@ export type MemberCreateWithoutRestoredTimerHistoryEntriesInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorMemberInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1400,6 +1434,7 @@ export type MemberUncheckedCreateWithoutRestoredTimerHistoryEntriesInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorMemberInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1445,6 +1480,7 @@ export type MemberUpdateWithoutTimerHistoryEntriesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -1475,6 +1511,7 @@ export type MemberUncheckedUpdateWithoutTimerHistoryEntriesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -1515,6 +1552,7 @@ export type MemberUpdateWithoutRestoredTimerHistoryEntriesInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorMemberNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -1543,6 +1581,145 @@ export type MemberUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutMembersNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutMemberNestedInput
   timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorMemberNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
+  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
+  assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
+  eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
+  eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
+  eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
+  detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
+}
+
+export type MemberCreateWithoutArchivedOrganizationLootRecordsInput = {
+  userId: string
+  type?: $Enums.MemberType
+  name: string
+  avatar?: string | null
+  banner?: string | null
+  active?: boolean
+  globalUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastDiscordSyncAt?: Date | string | null
+  lastDiscordAttemptAt?: Date | string | null
+  lastDiscordStatus?: string | null
+  guild: Prisma.GuildCreateNestedOneWithoutMembersInput
+  roles?: Prisma.RoleCreateNestedManyWithoutMembersInput
+  timers?: Prisma.TimerCreateNestedManyWithoutMemberInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorMemberInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
+  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
+  comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
+  eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
+  eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
+  eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
+  detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
+  npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
+}
+
+export type MemberUncheckedCreateWithoutArchivedOrganizationLootRecordsInput = {
+  id?: number
+  userId: string
+  guildId: string
+  type?: $Enums.MemberType
+  name: string
+  avatar?: string | null
+  banner?: string | null
+  active?: boolean
+  globalUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastDiscordSyncAt?: Date | string | null
+  lastDiscordAttemptAt?: Date | string | null
+  lastDiscordStatus?: string | null
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutMembersInput
+  timers?: Prisma.TimerUncheckedCreateNestedManyWithoutMemberInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorMemberInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
+  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
+  eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
+  eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
+  eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
+  detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
+}
+
+export type MemberCreateOrConnectWithoutArchivedOrganizationLootRecordsInput = {
+  where: Prisma.MemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.MemberCreateWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUncheckedCreateWithoutArchivedOrganizationLootRecordsInput>
+}
+
+export type MemberUpsertWithoutArchivedOrganizationLootRecordsInput = {
+  update: Prisma.XOR<Prisma.MemberUpdateWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUncheckedUpdateWithoutArchivedOrganizationLootRecordsInput>
+  create: Prisma.XOR<Prisma.MemberCreateWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUncheckedCreateWithoutArchivedOrganizationLootRecordsInput>
+  where?: Prisma.MemberWhereInput
+}
+
+export type MemberUpdateToOneWithWhereWithoutArchivedOrganizationLootRecordsInput = {
+  where?: Prisma.MemberWhereInput
+  data: Prisma.XOR<Prisma.MemberUpdateWithoutArchivedOrganizationLootRecordsInput, Prisma.MemberUncheckedUpdateWithoutArchivedOrganizationLootRecordsInput>
+}
+
+export type MemberUpdateWithoutArchivedOrganizationLootRecordsInput = {
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumMemberTypeFieldUpdateOperationsInput | $Enums.MemberType
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  globalUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastDiscordSyncAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guild?: Prisma.GuildUpdateOneRequiredWithoutMembersNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutMembersNestedInput
+  timers?: Prisma.TimerUpdateManyWithoutMemberNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorMemberNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
+  comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
+  eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
+  eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
+  eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
+  detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
+}
+
+export type MemberUncheckedUpdateWithoutArchivedOrganizationLootRecordsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumMemberTypeFieldUpdateOperationsInput | $Enums.MemberType
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  globalUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastDiscordSyncAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutMembersNestedInput
+  timers?: Prisma.TimerUncheckedUpdateManyWithoutMemberNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorMemberNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
@@ -1574,6 +1751,7 @@ export type MemberCreateWithoutLootSubmissionsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorMemberInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1604,6 +1782,7 @@ export type MemberUncheckedCreateWithoutLootSubmissionsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorMemberInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1649,6 +1828,7 @@ export type MemberUpdateWithoutLootSubmissionsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorMemberNestedInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -1679,6 +1859,7 @@ export type MemberUncheckedUpdateWithoutLootSubmissionsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorMemberNestedInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -1708,6 +1889,7 @@ export type MemberCreateWithoutCommentsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorMemberInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1738,6 +1920,7 @@ export type MemberUncheckedCreateWithoutCommentsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorMemberInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1783,6 +1966,7 @@ export type MemberUpdateWithoutCommentsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorMemberNestedInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -1813,6 +1997,7 @@ export type MemberUncheckedUpdateWithoutCommentsInput = {
   timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorMemberNestedInput
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -1843,6 +2028,7 @@ export type MemberCreateWithoutAssignedEventMapsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
   eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
@@ -1873,6 +2059,7 @@ export type MemberUncheckedCreateWithoutAssignedEventMapsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
   eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
@@ -1923,6 +2110,7 @@ export type MemberCreateWithoutMapAssignmentHistoryInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -1953,6 +2141,7 @@ export type MemberUncheckedCreateWithoutMapAssignmentHistoryInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -1998,6 +2187,7 @@ export type MemberUpdateWithoutMapAssignmentHistoryInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2028,6 +2218,7 @@ export type MemberUncheckedUpdateWithoutMapAssignmentHistoryInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -2057,6 +2248,7 @@ export type MemberCreateWithoutEventPresenceLogsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
   eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
@@ -2087,6 +2279,7 @@ export type MemberUncheckedCreateWithoutEventPresenceLogsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
   eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
@@ -2132,6 +2325,7 @@ export type MemberUpdateWithoutEventPresenceLogsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
   eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
@@ -2162,6 +2356,7 @@ export type MemberUncheckedUpdateWithoutEventPresenceLogsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
   eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
@@ -2191,6 +2386,7 @@ export type MemberCreateWithoutDetectedKillsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -2221,6 +2417,7 @@ export type MemberUncheckedCreateWithoutDetectedKillsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -2266,6 +2463,7 @@ export type MemberUpdateWithoutDetectedKillsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2296,6 +2494,7 @@ export type MemberUncheckedUpdateWithoutDetectedKillsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -2325,6 +2524,7 @@ export type MemberCreateWithoutEventKillPointsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
@@ -2355,6 +2555,7 @@ export type MemberUncheckedCreateWithoutEventKillPointsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
@@ -2400,6 +2601,7 @@ export type MemberUpdateWithoutEventKillPointsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
@@ -2430,6 +2632,7 @@ export type MemberUncheckedUpdateWithoutEventKillPointsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
@@ -2459,6 +2662,7 @@ export type MemberCreateWithoutEventRankingsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -2489,6 +2693,7 @@ export type MemberUncheckedCreateWithoutEventRankingsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -2534,6 +2739,7 @@ export type MemberUpdateWithoutEventRankingsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2564,6 +2770,7 @@ export type MemberUncheckedUpdateWithoutEventRankingsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -2593,6 +2800,7 @@ export type MemberCreateWithoutNpcKillStatsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -2623,6 +2831,7 @@ export type MemberUncheckedCreateWithoutNpcKillStatsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -2668,6 +2877,7 @@ export type MemberUpdateWithoutNpcKillStatsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2698,6 +2908,7 @@ export type MemberUncheckedUpdateWithoutNpcKillStatsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -2727,6 +2938,7 @@ export type MemberCreateWithoutNpcKillStatsBucketsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
@@ -2757,6 +2969,7 @@ export type MemberUncheckedCreateWithoutNpcKillStatsBucketsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
   comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedCreateNestedManyWithoutArchivedByInput
   assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
   eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
@@ -2802,6 +3015,7 @@ export type MemberUpdateWithoutNpcKillStatsBucketsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2832,6 +3046,7 @@ export type MemberUncheckedUpdateWithoutNpcKillStatsBucketsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -2876,6 +3091,7 @@ export type MemberUpdateWithoutGuildInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2906,6 +3122,7 @@ export type MemberUncheckedUpdateWithoutGuildInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -2951,6 +3168,7 @@ export type MemberUpdateWithoutRolesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
@@ -2981,6 +3199,7 @@ export type MemberUncheckedUpdateWithoutRolesInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
@@ -3028,6 +3247,7 @@ export type MemberUpdateWithoutAssignedEventMapsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUpdateManyWithoutArchivedByNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
   eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
@@ -3058,6 +3278,7 @@ export type MemberUncheckedUpdateWithoutAssignedEventMapsInput = {
   restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
   comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  archivedOrganizationLootRecords?: Prisma.OrganizationLootRecordUncheckedUpdateManyWithoutArchivedByNestedInput
   eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
   eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
   eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
@@ -3096,6 +3317,7 @@ export type MemberCountOutputType = {
   restoredTimerHistoryEntries: number
   lootSubmissions: number
   comments: number
+  archivedOrganizationLootRecords: number
   assignedEventMaps: number
   eventPresenceLogs: number
   eventKillPoints: number
@@ -3113,6 +3335,7 @@ export type MemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   restoredTimerHistoryEntries?: boolean | MemberCountOutputTypeCountRestoredTimerHistoryEntriesArgs
   lootSubmissions?: boolean | MemberCountOutputTypeCountLootSubmissionsArgs
   comments?: boolean | MemberCountOutputTypeCountCommentsArgs
+  archivedOrganizationLootRecords?: boolean | MemberCountOutputTypeCountArchivedOrganizationLootRecordsArgs
   assignedEventMaps?: boolean | MemberCountOutputTypeCountAssignedEventMapsArgs
   eventPresenceLogs?: boolean | MemberCountOutputTypeCountEventPresenceLogsArgs
   eventKillPoints?: boolean | MemberCountOutputTypeCountEventKillPointsArgs
@@ -3173,6 +3396,13 @@ export type MemberCountOutputTypeCountLootSubmissionsArgs<ExtArgs extends runtim
  */
 export type MemberCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.LootCommentWhereInput
+}
+
+/**
+ * MemberCountOutputType without action
+ */
+export type MemberCountOutputTypeCountArchivedOrganizationLootRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrganizationLootRecordWhereInput
 }
 
 /**
@@ -3254,6 +3484,7 @@ export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   restoredTimerHistoryEntries?: boolean | Prisma.Member$restoredTimerHistoryEntriesArgs<ExtArgs>
   lootSubmissions?: boolean | Prisma.Member$lootSubmissionsArgs<ExtArgs>
   comments?: boolean | Prisma.Member$commentsArgs<ExtArgs>
+  archivedOrganizationLootRecords?: boolean | Prisma.Member$archivedOrganizationLootRecordsArgs<ExtArgs>
   assignedEventMaps?: boolean | Prisma.Member$assignedEventMapsArgs<ExtArgs>
   eventPresenceLogs?: boolean | Prisma.Member$eventPresenceLogsArgs<ExtArgs>
   eventKillPoints?: boolean | Prisma.Member$eventKillPointsArgs<ExtArgs>
@@ -3327,6 +3558,7 @@ export type MemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   restoredTimerHistoryEntries?: boolean | Prisma.Member$restoredTimerHistoryEntriesArgs<ExtArgs>
   lootSubmissions?: boolean | Prisma.Member$lootSubmissionsArgs<ExtArgs>
   comments?: boolean | Prisma.Member$commentsArgs<ExtArgs>
+  archivedOrganizationLootRecords?: boolean | Prisma.Member$archivedOrganizationLootRecordsArgs<ExtArgs>
   assignedEventMaps?: boolean | Prisma.Member$assignedEventMapsArgs<ExtArgs>
   eventPresenceLogs?: boolean | Prisma.Member$eventPresenceLogsArgs<ExtArgs>
   eventKillPoints?: boolean | Prisma.Member$eventKillPointsArgs<ExtArgs>
@@ -3354,6 +3586,7 @@ export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     restoredTimerHistoryEntries: Prisma.$TimerHistoryEntryPayload<ExtArgs>[]
     lootSubmissions: Prisma.$LootSubmissionPayload<ExtArgs>[]
     comments: Prisma.$LootCommentPayload<ExtArgs>[]
+    archivedOrganizationLootRecords: Prisma.$OrganizationLootRecordPayload<ExtArgs>[]
     assignedEventMaps: Prisma.$EventMapPayload<ExtArgs>[]
     eventPresenceLogs: Prisma.$EventPresenceLogPayload<ExtArgs>[]
     eventKillPoints: Prisma.$EventKillPointPayload<ExtArgs>[]
@@ -3779,6 +4012,7 @@ export interface Prisma__MemberClient<T, Null = never, ExtArgs extends runtime.T
   restoredTimerHistoryEntries<T extends Prisma.Member$restoredTimerHistoryEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$restoredTimerHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimerHistoryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lootSubmissions<T extends Prisma.Member$lootSubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$lootSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootSubmissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.Member$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  archivedOrganizationLootRecords<T extends Prisma.Member$archivedOrganizationLootRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$archivedOrganizationLootRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationLootRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedEventMaps<T extends Prisma.Member$assignedEventMapsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$assignedEventMapsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventMapPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventPresenceLogs<T extends Prisma.Member$eventPresenceLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$eventPresenceLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventPresenceLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventKillPoints<T extends Prisma.Member$eventKillPointsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$eventKillPointsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventKillPointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4372,6 +4606,30 @@ export type Member$commentsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.LootCommentScalarFieldEnum | Prisma.LootCommentScalarFieldEnum[]
+}
+
+/**
+ * Member.archivedOrganizationLootRecords
+ */
+export type Member$archivedOrganizationLootRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrganizationLootRecord
+   */
+  select?: Prisma.OrganizationLootRecordSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrganizationLootRecord
+   */
+  omit?: Prisma.OrganizationLootRecordOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrganizationLootRecordInclude<ExtArgs> | null
+  where?: Prisma.OrganizationLootRecordWhereInput
+  orderBy?: Prisma.OrganizationLootRecordOrderByWithRelationInput | Prisma.OrganizationLootRecordOrderByWithRelationInput[]
+  cursor?: Prisma.OrganizationLootRecordWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrganizationLootRecordScalarFieldEnum | Prisma.OrganizationLootRecordScalarFieldEnum[]
 }
 
 /**

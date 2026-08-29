@@ -3,9 +3,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
+  LootCreatedNotificationEventV2,
 } from "@lootlog/types";
 import {
-  type NpcType,
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
@@ -121,15 +121,7 @@ export class NotificationsEventsHandler {
       durable: true,
     },
   })
-  async handleLootCreated(event: {
-    lootId: number;
-    world: string;
-    guildIds: string[];
-    itemIds: number[];
-    itemNames: string[];
-    npcType?: NpcType | null;
-    npcLvl?: number | null;
-  }) {
+  async handleLootCreated(event: LootCreatedNotificationEventV2) {
     const watchedItems = await this.prisma.watchedItem.findMany({
       where: {
         enabled: true,
@@ -166,31 +158,17 @@ export class NotificationsEventsHandler {
     );
     const guildNamesMap = new Map(guilds.map((g) => [g.id, g.name]));
 
-    const hasNpcData =
-      (event.npcType !== null && event.npcType !== undefined) ||
-      (event.npcLvl !== null && event.npcLvl !== undefined);
-
-    const membershipsByOwner = hasNpcData
-      ? await this.matchingService.getActiveMembershipsWithRoles(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
-          event.guildIds,
-        )
-      : null;
-
-    const activeGuildIdsByOwnerId = membershipsByOwner
-      ? null
-      : await this.matchingService.getActiveMembershipGuildIdsByOwner(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
-          event.guildIds,
-        );
+    const lootVisibilityNpcs = event.npcs.map((npc) => ({
+      type: npc.type,
+      level: npc.lvl,
+    }));
+    const membershipsByOwner =
+      await this.matchingService.getActiveMembershipsWithRoles(
+        watchedItems
+          .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+          .filter((ownerId): ownerId is string => typeof ownerId === "string"),
+        event.guildIds,
+      );
 
     await Promise.all(
       watchedItems.map(async (watchedItem) => {
@@ -216,36 +194,22 @@ export class NotificationsEventsHandler {
             return;
           }
 
-          let visibleGuildIds: string[];
+          const ownerMemberships =
+            membershipsByOwner.get(notificationRule.ownerId) ?? [];
+          const visibleGuildIds = matchedGuildIds.filter((guildId) => {
+            const membership = ownerMemberships.find(
+              (candidate) => candidate.guildId === guildId,
+            );
+            if (!membership) {
+              return false;
+            }
 
-          if (membershipsByOwner) {
-            const ownerMemberships =
-              membershipsByOwner.get(notificationRule.ownerId) ?? [];
-            const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
-              ownerMemberships.some((m) => m.guildId === guildId),
+            return this.matchingService.canRolesViewLoot(
+              membership.roles,
+              lootVisibilityNpcs,
+              membership.isGuildOwner,
             );
-            visibleGuildIds = authorizedGuildIds.filter((guildId) => {
-              const membership = ownerMemberships.find(
-                (m) => m.guildId === guildId,
-              );
-              if (!membership) {
-                return false;
-              }
-              return this.matchingService.canRolesViewNpc(
-                membership.roles,
-                event.npcType,
-                event.npcLvl,
-                membership.isGuildOwner,
-              );
-            });
-          } else {
-            const activeOwnerGuildIds =
-              activeGuildIdsByOwnerId?.get(notificationRule.ownerId) ??
-              new Set();
-            visibleGuildIds = matchedGuildIds.filter((guildId) =>
-              activeOwnerGuildIds.has(guildId),
-            );
-          }
+          });
 
           if (visibleGuildIds.length === 0) {
             return;

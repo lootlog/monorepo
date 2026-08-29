@@ -107,9 +107,16 @@ export class LootsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  getLootStats(@GuildData() guild: Guild, @Query() query: LootStatsQueryDto) {
+  getLootStats(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+    @GuildData() guild: Guild,
+    @Query() query: LootStatsQueryDto,
+  ) {
     return this.lootStatsService.getLootStats(
       guild.id,
+      permissions,
+      roles,
       query.period ?? "7d",
       query.world,
       query.npcTypes ? query.npcTypes.split(",") : undefined,
@@ -252,11 +259,15 @@ export class LootsController {
   @ApiResponse({ status: 404, description: "Loot not found" })
   getComments(
     @Param("lootId", new ParseIntPipe()) lootId: number,
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.lootsService.getComments({
       lootId,
-      guildId: guild.id,
+      guild,
+      permissions,
+      roles,
     });
   }
 
@@ -283,41 +294,51 @@ export class LootsController {
     @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @Body() body: CreateCommentDto,
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.lootsService.createComment({
       discordId,
       lootId,
       body,
-      guildId: guild.id,
+      guild,
+      permissions,
+      roles,
     });
   }
 
-  @Permissions(Permission.ADMIN, Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_LOOTS_ARCHIVE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/loots/:lootId")
   @ApiOperation({
-    summary: "Delete loot",
-    description: "Delete a loot entry",
+    summary: "Archive loot",
+    description: "Archive an Organization Loot record",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "lootId", description: "Loot ID", example: "123" })
   @ApiResponse({
     status: 200,
-    description: "Loot deleted successfully",
+    description: "Loot archived successfully",
   })
   @ApiResponse({
     status: 403,
-    description: "Forbidden - admin or manage permission required",
+    description: "Forbidden - archive permission required",
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
   deleteLoot(
+    @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
-    return this.lootsService.deleteLoot({
-      guildId: guild.id,
+    return this.lootsService.archiveLoot({
+      discordId,
+      guild,
       lootId,
+      permissions,
+      roles,
     });
   }
 

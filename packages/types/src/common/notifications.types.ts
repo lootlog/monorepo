@@ -68,6 +68,19 @@ export interface NotificationFilters {
   itemIds?: number[];
 }
 
+export interface LootCreatedNotificationEventV2 {
+  version: 2;
+  lootId: number;
+  world: string;
+  guildIds: string[];
+  itemIds: number[];
+  itemNames: string[];
+  npcs: Array<{
+    type: string | null;
+    lvl: number | null;
+  }>;
+}
+
 export interface DiscordGuildChannelSnapshot {
   guildId: string;
   channelId: string;

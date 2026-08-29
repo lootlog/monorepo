@@ -1,17 +1,26 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
   ServiceUnavailableException,
   type OnModuleInit,
 } from "@nestjs/common";
+import { createHash } from "node:crypto";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
-import { getNpcTypeByWt } from "@lootlog/types";
+import {
+  getNpcTypeByWt,
+  type GuildLootCreatedEventV2,
+  type GuildLootEventNpc,
+  type GuildLootShareUpdatedEventV2,
+  type LootCreatedNotificationEventV2,
+} from "@lootlog/types";
 import { ErrorKey } from "./enum/error-key.enum";
 import { PlayersService } from "src/players/players.service";
 import { NpcsService } from "src/npcs/npcs.service";
@@ -64,13 +73,6 @@ type LootNpcWithSocketSnapshot = {
   };
 };
 
-type LootSocketNpcPayload = {
-  lvl?: number | null;
-  prof?: string | null;
-  type?: string | null;
-  wt?: number | null;
-};
-
 type CreateLootOutcome = {
   submissionData: LootSubmissionData[];
   submittedGuilds: CreateLootSubmittedGuild[];
@@ -86,6 +88,8 @@ type InitialLootShare =
       share: LootShare;
       source: typeof LootShareSource.ITEM_OWNER;
     };
+
+const LOOT_SHARE_SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 
 type CachedLootQueryResult = Omit<
   LootQueryResult,
@@ -164,22 +168,10 @@ export class LootsService implements OnModuleInit {
     });
   }
 
-  private getPrimarySocketNpcPayload(
-    npcData: ReturnType<LootMappingService["processNpcs"]>,
-    npcType: NpcType,
-  ): LootSocketNpcPayload {
-    return {
-      lvl: npcData.highest.lvl ?? null,
-      prof: npcData.highest.prof ?? null,
-      type: npcType,
-      wt: npcData.highest.wt ?? null,
-    };
-  }
-
   private async publishLootCreateEvents(
     lootId: number,
     submissions: LootSubmissionData[],
-    npc: LootSocketNpcPayload,
+    npcs: GuildLootEventNpc[],
   ) {
     await Promise.all(
       submissions.map((submission) =>
@@ -187,10 +179,11 @@ export class LootsService implements OnModuleInit {
           DEFAULT_EXCHANGE_NAME,
           RoutingKey.GUILDS_LOOTS_CREATE,
           {
+            version: 2,
             guildId: submission.guildId,
             lootId,
-            npc,
-          },
+            npcs,
+          } satisfies GuildLootCreatedEventV2,
         ),
       ),
     );
@@ -317,7 +310,7 @@ export class LootsService implements OnModuleInit {
         .join(",")}}`;
     }
 
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? "undefined";
   }
 
   private normalizeCachedLootDate(value: Date | string): Date {
@@ -338,39 +331,39 @@ export class LootsService implements OnModuleInit {
     }));
   }
 
-  private getSocketNpcPayloadFromLootNpcs(
+  private getSocketNpcPayloadsFromLootNpcs(
     lootNpcs: LootNpcWithSocketSnapshot[],
-  ): LootSocketNpcPayload {
-    const primaryNpc = [...lootNpcs].sort(
-      (a, b) => (b.npcSnapshot.wt ?? 0) - (a.npcSnapshot.wt ?? 0),
-    )[0]?.npcSnapshot;
-
-    if (!primaryNpc) {
-      return {};
-    }
-
-    return {
-      lvl: primaryNpc.lvl,
-      prof: primaryNpc.prof,
+  ): GuildLootEventNpc[] {
+    return lootNpcs.map(({ npcSnapshot }) => ({
+      lvl: npcSnapshot.lvl,
+      prof: npcSnapshot.prof,
       type:
-        primaryNpc.type ??
+        npcSnapshot.type ??
         getNpcTypeByWt(
           NpcType,
-          primaryNpc.wt ?? 0,
-          primaryNpc.prof ?? undefined,
+          npcSnapshot.wt ?? 0,
+          npcSnapshot.prof ?? undefined,
         ),
-      wt: primaryNpc.wt,
-    };
+      wt: npcSnapshot.wt,
+    }));
   }
 
   private getAuthorizedLootUpdateWhere(
     actorUserId: string,
     lootId: number,
+    submissionCutoff: Date,
   ): Prisma.LootWhereInput {
     return {
       id: lootId,
-      lootSubmissions: {
-        some: { member: { globalUserId: actorUserId } },
+      organizationLootRecords: {
+        some: {
+          submissions: {
+            some: {
+              member: { globalUserId: actorUserId },
+              createdAt: { gte: submissionCutoff },
+            },
+          },
+        },
       },
     };
   }
@@ -413,10 +406,16 @@ export class LootsService implements OnModuleInit {
   private async acknowledgeConcurrentLootShareUpdate(
     actorUserId: string,
     lootId: number,
+    submissionCutoff: Date,
+    expectedLootShare: LootShare,
   ): Promise<LootShare> {
     const loot = await this.prisma.loot.findFirst({
-      where: this.getAuthorizedLootUpdateWhere(actorUserId, lootId),
-      select: { lootShareSource: true },
+      where: this.getAuthorizedLootUpdateWhere(
+        actorUserId,
+        lootId,
+        submissionCutoff,
+      ),
+      select: { lootShare: true, lootShareSource: true },
     });
 
     if (!loot) {
@@ -427,7 +426,28 @@ export class LootsService implements OnModuleInit {
       throw new ServiceUnavailableException("Failed to persist loot share");
     }
 
+    this.assertMatchingLootShare(lootId, loot.lootShare, expectedLootShare);
+
     return {};
+  }
+
+  private assertMatchingLootShare(
+    lootId: number,
+    persistedLootShare: unknown,
+    submittedLootShare: LootShare,
+  ) {
+    const persisted = this.stableSerialize(persistedLootShare);
+    const submitted = this.stableSerialize(submittedLootShare);
+    if (persisted === submitted) {
+      return;
+    }
+
+    this.logger.warn("Conflicting chat loot share rejected", {
+      lootId,
+      persistedHash: createHash("sha256").update(persisted).digest("hex"),
+      submittedHash: createHash("sha256").update(submitted).digest("hex"),
+    });
+    throw new ConflictException("Conflicting loot share");
   }
 
   async createLoot(discordId: string, _userId: string, body: CreateLootDto) {
@@ -505,10 +525,12 @@ export class LootsService implements OnModuleInit {
         npcData.highest.prof,
         npcData.highest.type,
       );
-      const socketNpc = this.getPrimarySocketNpcPayload(
-        npcData,
-        highestWtNpcType,
-      );
+      const socketNpcs = npcData.mapped.map((npc) => ({
+        lvl: npc.lvl,
+        prof: npc.prof,
+        type: npc.type,
+        wt: npc.wt,
+      }));
 
       const lootlogConfigByGuildId = new Map(
         lootlogConfigs.map((config) => [config.id, config]),
@@ -582,47 +604,106 @@ export class LootsService implements OnModuleInit {
       }
 
       if (existingLoot) {
-        const existingSubmissions = await this.prisma.lootSubmission.findMany({
-          where: {
-            lootId: existingLoot.id,
-            OR: outcome.submissionData.map((submission) => ({
-              guildId: submission.guildId,
+        const existingOrganizationRecords =
+          await this.prisma.organizationLootRecord.findMany({
+            where: {
+              lootId: existingLoot.id,
+              guildId: {
+                in: outcome.submissionData.map(
+                  (submission) => submission.guildId,
+                ),
+              },
+            },
+            select: {
+              guildId: true,
+              archivedAt: true,
+              submissions: {
+                select: { memberId: true },
+              },
+            },
+          });
+        const existingSubmissions = existingOrganizationRecords.flatMap(
+          (record) =>
+            record.submissions.map((submission) => ({
+              guildId: record.guildId,
               memberId: submission.memberId,
             })),
-          },
-          select: {
-            guildId: true,
-            memberId: true,
-          },
-        });
+        );
         const newSubmissions = this.getNewLootSubmissions(
           outcome.submissionData,
           existingSubmissions,
         );
 
         if (newSubmissions.length > 0) {
-          await this.prisma.lootSubmission.createMany({
-            data: newSubmissions.map((submission) => ({
-              guildId: submission.guildId,
-              memberId: submission.memberId,
-              lootId: existingLoot.id,
-            })),
-            skipDuplicates: true,
-          });
-        }
+          const organizationRecords = await this.prisma.$transaction(
+            async (tx) => {
+              await tx.organizationLootRecord.createMany({
+                data: this.getUniqueGuildSubmissions(newSubmissions).map(
+                  (submission) => ({
+                    guildId: submission.guildId,
+                    lootId: existingLoot.id,
+                  }),
+                ),
+                skipDuplicates: true,
+              });
+              const records = await tx.organizationLootRecord.findMany({
+                where: {
+                  lootId: existingLoot.id,
+                  guildId: {
+                    in: newSubmissions.map((submission) => submission.guildId),
+                  },
+                },
+                select: { id: true, guildId: true, archivedAt: true },
+              });
+              const recordIdByGuildId = new Map(
+                records.map((record) => [record.guildId, record.id]),
+              );
+              const submissionRows = newSubmissions.map((submission) => {
+                const organizationLootRecordId = recordIdByGuildId.get(
+                  submission.guildId,
+                );
+                if (organizationLootRecordId === undefined) {
+                  throw new ServiceUnavailableException(
+                    "Failed to resolve Organization Loot record",
+                  );
+                }
 
-        const newSubmissionGuildIds = newSubmissions.map(
-          (submission) => submission.guildId,
-        );
-        await Promise.all([
-          this.invalidateLootsListCache(newSubmissionGuildIds),
-          this.invalidateLootStatsCaches(newSubmissionGuildIds),
-        ]);
-        await this.publishLootCreateEvents(
-          existingLoot.id,
-          newSubmissions,
-          socketNpc,
-        );
+                return {
+                  organizationLootRecordId,
+                  memberId: submission.memberId,
+                };
+              });
+
+              await tx.lootSubmission.createMany({
+                data: submissionRows,
+                skipDuplicates: true,
+              });
+
+              return records;
+            },
+          );
+
+          const archivedGuildIds = new Set(
+            organizationRecords
+              .filter((record) => (record.archivedAt ?? null) !== null)
+              .map((record) => record.guildId),
+          );
+          const activeNewSubmissions = newSubmissions.filter(
+            (submission) => !archivedGuildIds.has(submission.guildId),
+          );
+          const activeGuildIds = activeNewSubmissions.map(
+            (submission) => submission.guildId,
+          );
+          await Promise.all([
+            this.invalidateLootsListCache(activeGuildIds),
+            this.invalidateLootStatsCaches(activeGuildIds),
+          ]);
+          await this.publishLootCreateEvents(
+            existingLoot.id,
+            activeNewSubmissions,
+            socketNpcs,
+          );
+        }
         return this.createCreateLootResponse(existingLoot.id, outcome);
       }
 
@@ -664,17 +745,17 @@ export class LootsService implements OnModuleInit {
           lootNpcs: {
             create: lootNpcs,
           },
+          organizationLootRecords: {
+            create: outcome.submissionData.map((submission) => ({
+              guildId: submission.guildId,
+              submissions: {
+                create: { memberId: submission.memberId },
+              },
+            })),
+          },
         },
       });
 
-      await this.prisma.lootSubmission.createMany({
-        data: outcome.submissionData.map((submission) => ({
-          guildId: submission.guildId,
-          memberId: submission.memberId,
-          lootId: loot.id,
-        })),
-        skipDuplicates: true,
-      });
       const submittedGuildIds = outcome.submissionData.map(
         (submission) => submission.guildId,
       );
@@ -685,7 +766,7 @@ export class LootsService implements OnModuleInit {
       await this.publishLootCreateEvents(
         loot.id,
         outcome.submissionData,
-        socketNpc,
+        socketNpcs,
       );
 
       const playersWithWorld = players.map((player) => ({
@@ -712,20 +793,25 @@ export class LootsService implements OnModuleInit {
       }));
       this.itemsService.bulkIndexItems(indexItems);
 
+      const notificationEvent = {
+        version: 2,
+        lootId: loot.id,
+        world: body.world,
+        guildIds: outcome.submissionData.map(
+          (submission) => submission.guildId,
+        ),
+        itemIds: items.map((item) => item.id),
+        itemNames: items.map((item) => item.name),
+        npcs: socketNpcs.map((npc) => ({
+          type: npc.type ?? null,
+          lvl: npc.lvl ?? null,
+        })),
+      } satisfies LootCreatedNotificationEventV2;
+
       await this.amqpConnection.publish(
         DEFAULT_EXCHANGE_NAME,
         RoutingKey.NOTIFICATIONS_LOOT_CREATED,
-        {
-          lootId: loot.id,
-          world: body.world,
-          guildIds: outcome.submissionData.map(
-            (submission) => submission.guildId,
-          ),
-          itemIds: items.map((item) => item.id),
-          itemNames: items.map((item) => item.name),
-          npcType: highestWtNpcType,
-          npcLvl: npcData.highest.lvl ?? null,
-        },
+        notificationEvent,
       );
 
       return this.createCreateLootResponse(loot.id, outcome);
@@ -745,51 +831,108 @@ export class LootsService implements OnModuleInit {
     }
   }
 
-  getComments(options: { guildId: string; lootId: number }) {
-    return this.lootCommentService.getComments(options);
-  }
-
-  async deleteLoot(options: { guildId: string; lootId: number }) {
-    const { guildId, lootId } = options;
-
-    const loot = await this.prisma.loot.findFirst({
-      where: {
-        id: lootId,
-        lootSubmissions: { some: { guildId } },
-      },
-    });
-
-    if (!loot) {
-      throw new ForbiddenException(ErrorKey.CANT_DELETE_LOOT);
+  async getComments(options: {
+    guild: Guild;
+    lootId: number;
+    permissions: Permission[];
+    roles: Role[];
+  }) {
+    const { guild, lootId, permissions, roles } = options;
+    const visibleLoot = await this.lootQueryService.fetchLootById(
+      guild,
+      permissions,
+      roles,
+      lootId,
+    );
+    if (!visibleLoot) {
+      throw new NotFoundException();
     }
 
-    await this.prisma.lootSubmission.deleteMany({
+    return this.lootCommentService.getComments({ guildId: guild.id, lootId });
+  }
+
+  async archiveLoot(options: {
+    discordId: string;
+    guild: Guild;
+    lootId: number;
+    permissions: Permission[];
+    roles: Role[];
+  }) {
+    const { discordId, guild, lootId, permissions, roles } = options;
+    const visibleLoot = await this.lootQueryService.fetchLootById(
+      guild,
+      permissions,
+      roles,
+      lootId,
+    );
+    if (!visibleLoot) {
+      throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
+    }
+
+    const actor = await this.prisma.member.findUnique({
       where: {
-        lootId,
-        guildId,
+        memberId: { userId: discordId, guildId: guild.id },
+      },
+      select: { id: true },
+    });
+    if (!actor) {
+      throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
+    }
+
+    const archived = await this.prisma.organizationLootRecord.updateMany({
+      where: { guildId: guild.id, lootId, archivedAt: null },
+      data: {
+        archivedAt: new Date(),
+        archivedByMemberId: actor.id,
       },
     });
+    if (archived.count === 0) {
+      throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
+    }
+
     await Promise.all([
-      this.invalidateLootsListCache([guildId]),
-      this.invalidateLootStatsCaches([guildId]),
+      this.invalidateLootsListCache([guild.id]),
+      this.invalidateLootStatsCaches([guild.id]),
     ]);
   }
 
   async createComment(options: {
     discordId: string;
-    guildId: string;
+    guild: Guild;
     lootId: number;
     body: CreateCommentDto;
+    permissions: Permission[];
+    roles: Role[];
   }) {
-    const comment = await this.lootCommentService.createComment(options);
-    await this.invalidateLootsListCache([options.guildId]);
+    const { guild, lootId, permissions, roles } = options;
+    const visibleLoot = await this.lootQueryService.fetchLootById(
+      guild,
+      permissions,
+      roles,
+      lootId,
+    );
+    if (!visibleLoot) {
+      throw new NotFoundException();
+    }
+
+    const comment = await this.lootCommentService.createComment({
+      discordId: options.discordId,
+      guildId: guild.id,
+      lootId,
+      body: options.body,
+    });
+    await this.invalidateLootsListCache([guild.id]);
     return comment;
   }
 
   async updateLoot(actorUserId: string, lootId: number, data: UpdateLootDto) {
+    const submissionCutoff = new Date(
+      Date.now() - LOOT_SHARE_SUBMISSION_WINDOW_MS,
+    );
     const authorizedLootWhere = this.getAuthorizedLootUpdateWhere(
       actorUserId,
       lootId,
+      submissionCutoff,
     );
     const loot = await this.prisma.loot.findFirst({
       where: authorizedLootWhere,
@@ -810,7 +953,8 @@ export class LootsService implements OnModuleInit {
           },
           orderBy: { id: "asc" },
         },
-        lootSubmissions: {
+        organizationLootRecords: {
+          where: { archivedAt: null },
           select: {
             guildId: true,
           },
@@ -820,10 +964,6 @@ export class LootsService implements OnModuleInit {
 
     if (!loot) {
       throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
-    }
-
-    if (loot.lootShareSource === LootShareSource.CHAT_MESSAGE) {
-      return {};
     }
 
     const lootShare = this.lootMappingService.getLootShareFromMsg(data.msg);
@@ -864,13 +1004,17 @@ export class LootsService implements OnModuleInit {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER);
     }
 
+    if (loot.lootShareSource === LootShareSource.CHAT_MESSAGE) {
+      this.assertMatchingLootShare(lootId, loot.lootShare, mappedLootShare);
+      return {};
+    }
+
     if (Object.keys(mappedLootShare).length < items.length) {
       this.logger.log({
         level: "warn",
         message:
           "Loot share does not include all items, some items may not be shared",
         lootId,
-        lootShareMsg: data.msg,
         mappedItemsCount: Object.keys(mappedLootShare).length,
         totalItemsCount: items.length,
       });
@@ -888,12 +1032,17 @@ export class LootsService implements OnModuleInit {
     });
 
     if (updateResult.count === 0) {
-      return this.acknowledgeConcurrentLootShareUpdate(actorUserId, lootId);
+      return this.acknowledgeConcurrentLootShareUpdate(
+        actorUserId,
+        lootId,
+        submissionCutoff,
+        mappedLootShare,
+      );
     }
 
-    const socketNpc = this.getSocketNpcPayloadFromLootNpcs(loot.lootNpcs);
+    const socketNpcs = this.getSocketNpcPayloadsFromLootNpcs(loot.lootNpcs);
     const uniqueGuildSubmissions = this.getUniqueGuildSubmissions(
-      loot.lootSubmissions,
+      loot.organizationLootRecords,
     );
     await this.invalidateLootsListCache(
       uniqueGuildSubmissions.map((submission) => submission.guildId),
@@ -905,11 +1054,12 @@ export class LootsService implements OnModuleInit {
           DEFAULT_EXCHANGE_NAME,
           RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
           {
+            version: 2,
             guildId: submission.guildId,
             lootId,
             lootShare: mappedLootShare,
-            npc: socketNpc,
-          },
+            npcs: socketNpcs,
+          } satisfies GuildLootShareUpdatedEventV2,
         ),
       ),
     );

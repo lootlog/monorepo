@@ -94,7 +94,12 @@ describe("GatewayQueueHandler", () => {
   });
 
   it("routes loot create events through retry logic", async () => {
-    const payload = { guildId: "guild-1", lootId: 123 };
+    const payload = {
+      version: 2 as const,
+      guildId: "guild-1",
+      lootId: 123,
+      npcs: [{ type: "ELITE", lvl: 100 }],
+    };
 
     await handler.handleGuildsLootCreate(payload, message as never);
 
@@ -111,9 +116,11 @@ describe("GatewayQueueHandler", () => {
 
   it("routes loot share update events through retry logic", async () => {
     const payload = {
+      version: 2 as const,
       guildId: "guild-1",
       lootId: 123,
       lootShare: { player: ["item"] },
+      npcs: [{ type: "ELITE", lvl: 100 }],
     };
 
     await handler.handleGuildsLootShareUpdate(payload, message as never);
@@ -127,6 +134,33 @@ describe("GatewayQueueHandler", () => {
     expect(mockGatewayService.handleGuildsLootShareUpdate).toHaveBeenCalledWith(
       payload,
     );
+  });
+
+  it.each([
+    ["create", { guildId: "guild-1", lootId: 123 }],
+    [
+      "share update",
+      {
+        guildId: "guild-1",
+        lootId: 123,
+        lootShare: { player: ["item"] },
+      },
+    ],
+  ])("rejects a legacy loot %s event before fan-out", async (kind, payload) => {
+    if (kind === "create") {
+      await expect(
+        handler.handleGuildsLootCreate(payload, message as never),
+      ).rejects.toThrow();
+    } else {
+      await expect(
+        handler.handleGuildsLootShareUpdate(payload, message as never),
+      ).rejects.toThrow();
+    }
+
+    expect(mockGatewayService.handleGuildsLootCreate).not.toHaveBeenCalled();
+    expect(
+      mockGatewayService.handleGuildsLootShareUpdate,
+    ).not.toHaveBeenCalled();
   });
 
   it("lets retry handling bound malformed reservation v2 messages before parsing", async () => {
@@ -152,7 +186,12 @@ describe("GatewayQueueHandler", () => {
   });
 
   it("logs loot create messages sent to DLQ", () => {
-    const payload = { guildId: "guild-1", lootId: 123 };
+    const payload = {
+      version: 2 as const,
+      guildId: "guild-1",
+      lootId: 123,
+      npcs: [{ type: "ELITE", lvl: 100 }],
+    };
     const loggerSpy = vi
       .spyOn(handler["logger"], "error")
       .mockImplementation(() => undefined);
@@ -174,9 +213,11 @@ describe("GatewayQueueHandler", () => {
 
   it("logs loot share update messages sent to DLQ", () => {
     const payload = {
+      version: 2 as const,
       guildId: "guild-1",
       lootId: 123,
       lootShare: { player: ["item"] },
+      npcs: [{ type: "ELITE", lvl: 100 }],
     };
     const loggerSpy = vi
       .spyOn(handler["logger"], "error")
@@ -198,7 +239,12 @@ describe("GatewayQueueHandler", () => {
   });
 
   it("logs DLQ messages without headers using an empty headers object", () => {
-    const payload = { guildId: "guild-1", lootId: 123 };
+    const payload = {
+      version: 2 as const,
+      guildId: "guild-1",
+      lootId: 123,
+      npcs: [{ type: "ELITE", lvl: 100 }],
+    };
     const messageWithoutHeaders = {
       properties: {},
     };

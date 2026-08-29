@@ -78,6 +78,11 @@ export type NpcSnapshot = Prisma.NpcSnapshotModel
  */
 export type LootNpc = Prisma.LootNpcModel
 /**
+ * Model OrganizationLootRecord
+ *
+ */
+export type OrganizationLootRecord = Prisma.OrganizationLootRecordModel
+/**
  * Model LootSubmission
  * 
  */

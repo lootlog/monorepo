@@ -30,6 +30,7 @@
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/loot-visibility": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/reservations": "workspace:*",
     "@lootlog/scoring": "workspace:*",

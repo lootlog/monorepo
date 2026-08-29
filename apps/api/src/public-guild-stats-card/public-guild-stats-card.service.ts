@@ -163,9 +163,10 @@ export class PublicGuildStatsCardService {
     const rows = await this.prisma.$queryRaw<LootStatsRow[]>`
       WITH valid_loots AS (
         SELECT DISTINCT l.id
-        FROM "LootSubmission" ls
-        INNER JOIN "Loot" l ON l.id = ls."lootId"
-        WHERE ls."guildId" = ${guildId}
+        FROM "OrganizationLootRecord" olr
+        INNER JOIN "Loot" l ON l.id = olr."lootId"
+        WHERE olr."guildId" = ${guildId}
+          AND olr."archivedAt" IS NULL
           AND l."createdAt" >= ${dateFrom}
       )
       SELECT

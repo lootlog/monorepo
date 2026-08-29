@@ -45,6 +45,24 @@ An accepted gameplay fact, such as loot, a kill, or a battle, that remains
 available according to its retention policy.
 _Avoid_: Signal, log
 
+**Loot drop**:
+The immutable gameplay fact describing items obtained in one encounter and the
+Players and NPCs involved.
+_Avoid_: Organization Loot record, Loot submission
+
+**Loot allocation**:
+The shared assignment of items from a Loot drop to the Players who received
+them.
+_Avoid_: Loot share, Organization settlement
+
+**Organization Loot record**:
+An Organization's record of a Loot drop.
+_Avoid_: Loot drop, Loot submission
+
+**Loot submission**:
+Evidence that a Member reported a Loot drop to an Organization.
+_Avoid_: Organization Loot record
+
 **Presence**:
 The expiring report of a User's current game session, character, availability,
 and permitted location detail.

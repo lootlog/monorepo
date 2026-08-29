@@ -2,7 +2,8 @@ import { Permission } from "src/generated/prisma/client";
 
 /**
  * Utility class for resolving permissions with implicit grants.
- * Handles permission expansion (OWNER/ADMIN → all).
+ * Handles permission expansion while preserving OWNER as a distinct recovery
+ * authority that ADMIN cannot impersonate.
  */
 export class PermissionResolver {
   private static readonly ADMIN_PERMISSIONS: Permission[] = [
@@ -16,8 +17,14 @@ export class PermissionResolver {
    * Resolves permissions with implicit grants
    */
   static resolve(permissions: Permission[]): Permission[] {
-    if (this.isAdministrative(permissions)) {
+    if (permissions.includes(Permission.OWNER)) {
       return this.ALL_PERMISSIONS;
+    }
+
+    if (permissions.includes(Permission.ADMIN)) {
+      return this.ALL_PERMISSIONS.filter(
+        (permission) => permission !== Permission.OWNER,
+      );
     }
 
     return Array.from(new Set(permissions));

@@ -18,68 +18,72 @@ describe("NotificationMatchingService", () => {
     expect(service.parseFilters("invalid" as never)).toEqual({});
   });
 
-  it("allows guild owners to view any npc", () => {
-    expect(service.canRolesViewNpc([], NpcType.TITAN, 300, true)).toBe(true);
+  it("allows guild owners to view any loot", () => {
+    expect(
+      service.canRolesViewLoot([], [{ type: NpcType.TITAN, level: 300 }], true),
+    ).toBe(true);
   });
 
-  it("allows administrative users to bypass npc filtering", () => {
+  it("does not give administrators a loot visibility bypass", () => {
     expect(
-      service.canRolesViewNpc(
+      service.canRolesViewLoot(
         [
           {
+            id: "admin",
             permissions: [Permission.ADMIN],
             lvlRangeFrom: 1,
             lvlRangeTo: 10,
           },
         ],
-        NpcType.TITAN,
-        300,
+        [{ type: NpcType.TITAN, level: 300 }],
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("blocks access when no readable role exists", () => {
     expect(
-      service.canRolesViewNpc(
+      service.canRolesViewLoot(
         [
           {
+            id: "titan-only",
             permissions: [Permission.LOOTLOG_LOOTS_TITANS_READ],
             lvlRangeFrom: 1,
             lvlRangeTo: 500,
           },
         ],
-        NpcType.TITAN,
-        300,
+        [{ type: NpcType.TITAN, level: 300 }],
       ),
     ).toBe(false);
   });
 
   it("requires a single role to satisfy loot read, tier permission and level range", () => {
     expect(
-      service.canRolesViewNpc(
+      service.canRolesViewLoot(
         [
           {
+            id: "read",
             permissions: [Permission.LOOTLOG_LOOTS_READ],
             lvlRangeFrom: 1,
             lvlRangeTo: 500,
           },
           {
+            id: "titan",
             permissions: [Permission.LOOTLOG_LOOTS_TITANS_READ],
             lvlRangeFrom: 250,
             lvlRangeTo: 350,
           },
         ],
-        NpcType.TITAN,
-        300,
+        [{ type: NpcType.TITAN, level: 300 }],
       ),
     ).toBe(false);
   });
 
   it("allows access when one role fully matches loot read, tier permission and level range", () => {
     expect(
-      service.canRolesViewNpc(
+      service.canRolesViewLoot(
         [
           {
+            id: "complete-titan",
             permissions: [
               Permission.LOOTLOG_LOOTS_READ,
               Permission.LOOTLOG_LOOTS_TITANS_READ,
@@ -88,17 +92,17 @@ describe("NotificationMatchingService", () => {
             lvlRangeTo: 350,
           },
         ],
-        NpcType.TITAN,
-        300,
+        [{ type: NpcType.TITAN, level: 300 }],
       ),
     ).toBe(true);
   });
 
-  it("allows access for unknown npc levels when tier permissions match", () => {
+  it("fails closed for unknown NPC levels", () => {
     expect(
-      service.canRolesViewNpc(
+      service.canRolesViewLoot(
         [
           {
+            id: "complete-titan",
             permissions: [
               Permission.LOOTLOG_LOOTS_READ,
               Permission.LOOTLOG_LOOTS_TITANS_READ,
@@ -107,24 +111,23 @@ describe("NotificationMatchingService", () => {
             lvlRangeTo: 350,
           },
         ],
-        NpcType.TITAN,
-        null,
+        [{ type: NpcType.TITAN, level: null }],
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("blocks heroes without heroes read permission", () => {
     expect(
-      service.canRolesViewNpc(
+      service.canRolesViewLoot(
         [
           {
+            id: "base",
             permissions: [Permission.LOOTLOG_LOOTS_READ],
             lvlRangeFrom: 80,
             lvlRangeTo: 180,
           },
         ],
-        NpcType.EVENT_HERO,
-        120,
+        [{ type: NpcType.EVENT_HERO, level: 120 }],
       ),
     ).toBe(false);
   });

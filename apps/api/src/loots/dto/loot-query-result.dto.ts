@@ -4,17 +4,16 @@ import type { LootNpcDto } from "./loot-npc.dto";
 import type { LootPlayerDto } from "./loot-player.dto";
 import type { LootShare } from "src/shared/dto/loot-response.dto";
 
-export type SubmissionWithMember = Prisma.LootSubmissionGetPayload<{
-  include: {
-    member: {
-      select: {
-        name: true;
-        avatar: true;
-        userId: true;
-      };
-    };
+export type SubmissionWithMember = {
+  guildId: string;
+  lootId: number;
+  memberId: number;
+  member: {
+    name: string;
+    avatar: string | null;
+    userId: string;
   };
-}>;
+};
 
 export type LootSelection = Prisma.LootGetPayload<{
   select: {

@@ -63,6 +63,7 @@ export const ModelName = {
   LootPlayer: 'LootPlayer',
   NpcSnapshot: 'NpcSnapshot',
   LootNpc: 'LootNpc',
+  OrganizationLootRecord: 'OrganizationLootRecord',
   LootSubmission: 'LootSubmission',
   LootComment: 'LootComment',
   LootlogConfigNpc: 'LootlogConfigNpc',
@@ -327,10 +328,22 @@ export const LootNpcScalarFieldEnum = {
 export type LootNpcScalarFieldEnum = (typeof LootNpcScalarFieldEnum)[keyof typeof LootNpcScalarFieldEnum]
 
 
-export const LootSubmissionScalarFieldEnum = {
+export const OrganizationLootRecordScalarFieldEnum = {
   id: 'id',
   lootId: 'lootId',
   guildId: 'guildId',
+  archivedAt: 'archivedAt',
+  archivedByMemberId: 'archivedByMemberId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrganizationLootRecordScalarFieldEnum = (typeof OrganizationLootRecordScalarFieldEnum)[keyof typeof OrganizationLootRecordScalarFieldEnum]
+
+
+export const LootSubmissionScalarFieldEnum = {
+  id: 'id',
+  organizationLootRecordId: 'organizationLootRecordId',
   memberId: 'memberId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -341,9 +354,8 @@ export type LootSubmissionScalarFieldEnum = (typeof LootSubmissionScalarFieldEnu
 
 export const LootCommentScalarFieldEnum = {
   id: 'id',
-  lootId: 'lootId',
+  organizationLootRecordId: 'organizationLootRecordId',
   memberId: 'memberId',
-  guildId: 'guildId',
   content: 'content',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
