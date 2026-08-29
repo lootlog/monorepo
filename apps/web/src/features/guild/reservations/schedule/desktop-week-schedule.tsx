@@ -244,47 +244,51 @@ export function DesktopWeekSchedule({
           />
         )}
 
-        {segments.map((segment) => {
-          const startFraction =
-            (segment.dayIdx + segment.lane / segment.laneCount) / DAYS.length;
-          const lanePercentage = 100 / (DAYS.length * segment.laneCount);
-          const laneLabelOffset =
-            LABEL_COLUMN_WIDTH / (DAYS.length * segment.laneCount);
-          return (
-            <ReservationBlock
-              key={segment.id}
-              segment={segment}
-              onSelect={() => onReservationSelect(segment.reservation.id)}
-              onCancel={
-                segment.reservation.canCancel && onReservationCancel
-                  ? () => onReservationCancel(segment.reservation.id)
-                  : undefined
-              }
-              isCancelPending={
-                cancellingReservationId === segment.reservation.id
-              }
-              onContextMenuOpenChange={(open) => {
-                contextMenuOpenRef.current = open;
-              }}
-              onContextMenuOutsidePress={(event) => {
-                const grid = gridRef.current;
-                if (!grid || !isEventInsideElement(event, grid)) return;
-                suppressSelectionRef.current = true;
-                setSelection(null);
-              }}
-              className="absolute z-10"
-              style={{
-                left: `calc(${startFraction * 100}% + ${LABEL_COLUMN_WIDTH * (1 - startFraction)}px + 1px)`,
-                width: `calc(${lanePercentage}% - ${laneLabelOffset + 2}px)`,
-                top: HEADER_HEIGHT + segment.startHour * MIN_ROW_HEIGHT + 1,
-                height: Math.max(
-                  24,
-                  segment.durationHours * MIN_ROW_HEIGHT - 2,
-                ),
-              }}
-            />
-          );
-        })}
+        {segments
+          .filter(
+            (segment) => segment.dayIdx >= 0 && segment.dayIdx < DAYS.length,
+          )
+          .map((segment) => {
+            const startFraction =
+              (segment.dayIdx + segment.lane / segment.laneCount) / DAYS.length;
+            const lanePercentage = 100 / (DAYS.length * segment.laneCount);
+            const laneLabelOffset =
+              LABEL_COLUMN_WIDTH / (DAYS.length * segment.laneCount);
+            return (
+              <ReservationBlock
+                key={segment.id}
+                segment={segment}
+                onSelect={() => onReservationSelect(segment.reservation.id)}
+                onCancel={
+                  segment.reservation.canCancel && onReservationCancel
+                    ? () => onReservationCancel(segment.reservation.id)
+                    : undefined
+                }
+                isCancelPending={
+                  cancellingReservationId === segment.reservation.id
+                }
+                onContextMenuOpenChange={(open) => {
+                  contextMenuOpenRef.current = open;
+                }}
+                onContextMenuOutsidePress={(event) => {
+                  const grid = gridRef.current;
+                  if (!grid || !isEventInsideElement(event, grid)) return;
+                  suppressSelectionRef.current = true;
+                  setSelection(null);
+                }}
+                className="absolute z-10"
+                style={{
+                  left: `calc(${startFraction * 100}% + ${LABEL_COLUMN_WIDTH * (1 - startFraction)}px + 1px)`,
+                  width: `calc(${lanePercentage}% - ${laneLabelOffset + 2}px)`,
+                  top: HEADER_HEIGHT + segment.startHour * MIN_ROW_HEIGHT + 1,
+                  height: Math.max(
+                    24,
+                    segment.durationHours * MIN_ROW_HEIGHT - 2,
+                  ),
+                }}
+              />
+            );
+          })}
       </div>
     </ScrollArea>
   );

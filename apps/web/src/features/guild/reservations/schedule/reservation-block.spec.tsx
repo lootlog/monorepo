@@ -62,6 +62,32 @@ const createSegment = (
 };
 
 describe("ReservationBlock", () => {
+  it.each([
+    [30, "size-4", true],
+    [60, "size-4", true],
+    [90, "size-6", false],
+  ] as const)(
+    "uses the responsive avatar treatment for a %i minute reservation",
+    (durationMinutes, sizeClassName, isCompact) => {
+      const { container } = render(
+        <ReservationBlock
+          segment={createSegment(durationMinutes, "Alderaan")}
+          onSelect={vi.fn()}
+        />,
+      );
+      const avatar = container.querySelector(
+        '[data-slot="reservation-avatar"]',
+      );
+
+      expect(avatar).not.toBeNull();
+      expect(avatar?.className).toContain(sizeClassName);
+      expect(avatar?.className.split(" ").includes("hidden")).toBe(isCompact);
+      if (isCompact) {
+        expect(avatar?.className).toContain("@min-[7rem]:flex");
+      }
+    },
+  );
+
   it.each([30, 60, 120])(
     "keeps the nickname visible for a %i minute reservation",
     (durationMinutes) => {

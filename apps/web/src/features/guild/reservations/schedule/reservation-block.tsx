@@ -49,6 +49,9 @@ export function ReservationBlock({
   const showStackedTime = durationMinutes >= 45;
   const showInlineTime = durationMinutes < 45 && segment.laneCount === 1;
   const showDetails = durationMinutes >= 90;
+  const avatarClassName = showDetails
+    ? "size-6"
+    : "hidden size-4 @min-[7rem]:flex";
   const isPartner = !reservation.sourceOrganization.isCurrent;
   const time = `${format(segment.segmentStart, "HH:mm")}–${format(segment.segmentEnd, "HH:mm")}`;
   const fallback =
@@ -66,7 +69,7 @@ export function ReservationBlock({
         organization: reservation.sourceOrganization.name,
       })}
       className={cn(
-        "reservation-card group flex min-w-0 cursor-pointer overflow-hidden rounded-md border px-1.5 py-1 text-left shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        "reservation-card @container group flex min-w-0 cursor-pointer overflow-hidden rounded-md border px-1.5 py-1 text-left shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isPartner
           ? "border-sky-500/45 bg-sky-500/15 hover:bg-sky-500/25"
           : "border-primary/50 bg-primary/20 hover:bg-primary/30",
@@ -74,15 +77,13 @@ export function ReservationBlock({
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        {showDetails && (
-          <Avatar className="size-6 shrink-0">
-            <AvatarImage
-              src={reservation.author.avatarUrl ?? undefined}
-              alt=""
-            />
-            <AvatarFallback>{fallback}</AvatarFallback>
-          </Avatar>
-        )}
+        <Avatar
+          data-slot="reservation-avatar"
+          className={cn("shrink-0", avatarClassName)}
+        >
+          <AvatarImage src={reservation.author.avatarUrl ?? undefined} alt="" />
+          <AvatarFallback>{fallback}</AvatarFallback>
+        </Avatar>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1">
             {isPartner && (
