@@ -15,8 +15,13 @@ import { useChatStore } from "@/store/chat.store";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
 import { useTranslation } from "react-i18next";
-import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
+import {
+  isNotificationRateLimitError,
+  useNotificationChatOrchestration,
+} from "@/features/chat/hooks/use-notification-chat-orchestration";
 import { useShallow } from "zustand/react/shallow";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   message: z.string().min(1).max(120),
@@ -50,6 +55,8 @@ export const CommandWindow = () => {
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
   const { startNotificationMessage } = useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
+  const submissionInProgressRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { control, setValue, handleSubmit } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -67,20 +74,25 @@ export const CommandWindow = () => {
 
   const onSubmit = async (data: FormData) => {
     if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
+    if (submissionInProgressRef.current) return;
 
-    if (data.message.startsWith("/grp")) {
-      const description = data.message.slice("/grp".length).trim() || undefined;
-      await handlePartyCommand(description, selectedInputGuildIds);
-      setValue("message", "");
-      setOpen("command", false);
-      return;
-    }
+    submissionInProgressRef.current = true;
+    setIsSubmitting(true);
 
-    const isNotification = data.message.startsWith("!");
-    const message = isNotification ? data.message.slice(1) : data.message;
+    try {
+      if (data.message.startsWith("/grp")) {
+        const description =
+          data.message.slice("/grp".length).trim() || undefined;
+        await handlePartyCommand(description, selectedInputGuildIds);
+        setValue("message", "");
+        setOpen("command", false);
+        return;
+      }
 
-    if (isNotification) {
-      try {
+      const isNotification = data.message.startsWith("!");
+      const message = isNotification ? data.message.slice(1) : data.message;
+
+      if (isNotification) {
         await startNotificationMessage({
           guildIds: selectedInputGuildIds,
           world,
@@ -100,11 +112,7 @@ export const CommandWindow = () => {
               },
             }),
         });
-      } catch {
-        return;
-      }
-    } else {
-      try {
+      } else {
         await sendChatMessageAsync({
           guildIds: selectedInputGuildIds,
           message: data.message,
@@ -118,13 +126,18 @@ export const CommandWindow = () => {
             icon: heroIcon,
           },
         });
-      } catch {
-        return;
       }
-    }
 
-    setValue("message", "");
-    setOpen("command", false);
+      setValue("message", "");
+      setOpen("command", false);
+    } catch (error) {
+      if (isNotificationRateLimitError(error)) {
+        toast.error(t("errors.notificationRateLimited"));
+      }
+    } finally {
+      submissionInProgressRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -154,7 +167,9 @@ export const CommandWindow = () => {
               selectedIndex={suggestions.selectedIndex}
             />
             <form
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={(event) => {
+                void handleSubmit(onSubmit)(event);
+              }}
               className="ll:flex ll:flex-1"
             >
               <textarea
@@ -177,6 +192,7 @@ export const CommandWindow = () => {
                 }}
                 placeholder={t("input.placeholder")}
                 autoFocus={autofocus}
+                disabled={isSubmitting}
                 value={messageValue}
                 onChange={(e) => setValue("message", e.target.value)}
                 className="ll:h-full ll:w-full ll:overflow-hidden ll:resize-none ll:outline-none ll:rounded-sm ll:border ll:border-gray-400 ll:bg-transparent ll:px-1 ll:py-1 ll:text-xs ll:text-white ll:placeholder:text-muted-foreground ll:box-border ll:transition-[color,box-shadow] ll:disabled:pointer-events-none ll:disabled:opacity-50"
