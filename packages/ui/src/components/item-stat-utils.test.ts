@@ -75,7 +75,7 @@ describe("item stat utilities", () => {
   it("preserves stat formatting and semantic block assignment", () => {
     const blocks = mapStatsToDisplayValues(
       parseItemStats(
-        "created=1767225600;hp=10;dmg=5,8;lvl=20;reqp=wm;opis=Created #YEAR#[br]Line;teleport=x,10,20,Karka-han;legbon=curse,1;amount=2;lvlupgs=3;unknown=value;rarity=legendary;rkey=x;enhancement_upgrade_lvl=4",
+        "created=1767225600;hp=10;dmg=5,8;lvl=20;reqp=wm;opis=Created #YEAR#[br]Line;teleport=x,10,20,Karka-han;legbon=curse,1;amount=2;lvlupgs=3;unknown=value;rarity=legendary;rkey=x",
       ),
     );
 
@@ -145,7 +145,7 @@ describe("item stat utilities", () => {
   it("formats missing combat, enhancement, action and metadata families", () => {
     const blocks = mapStatsToDisplayValues(
       parseItemStats(
-        "dmgmul=-5;afterheal2=10,250;resmanaendest=9;leczy=-120;bonus=sa,250;action=fightperheal,10,20;expire_duration=2d;expire_date=1767225600;target_class=WEAPONS;cansplit=0;enhancement_refund=3;custom_teleport=id,12,34,Tuzmer;socket_content=0;nodepoclan",
+        "dmgmul=-5;afterheal2=10,250;resmanaendest=9;leczy=-120;bonus=sa,250;action=fightperheal,10,20;expire_duration=2d;expire_date=1767225600;target_class=WEAPONS;cansplit=0;enhancement_refund=3;custom_teleport=id,12,34,Tuzmer;socket_content=0;enhancement_upgrade_lvl=4;nodepoclan",
       ),
     );
 
@@ -175,7 +175,10 @@ describe("item stat utilities", () => {
     expect(blocks.descriptionBlock).toEqual([
       { key: "custom_teleport.set", value: ["id", "12", "34", "Tuzmer"] },
     ]);
-    expect(blocks.metadataBlock).toEqual([{ key: "nodepoclan", value: true }]);
+    expect(blocks.metadataBlock).toEqual([
+      { key: "enhancement_upgrade_lvl", value: "4" },
+      { key: "nodepoclan", value: true },
+    ]);
     expect(blocks.requirementsBlock).toEqual([
       {
         key: "target_class",
