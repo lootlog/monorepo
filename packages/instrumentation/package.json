@@ -21,7 +21,8 @@
   },
   "scripts": {
     "build": "tsdown",
-    "lint": "oxlint src"
+    "lint": "oxlint src",
+    "test": "vitest run src"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
@@ -40,6 +41,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
