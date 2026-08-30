@@ -1,6 +1,6 @@
 import * as winston from "winston";
-import { WinstonTransport as AxiomTransport } from "@axiomhq/winston";
 import { RuntimeEnvironment } from "@lootlog/types";
+import { context, isSpanContextValid, trace } from "@opentelemetry/api";
 import type { WinstonModuleOptions } from "nest-winston";
 
 export interface WinstonConfigOptions {
@@ -10,14 +10,28 @@ export interface WinstonConfigOptions {
 export const createWinstonConfig = ({
   serviceName,
 }: WinstonConfigOptions): WinstonModuleOptions => {
-  const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN, COMMIT_SHA } = process.env;
+  const { ENV, COMMIT_SHA } = process.env;
 
-  const useConsole =
-    ENV === RuntimeEnvironment.LOCAL || ENV === RuntimeEnvironment.DEV;
+  const usePrettyConsole = ENV === RuntimeEnvironment.LOCAL;
+
+  const traceContext = winston.format((info) => {
+    const spanContext = trace.getSpan(context.active())?.spanContext();
+
+    if (spanContext && isSpanContextValid(spanContext)) {
+      info.trace_id = spanContext.traceId;
+      info.span_id = spanContext.spanId;
+    } else {
+      info.trace_id = null;
+      info.span_id = null;
+    }
+
+    return info;
+  });
 
   const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.colorize({ all: true }),
+    traceContext(),
     winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
       const contextStr = context ? `[${context}]` : "";
       const metaStr = Object.keys(meta).length
@@ -27,28 +41,24 @@ export const createWinstonConfig = ({
     }),
   );
 
-  const prodFormat = winston.format.json();
-
-  const transports = useConsole
-    ? [new winston.transports.Console({ level: "debug" })]
-    : [
-        new AxiomTransport({
-          dataset: AXIOM_DATASET as string,
-          token: AXIOM_TOKEN as string,
-        }),
-      ];
+  const jsonFormat = winston.format.combine(
+    winston.format.timestamp(),
+    traceContext(),
+    winston.format.json(),
+  );
 
   return {
-    level: "info",
-    format: useConsole ? consoleFormat : prodFormat,
-    ...(useConsole
-      ? {}
-      : {
-          defaultMeta: {
-            service: `${ENV}-${serviceName}-${HOSTNAME ?? serviceName}`,
-            commit: COMMIT_SHA?.slice(0, 7) ?? "unknown",
-          },
-        }),
-    transports,
+    level: usePrettyConsole ? "debug" : "info",
+    format: usePrettyConsole ? consoleFormat : jsonFormat,
+    defaultMeta: {
+      service: serviceName,
+      environment: ENV ?? "unknown",
+      commit: COMMIT_SHA?.slice(0, 7) ?? "unknown",
+    },
+    transports: [
+      new winston.transports.Console({
+        level: usePrettyConsole ? "debug" : "info",
+      }),
+    ],
   };
 };
