@@ -206,13 +206,13 @@
     "accept": "Połącz kalendarze",
     "connecting": "Łączenie kalendarzy...",
     "acceptedTitle": "Kalendarze zostały połączone",
-    "acceptedDescription": "Obie organizacje widzą teraz swoje rezerwacje i nowe kolizje są sprawdzane wspólnie.",
+    "acceptedDescription": "Obie organizacje widzą teraz wzajemnie swoje rezerwacje. Terminy sojusznika nie blokują zapisów.",
     "openSettings": "Otwórz ustawienia rezerwacji",
     "invalidTitle": "Zaproszenie jest niedostępne",
     "invalidDescription": "Link wygasł, został wycofany albo użyto go wcześniej."
   },
   "errors": {
-    "RESERVATION_OVERLAP": "Ten termin koliduje z rezerwacją Twojej organizacji lub organizacji z sojuszu.",
+    "RESERVATION_OVERLAP": "Ten termin koliduje z rezerwacją Twojej organizacji.",
     "ACTIVE_LIMIT_REACHED": "Osiągnięto limit aktywnych rezerwacji na tym expowisku.",
     "INVALID_TIME_GRID": "Początek i koniec muszą pasować do kroku kalendarza.",
     "DM_TARGET_REQUIRED": "Najpierw skonfiguruj aktywny cel powiadomień DM.",

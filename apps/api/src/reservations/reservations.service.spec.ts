@@ -48,6 +48,97 @@ describe("ReservationsService", () => {
     vi.useRealTimers();
   });
 
+  it("keeps a partner-only spot locally available", async () => {
+    catalogService.getSpots.mockResolvedValue([
+      {
+        id: reservation.spotId,
+        name: "Potępione Zamczysko",
+        level: 300,
+        images: [],
+        maps: [],
+      },
+    ]);
+    sharingService.getVisibleGuildIds.mockResolvedValue([
+      guild.id,
+      "partner-guild",
+    ]);
+    prisma.userPinnedReservationSpot.findMany.mockResolvedValue([]);
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        ...reservation,
+        guildId: "partner-guild",
+        startsAt: new Date("2026-08-26T11:30:00.000Z"),
+        endsAt: new Date("2026-08-26T12:30:00.000Z"),
+        guild: { id: "partner-guild", name: "Partner" },
+      },
+    ]);
+
+    const [spot] = await service.listSpots({
+      guildId: guild.id,
+      userId: "user-1",
+      discordId: "discord-1",
+      actorIsOwner: false,
+      permissions: [],
+    });
+
+    expect(spot).toEqual(
+      expect.objectContaining({
+        isAvailableNow: true,
+        availableUntil: null,
+        activeReservationCount: 0,
+        hasPartnerReservations: true,
+        currentReservation: null,
+        nextReservation: null,
+      }),
+    );
+  });
+
+  it("derives spot availability from local reservations in a mixed calendar", async () => {
+    catalogService.getSpots.mockResolvedValue([
+      {
+        id: reservation.spotId,
+        name: "Potępione Zamczysko",
+        level: 300,
+        images: [],
+        maps: [],
+      },
+    ]);
+    sharingService.getVisibleGuildIds.mockResolvedValue([
+      guild.id,
+      "partner-guild",
+    ]);
+    prisma.userPinnedReservationSpot.findMany.mockResolvedValue([]);
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        ...reservation,
+        guildId: "partner-guild",
+        startsAt: new Date("2026-08-26T11:30:00.000Z"),
+        endsAt: new Date("2026-08-26T12:30:00.000Z"),
+        guild: { id: "partner-guild", name: "Partner" },
+      },
+      reservation,
+    ]);
+
+    const [spot] = await service.listSpots({
+      guildId: guild.id,
+      userId: "user-1",
+      discordId: "discord-1",
+      actorIsOwner: false,
+      permissions: [],
+    });
+
+    expect(spot).toEqual(
+      expect.objectContaining({
+        isAvailableNow: true,
+        availableUntil: reservation.startsAt,
+        activeReservationCount: 1,
+        hasPartnerReservations: true,
+        currentReservation: null,
+        nextReservation: expect.objectContaining({ id: reservation.id }),
+      }),
+    );
+  });
+
   it("isolates a pin by user, organization, and spot", async () => {
     catalogService.getSpot.mockResolvedValue({ id: reservation.spotId });
 

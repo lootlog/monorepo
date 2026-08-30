@@ -16,6 +16,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 
 const mocks = vi.hoisted(() => ({
+  createdInvitationResponse: {
+    id: "invitation-1",
+    invitePath: "/reservation-sharing/invitations/invitation-1",
+    createdAt: "2026-08-26T00:00:00.000Z",
+    expiresAt: "2026-09-02T00:00:00.000Z",
+  } as Record<string, string>,
   invalidateQueries: vi.fn(),
 }));
 
@@ -51,12 +57,7 @@ vi.mock("@lootlog/api-client/react-query/main/reservation-sharing", () => ({
     isPending: false,
     mutate: (variables: unknown) =>
       mutation.onSuccess?.(
-        {
-          id: "invitation-1",
-          inviteUrl: "http://localhost/invitation-1",
-          createdAt: "2026-08-26T00:00:00.000Z",
-          expiresAt: "2026-09-02T00:00:00.000Z",
-        },
+        mocks.createdInvitationResponse,
         variables,
         undefined,
       ),
@@ -126,6 +127,47 @@ describe("ReservationSharingSettings", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    mocks.createdInvitationResponse = {
+      id: "invitation-1",
+      invitePath: "/reservation-sharing/invitations/invitation-1",
+      createdAt: "2026-08-26T00:00:00.000Z",
+      expiresAt: "2026-09-02T00:00:00.000Z",
+    };
+  });
+
+  it("builds the invitation URL from the current web origin", () => {
+    render(<ReservationSharingSettings />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
+
+    expect(
+      screen.getByRole<HTMLInputElement>("textbox", {
+        name: "Link zaproszenia",
+      }).value,
+    ).toBe(
+      `${window.location.origin}/reservation-sharing/invitations/invitation-1`,
+    );
+  });
+
+  it("supports the previous API response during a Web-first rollout", () => {
+    mocks.createdInvitationResponse = {
+      id: "invitation-1",
+      inviteUrl:
+        "http://localhost/reservation-sharing/invitations/invitation-1",
+      createdAt: "2026-08-26T00:00:00.000Z",
+      expiresAt: "2026-09-02T00:00:00.000Z",
+    };
+    render(<ReservationSharingSettings />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
+
+    expect(
+      screen.getByRole<HTMLInputElement>("textbox", {
+        name: "Link zaproszenia",
+      }).value,
+    ).toBe(
+      `${window.location.origin}/reservation-sharing/invitations/invitation-1`,
+    );
   });
 
   it("hides a newly created link after its invitation is revoked", async () => {

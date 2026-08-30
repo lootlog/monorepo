@@ -23,14 +23,20 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@lootlog/ui/components/alert";
-import type { CreateReservationShareInvitationResponseDto } from "@lootlog/api-client/models/main/create-reservation-share-invitation-response-dto";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
 
-type CreatedInvitation = Pick<
-  CreateReservationShareInvitationResponseDto,
-  "id" | "inviteUrl"
->;
+type CreatedInvitation = { id: string; inviteUrl: string };
+type InvitationLink = { invitePath: string } | { inviteUrl: string };
+
+function buildInvitationUrl(invitation: InvitationLink): string {
+  const invitePath =
+    "invitePath" in invitation
+      ? invitation.invitePath
+      : new URL(invitation.inviteUrl).pathname;
+
+  return new URL(invitePath, window.location.origin).toString();
+}
 
 export function ReservationSharingSettings() {
   const { t } = useTranslation();
@@ -49,7 +55,7 @@ export function ReservationSharingSettings() {
       onSuccess: async (invitation) => {
         setCreatedInvitation({
           id: invitation.id,
-          inviteUrl: invitation.inviteUrl,
+          inviteUrl: buildInvitationUrl(invitation),
         });
         await refresh();
       },

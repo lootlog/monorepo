@@ -154,7 +154,36 @@ describe("ReservationMutationsService", () => {
     );
   });
 
-  it("checks overlap across every directly visible partner", async () => {
+  it("does not let a partner reservation block a local write", async () => {
+    transaction.reservation.findFirst.mockImplementation(
+      (query: { where: { guildId: string | { in: string[] } } }) =>
+        Promise.resolve(
+          typeof query.where.guildId !== "string" &&
+            query.where.guildId.in.includes("partner-guild")
+            ? { id: 99 }
+            : null,
+        ),
+    );
+
+    await service.create({
+      context,
+      spotId: reservation.spotId,
+      data: {
+        startsAt: reservation.startsAt.toISOString(),
+        endsAt: reservation.endsAt.toISOString(),
+      },
+    });
+
+    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        guildId: guild.id,
+        spotId: reservation.spotId,
+      }),
+      select: { id: true },
+    });
+  });
+
+  it("rejects an overlapping reservation in the current organization", async () => {
     transaction.reservation.findFirst.mockResolvedValue({ id: 99 });
 
     await expect(
@@ -169,28 +198,7 @@ describe("ReservationMutationsService", () => {
     ).rejects.toMatchObject({ status: 409 });
 
     expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({
-        guildId: { in: [guild.id, "partner-guild"] },
-        spotId: reservation.spotId,
-      }),
-      select: { id: true },
-    });
-  });
-
-  it("does not check an unrelated organization without a direct share", async () => {
-    sharingService.getVisibleGuildIds.mockResolvedValue([guild.id]);
-
-    await service.create({
-      context,
-      spotId: reservation.spotId,
-      data: {
-        startsAt: reservation.startsAt.toISOString(),
-        endsAt: reservation.endsAt.toISOString(),
-      },
-    });
-
-    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({ guildId: { in: [guild.id] } }),
+      where: expect.objectContaining({ guildId: guild.id }),
       select: { id: true },
     });
   });
@@ -276,6 +284,15 @@ describe("ReservationMutationsService", () => {
     };
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
     prisma.reservation.findFirst.mockResolvedValue(reservation);
+    transaction.reservation.findFirst.mockImplementation(
+      (query: { where: { guildId: string | { in: string[] } } }) =>
+        Promise.resolve(
+          typeof query.where.guildId !== "string" &&
+            query.where.guildId.in.includes("partner-guild")
+            ? { id: 99 }
+            : null,
+        ),
+    );
     transaction.reservation.update.mockResolvedValue(updatedReservation);
     reminderService.prepare.mockResolvedValue({
       target: { id: 1 },
@@ -297,7 +314,7 @@ describe("ReservationMutationsService", () => {
     expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
       where: expect.objectContaining({
         id: { not: reservation.id },
-        guildId: { in: [guild.id, "partner-guild"] },
+        guildId: guild.id,
         spotId: reservation.spotId,
       }),
       select: { id: true },
@@ -332,6 +349,34 @@ describe("ReservationMutationsService", () => {
         reminderMinutesBefore: 15,
       }),
     );
+  });
+
+  it("rejects a time edit overlapping the source organization", async () => {
+    guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
+    prisma.reservation.findFirst.mockResolvedValue(reservation);
+    transaction.reservation.findFirst.mockResolvedValue({ id: 99 });
+
+    await expect(
+      service.updateOwned({
+        userId: context.userId,
+        discordId: context.discordId,
+        reservationId: reservation.id,
+        data: {
+          startsAt: "2026-08-26T12:30:00.000Z",
+          endsAt: "2026-08-26T13:30:00.000Z",
+        },
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+
+    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        id: { not: reservation.id },
+        guildId: guild.id,
+        spotId: reservation.spotId,
+      }),
+      select: { id: true },
+    });
+    expect(transaction.reservation.update).not.toHaveBeenCalled();
   });
 
   it("does not reschedule an unchanged reminder for a comment-only edit", async () => {

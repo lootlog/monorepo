@@ -15,6 +15,7 @@ describe("ReservationSharingService", () => {
       findMany: vi.fn(),
     },
     reservationShareInvitation: {
+      create: vi.fn(),
       findUnique: vi.fn(),
     },
   };
@@ -44,6 +45,27 @@ describe("ReservationSharingService", () => {
       guildsService as never,
       eventsPublisher as never,
     );
+  });
+
+  it("creates an origin-independent invitation path", async () => {
+    const createdAt = new Date();
+    const expiresAt = future();
+    prisma.reservationShareInvitation.create.mockResolvedValue({
+      id: "invite",
+      createdAt,
+      expiresAt,
+    });
+
+    const invitation = await service.createInvitation("guild", "user");
+
+    expect(invitation).toEqual({
+      id: "invite",
+      invitePath: expect.stringMatching(
+        /^\/reservation-sharing\/invitations\/[\w-]+$/,
+      ),
+      createdAt,
+      expiresAt,
+    });
   });
 
   it("returns only the current organization and its direct partners", async () => {
