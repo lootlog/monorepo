@@ -35,8 +35,6 @@ const parsedEnv = createEnv(
     OTEL_NODE_RESOURCE_DETECTORS: z.string().default("env,host,os,process"),
     OTEL_TRACES_EXPORTER: z.string().default("otlp"),
     SERVICE_NAMESPACE: z.string().default("local"),
-    AXIOM_DATASET: z.string().optional(),
-    AXIOM_TOKEN: z.string().optional(),
     MARGONEM_ACCOUNT_PROOF_REQUIRED: booleanEnv.default(false),
     ACTIVITY_EVENT_SIGNATURE_SECRET: z.string().min(32).optional(),
   }),
