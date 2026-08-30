@@ -37,6 +37,7 @@ import {
   Permission,
   type Guild,
   LootSource,
+  type Prisma,
   type Role,
 } from "#src/generated/prisma/client";
 import { ErrorKey } from "./enum/error-key.enum.js";
@@ -2021,6 +2022,15 @@ describe("Loot modules", () => {
       world: "testworld",
     };
 
+    const getLastOrganizationLootWhere = () => {
+      const lastCall =
+        prismaService.organizationLootRecord.findMany.mock.calls.at(-1) as
+          | [Prisma.OrganizationLootRecordFindManyArgs]
+          | undefined;
+
+      return lastCall?.[0].where?.loot;
+    };
+
     it("should return loots with submissions", async () => {
       const mockSubmissions = [
         {
@@ -2033,26 +2043,30 @@ describe("Loot modules", () => {
         },
       ];
 
-      const mockLootsWithRelations = [
+      const mockOrganizationRecords = [
         {
-          id: 1,
-          uniqueId: "unique1",
-          world: "testworld",
-          source: LootSource.FIGHT,
-          location: "Test Location",
-          lootShare: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          organizationLootRecords: [
-            { submissions: mockSubmissions, _count: { comments: 0 } },
-          ],
-          lootItems: [],
-          lootPlayers: [],
-          lootNpcs: [],
+          lootId: 1,
+          submissions: mockSubmissions,
+          _count: { comments: 0 },
+          loot: {
+            id: 1,
+            uniqueId: "unique1",
+            world: "testworld",
+            source: LootSource.FIGHT,
+            location: "Test Location",
+            lootShare: {},
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            lootItems: [],
+            lootPlayers: [],
+            lootNpcs: [],
+          },
         },
       ];
 
-      prismaService.loot.findMany.mockResolvedValue(mockLootsWithRelations);
+      prismaService.organizationLootRecord.findMany.mockResolvedValue(
+        mockOrganizationRecords,
+      );
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
@@ -2067,6 +2081,81 @@ describe("Loot modules", () => {
         uniqueId: "unique1",
         submissions: mockSubmissions,
       });
+      expect(
+        prismaService.organizationLootRecord.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            guildId: mockGuild.id,
+            archivedAt: null,
+            loot: expect.objectContaining({ world: "testworld" }),
+          }),
+          orderBy: { lootId: "desc" },
+          take: params.limit,
+        }),
+      );
+      expect(prismaService.loot.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should keep cursor and role visibility within the Organization Loot query", async () => {
+      const role: Role = {
+        id: "role1",
+        name: "Loot Reader",
+        color: 0,
+        position: 1,
+        permissions: [Permission.LOOTLOG_LOOTS_READ],
+        lvlRangeFrom: 10,
+        lvlRangeTo: 60,
+        guildId: mockGuild.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
+
+      await service.fetchLootsByGuildId(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [role],
+        { ...params, cursor: 123 },
+      );
+
+      expect(getLastOrganizationLootWhere()).toEqual(
+        expect.objectContaining({
+          AND: expect.arrayContaining([
+            { id: { lt: 123 } },
+            {
+              AND: [
+                { lootNpcs: { some: {} } },
+                {
+                  lootNpcs: {
+                    every: {
+                      npcSnapshot: {
+                        OR: [
+                          {
+                            AND: [
+                              { lvl: { not: null, gte: 10, lte: 60 } },
+                              {
+                                type: {
+                                  not: null,
+                                  notIn: [
+                                    NpcType.TITAN,
+                                    NpcType.HERO,
+                                    NpcType.EVENT_HERO,
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ]),
+        }),
+      );
     });
 
     it("should revive cached loot dates before returning first page results", async () => {
@@ -2103,7 +2192,7 @@ describe("Loot modules", () => {
     });
 
     it("should return empty array when no loots found", async () => {
-      prismaService.loot.findMany.mockResolvedValue([]);
+      prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
@@ -2117,7 +2206,7 @@ describe("Loot modules", () => {
     });
 
     it("should apply ranged loot filters to the Prisma query", async () => {
-      prismaService.loot.findMany.mockResolvedValue([]);
+      prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
       await service.fetchLootsByGuildId(mockGuild, [], [], {
         ...params,
@@ -2131,126 +2220,120 @@ describe("Loot modules", () => {
         createdAtMax: "2024-01-31T23:59:59.999Z",
       });
 
-      expect(prismaService.loot.findMany).toHaveBeenCalledWith(
+      expect(getLastOrganizationLootWhere()).toEqual(
         expect.objectContaining({
-          where: expect.objectContaining({
-            AND: expect.arrayContaining([
-              {
-                lootNpcs: {
-                  some: {
-                    npcSnapshot: {
-                      lvl: {
-                        gte: 10,
-                        lte: 20,
-                      },
-                    },
-                  },
-                },
-              },
-              {
-                lootItems: {
-                  some: {
-                    itemSnapshot: {
-                      lvl: {
-                        gte: 30,
-                        lte: 40,
-                      },
-                    },
-                  },
-                },
-              },
-              {
-                lootPlayers: {
-                  some: {
+          AND: expect.arrayContaining([
+            {
+              lootNpcs: {
+                some: {
+                  npcSnapshot: {
                     lvl: {
-                      gte: 50,
-                      lte: 60,
+                      gte: 10,
+                      lte: 20,
                     },
                   },
                 },
               },
-              {
-                createdAt: {
-                  gte: new Date("2024-01-01T00:00:00.000Z"),
-                  lte: new Date("2024-01-31T23:59:59.999Z"),
+            },
+            {
+              lootItems: {
+                some: {
+                  itemSnapshot: {
+                    lvl: {
+                      gte: 30,
+                      lte: 40,
+                    },
+                  },
                 },
               },
-            ]),
-          }),
+            },
+            {
+              lootPlayers: {
+                some: {
+                  lvl: {
+                    gte: 50,
+                    lte: 60,
+                  },
+                },
+              },
+            },
+            {
+              createdAt: {
+                gte: new Date("2024-01-01T00:00:00.000Z"),
+                lte: new Date("2024-01-31T23:59:59.999Z"),
+              },
+            },
+          ]),
         }),
       );
     });
 
     it("should apply item profession filters to the Prisma query", async () => {
-      prismaService.loot.findMany.mockResolvedValue([]);
+      prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
       await service.fetchLootsByGuildId(mockGuild, [], [], {
         ...params,
         professions: [Profession.HUNTER, Profession.TRACKER, "INVALID"],
       });
 
-      expect(prismaService.loot.findMany).toHaveBeenCalledWith(
+      expect(getLastOrganizationLootWhere()).toEqual(
         expect.objectContaining({
-          where: expect.objectContaining({
-            AND: expect.arrayContaining([
-              {
-                lootItems: {
-                  some: {
-                    itemSnapshot: {
-                      OR: [
-                        {
-                          statRaw: {
-                            not: {
-                              contains: "reqp=",
-                            },
+          AND: expect.arrayContaining([
+            {
+              lootItems: {
+                some: {
+                  itemSnapshot: {
+                    OR: [
+                      {
+                        statRaw: {
+                          not: {
+                            contains: "reqp=",
                           },
                         },
-                        {
-                          statsSnapshot: {
-                            path: ["reqp"],
-                            string_contains: "h",
-                          },
+                      },
+                      {
+                        statsSnapshot: {
+                          path: ["reqp"],
+                          string_contains: "h",
                         },
-                        {
-                          statsSnapshot: {
-                            path: ["reqp"],
-                            string_contains: "t",
-                          },
+                      },
+                      {
+                        statsSnapshot: {
+                          path: ["reqp"],
+                          string_contains: "t",
                         },
-                      ],
-                    },
+                      },
+                    ],
                   },
                 },
               },
-            ]),
-          }),
+            },
+          ]),
         }),
       );
     });
 
     it("should ignore invalid item profession filters", async () => {
-      prismaService.loot.findMany.mockResolvedValue([]);
+      prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
       await service.fetchLootsByGuildId(mockGuild, [], [], {
         ...params,
         professions: ["INVALID"],
       });
 
-      expect(prismaService.loot.findMany).toHaveBeenCalledWith(
+      expect(getLastOrganizationLootWhere()).not.toEqual(
         expect.objectContaining({
-          where: expect.not.objectContaining({
-            AND: expect.arrayContaining([
-              expect.objectContaining({
-                lootItems: expect.objectContaining({
-                  some: expect.objectContaining({
-                    itemSnapshot: expect.objectContaining({
-                      OR: expect.any(Array),
-                    }),
+          AND: expect.arrayContaining([
+            expect.objectContaining({
+              lootItems: expect.objectContaining({
+                some: expect.objectContaining({
+                  itemSnapshot: expect.objectContaining({
+                    OR: expect.any(Array),
                   }),
                 }),
               }),
-            ]),
-          }),
+            }),
+          ]),
         }),
       );
     });
