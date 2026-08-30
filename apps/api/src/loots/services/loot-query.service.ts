@@ -48,6 +48,27 @@ type LootNpcWithSnapshot = Prisma.LootNpcGetPayload<{
   include: { npcSnapshot: true };
 }>;
 
+type LootWhereOptions = {
+  npcTypes?: string[];
+  npcs?: string[];
+  players?: string[];
+  rarities?: string[];
+  professions?: string[];
+  npcLevelMin?: number;
+  npcLevelMax?: number;
+  itemLevelMin?: number;
+  itemLevelMax?: number;
+  playerLevelMin?: number;
+  playerLevelMax?: number;
+  search?: string;
+  world?: string;
+  hid?: string;
+  itemSnapshotIds?: number[];
+  cursor?: number | null;
+  createdAtMin?: string;
+  createdAtMax?: string;
+};
+
 @Injectable()
 export class LootQueryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -84,7 +105,7 @@ export class LootQueryService {
       return [];
     }
 
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
+    const lootWhere = this.buildLootWhereCondition(permissions, roles, {
       npcTypes,
       npcs,
       players,
@@ -105,89 +126,85 @@ export class LootQueryService {
       createdAtMax,
     });
 
-    const lootsWithRelations = await this.prisma.loot.findMany({
-      where: baseWhere,
-      orderBy: { id: "desc" },
-      take: limit,
-      select: {
-        id: true,
-        uniqueId: true,
-        world: true,
-        source: true,
-        location: true,
-        lootShare: true,
-        createdAt: true,
-        updatedAt: true,
-        organizationLootRecords: {
-          where: { guildId: guild.id, archivedAt: null },
-          take: 1,
-          select: {
-            submissions: {
-              include: {
-                member: {
-                  select: {
-                    name: true,
-                    avatar: true,
-                    userId: true,
-                  },
+    const organizationRecords =
+      await this.prisma.organizationLootRecord.findMany({
+        where: {
+          guildId: guild.id,
+          archivedAt: null,
+          loot: lootWhere,
+        },
+        orderBy: { lootId: "desc" },
+        take: limit,
+        select: {
+          submissions: {
+            include: {
+              member: {
+                select: {
+                  name: true,
+                  avatar: true,
+                  userId: true,
                 },
               },
             },
-            _count: { select: { comments: true } },
+          },
+          _count: { select: { comments: true } },
+          loot: {
+            select: {
+              id: true,
+              uniqueId: true,
+              world: true,
+              source: true,
+              location: true,
+              lootShare: true,
+              createdAt: true,
+              updatedAt: true,
+              lootItems: {
+                select: lootItemSelect,
+                orderBy: { id: "asc" },
+              },
+              lootPlayers: {
+                include: { playerSnapshot: true },
+                orderBy: { id: "asc" },
+              },
+              lootNpcs: {
+                include: { npcSnapshot: true },
+                orderBy: { id: "asc" },
+              },
+            },
           },
         },
-        lootItems: {
-          select: lootItemSelect,
-          orderBy: { id: "asc" },
-        },
-        lootPlayers: {
-          include: { playerSnapshot: true },
-          orderBy: { id: "asc" },
-        },
-        lootNpcs: {
-          include: { npcSnapshot: true },
-          orderBy: { id: "asc" },
-        },
-      },
+      });
+
+    if (organizationRecords.length === 0) return [];
+
+    return organizationRecords.map((organizationRecord): LootQueryResult => {
+      const { loot } = organizationRecord;
+
+      return {
+        id: loot.id,
+        uniqueId: loot.uniqueId,
+        world: loot.world,
+        source: loot.source,
+        location: loot.location,
+        lootShare: this.parseLootShare(loot.lootShare),
+        createdAt: loot.createdAt,
+        updatedAt: loot.updatedAt,
+        items: this.mapItems(
+          loot.lootItems as unknown as LootItemWithSnapshot[],
+        ),
+        players: (loot.lootPlayers as unknown as LootPlayerWithSnapshot[]).map(
+          (entry) => this.mapPlayerFromSnapshot(entry),
+        ),
+        npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
+        submissions: organizationRecord.submissions.map((submission) => ({
+          guildId: guild.id,
+          lootId: loot.id,
+          memberId: submission.memberId,
+          member: submission.member,
+        })),
+        commentsCount: organizationRecord._count.comments,
+      };
     });
-
-    if (!lootsWithRelations.length) return [];
-
-    const results: LootQueryResult[] = lootsWithRelations.flatMap((loot) => {
-      const organizationRecord = loot.organizationLootRecords[0];
-      if (!organizationRecord) {
-        return [];
-      }
-
-      return [
-        {
-          id: loot.id,
-          uniqueId: loot.uniqueId,
-          world: loot.world,
-          source: loot.source,
-          location: loot.location,
-          lootShare: this.parseLootShare(loot.lootShare),
-          createdAt: loot.createdAt,
-          updatedAt: loot.updatedAt,
-          items: this.mapItems(
-            loot.lootItems as unknown as LootItemWithSnapshot[],
-          ),
-          players: (
-            loot.lootPlayers as unknown as LootPlayerWithSnapshot[]
-          ).map((entry) => this.mapPlayerFromSnapshot(entry)),
-          npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
-          submissions: organizationRecord.submissions.map((submission) => ({
-            guildId: guild.id,
-            lootId: loot.id,
-            memberId: submission.memberId,
-            member: submission.member,
-          })),
-          commentsCount: organizationRecord._count.comments,
-        },
-      ];
-    });
-
-    return results;
   }
 
   async countLootsByGuildId(
@@ -397,6 +414,22 @@ export class LootQueryService {
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
+    options: LootWhereOptions,
+  ): Prisma.LootWhereInput {
+    return {
+      ...this.buildLootWhereCondition(permissions, roles, options),
+      organizationLootRecords: {
+        some: {
+          guildId: guild.id,
+          archivedAt: null,
+        },
+      },
+    };
+  }
+
+  private buildLootWhereCondition(
+    permissions: Permission[],
+    roles: Role[],
     {
       npcTypes = [],
       npcs = [],
@@ -416,26 +449,7 @@ export class LootQueryService {
       cursor,
       createdAtMin,
       createdAtMax,
-    }: {
-      npcTypes?: string[];
-      npcs?: string[];
-      players?: string[];
-      rarities?: string[];
-      professions?: string[];
-      npcLevelMin?: number;
-      npcLevelMax?: number;
-      itemLevelMin?: number;
-      itemLevelMax?: number;
-      playerLevelMin?: number;
-      playerLevelMax?: number;
-      search?: string;
-      world?: string;
-      hid?: string;
-      itemSnapshotIds?: number[];
-      cursor?: number | null;
-      createdAtMin?: string;
-      createdAtMax?: string;
-    },
+    }: LootWhereOptions,
   ): Prisma.LootWhereInput {
     const visibilityCondition = buildLootNpcVisibilityWhere(permissions, roles);
     const playersCondition = this.buildPlayersCondition(players);
@@ -466,17 +480,10 @@ export class LootQueryService {
       createdAtMax,
     );
 
-    const baseWhere: Prisma.LootWhereInput = {
-      organizationLootRecords: {
-        some: {
-          guildId: guild.id,
-          archivedAt: null,
-        },
-      },
-    };
+    const lootWhere: Prisma.LootWhereInput = {};
 
     if (world) {
-      baseWhere.world = world;
+      lootWhere.world = world;
     }
 
     const andConditions = [
@@ -497,10 +504,10 @@ export class LootQueryService {
     ].filter(Boolean) as Prisma.LootWhereInput[];
 
     if (andConditions.length > 0) {
-      baseWhere.AND = andConditions;
+      lootWhere.AND = andConditions;
     }
 
-    return baseWhere;
+    return lootWhere;
   }
 
   private parseLootShare(lootShare: Prisma.JsonValue) {
