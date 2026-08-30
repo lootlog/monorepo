@@ -1,5 +1,12 @@
 # @lootlog/game-client
 
+## 1.2.13
+
+### Patch Changes
+
+- Updated dependencies [1f174e8]
+  - @lootlog/api-client@5.0.5
+
 ## 1.2.12
 
 ### Patch Changes
