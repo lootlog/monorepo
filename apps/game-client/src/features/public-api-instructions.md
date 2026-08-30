@@ -1,6 +1,6 @@
 # Lootlog Game Client Public API v1
 
-API for addons (userscripts) running in the Margonem page context. Provides read-only access to guilds, timers, and socket state.
+API for addons (userscripts) running in the Margonem page context. Provides read-only access to guilds, timers, online players, and socket state.
 
 ## Access
 
@@ -84,6 +84,47 @@ Calling `getTimers()` without `world` returns `undefined`.
 
 ---
 
+### `getOnlinePlayers(options)`
+
+Fetches the current online-player snapshot for one guild and world. Wait until
+`getSocketState()` reports both `connected` and `joined` before calling it.
+
+```js
+const result = await api.getOnlinePlayers({
+  guildId: "guild-1",
+  world: "tempest",
+});
+
+if (result.status === "success") {
+  console.log(result.players);
+} else {
+  console.log("Online-player access is not available for this guild");
+}
+```
+
+**Return type:**
+`Promise<{ status: "success"; players: PublicOnlinePlayers } | { status: "forbidden"; code: "ONLINE_PLAYERS_ACCESS_DENIED" }>`
+
+`PublicOnlinePlayers` groups presences by Discord user ID:
+
+```ts
+type PublicOnlinePlayers = Record<string, PublicOnlinePlayerPresence[]>;
+```
+
+Each presence contains the normalized character, account, session, AFK,
+verification, map, location, and update-time fields available to the in-game
+Online players feature. A user can have more than one presence when multiple
+characters or sessions are online.
+
+Invalid options, an unavailable socket, and transport failures reject the
+Promise. Missing presence permission returns the `forbidden` result instead of
+throwing.
+
+Calling this method also registers the guild and world as a scope for the
+`online-players:changed` event.
+
+---
+
 ### `getSocketState()`
 
 Returns the current WebSocket connection state.
@@ -160,6 +201,38 @@ api.subscribe("timers:changed", ({ world, guildId, timers }) => {
 
 ---
 
+### `online-players:changed`
+
+Fired when online players change in a guild and world previously passed to
+`getOnlinePlayers()`. The event contains a complete snapshot, not an individual
+socket update.
+
+```js
+const initial = await api.getOnlinePlayers({
+  guildId: "guild-1",
+  world: "tempest",
+});
+
+const unsubscribe = api.subscribe("online-players:changed", (event) => {
+  if (event.guildId !== "guild-1" || event.world !== "tempest") return;
+
+  if (event.status === "success") {
+    console.log("Online players updated:", event.players);
+  } else {
+    console.log("Online-player access was removed");
+  }
+});
+```
+
+**Payload:**
+`{ guildId: string; world: string } & ({ status: "success"; players: PublicOnlinePlayers } | { status: "forbidden"; code: "ONLINE_PLAYERS_ACCESS_DENIED" })`
+
+The API refreshes tracked scopes after reconnecting or receiving a permissions
+update. A permission revocation clears the cached snapshot and emits the
+`forbidden` result.
+
+---
+
 ### `socket:state-changed`
 
 Fired when the WebSocket connection state changes (connect, disconnect, join, guild list update).
@@ -178,6 +251,7 @@ api.subscribe("socket:state-changed", (state) => {
 
 - All getters and event payloads return **cloned snapshots**, never live references. Mutating the returned objects has no effect on the internal state.
 - `subscribe` does **not** replay the current state. Read the snapshot first with the corresponding getter, then subscribe to changes.
+- Online-player snapshots are current only while the socket is connected and joined. Use `getSocketState()` or `socket:state-changed` to detect stale data.
 - `undefined` from a getter means "data not yet loaded". An empty array means "loaded, but no results".
 - Event deduplication is built-in: events only fire when the underlying data actually changes, not on every internal cache update.
 - Errors thrown inside event listeners are caught and logged. A broken listener will not crash the game client.

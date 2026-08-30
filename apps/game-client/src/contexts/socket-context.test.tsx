@@ -208,6 +208,41 @@ describe("SocketProvider", () => {
     });
   });
 
+  it("clears joined state after disconnect", async () => {
+    render(
+      <SocketProvider>
+        <div />
+      </SocketProvider>,
+    );
+
+    act(() => {
+      mockSocketHandlers[GatewayEvent.JOIN]?.({
+        status: "success",
+        guildIds: ["guild-1"],
+      });
+    });
+
+    await waitFor(() => {
+      expect(useGlobalStore.getState().socketState).toMatchObject({
+        connected: true,
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      });
+    });
+
+    act(() => {
+      mockSocketHandlers[GatewayEvent.DISCONNECT]?.(undefined);
+    });
+
+    await waitFor(() => {
+      expect(useGlobalStore.getState().socketState).toEqual({
+        connected: false,
+        joined: false,
+        joinedGuilds: [],
+      });
+    });
+  });
+
   it("does not register a development catch-all listener", () => {
     render(
       <SocketProvider>
