@@ -92,7 +92,7 @@ export class ReservationMutationsService {
       async (transaction) => {
         await this.assertNoOverlap(transaction, {
           ...range,
-          visibleGuildIds,
+          guildId: context.guildId,
           spotId: spot.id,
         });
 
@@ -237,7 +237,7 @@ export class ReservationMutationsService {
         if (timeChanged) {
           await this.assertNoOverlap(transaction, {
             ...range,
-            visibleGuildIds,
+            guildId: reservation.guildId,
             spotId: reservation.spotId,
             excludedReservationId: reservation.id,
           });
@@ -368,7 +368,7 @@ export class ReservationMutationsService {
   private async assertNoOverlap(
     transaction: Prisma.TransactionClient,
     options: ReservationRange & {
-      visibleGuildIds: string[];
+      guildId: string;
       spotId: string;
       excludedReservationId?: number;
     },
@@ -378,7 +378,7 @@ export class ReservationMutationsService {
         ...(options.excludedReservationId === undefined
           ? {}
           : { id: { not: options.excludedReservationId } }),
-        guildId: { in: options.visibleGuildIds },
+        guildId: options.guildId,
         spotId: options.spotId,
         startsAt: { lt: options.endsAt },
         endsAt: { gt: options.startsAt },

@@ -131,10 +131,11 @@ the Organization's time policy, and check collisions inside a serializable
 transaction. Reads are bounded by an explicit window; retention is handled by
 scheduled cleanup rather than a read-side mutation or full-calendar cache.
 
-An active calendar partnership extends visibility and collision checks to one
-direct partner while keeping source ownership and moderation unchanged. It is
-reciprocal and non-transitive. The detailed disclosure and revocation contract
-is recorded in [ADR 0001](docs/adr/0001-direct-reciprocal-reservation-sharing.md).
+An active calendar partnership extends visibility to one direct partner while
+keeping each Organization's availability, collision checks, source ownership,
+and moderation independent. It is reciprocal and non-transitive. The detailed
+disclosure and revocation contract is recorded in
+[ADR 0001](docs/adr/0001-direct-reciprocal-reservation-sharing.md).
 
 Reservation reminders reuse the notification domain. A reservation stores an
 offset, not a Discord identifier. The notification boundary resolves an active

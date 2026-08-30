@@ -30,7 +30,6 @@ export const env = createEnv(
     AUTH_SERVICE_URL: z.string(),
     BATTLELOG_SERVICE_URL: z.string().default("http://battlelog-service:4000"),
     DISCORD_BOT_SERVICE_URL: z.string().default("http://discord-bot:4000"),
-    WEB_APP_URL: z.string().url().default("http://localhost"),
     RESERVATIONS_CARDS_URL: z.string().url(),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),

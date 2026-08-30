@@ -184,7 +184,7 @@
     },
     "sharing": {
       "title": "Współdzielone rezerwacje",
-      "description": "Połącz kalendarze dwóch organizacji. Relacja tworzy bezpośredni, wzajemny sojusz i nie obejmuje kolejnych organizacji.",
+      "description": "Połącz kalendarze dwóch organizacji w trybie podglądu. Rezerwacje sojusznika są widoczne, ale nie blokują zapisów.",
       "createInvite": "Utwórz zaproszenie",
       "inviteReady": "Jednorazowe zaproszenie jest gotowe",
       "inviteLink": "Link zaproszenia",
