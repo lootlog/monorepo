@@ -16,6 +16,7 @@ import { GatewayAuthService } from "./services/gateway-auth.service.js";
 import { MargonemAccountProofService } from "./services/margonem-account-proof.service.js";
 import { MapPingService } from "./services/map-ping.service.js";
 import { AirTagService } from "./services/air-tag.service.js";
+import { GatewayMetricsService } from "./services/gateway-metrics.service.js";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 
 export const gatewayRabbitMqModule = RabbitMQModule.forRoot(rabbitmqConfig);
@@ -41,6 +42,7 @@ export const gatewayRabbitMqModule = RabbitMQModule.forRoot(rabbitmqConfig);
     MargonemAccountProofService,
     MapPingService,
     AirTagService,
+    GatewayMetricsService,
   ],
 })
 export class GatewayModule {}
