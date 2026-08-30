@@ -3,6 +3,7 @@
 "@lootlog/api": patch
 "@lootlog/auth": patch
 "@lootlog/battlelog-service": patch
+"@lootlog/cli": patch
 "@lootlog/discord-bot": patch
 "@lootlog/gateway": patch
 "@lootlog/instrumentation": patch
