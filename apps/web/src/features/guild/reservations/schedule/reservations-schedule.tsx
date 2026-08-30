@@ -181,10 +181,12 @@ export function ReservationsSchedule() {
         ),
       );
       const nearestRange = findNearestFreeReservationRange({
-        intervals: result.items.map(({ endsAt, startsAt }) => ({
-          endsAt: new Date(endsAt),
-          startsAt: new Date(startsAt),
-        })),
+        intervals: result.items
+          .filter(({ sourceOrganization }) => sourceOrganization.isCurrent)
+          .map(({ endsAt, startsAt }) => ({
+            endsAt: new Date(endsAt),
+            startsAt: new Date(startsAt),
+          })),
         now,
         settings,
       });
