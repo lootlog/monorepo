@@ -6,6 +6,7 @@ import type { Emitter } from "./emitter";
 import { groupTimersByGuild, mapGuilds, mapTimers } from "./mappers";
 import { queryKeys } from "./query-keys";
 import type { ApiEventMap, ApiEventName } from "./types";
+import type { PublicOnlinePlayersController } from "./online-players-controller";
 
 type Unsubscribe = () => void;
 
@@ -25,6 +26,7 @@ function getQueryWorld(query: Query): string | undefined {
 export function setupSubscriptions(
   queryClient: QueryClient,
   emitter: Emitter<ApiEventMap>,
+  onlinePlayersController: PublicOnlinePlayersController,
 ): PublicApiSubscriptionController {
   const activeEvents = new Set<ApiEventName>();
   let lastGuildsJson = "";
@@ -193,6 +195,11 @@ export function setupSubscriptions(
         return;
       }
 
+      if (eventName === "online-players:changed") {
+        onlinePlayersController.activate();
+        return;
+      }
+
       unsubscribeReady = useGlobalStore.subscribe((state, prevState) => {
         if (
           !prevState.gameState.gameInitialized &&
@@ -226,6 +233,11 @@ export function setupSubscriptions(
         return;
       }
 
+      if (eventName === "online-players:changed") {
+        onlinePlayersController.deactivate();
+        return;
+      }
+
       unsubscribeReady?.();
       unsubscribeReady = null;
     },
@@ -235,6 +247,7 @@ export function setupSubscriptions(
       unsubscribeQueryCache?.();
       unsubscribeSocket?.();
       unsubscribeReady?.();
+      onlinePlayersController.deactivate();
       unsubscribeQueryCache = null;
       unsubscribeSocket = null;
       unsubscribeReady = null;

@@ -1,13 +1,52 @@
 import type { Guild, Npc, Timer, User } from "@/api";
 import type { GuildMember } from "@/types/guild-member";
+import type {
+  PlayerPresence,
+  PlayerPresenceResponse,
+} from "@/lib/online-players-presence";
 import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 import type {
   PublicGuild,
   PublicMember,
   PublicNpc,
+  PublicOnlinePlayerPresence,
+  PublicOnlinePlayers,
   PublicTimer,
   PublicUser,
 } from "./types";
+
+const mapOnlinePlayerPresence = (
+  presence: PlayerPresence,
+): PublicOnlinePlayerPresence => ({
+  discordId: presence.discordId,
+  sessionId: presence.sessionId,
+  platform: presence.platform,
+  status: presence.status,
+  guildId: presence.guildId,
+  mapName: presence.mapName,
+  isAfk: presence.isAfk,
+  margonemAccountVerified: presence.margonemAccountVerified,
+  updatedAt: presence.updatedAt,
+  player: presence.player
+    ? {
+        ...presence.player,
+        clan: presence.player.clan ? { ...presence.player.clan } : undefined,
+        location: presence.player.location
+          ? { ...presence.player.location }
+          : undefined,
+      }
+    : undefined,
+});
+
+export const mapOnlinePlayers = (
+  players: PlayerPresenceResponse,
+): PublicOnlinePlayers =>
+  Object.fromEntries(
+    Object.entries(players).map(([discordId, presences]) => [
+      discordId,
+      presences.map(mapOnlinePlayerPresence),
+    ]),
+  );
 
 const mapUser = (user: User): PublicUser => ({
   avatar: user.avatar,
