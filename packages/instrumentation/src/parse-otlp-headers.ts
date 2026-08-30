@@ -1,7 +1,9 @@
 export function parseOtlpHeaders(
-  headersString: string,
+  headersString?: string,
 ): Record<string, string> {
   const headers: Record<string, string> = {};
+  if (!headersString) return headers;
+
   const paramsString = headersString.replaceAll(",", "&");
   const params = new URLSearchParams(paramsString);
 

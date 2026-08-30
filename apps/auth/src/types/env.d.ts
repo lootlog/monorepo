@@ -34,8 +34,6 @@ declare global {
       OTEL_TRACES_EXPORTER?: string;
       SERVICE_NAMESPACE?: string;
 
-      AXIOM_DATASET?: string;
-      AXIOM_TOKEN?: string;
       COMMIT_SHA?: string;
     }
   }

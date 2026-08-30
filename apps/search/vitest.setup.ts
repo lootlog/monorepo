@@ -8,8 +8,6 @@ vi.mock("#src/config/env", () => ({
     MEILISEARCH_HOST: "http://localhost:7700",
     MEILISEARCH_API_KEY: "test-api-key",
     RABBITMQ_URI: "amqp://localhost:5672",
-    AXIOM_DATASET: "",
-    AXIOM_TOKEN: "",
     OTEL_EXPORTER_OTLP_ENDPOINT: undefined,
     OTEL_EXPORTER_OTLP_HEADERS: undefined,
     OTEL_NODE_RESOURCE_DETECTORS: "env,host,os,process",

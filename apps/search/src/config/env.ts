@@ -11,8 +11,6 @@ export const env = createEnv(
     MEILISEARCH_HOST: z.string(),
     MEILISEARCH_API_KEY: z.string(),
     RABBITMQ_URI: z.string(),
-    AXIOM_DATASET: z.string().optional(),
-    AXIOM_TOKEN: z.string().optional(),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
     OTEL_NODE_RESOURCE_DETECTORS: z.string().default("env,host,os,process"),

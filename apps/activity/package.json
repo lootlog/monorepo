@@ -16,7 +16,7 @@
     "dev": "APP_VERSION=$(node -p \"require('./package.json').version\") nest start --watch",
     "prebuild": "pnpm activity:generate",
     "build": "nest build",
-    "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/main.js",
+    "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node --import ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src test",
     "format": "oxfmt src test",
@@ -33,6 +33,7 @@
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^9.0.2",
     "@keyv/redis": "^5.1.6",
+    "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@nestjs/axios": "catalog:",

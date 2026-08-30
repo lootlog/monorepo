@@ -48,8 +48,6 @@ export const env = createEnv(
     OTEL_TRACES_EXPORTER: z.string().default("otlp"),
     SERVICE_NAMESPACE: z.string().default("local"),
 
-    AXIOM_DATASET: z.string().optional(),
-    AXIOM_TOKEN: z.string().optional(),
     COMMIT_SHA: z.string().optional(),
   }),
 );
