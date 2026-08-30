@@ -45,14 +45,18 @@ export class ReservationsService {
       const spotReservations = reservations.filter(
         (reservation) => reservation.spotId === spot.id,
       );
+      const localSpotReservations = spotReservations.filter(
+        (reservation) => reservation.guildId === context.guildId,
+      );
       const currentReservation =
-        spotReservations.find(
+        localSpotReservations.find(
           (reservation) =>
             reservation.startsAt <= now && reservation.endsAt > now,
         ) ?? null;
       const nextReservation =
-        spotReservations.find((reservation) => reservation.startsAt > now) ??
-        null;
+        localSpotReservations.find(
+          (reservation) => reservation.startsAt > now,
+        ) ?? null;
 
       return {
         ...spot,
@@ -62,7 +66,7 @@ export class ReservationsService {
           currentReservation === null
             ? (nextReservation?.startsAt ?? null)
             : null,
-        activeReservationCount: spotReservations.length,
+        activeReservationCount: localSpotReservations.length,
         hasPartnerReservations: spotReservations.some(
           (reservation) => reservation.guildId !== context.guildId,
         ),

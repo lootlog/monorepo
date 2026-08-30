@@ -5,7 +5,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { env } from "#src/config/env";
 import { PrismaService } from "#src/db/prisma.service";
 import { Permission, type Guild } from "#src/generated/prisma/client";
 import { GuildsService } from "#src/guilds/guilds.service";
@@ -110,14 +109,11 @@ export class ReservationSharingService {
         expiresAt,
       },
     });
-    const inviteUrl = new URL(
-      `/reservation-sharing/invitations/${token}`,
-      env.WEB_APP_URL,
-    ).toString();
+    const invitePath = `/reservation-sharing/invitations/${token}`;
 
     return {
       id: invitation.id,
-      inviteUrl,
+      invitePath,
       expiresAt: invitation.expiresAt,
       createdAt: invitation.createdAt,
     };

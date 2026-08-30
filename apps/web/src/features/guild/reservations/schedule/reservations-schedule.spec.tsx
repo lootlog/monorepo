@@ -178,13 +178,18 @@ describe("ReservationsSchedule nearest free slot", () => {
     vi.useRealTimers();
   });
 
-  it("loads the full availability window and opens the nearest partner-safe range", async () => {
+  it("ignores partner reservations while finding the nearest local range", async () => {
     mocks.fetchQuery.mockResolvedValue({
       items: [
         {
           endsAt: new Date(2026, 0, 2, 9, 0).toISOString(),
           sourceOrganization: { isCurrent: false },
           startsAt: new Date(2026, 0, 1, 12, 0).toISOString(),
+        },
+        {
+          endsAt: new Date(2026, 0, 1, 13, 0).toISOString(),
+          sourceOrganization: { isCurrent: true },
+          startsAt: new Date(2026, 0, 1, 12, 30).toISOString(),
         },
       ],
     });
@@ -207,17 +212,17 @@ describe("ReservationsSchedule nearest free slot", () => {
     );
     expect(
       screen.getByTestId("schedule-header").getAttribute("data-date"),
-    ).toBe(new Date(2026, 0, 2, 9, 0).toISOString());
+    ).toBe(new Date(2026, 0, 1, 13, 0).toISOString());
     expect(
       screen
         .getByTestId("reservation-form-dialog")
         .getAttribute("data-starts-at"),
-    ).toBe(new Date(2026, 0, 2, 9, 0).toISOString());
+    ).toBe(new Date(2026, 0, 1, 13, 0).toISOString());
     expect(
       screen
         .getByTestId("reservation-form-dialog")
         .getAttribute("data-ends-at"),
-    ).toBe(new Date(2026, 0, 2, 9, 30).toISOString());
+    ).toBe(new Date(2026, 0, 1, 13, 30).toISOString());
   });
 
   it("shows distinct feedback for no availability and request failures", async () => {
@@ -227,6 +232,7 @@ describe("ReservationsSchedule nearest free slot", () => {
         items: [
           {
             endsAt: unavailableUntil.toISOString(),
+            sourceOrganization: { isCurrent: true },
             startsAt: now.toISOString(),
           },
         ],

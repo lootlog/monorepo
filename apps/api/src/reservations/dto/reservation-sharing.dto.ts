@@ -28,7 +28,11 @@ export class ReservationSharesResponseDto extends createZodDto(
 ) {}
 
 export class CreateReservationShareInvitationResponseDto extends createZodDto(
-  ReservationShareInvitationSchema.extend({ inviteUrl: z.string().url() }),
+  ReservationShareInvitationSchema.extend({
+    invitePath: z
+      .string()
+      .regex(/^\/reservation-sharing\/invitations\/[\w-]+$/),
+  }),
   { codec: true },
 ) {}
 
