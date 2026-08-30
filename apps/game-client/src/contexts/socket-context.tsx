@@ -116,7 +116,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleConnect = () => setConnected(true);
-    const handleDisconnect = () => setConnected(false);
+    const handleDisconnect = () => {
+      setConnected(false);
+      setJoined(false);
+      setJoinedGuilds([]);
+    };
     const handleJoin = (data: {
       status: "success" | "error";
       code?: string;

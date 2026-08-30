@@ -8,6 +8,42 @@ import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@lootlog/api
 import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 import type { Timer } from "@/api";
 
+const socketMocks = vi.hoisted(() => {
+  type Handler = (payload?: unknown) => void;
+  const handlers = new Map<string, Set<Handler>>();
+  const responses: unknown[] = [];
+  const emitWithAck = vi.fn(() => {
+    const response = responses.shift();
+    if (response instanceof Error) return Promise.reject(response);
+    return Promise.resolve(response);
+  });
+  const socket = {
+    on: vi.fn((event: string, handler: Handler) => {
+      const eventHandlers = handlers.get(event) ?? new Set<Handler>();
+      eventHandlers.add(handler);
+      handlers.set(event, eventHandlers);
+    }),
+    off: vi.fn((event: string, handler: Handler) => {
+      handlers.get(event)?.delete(handler);
+    }),
+    timeout: vi.fn(() => ({ emitWithAck })),
+  };
+
+  return {
+    emit(event: string, payload?: unknown) {
+      for (const handler of handlers.get(event) ?? []) handler(payload);
+    },
+    emitWithAck,
+    handlers,
+    responses,
+    socket,
+  };
+});
+
+vi.mock("@/lib/socket", () => ({
+  getSocket: () => socketMocks.socket,
+}));
+
 const makeGuild = (
   overrides?: Partial<GuildResponseDtoOutput>,
 ): GuildResponseDtoOutput => {
@@ -69,6 +105,33 @@ const makeTimer = (overrides?: Partial<Timer>): Timer => ({
   ...overrides,
 });
 
+const makePresencePayload = (overrides?: Record<string, unknown>) => ({
+  discordId: "discord-1",
+  guildId: "guild-1",
+  platform: "game",
+  player: {
+    world: "tempest",
+    name: "Player One",
+    lvl: "120",
+    icon: "player.gif",
+    characterId: "character-1",
+    accountId: "account-1",
+    prof: "w",
+    mapName: "Cave",
+    sessionId: "session-1",
+    isAfk: false,
+    updatedAt: 1,
+  },
+  ...overrides,
+});
+
+const makePresenceSuccess = (
+  ...players: ReturnType<typeof makePresencePayload>[]
+) => ({
+  status: "success" as const,
+  players: { "discord-1": players },
+});
+
 const getPublicApi = () => {
   const publicApi = window.lootlogGameClientApi;
   if (!publicApi) {
@@ -91,6 +154,12 @@ describe("Public API", () => {
       gameState: { gameInitialized: false },
       socketState: { connected: false, joined: false, joinedGuilds: [] },
     });
+    socketMocks.handlers.clear();
+    socketMocks.responses.length = 0;
+    socketMocks.emitWithAck.mockClear();
+    socketMocks.socket.on.mockClear();
+    socketMocks.socket.off.mockClear();
+    socketMocks.socket.timeout.mockClear();
 
     teardown = bootstrapPublicApi(queryClient);
   });
@@ -270,6 +339,134 @@ describe("Public API", () => {
     });
   });
 
+  describe("getOnlinePlayers", () => {
+    beforeEach(() => {
+      useGlobalStore.getState().setSocketState({
+        connected: true,
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      });
+    });
+
+    it("fetches and maps a grouped presence snapshot", async () => {
+      socketMocks.responses.push(
+        makePresenceSuccess(
+          makePresencePayload(),
+          makePresencePayload({
+            player: {
+              ...makePresencePayload().player,
+              characterId: "character-2",
+              sessionId: "session-2",
+            },
+          }),
+        ),
+      );
+
+      const result = await getPublicApi().getOnlinePlayers({
+        guildId: "guild-1",
+        world: "tempest",
+      });
+
+      expect(result.status).toBe("success");
+      if (result.status !== "success") throw new Error("Expected success");
+      expect(result.players["discord-1"]).toHaveLength(2);
+      expect(result.players["discord-1"]?.[0]).toEqual(
+        expect.objectContaining({
+          discordId: "discord-1",
+          isAfk: false,
+          mapName: "Cave",
+          sessionId: "session-1",
+        }),
+      );
+      expect(result.players["discord-1"]?.[0]?.player?.lvl).toBe(120);
+    });
+
+    it("returns an empty successful snapshot", async () => {
+      socketMocks.responses.push({ status: "success", players: {} });
+
+      await expect(
+        getPublicApi().getOnlinePlayers({
+          guildId: "guild-1",
+          world: "tempest",
+        }),
+      ).resolves.toEqual({ status: "success", players: {} });
+    });
+
+    it("returns forbidden as a domain result", async () => {
+      socketMocks.responses.push({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+
+      await expect(
+        getPublicApi().getOnlinePlayers({
+          guildId: "guild-1",
+          world: "tempest",
+        }),
+      ).resolves.toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+    });
+
+    it("returns cloned data without shared nested references", async () => {
+      const response = makePresenceSuccess(makePresencePayload());
+      socketMocks.responses.push(response, response);
+
+      const first = await getPublicApi().getOnlinePlayers({
+        guildId: "guild-1",
+        world: "tempest",
+      });
+      const second = await getPublicApi().getOnlinePlayers({
+        guildId: "guild-1",
+        world: "tempest",
+      });
+
+      if (first.status !== "success" || second.status !== "success") {
+        throw new Error("Expected successful snapshots");
+      }
+      expect(first.players).not.toBe(second.players);
+      expect(first.players["discord-1"]).not.toBe(second.players["discord-1"]);
+      expect(first.players["discord-1"]?.[0]?.player).not.toBe(
+        second.players["discord-1"]?.[0]?.player,
+      );
+    });
+
+    it("validates scope arguments before using the socket", async () => {
+      await expect(
+        getPublicApi().getOnlinePlayers({ guildId: " ", world: "tempest" }),
+      ).rejects.toThrow("guildId must be a non-empty string");
+      await expect(
+        getPublicApi().getOnlinePlayers({ guildId: "guild-1", world: "" }),
+      ).rejects.toThrow("world must be a non-empty string");
+      expect(socketMocks.emitWithAck).not.toHaveBeenCalled();
+    });
+
+    it("rejects before using the socket when gateway join is incomplete", async () => {
+      useGlobalStore.getState().setSocketState({ joined: false });
+
+      await expect(
+        getPublicApi().getOnlinePlayers({
+          guildId: "guild-1",
+          world: "tempest",
+        }),
+      ).rejects.toThrow("gateway socket is not ready");
+      expect(socketMocks.emitWithAck).not.toHaveBeenCalled();
+    });
+
+    it("rejects after the existing transport retry is exhausted", async () => {
+      socketMocks.responses.push(new Error("timeout"), new Error("timeout"));
+
+      await expect(
+        getPublicApi().getOnlinePlayers({
+          guildId: "guild-1",
+          world: "tempest",
+        }),
+      ).rejects.toThrow("timeout");
+      expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("guilds:changed event", () => {
     it("emits when guilds data changes", () => {
       const listener = vi.fn();
@@ -401,6 +598,185 @@ describe("Public API", () => {
 
       expect(listener).toHaveBeenCalledOnce();
       expect(listener.mock.calls[0][0].joinedGuilds).toEqual(["g1", "g2"]);
+    });
+  });
+
+  describe("online-players:changed event", () => {
+    const primeScope = async () => {
+      useGlobalStore.getState().setSocketState({
+        connected: true,
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      });
+      const initialResponse = makePresenceSuccess(makePresencePayload());
+      socketMocks.responses.push(initialResponse);
+      await getPublicApi().getOnlinePlayers({
+        guildId: "guild-1",
+        world: "tempest",
+      });
+      socketMocks.responses.push(initialResponse);
+    };
+
+    it("publishes a full snapshot for matching presence updates", async () => {
+      await primeScope();
+      const listener = vi.fn();
+      getPublicApi().subscribe("online-players:changed", listener);
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+
+      socketMocks.emit(
+        "online-players:presence:update",
+        makePresencePayload({
+          player: {
+            ...makePresencePayload().player,
+            isAfk: true,
+            updatedAt: 2,
+          },
+        }),
+      );
+
+      expect(listener).toHaveBeenCalledOnce();
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          guildId: "guild-1",
+          world: "tempest",
+          status: "success",
+          players: expect.objectContaining({
+            "discord-1": [expect.objectContaining({ isAfk: true })],
+          }),
+        }),
+      );
+    });
+
+    it("removes an offline presence and ignores unrelated scopes", async () => {
+      await primeScope();
+      const listener = vi.fn();
+      getPublicApi().subscribe("online-players:changed", listener);
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+
+      socketMocks.emit(
+        "online-players:presence:update",
+        makePresencePayload({ guildId: "guild-2" }),
+      );
+      socketMocks.emit(
+        "online-players:presence:update",
+        makePresencePayload({ status: "offline" }),
+      );
+
+      expect(listener).toHaveBeenCalledOnce();
+      expect(listener.mock.calls[0][0]).toEqual({
+        guildId: "guild-1",
+        world: "tempest",
+        status: "success",
+        players: {},
+      });
+    });
+
+    it("deduplicates an update that does not change the snapshot", async () => {
+      await primeScope();
+      const listener = vi.fn();
+      getPublicApi().subscribe("online-players:changed", listener);
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+
+      socketMocks.emit("online-players:presence:update", makePresencePayload());
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("revalidates tracked scopes after permissions change", async () => {
+      await primeScope();
+      const listener = vi.fn();
+      getPublicApi().subscribe("online-players:changed", listener);
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+      socketMocks.responses.push({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+
+      socketMocks.emit("permissions-updated");
+
+      await vi.waitFor(() =>
+        expect(listener).toHaveBeenCalledWith({
+          guildId: "guild-1",
+          world: "tempest",
+          status: "forbidden",
+          code: "ONLINE_PLAYERS_ACCESS_DENIED",
+        }),
+      );
+    });
+
+    it("refreshes tracked scopes when the socket rejoins", async () => {
+      await primeScope();
+      const listener = vi.fn();
+      getPublicApi().subscribe("online-players:changed", listener);
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+      useGlobalStore.getState().setSocketState({
+        connected: false,
+        joined: false,
+      });
+      socketMocks.responses.push(
+        makePresenceSuccess(
+          makePresencePayload({
+            player: {
+              ...makePresencePayload().player,
+              isAfk: true,
+              updatedAt: 2,
+            },
+          }),
+        ),
+      );
+
+      useGlobalStore.getState().setSocketState({
+        connected: true,
+        joined: true,
+      });
+
+      await vi.waitFor(() => expect(listener).toHaveBeenCalledOnce());
+      expect(listener.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ status: "success" }),
+      );
+    });
+
+    it("shares one socket listener and detaches it after the last unsubscribe", async () => {
+      await primeScope();
+      const unsubscribeFirst = getPublicApi().subscribe(
+        "online-players:changed",
+        vi.fn(),
+      );
+      const unsubscribeSecond = getPublicApi().subscribe(
+        "online-players:changed",
+        vi.fn(),
+      );
+
+      expect(socketMocks.socket.on).toHaveBeenCalledTimes(2);
+      unsubscribeFirst();
+      expect(socketMocks.socket.off).not.toHaveBeenCalled();
+      unsubscribeSecond();
+      expect(socketMocks.socket.off).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps presence listeners active when another event unsubscribes", async () => {
+      await primeScope();
+      const unsubscribeOnlinePlayers = getPublicApi().subscribe(
+        "online-players:changed",
+        vi.fn(),
+      );
+      const unsubscribeReady = getPublicApi().subscribe("ready", vi.fn());
+
+      unsubscribeReady();
+
+      expect(socketMocks.socket.off).not.toHaveBeenCalled();
+      unsubscribeOnlinePlayers();
+      expect(socketMocks.socket.off).toHaveBeenCalledTimes(2);
     });
   });
 

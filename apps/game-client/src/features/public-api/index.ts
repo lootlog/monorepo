@@ -4,6 +4,7 @@ import { queryKeys } from "./query-keys";
 import { mapGuilds, mapTimers } from "./mappers";
 import { Emitter } from "./emitter";
 import { setupSubscriptions } from "./subscriptions";
+import { PublicOnlinePlayersController } from "./online-players-controller";
 import type {
   ApiEventMap,
   ApiEventName,
@@ -21,8 +22,15 @@ declare global {
 
 export function bootstrapPublicApi(queryClient: QueryClient): () => void {
   const emitter = new Emitter<ApiEventMap>();
+  const onlinePlayersController = new PublicOnlinePlayersController({
+    publish: (event) => emitter.emit("online-players:changed", event),
+  });
 
-  const subscriptions = setupSubscriptions(queryClient, emitter);
+  const subscriptions = setupSubscriptions(
+    queryClient,
+    emitter,
+    onlinePlayersController,
+  );
   const listenerCounts = new Map<ApiEventName, number>();
 
   const api: LootlogGameClientApi = Object.freeze({
@@ -45,6 +53,10 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
         queryKeys.timers(options.world),
       );
       return mapTimers(data);
+    },
+
+    getOnlinePlayers(options: { guildId: string; world: string }) {
+      return onlinePlayersController.getOnlinePlayers(options);
     },
 
     getSocketState(): PublicSocketState {
@@ -96,6 +108,7 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
 
   return () => {
     subscriptions.teardown();
+    onlinePlayersController.teardown();
     listenerCounts.clear();
     emitter.clear();
     delete window.lootlogGameClientApi;
