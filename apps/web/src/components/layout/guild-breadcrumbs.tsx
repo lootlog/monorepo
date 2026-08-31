@@ -12,7 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
 import { AppTopBar } from "@/components/layout/app-top-bar";
-import { getNavigationInfo } from "./get-navigation-info";
+import { resolveAppNavigation } from "@/navigation/app-navigation";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerGetGuildMembers,
@@ -149,34 +149,10 @@ export const GuildBreadcrumbs: FC = () => {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const guildRouteData = guildRouteApi.useLoaderData();
-  const eventRouteData = useMatches({
-    select: (matches) =>
-      matches.find(
-        (match) =>
-          match.routeId === "/_authenticated/$guildId/events_/$eventId_",
-      )?.loaderData as
-        | {
-            event?: {
-              name?: string;
-              heroNpcs?: Array<{ id: string; npcName: string }>;
-            };
-            rankings?: Array<{ memberId: number; member?: { name?: string } }>;
-          }
-        | undefined,
-  });
+  const matches = useMatches();
   const guild = guildRouteData?.guild;
 
-  const {
-    guildId,
-    eventId,
-    heroId,
-    killId,
-    memberId,
-    npcId,
-    reservationId,
-    roleId,
-    docId,
-  } = params;
+  const { guildId, eventId, memberId, npcId, roleId, docId } = params;
   const path = location.pathname;
   const routeFlags = getBreadcrumbRouteFlags({
     guildId,
@@ -210,10 +186,6 @@ export const GuildBreadcrumbs: FC = () => {
     return settingsNpc ? t(`npcType.${settingsNpc.npcType}`) : undefined;
   };
   const resolveNavigationInfo = () => {
-    const event = routeFlags.isEventRoute ? eventRouteData?.event : undefined;
-    const eventRankings = routeFlags.isEventMemberRoute
-      ? (eventRouteData?.rankings ?? [])
-      : [];
     const settingsMemberName = routeFlags.isSettingsMemberRoute
       ? settingsMembers?.find((member) => String(member.id) === memberId)?.name
       : undefined;
@@ -222,44 +194,29 @@ export const GuildBreadcrumbs: FC = () => {
       : undefined;
     const settingsNpcName = resolveSettingsNpcName();
 
-    return getNavigationInfo({
-      path,
-      params: {
-        guildId,
-        eventId,
-        heroId,
-        killId,
-        memberId,
-        npcId,
-        reservationId,
-        roleId,
-        docId,
-      },
-      docTitle: routeFlags.isDocsDetailRoute
-        ? currentDocument?.title
-        : undefined,
-      guildName: guild?.name,
-      eventName: event?.name,
-      eventHeroNpcs: event?.heroNpcs,
-      eventRankings,
-      settingsMemberName,
-      settingsNpcName,
-      settingsRoleName,
-      t,
+    return resolveAppNavigation({
+      matches,
+      organizationName: guild?.name,
+      currentEntityLabel:
+        settingsMemberName ??
+        settingsNpcName ??
+        settingsRoleName ??
+        (routeFlags.isDocsDetailRoute ? currentDocument?.title : undefined),
     });
   };
   const navInfo = resolveNavigationInfo();
+  const parentPath = navInfo.parentPath;
 
   return (
     <AppTopBar>
       <div className="flex w-full min-w-0 flex-row items-center justify-between gap-2 overflow-hidden">
         <div className="flex min-w-0 shrink-0 flex-row gap-2 items-center">
           <SidebarTrigger className="size-8!" />
-          {navInfo.showBack && navInfo.backPath && (
+          {parentPath && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate({ to: navInfo.backPath as string })}
+              onClick={() => navigate({ to: parentPath })}
               className="p-1 h-8 w-8 rounded-full hover:bg-muted/50 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -271,11 +228,7 @@ export const GuildBreadcrumbs: FC = () => {
           breadcrumbs={navInfo.breadcrumbs}
           onNavigate={(breadcrumbPath) => navigate({ to: breadcrumbPath })}
         />
-        <div
-          className={
-            navInfo.showBack && navInfo.backPath ? "w-[4.5rem]" : "w-8"
-          }
-        />
+        <div className={parentPath ? "w-[4.5rem]" : "w-8"} />
       </div>
     </AppTopBar>
   );

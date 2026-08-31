@@ -1,0 +1,151 @@
+import { describe, expect, it } from "vitest";
+import {
+  resolveAppNavigation,
+  type AppNavigationMatch,
+} from "./app-navigation";
+
+function createMatch(
+  overrides: Partial<AppNavigationMatch>,
+): AppNavigationMatch {
+  return {
+    params: {},
+    pathname: "/",
+    routeId: "__root__",
+    status: "success",
+    ...overrides,
+  };
+}
+
+describe("resolveAppNavigation", () => {
+  it("resolves one Organization hierarchy for breadcrumbs, title, parent, and sidebar", () => {
+    const navigation = resolveAppNavigation({
+      currentEntityLabel: "Alicja",
+      matches: [
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1", memberId: "member-1" },
+          pathname: "/guild-1/settings/members/member-1",
+          routeId: "/_authenticated/$guildId/settings/members/$memberId",
+        }),
+      ],
+      permissions: ["ADMIN"],
+    });
+
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Nocna Straż", path: "/guild-1" },
+      { label: "Ustawienia", path: "/guild-1/settings" },
+      { label: "Członkowie", path: "/guild-1/settings/members" },
+      { label: "Alicja", path: null },
+    ]);
+    expect(navigation.parentPath).toBe("/guild-1/settings/members");
+    expect(navigation.documentTitle).toBe("Alicja — Nocna Straż — Lootlog.pl");
+    expect(
+      navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
+    ).toMatchObject({ active: true, visible: true });
+  });
+
+  it("uses a translated dynamic fallback immediately", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1", roleId: "role-7" },
+          pathname: "/guild-1/settings/roles/role-7",
+          routeId: "/_authenticated/$guildId/settings/roles/$roleId",
+        }),
+      ],
+      permissions: ["ADMIN"],
+    });
+
+    expect(navigation.breadcrumbs[navigation.breadcrumbs.length - 1]).toEqual({
+      label: "Rola #role-7",
+      path: null,
+    });
+    expect(navigation.parentPath).toBe("/guild-1/settings/roles");
+  });
+
+  it("keeps the nearest parent for an unknown Organization subroute", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1/settings/unknown",
+          routeId: "/_authenticated/$guildId/settings/$",
+        }),
+      ],
+      permissions: ["ADMIN"],
+    });
+
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Nocna Straż", path: "/guild-1" },
+      { label: "Ustawienia", path: "/guild-1/settings" },
+      { label: "Strona", path: null },
+    ]);
+    expect(navigation.parentPath).toBe("/guild-1/settings");
+    expect(navigation.documentTitle).toBe("Strona — Nocna Straż — Lootlog.pl");
+  });
+
+  it("resolves personal navigation through the same seam", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          pathname: "/@me/battle-panel/statistics/h2h",
+          routeId: "/_authenticated/@me/battle-panel/statistics_/h2h",
+        }),
+      ],
+    });
+
+    expect(navigation.scope).toBe("user");
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Panel walk", path: "/@me/battle-panel" },
+      { label: "Statystyki", path: "/@me/battle-panel/statistics" },
+      { label: "Bilans H2H", path: null },
+    ]);
+    expect(navigation.parentPath).toBe("/@me/battle-panel/statistics");
+    expect(navigation.documentTitle).toBe(
+      "Bilans H2H — Panel walk — Lootlog.pl",
+    );
+    expect(
+      navigation.sidebarItems.find(({ id }) => id === "user-battles"),
+    ).toMatchObject({ active: true, visible: true });
+  });
+
+  it("derives Organization sidebar visibility from Access policy permissions", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1/timers",
+          routeId: "/_authenticated/$guildId/timers",
+        }),
+      ],
+      permissions: ["LOOTLOG_TIMERS_READ"],
+    });
+
+    expect(
+      navigation.sidebarItems.find(({ id }) => id === "organization-timers"),
+    ).toMatchObject({ active: true, visible: true });
+    expect(
+      navigation.sidebarItems.find(({ id }) => id === "organization-loots"),
+    ).toMatchObject({ label: "Lista łupów", visible: false });
+    expect(
+      navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
+    ).toMatchObject({ visible: false });
+  });
+});

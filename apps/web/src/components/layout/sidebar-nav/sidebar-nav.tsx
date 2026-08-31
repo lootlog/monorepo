@@ -1,6 +1,5 @@
 import { Separator } from "@lootlog/ui/components/separator";
 import type { MouseEvent, ReactNode } from "react";
-import { useLocation } from "@tanstack/react-router";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import {
@@ -26,7 +25,6 @@ export const SidebarNav = ({
   footer,
   onItemClick,
 }: SidebarNavProps) => {
-  const { pathname } = useLocation();
   const { isRukiaTheme, isCatTheme } = useThemeMeta();
 
   return (
@@ -41,6 +39,7 @@ export const SidebarNav = ({
       <div key={basePath} className="flex flex-col gap-1.5">
         {items.map((item) => {
           const {
+            active,
             divided,
             icon,
             path,
@@ -49,33 +48,18 @@ export const SidebarNav = ({
             enabled,
             badge,
             highlight,
-            childPaths,
           } = item;
 
           if (!enabled) return null;
 
           const url = `${basePath}${path}`;
-          const normalizedPathname = pathname.replace(/\/$/, "");
-          const normalizedUrl = url.replace(/\/$/, "");
-          const isActive =
-            path === ""
-              ? normalizedPathname === normalizedUrl ||
-                (childPaths?.some(
-                  (cp) =>
-                    normalizedPathname === `${normalizedUrl}${cp}` ||
-                    pathname.startsWith(`${normalizedUrl}${cp}/`),
-                ) ??
-                  false)
-              : normalizedPathname === normalizedUrl ||
-                pathname.startsWith(`${normalizedUrl}/`);
-
           return (
             <div key={path}>
               {divided && <Separator className="mb-1.5" />}
               <SidebarNavItem
                 url={url}
                 available={available}
-                isActive={isActive}
+                isActive={active}
                 icon={icon}
                 label={label}
                 badge={badge}

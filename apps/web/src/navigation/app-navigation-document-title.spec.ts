@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest";
 import type { Battle } from "@/lib/api/battlelog-types";
 import {
-  resolveDocumentTitle,
-  type DocumentTitleMatch,
-} from "./document-title";
+  resolveAppNavigation,
+  type AppNavigationMatch,
+} from "./app-navigation";
+
+type DocumentTitleMatch = AppNavigationMatch;
+
+function resolveDocumentTitle(
+  matches: readonly AppNavigationMatch[],
+  options: { currentBattle?: Battle; guildName?: string } = {},
+) {
+  return resolveAppNavigation({
+    matches,
+    currentBattle: options.currentBattle,
+    organizationName: options.guildName,
+  }).documentTitle;
+}
 
 function createMatch(
   overrides: Partial<DocumentTitleMatch>,
@@ -35,7 +48,7 @@ describe("resolveDocumentTitle", () => {
         createMatch({ routeId: "__root__" }),
         createMatch({ pathname: "/signin", routeId: "/signin" }),
       ]),
-    ).toBe("Logowanie | Lootlog.pl");
+    ).toBe("Logowanie — Lootlog.pl");
   });
 
   it("uses user breadcrumbs with the top-level section as context", () => {
@@ -47,7 +60,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/@me/battle-panel/statistics_/h2h",
         }),
       ]),
-    ).toBe("Bilans H2H - Panel walk | Lootlog.pl");
+    ).toBe("Bilans H2H — Panel walk — Lootlog.pl");
   });
 
   it("uses 1v1 battle participants for user battle detail titles", () => {
@@ -61,7 +74,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
         }),
       ]),
-    ).toBe("gorilla banana vs imbi woj - Panel walk | Lootlog.pl");
+    ).toBe("gorilla banana vs imbi woj — Panel walk — Lootlog.pl");
   });
 
   it("uses the cached battle for user battle detail titles when loader data is empty", () => {
@@ -77,7 +90,7 @@ describe("resolveDocumentTitle", () => {
         ],
         { currentBattle: createDuelBattle("battle-1") },
       ),
-    ).toBe("gorilla banana vs imbi woj - Panel walk | Lootlog.pl");
+    ).toBe("gorilla banana vs imbi woj — Panel walk — Lootlog.pl");
   });
 
   it("ignores stale battle loader data for user battle detail titles", () => {
@@ -91,7 +104,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
         }),
       ]),
-    ).toBe("Walka #battle-2 - Panel walk | Lootlog.pl");
+    ).toBe("Walka #battle-2 — Panel walk — Lootlog.pl");
   });
 
   it("ignores stale cached battle data for user battle detail titles", () => {
@@ -107,7 +120,7 @@ describe("resolveDocumentTitle", () => {
         ],
         { currentBattle: createDuelBattle("battle-1") },
       ),
-    ).toBe("Walka #battle-2 - Panel walk | Lootlog.pl");
+    ).toBe("Walka #battle-2 — Panel walk — Lootlog.pl");
   });
 
   it("uses the battle id fallback for non-1v1 user battle detail titles", () => {
@@ -130,7 +143,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
         }),
       ]),
-    ).toBe("Walka #battle-1 - Panel walk | Lootlog.pl");
+    ).toBe("Walka #battle-1 — Panel walk — Lootlog.pl");
   });
 
   it("uses the guild name as context for regular guild pages", () => {
@@ -148,7 +161,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/timers",
         }),
       ]),
-    ).toBe("Timery - Nocna Straż | Lootlog.pl");
+    ).toBe("Timery — Nocna Straż — Lootlog.pl");
   });
 
   it("uses specific titles for guild stats child pages", () => {
@@ -166,7 +179,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/stats/kills",
         }),
       ]),
-    ).toBe("Statystyki killi - Nocna Straż | Lootlog.pl");
+    ).toBe("Statystyki killi — Nocna Straż — Lootlog.pl");
 
     expect(
       resolveDocumentTitle([
@@ -182,7 +195,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/stats/loots",
         }),
       ]),
-    ).toBe("Statystyki lootów - Nocna Straż | Lootlog.pl");
+    ).toBe("Statystyki lootów — Nocna Straż — Lootlog.pl");
   });
 
   it("treats trailing slashes as the same guild page", () => {
@@ -200,7 +213,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/reservations/",
         }),
       ]),
-    ).toBe("Rezerwacje - Nocna Straż | Lootlog.pl");
+    ).toBe("Rezerwacje — Nocna Straż — Lootlog.pl");
   });
 
   it("uses the guild docs list title", () => {
@@ -218,7 +231,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/docs",
         }),
       ]),
-    ).toBe("Dokumenty - Nocna Straż | Lootlog.pl");
+    ).toBe("Dokumenty — Nocna Straż — Lootlog.pl");
   });
 
   it("uses the guild doc detail title from loader data", () => {
@@ -237,7 +250,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/docs/$docId",
         }),
       ]),
-    ).toBe("Zasady tytanów - Nocna Straż | Lootlog.pl");
+    ).toBe("Zasady tytanów — Nocna Straż — Lootlog.pl");
   });
 
   it("uses the event name as context for event child pages", () => {
@@ -264,7 +277,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/events_/$eventId_/ranking",
         }),
       ]),
-    ).toBe("Ranking - Letni event | Lootlog.pl");
+    ).toBe("Ranking — Letni event — Lootlog.pl");
   });
 
   it("uses the event name as context for the coordination route", () => {
@@ -291,7 +304,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/events_/$eventId_/coordination",
         }),
       ]),
-    ).toBe("Koordynator - Letni event | Lootlog.pl");
+    ).toBe("Koordynator — Letni event — Lootlog.pl");
   });
 
   it("uses fallback detail labels when loader data does not include a name", () => {
@@ -309,7 +322,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/stats/members/$memberId",
         }),
       ]),
-    ).toBe("Członek #123 | Lootlog.pl");
+    ).toBe("Członek #123 — Nocna Straż — Lootlog.pl");
   });
 
   it("uses the not found title for not found route matches", () => {
@@ -322,6 +335,6 @@ describe("resolveDocumentTitle", () => {
           status: "notFound",
         }),
       ]),
-    ).toBe("Nie znaleziono strony | Lootlog.pl");
+    ).toBe("Nie znaleziono strony — Lootlog.pl");
   });
 });
