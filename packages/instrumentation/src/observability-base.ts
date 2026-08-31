@@ -46,7 +46,6 @@ export function shouldSkipObservability(
   const {
     serviceName,
     otlpEndpoint,
-    otlpHeaders,
     serviceEnvironment,
     forceEnable = false,
   } = config;
@@ -58,9 +57,9 @@ export function shouldSkipObservability(
     return true;
   }
 
-  if (!otlpEndpoint || !otlpHeaders) {
+  if (!otlpEndpoint) {
     console.warn(
-      `[${serviceName}] Observability skipped: missing OTLP config.`,
+      `[${serviceName}] Observability skipped: missing OTLP endpoint.`,
     );
     return true;
   }
@@ -104,7 +103,7 @@ export function createObservabilityComponents(
     root: new TraceIdRatioBasedSampler(traceSampleRate),
   });
 
-  const headers = parseOtlpHeaders(otlpHeaders!);
+  const headers = parseOtlpHeaders(otlpHeaders);
 
   const traceExporter = new OTLPTraceExporter({
     url: `${otlpEndpoint}/v1/traces`,

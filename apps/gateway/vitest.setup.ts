@@ -17,8 +17,6 @@ vi.mock("#src/config/env", () => ({
     OTEL_NODE_RESOURCE_DETECTORS: "env,host,os,process",
     OTEL_TRACES_EXPORTER: "otlp",
     SERVICE_NAMESPACE: "local",
-    AXIOM_DATASET: "",
-    AXIOM_TOKEN: "",
     MARGONEM_ACCOUNT_PROOF_REQUIRED: false,
     ACTIVITY_EVENT_SIGNATURE_SECRET:
       "local-development-activity-event-signature-secret",

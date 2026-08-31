@@ -21,8 +21,6 @@ export const env = createEnv(
     SERVICE_NAME: z.string().default("api"),
     POSTGRESQL_CONNECTION_URI: z.string().optional(),
     RABBITMQ_URI: z.string(),
-    AXIOM_DATASET: z.string().optional(),
-    AXIOM_TOKEN: z.string().optional(),
     REDIS_HOST: z.string(),
     REDIS_PORT: z.coerce.number(),
     REDIS_PASSWORD: z.string(),
