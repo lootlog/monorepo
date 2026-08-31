@@ -1,21 +1,23 @@
 import type { PrismaService } from "#src/db/prisma.service";
+import type { Member, Role } from "#src/db/domain";
 
 type DatabaseClient = Pick<PrismaService["db"], "orm">;
+type MemberWithRoles = Member & { roles: Role[] };
 
 export async function attachRolesToMembers<T extends { id: number }>(
   prisma: DatabaseClient,
   members: T[],
-): Promise<Array<T & { roles: any[] }>> {
+): Promise<Array<T & { roles: Role[] }>> {
   if (members.length === 0) {
     return [];
   }
 
-  const links = await prisma.orm.public.MemberToRole.where((row) =>
+  const links = (await prisma.orm.public.MemberToRole.where((row) =>
     row.a.in(members.map((member) => member.id)),
   )
     .include("role")
-    .all();
-  const rolesByMemberId = new Map<number, any[]>();
+    .all()) as unknown as Array<{ a: number; role: Role }>;
+  const rolesByMemberId = new Map<number, Role[]>();
 
   for (const link of links) {
     const roles = rolesByMemberId.get(link.a) ?? [];
@@ -26,7 +28,8 @@ export async function attachRolesToMembers<T extends { id: number }>(
   return members.map((member) => ({
     ...member,
     roles: (rolesByMemberId.get(member.id) ?? []).sort(
-      (leftRole, rightRole) => rightRole.position - leftRole.position,
+      (leftRole, rightRole) =>
+        (rightRole.position ?? 0) - (leftRole.position ?? 0),
     ),
   }));
 }
@@ -39,17 +42,17 @@ export async function attachAssignedMembersToMaps<T extends { id: string }>(
     return [];
   }
 
-  const links = await prisma.orm.public.EventMapToMember.where((row) =>
+  const links = (await prisma.orm.public.EventMapToMember.where((row) =>
     row.a.in(maps.map((map) => map.id)),
   )
     .include("member")
-    .all();
+    .all()) as unknown as Array<{ a: string; b: number; member: Member }>;
   const members = await attachRolesToMembers(
     prisma,
     links.map((link) => link.member),
   );
   const membersById = new Map(members.map((member) => [member.id, member]));
-  const membersByMapId = new Map<string, any[]>();
+  const membersByMapId = new Map<string, MemberWithRoles[]>();
 
   for (const link of links) {
     const member = membersById.get(link.b);

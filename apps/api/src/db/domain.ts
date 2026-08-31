@@ -1,6 +1,8 @@
 import postgres from "@prisma/orm-postgres/runtime";
-import type { Contract } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import contractJson from "../prisma/contract.json" with { type: "json" };
+import type { db } from "../prisma/db.js";
 
 const nativeEnums = postgres<Contract>({ contractJson }).nativeEnums.public;
 
@@ -104,23 +106,53 @@ export const TimerHistoryAction = nativeEnums.TimerHistoryAction.members;
 export type TimerHistoryAction =
   (typeof TimerHistoryAction)[keyof typeof TimerHistoryAction];
 
-export type {
-  DatabaseTransaction,
-  InputJsonObject,
-  InputJsonValue,
-  JsonObject,
-  JsonValue,
-} from "./database-types.js";
-export type {
-  Event,
-  EventHeroNpc,
-  EventKillPoint,
-  Guild,
-  LootlogConfigNpc,
-  Member,
-  MemberRefreshJob,
-  PlayerSnapshot,
-  Reservation,
-  Role,
-  Timer,
-} from "./database-models.js";
+export type JsonValue = DatabaseJsonValue;
+export type JsonObject = Record<string, JsonValue | undefined>;
+export type InputJsonValue = JsonValue;
+export type InputJsonObject = JsonObject;
+
+export type DatabaseTransaction = Parameters<
+  Parameters<(typeof db)["transaction"]>[0]
+>[0];
+
+type ApplicationDateField =
+  | `${string}At`
+  | `${"created" | "from" | "to"}Date`
+  | "maxSpawnTime"
+  | "maxSpawnTimeAtKill"
+  | "minSpawnTime"
+  | "minSpawnTimeAtKill"
+  | "periodStart";
+
+type ApplicationValue<Value> = Value extends readonly (infer Item)[]
+  ? ApplicationValue<Item>[]
+  : Value extends object
+    ? {
+        -readonly [Key in keyof Value]: Key extends ApplicationDateField
+          ? null extends Value[Key]
+            ? Date | null
+            : Date
+          : ApplicationValue<Value[Key]>;
+      }
+    : Value;
+
+type PublicModel<Model extends keyof FieldOutputTypes["public"]> =
+  ApplicationValue<
+    "_type" extends keyof FieldOutputTypes["public"][Model]
+      ? Omit<FieldOutputTypes["public"][Model], "_type"> & {
+          type: FieldOutputTypes["public"][Model]["_type"];
+        }
+      : FieldOutputTypes["public"][Model]
+  >;
+
+export type Guild = PublicModel<"Guild">;
+export type Role = PublicModel<"Role">;
+export type Member = PublicModel<"Member">;
+export type Timer = PublicModel<"Timer">;
+export type PlayerSnapshot = PublicModel<"PlayerSnapshot">;
+export type Reservation = PublicModel<"Reservation">;
+export type LootlogConfigNpc = PublicModel<"LootlogConfigNpc">;
+export type MemberRefreshJob = PublicModel<"MemberRefreshJob">;
+export type Event = PublicModel<"Event">;
+export type EventHeroNpc = PublicModel<"EventHeroNpc">;
+export type EventKillPoint = PublicModel<"EventKillPoint">;

@@ -106,7 +106,7 @@ export class MemberReadService {
           memberRows as Omit<MemberSummary, "color">[],
         );
 
-        const summaryPermissions = new Set([
+        const summaryPermissions = new Set<Permission>([
           Permission.OWNER,
           Permission.ADMIN,
           Permission.LOOTLOG_ACCESS,
