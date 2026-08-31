@@ -22,6 +22,13 @@ import {
 import type { NodeSDK } from "@opentelemetry/sdk-node";
 import { parseOtlpHeaders } from "./parse-otlp-headers.js";
 
+const HTTP_DURATION_MILLISECONDS_BUCKETS = [
+  5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000,
+];
+const HTTP_DURATION_SECONDS_BUCKETS = [
+  0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10,
+];
+
 export interface BaseObservabilityConfig {
   serviceName: string;
   serviceInstanceId?: string;
@@ -151,7 +158,10 @@ export function createHttpServerMetricViews(): ViewOptions[] {
           "http.status_code",
         ]),
       ],
-      aggregation: { type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM },
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+        options: { boundaries: HTTP_DURATION_MILLISECONDS_BUCKETS },
+      },
     },
     {
       instrumentName: "http.server.request.duration",
@@ -162,7 +172,10 @@ export function createHttpServerMetricViews(): ViewOptions[] {
           "http.response.status_code",
         ]),
       ],
-      aggregation: { type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM },
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+        options: { boundaries: HTTP_DURATION_SECONDS_BUCKETS },
+      },
     },
   ];
 }
