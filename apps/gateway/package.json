@@ -40,6 +40,7 @@
     "@nestjs/platform-socket.io": "catalog:",
     "@nestjs/schedule": "catalog:",
     "@nestjs/websockets": "catalog:",
+    "@opentelemetry/api": "^1.9.1",
     "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.20.0",
     "dotenv": "^17.4.2",
