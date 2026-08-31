@@ -28,6 +28,7 @@ import type { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import type { LootShare } from "#src/shared/dto/loot-response.dto";
 import type { Logger } from "winston";
+import { dateToTemporal } from "#src/db/temporal";
 
 const LootShareSource = prismaDb.nativeEnums.public.LootShareSource.members;
 type LootShareSource = (typeof LootShareSource)[keyof typeof LootShareSource];
@@ -189,7 +190,7 @@ export class LootAllocationService {
       .updateAndCount({
         lootShare: mappedLootShare,
         lootShareSource: LootShareSource.CHAT_MESSAGE,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
     if (updateResult === 0) {
       return this.acknowledgeConcurrentUpdate({
@@ -343,7 +344,7 @@ export class LootAllocationService {
         loot.organizationLootRecords.some((record) =>
           record.submissions.some((submission) =>
             and(
-              submission.createdAt.gte(submissionCutoff),
+              submission.createdAt.gte(dateToTemporal(submissionCutoff)),
               submission.member.some((member) =>
                 member.globalUserId.eq(actorUserId),
               ),

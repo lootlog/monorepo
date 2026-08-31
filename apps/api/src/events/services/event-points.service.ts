@@ -25,6 +25,7 @@ import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
 } from "../utils/tracking-window.util.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 type EventKillPoint = FieldOutputTypes["public"]["EventKillPoint"];
 type InputJsonValue = DatabaseJsonValue;
@@ -192,7 +193,8 @@ export class EventPointsService {
     }
 
     return (
-      params.confirmedAt.getTime() <= params.confirmationDeadlineAt.getTime()
+      temporalToDate(params.confirmedAt).getTime() <=
+      temporalToDate(params.confirmationDeadlineAt).getTime()
     );
   }
 
@@ -279,13 +281,16 @@ export class EventPointsService {
     }
 
     const trackingWindowStartTime =
-      params.minSpawnTimeAtKill > params.killedAt
+      temporalToDate(params.minSpawnTimeAtKill) >
+      temporalToDate(params.killedAt)
         ? params.killedAt
         : params.minSpawnTimeAtKill;
     const trackingWindowDurationSeconds = Math.max(
       0,
       Math.floor(
-        (params.killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000,
+        (temporalToDate(params.killedAt).getTime() -
+          trackingWindowStartTime.getTime()) /
+          1000,
       ),
     );
 
@@ -336,9 +341,9 @@ export class EventPointsService {
 
     return collection.where((row) =>
       or(
-        row.startedAt.gte(since),
-        row.endedAt.gte(since),
-        and(row.endedAt.isNull(), row.startedAt.lte(since)),
+        row.startedAt.gte(dateToTemporal(since)),
+        row.endedAt.gte(dateToTemporal(since)),
+        and(row.endedAt.isNull(), row.startedAt.lte(dateToTemporal(since))),
       ),
     );
   }
@@ -364,7 +369,7 @@ export class EventPointsService {
         continue;
       }
 
-      if (assignment.assignedAt > params.killTime) {
+      if (temporalToDate(assignment.assignedAt) > params.killTime) {
         continue;
       }
 
@@ -500,7 +505,11 @@ export class EventPointsService {
       new Set(killPoints.map((point) => point.memberId)),
     );
     const latestKillTime = new Date(
-      Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
+      Math.max(
+        ...killPoints.map((point) =>
+          temporalToDate(point.kill.killedAt).getTime(),
+        ),
+      ),
     );
     const windowSummaries =
       (await this.prisma.db.orm.public.EventRespawnWindowSummary.where((row) =>
@@ -541,10 +550,12 @@ export class EventPointsService {
               and(
                 row.mapId.in(allMapIds),
                 row.memberId.in(allMemberIds),
-                row.assignedAt.lte(latestKillTime),
+                row.assignedAt.lte(dateToTemporal(latestKillTime)),
                 or(
                   row.unassignedAt.isNull(),
-                  row.unassignedAt.gte(earliestOverlapWindowStart),
+                  row.unassignedAt.gte(
+                    dateToTemporal(earliestOverlapWindowStart),
+                  ),
                 ),
               ),
           )
@@ -713,7 +724,7 @@ export class EventPointsService {
         pointsModified:
           manualAdjustmentPoints !== 0 ||
           manualAdjustmentRankingKeys.has(rankingKey),
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       };
 
       processedRankingKeys.add(rankingKey);
@@ -764,7 +775,7 @@ export class EventPointsService {
             totalTimeSeconds: 0,
             avgAfkPercentage: 0,
             pointsModified: true,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           }),
         );
         continue;
@@ -822,7 +833,7 @@ export class EventPointsService {
         continue;
       }
 
-      if (assignment.assignedAt > params.killTime) {
+      if (temporalToDate(assignment.assignedAt) > params.killTime) {
         continue;
       }
 
@@ -833,16 +844,17 @@ export class EventPointsService {
 
       if (
         !assignment.unassignedAt ||
-        assignment.unassignedAt >= params.killTime
+        temporalToDate(assignment.unassignedAt) >= params.killTime
       ) {
         memberPresentAtKill = true;
         continue;
       }
 
       if (
-        assignment.unassignedAt >= params.respawnStartTime &&
-        assignment.unassignedAt < params.killTime &&
-        (!memberLeaveTime || assignment.unassignedAt > memberLeaveTime)
+        temporalToDate(assignment.unassignedAt) >= params.respawnStartTime &&
+        temporalToDate(assignment.unassignedAt) < params.killTime &&
+        (!memberLeaveTime ||
+          temporalToDate(assignment.unassignedAt) > memberLeaveTime)
       ) {
         memberLeaveTime = assignment.unassignedAt;
       }
@@ -912,9 +924,9 @@ export class EventPointsService {
     if (since) {
       logsQuery = logsQuery.where((row) =>
         or(
-          row.startedAt.gte(since),
-          row.endedAt.gte(since),
-          and(row.endedAt.isNull(), row.startedAt.lte(since)),
+          row.startedAt.gte(dateToTemporal(since)),
+          row.endedAt.gte(dateToTemporal(since)),
+          and(row.endedAt.isNull(), row.startedAt.lte(dateToTemporal(since))),
         ),
       );
     }
@@ -941,9 +953,14 @@ export class EventPointsService {
       }
 
       const effectiveStart =
-        since && log.startedAt < since ? since : log.startedAt;
+        since && temporalToDate(log.startedAt) < since ? since : log.startedAt;
       const endTime = log.endedAt
-        ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
+        ? new Date(
+            Math.min(
+              temporalToDate(log.endedAt).getTime(),
+              windowEnd.getTime(),
+            ),
+          )
         : windowEnd;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
@@ -1018,9 +1035,14 @@ export class EventPointsService {
       if (!stats) continue;
 
       const effectiveStart =
-        since && log.startedAt < since ? since : log.startedAt;
+        since && temporalToDate(log.startedAt) < since ? since : log.startedAt;
       const endTime = log.endedAt
-        ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
+        ? new Date(
+            Math.min(
+              temporalToDate(log.endedAt).getTime(),
+              windowEnd.getTime(),
+            ),
+          )
         : windowEnd;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
@@ -1092,9 +1114,14 @@ export class EventPointsService {
       if (!stats) continue;
 
       const effectiveStart =
-        since && log.startedAt < since ? since : log.startedAt;
+        since && temporalToDate(log.startedAt) < since ? since : log.startedAt;
       const endTime = log.endedAt
-        ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
+        ? new Date(
+            Math.min(
+              temporalToDate(log.endedAt).getTime(),
+              windowEnd.getTime(),
+            ),
+          )
         : windowEnd;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
@@ -1166,7 +1193,7 @@ export class EventPointsService {
             avgAfkPercentage: Math.round(newAvgAfk * 100) / 100,
             pointsModified:
               existing.pointsModified || killPoint.manualAdjustmentPoints !== 0,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           });
           return;
         }
@@ -1181,7 +1208,7 @@ export class EventPointsService {
           totalTimeSeconds: trackingDurationSeconds,
           avgAfkPercentage: killPoint.afkPercentage,
           pointsModified: killPoint.manualAdjustmentPoints !== 0,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
       }),
     );
@@ -1237,7 +1264,7 @@ export class EventPointsService {
           row.confirmedAt.isNull(),
           and(
             row.confirmationDeadlineAt.isNotNull(),
-            row.confirmationDeadlineAt.gte(now),
+            row.confirmationDeadlineAt.gte(dateToTemporal(now)),
           ),
           row.kill.some((related) =>
             related.heroNpc.some((related) => related.eventId.eq(eventId)),
@@ -1261,7 +1288,7 @@ export class EventPointsService {
           row.confirmationExpiredAcknowledgedAt.isNull(),
           and(
             row.confirmationDeadlineAt.isNotNull(),
-            row.confirmationDeadlineAt.lt(now),
+            row.confirmationDeadlineAt.lt(dateToTemporal(now)),
           ),
           row.kill.some((related) =>
             related.heroNpc.some((related) => related.eventId.eq(eventId)),
@@ -1348,7 +1375,7 @@ export class EventPointsService {
         row.killId.in(killIds),
         row.memberId.eq(memberId),
         row.confirmedAt.isNull(),
-        row.confirmationDeadlineAt.lt(acknowledgedAt),
+        row.confirmationDeadlineAt.lt(dateToTemporal(acknowledgedAt)),
         row.confirmationExpiredAcknowledgedAt.isNull(),
         row.kill.some((related) =>
           related.heroNpc.some((related) =>
@@ -1360,7 +1387,7 @@ export class EventPointsService {
         ),
       ),
     ).updateAndCount({
-      confirmationExpiredAcknowledgedAt: acknowledgedAt,
+      confirmationExpiredAcknowledgedAt: dateToTemporal(acknowledgedAt),
     });
 
     return {
@@ -1414,7 +1441,9 @@ export class EventPointsService {
         return false;
       }
 
-      return point.confirmationDeadlineAt.getTime() < now.getTime();
+      return (
+        temporalToDate(point.confirmationDeadlineAt).getTime() < now.getTime()
+      );
     });
 
     if (hasExpiredConfirmation) {
@@ -1433,7 +1462,7 @@ export class EventPointsService {
       await tx.orm.public.EventKillPoint.where((row) =>
         and(row.id.in(pointsToConfirmIds), row.confirmedAt.isNull()),
       ).updateAndCount({
-        confirmedAt: now,
+        confirmedAt: dateToTemporal(now),
       });
 
       return tx.orm.public.EventKillPoint.where((row) =>
@@ -1530,7 +1559,7 @@ export class EventPointsService {
         ).update({
           totalPoints: updatedRankingTotalPoints,
           pointsModified: true,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
 
         await this.prisma.db.orm.public.EventPointsEditHistory.create({
@@ -1609,7 +1638,7 @@ export class EventPointsService {
       totalPoints: normalizedNewTotalPoints,
       manualAdjustmentPoints,
       pointsModified: hasManualKillAdjustment || manualAdjustmentPoints !== 0,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
 
     await Promise.all([

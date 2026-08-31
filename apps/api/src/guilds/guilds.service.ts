@@ -45,6 +45,7 @@ import {
   UserGuildAccessResolver,
   type GuildRefreshCandidate,
 } from "./user-guild-access-resolver.service.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 type Guild = FieldOutputTypes["public"]["Guild"];
 type Role = FieldOutputTypes["public"]["Role"];
@@ -438,7 +439,8 @@ export class GuildsService {
     const existingSyncState = await this.loadGuildDiscordSyncState(guildId);
 
     if (existingSyncState) {
-      const elapsed = Date.now() - existingSyncState.updatedAt.getTime();
+      const elapsed =
+        Date.now() - temporalToDate(existingSyncState.updatedAt).getTime();
 
       if (elapsed < GuildsService.REFRESH_COOLDOWN_MS) {
         throw new HttpException(
@@ -1109,7 +1111,7 @@ export class GuildsService {
             reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
           }
         : {}),
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     };
   }
 
@@ -1154,14 +1156,14 @@ export class GuildsService {
           icon: data.icon,
           ownerId: data.ownerId,
           active: true,
-          updatedAt,
+          updatedAt: dateToTemporal(updatedAt),
         },
         update: {
           name: data.name,
           icon: data.icon,
           ownerId: data.ownerId,
           active: true,
-          updatedAt,
+          updatedAt: dateToTemporal(updatedAt),
         },
       });
 
@@ -1237,7 +1239,7 @@ export class GuildsService {
         name: data.name,
         icon: data.icon,
         ownerId: data.ownerId,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await Promise.all([
@@ -1290,7 +1292,7 @@ export class GuildsService {
 
         await tx.orm.public.Guild.where((row) => row.id.eq(guildId)).update({
           active: false,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
       });
 
@@ -1340,7 +1342,10 @@ export class GuildsService {
       return true;
     }
 
-    return Date.now() - syncState.updatedAt.getTime() > this.staleAfterMs;
+    return (
+      Date.now() - temporalToDate(syncState.updatedAt).getTime() >
+      this.staleAfterMs
+    );
   }
 
   private getDiscordSyncErrorMessage(error: unknown) {
@@ -1390,7 +1395,7 @@ export class GuildsService {
     ).upsert({
       create: {
         id: guildId,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {},
     });
@@ -1409,7 +1414,7 @@ export class GuildsService {
           lootlogConfigId: guildId,
           npcType,
           allowedRarities: Object.values(ItemRarity),
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         })),
       );
     }

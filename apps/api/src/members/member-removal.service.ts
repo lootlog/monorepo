@@ -31,6 +31,7 @@ import type {
   MemberRemovalNotificationTarget,
   MemberWithRoles,
 } from "./member.types.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 @Injectable()
 export class MemberRemovalService {
@@ -69,9 +70,9 @@ export class MemberRemovalService {
           row.id.eq(member.id),
         ).update({
           active: false,
-          lastDiscordAttemptAt: new Date(),
+          lastDiscordAttemptAt: dateToTemporal(new Date()),
           lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.MANUALLY_DEACTIVATED,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
         await setMemberRoles(transaction, member.id, []);
         return { ...updatedMember, roles: [] };
@@ -114,10 +115,10 @@ export class MemberRemovalService {
           and(row.userId.eq(member.userId), row.guildId.eq(member.guildId)),
         ).update({
           active: false,
-          lastDiscordAttemptAt: syncTimestamp,
-          lastDiscordSyncAt: syncTimestamp,
+          lastDiscordAttemptAt: dateToTemporal(syncTimestamp),
+          lastDiscordSyncAt: dateToTemporal(syncTimestamp),
           lastDiscordStatus: status,
-          updatedAt: syncTimestamp,
+          updatedAt: dateToTemporal(syncTimestamp),
         });
         await setMemberRoles(transaction, updatedMember.id, []);
       }
@@ -151,9 +152,9 @@ export class MemberRemovalService {
         and(row.guildId.eq(guildId), row.active.eq(true)),
       ).updateAndCount({
         active: false,
-        lastDiscordAttemptAt: new Date(),
+        lastDiscordAttemptAt: dateToTemporal(new Date()),
         lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       this.logger.log({

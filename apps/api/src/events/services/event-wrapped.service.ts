@@ -20,6 +20,7 @@ import type {
   EventWrappedResponseDto,
 } from "../dto/event-wrapped.dto.js";
 import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader.js";
+import { temporalToDate } from "#src/db/temporal";
 
 type Guild = FieldOutputTypes["public"]["Guild"];
 const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
@@ -318,8 +319,8 @@ export class EventWrappedService {
         id: event.id,
         name: event.name,
         world: event.world,
-        startsAt: event.startsAt?.toISOString() ?? null,
-        endsAt: event.endsAt?.toISOString() ?? null,
+        startsAt: temporalToDate(event.startsAt)?.toISOString() ?? null,
+        endsAt: temporalToDate(event.endsAt)?.toISOString() ?? null,
         heroCount: event.heroNpcs.length,
         mapCount: event.heroNpcs.reduce(
           (sum, hero) => sum + hero.maps.length,
@@ -602,9 +603,11 @@ export class EventWrappedService {
 
       for (const assignment of assignments) {
         const overlapsWindow =
-          assignment.assignedAt <= kill.killedAt &&
+          temporalToDate(assignment.assignedAt) <=
+            temporalToDate(kill.killedAt) &&
           (assignment.unassignedAt === null ||
-            assignment.unassignedAt >= kill.minSpawnTimeAtKill);
+            temporalToDate(assignment.unassignedAt) >=
+              temporalToDate(kill.minSpawnTimeAtKill));
 
         if (!overlapsWindow) {
           continue;
@@ -804,9 +807,11 @@ export class EventWrappedService {
       const assignedMaps = new Set<string>();
       for (const assignment of assignments) {
         const overlapsWindow =
-          assignment.assignedAt <= kill.killedAt &&
+          temporalToDate(assignment.assignedAt) <=
+            temporalToDate(kill.killedAt) &&
           (assignment.unassignedAt === null ||
-            assignment.unassignedAt >= kill.minSpawnTimeAtKill);
+            temporalToDate(assignment.unassignedAt) >=
+              temporalToDate(kill.minSpawnTimeAtKill));
 
         if (overlapsWindow) {
           assignedMaps.add(assignment.mapId);

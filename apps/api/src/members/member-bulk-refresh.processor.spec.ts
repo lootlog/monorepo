@@ -131,8 +131,8 @@ describe("MemberBulkRefreshProcessor", () => {
       data: {
         status: "COMPLETED",
         processedMembers: 3,
-        completedAt: expect.any(Date),
-        updatedAt: expect.any(Date),
+        completedAt: expect.any(Temporal.PlainDateTime),
+        updatedAt: expect.any(Temporal.PlainDateTime),
       },
     });
 

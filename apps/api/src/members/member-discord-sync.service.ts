@@ -13,6 +13,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
+import { dateToTemporal } from "#src/db/temporal";
 import {
   attachRolesToMembers,
   setMemberRoles,
@@ -254,10 +255,10 @@ export class MemberDiscordSyncService {
             name: memberName,
             globalUserId,
             banner,
-            lastDiscordAttemptAt: syncTimestamp,
-            lastDiscordSyncAt: syncTimestamp,
+            lastDiscordAttemptAt: dateToTemporal(syncTimestamp),
+            lastDiscordSyncAt: dateToTemporal(syncTimestamp),
             lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-            updatedAt: syncTimestamp,
+            updatedAt: dateToTemporal(syncTimestamp),
           },
           update: {
             avatar: memberAvatar,
@@ -265,10 +266,10 @@ export class MemberDiscordSyncService {
             name: memberName,
             active: true,
             globalUserId,
-            lastDiscordAttemptAt: syncTimestamp,
-            lastDiscordSyncAt: syncTimestamp,
+            lastDiscordAttemptAt: dateToTemporal(syncTimestamp),
+            lastDiscordSyncAt: dateToTemporal(syncTimestamp),
             lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-            updatedAt: syncTimestamp,
+            updatedAt: dateToTemporal(syncTimestamp),
           },
         });
         await setMemberRoles(transaction, savedMember.id, existingRoleIds);
@@ -332,11 +333,13 @@ export class MemberDiscordSyncService {
       const updatedMember = await transaction.orm.public.Member.where((row) =>
         and(row.userId.eq(discordId), row.guildId.eq(guildId)),
       ).update({
-        lastDiscordAttemptAt: attemptTimestamp,
+        lastDiscordAttemptAt: dateToTemporal(attemptTimestamp),
         lastDiscordStatus: status,
-        ...(markSynced ? { lastDiscordSyncAt: attemptTimestamp } : {}),
+        ...(markSynced
+          ? { lastDiscordSyncAt: dateToTemporal(attemptTimestamp) }
+          : {}),
         ...(deactivate ? { active: false } : {}),
-        updatedAt: attemptTimestamp,
+        updatedAt: dateToTemporal(attemptTimestamp),
       });
       if (deactivate) {
         await setMemberRoles(transaction, updatedMember.id, []);

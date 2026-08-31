@@ -9,6 +9,7 @@ import {
   getEventRespawnWindowStatus,
   type EventRespawnWindowStatus,
 } from "../utils/event-respawn-window.util.js";
+import { temporalToDate } from "#src/db/temporal";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
 type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
@@ -201,7 +202,11 @@ export class EventCoordinationService {
                 status,
                 overdueMs:
                   status === "OVERDUE"
-                    ? Math.max(0, now.getTime() - timer.maxSpawnTime.getTime())
+                    ? Math.max(
+                        0,
+                        now.getTime() -
+                          temporalToDate(timer.maxSpawnTime).getTime(),
+                      )
                     : null,
               }
             : null,
@@ -218,7 +223,10 @@ export class EventCoordinationService {
                 gap.durationSeconds ??
                 Math.max(
                   0,
-                  Math.round((now.getTime() - gap.startedAt.getTime()) / 1000),
+                  Math.round(
+                    (now.getTime() - temporalToDate(gap.startedAt).getTime()) /
+                      1000,
+                  ),
                 ),
             }))
             .sort(compareActiveGaps),
@@ -360,7 +368,8 @@ function compareActiveGaps(
 
   return (
     gapRank[first.gapType] - gapRank[second.gapType] ||
-    first.startedAt.getTime() - second.startedAt.getTime()
+    temporalToDate(first.startedAt).getTime() -
+      temporalToDate(second.startedAt).getTime()
   );
 }
 
@@ -391,10 +400,12 @@ function compareCoordinationHeroes(
     return priorityDiff;
   }
 
-  const firstSpawn =
-    first.timer?.minSpawnTime.getTime() ?? Number.MAX_SAFE_INTEGER;
-  const secondSpawn =
-    second.timer?.minSpawnTime.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const firstSpawn = first.timer
+    ? temporalToDate(first.timer.minSpawnTime).getTime()
+    : Number.MAX_SAFE_INTEGER;
+  const secondSpawn = second.timer
+    ? temporalToDate(second.timer.minSpawnTime).getTime()
+    : Number.MAX_SAFE_INTEGER;
   if (firstSpawn !== secondSpawn) {
     return firstSpawn - secondSpawn;
   }
@@ -427,7 +438,7 @@ function getNextSpawnAt(
       continue;
     }
 
-    if (!nextSpawnAt || hero.timer.minSpawnTime < nextSpawnAt) {
+    if (!nextSpawnAt || temporalToDate(hero.timer.minSpawnTime) < nextSpawnAt) {
       nextSpawnAt = hero.timer.minSpawnTime;
     }
   }

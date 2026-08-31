@@ -52,6 +52,7 @@ import type {
   CreateAutoTimerResponse,
   CreateAutoTimerSubmittedGuild,
 } from "#src/timers/dto/create-auto-timer-response.dto";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
 type NpcType = (typeof NpcType)[keyof typeof NpcType];
@@ -534,12 +535,12 @@ export class TimersService implements OnModuleInit {
         actorMemberId: actorMember.id,
         actorCharacterSnapshotId: data.actorCharacterSnapshotId ?? null,
         actorCharacterLvl: data.actorCharacterLvl ?? null,
-        minSpawnTime: data.minSpawnTime ?? null,
-        maxSpawnTime: data.maxSpawnTime ?? null,
+        minSpawnTime: dateToTemporal(data.minSpawnTime ?? null),
+        maxSpawnTime: dateToTemporal(data.maxSpawnTime ?? null),
         latestRespBaseSeconds: data.latestRespBaseSeconds ?? null,
         latestRespawnRandomness: data.latestRespawnRandomness ?? null,
         wasReset: data.wasReset ?? null,
-        windowOpenedAt: data.windowOpenedAt ?? null,
+        windowOpenedAt: dateToTemporal(data.windowOpenedAt ?? null),
         timerCreatedById: data.timerCreatedById ?? null,
         timerActorCharacterSnapshotId:
           data.timerActorCharacterSnapshotId ?? null,
@@ -643,10 +644,13 @@ export class TimersService implements OnModuleInit {
           : row.guildId.in(guildId),
         row.world.eq(world),
         or(
-          and(row.deletedAt.isNull(), row.maxSpawnTime.gt(now)),
+          and(row.deletedAt.isNull(), row.maxSpawnTime.gt(dateToTemporal(now))),
           and(
             row.timerKey.in(alwaysVisibleExpiredTimerKeys),
-            or(row.maxSpawnTime.lte(now), row.deletedAt.isNotNull()),
+            or(
+              row.maxSpawnTime.lte(dateToTemporal(now)),
+              row.deletedAt.isNotNull(),
+            ),
           ),
         ),
       ),
@@ -660,7 +664,8 @@ export class TimersService implements OnModuleInit {
   ): TimerWithOptionalMember[] {
     return timers.filter(
       (timer) =>
-        (timer.deletedAt === null && timer.maxSpawnTime > now) ||
+        (timer.deletedAt === null &&
+          temporalToDate(timer.maxSpawnTime) > now) ||
         (alwaysVisibleExpiredTimerKeys.includes(timer.timerKey) &&
           !this.isManualTimerNpc(timer.npc)),
     );
@@ -776,16 +781,16 @@ export class TimersService implements OnModuleInit {
           npcId,
           timerKey,
           world,
-          minSpawnTime: syntheticTimer.minSpawnTime,
-          maxSpawnTime: syntheticTimer.maxSpawnTime,
+          minSpawnTime: dateToTemporal(syntheticTimer.minSpawnTime),
+          maxSpawnTime: dateToTemporal(syntheticTimer.maxSpawnTime),
           latestRespBaseSeconds: syntheticTimer.latestRespBaseSeconds,
           latestRespawnRandomness: syntheticTimer.latestRespawnRandomness,
           tempId: syntheticTimer.tempId,
           wasReset: syntheticTimer.wasReset,
           npc: npcData,
-          windowOpenedAt: syntheticTimer.windowOpenedAt,
+          windowOpenedAt: dateToTemporal(syntheticTimer.windowOpenedAt),
           deletedAt: null,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         },
         update: {},
       });
@@ -967,8 +972,8 @@ export class TimersService implements OnModuleInit {
           world,
           npcId,
           timerKey,
-          minSpawnTime,
-          maxSpawnTime,
+          minSpawnTime: dateToTemporal(minSpawnTime),
+          maxSpawnTime: dateToTemporal(maxSpawnTime),
           latestRespBaseSeconds: Math.round(
             (maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000,
           ),
@@ -987,13 +992,13 @@ export class TimersService implements OnModuleInit {
               ? String(TIMER_TYPES.CUSTOM_MANUAL)
               : "0",
           },
-          windowOpenedAt,
+          windowOpenedAt: dateToTemporal(windowOpenedAt),
           deletedAt: null,
-          updatedAt: windowOpenedAt,
+          updatedAt: dateToTemporal(windowOpenedAt),
         },
         update: {
-          minSpawnTime,
-          maxSpawnTime,
+          minSpawnTime: dateToTemporal(minSpawnTime),
+          maxSpawnTime: dateToTemporal(maxSpawnTime),
           wasReset: false,
           npc: {
             id: npcId,
@@ -1008,8 +1013,8 @@ export class TimersService implements OnModuleInit {
               ? String(TIMER_TYPES.CUSTOM_MANUAL)
               : "0",
           },
-          windowOpenedAt,
-          updatedAt: windowOpenedAt,
+          windowOpenedAt: dateToTemporal(windowOpenedAt),
+          updatedAt: dateToTemporal(windowOpenedAt),
           deletedAt: null,
         },
       });
@@ -1397,7 +1402,9 @@ export class TimersService implements OnModuleInit {
       return false;
     }
 
-    return timer.updatedAt.getTime() >= burstStartedAt.getTime();
+    return (
+      temporalToDate(timer.updatedAt).getTime() >= burstStartedAt.getTime()
+    );
   }
 
   private async createOrUpdateTimerForGuild(
@@ -1442,8 +1449,8 @@ export class TimersService implements OnModuleInit {
         throw new NotFoundException({ message: "Member not found" });
       }
       const timerData = {
-        maxSpawnTime,
-        minSpawnTime,
+        maxSpawnTime: dateToTemporal(maxSpawnTime),
+        minSpawnTime: dateToTemporal(minSpawnTime),
         world: context.data.world,
         npcId: context.data.npc.id,
         timerKey: context.timerKey,
@@ -1451,13 +1458,13 @@ export class TimersService implements OnModuleInit {
         latestRespawnRandomness: respawnRandomness,
         wasReset: false,
         npc: npcData,
-        windowOpenedAt: new Date(),
+        windowOpenedAt: dateToTemporal(new Date()),
         actorCharacterSnapshotId: actorCharacter?.id ?? null,
         actorCharacterLvl: context.data.actorCharacter?.lvl ?? null,
         deletedAt: null,
         createdById: timerMember.id,
         guildId: context.guildId,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       };
 
       const newTimer = await this.prisma.db.orm.public.Timer.where((row) =>
@@ -1685,8 +1692,8 @@ export class TimersService implements OnModuleInit {
     }
 
     const newTimer = await this.prisma.db.orm.public.Timer.create({
-      maxSpawnTime,
-      minSpawnTime,
+      maxSpawnTime: dateToTemporal(maxSpawnTime),
+      minSpawnTime: dateToTemporal(minSpawnTime),
       npcId,
       timerKey,
       world: data.world,
@@ -1709,7 +1716,7 @@ export class TimersService implements OnModuleInit {
       deletedAt: null,
       guildId,
       createdById: timerMember.id,
-      updatedAt: now,
+      updatedAt: dateToTemporal(now),
     });
 
     await this.invalidateTimersCache(guildId);
@@ -2003,32 +2010,32 @@ export class TimersService implements OnModuleInit {
         npcId: entry.npcId,
         timerKey: entry.timerKey,
         world: entry.world,
-        minSpawnTime: entry.minSpawnTime,
-        maxSpawnTime: entry.maxSpawnTime,
+        minSpawnTime: dateToTemporal(entry.minSpawnTime),
+        maxSpawnTime: dateToTemporal(entry.maxSpawnTime),
         latestRespBaseSeconds: entry.latestRespBaseSeconds,
         latestRespawnRandomness: entry.latestRespawnRandomness,
         wasReset: entry.wasReset ?? false,
         npc: entry.npc as InputJsonValue,
-        windowOpenedAt: entry.windowOpenedAt,
+        windowOpenedAt: dateToTemporal(entry.windowOpenedAt),
         actorCharacterSnapshotId: entry.timerActorCharacterSnapshotId,
         actorCharacterLvl: entry.timerActorCharacterLvl,
         deletedAt: null,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         createdById: entry.timerCreatedById,
         npcId: entry.npcId,
-        minSpawnTime: entry.minSpawnTime,
-        maxSpawnTime: entry.maxSpawnTime,
+        minSpawnTime: dateToTemporal(entry.minSpawnTime),
+        maxSpawnTime: dateToTemporal(entry.maxSpawnTime),
         latestRespBaseSeconds: entry.latestRespBaseSeconds,
         latestRespawnRandomness: entry.latestRespawnRandomness,
         wasReset: entry.wasReset ?? false,
         npc: entry.npc as InputJsonValue,
-        windowOpenedAt: entry.windowOpenedAt,
+        windowOpenedAt: dateToTemporal(entry.windowOpenedAt),
         actorCharacterSnapshotId: entry.timerActorCharacterSnapshotId,
         actorCharacterLvl: entry.timerActorCharacterLvl,
         deletedAt: null,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
     });
 
@@ -2133,13 +2140,13 @@ export class TimersService implements OnModuleInit {
           row.timerKey.eq(resolvedTimer.timerKey),
         ),
       ).update({
-        minSpawnTime,
-        maxSpawnTime,
+        minSpawnTime: dateToTemporal(minSpawnTime),
+        maxSpawnTime: dateToTemporal(maxSpawnTime),
         wasReset: true,
         deletedAt: null,
         ...actorCharacterUpdate,
         createdById: timerMember.id,
-        updatedAt: now,
+        updatedAt: dateToTemporal(now),
       });
 
       await this.createTimerHistoryEntryIfNotManual({
@@ -2243,7 +2250,10 @@ export class TimersService implements OnModuleInit {
             row.world.eq(world),
             row.timerKey.eq(resolvedTimer.timerKey),
           ),
-        ).update({ deletedAt: new Date(), updatedAt: new Date() });
+        ).update({
+          deletedAt: dateToTemporal(new Date()),
+          updatedAt: dateToTemporal(new Date()),
+        });
       }
 
       await this.invalidateTimersCache(guildId);

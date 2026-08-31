@@ -8,6 +8,7 @@ import {
 import { PrismaService } from "#src/db/prisma.service";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
+import { dateToTemporal } from "#src/db/temporal";
 
 const NotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
@@ -199,7 +200,7 @@ export class ReservationReminderService {
         name: RESERVATION_REMINDER_RULE_NAME,
         scheduleStrategy: NotificationScheduleStrategy.FIXED_DATETIME,
         enabled: true,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
       await transaction.orm.public.NotificationRuleTarget.create({
         ruleId: rule.id,

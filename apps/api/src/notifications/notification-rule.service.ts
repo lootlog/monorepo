@@ -31,6 +31,7 @@ import {
   getDefaultTestTriggerUsage,
   getWorstTestTriggerUsage,
 } from "#src/notifications/utils/test-trigger-usage.util";
+import { dateToTemporal } from "#src/db/temporal";
 
 const DbNotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
@@ -374,7 +375,7 @@ export class NotificationRuleService {
         }),
         enabled: data.enabled ?? true,
         dedupeWindowSeconds: 0,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
       if (targetIds.length > 0) {
         await transaction.orm.public.NotificationRuleTarget.createAndCount(
@@ -450,17 +451,17 @@ export class NotificationRuleService {
           data: isScheduledMessage ? data : null,
           existingRule: isScheduledMessage
             ? {
-                scheduledAt: existingRule.scheduledAt,
+                scheduledAt: dateToTemporal(existingRule.scheduledAt),
                 scheduleIntervalType: existingRule.scheduleIntervalType,
                 scheduleIntervalValue: existingRule.scheduleIntervalValue,
                 scheduleWeekday: existingRule.scheduleWeekday,
                 scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
-                scheduledUntil: existingRule.scheduledUntil,
+                scheduledUntil: dateToTemporal(existingRule.scheduledUntil),
                 scheduleTimezone: existingRule.scheduleTimezone,
               }
             : undefined,
         }),
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
         enabled: data.enabled ?? existingRule.enabled,
         dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
       });

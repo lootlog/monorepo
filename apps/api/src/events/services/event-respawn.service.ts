@@ -26,6 +26,7 @@ import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
 import { TimersService } from "#src/timers/timers.service";
+import { dateToTemporal } from "#src/db/temporal";
 
 const normalizeCloseRespawnWindowOptions = (
   options: CloseRespawnWindowOptions,
@@ -120,7 +121,7 @@ export class EventRespawnService {
                 row.unassignedAt.isNull(),
               ),
             ).updateAndCount({
-              unassignedAt: closedAt,
+              unassignedAt: dateToTemporal(closedAt),
             });
           }
         });

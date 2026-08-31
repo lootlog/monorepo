@@ -19,6 +19,7 @@ import { discordBotConfig } from "#src/config/discord-bot.config";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 const DbNotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
@@ -228,12 +229,12 @@ export class ChannelsService {
         lastAttemptAt: null,
         lastSuccessAt: null,
         lastError: lastError ?? null,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         status: DiscordGuildSyncStatus.STALE,
         lastError: lastError ?? null,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
     });
   }
@@ -258,7 +259,10 @@ export class ChannelsService {
       return true;
     }
 
-    return Date.now() - syncState.updatedAt.getTime() > this.staleAfterMs;
+    return (
+      Date.now() - temporalToDate(syncState.updatedAt).getTime() >
+      this.staleAfterMs
+    );
   }
 
   private async reconcileGuildChannels(event: DiscordGuildChannelsSyncedEvent) {
@@ -332,10 +336,10 @@ export class ChannelsService {
     syncState: DiscordGuildSyncState,
   ) {
     const lastAttemptAt = syncState.lastAttemptAt
-      ? new Date(syncState.lastAttemptAt)
+      ? temporalToDate(syncState.lastAttemptAt)
       : null;
     const lastSuccessAt = syncState.lastSuccessAt
-      ? new Date(syncState.lastSuccessAt)
+      ? temporalToDate(syncState.lastSuccessAt)
       : lastAttemptAt;
 
     await client.orm.public.DiscordGuildSyncState.where((row) =>
@@ -350,10 +354,10 @@ export class ChannelsService {
         missingPermissions: syncState.missingPermissions,
         channelCount: syncState.channelCount,
         selectableChannelCount: syncState.selectableChannelCount,
-        lastAttemptAt,
-        lastSuccessAt,
+        lastAttemptAt: dateToTemporal(lastAttemptAt),
+        lastSuccessAt: dateToTemporal(lastSuccessAt),
         lastError: syncState.lastError,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         status: syncState.status,
@@ -363,12 +367,12 @@ export class ChannelsService {
         missingPermissions: syncState.missingPermissions,
         channelCount: syncState.channelCount,
         selectableChannelCount: syncState.selectableChannelCount,
-        lastAttemptAt,
+        lastAttemptAt: dateToTemporal(lastAttemptAt),
         lastError: syncState.lastError,
         ...(syncState.status === DiscordGuildSyncStatus.SYNCED
-          ? { lastSuccessAt }
+          ? { lastSuccessAt: dateToTemporal(lastSuccessAt) }
           : {}),
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
     });
   }
@@ -393,16 +397,16 @@ export class ChannelsService {
         missingPermissions: [],
         channelCount: 0,
         selectableChannelCount: 0,
-        lastAttemptAt: new Date(failure.lastAttemptAt),
+        lastAttemptAt: dateToTemporal(new Date(failure.lastAttemptAt)),
         lastSuccessAt: null,
         lastError: failure.lastError,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         status: failure.status,
-        lastAttemptAt: new Date(failure.lastAttemptAt),
+        lastAttemptAt: dateToTemporal(new Date(failure.lastAttemptAt)),
         lastError: failure.lastError,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
     });
   }
@@ -453,9 +457,9 @@ export class ChannelsService {
       ),
     ).updateAndCount({
       canSend: channel.hasRequiredPermissions,
-      lastSyncedAt: new Date(channel.lastSyncedAt),
+      lastSyncedAt: dateToTemporal(new Date(channel.lastSyncedAt)),
       metadata: this.createGuildChannelTargetMetadata(channel),
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
   }
 
@@ -477,8 +481,8 @@ export class ChannelsService {
       requiredPermissions: channel.requiredPermissions,
       grantedPermissions: channel.grantedPermissions,
       missingPermissions: channel.missingPermissions,
-      lastSyncedAt: new Date(channel.lastSyncedAt),
-      updatedAt: new Date(),
+      lastSyncedAt: dateToTemporal(new Date(channel.lastSyncedAt)),
+      updatedAt: dateToTemporal(new Date()),
     };
   }
 

@@ -40,6 +40,7 @@ import {
   findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc,
   type ActiveEventHeroMatch,
 } from "../utils/find-active-event-heroes-by-npc.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
 type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
@@ -182,10 +183,10 @@ export class EventKillService {
   ) {
     let query = collection.where((row) =>
       and(
-        row.assignedAt.lte(params.killedAt),
+        row.assignedAt.lte(dateToTemporal(params.killedAt)),
         or(
           row.unassignedAt.isNull(),
-          row.unassignedAt.gte(params.overlapWindowStartTime),
+          row.unassignedAt.gte(dateToTemporal(params.overlapWindowStartTime)),
         ),
       ),
     );
@@ -691,9 +692,9 @@ export class EventKillService {
       const heroKill = await tx.orm.public.EventHeroKill.create({
         id: createId(),
         heroNpcId: eventHero.id,
-        killedAt,
-        minSpawnTimeAtKill,
-        maxSpawnTimeAtKill,
+        killedAt: dateToTemporal(killedAt),
+        minSpawnTimeAtKill: dateToTemporal(minSpawnTimeAtKill),
+        maxSpawnTimeAtKill: dateToTemporal(maxSpawnTimeAtKill),
         timerCreatedById: timerData.memberId,
         isManualClose,
       });
@@ -841,7 +842,14 @@ export class EventKillService {
 
       if (killPointsData.length > 0) {
         await tx.orm.public.EventKillPoint.createAndCount(
-          killPointsData.map((point) => ({ id: createId(), ...point })),
+          killPointsData.map((point) => ({
+            id: createId(),
+            ...point,
+            confirmationDeadlineAt: dateToTemporal(
+              point.confirmationDeadlineAt,
+            ),
+            confirmedAt: dateToTemporal(point.confirmedAt),
+          })),
         );
       }
 
@@ -851,7 +859,7 @@ export class EventKillService {
 
       await tx.orm.public.EventMapAssignmentHistory.where((row) =>
         and(row.mapId.in(heroMapIds), row.unassignedAt.isNull()),
-      ).updateAndCount({ unassignedAt: killedAt });
+      ).updateAndCount({ unassignedAt: dateToTemporal(killedAt) });
 
       const createdPoints = await tx.orm.public.EventKillPoint.where((row) =>
         row.killId.eq(heroKill.id),
@@ -878,7 +886,7 @@ export class EventKillService {
       !isManualClose &&
       timerData.minSpawnTime &&
       timerData.maxSpawnTime &&
-      timerData.minSpawnTime > killedAt
+      temporalToDate(timerData.minSpawnTime) > killedAt
     ) {
       await Promise.all(
         heroMaps.map((map) =>
@@ -969,18 +977,25 @@ export class EventKillService {
     let memberLeaveTime: Date | null = null;
 
     for (const assignment of params.assignments) {
-      if (assignment.assignedAt > params.killedAt) continue;
+      if (
+        temporalToDate(assignment.assignedAt) > temporalToDate(params.killedAt)
+      )
+        continue;
       if (
         !assignment.unassignedAt ||
-        assignment.unassignedAt >= params.killedAt
+        temporalToDate(assignment.unassignedAt) >=
+          temporalToDate(params.killedAt)
       ) {
         memberPresentAtKill = true;
         continue;
       }
       if (
-        assignment.unassignedAt >= params.trackingWindowStartTime &&
-        assignment.unassignedAt < params.killedAt &&
-        (!memberLeaveTime || assignment.unassignedAt > memberLeaveTime)
+        temporalToDate(assignment.unassignedAt) >=
+          params.trackingWindowStartTime &&
+        temporalToDate(assignment.unassignedAt) <
+          temporalToDate(params.killedAt) &&
+        (!memberLeaveTime ||
+          temporalToDate(assignment.unassignedAt) > memberLeaveTime)
       ) {
         memberLeaveTime = assignment.unassignedAt;
       }
@@ -1489,8 +1504,11 @@ export class EventKillService {
         return {
           mapId: assignment.mapId,
           mapName: mapIdToName.get(assignment.mapId) ?? "",
-          assignedAt: assignment.assignedAt.toISOString(),
-          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
+          assignedAt: temporalToDate(assignment.assignedAt).toISOString(),
+          unassignedAt:
+            assignment.unassignedAt === null
+              ? null
+              : temporalToDate(assignment.unassignedAt).toISOString(),
           assignmentDurationSeconds,
           presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
           afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
@@ -1512,7 +1530,8 @@ export class EventKillService {
     );
     const resolvedAfterMaxSpawnTimeMs = Math.max(
       0,
-      kill.killedAt.getTime() - kill.maxSpawnTimeAtKill.getTime(),
+      temporalToDate(kill.killedAt).getTime() -
+        temporalToDate(kill.maxSpawnTimeAtKill).getTime(),
     );
     const windowDurationSeconds = Math.max(
       0,
@@ -1575,7 +1594,7 @@ export class EventKillService {
     }
 
     const maxKillTime = new Date(
-      Math.max(...kills.map((kill) => kill.killedAt.getTime())),
+      Math.max(...kills.map((kill) => temporalToDate(kill.killedAt).getTime())),
     );
     const minTrackingWindowStart = new Date(
       Math.min(
@@ -1673,8 +1692,9 @@ export class EventKillService {
             return {
               mapId: assignment.mapId,
               mapName: mapIdToName.get(assignment.mapId) ?? "",
-              assignedAt: assignment.assignedAt.toISOString(),
-              unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
+              assignedAt: temporalToDate(assignment.assignedAt).toISOString(),
+              unassignedAt:
+                temporalToDate(assignment.unassignedAt)?.toISOString() ?? null,
               assignmentDurationSeconds,
               presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
               afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
@@ -1872,14 +1892,15 @@ export class EventKillService {
           memberName: assignment.member.name,
           memberAvatar: assignment.member.avatar,
           memberUserId: assignment.member.userId,
-          assignedAt: assignment.assignedAt.toISOString(),
-          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
+          assignedAt: temporalToDate(assignment.assignedAt).toISOString(),
+          unassignedAt:
+            temporalToDate(assignment.unassignedAt)?.toISOString() ?? null,
         })),
         gaps: gapsForMap.map((g) => ({
-          id: `${g.mapId}-${new Date(g.startedAt).getTime()}`,
+          id: `${g.mapId}-${temporalToDate(g.startedAt).getTime()}`,
           gapType: g.gapType,
-          startedAt: new Date(g.startedAt).toISOString(),
-          endedAt: g.endedAt ? new Date(g.endedAt).toISOString() : null,
+          startedAt: temporalToDate(g.startedAt).toISOString(),
+          endedAt: g.endedAt ? temporalToDate(g.endedAt).toISOString() : null,
           durationSeconds: g.durationSeconds,
         })),
       };

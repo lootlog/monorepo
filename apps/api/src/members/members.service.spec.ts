@@ -15,6 +15,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MembersService } from "./members.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { dateToTemporal } from "#src/db/temporal";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { DiscordService } from "#src/discord/discord.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
@@ -1113,6 +1114,12 @@ describe("MembersService", () => {
 
       expect(result).toEqual(mockMember);
       expect(prismaService.member.upsert).toHaveBeenCalled();
+    });
+
+    it("should encode database timestamps as Temporal.PlainDateTime", () => {
+      expect(Object.prototype.toString.call(dateToTemporal(new Date()))).toBe(
+        "[object Temporal.PlainDateTime]",
+      );
     });
 
     it("should update existing member", async () => {

@@ -4,7 +4,7 @@ import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { db as prismaDb } from "../prisma/db.js";
 import { PrismaService } from "#src/prisma.service";
-import { temporalToDate } from "#src/shared/db/temporal";
+import { dateToTemporal, temporalToDate } from "#src/shared/db/temporal";
 import { CreateActivityDto } from "./dto/create-activity.dto.js";
 import type { ActivityResponse } from "./dto/activity-response.dto.js";
 import { mapActivityDetails } from "./utils/map-activity-details.js";
@@ -181,7 +181,7 @@ export class ActivitiesService {
       guildId: dto.guildId,
       discordId: dto.discordId,
       source: dto.source,
-    }).update({ activeSessionCount, updatedAt: new Date() });
+    }).update({ activeSessionCount, updatedAt: dateToTemporal(new Date()) });
   }
 
   async clearActiveSessionsForMember(member: {
@@ -199,7 +199,10 @@ export class ActivitiesService {
         discordId: member.discordId,
       })
         .where((stats) => stats.activeSessionCount.gt(0))
-        .update({ activeSessionCount: 0, updatedAt: new Date() });
+        .update({
+          activeSessionCount: 0,
+          updatedAt: dateToTemporal(new Date()),
+        });
     });
   }
 
@@ -242,7 +245,7 @@ export class ActivitiesService {
 
     await this.prisma.db.orm.public.Activity.where({
       id: activity.id,
-      createdAt: activity.createdAt,
+      createdAt: dateToTemporal(activity.createdAt),
     }).delete();
 
     return 1;

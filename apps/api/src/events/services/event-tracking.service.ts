@@ -24,6 +24,7 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { TimersService } from "#src/timers/timers.service";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
 type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
@@ -179,7 +180,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
         heroNpcId: map.heroNpcId,
         memberId,
-        assignedAt: new Date(),
+        assignedAt: dateToTemporal(new Date()),
       });
     }
 
@@ -251,11 +252,11 @@ export class EventTrackingService implements OnModuleInit {
           row.memberId.eq(memberId),
           row.unassignedAt.isNull(),
         ),
-      ).updateAndCount({ unassignedAt: now });
+      ).updateAndCount({ unassignedAt: dateToTemporal(now) });
     } else {
       await this.prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
         and(row.mapId.eq(mapId), row.unassignedAt.isNull()),
-      ).updateAndCount({ unassignedAt: now });
+      ).updateAndCount({ unassignedAt: dateToTemporal(now) });
     }
 
     if (updated.assignedMembers.length === 0) {
@@ -304,7 +305,7 @@ export class EventTrackingService implements OnModuleInit {
       mapId,
       heroNpcId,
       gapType: CoverageGapType.UNASSIGNED,
-      startedAt: startedAt ?? new Date(),
+      startedAt: dateToTemporal(startedAt ?? new Date()),
     });
 
     this.logger.debug({
@@ -331,13 +332,13 @@ export class EventTrackingService implements OnModuleInit {
     }
 
     const durationSeconds = Math.round(
-      (now.getTime() - openGap.startedAt.getTime()) / 1000,
+      (now.getTime() - temporalToDate(openGap.startedAt).getTime()) / 1000,
     );
 
     await this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
       row.id.eq(openGap.id),
     ).update({
-      endedAt: now,
+      endedAt: dateToTemporal(now),
       durationSeconds,
     });
 
@@ -371,7 +372,7 @@ export class EventTrackingService implements OnModuleInit {
       mapId,
       heroNpcId,
       gapType: CoverageGapType.UNCOVERED,
-      startedAt: startedAt ?? new Date(),
+      startedAt: dateToTemporal(startedAt ?? new Date()),
     });
 
     this.logger.debug({
@@ -398,13 +399,13 @@ export class EventTrackingService implements OnModuleInit {
     }
 
     const durationSeconds = Math.round(
-      (now.getTime() - openGap.startedAt.getTime()) / 1000,
+      (now.getTime() - temporalToDate(openGap.startedAt).getTime()) / 1000,
     );
 
     await this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
       row.id.eq(openGap.id),
     ).update({
-      endedAt: now,
+      endedAt: dateToTemporal(now),
       durationSeconds,
     });
 
@@ -429,12 +430,12 @@ export class EventTrackingService implements OnModuleInit {
     await this.prisma.db.transaction(async (transaction) => {
       for (const gap of openGaps) {
         const durationSeconds = Math.round(
-          (now.getTime() - gap.startedAt.getTime()) / 1000,
+          (now.getTime() - temporalToDate(gap.startedAt).getTime()) / 1000,
         );
         await transaction.orm.public.EventMapCoverageGap.where((row) =>
           row.id.eq(gap.id),
         ).update({
-          endedAt: now,
+          endedAt: dateToTemporal(now),
           durationSeconds,
         });
       }
@@ -610,8 +611,14 @@ export class EventTrackingService implements OnModuleInit {
           heroNpc.event.some((event) =>
             and(
               event.guildId.eq(guildId),
-              or(event.startsAt.isNull(), event.startsAt.lte(referenceTime)),
-              or(event.endsAt.isNull(), event.endsAt.gt(referenceTime)),
+              or(
+                event.startsAt.isNull(),
+                event.startsAt.lte(dateToTemporal(referenceTime)),
+              ),
+              or(
+                event.endsAt.isNull(),
+                event.endsAt.gt(dateToTemporal(referenceTime)),
+              ),
             ),
           ),
         ),
@@ -669,7 +676,7 @@ export class EventTrackingService implements OnModuleInit {
                 row.memberId.eq(member.id),
                 row.endedAt.isNull(),
               ),
-            ).updateAndCount({ endedAt: now });
+            ).updateAndCount({ endedAt: dateToTemporal(now) });
 
             await this.prisma.db.orm.public.EventPresenceLog.create({
               id: createId(),
@@ -698,7 +705,7 @@ export class EventTrackingService implements OnModuleInit {
                   row.memberId.eq(member.id),
                   row.endedAt.isNull(),
                 ),
-              ).updateAndCount({ endedAt: now });
+              ).updateAndCount({ endedAt: dateToTemporal(now) });
 
             if (result > 0) {
               this.logger.debug({
@@ -906,7 +913,10 @@ export class EventTrackingService implements OnModuleInit {
 
     for (const log of presenceLogs) {
       const endTime = log.endedAt || now;
-      const duration = Math.max(0, endTime.getTime() - log.startedAt.getTime());
+      const duration = Math.max(
+        0,
+        endTime.getTime() - temporalToDate(log.startedAt).getTime(),
+      );
 
       if (!log.isAfk) {
         totalCoverageMs += duration;

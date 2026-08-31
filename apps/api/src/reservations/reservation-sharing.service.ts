@@ -12,6 +12,7 @@ import {
 import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { ReservationEventsPublisher } from "./reservation-events.publisher.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
@@ -81,7 +82,7 @@ export class ReservationSharingService {
           row.sourceGuildId.eq(guildId),
           row.acceptedAt.isNull(),
           row.revokedAt.isNull(),
-          row.expiresAt.gt(now),
+          row.expiresAt.gt(dateToTemporal(now)),
         ),
       )
         .orderBy((row) => row.createdAt.desc())
@@ -119,8 +120,8 @@ export class ReservationSharingService {
         sourceGuildId: guildId,
         tokenHash: this.hashToken(token),
         createdByUserId: userId,
-        expiresAt,
-        updatedAt: new Date(),
+        expiresAt: dateToTemporal(expiresAt),
+        updatedAt: dateToTemporal(new Date()),
       });
     const invitePath = `/reservation-sharing/invitations/${token}`;
 
@@ -195,13 +196,13 @@ export class ReservationSharingService {
             row.id.eq(invitation.id),
             row.acceptedAt.isNull(),
             row.revokedAt.isNull(),
-            row.expiresAt.gt(acceptedAt),
+            row.expiresAt.gt(dateToTemporal(acceptedAt)),
           ),
         ).updateAndCount({
-          acceptedAt,
+          acceptedAt: dateToTemporal(acceptedAt),
           acceptedByUserId: options.userId,
           targetGuildId: targetGuild.id,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
 
       if (claim === 0) {
@@ -232,7 +233,7 @@ export class ReservationSharingService {
           secondGuildId,
           createdByUserId: invitation.createdByUserId,
           acceptedByUserId: options.userId,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         },
         update: {
           createdByUserId: invitation.createdByUserId,
@@ -268,7 +269,10 @@ export class ReservationSharingService {
           row.acceptedAt.isNull(),
           row.revokedAt.isNull(),
         ),
-      ).updateAndCount({ revokedAt: new Date(), updatedAt: new Date() });
+      ).updateAndCount({
+        revokedAt: dateToTemporal(new Date()),
+        updatedAt: dateToTemporal(new Date()),
+      });
 
     if (result === 0) {
       throw new NotFoundException({ code: "INVITATION_NOT_FOUND" });
@@ -290,7 +294,10 @@ export class ReservationSharingService {
 
     await this.prisma.db.orm.public.ReservationShare.where((row) =>
       row.id.eq(share.id),
-    ).update({ revokedAt: new Date(), updatedAt: new Date() });
+    ).update({
+      revokedAt: dateToTemporal(new Date()),
+      updatedAt: dateToTemporal(new Date()),
+    });
     await this.eventsPublisher.sharingChanged(guildId, [
       share.firstGuildId,
       share.secondGuildId,
@@ -311,7 +318,10 @@ export class ReservationSharingService {
     if (invitation.acceptedAt) {
       throw new ConflictException({ code: "INVITATION_ALREADY_USED" });
     }
-    if (invitation.revokedAt || invitation.expiresAt <= new Date()) {
+    if (
+      invitation.revokedAt ||
+      temporalToDate(invitation.expiresAt) <= new Date()
+    ) {
       throw new GoneException({ code: "INVITATION_EXPIRED" });
     }
 

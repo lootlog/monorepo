@@ -14,6 +14,7 @@ import {
   getProfByShortname,
   getShortnameByProf,
 } from "#src/shared/utils/get-prof-by-shortname";
+import { dateToTemporal } from "#src/db/temporal";
 
 const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
 type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
@@ -443,10 +444,14 @@ export class LootQueryService {
     if (options.world) predicates.push(loot.world.eq(options.world));
     if (options.cursor) predicates.push(loot.id.lt(Number(options.cursor)));
     if (options.createdAtMin) {
-      predicates.push(loot.createdAt.gte(new Date(options.createdAtMin)));
+      predicates.push(
+        loot.createdAt.gte(dateToTemporal(new Date(options.createdAtMin))),
+      );
     }
     if (options.createdAtMax) {
-      predicates.push(loot.createdAt.lte(new Date(options.createdAtMax)));
+      predicates.push(
+        loot.createdAt.lte(dateToTemporal(new Date(options.createdAtMax))),
+      );
     }
     if (options.players?.length) {
       predicates.push(

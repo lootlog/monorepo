@@ -14,6 +14,7 @@ import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MembersService } from "#src/members/members.service";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
+import { dateToTemporal } from "#src/db/temporal";
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {
@@ -92,7 +93,9 @@ export class MemberSyncInterceptor implements NestInterceptor {
     const [neverSyncedMembers, outdatedMembers] = await Promise.all([
       members.where((member) => member.lastDiscordSyncAt.isNull()).all(),
       members
-        .where((member) => member.lastDiscordSyncAt.lt(staleThreshold))
+        .where((member) =>
+          member.lastDiscordSyncAt.lt(dateToTemporal(staleThreshold)),
+        )
         .all(),
     ]);
     const staleMembers = Array.from(

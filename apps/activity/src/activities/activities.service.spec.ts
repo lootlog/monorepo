@@ -99,7 +99,7 @@ describe("ActivitiesService", () => {
     expect(sessionDelete).toHaveBeenCalledOnce();
     expect(statsUpdate).toHaveBeenCalledWith({
       activeSessionCount: 0,
-      updatedAt: expect.any(Date),
+      updatedAt: expect.any(Temporal.Instant),
     });
   });
 

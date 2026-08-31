@@ -40,10 +40,41 @@ function legacyModelName(modelName: string) {
   return modelName.charAt(0).toLowerCase() + modelName.slice(1);
 }
 
-function queryArguments(state: QueryState) {
+function toLegacyValue(value: unknown): unknown {
+  if (
+    value === null ||
+    value === undefined ||
+    typeof value !== "object" ||
+    value instanceof Date
+  ) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map(toLegacyValue);
+  }
+
+  const temporalTag = Object.prototype.toString.call(value);
+  if (temporalTag === "[object Temporal.Instant]") {
+    return new Date((value as { epochMilliseconds: number }).epochMilliseconds);
+  }
+  if (temporalTag === "[object Temporal.PlainDateTime]") {
+    return new Date(`${value.toString()}Z`);
+  }
+
   return Object.fromEntries(
-    Object.entries(state).filter(([, value]) => value !== undefined),
+    Object.entries(value).map(([key, nestedValue]) => [
+      key,
+      toLegacyValue(nestedValue),
+    ]),
   );
+}
+
+function queryArguments(state: QueryState): Record<string, unknown> {
+  return toLegacyValue(
+    Object.fromEntries(
+      Object.entries(state).filter(([, value]) => value !== undefined),
+    ),
+  ) as Record<string, unknown>;
 }
 
 function normalizeCount(result: unknown) {
@@ -363,13 +394,19 @@ function createQuery(
     create(data: unknown) {
       return rememberResult(
         context,
-        model.create?.({ ...queryArguments(state), data }) ?? data,
+        model.create?.({
+          ...queryArguments(state),
+          data: toLegacyValue(data),
+        }) ?? data,
       );
     },
     update(data: unknown) {
       return rememberResult(
         context,
-        model.update?.({ ...queryArguments(state), data }) ?? data,
+        model.update?.({
+          ...queryArguments(state),
+          data: toLegacyValue(data),
+        }) ?? data,
       );
     },
     delete() {
@@ -377,12 +414,17 @@ function createQuery(
     },
     upsert(data: unknown) {
       return (
-        model.upsert?.({ ...queryArguments(state), ...(data as object) }) ??
-        (data as { create?: unknown }).create
+        model.upsert?.({
+          ...queryArguments(state),
+          ...(toLegacyValue(data) as object),
+        }) ?? (data as { create?: unknown }).create
       );
     },
     createAndCount(data: unknown) {
-      const result = model.createMany?.({ ...queryArguments(state), data });
+      const result = model.createMany?.({
+        ...queryArguments(state),
+        data: toLegacyValue(data),
+      });
       return result === undefined
         ? Array.isArray(data)
           ? data.length
@@ -390,7 +432,10 @@ function createQuery(
         : normalizeCount(result);
     },
     updateAndCount(data: unknown) {
-      const result = model.updateMany?.({ ...queryArguments(state), data });
+      const result = model.updateMany?.({
+        ...queryArguments(state),
+        data: toLegacyValue(data),
+      });
       return result === undefined ? 0 : normalizeCount(result);
     },
     deleteAndCount() {

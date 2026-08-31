@@ -25,6 +25,7 @@ import {
   getDefaultTestTriggerUsage,
 } from "#src/notifications/utils/test-trigger-usage.util";
 import { hasOwnField } from "#src/shared/utils/has-own-field";
+import { dateToTemporal } from "#src/db/temporal";
 
 const DbNotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
@@ -124,15 +125,15 @@ export class NotificationTargetService {
         metadata: this.createGuildChannelTargetMetadata(selectedChannel),
         active: true,
         canSend: selectedChannel.hasRequiredPermissions,
-        lastSyncedAt: new Date(selectedChannel.lastSyncedAt),
-        updatedAt: new Date(),
+        lastSyncedAt: dateToTemporal(new Date(selectedChannel.lastSyncedAt)),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         displayName: data.displayName ?? selectedChannel.name,
         metadata: this.createGuildChannelTargetMetadata(selectedChannel),
         active: true,
         canSend: selectedChannel.hasRequiredPermissions,
-        lastSyncedAt: new Date(selectedChannel.lastSyncedAt),
+        lastSyncedAt: dateToTemporal(new Date(selectedChannel.lastSyncedAt)),
       },
     });
   }
@@ -149,7 +150,7 @@ export class NotificationTargetService {
     ).update({
       ...this.getDisplayNameUpdate(data),
       active: data.active,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
 
     if (data.active === false) {
@@ -222,7 +223,7 @@ export class NotificationTargetService {
         displayName: data.displayName ?? "Discord DM",
         active: true,
         canSend: true,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         displayName: data.displayName ?? "Discord DM",
@@ -248,7 +249,7 @@ export class NotificationTargetService {
     ).update({
       ...this.getDisplayNameUpdate(data),
       active: data.active,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
   }
 
@@ -495,7 +496,7 @@ export class NotificationTargetService {
           scheduleTimezone: null,
           enabled: false,
           dedupeWindowSeconds: 0,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
     }
 

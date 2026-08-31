@@ -11,7 +11,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { serviceConfig } from "#src/config/service.config";
 import { PrismaService } from "#src/db/prisma.service";
-import { temporalToDate } from "#src/db/temporal";
+import { dateToTemporal, temporalToDate } from "#src/db/temporal";
 import { RuntimeEnvironment } from "@lootlog/types";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant.js";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
@@ -46,7 +46,9 @@ export class MemberBulkRefreshService {
     const recentJob = await this.prisma.db.orm.public.MemberRefreshJob.where(
       (row) => row.guildId.eq(guildId),
     )
-      .where((job) => job.createdAt.gte(new Date(Date.now() - rateLimit)))
+      .where((job) =>
+        job.createdAt.gte(dateToTemporal(new Date(Date.now() - rateLimit))),
+      )
       .orderBy((job) => job.createdAt.desc())
       .first();
 
@@ -65,7 +67,7 @@ export class MemberBulkRefreshService {
       requestedBy,
       status: "PENDING",
       totalMembers: members.length,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
 
     try {
@@ -96,8 +98,8 @@ export class MemberBulkRefreshService {
         row.id.eq(job.id),
       ).update({
         status: "FAILED",
-        completedAt: new Date(),
-        updatedAt: new Date(),
+        completedAt: dateToTemporal(new Date()),
+        updatedAt: dateToTemporal(new Date()),
       });
       await this.memberRefreshJobEventsService.emitJobUpdate(job.id);
       throw error;

@@ -4,6 +4,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { ReservationChangedEventV2 } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+import { temporalToDate } from "#src/db/temporal";
 
 type Reservation = FieldOutputTypes["public"]["Reservation"];
 
@@ -81,9 +82,9 @@ export class ReservationEventsPublisher {
       reservation: {
         id: input.reservation.id,
         reservationId: input.reservation.spotId,
-        createdDate: input.reservation.createdAt.toISOString(),
-        fromDate: input.reservation.startsAt.toISOString(),
-        toDate: input.reservation.endsAt.toISOString(),
+        createdDate: temporalToDate(input.reservation.createdAt).toISOString(),
+        fromDate: temporalToDate(input.reservation.startsAt).toISOString(),
+        toDate: temporalToDate(input.reservation.endsAt).toISOString(),
         createdBy: input.actorDiscordId,
       },
     });

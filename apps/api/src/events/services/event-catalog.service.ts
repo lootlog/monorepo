@@ -44,6 +44,7 @@ import {
   compareEventsByActivityAndStart,
   isEventActiveAt,
 } from "../utils/event-activity.util.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 type Event = FieldOutputTypes["public"]["Event"];
 
@@ -126,12 +127,12 @@ export class EventCatalogService {
           id: createId(),
           world: normalizedWorld,
           guildId,
-          startsAt: startDate,
-          endsAt: endDate,
+          startsAt: dateToTemporal(startDate),
+          endsAt: dateToTemporal(endDate),
           scoringMode: normalizedScoringMode,
           scoringRules: normalizedScoringRules,
           rulebookMarkdown: normalizedRulebookMarkdown,
-          updatedAt: now,
+          updatedAt: dateToTemporal(now),
         });
         await this.createEventHeroes(transaction, event.id, heroNpcs ?? []);
         return event;
@@ -353,10 +354,10 @@ export class EventCatalogService {
         ).update({
           ...updateData,
           ...(startsAt !== undefined && {
-            startsAt: newStartDate,
+            startsAt: dateToTemporal(newStartDate),
           }),
           ...(endsAt !== undefined && {
-            endsAt: newEndDate,
+            endsAt: dateToTemporal(newEndDate),
           }),
           ...(assignmentTimeoutMinutes !== undefined && {
             assignmentTimeoutMinutes,
@@ -380,7 +381,7 @@ export class EventCatalogService {
                 ? rulebookMarkdown.trim()
                 : null,
           }),
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
         if (heroNpcs) {
           await this.createEventHeroes(transactionClient, eventId, heroNpcs);
@@ -499,7 +500,7 @@ export class EventCatalogService {
               heroNpcId: hero.id,
               mapId: map.mapId,
               mapName: map.mapName,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             })),
           );
         }
@@ -600,7 +601,7 @@ export class EventCatalogService {
       heroNpcId: heroId,
       mapId: data.mapId,
       mapName: data.mapName,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
 
     await this.trackingService.openUnassignedGap(map.id, heroId);
@@ -680,7 +681,7 @@ export class EventCatalogService {
         heroNpcId: heroId,
         name: data.name,
         order: newOrder,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
@@ -733,7 +734,7 @@ export class EventCatalogService {
         row.id.eq(locationId),
       ).update({
         ...(data.name && { name: data.name }),
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
@@ -806,7 +807,7 @@ export class EventCatalogService {
       for (const [index, locationId] of data.locationIds.entries()) {
         await transaction.orm.public.EventMapLocation.where((row) =>
           row.id.eq(locationId),
-        ).update({ order: index, updatedAt: new Date() });
+        ).update({ order: index, updatedAt: dateToTemporal(new Date()) });
       }
     });
 
@@ -851,7 +852,7 @@ export class EventCatalogService {
 
     const updatedMap = await this.prisma.db.orm.public.EventMap.where((row) =>
       row.id.eq(mapId),
-    ).update({ locationId, updatedAt: new Date() });
+    ).update({ locationId, updatedAt: dateToTemporal(new Date()) });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
 
@@ -943,7 +944,7 @@ export class EventCatalogService {
             heroNpcId: heroId,
             mapId: map.mapId,
             mapName: map.mapName,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           })),
         );
       }

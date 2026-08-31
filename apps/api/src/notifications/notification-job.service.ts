@@ -32,6 +32,7 @@ import { NotificationMatchingService } from "#src/notifications/notification-mat
 import { Error } from "#src/notifications/enum/error.enum";
 import type { NotificationDispatchJobData } from "#src/notifications/notifications-dispatch.processor";
 import { calculateNextOccurrenceInTimeZone } from "#src/notifications/utils/notification-schedule-time.util";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 const DbNotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
@@ -182,8 +183,8 @@ export class NotificationJobService {
       ),
     ).updateAndCount({
       status: DbNotificationJobStatus.CANCELED,
-      processedAt: new Date(),
-      updatedAt: new Date(),
+      processedAt: dateToTemporal(new Date()),
+      updatedAt: dateToTemporal(new Date()),
     });
   }
 
@@ -218,7 +219,7 @@ export class NotificationJobService {
             options.target.id,
             options.sourceEntityType ?? "unknown",
             options.sourceEntityId ?? "unknown",
-            options.scheduledFor.toISOString(),
+            temporalToDate(options.scheduledFor).toISOString(),
           ].join(":")
         : [
             options.jobKind === DbNotificationJobKind.TEST ? "test" : "instant",
@@ -235,7 +236,7 @@ export class NotificationJobService {
         ownerType: options.notificationRule.ownerType,
         ownerId: options.notificationRule.ownerId,
         jobKind: options.jobKind,
-        scheduledFor: options.scheduledFor,
+        scheduledFor: dateToTemporal(options.scheduledFor),
         status: options.forceBlocked
           ? DbNotificationJobStatus.BLOCKED
           : DbNotificationJobStatus.PENDING,
@@ -247,7 +248,7 @@ export class NotificationJobService {
         blockedReason: options.forceBlocked
           ? "Missing Discord bot permissions or target access"
           : null,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
     } catch (error) {
       if (isUniqueConstraintError(error)) {
@@ -265,7 +266,7 @@ export class NotificationJobService {
             row.id.eq(existingJob.id),
           ).update({
             idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           });
 
           return tx.orm.public.NotificationJob.create({
@@ -275,7 +276,7 @@ export class NotificationJobService {
             ownerType: options.notificationRule.ownerType,
             ownerId: options.notificationRule.ownerId,
             jobKind: options.jobKind,
-            scheduledFor: options.scheduledFor,
+            scheduledFor: dateToTemporal(options.scheduledFor),
             status: options.forceBlocked
               ? DbNotificationJobStatus.BLOCKED
               : DbNotificationJobStatus.PENDING,
@@ -287,7 +288,7 @@ export class NotificationJobService {
             blockedReason: options.forceBlocked
               ? "Missing Discord bot permissions or target access"
               : null,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           });
         });
       }
@@ -333,7 +334,7 @@ export class NotificationJobService {
         status: DbNotificationJobStatus.BLOCKED,
         blockedReason: targetBlockedReason,
         lastError: targetBlockedReason,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
       return;
     }
@@ -350,7 +351,7 @@ export class NotificationJobService {
         status: DbNotificationJobStatus.BLOCKED,
         blockedReason: "Missing Discord bot permissions",
         lastError: "Missing Discord bot permissions",
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
       return;
     }
@@ -433,7 +434,7 @@ export class NotificationJobService {
       ).update({
         status: DbNotificationJobStatus.PENDING,
         lastError: `AMQP publish failed: ${errorMessage}`,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       const retryDelay = Math.min(
@@ -464,18 +465,18 @@ export class NotificationJobService {
           row.id.eq(notificationJob.id),
         ).update({
           status: DbNotificationJobStatus.SENT,
-          processedAt: new Date(event.deliveredAt),
+          processedAt: dateToTemporal(new Date(event.deliveredAt)),
           providerMessageId: event.providerMessageId ?? null,
           lastError: null,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
 
         await tx.orm.public.NotificationTarget.where((row) =>
           row.id.eq(notificationJob.targetId),
         ).update({
-          lastDeliveryAt: new Date(event.deliveredAt),
+          lastDeliveryAt: dateToTemporal(new Date(event.deliveredAt)),
           lastDeliveryError: null,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
       });
 
@@ -502,7 +503,7 @@ export class NotificationJobService {
           event.errorMessage ??
           event.errorCode ??
           "Notification delivery failed",
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await tx.orm.public.NotificationJob.where((row) =>
@@ -515,16 +516,16 @@ export class NotificationJobService {
                 event.errorMessage ??
                 event.errorCode ??
                 "Notification delivery failed",
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             }
           : {
               status: DbNotificationJobStatus.FAILED,
-              processedAt: new Date(event.deliveredAt),
+              processedAt: dateToTemporal(new Date(event.deliveredAt)),
               lastError:
                 event.errorMessage ??
                 event.errorCode ??
                 "Notification delivery failed",
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             },
       );
     });
@@ -742,7 +743,8 @@ export class NotificationJobService {
 
     if (
       notificationRule.scheduledUntil &&
-      scheduledAt.getTime() > notificationRule.scheduledUntil.getTime()
+      scheduledAt.getTime() >
+        temporalToDate(notificationRule.scheduledUntil).getTime()
     ) {
       return;
     }
@@ -812,7 +814,7 @@ export class NotificationJobService {
       await this.prisma.db.orm.public.NotificationJob.where((row) =>
         and(
           row.ruleId.eq(ruleId),
-          row.scheduledFor.eq(notificationRule.scheduledAt),
+          row.scheduledFor.eq(dateToTemporal(notificationRule.scheduledAt)),
           row.sourceEntityType.eq("scheduled-message"),
         ),
       )
@@ -844,7 +846,8 @@ export class NotificationJobService {
 
     if (
       notificationRule.scheduledUntil &&
-      nextScheduledAt.getTime() > notificationRule.scheduledUntil.getTime()
+      nextScheduledAt.getTime() >
+        temporalToDate(notificationRule.scheduledUntil).getTime()
     ) {
       return;
     }
@@ -853,9 +856,12 @@ export class NotificationJobService {
       (row) =>
         and(
           row.id.eq(ruleId),
-          row.scheduledAt.eq(notificationRule.scheduledAt),
+          row.scheduledAt.eq(dateToTemporal(notificationRule.scheduledAt)),
         ),
-    ).updateAndCount({ scheduledAt: nextScheduledAt, updatedAt: new Date() });
+    ).updateAndCount({
+      scheduledAt: dateToTemporal(nextScheduledAt),
+      updatedAt: dateToTemporal(new Date()),
+    });
 
     if (updated === 0) {
       return;

@@ -11,6 +11,7 @@ import {
   canModerateReservations,
   type ReservationViewerContext,
 } from "./reservation-viewer.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 @Injectable()
 export class ReservationsService {
@@ -33,7 +34,11 @@ export class ReservationsService {
         .all(),
     ]);
     const reservations = await this.prisma.db.orm.public.Reservation.where(
-      (row) => and(row.guildId.in(visibleGuildIds), row.endsAt.gt(now)),
+      (row) =>
+        and(
+          row.guildId.in(visibleGuildIds),
+          row.endsAt.gt(dateToTemporal(now)),
+        ),
     )
       .include("guild")
       .orderBy([(row) => row.startsAt.asc(), (row) => row.id.asc()])
@@ -51,11 +56,12 @@ export class ReservationsService {
       const currentReservation =
         localSpotReservations.find(
           (reservation) =>
-            reservation.startsAt <= now && reservation.endsAt > now,
+            temporalToDate(reservation.startsAt) <= now &&
+            temporalToDate(reservation.endsAt) > now,
         ) ?? null;
       const nextReservation =
         localSpotReservations.find(
-          (reservation) => reservation.startsAt > now,
+          (reservation) => temporalToDate(reservation.startsAt) > now,
         ) ?? null;
 
       return {
@@ -96,8 +102,8 @@ export class ReservationsService {
         and(
           row.guildId.in(visibleGuildIds),
           row.spotId.eq(spotId),
-          row.startsAt.lt(to),
-          row.endsAt.gt(from),
+          row.startsAt.lt(dateToTemporal(to)),
+          row.endsAt.gt(dateToTemporal(from)),
         ),
     )
       .include("guild")
@@ -169,9 +175,12 @@ export class ReservationsService {
     reservationsQuery =
       options.query.status === "past"
         ? reservationsQuery.where((row) =>
-            and(row.endsAt.gte(retentionStart), row.endsAt.lt(now)),
+            and(
+              row.endsAt.gte(dateToTemporal(retentionStart)),
+              row.endsAt.lt(dateToTemporal(now)),
+            ),
           )
-        : reservationsQuery.where((row) => row.endsAt.gte(now));
+        : reservationsQuery.where((row) => row.endsAt.gte(dateToTemporal(now)));
     const reservations = await reservationsQuery
       .include("guild")
       .orderBy(

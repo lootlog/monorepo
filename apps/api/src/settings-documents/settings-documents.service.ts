@@ -22,6 +22,7 @@ import {
   applySettingsPatch,
   resolveSettingsDomain,
 } from "./settings-resolver.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 type InputJsonValue = DatabaseJsonValue;
 const PrismaSettingsScopeType =
@@ -99,7 +100,7 @@ export class SettingsDocumentsService {
             scope,
             overrides: isRecord(document.overrides) ? document.overrides : {},
             schemaVersion: document.schemaVersion,
-            updatedAt: document.updatedAt.toISOString(),
+            updatedAt: temporalToDate(document.updatedAt).toISOString(),
           },
         ];
       });
@@ -173,7 +174,7 @@ export class SettingsDocumentsService {
             const data = {
               overrides: nextOverrides as InputJsonValue,
               schemaVersion: SETTINGS_CATALOG[operation.domain].schemaVersion,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             };
 
             if (currentDocument) {
@@ -197,7 +198,7 @@ export class SettingsDocumentsService {
                 scopeType: operation.scope.type as PrismaSettingsScopeType,
                 scopeId: operation.scope.id,
                 ...data,
-                updatedAt: new Date(),
+                updatedAt: dateToTemporal(new Date()),
               },
               update: data,
             });

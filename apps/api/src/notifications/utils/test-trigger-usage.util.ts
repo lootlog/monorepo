@@ -1,6 +1,7 @@
 import { db as prismaDb } from "#src/prisma/db";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import type { PrismaService } from "#src/db/prisma.service";
+import { dateToTemporal } from "#src/db/temporal";
 
 const DbNotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
@@ -32,7 +33,7 @@ export async function computeTestTriggerUsage(
     and(
       row.targetId.in(targetIds),
       row.jobKind.eq(DbNotificationJobKind.TEST),
-      row.createdAt.gte(threshold),
+      row.createdAt.gte(dateToTemporal(threshold)),
     ),
   )
     .select("targetId", "createdAt")

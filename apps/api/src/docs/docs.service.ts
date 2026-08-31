@@ -16,6 +16,7 @@ import {
 import type { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
 import type { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto.js";
 import type { GuildDocumentContent } from "./dto/guild-document-content.schema.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 type InputJsonValue = DatabaseJsonValue;
 type JsonValue = DatabaseJsonValue;
@@ -147,7 +148,7 @@ export class DocsService {
         content: EMPTY_DOCUMENT_CONTENT,
         createdByMemberId: memberId,
         updatedByMemberId: memberId,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await tx.orm.public.GuildDocumentHistory.create({
@@ -214,7 +215,7 @@ export class DocsService {
         content: content as InputJsonValue,
         updatedByMemberId: memberId,
         version: document.version + 1,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await tx.orm.public.GuildDocumentHistory.create({
@@ -330,10 +331,10 @@ export class DocsService {
       const deletedDocument = await tx.orm.public.GuildDocument.where((row) =>
         row.id.eq(documentId),
       ).update({
-        deletedAt: new Date(),
+        deletedAt: dateToTemporal(new Date()),
         deletedByMemberId: memberId,
         updatedByMemberId: memberId,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await tx.orm.public.GuildDocumentHistory.create({
@@ -371,7 +372,7 @@ export class DocsService {
         deletedAt: null,
         deletedByMemberId: null,
         updatedByMemberId: memberId,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await tx.orm.public.GuildDocumentHistory.create({

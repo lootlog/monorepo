@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "#src/prisma.service";
-import { temporalToDate } from "#src/shared/db/temporal";
+import { dateToTemporal, temporalToDate } from "#src/shared/db/temporal";
 import type { MemberActivityStatsResponse } from "../dto/member-activity-stats-response.dto.js";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto.js";
 import { mapActivityDetails } from "../utils/map-activity-details.js";
@@ -37,12 +37,12 @@ export class ActivitiesQueryService {
     }
     if (query.startDate) {
       activitiesQuery = activitiesQuery.where((activity) =>
-        activity.createdAt.gte(query.startDate!),
+        activity.createdAt.gte(dateToTemporal(query.startDate!)),
       );
     }
     if (query.endDate) {
       activitiesQuery = activitiesQuery.where((activity) =>
-        activity.createdAt.lte(query.endDate!),
+        activity.createdAt.lte(dateToTemporal(query.endDate!)),
       );
     }
     if (query.cursor) {

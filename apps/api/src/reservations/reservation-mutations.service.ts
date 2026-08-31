@@ -29,6 +29,7 @@ import {
   canModerateReservations,
   type ReservationViewerContext,
 } from "./reservation-viewer.js";
+import { temporalToDate, dateToTemporal } from "#src/db/temporal";
 
 type DatabaseTransaction = Parameters<
   Parameters<(typeof prismaDbType)["transaction"]>[0]
@@ -109,7 +110,8 @@ export class ReservationMutationsService {
           .build(),
       );
       await this.assertNoOverlap(transaction, {
-        ...range,
+        startsAt: dateToTemporal(range.startsAt),
+        endsAt: dateToTemporal(range.endsAt),
         guildId: context.guildId,
         spotId: spot.id,
       });
@@ -119,7 +121,7 @@ export class ReservationMutationsService {
           and(
             row.guildId.eq(context.guildId),
             row.spotId.eq(spot.id),
-            row.endsAt.gt(new Date()),
+            row.endsAt.gt(dateToTemporal(new Date())),
             or(
               row.createdByUserId.eq(context.userId),
               row.createdBy.eq(context.discordId),
@@ -143,7 +145,7 @@ export class ReservationMutationsService {
         authorAvatarUrl: getDiscordAvatarUrl(context.discordId, member.avatar),
         reminderMinutesBefore,
         comment: data.comment || null,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
     });
     const created = { ...createdRow, guild };
@@ -217,8 +219,10 @@ export class ReservationMutationsService {
         ? reservation.reminderMinutesBefore
         : options.data.reminderMinutesBefore;
     const timeChanged =
-      range.startsAt.getTime() !== reservation.startsAt.getTime() ||
-      range.endsAt.getTime() !== reservation.endsAt.getTime();
+      temporalToDate(range.startsAt).getTime() !==
+        temporalToDate(reservation.startsAt).getTime() ||
+      temporalToDate(range.endsAt).getTime() !==
+        temporalToDate(reservation.endsAt).getTime();
     const reminderChanged =
       reminderMinutesBefore !== reservation.reminderMinutesBefore;
     const reminderNeedsReschedule = timeChanged || reminderChanged;
@@ -232,7 +236,8 @@ export class ReservationMutationsService {
         ...range,
         settings,
         allowPastStart:
-          range.startsAt.getTime() === reservation.startsAt.getTime(),
+          temporalToDate(range.startsAt).getTime() ===
+          temporalToDate(reservation.startsAt).getTime(),
       });
     }
 
@@ -270,7 +275,7 @@ export class ReservationMutationsService {
         ...range,
         comment,
         reminderMinutesBefore,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
     });
     const updated = { ...updatedRow, guild: reservation.guild };
@@ -395,8 +400,8 @@ export class ReservationMutationsService {
       and(
         row.guildId.eq(options.guildId),
         row.spotId.eq(options.spotId),
-        row.startsAt.lt(options.endsAt),
-        row.endsAt.gt(options.startsAt),
+        row.startsAt.lt(dateToTemporal(options.endsAt)),
+        row.endsAt.gt(dateToTemporal(options.startsAt)),
       ),
     );
     if (options.excludedReservationId !== undefined) {
@@ -415,8 +420,12 @@ export class ReservationMutationsService {
     data: UpdateReservationDto,
   ): ReservationRange {
     return {
-      startsAt: data.startsAt ? new Date(data.startsAt) : reservation.startsAt,
-      endsAt: data.endsAt ? new Date(data.endsAt) : reservation.endsAt,
+      startsAt: data.startsAt
+        ? new Date(data.startsAt)
+        : temporalToDate(reservation.startsAt),
+      endsAt: data.endsAt
+        ? new Date(data.endsAt)
+        : temporalToDate(reservation.endsAt),
     };
   }
 
@@ -434,7 +443,7 @@ export class ReservationMutationsService {
     }
 
     const previousReminderScheduledFor = new Date(
-      reservation.startsAt.getTime() -
+      temporalToDate(reservation.startsAt).getTime() -
         reservation.reminderMinutesBefore * 60_000,
     );
     if (previousReminderScheduledFor.getTime() <= Date.now()) {
@@ -461,11 +470,11 @@ export class ReservationMutationsService {
     await this.prisma.db.orm.public.Reservation.where((row) =>
       row.id.eq(reservation.id),
     ).update({
-      startsAt: reservation.startsAt,
-      endsAt: reservation.endsAt,
+      startsAt: dateToTemporal(reservation.startsAt),
+      endsAt: dateToTemporal(reservation.endsAt),
       comment: reservation.comment,
       reminderMinutesBefore: reservation.reminderMinutesBefore,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
     await this.reminderService.cancel(reservation.id);
     await this.reminderService.schedule({

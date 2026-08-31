@@ -4,6 +4,7 @@ import { PrismaService } from "#src/db/prisma.service";
 import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { ErrorKey } from "../enum/error-key.enum.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 @Injectable()
 export class LootCommentService {
@@ -78,7 +79,7 @@ export class LootCommentService {
       content: body.content,
       organizationLootRecordId: organizationLootRecord.id,
       memberId: member.id,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
 
     return {

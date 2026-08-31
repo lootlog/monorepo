@@ -28,6 +28,7 @@ import {
   getKillStatsPeriodStart,
   type KillStatsPeriod,
 } from "./utils/kill-stats-period.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
@@ -212,17 +213,17 @@ export class KillsService {
           npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
           totalKills: 1,
-          lastKilledAt: killedAt,
-          updatedAt: killedAt,
+          lastKilledAt: dateToTemporal(killedAt),
+          updatedAt: dateToTemporal(killedAt),
         },
         update: {
           totalKills: (userStats?.totalKills ?? 0) + 1,
-          lastKilledAt: killedAt,
+          lastKilledAt: dateToTemporal(killedAt),
           npcName: data.npc.name,
           npcLvl: data.npc.lvl,
           npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
-          updatedAt: killedAt,
+          updatedAt: dateToTemporal(killedAt),
         },
       });
       userStatsUpdated = true;
@@ -232,7 +233,7 @@ export class KillsService {
             row.userId.eq(discordId),
             row.world.eq(data.world),
             row.npcId.eq(npcId),
-            row.periodStart.eq(periodStart),
+            row.periodStart.eq(dateToTemporal(periodStart)),
           ),
         ).first();
       await this.prisma.db.orm.public.UserKillStatsBucket.where((row) =>
@@ -240,7 +241,7 @@ export class KillsService {
           row.userId.eq(discordId),
           row.world.eq(data.world),
           row.npcId.eq(npcId),
-          row.periodStart.eq(periodStart),
+          row.periodStart.eq(dateToTemporal(periodStart)),
         ),
       ).upsert({
         create: {
@@ -254,18 +255,18 @@ export class KillsService {
           npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
           totalKills: 1,
-          periodStart,
-          lastKilledAt: killedAt,
-          updatedAt: killedAt,
+          periodStart: dateToTemporal(periodStart),
+          lastKilledAt: dateToTemporal(killedAt),
+          updatedAt: dateToTemporal(killedAt),
         },
         update: {
           totalKills: (userStatsBucket?.totalKills ?? 0) + 1,
-          lastKilledAt: killedAt,
+          lastKilledAt: dateToTemporal(killedAt),
           npcName: data.npc.name,
           npcLvl: data.npc.lvl,
           npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
-          updatedAt: killedAt,
+          updatedAt: dateToTemporal(killedAt),
         },
       });
     } catch (error) {
@@ -358,17 +359,17 @@ export class KillsService {
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
               memberKills: 1,
-              lastKilledAt: killedAt,
-              updatedAt: killedAt,
+              lastKilledAt: dateToTemporal(killedAt),
+              updatedAt: dateToTemporal(killedAt),
             },
             update: {
               memberKills: (memberStats?.memberKills ?? 0) + 1,
-              lastKilledAt: killedAt,
+              lastKilledAt: dateToTemporal(killedAt),
               npcName: data.npc.name,
               npcLvl: data.npc.lvl,
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
-              updatedAt: killedAt,
+              updatedAt: dateToTemporal(killedAt),
             },
           });
           guildStatsUpdated = true;
@@ -379,7 +380,7 @@ export class KillsService {
                 row.memberId.eq(member.id),
                 row.world.eq(data.world),
                 row.npcId.eq(npcId),
-                row.periodStart.eq(periodStart),
+                row.periodStart.eq(dateToTemporal(periodStart)),
               ),
             ).first();
           await this.prisma.db.orm.public.NpcKillStatsBucket.where((row) =>
@@ -388,7 +389,7 @@ export class KillsService {
               row.memberId.eq(member.id),
               row.world.eq(data.world),
               row.npcId.eq(npcId),
-              row.periodStart.eq(periodStart),
+              row.periodStart.eq(dateToTemporal(periodStart)),
             ),
           ).upsert({
             create: {
@@ -404,18 +405,18 @@ export class KillsService {
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
               memberKills: 1,
-              periodStart,
-              lastKilledAt: killedAt,
-              updatedAt: killedAt,
+              periodStart: dateToTemporal(periodStart),
+              lastKilledAt: dateToTemporal(killedAt),
+              updatedAt: dateToTemporal(killedAt),
             },
             update: {
               memberKills: (memberStatsBucket?.memberKills ?? 0) + 1,
-              lastKilledAt: killedAt,
+              lastKilledAt: dateToTemporal(killedAt),
               npcName: data.npc.name,
               npcLvl: data.npc.lvl,
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
-              updatedAt: killedAt,
+              updatedAt: dateToTemporal(killedAt),
             },
           });
 
@@ -458,17 +459,17 @@ export class KillsService {
                 npcProf: data.npc.prof,
                 npcIcon: data.npc.icon,
                 uniqueKills: 1,
-                lastKilledAt: killedAt,
-                updatedAt: killedAt,
+                lastKilledAt: dateToTemporal(killedAt),
+                updatedAt: dateToTemporal(killedAt),
               },
               update: {
                 uniqueKills: (guildSummary?.uniqueKills ?? 0) + 1,
-                lastKilledAt: killedAt,
+                lastKilledAt: dateToTemporal(killedAt),
                 npcName: data.npc.name,
                 npcLvl: data.npc.lvl,
                 npcProf: data.npc.prof,
                 npcIcon: data.npc.icon,
-                updatedAt: killedAt,
+                updatedAt: dateToTemporal(killedAt),
               },
             });
             guildStatsUpdated = true;
@@ -479,7 +480,7 @@ export class KillsService {
                     row.guildId.eq(guildId),
                     row.world.eq(data.world),
                     row.npcId.eq(npcId),
-                    row.periodStart.eq(periodStart),
+                    row.periodStart.eq(dateToTemporal(periodStart)),
                   ),
               ).first();
             await this.prisma.db.orm.public.GuildKillSummaryBucket.where(
@@ -488,7 +489,7 @@ export class KillsService {
                   row.guildId.eq(guildId),
                   row.world.eq(data.world),
                   row.npcId.eq(npcId),
-                  row.periodStart.eq(periodStart),
+                  row.periodStart.eq(dateToTemporal(periodStart)),
                 ),
             ).upsert({
               create: {
@@ -502,18 +503,18 @@ export class KillsService {
                 npcProf: data.npc.prof,
                 npcIcon: data.npc.icon,
                 uniqueKills: 1,
-                periodStart,
-                lastKilledAt: killedAt,
-                updatedAt: killedAt,
+                periodStart: dateToTemporal(periodStart),
+                lastKilledAt: dateToTemporal(killedAt),
+                updatedAt: dateToTemporal(killedAt),
               },
               update: {
                 uniqueKills: (guildSummaryBucket?.uniqueKills ?? 0) + 1,
-                lastKilledAt: killedAt,
+                lastKilledAt: dateToTemporal(killedAt),
                 npcName: data.npc.name,
                 npcLvl: data.npc.lvl,
                 npcProf: data.npc.prof,
                 npcIcon: data.npc.icon,
-                updatedAt: killedAt,
+                updatedAt: dateToTemporal(killedAt),
               },
             });
           }
@@ -766,7 +767,9 @@ export class KillsService {
       filtered = filtered.where((row) => row.npcLvl.lte(query.maxLvl));
     }
     if (periodStart) {
-      filtered = filtered.where((row) => row.periodStart.gte(periodStart));
+      filtered = filtered.where((row) =>
+        row.periodStart.gte(dateToTemporal(periodStart)),
+      );
     }
 
     if (!administrativeUser && roles.length > 0) {

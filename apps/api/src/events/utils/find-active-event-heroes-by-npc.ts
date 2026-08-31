@@ -1,6 +1,6 @@
 import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
-import { temporalToDate } from "#src/db/temporal";
+import { dateToTemporal, temporalToDate } from "#src/db/temporal";
 
 type Event = FieldOutputTypes["public"]["Event"];
 type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
@@ -22,8 +22,8 @@ export async function findActiveEventHeroesByNpc(
     and(
       event.guildId.eq(guildId),
       event.world.eq(world),
-      or(event.startsAt.isNull(), event.startsAt.lte(now)),
-      or(event.endsAt.isNull(), event.endsAt.gt(now)),
+      or(event.startsAt.isNull(), event.startsAt.lte(dateToTemporal(now))),
+      or(event.endsAt.isNull(), event.endsAt.gt(dateToTemporal(now))),
     );
   const matches = await prisma.orm.public.EventHeroNpc.where((hero) =>
     and(
@@ -58,12 +58,12 @@ export async function findActiveEventHeroesByNpc(
 
   return Array.from(uniqueMatches.values()).sort((leftHero, rightHero) => {
     const leftStart =
-      leftHero.event.startsAt?.getTime() ??
-      leftHero.event.createdAt?.getTime?.() ??
+      temporalToDate(leftHero.event.startsAt)?.getTime() ??
+      temporalToDate(leftHero.event.createdAt)?.getTime() ??
       0;
     const rightStart =
-      rightHero.event.startsAt?.getTime() ??
-      rightHero.event.createdAt?.getTime?.() ??
+      temporalToDate(rightHero.event.startsAt)?.getTime() ??
+      temporalToDate(rightHero.event.createdAt)?.getTime() ??
       0;
 
     return rightStart - leftStart;

@@ -5,6 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { clipToWindow } from "../utils/tracking-window.util.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
 type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
@@ -74,12 +75,15 @@ export class EventSummaryService {
           row.mapId.in(mapIds),
           or(
             and(
-              row.startedAt.gte(windowOpenedAt),
-              row.startedAt.lte(windowClosedAt),
+              row.startedAt.gte(dateToTemporal(windowOpenedAt)),
+              row.startedAt.lte(dateToTemporal(windowClosedAt)),
             ),
             and(
-              row.startedAt.lt(windowOpenedAt),
-              or(row.endedAt.isNull(), row.endedAt.gt(windowOpenedAt)),
+              row.startedAt.lt(dateToTemporal(windowOpenedAt)),
+              or(
+                row.endedAt.isNull(),
+                row.endedAt.gt(dateToTemporal(windowOpenedAt)),
+              ),
             ),
           ),
         ),
@@ -95,12 +99,15 @@ export class EventSummaryService {
           row.heroNpcId.eq(heroNpcId),
           or(
             and(
-              row.startedAt.gte(windowOpenedAt),
-              row.startedAt.lte(windowClosedAt),
+              row.startedAt.gte(dateToTemporal(windowOpenedAt)),
+              row.startedAt.lte(dateToTemporal(windowClosedAt)),
             ),
             and(
-              row.startedAt.lt(windowOpenedAt),
-              or(row.endedAt.isNull(), row.endedAt.gt(windowOpenedAt)),
+              row.startedAt.lt(dateToTemporal(windowOpenedAt)),
+              or(
+                row.endedAt.isNull(),
+                row.endedAt.gt(dateToTemporal(windowOpenedAt)),
+              ),
             ),
           ),
         ),
@@ -249,10 +256,10 @@ export class EventSummaryService {
         id: createId(),
         heroNpcId,
         killId,
-        windowOpenedAt,
-        windowClosedAt,
-        minSpawnTime,
-        maxSpawnTime,
+        windowOpenedAt: dateToTemporal(windowOpenedAt),
+        windowClosedAt: dateToTemporal(windowClosedAt),
+        minSpawnTime: dateToTemporal(minSpawnTime),
+        maxSpawnTime: dateToTemporal(maxSpawnTime),
         wasManualClose,
         totalWindowSeconds,
         totalCoverageSeconds,
@@ -269,12 +276,12 @@ export class EventSummaryService {
           row.mapId.in(mapIds),
           or(
             and(
-              row.startedAt.gte(windowOpenedAt),
-              row.startedAt.lte(windowClosedAt),
+              row.startedAt.gte(dateToTemporal(windowOpenedAt)),
+              row.startedAt.lte(dateToTemporal(windowClosedAt)),
             ),
             and(
-              row.startedAt.lt(windowOpenedAt),
-              row.endedAt.lte(windowClosedAt),
+              row.startedAt.lt(dateToTemporal(windowOpenedAt)),
+              row.endedAt.lte(dateToTemporal(windowClosedAt)),
             ),
           ),
         ),
@@ -283,7 +290,10 @@ export class EventSummaryService {
       const deletedGaps = await tx.orm.public.EventMapCoverageGap.where((row) =>
         and(
           row.heroNpcId.eq(heroNpcId),
-          and(row.endedAt.isNotNull(), row.endedAt.lte(windowClosedAt)),
+          and(
+            row.endedAt.isNotNull(),
+            row.endedAt.lte(dateToTemporal(windowClosedAt)),
+          ),
         ),
       ).deleteAndCount();
 

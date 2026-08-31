@@ -51,6 +51,7 @@ import {
 } from "#src/guilds/guilds.service";
 import type { UpdateUserGameAccountPreferencesDto } from "#src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "#src/users/dto/update-user-preferences.dto";
+import { dateToTemporal } from "#src/db/temporal";
 
 type InputJsonValue = DatabaseJsonValue;
 type JsonObject = Record<string, DatabaseJsonValue | undefined>;
@@ -195,9 +196,9 @@ export class UsersService {
       for (const member of members) {
         await tx.orm.public.Member.where((row) => row.id.eq(member.id)).update({
           active: false,
-          lastDiscordAttemptAt: new Date(),
+          lastDiscordAttemptAt: dateToTemporal(new Date()),
           lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.ACCOUNT_DELETED,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
         await setMemberRoles(tx, member.id, []);
       }
@@ -304,11 +305,11 @@ export class UsersService {
               userId,
               ...this.getDefaultUserPreferencesData(),
               ...nextUserSettingsPayload,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             },
             update: {
               ...nextUserSettingsPayload,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             },
           })
         : Promise.resolve(currentUserSettings),
@@ -325,13 +326,13 @@ export class UsersService {
               settings: {
                 mutes: nextMutes,
               } as unknown as InputJsonValue,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             },
             update: {
               settings: {
                 mutes: nextMutes,
               } as unknown as InputJsonValue,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             },
           })
         : Promise.resolve(null),
@@ -353,7 +354,7 @@ export class UsersService {
                 chat: nextChatAppearance,
               } as unknown as InputJsonValue,
               schemaVersion: 1,
-              updatedAt: new Date(),
+              updatedAt: dateToTemporal(new Date()),
             },
             update: {
               overrides: applySettingsPatch({
@@ -511,11 +512,11 @@ export class UsersService {
         userId,
         accountId,
         settings: nextSettings as InputJsonValue,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
       update: {
         settings: nextSettings as InputJsonValue,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       },
     });
 

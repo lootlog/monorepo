@@ -13,6 +13,7 @@ import { LootCommentService } from "#src/loots/services/loot-comment.service";
 import { LootQueryService } from "#src/loots/services/loot-query.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import type { Logger } from "winston";
+import { dateToTemporal } from "#src/db/temporal";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
@@ -96,9 +97,9 @@ export class LootsService {
           row.archivedAt.isNull(),
         ),
       ).updateAndCount({
-        archivedAt: new Date(),
+        archivedAt: dateToTemporal(new Date()),
         archivedByMemberId: actor.id,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
     if (archived === 0) {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);

@@ -8,6 +8,7 @@ import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.cons
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MembersService } from "./members.service.js";
 import type { MemberBulkRefreshJobData } from "./member.types.js";
+import { dateToTemporal } from "#src/db/temporal";
 
 interface JobProgress {
   processedCount: number;
@@ -47,7 +48,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     try {
       await this.prisma.db.orm.public.MemberRefreshJob.where((row) =>
         row.id.eq(jobId),
-      ).update({ status: "PROCESSING", updatedAt: new Date() });
+      ).update({ status: "PROCESSING", updatedAt: dateToTemporal(new Date()) });
 
       await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
 
@@ -124,8 +125,8 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       ).update({
         status: "COMPLETED",
         processedMembers: progress.processedCount,
-        completedAt: new Date(),
-        updatedAt: new Date(),
+        completedAt: dateToTemporal(new Date()),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await this.memberRefreshJobEventsService.emitJobUpdate(jobId, {
@@ -149,8 +150,8 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         row.id.eq(jobId),
       ).update({
         status: "FAILED",
-        completedAt: new Date(),
-        updatedAt: new Date(),
+        completedAt: dateToTemporal(new Date()),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
@@ -166,7 +167,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       row.id.eq(jobId),
     ).update({
       processedMembers: progress.processedCount,
-      updatedAt: new Date(),
+      updatedAt: dateToTemporal(new Date()),
     });
     await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
   }

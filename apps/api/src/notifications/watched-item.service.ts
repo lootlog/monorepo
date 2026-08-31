@@ -21,6 +21,7 @@ import { Error as NotificationError } from "#src/notifications/enum/error.enum";
 import { ensureLimitNotExceeded } from "#src/notifications/utils/ensure-limit-not-exceeded.util";
 import type { CreateWatchedItemQuickAddDto } from "#src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "#src/notifications/dto/create-watched-item.dto";
+import { dateToTemporal } from "#src/db/temporal";
 
 const DbNotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
@@ -206,7 +207,7 @@ export class WatchedItemService {
         ).update({
           enabled: true,
           itemName: params.itemName,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
         await tx.orm.public.NotificationRule.where((row) =>
           row.id.eq(existingWatchedItem.notificationRuleId),
@@ -217,7 +218,7 @@ export class WatchedItemService {
             itemId: params.itemId,
             guildIds,
           },
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
         const notificationRuleId = existingWatchedItem.notificationRuleId;
         if (!notificationRuleId) {
@@ -257,7 +258,7 @@ export class WatchedItemService {
         },
         enabled: true,
         dedupeWindowSeconds: 0,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
       if (targetIds.length > 0) {
         await tx.orm.public.NotificationRuleTarget.createAndCount(
@@ -282,7 +283,7 @@ export class WatchedItemService {
             itemName: params.itemName,
             world: params.world,
             notificationRuleId: notificationRule.id,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           },
           update: {
             enabled: true,

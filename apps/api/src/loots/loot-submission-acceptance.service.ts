@@ -43,6 +43,7 @@ import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import type { Logger } from "winston";
+import { dateToTemporal } from "#src/db/temporal";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
 type NpcType = (typeof NpcType)[keyof typeof NpcType];
@@ -355,7 +356,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
         await tx.orm.public.OrganizationLootRecord.where((row) =>
           and(row.guildId.eq(guildId), row.lootId.eq(lootId)),
         ).upsert({
-          create: { guildId, lootId, updatedAt: new Date() },
+          create: { guildId, lootId, updatedAt: dateToTemporal(new Date()) },
           update: {},
         });
       }
@@ -393,7 +394,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
             row.memberId.eq(submission.memberId),
           ),
         ).upsert({
-          create: { ...submission, updatedAt: new Date() },
+          create: { ...submission, updatedAt: dateToTemporal(new Date()) },
           update: {},
         });
       }
@@ -435,7 +436,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
         location: options.submission.location,
         lootShare: initialAllocation.share,
         lootShareSource: initialAllocation.source,
-        updatedAt: new Date(),
+        updatedAt: dateToTemporal(new Date()),
       });
 
       for (const item of options.submission.loots) {
@@ -526,12 +527,12 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
           await transaction.orm.public.OrganizationLootRecord.create({
             lootId: savedLoot.id,
             guildId: submission.guildId,
-            updatedAt: new Date(),
+            updatedAt: dateToTemporal(new Date()),
           });
         await transaction.orm.public.LootSubmission.create({
           organizationLootRecordId: record.id,
           memberId: submission.memberId,
-          updatedAt: new Date(),
+          updatedAt: dateToTemporal(new Date()),
         });
       }
       return savedLoot;
