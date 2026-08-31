@@ -1,12 +1,10 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { ReservationMutationsService } from "./reservation-mutations.service.js";
 import type { ReservationViewerContext } from "./reservation-viewer.js";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("ReservationMutationsService", () => {
   const guild = {

@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import {
   Controller,
   ForbiddenException,
@@ -43,8 +43,7 @@ import { ErrorKey } from "./enum/error-key.enum.js";
 
 type Guild = FieldOutputTypes["public"]["Guild"];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 @ApiTags("members")
 @ApiBearerAuth()

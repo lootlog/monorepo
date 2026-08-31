@@ -1,12 +1,10 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { ForbiddenException } from "@nestjs/common";
 import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
 import { EventsAssignmentController } from "./events-assignment.controller.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("EventsAssignmentController", () => {
   const mockEventsService = {

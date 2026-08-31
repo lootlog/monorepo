@@ -1,13 +1,12 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { hasRolePermissionInLevelRange } from "@lootlog/api-helpers/permissions";
 import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
 import { MessageType } from "#src/chat/dto/send-message.dto";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 type NpcData = NonNullable<ChatStoredMessage["npc"]>;

@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import {
@@ -15,39 +14,39 @@ import {
 const NotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
 type NotificationJobKind =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+  (typeof NotificationJobKind)[keyof typeof NotificationJobKind];
 const NotificationJobStatus =
   prismaDb.nativeEnums.public.NotificationJobStatus.members;
 type NotificationJobStatus =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobStatus"]["values"][number];
+  (typeof NotificationJobStatus)[keyof typeof NotificationJobStatus];
 const NotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
 type NotificationOwnerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+  (typeof NotificationOwnerType)[keyof typeof NotificationOwnerType];
 const NotificationProvider =
   prismaDb.nativeEnums.public.NotificationProvider.members;
 type NotificationProvider =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+  (typeof NotificationProvider)[keyof typeof NotificationProvider];
 const NotificationScheduleAnchor =
   prismaDb.nativeEnums.public.NotificationScheduleAnchor.members;
 type NotificationScheduleAnchor =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleAnchor"]["values"][number];
+  (typeof NotificationScheduleAnchor)[keyof typeof NotificationScheduleAnchor];
 const NotificationScheduleIntervalType =
   prismaDb.nativeEnums.public.NotificationScheduleIntervalType.members;
 type NotificationScheduleIntervalType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleIntervalType"]["values"][number];
+  (typeof NotificationScheduleIntervalType)[keyof typeof NotificationScheduleIntervalType];
 const NotificationScheduleStrategy =
   prismaDb.nativeEnums.public.NotificationScheduleStrategy.members;
 type NotificationScheduleStrategy =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleStrategy"]["values"][number];
+  (typeof NotificationScheduleStrategy)[keyof typeof NotificationScheduleStrategy];
 const NotificationTargetType =
   prismaDb.nativeEnums.public.NotificationTargetType.members;
 type NotificationTargetType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+  (typeof NotificationTargetType)[keyof typeof NotificationTargetType];
 const NotificationTriggerType =
   prismaDb.nativeEnums.public.NotificationTriggerType.members;
 type NotificationTriggerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+  (typeof NotificationTriggerType)[keyof typeof NotificationTriggerType];
 
 const NotificationTestTriggerUsageResponseSchema = z.object({
   limit: z.number().int(),

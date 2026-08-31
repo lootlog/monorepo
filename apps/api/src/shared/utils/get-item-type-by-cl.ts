@@ -1,9 +1,7 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 
 const ItemType = prismaDb.nativeEnums.public.ItemType.members;
-type ItemType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemType"]["values"][number];
+type ItemType = (typeof ItemType)[keyof typeof ItemType];
 
 const ITEM_TYPES = {
   1: ItemType.ONE_HAND_WEAPON,

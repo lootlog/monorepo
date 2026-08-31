@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import {
@@ -9,8 +8,7 @@ import {
 import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
 const GetGuildKillStatsSchema = z
   .object({

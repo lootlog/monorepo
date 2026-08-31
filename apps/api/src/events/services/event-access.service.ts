@@ -1,11 +1,12 @@
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
 
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 @Injectable()

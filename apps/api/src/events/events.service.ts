@@ -1,4 +1,5 @@
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import { db as prismaDb } from "../prisma/db.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
@@ -41,8 +42,8 @@ type Event = FieldOutputTypes["public"]["Event"];
 type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
 type EventKillPoint = FieldOutputTypes["public"]["EventKillPoint"];
 type Guild = FieldOutputTypes["public"]["Guild"];
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 @Injectable()

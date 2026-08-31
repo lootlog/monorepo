@@ -1,12 +1,12 @@
-import type { Contract } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import { booleanFromString } from "@lootlog/nest-shared/validators/query-helpers";
 
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
 export type Period =
   | "24h"

@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -32,8 +31,7 @@ import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { AuthGuard } from "@lootlog/nest-shared";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 const READY_ROOM_PERMISSIONS = [
   Permission.LOOTLOG_NOTIFICATIONS_SEND,

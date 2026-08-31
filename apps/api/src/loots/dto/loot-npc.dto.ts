@@ -1,9 +1,8 @@
-import type { Contract } from "../../prisma/contract.js";
-
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+import { db as prismaDb } from "../../prisma/db.js";
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession = (typeof Profession)[keyof typeof Profession];
 
 export type LootNpcDto = {
   id: number;

@@ -1,12 +1,10 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { mockFn } from "#src/test/mock-fn";
 import { RolesService } from "./roles.service.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("RolesService", () => {
   const postgres = { query: mockFn(), connect: mockFn() };

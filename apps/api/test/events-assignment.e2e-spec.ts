@@ -3,7 +3,6 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service.js";
 import { db as prismaDb } from "../src/prisma/db.js";
-import type { Contract } from "../src/prisma/contract.js";
 import {
   closeE2EApp,
   createE2EApp,
@@ -18,8 +17,7 @@ import {
 } from "./events-timers-e2e-helpers.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("Events Assignment E2E", () => {
   let app: INestApplication;

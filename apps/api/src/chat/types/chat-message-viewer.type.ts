@@ -1,8 +1,9 @@
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 
 type Role = FieldOutputTypes["public"]["Role"];
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 export type ChatMessageViewer = {
   discordId: string;

@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
@@ -12,8 +11,7 @@ import {
 } from "../utils/event-respawn-window.util.js";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
-type CoverageGapType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
 
 type CoordinationPriority = "CRITICAL" | "WARNING" | "OK" | "IDLE";
 type RecommendedAction =

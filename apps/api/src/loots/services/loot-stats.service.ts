@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
@@ -23,12 +23,11 @@ import type {
 } from "../dto/loot-stats.dto.js";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 const CACHE_TTL_SECONDS = 60;

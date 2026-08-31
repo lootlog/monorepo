@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
@@ -26,11 +25,11 @@ import type { CreateWatchedItemDto } from "#src/notifications/dto/create-watched
 const DbNotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
 type DbNotificationOwnerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+  (typeof DbNotificationOwnerType)[keyof typeof DbNotificationOwnerType];
 const DbNotificationTriggerType =
   prismaDb.nativeEnums.public.NotificationTriggerType.members;
 type DbNotificationTriggerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+  (typeof DbNotificationTriggerType)[keyof typeof DbNotificationTriggerType];
 
 const USER_WATCHED_ITEM_LIMIT = 20;
 

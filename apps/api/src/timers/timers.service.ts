@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createHash, randomUUID } from "node:crypto";
@@ -54,15 +54,13 @@ import type {
 } from "#src/timers/dto/create-auto-timer-response.dto";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 const TimerHistoryAction =
   prismaDb.nativeEnums.public.TimerHistoryAction.members;
 type TimerHistoryAction =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["TimerHistoryAction"]["values"][number];
+  (typeof TimerHistoryAction)[keyof typeof TimerHistoryAction];
 type InputJsonValue = DatabaseJsonValue;
 type JsonValue = DatabaseJsonValue;
 type Member = FieldOutputTypes["public"]["Member"];

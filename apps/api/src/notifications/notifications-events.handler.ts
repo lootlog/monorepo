@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
@@ -23,15 +22,15 @@ import {
 const DbNotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
 type DbNotificationJobKind =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+  (typeof DbNotificationJobKind)[keyof typeof DbNotificationJobKind];
 const DbNotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
 type DbNotificationOwnerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+  (typeof DbNotificationOwnerType)[keyof typeof DbNotificationOwnerType];
 const DbNotificationTriggerType =
   prismaDb.nativeEnums.public.NotificationTriggerType.members;
 type DbNotificationTriggerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+  (typeof DbNotificationTriggerType)[keyof typeof DbNotificationTriggerType];
 
 @Injectable()
 export class NotificationsEventsHandler {

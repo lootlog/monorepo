@@ -1,11 +1,9 @@
 import { db as prismaDb } from "../../prisma/db.js";
-import type { Contract } from "../../prisma/contract.js";
 import { ActivitiesQueryService } from "./activities-query.service.js";
 import type { PrismaService } from "#src/prisma.service";
 
 const ActivitySource = prismaDb.nativeEnums.public.ActivitySource.members;
-type ActivitySource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivitySource"]["values"][number];
+type ActivitySource = (typeof ActivitySource)[keyof typeof ActivitySource];
 
 function fluentModel(rows: unknown[] = []) {
   const model = {

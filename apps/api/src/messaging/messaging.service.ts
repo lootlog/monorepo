@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
@@ -24,11 +23,9 @@ import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 

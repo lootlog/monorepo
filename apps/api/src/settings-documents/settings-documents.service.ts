@@ -1,4 +1,4 @@
-import type { Contract } from "../prisma/contract.js";
+import { db as prismaDb } from "../prisma/db.js";
 import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
@@ -24,8 +24,10 @@ import {
 } from "./settings-resolver.js";
 
 type InputJsonValue = DatabaseJsonValue;
+const PrismaSettingsScopeType =
+  prismaDb.nativeEnums.public.SettingsScopeType.members;
 type PrismaSettingsScopeType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["SettingsScopeType"]["values"][number];
+  (typeof PrismaSettingsScopeType)[keyof typeof PrismaSettingsScopeType];
 
 type JsonRecord = Record<string, unknown>;
 

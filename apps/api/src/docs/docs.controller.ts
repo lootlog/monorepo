@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -39,8 +39,7 @@ import {
 type Guild = FieldOutputTypes["public"]["Guild"];
 type Member = FieldOutputTypes["public"]["Member"];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 const DOCS_READ_PERMISSIONS = [
   Permission.LOOTLOG_DOCS_READ,

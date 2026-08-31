@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -31,11 +30,9 @@ import type { LootShare } from "#src/shared/dto/loot-response.dto";
 import type { Logger } from "winston";
 
 const LootShareSource = prismaDb.nativeEnums.public.LootShareSource.members;
-type LootShareSource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootShareSource"]["values"][number];
+type LootShareSource = (typeof LootShareSource)[keyof typeof LootShareSource];
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
 type LootNpcWithSocketSnapshot = {
   npcSnapshot: {

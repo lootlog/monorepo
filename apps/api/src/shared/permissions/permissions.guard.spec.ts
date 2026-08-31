@@ -1,12 +1,10 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PermissionsGuard } from "./permissions.guard.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("PermissionsGuard", () => {
   const mockReflector = {

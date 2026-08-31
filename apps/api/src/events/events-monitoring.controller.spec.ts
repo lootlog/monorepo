@@ -1,12 +1,10 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
 import { mockFn } from "#src/test/mock-fn";
 import { EventsMonitoringController } from "./events-monitoring.controller.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("EventsMonitoringController", () => {
   const mockEventsService = {

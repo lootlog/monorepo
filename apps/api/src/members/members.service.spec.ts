@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import type { Mock, Mocked } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
@@ -40,13 +40,11 @@ import { MemberRefreshJobEventsService } from "./member-refresh-job-events.servi
 import { MemberRemovalService } from "./member-removal.service.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Member = FieldOutputTypes["public"]["Member"];
 type Guild = FieldOutputTypes["public"]["Guild"];
 const MemberType = prismaDb.nativeEnums.public.MemberType.members;
-type MemberType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
+type MemberType = (typeof MemberType)[keyof typeof MemberType];
 
 vi.mock("#src/config/service.config", () => ({
   serviceConfig: { env: "local" },

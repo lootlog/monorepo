@@ -1,7 +1,6 @@
-import type { Contract } from "../../prisma/contract.js";
-
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+import { db as prismaDb } from "../../prisma/db.js";
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession = (typeof Profession)[keyof typeof Profession];
 
 export type LootPlayerDto = {
   id: string;

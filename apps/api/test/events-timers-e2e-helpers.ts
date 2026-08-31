@@ -4,13 +4,12 @@ import request from "supertest";
 import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/db/prisma.service.js";
 import { db as prismaDb } from "../src/prisma/db.js";
-import type { Contract, FieldOutputTypes } from "../src/prisma/contract.js";
+import type { FieldOutputTypes } from "../src/prisma/contract.js";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Event = FieldOutputTypes["public"]["Event"];
 type EventHeroKill = FieldOutputTypes["public"]["EventHeroKill"];
 type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];

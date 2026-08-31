@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -27,8 +26,7 @@ import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { TimersService } from "#src/timers/timers.service";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
-type CoverageGapType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {

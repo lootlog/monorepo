@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import {
   ForbiddenException,
   Inject,
@@ -20,10 +19,8 @@ import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant
 import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
-type PermissionValue =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
+type PermissionValue = (typeof Permission)[keyof typeof Permission];
 
 type RoleRow = {
   id: string;

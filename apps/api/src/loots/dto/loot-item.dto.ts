@@ -1,9 +1,8 @@
-import type { Contract } from "../../prisma/contract.js";
-
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+import { db as prismaDb } from "../../prisma/db.js";
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession = (typeof Profession)[keyof typeof Profession];
 
 export type LootItemDto = {
   id: number;

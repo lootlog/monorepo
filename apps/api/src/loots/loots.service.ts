@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
@@ -15,8 +15,7 @@ import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import type { Logger } from "winston";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Guild = FieldOutputTypes["public"]["Guild"];
 type Role = FieldOutputTypes["public"]["Role"];
 

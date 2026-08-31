@@ -1,4 +1,5 @@
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
@@ -40,8 +41,8 @@ import {
   type ActiveEventHeroMatch,
 } from "../utils/find-active-event-heroes-by-npc.js";
 
-type CoverageGapType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
+type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
 type Event = FieldOutputTypes["public"]["Event"];
 type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
 type InputJsonValue = DatabaseJsonValue;

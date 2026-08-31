@@ -3,7 +3,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { db as prismaDb } from "../prisma/db.js";
-import type { Contract } from "../prisma/contract.js";
 import { PrismaService } from "#src/prisma.service";
 import { temporalToDate } from "#src/shared/db/temporal";
 import { CreateActivityDto } from "./dto/create-activity.dto.js";
@@ -11,10 +10,8 @@ import type { ActivityResponse } from "./dto/activity-response.dto.js";
 import { mapActivityDetails } from "./utils/map-activity-details.js";
 
 const ActivityType = prismaDb.nativeEnums.public.ActivityType.members;
-type ActivityType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivityType"]["values"][number];
-type ActivityTypeValue =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivityType"]["values"][number];
+type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
+type ActivityTypeValue = (typeof ActivityType)[keyof typeof ActivityType];
 
 type PrismaTransaction = Parameters<
   PrismaService["db"]["transaction"]

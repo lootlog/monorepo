@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
@@ -14,7 +14,6 @@ import {
   resolveReservationSettings,
   type ReservationSettings,
 } from "@lootlog/reservations";
-
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -50,14 +49,11 @@ import {
 type Guild = FieldOutputTypes["public"]["Guild"];
 type Role = FieldOutputTypes["public"]["Role"];
 const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,

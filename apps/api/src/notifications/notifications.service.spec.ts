@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { mockFn } from "#src/test/mock-fn";
@@ -23,11 +22,9 @@ import { NotificationsEventsHandler } from "./notifications-events.handler.js";
 import { WatchedItemService } from "./watched-item.service.js";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type JsonValue = DatabaseJsonValue;
 
 describe("Notification Services", () => {

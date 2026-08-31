@@ -1,14 +1,11 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 
 const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
 const UpdateLootlogConfigNpcsSchema = z.object({
   npcType: z.nativeEnum(NpcType),

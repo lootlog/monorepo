@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { ForbiddenException } from "@nestjs/common";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -12,11 +12,9 @@ import { MembersService } from "./members.service.js";
 type Guild = FieldOutputTypes["public"]["Guild"];
 type Member = FieldOutputTypes["public"]["Member"];
 const MemberType = prismaDb.nativeEnums.public.MemberType.members;
-type MemberType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
+type MemberType = (typeof MemberType)[keyof typeof MemberType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("MembersController", () => {
   let controller: MembersController;

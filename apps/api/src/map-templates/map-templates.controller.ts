@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -30,8 +29,7 @@ import {
 } from "#src/shared/dto/map-template-response.dto";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 @ApiTags("map-templates")
 @ApiBearerAuth()

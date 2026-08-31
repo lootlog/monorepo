@@ -1,11 +1,9 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 
 const LootSource = prismaDb.nativeEnums.public.LootSource.members;
-type LootSource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+type LootSource = (typeof LootSource)[keyof typeof LootSource];
 
 const LootSchema = z.object({
   hid: z.string().min(1),

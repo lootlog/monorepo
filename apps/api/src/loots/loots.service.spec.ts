@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -37,21 +37,16 @@ import { ErrorKey } from "./enum/error-key.enum.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 
 const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
 const Profession = prismaDb.nativeEnums.public.Profession.members;
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type Profession = (typeof Profession)[keyof typeof Profession];
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Guild = FieldOutputTypes["public"]["Guild"];
 const LootSource = prismaDb.nativeEnums.public.LootSource.members;
-type LootSource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+type LootSource = (typeof LootSource)[keyof typeof LootSource];
 type Role = FieldOutputTypes["public"]["Role"];
 
 describe("Loot modules", () => {

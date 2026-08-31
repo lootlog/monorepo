@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   Inject,
@@ -25,8 +25,7 @@ import { PermissionResolver } from "./permission-resolver.js";
 
 type Guild = FieldOutputTypes["public"]["Guild"];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 type GuildLookupResult = {
   guild: Guild;

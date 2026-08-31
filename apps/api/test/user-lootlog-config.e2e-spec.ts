@@ -6,10 +6,9 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { TEST_GUILDS, TEST_USERS } from "./test-helpers.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 import { db as prismaDb } from "../src/prisma/db.js";
-import type { Contract } from "../src/prisma/contract.js";
+
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("User Lootlog Config E2E Tests", () => {
   let app: INestApplication;

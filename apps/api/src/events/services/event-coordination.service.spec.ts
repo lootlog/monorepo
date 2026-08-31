@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { NotFoundException } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
@@ -9,8 +8,7 @@ import { mockFn } from "#src/test/mock-fn";
 import { EventCoordinationService } from "./event-coordination.service.js";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
-type CoverageGapType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
 
 describe("EventCoordinationService", () => {
   const now = new Date("2026-06-19T12:00:00.000Z");

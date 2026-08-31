@@ -1,4 +1,4 @@
-import type { Contract } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
 import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import type { LootItemDto } from "./loot-item.dto.js";
 import type { LootNpcDto } from "./loot-npc.dto.js";
@@ -6,8 +6,8 @@ import type { LootPlayerDto } from "./loot-player.dto.js";
 import type { LootShare } from "#src/shared/dto/loot-response.dto";
 
 type JsonValue = DatabaseJsonValue;
-type LootSource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+const LootSource = prismaDb.nativeEnums.public.LootSource.members;
+type LootSource = (typeof LootSource)[keyof typeof LootSource];
 
 export type SubmissionWithMember = {
   guildId: string;

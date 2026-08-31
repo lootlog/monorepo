@@ -1,18 +1,15 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
 import { db as prismaDb } from "../../prisma/db.js";
-import type { Contract } from "../../prisma/contract.js";
 import {
   isoDatetimeCodec,
   unknownRecordSchema,
 } from "#src/shared/dto/zod-response-codecs";
 
 const ActivitySource = prismaDb.nativeEnums.public.ActivitySource.members;
-type ActivitySource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivitySource"]["values"][number];
+type ActivitySource = (typeof ActivitySource)[keyof typeof ActivitySource];
 const ActivityType = prismaDb.nativeEnums.public.ActivityType.members;
-type ActivityType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivityType"]["values"][number];
+type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
 
 const ActivityActorSnapshotResponseSchema = z.object({
   id: z.string(),

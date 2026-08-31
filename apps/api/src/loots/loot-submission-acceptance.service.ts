@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -45,17 +45,14 @@ import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-
 import type { Logger } from "winston";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 const Profession = prismaDb.nativeEnums.public.Profession.members;
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type Profession = (typeof Profession)[keyof typeof Profession];
 type Guild = FieldOutputTypes["public"]["Guild"];
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
 type LootlogConfigNpc = FieldOutputTypes["public"]["LootlogConfigNpc"];
 
 type LootSubmissionData = {

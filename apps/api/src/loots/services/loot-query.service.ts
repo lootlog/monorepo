@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
@@ -16,24 +16,17 @@ import {
 } from "#src/shared/utils/get-prof-by-shortname";
 
 const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 const Profession = prismaDb.nativeEnums.public.Profession.members;
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type Profession = (typeof Profession)[keyof typeof Profession];
 type Guild = FieldOutputTypes["public"]["Guild"];
-type ItemRarityValue =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
-type NpcTypeValue =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
-type ProfessionValue =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type ItemRarityValue = (typeof ItemRarity)[keyof typeof ItemRarity];
+type NpcTypeValue = (typeof NpcType)[keyof typeof NpcType];
+type ProfessionValue = (typeof Profession)[keyof typeof Profession];
 type Role = FieldOutputTypes["public"]["Role"];
 
 type LootItemWithSnapshot = {

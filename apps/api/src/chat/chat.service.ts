@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   ForbiddenException,
@@ -33,8 +33,7 @@ import {
 import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 type MessageRouting = {

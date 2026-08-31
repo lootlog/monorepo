@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import {
@@ -10,7 +9,7 @@ import {
 const DiscordGuildSyncStatus =
   prismaDb.nativeEnums.public.DiscordGuildSyncStatus.members;
 type DiscordGuildSyncStatus =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["DiscordGuildSyncStatus"]["values"][number];
+  (typeof DiscordGuildSyncStatus)[keyof typeof DiscordGuildSyncStatus];
 
 const DiscordGuildChannelSnapshotResponseSchema = z.object({
   id: z.number().int(),

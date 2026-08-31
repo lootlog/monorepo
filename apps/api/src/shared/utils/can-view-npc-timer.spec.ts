@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import {
   canViewNpcTimer,
   type NpcPermissionData,
@@ -7,8 +6,7 @@ import {
 } from "@lootlog/api-helpers/permissions";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 function createRole(
   permissions: string[],

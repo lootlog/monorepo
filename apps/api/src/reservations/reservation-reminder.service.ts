@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import {
   Inject,
@@ -13,27 +12,27 @@ import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord
 const NotificationJobKind =
   prismaDb.nativeEnums.public.NotificationJobKind.members;
 type NotificationJobKind =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+  (typeof NotificationJobKind)[keyof typeof NotificationJobKind];
 const NotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
 type NotificationOwnerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+  (typeof NotificationOwnerType)[keyof typeof NotificationOwnerType];
 const NotificationProvider =
   prismaDb.nativeEnums.public.NotificationProvider.members;
 type NotificationProvider =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+  (typeof NotificationProvider)[keyof typeof NotificationProvider];
 const NotificationScheduleStrategy =
   prismaDb.nativeEnums.public.NotificationScheduleStrategy.members;
 type NotificationScheduleStrategy =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleStrategy"]["values"][number];
+  (typeof NotificationScheduleStrategy)[keyof typeof NotificationScheduleStrategy];
 const NotificationTargetType =
   prismaDb.nativeEnums.public.NotificationTargetType.members;
 type NotificationTargetType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+  (typeof NotificationTargetType)[keyof typeof NotificationTargetType];
 const NotificationTriggerType =
   prismaDb.nativeEnums.public.NotificationTriggerType.members;
 type NotificationTriggerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+  (typeof NotificationTriggerType)[keyof typeof NotificationTriggerType];
 
 const RESERVATION_REMINDER_RULE_NAME = "__system:reservation-reminder__";
 const RESERVATION_SOURCE_ENTITY_TYPE = "reservation";

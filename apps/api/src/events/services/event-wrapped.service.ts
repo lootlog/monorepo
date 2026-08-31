@@ -1,4 +1,5 @@
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
@@ -21,10 +22,10 @@ import type {
 import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader.js";
 
 type Guild = FieldOutputTypes["public"]["Guild"];
-type ItemRarity =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 type RankingRow = {

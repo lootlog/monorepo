@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
@@ -24,15 +23,15 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 const DbNotificationOwnerType =
   prismaDb.nativeEnums.public.NotificationOwnerType.members;
 type DbNotificationOwnerType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+  (typeof DbNotificationOwnerType)[keyof typeof DbNotificationOwnerType];
 const DbNotificationProvider =
   prismaDb.nativeEnums.public.NotificationProvider.members;
 type DbNotificationProvider =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+  (typeof DbNotificationProvider)[keyof typeof DbNotificationProvider];
 const DbNotificationTargetType =
   prismaDb.nativeEnums.public.NotificationTargetType.members;
 type DbNotificationTargetType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+  (typeof DbNotificationTargetType)[keyof typeof DbNotificationTargetType];
 
 type GetGuildDiscordChannelsOptions = {
   forceRefresh?: boolean;

@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import {
@@ -25,8 +24,7 @@ import { PinnedEventResponseDto } from "./dto/pinned-event-response.dto.js";
 import { PinnedEventsService } from "./services/pinned-events.service.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 @ApiTags("events")
 @ApiBearerAuth()

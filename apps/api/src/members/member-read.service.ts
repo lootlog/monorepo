@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -19,8 +19,7 @@ import type {
 } from "./member.types.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 type PlayerSnapshot = FieldOutputTypes["public"]["PlayerSnapshot"];
 
 const MEMBER_READ_CACHE_TTL_SECONDS = 30;

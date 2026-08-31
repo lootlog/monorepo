@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { UnprocessableEntityException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReservationReminderService } from "./reservation-reminder.service.js";
@@ -8,7 +7,7 @@ import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 const NotificationTargetType =
   prismaDb.nativeEnums.public.NotificationTargetType.members;
 type NotificationTargetType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+  (typeof NotificationTargetType)[keyof typeof NotificationTargetType];
 
 describe("ReservationReminderService", () => {
   const target = {

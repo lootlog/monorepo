@@ -1,9 +1,9 @@
-import type { Contract } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
 import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
 
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 export const MemberPermissions = createRequiredRequestValueDecorator<
   Permission[]

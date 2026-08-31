@@ -1,8 +1,9 @@
-import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 type Role = FieldOutputTypes["public"]["Role"];
 
 interface EventHeroWithLevel {

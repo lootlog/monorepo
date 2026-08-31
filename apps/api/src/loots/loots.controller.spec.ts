@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
@@ -20,14 +20,11 @@ import { LootsService } from "./loots.service.js";
 import { LootStatsService } from "./services/loot-stats.service.js";
 
 const LootSource = prismaDb.nativeEnums.public.LootSource.members;
-type LootSource =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+type LootSource = (typeof LootSource)[keyof typeof LootSource];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 const Profession = prismaDb.nativeEnums.public.Profession.members;
-type Profession =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type Profession = (typeof Profession)[keyof typeof Profession];
 type Guild = FieldOutputTypes["public"]["Guild"];
 type Role = FieldOutputTypes["public"]["Role"];
 

@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -14,8 +13,7 @@ import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { TimersService } from "#src/timers/timers.service";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
-type CoverageGapType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
 
 describe("EventTrackingService", () => {
   let service: EventTrackingService;

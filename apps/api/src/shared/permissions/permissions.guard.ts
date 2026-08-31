@@ -1,4 +1,4 @@
-import type { Contract } from "../../prisma/contract.js";
+import { db as prismaDb } from "../../prisma/db.js";
 import {
   Injectable,
   Optional,
@@ -12,8 +12,8 @@ import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics
 import { setRequestDiagnosticsRoute } from "#src/shared/diagnostics/request-diagnostics-context";
 import { PermissionResolver } from "./permission-resolver.js";
 
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission = (typeof Permission)[keyof typeof Permission];
 
 interface RequestWithPermissions {
   userId?: string;

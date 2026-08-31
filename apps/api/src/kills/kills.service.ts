@@ -1,5 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import { Injectable, Inject } from "@nestjs/common";
@@ -30,11 +30,9 @@ import {
 } from "./utils/kill-stats-period.js";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Permission = (typeof Permission)[keyof typeof Permission];
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 type Role = FieldOutputTypes["public"]["Role"];
 
 const KILL_DEDUP_TTL_SECONDS = 30;

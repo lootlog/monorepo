@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../../prisma/contract.js";
 import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
@@ -8,8 +7,7 @@ import { PrismaService } from "#src/db/prisma.service";
 import { clipToWindow } from "../utils/tracking-window.util.js";
 
 const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
-type CoverageGapType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+type CoverageGapType = (typeof CoverageGapType)[keyof typeof CoverageGapType];
 type InputJsonValue = DatabaseJsonValue;
 
 interface MemberStat {

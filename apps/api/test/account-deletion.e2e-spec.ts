@@ -7,14 +7,12 @@ import { of } from "rxjs";
 import request from "supertest";
 import { vi } from "vitest";
 import { db as prismaDb } from "../src/prisma/db.js";
-import type { Contract } from "../src/prisma/contract.js";
 import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/db/prisma.service.js";
 import { createMockAmqpConnection } from "./test-module-helpers.js";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
 describe("Account Deletion E2E", () => {
   let app: INestApplication;

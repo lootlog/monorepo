@@ -1,5 +1,4 @@
 import { db as prismaDb } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -14,8 +13,7 @@ import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
-type NpcType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
 const { mockUuid } = vi.hoisted(() => ({
   mockUuid: vi.fn<() => string>(() => "mock-uuid"),

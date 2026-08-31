@@ -1,7 +1,6 @@
-import type { Contract } from "../../prisma/contract.js";
-
-type MemberType =
-  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
+import { db as prismaDb } from "../../prisma/db.js";
+const MemberType = prismaDb.nativeEnums.public.MemberType.members;
+type MemberType = (typeof MemberType)[keyof typeof MemberType];
 
 export class GuildMemberDto {
   id: string;
