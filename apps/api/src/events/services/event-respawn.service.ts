@@ -12,7 +12,7 @@ import { PrismaService } from "#src/db/prisma.service";
 import {
   attachAssignedMembersToMaps,
   setMapAssignedMembers,
-} from "#src/db/many-to-many";
+} from "../event-map-members.repository.js";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 import type {

@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import type { EventKillPoint, InputJsonValue } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachRolesToMembers } from "#src/db/many-to-many";
+import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import { EventEmitterService } from "./event-emitter.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import {

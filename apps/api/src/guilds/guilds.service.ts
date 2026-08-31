@@ -26,7 +26,7 @@ import {
   Permission,
 } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachRolesToMembers } from "#src/db/many-to-many";
+import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "#src/guilds/dto/delete-guild.dto";
 import type { UpdateGuildDto } from "#src/guilds/dto/update-guild.dto";

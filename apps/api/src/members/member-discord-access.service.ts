@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachRolesToMembers } from "#src/db/many-to-many";
+import { attachRolesToMembers } from "./member-roles.repository.js";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
 import type { Member } from "#src/db/domain";

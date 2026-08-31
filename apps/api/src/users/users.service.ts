@@ -9,7 +9,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger as WinstonLogger } from "winston";
 import { firstValueFrom } from "rxjs";
 import { PrismaService } from "#src/db/prisma.service";
-import { setMemberRoles } from "#src/db/many-to-many";
+import { setMemberRoles } from "#src/members/member-roles.repository";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";

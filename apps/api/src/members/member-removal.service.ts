@@ -11,7 +11,10 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachRolesToMembers, setMemberRoles } from "#src/db/many-to-many";
+import {
+  attachRolesToMembers,
+  setMemberRoles,
+} from "./member-roles.repository.js";
 import { DiscordService } from "#src/discord/discord.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import {

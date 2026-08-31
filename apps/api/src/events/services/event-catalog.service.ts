@@ -15,7 +15,7 @@ import { PrismaService } from "#src/db/prisma.service";
 import {
   attachAssignedMembersToHeroes,
   attachAssignedMembersToMaps,
-} from "#src/db/many-to-many";
+} from "../event-map-members.repository.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventPointsService } from "#src/events/services/event-points.service";
 import { EventReadCacheService } from "#src/events/services/event-read-cache.service";

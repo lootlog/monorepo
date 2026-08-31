@@ -11,10 +11,8 @@ import type {
   JsonValue,
 } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
-import {
-  attachRolesToMembers,
-  setMapAssignedMembers,
-} from "#src/db/many-to-many";
+import { setMapAssignedMembers } from "../event-map-members.repository.js";
+import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventEmitterService } from "./event-emitter.service.js";
 import { EventPointsService } from "./event-points.service.js";

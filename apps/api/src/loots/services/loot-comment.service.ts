@@ -1,7 +1,7 @@
 import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachRolesToMembers } from "#src/db/many-to-many";
+import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { ErrorKey } from "../enum/error-key.enum.js";
 

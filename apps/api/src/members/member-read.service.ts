@@ -2,7 +2,7 @@ import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachRolesToMembers } from "#src/db/many-to-many";
+import { attachRolesToMembers } from "./member-roles.repository.js";
 import { Permission, type PlayerSnapshot } from "#src/db/domain";
 import {
   getGuildMemberReferencesCacheKey,

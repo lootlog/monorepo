@@ -2,7 +2,7 @@ import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { CoverageGapType } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
-import { attachAssignedMembersToHeroes } from "#src/db/many-to-many";
+import { attachAssignedMembersToHeroes } from "../event-map-members.repository.js";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import {
