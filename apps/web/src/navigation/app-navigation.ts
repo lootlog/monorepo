@@ -668,15 +668,22 @@ export function resolveAppNavigation(
     );
   }
   const publicTitle = resolvePublicTitle(lastMatch);
-  if (statusTitle || publicTitle) {
-    return createPublicNavigation(statusTitle ?? publicTitle ?? "");
+  if (publicTitle && !statusTitle) {
+    return createPublicNavigation(publicTitle);
   }
   if (lastMatch.routeId.startsWith(USER_ROUTE_PREFIX)) {
-    return resolveUserAppNavigation(lastMatch, currentBattle);
+    const navigation = resolveUserAppNavigation(lastMatch, currentBattle);
+    return statusTitle
+      ? { ...navigation, documentTitle: statusTitle }
+      : navigation;
   }
   if (lastMatch.routeId.startsWith(ORGANIZATION_ROUTE_PREFIX)) {
-    return resolveOrganizationAppNavigation(options, lastMatch);
+    const navigation = resolveOrganizationAppNavigation(options, lastMatch);
+    return statusTitle
+      ? { ...navigation, documentTitle: statusTitle }
+      : navigation;
   }
+  if (statusTitle) return createPublicNavigation(statusTitle);
   return createPublicNavigation(
     formatDocumentTitle(t("common.documentTitle.fallback")),
   );

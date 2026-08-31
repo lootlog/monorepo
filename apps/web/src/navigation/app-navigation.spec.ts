@@ -49,6 +49,37 @@ describe("resolveAppNavigation", () => {
     ).toMatchObject({ active: true, visible: true });
   });
 
+  it("keeps scoped navigation when an Organization child route is in error", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1/settings",
+          routeId: "/_authenticated/$guildId/settings/",
+          status: "error",
+        }),
+      ],
+      permissions: ["ADMIN"],
+    });
+
+    expect(navigation.scope).toBe("organization");
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Nocna Straż", path: "/guild-1" },
+      { label: "Ustawienia", path: null },
+    ]);
+    expect(navigation.parentPath).toBe("/guild-1");
+    expect(navigation.documentTitle).toBe("Wystąpił błąd — Lootlog.pl");
+    expect(
+      navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
+    ).toMatchObject({ active: true, visible: true });
+  });
+
   it("uses a translated dynamic fallback immediately", () => {
     const navigation = resolveAppNavigation({
       matches: [
