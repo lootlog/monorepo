@@ -8,7 +8,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Pool } from "pg";
 import type { Logger } from "winston";
 import { Permission, type Permission as PermissionValue } from "#src/db/domain";
-import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { withPostgresTransaction } from "#src/db/postgres-transaction";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";

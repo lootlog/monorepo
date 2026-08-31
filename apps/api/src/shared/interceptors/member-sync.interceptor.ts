@@ -10,7 +10,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MembersService } from "#src/members/members.service";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
@@ -21,7 +21,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     private readonly membersService: MembersService,
     private readonly redis: RedisService,
   ) {}
@@ -83,7 +83,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
     const guildIds = guilds.map((g) => g.id);
     const staleThreshold = this.membersService.getMemberSoftStaleThreshold();
 
-    const members = this.prisma.orm.public.Member.where((row) =>
+    const members = this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.active.eq(true)),
     )
       .where((member) => member.guildId.in(guildIds))

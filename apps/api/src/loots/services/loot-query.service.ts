@@ -145,7 +145,7 @@ export class LootQueryService {
     };
 
     let organizationRecordsQuery =
-      this.prisma.orm.public.OrganizationLootRecord.where((row) =>
+      this.prisma.db.orm.public.OrganizationLootRecord.where((row) =>
         and(row.guildId.eq(guild.id), row.archivedAt.isNull()),
       );
     organizationRecordsQuery = organizationRecordsQuery.where((row) =>
@@ -253,7 +253,7 @@ export class LootQueryService {
     }
 
     const lootQuery = this.applyBaseLootFilters(
-      this.prisma.orm.public.Loot,
+      this.prisma.db.orm.public.Loot,
       guild,
       permissions,
       roles,
@@ -289,7 +289,7 @@ export class LootQueryService {
     lootId: number,
   ): Promise<LootQueryResult | null> {
     const loot = await this.applyBaseLootFilters(
-      this.prisma.orm.public.Loot,
+      this.prisma.db.orm.public.Loot,
       guild,
       permissions,
       roles,
@@ -370,7 +370,7 @@ export class LootQueryService {
     }
 
     const loot = await this.applyBaseLootFilters(
-      this.prisma.orm.public.Loot,
+      this.prisma.db.orm.public.Loot,
       guild,
       permissions,
       roles,
@@ -401,8 +401,8 @@ export class LootQueryService {
       return undefined;
     }
 
-    const snapshots = await this.prisma.orm.public.ItemSnapshot.where((row) =>
-      row.name.in(names),
+    const snapshots = await this.prisma.db.orm.public.ItemSnapshot.where(
+      (row) => row.name.in(names),
     )
       .select("id")
       .all();

@@ -38,11 +38,12 @@ export class ReservationSharingService {
   ) {}
 
   async getVisibleGuildIds(guildId: string): Promise<string[]> {
-    const shares = await this.prisma.orm.public.ReservationShare.where((row) =>
-      and(
-        row.revokedAt.isNull(),
-        or(row.firstGuildId.eq(guildId), row.secondGuildId.eq(guildId)),
-      ),
+    const shares = await this.prisma.db.orm.public.ReservationShare.where(
+      (row) =>
+        and(
+          row.revokedAt.isNull(),
+          or(row.firstGuildId.eq(guildId), row.secondGuildId.eq(guildId)),
+        ),
     )
       .select("firstGuildId", "secondGuildId")
       .all();
@@ -60,7 +61,7 @@ export class ReservationSharingService {
   async list(guildId: string) {
     const now = new Date();
     const [shares, pendingInvitations] = await Promise.all([
-      this.prisma.orm.public.ReservationShare.where((row) =>
+      this.prisma.db.orm.public.ReservationShare.where((row) =>
         and(
           row.revokedAt.isNull(),
           or(row.firstGuildId.eq(guildId), row.secondGuildId.eq(guildId)),
@@ -70,7 +71,7 @@ export class ReservationSharingService {
         .include("secondGuild")
         .orderBy((row) => row.createdAt.desc())
         .all(),
-      this.prisma.orm.public.ReservationShareInvitation.where((row) =>
+      this.prisma.db.orm.public.ReservationShareInvitation.where((row) =>
         and(
           row.sourceGuildId.eq(guildId),
           row.acceptedAt.isNull(),
@@ -108,7 +109,7 @@ export class ReservationSharingService {
     const token = randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
     const invitation =
-      await this.prisma.orm.public.ReservationShareInvitation.create({
+      await this.prisma.db.orm.public.ReservationShareInvitation.create({
         id: createId(),
         sourceGuildId: guildId,
         tokenHash: this.hashToken(token),
@@ -181,7 +182,7 @@ export class ReservationSharingService {
       invitation.sourceGuildId,
       targetGuild.id,
     );
-    const share = await this.prisma.transaction(async (transaction) => {
+    const share = await this.prisma.db.transaction(async (transaction) => {
       const acceptedAt = new Date();
       const claim =
         await transaction.orm.public.ReservationShareInvitation.where((row) =>
@@ -255,7 +256,7 @@ export class ReservationSharingService {
 
   async revokeInvitation(guildId: string, invitationId: string): Promise<void> {
     const result =
-      await this.prisma.orm.public.ReservationShareInvitation.where((row) =>
+      await this.prisma.db.orm.public.ReservationShareInvitation.where((row) =>
         and(
           row.id.eq(invitationId),
           row.sourceGuildId.eq(guildId),
@@ -270,18 +271,19 @@ export class ReservationSharingService {
   }
 
   async revokeShare(guildId: string, shareId: string): Promise<void> {
-    const share = await this.prisma.orm.public.ReservationShare.where((row) =>
-      and(
-        row.id.eq(shareId),
-        row.revokedAt.isNull(),
-        or(row.firstGuildId.eq(guildId), row.secondGuildId.eq(guildId)),
-      ),
+    const share = await this.prisma.db.orm.public.ReservationShare.where(
+      (row) =>
+        and(
+          row.id.eq(shareId),
+          row.revokedAt.isNull(),
+          or(row.firstGuildId.eq(guildId), row.secondGuildId.eq(guildId)),
+        ),
     ).first();
     if (!share) {
       throw new NotFoundException({ code: "RESERVATION_SHARE_NOT_FOUND" });
     }
 
-    await this.prisma.orm.public.ReservationShare.where((row) =>
+    await this.prisma.db.orm.public.ReservationShare.where((row) =>
       row.id.eq(share.id),
     ).update({ revokedAt: new Date(), updatedAt: new Date() });
     await this.eventsPublisher.sharingChanged(guildId, [
@@ -292,7 +294,7 @@ export class ReservationSharingService {
 
   private async getUsableInvitation(token: string) {
     const invitation =
-      await this.prisma.orm.public.ReservationShareInvitation.where((row) =>
+      await this.prisma.db.orm.public.ReservationShareInvitation.where((row) =>
         row.tokenHash.eq(this.hashToken(token)),
       )
         .include("sourceGuild")

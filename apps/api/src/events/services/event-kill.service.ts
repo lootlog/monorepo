@@ -122,7 +122,7 @@ export class EventKillService {
   ) {}
 
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -349,7 +349,7 @@ export class EventKillService {
   }
 
   private async getEventHeroStatsUncached(guildId: string, eventId: string) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .include("heroNpcs", (relation) =>
@@ -368,7 +368,7 @@ export class EventKillService {
     );
     const npcStats =
       npcIds.length > 0
-        ? await this.prisma.orm.public.NpcKillStats.where((row) =>
+        ? await this.prisma.db.orm.public.NpcKillStats.where((row) =>
             and(
               row.guildId.eq(guildId),
               row.world.eq(event.world),
@@ -547,8 +547,8 @@ export class EventKillService {
           };
 
           if (Object.keys(updateData).length > 0) {
-            eventHero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
-              row.id.eq(eventHero.id),
+            eventHero = await this.prisma.db.orm.public.EventHeroNpc.where(
+              (row) => row.id.eq(eventHero.id),
             ).update(updateData);
             this.logger.log({
               message: "Hero NPC data updated",
@@ -618,7 +618,7 @@ export class EventKillService {
     npcName: string,
   ): Promise<ActiveEventHeroMatch[]> {
     return findActiveEventHeroMatchesByNpc(
-      this.prisma,
+      this.prisma.db,
       guildId,
       world,
       npcId,
@@ -671,7 +671,7 @@ export class EventKillService {
       ),
     );
 
-    const heroMaps = await this.prisma.orm.public.EventMap.where((row) =>
+    const heroMaps = await this.prisma.db.orm.public.EventMap.where((row) =>
       row.heroNpcId.eq(eventHero.id),
     )
       .select("id", "mapName")
@@ -686,7 +686,7 @@ export class EventKillService {
       autoConfirmedAt,
     } = this.resolveKillScoringConfig(event, killedAt);
 
-    const kill = await this.prisma.transaction(async (tx) => {
+    const kill = await this.prisma.db.transaction(async (tx) => {
       const heroKill = await tx.orm.public.EventHeroKill.create({
         id: createId(),
         heroNpcId: eventHero.id,
@@ -1019,7 +1019,7 @@ export class EventKillService {
     limit = 20,
     cursor?: string,
   ) {
-    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const hero = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       and(
         row.id.eq(heroId),
         row.eventId.eq(eventId),
@@ -1033,7 +1033,7 @@ export class EventKillService {
       throw new NotFoundException("Hero not found");
     }
 
-    let killsQuery = this.prisma.orm.public.EventHeroKill.where((row) =>
+    let killsQuery = this.prisma.db.orm.public.EventHeroKill.where((row) =>
       row.heroNpcId.eq(heroId),
     );
     if (cursor) {
@@ -1106,7 +1106,7 @@ export class EventKillService {
     cursor?: string,
     heroId?: string,
   ) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -1116,7 +1116,7 @@ export class EventKillService {
       throw new NotFoundException("Event not found");
     }
 
-    let killsQuery = this.prisma.orm.public.EventHeroKill.where((row) =>
+    let killsQuery = this.prisma.db.orm.public.EventHeroKill.where((row) =>
       row.heroNpc.some((heroNpc) => heroNpc.eventId.eq(eventId)),
     );
     if (heroId) {
@@ -1198,7 +1198,7 @@ export class EventKillService {
     cursor?: string,
     heroId?: string,
   ) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -1208,7 +1208,7 @@ export class EventKillService {
       throw new NotFoundException("Event not found");
     }
 
-    const member = await this.prisma.orm.public.Member.where((row) =>
+    const member = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.id.eq(memberId), row.guildId.eq(guildId)),
     )
       .select("id", "name", "avatar", "userId")
@@ -1218,7 +1218,7 @@ export class EventKillService {
       throw new NotFoundException("Member not found");
     }
 
-    let killsQuery = this.prisma.orm.public.EventHeroKill.where((row) =>
+    let killsQuery = this.prisma.db.orm.public.EventHeroKill.where((row) =>
       and(
         row.heroNpc.some((heroNpc) => heroNpc.eventId.eq(eventId)),
         row.points.some((point) => point.memberId.eq(memberId)),
@@ -1296,7 +1296,7 @@ export class EventKillService {
     heroId: string,
     killId: string,
   ) {
-    const kill = await this.prisma.orm.public.EventHeroKill.where((row) =>
+    const kill = await this.prisma.db.orm.public.EventHeroKill.where((row) =>
       and(
         row.id.eq(killId),
         row.heroNpcId.eq(heroId),
@@ -1323,7 +1323,7 @@ export class EventKillService {
       throw new NotFoundException("Kill not found");
     }
     const pointMembers = await attachRolesToMembers(
-      this.prisma,
+      this.prisma.db,
       kill.points.map((point) => point.member),
     );
     const pointMembersById = new Map(
@@ -1334,7 +1334,7 @@ export class EventKillService {
       member: pointMembersById.get(point.member.id) ?? point.member,
     }));
 
-    const heroMaps = await this.prisma.orm.public.EventMap.where((row) =>
+    const heroMaps = await this.prisma.db.orm.public.EventMap.where((row) =>
       row.heroNpcId.eq(heroId),
     )
       .select("id", "mapName")
@@ -1373,7 +1373,7 @@ export class EventKillService {
     );
 
     const assignments = await this.applyAssignmentHistoryFilters(
-      this.prisma.orm.public.EventMapAssignmentHistory,
+      this.prisma.db.orm.public.EventMapAssignmentHistory,
       {
         mapIds,
         memberIds,
@@ -1591,7 +1591,7 @@ export class EventKillService {
     );
 
     const heroMaps =
-      (await this.prisma.orm.public.EventMap.where((row) =>
+      (await this.prisma.db.orm.public.EventMap.where((row) =>
         row.heroNpcId.in(heroIds),
       )
         .select("id", "mapName", "heroNpcId")
@@ -1603,7 +1603,7 @@ export class EventKillService {
     const mapIdToName = this.createMapNameLookup(heroMaps);
     const assignments =
       (await this.applyAssignmentHistoryFilters(
-        this.prisma.orm.public.EventMapAssignmentHistory,
+        this.prisma.db.orm.public.EventMapAssignmentHistory,
         {
           heroNpcIds: heroIds,
           memberIds,
@@ -1702,7 +1702,7 @@ export class EventKillService {
     }
 
     const windowSummaries =
-      (await this.prisma.orm.public.EventRespawnWindowSummary.where((row) =>
+      (await this.prisma.db.orm.public.EventRespawnWindowSummary.where((row) =>
         row.killId.in(kills.map((kill) => kill.id)),
       )
         .select("killId", "windowOpenedAt")
@@ -1783,7 +1783,7 @@ export class EventKillService {
     heroId: string,
     killId: string,
   ) {
-    const kill = await this.prisma.orm.public.EventHeroKill.where((row) =>
+    const kill = await this.prisma.db.orm.public.EventHeroKill.where((row) =>
       and(
         row.id.eq(killId),
         row.heroNpcId.eq(heroId),
@@ -1803,7 +1803,7 @@ export class EventKillService {
     }
 
     const summary =
-      await this.prisma.orm.public.EventRespawnWindowSummary.where((row) =>
+      await this.prisma.db.orm.public.EventRespawnWindowSummary.where((row) =>
         row.killId.eq(killId),
       )
         .select("gapsTimeline", "windowOpenedAt")
@@ -1814,7 +1814,7 @@ export class EventKillService {
     const scoringWindowStartTime =
       summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
 
-    const maps = await this.prisma.orm.public.EventMap.where((row) =>
+    const maps = await this.prisma.db.orm.public.EventMap.where((row) =>
       row.heroNpcId.eq(heroId),
     )
       .select("id", "mapName", "mapId")
@@ -1834,7 +1834,7 @@ export class EventKillService {
       }>
     >();
     const timelineAssignments = await this.applyAssignmentHistoryFilters(
-      this.prisma.orm.public.EventMapAssignmentHistory,
+      this.prisma.db.orm.public.EventMapAssignmentHistory,
       {
         mapIds: maps.map((map) => map.id),
         killedAt: kill.killedAt,

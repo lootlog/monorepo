@@ -33,14 +33,14 @@ export class MemberReadService {
     guildId: string,
     includeInactive = false,
   ): Promise<MemberWithRoles[]> {
-    let membersQuery = this.prisma.orm.public.Member.where((row) =>
+    let membersQuery = this.prisma.db.orm.public.Member.where((row) =>
       and(row.guildId.eq(guildId), row.globalUserId.isNotNull()),
     );
     if (!includeInactive) {
       membersQuery = membersQuery.where((row) => row.active.eq(true));
     }
     const members = await membersQuery.orderBy((row) => row.name.asc()).all();
-    return attachRolesToMembers(this.prisma, members);
+    return attachRolesToMembers(this.prisma.db, members);
   }
 
   getGuildMemberReferences(
@@ -52,7 +52,7 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild member references",
       async () => {
-        let membersQuery = this.prisma.orm.public.Member.where((row) =>
+        let membersQuery = this.prisma.db.orm.public.Member.where((row) =>
           and(row.guildId.eq(guildId), row.globalUserId.isNotNull()),
         );
         if (!includeInactive) {
@@ -63,7 +63,7 @@ export class MemberReadService {
           .orderBy((row) => row.name.asc())
           .all();
         const members = await attachRolesToMembers(
-          this.prisma,
+          this.prisma.db,
           memberRows as Omit<MemberReference, "color">[],
         );
 
@@ -81,7 +81,7 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild members summary",
       async () => {
-        const guild = await this.prisma.orm.public.Guild.where((row) =>
+        const guild = await this.prisma.db.orm.public.Guild.where((row) =>
           and(row.id.eq(guildId), row.active.eq(true)),
         )
           .select("ownerId")
@@ -91,7 +91,7 @@ export class MemberReadService {
           return [];
         }
 
-        const memberRows = await this.prisma.orm.public.Member.where((row) =>
+        const memberRows = await this.prisma.db.orm.public.Member.where((row) =>
           and(
             row.guildId.eq(guildId),
             row.active.eq(true),
@@ -102,7 +102,7 @@ export class MemberReadService {
           .orderBy((row) => row.name.asc())
           .all();
         const members = await attachRolesToMembers(
-          this.prisma,
+          this.prisma.db,
           memberRows as Omit<MemberSummary, "color">[],
         );
 
@@ -164,7 +164,7 @@ export class MemberReadService {
       MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS,
       "member lootlog config summary",
       async () => {
-        const member = await this.prisma.orm.public.Member.where((row) =>
+        const member = await this.prisma.db.orm.public.Member.where((row) =>
           and(row.userId.eq(discordId), row.guildId.eq(guildId)),
         )
           .select("userId", "active")
@@ -175,7 +175,7 @@ export class MemberReadService {
         }
 
         const configs =
-          await this.prisma.orm.public.UserCharactersLootlogSettings.where(
+          await this.prisma.db.orm.public.UserCharactersLootlogSettings.where(
             (row) => row.userId.eq(discordId),
           )
             .orderBy([
@@ -266,7 +266,7 @@ export class MemberReadService {
       return new Map();
     }
 
-    const snapshots = (await this.prisma.orm.public.PlayerSnapshot.where(
+    const snapshots = (await this.prisma.db.orm.public.PlayerSnapshot.where(
       (row) =>
         or(
           ...characterRefs.map(({ accountId, characterId }) =>

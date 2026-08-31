@@ -277,7 +277,7 @@ export class MemberContextService {
       });
     }
 
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       and(
         row.active.eq(true),
         or(row.id.eq(idOrVanityURL), row.vanityUrl.eq(idOrVanityURL)),

@@ -40,7 +40,7 @@ describe("EventAccessService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     eventFirst.mockResolvedValue({ id: "event-1" });
-    service = new EventAccessService(mockPrisma as never);
+    service = new EventAccessService({ db: mockPrisma } as never);
   });
 
   it("filters event heroes by visible level ranges", () => {

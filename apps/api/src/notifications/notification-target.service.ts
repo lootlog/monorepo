@@ -49,7 +49,7 @@ export class NotificationTargetService {
   ) {}
 
   listGuildTargets(guildId: string) {
-    return this.prisma.orm.public.NotificationTarget.where((row) =>
+    return this.prisma.db.orm.public.NotificationTarget.where((row) =>
       and(
         row.ownerType.eq(DbNotificationOwnerType.GUILD),
         row.ownerId.eq(guildId),
@@ -82,7 +82,7 @@ export class NotificationTargetService {
       );
     }
 
-    return this.prisma.orm.public.NotificationTarget.where((row) =>
+    return this.prisma.db.orm.public.NotificationTarget.where((row) =>
       and(
         row.ownerType.eq(DbNotificationOwnerType.GUILD),
         row.ownerId.eq(guildId),
@@ -122,7 +122,7 @@ export class NotificationTargetService {
   ) {
     await this.ensureTarget(DbNotificationOwnerType.GUILD, guildId, targetId);
 
-    const updated = await this.prisma.orm.public.NotificationTarget.where(
+    const updated = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) => row.id.eq(targetId),
     ).update({
       ...this.getDisplayNameUpdate(data),
@@ -144,7 +144,7 @@ export class NotificationTargetService {
   }
 
   async listUserTargets(discordId: string) {
-    const targets = await this.prisma.orm.public.NotificationTarget.where(
+    const targets = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.USER),
@@ -181,7 +181,7 @@ export class NotificationTargetService {
       );
     }
 
-    const target = await this.prisma.orm.public.NotificationTarget.where(
+    const target = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.USER),
@@ -221,7 +221,7 @@ export class NotificationTargetService {
   ) {
     await this.ensureTarget(DbNotificationOwnerType.USER, discordId, targetId);
 
-    return this.prisma.orm.public.NotificationTarget.where((row) =>
+    return this.prisma.db.orm.public.NotificationTarget.where((row) =>
       row.id.eq(targetId),
     ).update({
       ...this.getDisplayNameUpdate(data),
@@ -312,7 +312,7 @@ export class NotificationTargetService {
       throw new BadRequestException(Error.AT_LEAST_ONE_TARGET_REQUIRED);
     }
 
-    const targets = await this.prisma.orm.public.NotificationTarget.where(
+    const targets = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.id.in(params.targetIds),
@@ -332,7 +332,7 @@ export class NotificationTargetService {
   }
 
   async getActiveUserTargetIds(discordId: string) {
-    const targets = await this.prisma.orm.public.NotificationTarget.where(
+    const targets = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.USER),
@@ -351,7 +351,7 @@ export class NotificationTargetService {
     guildId: string;
     channelId: string;
   }) {
-    const targets = await this.prisma.orm.public.NotificationTarget.where(
+    const targets = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.GUILD),
@@ -378,7 +378,7 @@ export class NotificationTargetService {
     ownerId: string,
     targetId: number,
   ) {
-    const target = await this.prisma.orm.public.NotificationTarget.where(
+    const target = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.id.eq(targetId),
@@ -396,7 +396,7 @@ export class NotificationTargetService {
 
   private async deleteTargetAndOrphanedRules(targetId: number) {
     const singleTargetRuleIds =
-      await this.prisma.orm.public.NotificationRuleTarget.where((row) =>
+      await this.prisma.db.orm.public.NotificationRuleTarget.where((row) =>
         row.targetId.eq(targetId),
       )
         .select("ruleId")
@@ -418,12 +418,12 @@ export class NotificationTargetService {
       ),
     );
 
-    await this.prisma.orm.public.NotificationTarget.where((row) =>
+    await this.prisma.db.orm.public.NotificationTarget.where((row) =>
       row.id.eq(targetId),
     ).delete();
 
     if (singleTargetRuleIds.length > 0) {
-      await this.prisma.orm.public.NotificationRule.where((row) =>
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         row.id.in(singleTargetRuleIds),
       ).deleteAndCount();
     }
@@ -440,43 +440,44 @@ export class NotificationTargetService {
   }
 
   private async getOrCreateUserDmTestRule(discordId: string, targetId: number) {
-    let notificationRule = await this.prisma.orm.public.NotificationRule.where(
-      (row) =>
+    let notificationRule =
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.USER),
           row.ownerId.eq(discordId),
           row.triggerType.eq(DbNotificationTriggerType.SCHEDULED_MESSAGE),
           row.name.eq(USER_DM_TEST_RULE_NAME),
         ),
-    ).first();
+      ).first();
 
     if (!notificationRule) {
-      notificationRule = await this.prisma.orm.public.NotificationRule.create({
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
-        triggerType: DbNotificationTriggerType.SCHEDULED_MESSAGE,
-        guildId: null,
-        world: null,
-        name: USER_DM_TEST_RULE_NAME,
-        filters: null,
-        contentTemplate: null,
-        scheduleStrategy: DbNotificationScheduleStrategy.FIXED_DATETIME,
-        scheduleAnchor: null,
-        scheduleOffsetMinutes: null,
-        scheduledAt: null,
-        scheduleIntervalType: DbNotificationScheduleIntervalType.ONCE,
-        scheduleIntervalValue: null,
-        scheduleWeekday: null,
-        scheduleTimeOfDay: null,
-        scheduledUntil: null,
-        scheduleTimezone: null,
-        enabled: false,
-        dedupeWindowSeconds: 0,
-        updatedAt: new Date(),
-      });
+      notificationRule =
+        await this.prisma.db.orm.public.NotificationRule.create({
+          ownerType: DbNotificationOwnerType.USER,
+          ownerId: discordId,
+          triggerType: DbNotificationTriggerType.SCHEDULED_MESSAGE,
+          guildId: null,
+          world: null,
+          name: USER_DM_TEST_RULE_NAME,
+          filters: null,
+          contentTemplate: null,
+          scheduleStrategy: DbNotificationScheduleStrategy.FIXED_DATETIME,
+          scheduleAnchor: null,
+          scheduleOffsetMinutes: null,
+          scheduledAt: null,
+          scheduleIntervalType: DbNotificationScheduleIntervalType.ONCE,
+          scheduleIntervalValue: null,
+          scheduleWeekday: null,
+          scheduleTimeOfDay: null,
+          scheduledUntil: null,
+          scheduleTimezone: null,
+          enabled: false,
+          dedupeWindowSeconds: 0,
+          updatedAt: new Date(),
+        });
     }
 
-    await this.prisma.orm.public.NotificationRuleTarget.createAndCount([
+    await this.prisma.db.orm.public.NotificationRuleTarget.createAndCount([
       { ruleId: notificationRule.id, targetId },
     ]);
 
@@ -506,8 +507,9 @@ export class NotificationTargetService {
     discordId: string,
     targetId: number,
   ) {
-    const watchedRules = await this.prisma.orm.public.WatchedItem.where((row) =>
-      and(row.userId.eq(discordId), row.notificationRuleId.isNotNull()),
+    const watchedRules = await this.prisma.db.orm.public.WatchedItem.where(
+      (row) =>
+        and(row.userId.eq(discordId), row.notificationRuleId.isNotNull()),
     )
       .select("notificationRuleId")
       .all();
@@ -516,7 +518,7 @@ export class NotificationTargetService {
       return;
     }
 
-    await this.prisma.orm.public.NotificationRuleTarget.createAndCount(
+    await this.prisma.db.orm.public.NotificationRuleTarget.createAndCount(
       watchedRules
         .map((watchedItem) => watchedItem.notificationRuleId)
         .filter((ruleId): ruleId is number => ruleId !== null)
@@ -538,7 +540,7 @@ export class NotificationTargetService {
 
   private getUserDmTestTriggerUsageForTargets(targetIds: number[]) {
     return computeTestTriggerUsage(
-      this.prisma,
+      this.prisma.db,
       targetIds,
       USER_DM_TEST_TRIGGER_LIMIT,
       USER_DM_TEST_TRIGGER_WINDOW_MS,

@@ -42,7 +42,7 @@ describe("PinnedEventsService", () => {
     vi.clearAllMocks();
     heroAll.mockResolvedValue([]);
     pinDelete.mockResolvedValue(undefined);
-    service = new PinnedEventsService(prisma as never);
+    service = new PinnedEventsService({ db: prisma } as never);
   });
 
   afterEach(() => {

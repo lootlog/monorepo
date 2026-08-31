@@ -1,6 +1,6 @@
 import { Injectable, type OnModuleDestroy } from "@nestjs/common";
-import { db, postgresPool } from "#src/prisma/db";
-import type { Contract } from "../prisma/contract.js";
+import { db } from "#src/prisma/db";
+import type { Contract } from "./prisma/contract.js";
 
 type PrismaModelName =
   keyof Contract["domain"]["namespaces"]["public"]["models"];
@@ -22,6 +22,5 @@ export class PrismaService implements OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     await this.db.close();
-    await postgresPool.end();
   }
 }

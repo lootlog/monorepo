@@ -11,8 +11,8 @@ describe("PublicGuildStatsCardService", () => {
   let service: PublicGuildStatsCardService;
   let prisma: {
     guild: { findFirst: ReturnType<typeof mockFn> };
-    sql: ReturnType<typeof mockFn>;
   };
+  let postgres: { query: ReturnType<typeof mockFn> };
   let redis: {
     get: ReturnType<typeof mockFn>;
     set: ReturnType<typeof mockFn>;
@@ -26,8 +26,8 @@ describe("PublicGuildStatsCardService", () => {
       guild: {
         findFirst: mockFn(),
       },
-      sql: mockFn(),
     };
+    postgres = { query: mockFn() };
     redis = {
       get: mockFn(),
       set: mockFn(),
@@ -36,6 +36,7 @@ describe("PublicGuildStatsCardService", () => {
     };
     service = new PublicGuildStatsCardService(
       attachPrismaOrmMock(prisma) as unknown as PrismaService,
+      postgres as never,
       redis as unknown as RedisService,
     );
 
@@ -62,7 +63,7 @@ describe("PublicGuildStatsCardService", () => {
 
     expect(result).toEqual(cachedImage);
     expect(prisma.guild.findFirst).toHaveBeenCalledTimes(1);
-    expect(prisma.sql).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
     expect(redis.set).not.toHaveBeenCalled();
   });
 
@@ -102,7 +103,7 @@ describe("PublicGuildStatsCardService", () => {
     );
 
     expect(redis.get).not.toHaveBeenCalled();
-    expect(prisma.sql).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
   });
 
   it("renders and caches a png with zero stats", async () => {
@@ -113,13 +114,15 @@ describe("PublicGuildStatsCardService", () => {
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.sql.mockResolvedValue([
-      {
-        total_loots: 0n,
-        legendary_items: 0n,
-        heroic_items: 0n,
-      },
-    ]);
+    postgres.query.mockResolvedValue({
+      rows: [
+        {
+          total_loots: 0n,
+          legendary_items: 0n,
+          heroic_items: 0n,
+        },
+      ],
+    });
 
     const result = await service.getStatsCard("guild-1");
 
@@ -140,13 +143,15 @@ describe("PublicGuildStatsCardService", () => {
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.sql.mockResolvedValue([
-      {
-        total_loots: 7n,
-        legendary_items: 1n,
-        heroic_items: 2n,
-      },
-    ]);
+    postgres.query.mockResolvedValue({
+      rows: [
+        {
+          total_loots: 7n,
+          legendary_items: 1n,
+          heroic_items: 2n,
+        },
+      ],
+    });
 
     const result = await service.getStatsCard("guild-1");
 
@@ -164,17 +169,19 @@ describe("PublicGuildStatsCardService", () => {
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.sql.mockResolvedValue([
-      {
-        total_loots: 42n,
-        legendary_items: 3n,
-        heroic_items: 12n,
-      },
-    ]);
+    postgres.query.mockResolvedValue({
+      rows: [
+        {
+          total_loots: 42n,
+          legendary_items: 3n,
+          heroic_items: 12n,
+        },
+      ],
+    });
 
     await service.getStatsCard("guild-1");
 
-    expect(prisma.sql).toHaveBeenCalledTimes(1);
+    expect(postgres.query).toHaveBeenCalledTimes(1);
     expect(redis.set).toHaveBeenCalledWith(
       "guild-stats-card:guild-1:v2",
       expect.any(String),
@@ -190,13 +197,15 @@ describe("PublicGuildStatsCardService", () => {
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.sql.mockResolvedValue([
-      {
-        total_loots: 42n,
-        legendary_items: 3n,
-        heroic_items: 12n,
-      },
-    ]);
+    postgres.query.mockResolvedValue({
+      rows: [
+        {
+          total_loots: 42n,
+          legendary_items: 3n,
+          heroic_items: 12n,
+        },
+      ],
+    });
 
     const result = await service.refreshStatsCard("guild-1");
 
@@ -231,7 +240,7 @@ describe("PublicGuildStatsCardService", () => {
     });
 
     expect(redis.set).not.toHaveBeenCalled();
-    expect(prisma.sql).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
   });
 
   it("releases refresh cooldown when regeneration fails", async () => {
@@ -243,7 +252,7 @@ describe("PublicGuildStatsCardService", () => {
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.sql.mockRejectedValue(error);
+    postgres.query.mockRejectedValue(error);
 
     await expect(service.refreshStatsCard("guild-1")).rejects.toThrow(error);
 

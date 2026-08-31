@@ -6,7 +6,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MembersService } from "./members.service.js";
-import { PRISMA_DB } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 
 describe("MemberBulkRefreshProcessor", () => {
   let processor: MemberBulkRefreshProcessor;
@@ -79,8 +79,8 @@ describe("MemberBulkRefreshProcessor", () => {
           useValue: mockMembersService,
         },
         {
-          provide: PRISMA_DB,
-          useValue: mockPrisma,
+          provide: PrismaService,
+          useValue: { db: mockPrisma },
         },
         {
           provide: MemberRefreshJobEventsService,

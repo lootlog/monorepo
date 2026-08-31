@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
+import { PrismaService } from "#src/prisma.service";
 import { temporalToDate } from "#src/shared/db/temporal";
 import type { MemberActivityStatsResponse } from "../dto/member-activity-stats-response.dto.js";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto.js";
@@ -11,11 +11,11 @@ const MAX_SUGGESTION_LIMIT = 50;
 
 @Injectable()
 export class ActivitiesQueryService {
-  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findMany(query: QueryActivitiesDto) {
     const limit = Math.min(query.limit ?? 50, 100);
-    let activitiesQuery = this.prisma.orm.public.Activity;
+    let activitiesQuery = this.prisma.db.orm.public.Activity;
     if (query.userId)
       activitiesQuery = activitiesQuery.where({ userId: query.userId });
     if (query.guildId)
@@ -96,7 +96,7 @@ export class ActivitiesQueryService {
 
     const snapshotIds = await this.findGuildActorSnapshotIds(guildId);
     if (snapshotIds.length === 0) return [];
-    let snapshotsQuery = this.prisma.orm.public.ActivityActorSnapshot.where(
+    let snapshotsQuery = this.prisma.db.orm.public.ActivityActorSnapshot.where(
       (snapshot) => snapshot.id.in(snapshotIds),
     );
     if (trimmedSearch) {
@@ -124,7 +124,7 @@ export class ActivitiesQueryService {
     const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
-    let worldsQuery = this.prisma.orm.public.Activity.where({ guildId })
+    let worldsQuery = this.prisma.db.orm.public.Activity.where({ guildId })
       .where((activity) => activity.world.isNotNull())
       .where((activity) => activity.world.neq(""));
     if (trimmedSearch) {
@@ -153,7 +153,7 @@ export class ActivitiesQueryService {
 
     const snapshotIds = await this.findGuildActorSnapshotIds(guildId);
     if (snapshotIds.length === 0) return [];
-    let snapshotsQuery = this.prisma.orm.public.ActivityActorSnapshot.where(
+    let snapshotsQuery = this.prisma.db.orm.public.ActivityActorSnapshot.where(
       (snapshot) => snapshot.id.in(snapshotIds),
     )
       .where((snapshot) => snapshot.clanName.isNotNull())
@@ -186,7 +186,7 @@ export class ActivitiesQueryService {
   async findMemberActivityStatsByGuild(
     guildId: string,
   ): Promise<MemberActivityStatsResponse[]> {
-    const rows = await this.prisma.orm.public.MemberActivityStats.where({
+    const rows = await this.prisma.db.orm.public.MemberActivityStats.where({
       guildId,
     })
       .orderBy([
@@ -241,7 +241,7 @@ export class ActivitiesQueryService {
   }
 
   async findOne(id: string, guildId: string) {
-    const activity = await this.prisma.orm.public.Activity.where({
+    const activity = await this.prisma.db.orm.public.Activity.where({
       id,
       guildId,
     }).first();
@@ -251,7 +251,7 @@ export class ActivitiesQueryService {
     }
 
     const actorSnapshot = activity.actorSnapshotId
-      ? await this.prisma.orm.public.ActivityActorSnapshot.first({
+      ? await this.prisma.db.orm.public.ActivityActorSnapshot.first({
           id: activity.actorSnapshotId,
         })
       : null;
@@ -271,22 +271,27 @@ export class ActivitiesQueryService {
   }
 
   private async findGuildActorSnapshotIds(guildId: string): Promise<string[]> {
-    const activities = await this.prisma.orm.public.Activity.where({ guildId })
+    const activities = await this.prisma.db.orm.public.Activity.where({
+      guildId,
+    })
       .where((activity) => activity.actorSnapshotId.isNotNull())
       .select("actorSnapshotId")
       .all();
-    return [
-      ...new Set(
-        activities.flatMap(({ actorSnapshotId }) => actorSnapshotId ?? []),
-      ),
-    ];
+    const actorSnapshotIds = new Set<string>();
+    for (const { actorSnapshotId } of activities) {
+      if (typeof actorSnapshotId === "string") {
+        actorSnapshotIds.add(actorSnapshotId);
+      }
+    }
+    return [...actorSnapshotIds];
   }
 
   private async findMatchingActorSnapshotIds(
     query: QueryActivitiesDto,
   ): Promise<string[] | null> {
     if (!query.playerName && !query.clanName) return null;
-    let snapshots = this.prisma.orm.public.ActivityActorSnapshot.select("id");
+    let snapshots =
+      this.prisma.db.orm.public.ActivityActorSnapshot.select("id");
     if (query.playerName) {
       snapshots = snapshots.where((snapshot) =>
         snapshot.name.ilike(`%${query.playerName}%`),
@@ -309,9 +314,10 @@ export class ActivitiesQueryService {
       ),
     ];
     if (ids.length === 0) return new Map();
-    const snapshots = await this.prisma.orm.public.ActivityActorSnapshot.where(
-      (snapshot) => snapshot.id.in(ids),
-    ).all();
+    const snapshots =
+      await this.prisma.db.orm.public.ActivityActorSnapshot.where((snapshot) =>
+        snapshot.id.in(ids),
+      ).all();
     return new Map(
       snapshots.map((snapshot) => [
         snapshot.id,

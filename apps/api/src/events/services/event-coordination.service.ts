@@ -76,7 +76,7 @@ export class EventCoordinationService {
   ) {}
 
   async getCoordination(guildId: string, eventId: string) {
-    const eventRow = await this.prisma.orm.public.Event.where((row) =>
+    const eventRow = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("assignmentTimeoutMinutes", "id", "world")
@@ -94,7 +94,7 @@ export class EventCoordinationService {
       ? {
           ...eventRow,
           heroNpcs: await attachAssignedMembersToHeroes(
-            this.prisma,
+            this.prisma.db,
             eventRow.heroNpcs,
           ),
         }
@@ -111,7 +111,7 @@ export class EventCoordinationService {
         event.world,
         event.heroNpcs,
       ),
-      this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+      this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
         and(
           row.heroNpcId.in(event.heroNpcs.map((hero) => hero.id)),
           row.endedAt.isNull(),

@@ -11,7 +11,7 @@ export type TestTriggerUsage = {
 };
 
 export async function computeTestTriggerUsage(
-  prisma: PrismaService,
+  prisma: PrismaService["db"],
   targetIds: number[],
   limit: number,
   windowMs: number,

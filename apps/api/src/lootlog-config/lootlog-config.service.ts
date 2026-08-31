@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { Pool, PoolClient } from "pg";
 import { ItemRarity, NpcType } from "#src/db/domain";
-import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { withPostgresTransaction } from "#src/db/postgres-transaction";
 import type { UpdateLootlogConfigNpcDto } from "#src/lootlog-config/dto/update-lootlog-config-npc.dto";
 import type { UpdateLootlogConfigDto } from "#src/lootlog-config/dto/update-lootlog-config.dto";

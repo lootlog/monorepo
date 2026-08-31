@@ -6,7 +6,7 @@ import { NotificationTargetType } from "@lootlog/types";
 import { NpcType, Permission, type JsonValue } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
-import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import { Error as NotificationError } from "#src/notifications/enum/error.enum";

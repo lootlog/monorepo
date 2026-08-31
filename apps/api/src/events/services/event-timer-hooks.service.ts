@@ -2,7 +2,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import type { Event, EventHeroNpc } from "#src/db/domain";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import type { CheckEventHeroKillParams } from "../interfaces/check-event-hero-kill-params.interface.js";
 import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant.js";
 import {
@@ -16,7 +16,7 @@ import { findActiveEventHeroesByNpc } from "../utils/find-active-event-heroes-by
 @Injectable()
 export class EventTimerHooksService {
   constructor(
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     @InjectQueue(EVENT_HERO_KILL_QUEUE)
     private readonly eventHeroKillQueue: Queue,
   ) {}
@@ -54,7 +54,7 @@ export class EventTimerHooksService {
     npcName: string,
   ): Promise<{ eventHero: EventHeroNpc; event: Event } | null> {
     const matches = await findActiveEventHeroesByNpc(
-      this.prisma,
+      this.prisma.db,
       guildId,
       world,
       npcId,

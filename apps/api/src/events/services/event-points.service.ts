@@ -84,7 +84,7 @@ export class EventPointsService {
     return this.eventReadCache.getOrSet(
       this.eventReadCache.getEventKey(guildId, eventId, "ranking"),
       async () => {
-        const event = await this.prisma.orm.public.Event.where((row) =>
+        const event = await this.prisma.db.orm.public.Event.where((row) =>
           and(row.id.eq(eventId), row.guildId.eq(guildId)),
         ).first();
 
@@ -92,7 +92,7 @@ export class EventPointsService {
           throw new NotFoundException("Event not found");
         }
 
-        const rankings = await this.prisma.orm.public.EventRanking.where(
+        const rankings = await this.prisma.db.orm.public.EventRanking.where(
           (row) => row.eventId.eq(eventId),
         )
           .select(
@@ -111,7 +111,7 @@ export class EventPointsService {
           .orderBy((row) => row.totalPoints.desc())
           .all();
         const members = await attachRolesToMembers(
-          this.prisma,
+          this.prisma.db,
           rankings.map((ranking) => ranking.member),
         );
         const membersById = new Map(
@@ -240,7 +240,7 @@ export class EventPointsService {
     heroNpcName: string;
   }): Promise<boolean> {
     const matchingKillPoints =
-      await this.prisma.orm.public.EventKillPoint.where((row) =>
+      await this.prisma.db.orm.public.EventKillPoint.where((row) =>
         and(
           row.memberId.eq(params.memberId),
           row.manualAdjustmentPoints.neq(0),
@@ -406,7 +406,7 @@ export class EventPointsService {
   private async recalculateEventPointsWithCurrentRules(
     eventId: string,
   ): Promise<void> {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       row.id.eq(eventId),
     )
       .select("scoringMode", "scoringRules")
@@ -423,18 +423,19 @@ export class EventPointsService {
       scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
-    const existingRankings = (await this.prisma.orm.public.EventRanking.where(
-      (row) => row.eventId.eq(eventId),
-    )
-      .select(
-        "id",
-        "memberId",
-        "heroNpcName",
-        "totalPoints",
-        "manualAdjustmentPoints",
-        "pointsModified",
+    const existingRankings =
+      (await this.prisma.db.orm.public.EventRanking.where((row) =>
+        row.eventId.eq(eventId),
       )
-      .all()) as ExistingRankingSnapshot[];
+        .select(
+          "id",
+          "memberId",
+          "heroNpcName",
+          "totalPoints",
+          "manualAdjustmentPoints",
+          "pointsModified",
+        )
+        .all()) as ExistingRankingSnapshot[];
     const existingRankingsByKey = new Map(
       existingRankings.map((ranking) => [
         this.createRankingKey({
@@ -445,7 +446,7 @@ export class EventPointsService {
       ]),
     );
 
-    const killPoints = (await this.prisma.orm.public.EventKillPoint.where(
+    const killPoints = (await this.prisma.db.orm.public.EventKillPoint.where(
       (row) =>
         row.kill.some((kill) =>
           kill.heroNpc.some((heroNpc) => heroNpc.eventId.eq(eventId)),
@@ -498,7 +499,7 @@ export class EventPointsService {
       Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
     );
     const windowSummaries =
-      (await this.prisma.orm.public.EventRespawnWindowSummary.where((row) =>
+      (await this.prisma.db.orm.public.EventRespawnWindowSummary.where((row) =>
         row.killId.in(
           Array.from(new Set(killPoints.map((point) => point.kill.id))),
         ),
@@ -531,16 +532,17 @@ export class EventPointsService {
       unassignedAt: Date | null;
     }> =
       allMapIds.length > 0 && allMemberIds.length > 0
-        ? await this.prisma.orm.public.EventMapAssignmentHistory.where((row) =>
-            and(
-              row.mapId.in(allMapIds),
-              row.memberId.in(allMemberIds),
-              row.assignedAt.lte(latestKillTime),
-              or(
-                row.unassignedAt.isNull(),
-                row.unassignedAt.gte(earliestOverlapWindowStart),
+        ? await this.prisma.db.orm.public.EventMapAssignmentHistory.where(
+            (row) =>
+              and(
+                row.mapId.in(allMapIds),
+                row.memberId.in(allMemberIds),
+                row.assignedAt.lte(latestKillTime),
+                or(
+                  row.unassignedAt.isNull(),
+                  row.unassignedAt.gte(earliestOverlapWindowStart),
+                ),
               ),
-            ),
           )
             .select("mapId", "memberId", "assignedAt", "unassignedAt")
             .orderBy((row) => row.assignedAt.asc())
@@ -677,7 +679,7 @@ export class EventPointsService {
     const processedRankingKeys = new Set<string>();
 
     const transactionOperations: Array<
-      (transaction: PrismaService) => Promise<unknown>
+      (transaction: Pick<PrismaService["db"], "orm">) => Promise<unknown>
     > = recalculatedKillPoints.map(
       (recalculatedKillPoint) => (transaction) =>
         transaction.orm.public.EventKillPoint.where((row) =>
@@ -771,7 +773,7 @@ export class EventPointsService {
       );
     }
 
-    await this.prisma.transaction(async (transaction) => {
+    await this.prisma.db.transaction(async (transaction) => {
       for (const operation of transactionOperations) {
         await operation(transaction);
       }
@@ -881,7 +883,7 @@ export class EventPointsService {
       return [];
     }
 
-    const maps = (await this.prisma.orm.public.EventMap.where((row) =>
+    const maps = (await this.prisma.db.orm.public.EventMap.where((row) =>
       row.heroNpcId.eq(heroNpcId),
     )
       .select("id", "mapName")
@@ -900,7 +902,7 @@ export class EventPointsService {
     const mapIds = maps.map((m) => m.id);
     const mapNamesById = new Map(maps.map((map) => [map.id, map.mapName]));
 
-    let logsQuery = this.prisma.orm.public.EventPresenceLog.where((row) =>
+    let logsQuery = this.prisma.db.orm.public.EventPresenceLog.where((row) =>
       and(row.mapId.in(mapIds), row.memberId.in(memberIds)),
     );
     if (since) {
@@ -989,7 +991,7 @@ export class EventPointsService {
     }
 
     const logs = await this.applyPresenceLogSinceFilter(
-      this.prisma.orm.public.EventPresenceLog.where((row) =>
+      this.prisma.db.orm.public.EventPresenceLog.where((row) =>
         and(row.mapId.in(mapIds), row.memberId.eq(memberId)),
       ),
       since,
@@ -1052,7 +1054,7 @@ export class EventPointsService {
     }
 
     const logs = await this.applyPresenceLogSinceFilter(
-      this.prisma.orm.public.EventPresenceLog.where((row) =>
+      this.prisma.db.orm.public.EventPresenceLog.where((row) =>
         and(row.mapId.in(mapIds), row.memberId.in(memberIds)),
       ),
       since,
@@ -1130,7 +1132,7 @@ export class EventPointsService {
           this.getTrackingDurationSecondsForRanking({
             trackingDurationSeconds: killPoint.trackingDurationSeconds,
           });
-        const existing = await this.prisma.orm.public.EventRanking.where(
+        const existing = await this.prisma.db.orm.public.EventRanking.where(
           (row) =>
             and(
               row.eventId.eq(eventId),
@@ -1146,7 +1148,7 @@ export class EventPointsService {
               killPoint.afkPercentage) /
             newTotalKills;
 
-          await this.prisma.orm.public.EventRanking.where((row) =>
+          await this.prisma.db.orm.public.EventRanking.where((row) =>
             and(
               row.eventId.eq(eventId),
               row.memberId.eq(killPoint.memberId),
@@ -1165,7 +1167,7 @@ export class EventPointsService {
           return;
         }
 
-        await this.prisma.orm.public.EventRanking.create({
+        await this.prisma.db.orm.public.EventRanking.create({
           id: createId(),
           eventId,
           memberId: killPoint.memberId,
@@ -1213,7 +1215,7 @@ export class EventPointsService {
       };
     }>;
   }> {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -1225,7 +1227,7 @@ export class EventPointsService {
 
     const now = new Date();
     const [pendingKillPoints, expiredKillPoints] = await Promise.all([
-      this.prisma.orm.public.EventKillPoint.where((row) =>
+      this.prisma.db.orm.public.EventKillPoint.where((row) =>
         and(
           row.memberId.eq(memberId),
           row.confirmedAt.isNull(),
@@ -1248,7 +1250,7 @@ export class EventPointsService {
         )
         .orderBy((row) => row.confirmationDeadlineAt.asc())
         .all(),
-      this.prisma.orm.public.EventKillPoint.where((row) =>
+      this.prisma.db.orm.public.EventKillPoint.where((row) =>
         and(
           row.memberId.eq(memberId),
           row.confirmedAt.isNull(),
@@ -1337,7 +1339,7 @@ export class EventPointsService {
     killIds: string[],
   ): Promise<{ acknowledgedCount: number }> {
     const acknowledgedAt = new Date();
-    const result = await this.prisma.orm.public.EventKillPoint.where((row) =>
+    const result = await this.prisma.db.orm.public.EventKillPoint.where((row) =>
       and(
         row.killId.in(killIds),
         row.memberId.eq(memberId),
@@ -1368,8 +1370,8 @@ export class EventPointsService {
     killId: string,
     memberId: number,
   ): Promise<{ success: true; confirmedNow: boolean }> {
-    const memberKillPoints = await this.prisma.orm.public.EventKillPoint.where(
-      (row) =>
+    const memberKillPoints =
+      await this.prisma.db.orm.public.EventKillPoint.where((row) =>
         and(
           row.killId.eq(killId),
           row.memberId.eq(memberId),
@@ -1382,13 +1384,13 @@ export class EventPointsService {
             ),
           ),
         ),
-    )
-      .include("kill", (relation) =>
-        relation.include("heroNpc", (relationChild) =>
-          relationChild.select("npcName"),
-        ),
       )
-      .all();
+        .include("kill", (relation) =>
+          relation.include("heroNpc", (relationChild) =>
+            relationChild.select("npcName"),
+          ),
+        )
+        .all();
 
     if (memberKillPoints.length === 0) {
       throw new NotFoundException("Kill point not found");
@@ -1423,7 +1425,7 @@ export class EventPointsService {
       return { success: true, confirmedNow: false };
     }
 
-    const confirmedPoints = await this.prisma.transaction(async (tx) => {
+    const confirmedPoints = await this.prisma.db.transaction(async (tx) => {
       await tx.orm.public.EventKillPoint.where((row) =>
         and(row.id.in(pointsToConfirmIds), row.confirmedAt.isNull()),
       ).updateAndCount({
@@ -1457,19 +1459,20 @@ export class EventPointsService {
     comment: string | undefined,
     editedByUserId: string,
   ) {
-    const killPoint = await this.prisma.orm.public.EventKillPoint.where((row) =>
-      and(
-        row.id.eq(killPointId),
-        row.killId.eq(killId),
-        row.kill.some((related) =>
-          related.heroNpc.some((related) =>
-            and(
-              related.eventId.eq(eventId),
-              related.event.some((related) => related.guildId.eq(guildId)),
+    const killPoint = await this.prisma.db.orm.public.EventKillPoint.where(
+      (row) =>
+        and(
+          row.id.eq(killPointId),
+          row.killId.eq(killId),
+          row.kill.some((related) =>
+            related.heroNpc.some((related) =>
+              and(
+                related.eventId.eq(eventId),
+                related.event.some((related) => related.guildId.eq(guildId)),
+              ),
             ),
           ),
         ),
-      ),
     )
       .include("kill", (relation) => relation.include("heroNpc"))
       .first();
@@ -1491,8 +1494,8 @@ export class EventPointsService {
       killPoint.manualAdjustmentPoints + normalizedPointsDelta,
     );
 
-    const updated = await this.prisma.orm.public.EventKillPoint.where((row) =>
-      row.id.eq(killPointId),
+    const updated = await this.prisma.db.orm.public.EventKillPoint.where(
+      (row) => row.id.eq(killPointId),
     ).update({
       points: updatedKillPoints,
       manualAdjustmentPoints: updatedKillAdjustment,
@@ -1504,12 +1507,13 @@ export class EventPointsService {
     });
 
     if (isCountedInRanking) {
-      const ranking = await this.prisma.orm.public.EventRanking.where((row) =>
-        and(
-          row.eventId.eq(eventId),
-          row.memberId.eq(killPoint.memberId),
-          row.heroNpcName.eq(killPoint.kill.heroNpc.npcName),
-        ),
+      const ranking = await this.prisma.db.orm.public.EventRanking.where(
+        (row) =>
+          and(
+            row.eventId.eq(eventId),
+            row.memberId.eq(killPoint.memberId),
+            row.heroNpcName.eq(killPoint.kill.heroNpc.npcName),
+          ),
       ).first();
 
       if (ranking) {
@@ -1517,7 +1521,7 @@ export class EventPointsService {
           ranking.totalPoints + normalizedPointsDelta,
         );
 
-        await this.prisma.orm.public.EventRanking.where((row) =>
+        await this.prisma.db.orm.public.EventRanking.where((row) =>
           row.id.eq(ranking.id),
         ).update({
           totalPoints: updatedRankingTotalPoints,
@@ -1525,7 +1529,7 @@ export class EventPointsService {
           updatedAt: new Date(),
         });
 
-        await this.prisma.orm.public.EventPointsEditHistory.create({
+        await this.prisma.db.orm.public.EventPointsEditHistory.create({
           id: createId(),
           rankingId: ranking.id,
           previousPoints: ranking.totalPoints,
@@ -1553,7 +1557,7 @@ export class EventPointsService {
     comment: string | undefined,
     editedByUserId: string,
   ) {
-    const ranking = await this.prisma.orm.public.EventRanking.where((row) =>
+    const ranking = await this.prisma.db.orm.public.EventRanking.where((row) =>
       and(
         row.id.eq(rankingId),
         row.eventId.eq(eventId),
@@ -1585,7 +1589,7 @@ export class EventPointsService {
         heroNpcName: ranking.heroNpcName,
       });
 
-    await this.prisma.orm.public.EventPointsEditHistory.create({
+    await this.prisma.db.orm.public.EventPointsEditHistory.create({
       id: createId(),
       rankingId,
       previousPoints,
@@ -1595,7 +1599,7 @@ export class EventPointsService {
       comment: normalizedComment,
     });
 
-    const updated = await this.prisma.orm.public.EventRanking.where((row) =>
+    const updated = await this.prisma.db.orm.public.EventRanking.where((row) =>
       row.id.eq(rankingId),
     ).update({
       totalPoints: normalizedNewTotalPoints,
@@ -1622,7 +1626,7 @@ export class EventPointsService {
     }
 
     const historyEntries =
-      await this.prisma.orm.public.EventPointsEditHistory.where((row) =>
+      await this.prisma.db.orm.public.EventPointsEditHistory.where((row) =>
         and(
           row.rankingId.in(rankingIds),
           row.ranking.some((related) =>
@@ -1642,7 +1646,7 @@ export class EventPointsService {
     const editors =
       editedByUserIds.length === 0
         ? []
-        : await this.prisma.orm.public.Member.where((row) =>
+        : await this.prisma.db.orm.public.Member.where((row) =>
             and(row.guildId.eq(guildId), row.globalUserId.in(editedByUserIds)),
           )
             .select("globalUserId", "name")
@@ -1678,7 +1682,7 @@ export class EventPointsService {
   }
 
   private async emitRankingUpdateByEventId(eventId: string): Promise<void> {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       row.id.eq(eventId),
     )
       .select("guildId", "id")

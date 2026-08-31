@@ -14,7 +14,6 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MembersService } from "./members.service.js";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
-import { PRISMA_DB } from "#src/db/prisma.provider";
 import { DiscordService } from "#src/discord/discord.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
@@ -259,10 +258,6 @@ describe("MembersService", () => {
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
         {
           provide: PrismaService,
-          useValue: attachPrismaOrmMock(mockPrismaService),
-        },
-        {
-          provide: PRISMA_DB,
           useValue: attachPrismaOrmMock(mockPrismaService),
         },
         { provide: DiscordService, useValue: mockDiscordService },

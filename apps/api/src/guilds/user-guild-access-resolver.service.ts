@@ -4,7 +4,7 @@ import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordService } from "#src/discord/discord.service";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { temporalToDate } from "#src/db/temporal";
 import type { Guild } from "#src/db/domain";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
@@ -20,7 +20,7 @@ export interface GuildRefreshCandidate {
 export class UserGuildAccessResolver {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
     private readonly membersService: MembersService,
   ) {}
@@ -71,7 +71,7 @@ export class UserGuildAccessResolver {
     const discordGuildMap = new Map(
       discordGuilds.map((guild) => [guild.id, guild] as const),
     );
-    const guilds = await this.prisma.orm.public.Guild.where((row) =>
+    const guilds = await this.prisma.db.orm.public.Guild.where((row) =>
       row.active.eq(true),
     )
       .where((guild) => guild.id.in(discordGuildIds))

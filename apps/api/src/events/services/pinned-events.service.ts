@@ -5,17 +5,17 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { temporalToDate } from "#src/db/temporal";
 import { attachComputedEventActive } from "../utils/event-activity.util.js";
 
 @Injectable()
 export class PinnedEventsService {
-  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listPinnedEvents(userId: string, guildId: string) {
     const referenceTime = new Date();
-    const pins = await this.prisma.orm.public.UserPinnedEvent.where((row) =>
+    const pins = await this.prisma.db.orm.public.UserPinnedEvent.where((row) =>
       row.userId.eq(userId),
     )
       .orderBy((pin) => pin.pinnedAt.desc())
@@ -33,7 +33,7 @@ export class PinnedEventsService {
       .map((event) => event.id);
 
     if (inactiveEventIds.length > 0) {
-      await this.prisma.orm.public.UserPinnedEvent.where((row) =>
+      await this.prisma.db.orm.public.UserPinnedEvent.where((row) =>
         row.userId.eq(userId),
       )
         .where((pin) => pin.eventId.in(inactiveEventIds))
@@ -60,13 +60,13 @@ export class PinnedEventsService {
       throw new ConflictException("Only active events can be pinned");
     }
 
-    let pinnedEvent = await this.prisma.orm.public.UserPinnedEvent.where(
+    let pinnedEvent = await this.prisma.db.orm.public.UserPinnedEvent.where(
       (row) => and(row.userId.eq(userId), row.eventId.eq(eventId)),
     ).first();
 
     if (!pinnedEvent) {
       try {
-        pinnedEvent = await this.prisma.orm.public.UserPinnedEvent.create({
+        pinnedEvent = await this.prisma.db.orm.public.UserPinnedEvent.create({
           userId,
           eventId,
         });
@@ -74,7 +74,7 @@ export class PinnedEventsService {
         if (!this.isUniqueViolation(error)) {
           throw error;
         }
-        pinnedEvent = await this.prisma.orm.public.UserPinnedEvent.where(
+        pinnedEvent = await this.prisma.db.orm.public.UserPinnedEvent.where(
           (row) => and(row.userId.eq(userId), row.eventId.eq(eventId)),
         ).first();
         if (!pinnedEvent) {
@@ -90,7 +90,7 @@ export class PinnedEventsService {
   }
 
   async unpinEvent(userId: string, guildId: string, eventId: string) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -106,7 +106,7 @@ export class PinnedEventsService {
       return [];
     }
 
-    const events = await this.prisma.orm.public.Event.where((row) =>
+    const events = await this.prisma.db.orm.public.Event.where((row) =>
       row.guildId.eq(guildId),
     )
       .where((event) => event.id.in(eventIds))
@@ -115,7 +115,7 @@ export class PinnedEventsService {
     const heroes =
       foundEventIds.length === 0
         ? []
-        : await this.prisma.orm.public.EventHeroNpc.where((hero) =>
+        : await this.prisma.db.orm.public.EventHeroNpc.where((hero) =>
             hero.eventId.in(foundEventIds),
           ).all();
     const heroesByEventId = new Map<string, typeof heroes>();
@@ -139,7 +139,7 @@ export class PinnedEventsService {
   }
 
   private deletePin(userId: string, eventId: string) {
-    return this.prisma.orm.public.UserPinnedEvent.where((row) =>
+    return this.prisma.db.orm.public.UserPinnedEvent.where((row) =>
       and(row.userId.eq(userId), row.eventId.eq(eventId)),
     ).delete();
   }

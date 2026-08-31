@@ -12,7 +12,7 @@ export class LootCommentService {
   async getComments(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
-    const comments = await this.prisma.orm.public.LootComment.where((row) =>
+    const comments = await this.prisma.db.orm.public.LootComment.where((row) =>
       row.organizationLootRecord.some((related) =>
         and(
           related.guildId.eq(guildId),
@@ -27,7 +27,7 @@ export class LootCommentService {
       .orderBy((row) => row.createdAt.desc())
       .all();
     const members = await attachRolesToMembers(
-      this.prisma,
+      this.prisma.db,
       comments.map((comment) => comment.member),
     );
     const membersById = new Map(members.map((member) => [member.id, member]));
@@ -51,7 +51,7 @@ export class LootCommentService {
   }) {
     const { discordId, lootId, body, guildId } = options;
     const organizationLootRecord =
-      await this.prisma.orm.public.OrganizationLootRecord.where((row) =>
+      await this.prisma.db.orm.public.OrganizationLootRecord.where((row) =>
         and(
           row.lootId.eq(lootId),
           row.guildId.eq(guildId),
@@ -65,14 +65,16 @@ export class LootCommentService {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
 
-    const member = await this.prisma.orm.public.Member.where((row) =>
+    const member = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.guildId.eq(guildId)),
     ).first();
     if (!member) {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
-    const [memberWithRoles] = await attachRolesToMembers(this.prisma, [member]);
-    const comment = await this.prisma.orm.public.LootComment.create({
+    const [memberWithRoles] = await attachRolesToMembers(this.prisma.db, [
+      member,
+    ]);
+    const comment = await this.prisma.db.orm.public.LootComment.create({
       content: body.content,
       organizationLootRecordId: organizationLootRecord.id,
       memberId: member.id,

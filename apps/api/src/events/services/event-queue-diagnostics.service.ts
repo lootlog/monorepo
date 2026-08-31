@@ -2,20 +2,20 @@ import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 
 @Injectable()
 export class EventQueueDiagnosticsService {
   constructor(
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
   async getAutoCloseJobsStatus(guildId: string, eventId: string) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -25,7 +25,7 @@ export class EventQueueDiagnosticsService {
       throw new NotFoundException("Event not found");
     }
 
-    const heroes = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const heroes = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       row.eventId.eq(eventId),
     )
       .select("id")
@@ -74,7 +74,7 @@ export class EventQueueDiagnosticsService {
   }
 
   async getQueueHealth(guildId: string, eventId: string) {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guildId)),
     )
       .select("id")

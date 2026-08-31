@@ -8,7 +8,7 @@ import {
   DiskHealthIndicator,
   HealthCheck,
 } from "@nestjs/terminus";
-import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
+import { PrismaService } from "#src/prisma.service";
 import { apiServiceConfig } from "#src/config/api-service.config";
 
 @ApiTags("health")
@@ -18,7 +18,7 @@ export class HealthzController {
     private readonly health: HealthCheckService,
     private readonly http: HttpHealthIndicator,
     private readonly healthIndicator: HealthIndicatorService,
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
   ) {}
@@ -53,7 +53,7 @@ export class HealthzController {
   private async checkDatabase() {
     const indicator = this.healthIndicator.check("database");
     try {
-      await this.prisma.orm.public.MemberActivityStats.select("guildId")
+      await this.prisma.db.orm.public.MemberActivityStats.select("guildId")
         .limit(1)
         .all();
       return indicator.up();

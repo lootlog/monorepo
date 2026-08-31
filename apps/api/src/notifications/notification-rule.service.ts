@@ -70,10 +70,10 @@ export class NotificationRuleService {
 
   async listGuildRules(guildId: string) {
     const [guildSettings, rules] = (await Promise.all([
-      this.prisma.orm.public.Guild.where((row) => row.id.eq(guildId))
+      this.prisma.db.orm.public.Guild.where((row) => row.id.eq(guildId))
         .select("notificationRuleLimit")
         .first(),
-      this.prisma.orm.public.NotificationRule.where((row) =>
+      this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.GUILD),
           row.ownerId.eq(guildId),
@@ -168,7 +168,7 @@ export class NotificationRuleService {
     await this.ensureGuildNotificationPermissions(guildId);
 
     const notificationRule =
-      await this.prisma.orm.public.NotificationRule.where((row) =>
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.id.eq(ruleId),
           row.ownerType.eq(DbNotificationOwnerType.GUILD),
@@ -270,7 +270,7 @@ export class NotificationRuleService {
   // ── User Rules ───────────────────────────────────────────────────────
 
   listUserRules(discordId: string) {
-    return this.prisma.orm.public.NotificationRule.where((row) =>
+    return this.prisma.db.orm.public.NotificationRule.where((row) =>
       and(
         row.ownerType.eq(DbNotificationOwnerType.USER),
         row.ownerId.eq(discordId),
@@ -335,7 +335,7 @@ export class NotificationRuleService {
       targetIds: data.targetIds,
     });
 
-    return this.prisma.transaction(async (transaction) => {
+    return this.prisma.db.transaction(async (transaction) => {
       const rule = await transaction.orm.public.NotificationRule.create({
         ownerType,
         ownerId,
@@ -410,7 +410,7 @@ export class NotificationRuleService {
       nextFilters = this.buildFilters(data);
     }
 
-    await this.prisma.transaction(async (tx) => {
+    await this.prisma.db.transaction(async (tx) => {
       await tx.orm.public.NotificationRule.where((row) =>
         row.id.eq(ruleId),
       ).update({
@@ -464,7 +464,7 @@ export class NotificationRuleService {
   ) {
     await this.ensureRule({ ownerType, ownerId, ruleId });
     await this.jobService.cancelPendingJobs({ ruleId });
-    await this.prisma.orm.public.NotificationRule.where((row) =>
+    await this.prisma.db.orm.public.NotificationRule.where((row) =>
       row.id.eq(ruleId),
     ).delete();
     return { success: true };
@@ -492,7 +492,7 @@ export class NotificationRuleService {
   }
 
   private async ensureGuildRuleLimitNotExceeded(guildId: string) {
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       row.id.eq(guildId),
     )
       .select("notificationRuleLimit")
@@ -503,7 +503,7 @@ export class NotificationRuleService {
     }
 
     const currentRuleCount =
-      await this.prisma.orm.public.NotificationRule.where((row) =>
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.GUILD),
           row.ownerId.eq(guildId),
@@ -523,7 +523,7 @@ export class NotificationRuleService {
 
   private async ensureUserRuleLimitNotExceeded(discordId: string) {
     const currentRuleCount =
-      await this.prisma.orm.public.NotificationRule.where((row) =>
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.USER),
           row.ownerId.eq(discordId),
@@ -547,7 +547,7 @@ export class NotificationRuleService {
     ruleId: number;
   }) {
     const notificationRule =
-      await this.prisma.orm.public.NotificationRule.where((row) =>
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.id.eq(params.ruleId),
           row.ownerType.eq(params.ownerType),
@@ -898,7 +898,7 @@ export class NotificationRuleService {
 
   private getTargetTestTriggerUsage(targetIds: number[]) {
     return computeTestTriggerUsage(
-      this.prisma,
+      this.prisma.db,
       targetIds,
       GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
       GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS,

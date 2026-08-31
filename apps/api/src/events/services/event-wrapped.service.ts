@@ -138,7 +138,7 @@ export class EventWrappedService {
     permissions: Permission[],
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
-    const event = await this.prisma.orm.public.Event.where((row) =>
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
       and(row.id.eq(eventId), row.guildId.eq(guild.id)),
     )
       .select("id", "name", "world", "startsAt", "endsAt", "createdAt")
@@ -163,7 +163,7 @@ export class EventWrappedService {
 
     const [rankings, kills, windowSummaries, assignments, loots] =
       await Promise.all([
-        this.prisma.orm.public.EventRanking.where((row) =>
+        this.prisma.db.orm.public.EventRanking.where((row) =>
           row.eventId.eq(eventId),
         )
           .select(
@@ -176,13 +176,13 @@ export class EventWrappedService {
           )
           .include("member", (row) => row.select("id", "name", "avatar"))
           .all() as Promise<RankingRow[]>,
-        this.prisma.orm.public.EventHeroKill.where((row) =>
+        this.prisma.db.orm.public.EventHeroKill.where((row) =>
           row.heroNpcId.in(heroIds),
         )
           .select("id", "heroNpcId", "killedAt", "minSpawnTimeAtKill")
           .orderBy((row) => row.killedAt.asc())
           .all(),
-        this.prisma.orm.public.EventRespawnWindowSummary.where((row) =>
+        this.prisma.db.orm.public.EventRespawnWindowSummary.where((row) =>
           row.heroNpcId.in(heroIds),
         )
           .select(
@@ -194,7 +194,7 @@ export class EventWrappedService {
             "mapStats",
           )
           .all() as Promise<SummaryRow[]>,
-        this.prisma.orm.public.EventMapAssignmentHistory.where((row) =>
+        this.prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
           row.heroNpcId.in(heroIds),
         )
           .select(

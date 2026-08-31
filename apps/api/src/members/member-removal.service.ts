@@ -45,11 +45,11 @@ export class MemberRemovalService {
   }): Promise<MemberWithRoles> {
     const { discordId, guildId } = options;
 
-    const memberRow = await this.prisma.orm.public.Member.where((row) =>
+    const memberRow = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.guildId.eq(guildId)),
     ).first();
     const member = memberRow
-      ? (await attachRolesToMembers(this.prisma, [memberRow]))[0]
+      ? (await attachRolesToMembers(this.prisma.db, [memberRow]))[0]
       : null;
 
     if (!member) {
@@ -60,7 +60,7 @@ export class MemberRemovalService {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
-    const deactivatedMember = await this.prisma.transaction(
+    const deactivatedMember = await this.prisma.db.transaction(
       async (transaction) => {
         const updatedMember = await transaction.orm.public.Member.where((row) =>
           row.id.eq(member.id),
@@ -88,7 +88,7 @@ export class MemberRemovalService {
     options: DeactivateMembersMissingFromDiscordGuildsOptions,
   ): Promise<number> {
     const { discordId, userId, activeDiscordGuildIds, status } = options;
-    const missingMembers = await this.prisma.orm.public.Member.where((row) =>
+    const missingMembers = await this.prisma.db.orm.public.Member.where((row) =>
       and(
         row.userId.eq(discordId),
         row.globalUserId.eq(userId),
@@ -105,7 +105,7 @@ export class MemberRemovalService {
     }
 
     const syncTimestamp = new Date();
-    await this.prisma.transaction(async (transaction) => {
+    await this.prisma.db.transaction(async (transaction) => {
       for (const member of missingMembers) {
         const updatedMember = await transaction.orm.public.Member.where((row) =>
           and(row.userId.eq(member.userId), row.guildId.eq(member.guildId)),
@@ -135,7 +135,7 @@ export class MemberRemovalService {
     guildId: string,
     options?: DeleteMembersByGuildIdOptions,
   ): Promise<DeleteMembersByGuildIdResult> {
-    const client = options?.tx ?? this.prisma;
+    const client = options?.tx ?? this.prisma.db;
 
     try {
       const affectedMembers = await client.orm.public.Member.where((row) =>

@@ -1,6 +1,6 @@
 import { ActivitySource } from "../../shared/db/domain.js";
 import { ActivitiesQueryService } from "./activities-query.service.js";
-import type { PrismaDb } from "#src/shared/db/prisma.provider";
+import type { PrismaService } from "#src/prisma.service";
 
 function fluentModel(rows: unknown[] = []) {
   const model = {
@@ -31,8 +31,8 @@ describe("ActivitiesQueryService", () => {
       },
     ]);
     const service = new ActivitiesQueryService({
-      orm: { public: { MemberActivityStats: stats } },
-    } as unknown as PrismaDb);
+      db: { orm: { public: { MemberActivityStats: stats } } },
+    } as unknown as PrismaService);
 
     const [result] = await service.findMemberActivityStatsByGuild("guild-1");
     expect(result.createdAt).toBeInstanceOf(Date);
@@ -44,13 +44,15 @@ describe("ActivitiesQueryService", () => {
     const activities = fluentModel([{ actorSnapshotId: "snapshot-1" }]);
     const snapshots = fluentModel([{ name: " Player " }, { name: "player" }]);
     const service = new ActivitiesQueryService({
-      orm: {
-        public: {
-          Activity: activities,
-          ActivityActorSnapshot: snapshots,
+      db: {
+        orm: {
+          public: {
+            Activity: activities,
+            ActivityActorSnapshot: snapshots,
+          },
         },
       },
-    } as unknown as PrismaDb);
+    } as unknown as PrismaService);
 
     await expect(
       service.suggestActorNames("guild-1", "pla", 10),

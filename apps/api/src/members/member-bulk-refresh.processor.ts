@@ -3,7 +3,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MembersService } from "./members.service.js";
@@ -30,7 +30,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly membersService: MembersService,
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,
   ) {
     super();
@@ -45,7 +45,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     });
 
     try {
-      await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+      await this.prisma.db.orm.public.MemberRefreshJob.where((row) =>
         row.id.eq(jobId),
       ).update({ status: "PROCESSING", updatedAt: new Date() });
 
@@ -99,8 +99,8 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
           });
 
           progress.failedIds.push(memberId);
-          await this.prisma.runtime().execute(
-            this.prisma.raw.sql`
+          await this.prisma.db.runtime().execute(
+            this.prisma.db.raw.sql`
               UPDATE "MemberRefreshJob"
               SET "failedMembers" = "failedMembers" + 1
               WHERE "id" = ${jobId}
@@ -119,7 +119,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
       await processMember(0);
 
-      await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+      await this.prisma.db.orm.public.MemberRefreshJob.where((row) =>
         row.id.eq(jobId),
       ).update({
         status: "COMPLETED",
@@ -145,7 +145,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         stack: (error as Error).stack,
       });
 
-      await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+      await this.prisma.db.orm.public.MemberRefreshJob.where((row) =>
         row.id.eq(jobId),
       ).update({
         status: "FAILED",
@@ -162,7 +162,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     jobId: number,
     progress: JobProgress,
   ): Promise<void> {
-    await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+    await this.prisma.db.orm.public.MemberRefreshJob.where((row) =>
       row.id.eq(jobId),
     ).update({
       processedMembers: progress.processedCount,

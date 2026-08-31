@@ -7,7 +7,7 @@ import {
   DiskHealthIndicator,
 } from "@nestjs/terminus";
 import { HealthzController } from "./healthz.controller.js";
-import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
+import { PrismaService } from "#src/prisma.service";
 
 describe("HealthzController", () => {
   let controller: HealthzController;
@@ -22,14 +22,18 @@ describe("HealthzController", () => {
 
   const databaseAll = vi.fn().mockResolvedValue([]);
   const mockPrisma = {
-    orm: {
-      public: {
-        MemberActivityStats: {
-          select: vi.fn(() => ({ limit: vi.fn(() => ({ all: databaseAll })) })),
+    db: {
+      orm: {
+        public: {
+          MemberActivityStats: {
+            select: vi.fn(() => ({
+              limit: vi.fn(() => ({ all: databaseAll })),
+            })),
+          },
         },
       },
     },
-  } as unknown as PrismaDb;
+  } as unknown as PrismaService;
   const mockHealthIndicatorService = {
     check: vi.fn(() => ({
       up: vi.fn(() => ({ database: { status: "up" } })),
@@ -71,7 +75,7 @@ describe("HealthzController", () => {
           useValue: mockDiskHealthIndicator,
         },
         {
-          provide: PRISMA_DB,
+          provide: PrismaService,
           useValue: mockPrisma,
         },
       ],

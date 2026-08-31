@@ -2,14 +2,17 @@ import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import sharp from "sharp";
 import { serviceConfig } from "#src/config/service.config";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { PrismaService } from "#src/db/prisma.service";
 import { RuntimeEnvironment } from "@lootlog/types";
+import type { Pool } from "pg";
 
 type GuildStatsCardData = {
   guild: {
@@ -50,6 +53,7 @@ const REFRESH_COOLDOWN_SECONDS = 300;
 export class PublicGuildStatsCardService {
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(POSTGRES_POOL) private readonly postgres: Pool,
     private readonly redis: RedisService,
   ) {}
 
@@ -137,7 +141,7 @@ export class PublicGuildStatsCardService {
   }
 
   private async getCardGuild(guildId: string): Promise<GuildStatsCardGuild> {
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       and(row.id.eq(guildId), row.active.eq(true)),
     )
       .select("id", "name", "icon", "publicStatsCardEnabled")
@@ -154,14 +158,15 @@ export class PublicGuildStatsCardService {
     guildId: string,
   ): Promise<GuildStatsCardData["stats"]> {
     const dateFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const rows = await this.prisma.sql<LootStatsRow[]>`
+    const rows = await this.postgres.query<LootStatsRow>(
+      `
       WITH valid_loots AS (
         SELECT DISTINCT l.id
         FROM "OrganizationLootRecord" olr
         INNER JOIN "Loot" l ON l.id = olr."lootId"
-        WHERE olr."guildId" = ${guildId}
+        WHERE olr."guildId" = $1
           AND olr."archivedAt" IS NULL
-          AND l."createdAt" >= ${dateFrom}
+          AND l."createdAt" >= $2
       )
       SELECT
         COUNT(DISTINCT l.id) AS total_loots,
@@ -171,8 +176,10 @@ export class PublicGuildStatsCardService {
       INNER JOIN "Loot" l ON l.id = vl.id
       LEFT JOIN "LootItem" li ON li."lootId" = l.id
       LEFT JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-    `;
-    const row = rows[0];
+    `,
+      [guildId, dateFrom],
+    );
+    const row = rows.rows[0];
 
     return {
       totalLoots: this.toNumber(row?.total_loots),

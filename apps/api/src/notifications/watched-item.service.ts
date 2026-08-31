@@ -53,7 +53,7 @@ export class WatchedItemService {
   ) {}
 
   async listWatchedItems(discordId: string) {
-    const watchedItems = (await this.prisma.orm.public.WatchedItem.where(
+    const watchedItems = (await this.prisma.db.orm.public.WatchedItem.where(
       (row) => row.userId.eq(discordId),
     )
       .include("notificationRule", (relation) =>
@@ -73,12 +73,13 @@ export class WatchedItemService {
       ).values(),
     ];
 
-    const snapshots = (await this.prisma.orm.public.ItemSnapshot.where((row) =>
-      or(
-        ...pairs.map(({ itemId, itemName }) =>
-          and(row.itemId.eq(itemId), row.name.eq(itemName)),
+    const snapshots = (await this.prisma.db.orm.public.ItemSnapshot.where(
+      (row) =>
+        or(
+          ...pairs.map(({ itemId, itemName }) =>
+            and(row.itemId.eq(itemId), row.name.eq(itemName)),
+          ),
         ),
-      ),
     )
       .select("itemId", "name", "icon", "rarity", "lvl", "itemType", "statRaw")
       .orderBy((row) => row.createdAt.desc())
@@ -174,16 +175,16 @@ export class WatchedItemService {
       );
     }
 
-    const existingWatchedItem = await this.prisma.orm.public.WatchedItem.where(
-      (row) =>
+    const existingWatchedItem =
+      await this.prisma.db.orm.public.WatchedItem.where((row) =>
         and(
           row.userId.eq(discordId),
           row.itemId.eq(params.itemId),
           row.world.eq(params.world),
         ),
-    )
-      .include("notificationRule")
-      .first();
+      )
+        .include("notificationRule")
+        .first();
 
     const existingFilters = existingWatchedItem?.notificationRule
       ? this.matchingService.parseFilters(
@@ -193,7 +194,7 @@ export class WatchedItemService {
     const guildIds = params.resolveGuildIds(existingFilters);
 
     if (existingWatchedItem?.notificationRuleId) {
-      await this.prisma.transaction(async (tx) => {
+      await this.prisma.db.transaction(async (tx) => {
         await tx.orm.public.WatchedItem.where((row) =>
           row.id.eq(existingWatchedItem.id),
         ).update({
@@ -238,7 +239,7 @@ export class WatchedItemService {
       await this.ensureWatchedItemLimitNotExceeded(discordId);
     }
 
-    return this.prisma.transaction(async (tx) => {
+    return this.prisma.db.transaction(async (tx) => {
       const notificationRule = await tx.orm.public.NotificationRule.create({
         ownerType: DbNotificationOwnerType.USER,
         ownerId: discordId,
@@ -288,8 +289,8 @@ export class WatchedItemService {
   }
 
   async deleteWatchedItem(discordId: string, watchedItemId: number) {
-    const watchedItem = await this.prisma.orm.public.WatchedItem.where((row) =>
-      and(row.id.eq(watchedItemId), row.userId.eq(discordId)),
+    const watchedItem = await this.prisma.db.orm.public.WatchedItem.where(
+      (row) => and(row.id.eq(watchedItemId), row.userId.eq(discordId)),
     ).first();
 
     if (!watchedItem) {
@@ -302,7 +303,7 @@ export class WatchedItemService {
       });
     }
 
-    await this.prisma.transaction(async (tx) => {
+    await this.prisma.db.transaction(async (tx) => {
       await tx.orm.public.WatchedItem.where((row) =>
         row.id.eq(watchedItem.id),
       ).delete();
@@ -319,7 +320,7 @@ export class WatchedItemService {
 
   private async ensureWatchedItemLimitNotExceeded(discordId: string) {
     const currentWatchedItemCount =
-      await this.prisma.orm.public.WatchedItem.where((row) =>
+      await this.prisma.db.orm.public.WatchedItem.where((row) =>
         row.userId.eq(discordId),
       ).count();
 
@@ -377,7 +378,7 @@ export class WatchedItemService {
     itemId: number;
     world: string;
   }) {
-    return this.prisma.orm.public.WatchedItem.where((row) =>
+    return this.prisma.db.orm.public.WatchedItem.where((row) =>
       and(
         row.userId.eq(params.discordId),
         row.itemId.eq(params.itemId),

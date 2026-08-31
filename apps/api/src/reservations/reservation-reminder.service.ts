@@ -12,7 +12,7 @@ import {
   NotificationTargetType,
   NotificationTriggerType,
 } from "#src/db/domain";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
 
@@ -33,7 +33,7 @@ type ReminderContext = {
 @Injectable()
 export class ReservationReminderService {
   constructor(
-    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     private readonly notificationJobService: NotificationJobService,
   ) {}
 
@@ -55,7 +55,7 @@ export class ReservationReminderService {
       });
     }
 
-    const target = await this.prisma.orm.public.NotificationTarget.where(
+    const target = await this.prisma.db.orm.public.NotificationTarget.where(
       (row) =>
         and(
           row.ownerType.eq(NotificationOwnerType.USER),
@@ -143,7 +143,7 @@ export class ReservationReminderService {
   }
 
   private async getOrCreateRule(discordId: string) {
-    const existingRule = await this.prisma.orm.public.NotificationRule.where(
+    const existingRule = await this.prisma.db.orm.public.NotificationRule.where(
       (row) =>
         and(
           row.ownerType.eq(NotificationOwnerType.USER),
@@ -157,7 +157,7 @@ export class ReservationReminderService {
       return existingRule;
     }
 
-    return this.prisma.transaction(async (transaction) => {
+    return this.prisma.db.transaction(async (transaction) => {
       const target = await transaction.orm.public.NotificationTarget.where(
         (row) =>
           and(

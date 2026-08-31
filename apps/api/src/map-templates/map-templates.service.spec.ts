@@ -1,4 +1,4 @@
-import type { PrismaDb } from "#src/db/prisma.provider";
+import type { PrismaService } from "#src/db/prisma.service";
 import { MapTemplatesService } from "./map-templates.service.js";
 
 describe("MapTemplatesService", () => {
@@ -18,7 +18,8 @@ describe("MapTemplatesService", () => {
         },
       },
     },
-  } as unknown as PrismaDb;
+  };
+  const prisma = { db: prismaMock } as unknown as PrismaService;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,7 +37,7 @@ describe("MapTemplatesService", () => {
         },
       },
     ]);
-    const service = new MapTemplatesService(prismaMock);
+    const service = new MapTemplatesService(prisma);
 
     await expect(service.getTemplates("guild-1")).resolves.toEqual([
       {
@@ -68,7 +69,7 @@ describe("MapTemplatesService", () => {
       maps: [{ id: 1, name: "Map" }],
       createdAt: { toString: () => "2026-08-31T10:00:00.000" },
     });
-    const service = new MapTemplatesService(prismaMock);
+    const service = new MapTemplatesService(prisma);
 
     await expect(
       service.createTemplate("guild-1", {

@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { LootlogConfigService } from "./lootlog-config.service.js";
-import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 
 describe("LootlogConfigService", () => {
   let service: LootlogConfigService;

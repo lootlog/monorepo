@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { env } from "#src/config/env";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 
@@ -10,7 +10,7 @@ export class TimersCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
     this.enabled = env.TIMER_CLEANUP_ENABLED !== "false";
     this.retentionDays = env.TIMER_RETENTION_DAYS;
   }
@@ -84,8 +84,8 @@ export class TimersCleanupService {
   }
 
   private async deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {
-    const result = await this.prisma.runtime().execute(
-      this.prisma.raw.sql`
+    const result = await this.prisma.db.runtime().execute(
+      this.prisma.db.raw.sql`
         DELETE FROM "Timer"
         WHERE "maxSpawnTime" < ${cutoffDate.toISOString().slice(0, -1)}::timestamp
           AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}

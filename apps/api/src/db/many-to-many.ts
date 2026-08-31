@@ -1,6 +1,6 @@
 import type { PrismaService } from "#src/db/prisma.service";
 
-type DatabaseClient = Pick<PrismaService, "orm">;
+type DatabaseClient = Pick<PrismaService["db"], "orm">;
 
 export async function attachRolesToMembers<T extends { id: number }>(
   prisma: DatabaseClient,

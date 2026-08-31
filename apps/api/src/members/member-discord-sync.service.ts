@@ -228,7 +228,7 @@ export class MemberDiscordSyncService {
       const existingRoleIds =
         roleIds.length > 0
           ? (
-              await this.prisma.orm.public.Role.where((row) =>
+              await this.prisma.db.orm.public.Role.where((row) =>
                 row.id.in(roleIds),
               )
                 .select("id")
@@ -239,7 +239,7 @@ export class MemberDiscordSyncService {
       const memberName = nick ?? user.global_name ?? user.username;
       const memberAvatar = avatar ?? user.avatar;
 
-      const member = await this.prisma.transaction(async (transaction) => {
+      const member = await this.prisma.db.transaction(async (transaction) => {
         const savedMember = await transaction.orm.public.Member.where((row) =>
           and(row.userId.eq(id), row.guildId.eq(guildId)),
         ).upsert({
@@ -271,7 +271,7 @@ export class MemberDiscordSyncService {
         await setMemberRoles(transaction, savedMember.id, existingRoleIds);
         return savedMember;
       });
-      const [memberWithRoles] = await attachRolesToMembers(this.prisma, [
+      const [memberWithRoles] = await attachRolesToMembers(this.prisma.db, [
         member,
       ]);
 
@@ -316,7 +316,7 @@ export class MemberDiscordSyncService {
       deactivate = false,
       markSynced = false,
     } = options;
-    const existingMember = await this.prisma.orm.public.Member.where((row) =>
+    const existingMember = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.guildId.eq(guildId)),
     ).first();
 
@@ -325,7 +325,7 @@ export class MemberDiscordSyncService {
     }
 
     const attemptTimestamp = new Date();
-    const member = await this.prisma.transaction(async (transaction) => {
+    const member = await this.prisma.db.transaction(async (transaction) => {
       const updatedMember = await transaction.orm.public.Member.where((row) =>
         and(row.userId.eq(discordId), row.guildId.eq(guildId)),
       ).update({

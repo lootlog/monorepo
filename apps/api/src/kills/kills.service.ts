@@ -179,7 +179,7 @@ export class KillsService {
 
     // 2. Save to UserKillStats for personal stats
     try {
-      const userStats = await this.prisma.orm.public.UserKillStats.where(
+      const userStats = await this.prisma.db.orm.public.UserKillStats.where(
         (row) =>
           and(
             row.userId.eq(discordId),
@@ -187,7 +187,7 @@ export class KillsService {
             row.npcId.eq(npcId),
           ),
       ).first();
-      await this.prisma.orm.public.UserKillStats.where((row) =>
+      await this.prisma.db.orm.public.UserKillStats.where((row) =>
         and(
           row.userId.eq(discordId),
           row.world.eq(data.world),
@@ -220,7 +220,7 @@ export class KillsService {
       });
       userStatsUpdated = true;
       const userStatsBucket =
-        await this.prisma.orm.public.UserKillStatsBucket.where((row) =>
+        await this.prisma.db.orm.public.UserKillStatsBucket.where((row) =>
           and(
             row.userId.eq(discordId),
             row.world.eq(data.world),
@@ -228,7 +228,7 @@ export class KillsService {
             row.periodStart.eq(periodStart),
           ),
         ).first();
-      await this.prisma.orm.public.UserKillStatsBucket.where((row) =>
+      await this.prisma.db.orm.public.UserKillStatsBucket.where((row) =>
         and(
           row.userId.eq(discordId),
           row.world.eq(data.world),
@@ -300,7 +300,7 @@ export class KillsService {
     }
 
     // 4. Batch-fetch members for all target guilds (single query)
-    const members = (await this.prisma.orm.public.Member.where((row) =>
+    const members = (await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.guildId.in(guildIdArray)),
     ).all()) as Array<{ id: number; guildId: string }>;
     const membersByGuild = new Map(members.map((m) => [m.guildId, m]));
@@ -321,16 +321,16 @@ export class KillsService {
 
         try {
           // 4a. Always increment member participation (memberKills)
-          const memberStats = await this.prisma.orm.public.NpcKillStats.where(
-            (row) =>
+          const memberStats =
+            await this.prisma.db.orm.public.NpcKillStats.where((row) =>
               and(
                 row.guildId.eq(guildId),
                 row.memberId.eq(member.id),
                 row.world.eq(data.world),
                 row.npcId.eq(npcId),
               ),
-          ).first();
-          await this.prisma.orm.public.NpcKillStats.where((row) =>
+            ).first();
+          await this.prisma.db.orm.public.NpcKillStats.where((row) =>
             and(
               row.guildId.eq(guildId),
               row.memberId.eq(member.id),
@@ -366,7 +366,7 @@ export class KillsService {
           });
           guildStatsUpdated = true;
           const memberStatsBucket =
-            await this.prisma.orm.public.NpcKillStatsBucket.where((row) =>
+            await this.prisma.db.orm.public.NpcKillStatsBucket.where((row) =>
               and(
                 row.guildId.eq(guildId),
                 row.memberId.eq(member.id),
@@ -375,7 +375,7 @@ export class KillsService {
                 row.periodStart.eq(periodStart),
               ),
             ).first();
-          await this.prisma.orm.public.NpcKillStatsBucket.where((row) =>
+          await this.prisma.db.orm.public.NpcKillStatsBucket.where((row) =>
             and(
               row.guildId.eq(guildId),
               row.memberId.eq(member.id),
@@ -426,14 +426,14 @@ export class KillsService {
           if (isFirstGuildKill) {
             // First guild member to report this kill - increment unique kills
             const guildSummary =
-              await this.prisma.orm.public.GuildKillSummary.where((row) =>
+              await this.prisma.db.orm.public.GuildKillSummary.where((row) =>
                 and(
                   row.guildId.eq(guildId),
                   row.world.eq(data.world),
                   row.npcId.eq(npcId),
                 ),
               ).first();
-            await this.prisma.orm.public.GuildKillSummary.where((row) =>
+            await this.prisma.db.orm.public.GuildKillSummary.where((row) =>
               and(
                 row.guildId.eq(guildId),
                 row.world.eq(data.world),
@@ -466,21 +466,23 @@ export class KillsService {
             });
             guildStatsUpdated = true;
             const guildSummaryBucket =
-              await this.prisma.orm.public.GuildKillSummaryBucket.where((row) =>
+              await this.prisma.db.orm.public.GuildKillSummaryBucket.where(
+                (row) =>
+                  and(
+                    row.guildId.eq(guildId),
+                    row.world.eq(data.world),
+                    row.npcId.eq(npcId),
+                    row.periodStart.eq(periodStart),
+                  ),
+              ).first();
+            await this.prisma.db.orm.public.GuildKillSummaryBucket.where(
+              (row) =>
                 and(
                   row.guildId.eq(guildId),
                   row.world.eq(data.world),
                   row.npcId.eq(npcId),
                   row.periodStart.eq(periodStart),
                 ),
-              ).first();
-            await this.prisma.orm.public.GuildKillSummaryBucket.where((row) =>
-              and(
-                row.guildId.eq(guildId),
-                row.world.eq(data.world),
-                row.npcId.eq(npcId),
-                row.periodStart.eq(periodStart),
-              ),
             ).upsert({
               create: {
                 id: createId(),
@@ -563,7 +565,7 @@ export class KillsService {
       const [memberStats, guildSummary] = periodStart
         ? await Promise.all([
             this.applyKillStatsFilters(
-              this.prisma.orm.public.NpcKillStatsBucket,
+              this.prisma.db.orm.public.NpcKillStatsBucket,
               guildId,
               query,
               filteredRoles,
@@ -575,7 +577,7 @@ export class KillsService {
                 memberKills: aggregate.sum("memberKills"),
               })),
             this.applyKillStatsFilters(
-              this.prisma.orm.public.GuildKillSummaryBucket,
+              this.prisma.db.orm.public.GuildKillSummaryBucket,
               guildId,
               query,
               filteredRoles,
@@ -589,7 +591,7 @@ export class KillsService {
           ])
         : await Promise.all([
             this.applyKillStatsFilters(
-              this.prisma.orm.public.NpcKillStats,
+              this.prisma.db.orm.public.NpcKillStats,
               guildId,
               query,
               filteredRoles,
@@ -600,7 +602,7 @@ export class KillsService {
                 memberKills: aggregate.sum("memberKills"),
               })),
             this.applyKillStatsFilters(
-              this.prisma.orm.public.GuildKillSummary,
+              this.prisma.db.orm.public.GuildKillSummary,
               guildId,
               query,
               filteredRoles,
@@ -620,7 +622,7 @@ export class KillsService {
         userId: string;
       }> =
         memberIds.length > 0
-          ? await this.prisma.orm.public.Member.where((row) =>
+          ? await this.prisma.db.orm.public.Member.where((row) =>
               row.id.in(memberIds),
             )
               .select("id", "name", "avatar", "userId")
@@ -801,8 +803,8 @@ export class KillsService {
     return this.getCachedKillStats(cacheKey, "user kill stats", async () => {
       const stats = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.UserKillStatsBucket
-          : this.prisma.orm.public.UserKillStats,
+          ? this.prisma.db.orm.public.UserKillStatsBucket
+          : this.prisma.db.orm.public.UserKillStats,
         null,
         { userId: discordId, world: query.world, npcTypes },
         [],
@@ -881,8 +883,8 @@ export class KillsService {
     return this.getCachedKillStats(cacheKey, "user npc kills", async () => {
       const stats = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.UserKillStatsBucket
-          : this.prisma.orm.public.UserKillStats,
+          ? this.prisma.db.orm.public.UserKillStatsBucket
+          : this.prisma.db.orm.public.UserKillStats,
         null,
         {
           userId: discordId,
@@ -995,8 +997,8 @@ export class KillsService {
     return this.getCachedKillStats(cacheKey, "guild top npcs", async () => {
       const summaries = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.GuildKillSummaryBucket
-          : this.prisma.orm.public.GuildKillSummary,
+          ? this.prisma.db.orm.public.GuildKillSummaryBucket
+          : this.prisma.db.orm.public.GuildKillSummary,
         guildId,
         { npcType, world, search, minLvl, maxLvl },
         filteredRoles,
@@ -1074,8 +1076,8 @@ export class KillsService {
     return this.getCachedKillStats(cacheKey, "guild top killers", async () => {
       const stats = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.NpcKillStatsBucket
-          : this.prisma.orm.public.NpcKillStats,
+          ? this.prisma.db.orm.public.NpcKillStatsBucket
+          : this.prisma.db.orm.public.NpcKillStats,
         guildId,
         { npcTypes },
         filteredRoles,
@@ -1162,8 +1164,8 @@ export class KillsService {
     return this.getCachedKillStats(cacheKey, "npc killers", async () => {
       const stats = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.NpcKillStatsBucket
-          : this.prisma.orm.public.NpcKillStats,
+          ? this.prisma.db.orm.public.NpcKillStatsBucket
+          : this.prisma.db.orm.public.NpcKillStats,
         guildId,
         { npcId, world },
         filteredRoles,
@@ -1175,8 +1177,8 @@ export class KillsService {
 
       const summaries = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.GuildKillSummaryBucket
-          : this.prisma.orm.public.GuildKillSummary,
+          ? this.prisma.db.orm.public.GuildKillSummaryBucket
+          : this.prisma.db.orm.public.GuildKillSummary,
         guildId,
         { npcId, world },
         filteredRoles,
@@ -1187,7 +1189,7 @@ export class KillsService {
       const metadataSummaries =
         stats.length === 0 && summaries.length === 0
           ? await this.applyKillStatsFilters(
-              this.prisma.orm.public.GuildKillSummary,
+              this.prisma.db.orm.public.GuildKillSummary,
               guildId,
               { npcId },
               filteredRoles,
@@ -1315,7 +1317,7 @@ export class KillsService {
     });
 
     return this.getCachedKillStats(cacheKey, "member kills", async () => {
-      const member = await this.prisma.orm.public.Member.where((row) =>
+      const member = await this.prisma.db.orm.public.Member.where((row) =>
         and(row.id.eq(memberId), row.guildId.eq(guildId)),
       ).first();
 
@@ -1325,8 +1327,8 @@ export class KillsService {
 
       const stats = await this.applyKillStatsFilters(
         periodStart
-          ? this.prisma.orm.public.NpcKillStatsBucket
-          : this.prisma.orm.public.NpcKillStats,
+          ? this.prisma.db.orm.public.NpcKillStatsBucket
+          : this.prisma.db.orm.public.NpcKillStats,
         guildId,
         {
           memberId,

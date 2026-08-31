@@ -59,12 +59,12 @@ export class ReservationMutationsService {
     const { context, data } = options;
     const [spot, guild, settings, visibleGuildIds, member] = await Promise.all([
       this.catalogService.getSpot(options.spotId),
-      this.prisma.orm.public.Guild.where((row) =>
+      this.prisma.db.orm.public.Guild.where((row) =>
         row.id.eq(context.guildId),
       ).first(),
       this.getReservationSettings(context.guildId),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.orm.public.Member.where((row) =>
+      this.prisma.db.orm.public.Member.where((row) =>
         and(
           row.guildId.eq(context.guildId),
           row.active.eq(true),
@@ -96,9 +96,9 @@ export class ReservationMutationsService {
       reminderMinutesBefore,
     });
 
-    const createdRow = await this.prisma.transaction(async (transaction) => {
+    const createdRow = await this.prisma.db.transaction(async (transaction) => {
       await transaction.execute(
-        this.prisma.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
+        this.prisma.db.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
           .affectedCount()
           .build(),
       );
@@ -152,7 +152,7 @@ export class ReservationMutationsService {
         startsAt: range.startsAt,
       });
     } catch (error) {
-      await this.prisma.orm.public.Reservation.where((row) =>
+      await this.prisma.db.orm.public.Reservation.where((row) =>
         row.id.eq(created.id),
       ).delete();
       throw error;
@@ -184,15 +184,16 @@ export class ReservationMutationsService {
         options.discordId,
         options.userId,
       );
-    const reservation = await this.prisma.orm.public.Reservation.where((row) =>
-      and(
-        row.id.eq(options.reservationId),
-        row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
-        or(
-          row.createdByUserId.eq(options.userId),
-          row.createdBy.eq(options.discordId),
+    const reservation = await this.prisma.db.orm.public.Reservation.where(
+      (row) =>
+        and(
+          row.id.eq(options.reservationId),
+          row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
+          or(
+            row.createdByUserId.eq(options.userId),
+            row.createdBy.eq(options.discordId),
+          ),
         ),
-      ),
     )
       .include("guild")
       .first();
@@ -242,9 +243,9 @@ export class ReservationMutationsService {
       reminderNeedsReschedule,
     });
 
-    const updatedRow = await this.prisma.transaction(async (transaction) => {
+    const updatedRow = await this.prisma.db.transaction(async (transaction) => {
       await transaction.execute(
-        this.prisma.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
+        this.prisma.db.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
           .affectedCount()
           .build(),
       );
@@ -312,8 +313,9 @@ export class ReservationMutationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservation = await this.prisma.orm.public.Reservation.where((row) =>
-      and(row.id.eq(options.reservationId), row.guildId.in(visibleGuildIds)),
+    const reservation = await this.prisma.db.orm.public.Reservation.where(
+      (row) =>
+        and(row.id.eq(options.reservationId), row.guildId.in(visibleGuildIds)),
     ).first();
     if (!reservation) {
       throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
@@ -350,15 +352,16 @@ export class ReservationMutationsService {
         options.discordId,
         options.userId,
       );
-    const reservation = await this.prisma.orm.public.Reservation.where((row) =>
-      and(
-        row.id.eq(options.reservationId),
-        row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
-        or(
-          row.createdByUserId.eq(options.userId),
-          row.createdBy.eq(options.discordId),
+    const reservation = await this.prisma.db.orm.public.Reservation.where(
+      (row) =>
+        and(
+          row.id.eq(options.reservationId),
+          row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
+          or(
+            row.createdByUserId.eq(options.userId),
+            row.createdBy.eq(options.discordId),
+          ),
         ),
-      ),
     ).first();
     if (!reservation) {
       throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
@@ -449,7 +452,7 @@ export class ReservationMutationsService {
     >;
   }): Promise<void> {
     const { reservation } = options;
-    await this.prisma.orm.public.Reservation.where((row) =>
+    await this.prisma.db.orm.public.Reservation.where((row) =>
       row.id.eq(reservation.id),
     ).update({
       startsAt: reservation.startsAt,
@@ -473,7 +476,7 @@ export class ReservationMutationsService {
     options: DeletePersistedReservationOptions,
   ): Promise<void> {
     await this.reminderService.cancel(options.reservation.id);
-    await this.prisma.orm.public.Reservation.where((row) =>
+    await this.prisma.db.orm.public.Reservation.where((row) =>
       row.id.eq(options.reservation.id),
     ).delete();
     await this.eventsPublisher.deleted({
@@ -487,7 +490,7 @@ export class ReservationMutationsService {
   private async getReservationSettings(
     guildId: string,
   ): Promise<ReservationSettings> {
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       row.id.eq(guildId),
     )
       .select(

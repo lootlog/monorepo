@@ -59,7 +59,7 @@ export class EventTrackingService implements OnModuleInit {
     mapId: string,
     memberId: number,
   ) {
-    const mapRow = await this.prisma.orm.public.EventMap.where((row) =>
+    const mapRow = await this.prisma.db.orm.public.EventMap.where((row) =>
       and(
         row.id.eq(mapId),
         row.heroNpc.some((related) =>
@@ -80,14 +80,14 @@ export class EventTrackingService implements OnModuleInit {
       )
       .first();
     const map = mapRow
-      ? (await attachAssignedMembersToMaps(this.prisma, [mapRow]))[0]
+      ? (await attachAssignedMembersToMaps(this.prisma.db, [mapRow]))[0]
       : null;
 
     if (!map) {
       throw new NotFoundException("Map not found");
     }
 
-    const member = await this.prisma.orm.public.Member.where((row) =>
+    const member = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.id.eq(memberId), row.guildId.eq(guildId)),
     )
       .select("id")
@@ -152,7 +152,7 @@ export class EventTrackingService implements OnModuleInit {
 
     const wasUnassigned = map.assignedMembers.length === 0;
 
-    await this.prisma.orm.public.EventMapToMember.create({
+    await this.prisma.db.orm.public.EventMapToMember.create({
       a: mapId,
       b: memberId,
     });
@@ -162,7 +162,7 @@ export class EventTrackingService implements OnModuleInit {
     };
 
     const existingOpenAssignment =
-      await this.prisma.orm.public.EventMapAssignmentHistory.where((row) =>
+      await this.prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
         and(
           row.mapId.eq(mapId),
           row.memberId.eq(memberId),
@@ -171,7 +171,7 @@ export class EventTrackingService implements OnModuleInit {
       ).first();
 
     if (!existingOpenAssignment) {
-      await this.prisma.orm.public.EventMapAssignmentHistory.create({
+      await this.prisma.db.orm.public.EventMapAssignmentHistory.create({
         id: createId(),
         mapId,
         heroNpcId: map.heroNpcId,
@@ -207,7 +207,7 @@ export class EventTrackingService implements OnModuleInit {
     mapId: string,
     memberId?: number,
   ) {
-    const mapRow = await this.prisma.orm.public.EventMap.where((row) =>
+    const mapRow = await this.prisma.db.orm.public.EventMap.where((row) =>
       and(
         row.id.eq(mapId),
         row.heroNpc.some((related) =>
@@ -220,7 +220,7 @@ export class EventTrackingService implements OnModuleInit {
       .include("heroNpc")
       .first();
     const map = mapRow
-      ? (await attachAssignedMembersToMaps(this.prisma, [mapRow]))[0]
+      ? (await attachAssignedMembersToMaps(this.prisma.db, [mapRow]))[0]
       : null;
 
     if (!map) {
@@ -232,7 +232,7 @@ export class EventTrackingService implements OnModuleInit {
           .filter((member) => member.id !== memberId)
           .map((member) => member.id)
       : [];
-    await setMapAssignedMembers(this.prisma, mapId, remainingMemberIds);
+    await setMapAssignedMembers(this.prisma.db, mapId, remainingMemberIds);
     const updated = {
       ...map,
       assignedMembers: map.assignedMembers.filter(
@@ -242,7 +242,7 @@ export class EventTrackingService implements OnModuleInit {
 
     const now = new Date();
     if (memberId) {
-      await this.prisma.orm.public.EventMapAssignmentHistory.where((row) =>
+      await this.prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
         and(
           row.mapId.eq(mapId),
           row.memberId.eq(memberId),
@@ -250,7 +250,7 @@ export class EventTrackingService implements OnModuleInit {
         ),
       ).updateAndCount({ unassignedAt: now });
     } else {
-      await this.prisma.orm.public.EventMapAssignmentHistory.where((row) =>
+      await this.prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
         and(row.mapId.eq(mapId), row.unassignedAt.isNull()),
       ).updateAndCount({ unassignedAt: now });
     }
@@ -269,7 +269,7 @@ export class EventTrackingService implements OnModuleInit {
   }
 
   getMemberByDiscordId(discordId: string, guildId: string) {
-    return this.prisma.orm.public.Member.where((row) =>
+    return this.prisma.db.orm.public.Member.where((row) =>
       and(
         row.userId.eq(discordId),
         row.guildId.eq(guildId),
@@ -283,20 +283,20 @@ export class EventTrackingService implements OnModuleInit {
     heroNpcId: string,
     startedAt?: Date,
   ): Promise<void> {
-    const existingGap = await this.prisma.orm.public.EventMapCoverageGap.where(
-      (row) =>
+    const existingGap =
+      await this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
         and(
           row.mapId.eq(mapId),
           row.gapType.eq(CoverageGapType.UNASSIGNED),
           row.endedAt.isNull(),
         ),
-    ).first();
+      ).first();
 
     if (existingGap) {
       return;
     }
 
-    await this.prisma.orm.public.EventMapCoverageGap.create({
+    await this.prisma.db.orm.public.EventMapCoverageGap.create({
       id: createId(),
       mapId,
       heroNpcId,
@@ -314,7 +314,7 @@ export class EventTrackingService implements OnModuleInit {
   async closeUnassignedGap(mapId: string): Promise<void> {
     const now = new Date();
 
-    const openGap = await this.prisma.orm.public.EventMapCoverageGap.where(
+    const openGap = await this.prisma.db.orm.public.EventMapCoverageGap.where(
       (row) =>
         and(
           row.mapId.eq(mapId),
@@ -331,7 +331,7 @@ export class EventTrackingService implements OnModuleInit {
       (now.getTime() - openGap.startedAt.getTime()) / 1000,
     );
 
-    await this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+    await this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
       row.id.eq(openGap.id),
     ).update({
       endedAt: now,
@@ -350,20 +350,20 @@ export class EventTrackingService implements OnModuleInit {
     heroNpcId: string,
     startedAt?: Date,
   ): Promise<void> {
-    const existingGap = await this.prisma.orm.public.EventMapCoverageGap.where(
-      (row) =>
+    const existingGap =
+      await this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
         and(
           row.mapId.eq(mapId),
           row.gapType.eq(CoverageGapType.UNCOVERED),
           row.endedAt.isNull(),
         ),
-    ).first();
+      ).first();
 
     if (existingGap) {
       return;
     }
 
-    await this.prisma.orm.public.EventMapCoverageGap.create({
+    await this.prisma.db.orm.public.EventMapCoverageGap.create({
       id: createId(),
       mapId,
       heroNpcId,
@@ -381,7 +381,7 @@ export class EventTrackingService implements OnModuleInit {
   async closeUncoveredGap(mapId: string): Promise<void> {
     const now = new Date();
 
-    const openGap = await this.prisma.orm.public.EventMapCoverageGap.where(
+    const openGap = await this.prisma.db.orm.public.EventMapCoverageGap.where(
       (row) =>
         and(
           row.mapId.eq(mapId),
@@ -398,7 +398,7 @@ export class EventTrackingService implements OnModuleInit {
       (now.getTime() - openGap.startedAt.getTime()) / 1000,
     );
 
-    await this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+    await this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
       row.id.eq(openGap.id),
     ).update({
       endedAt: now,
@@ -415,7 +415,7 @@ export class EventTrackingService implements OnModuleInit {
   async closeAllGapsForHero(heroNpcId: string): Promise<void> {
     const now = new Date();
 
-    const openGaps = await this.prisma.orm.public.EventMapCoverageGap.where(
+    const openGaps = await this.prisma.db.orm.public.EventMapCoverageGap.where(
       (row) => and(row.heroNpcId.eq(heroNpcId), row.endedAt.isNull()),
     ).all();
 
@@ -423,7 +423,7 @@ export class EventTrackingService implements OnModuleInit {
       return;
     }
 
-    await this.prisma.transaction(async (transaction) => {
+    await this.prisma.db.transaction(async (transaction) => {
       for (const gap of openGaps) {
         const durationSeconds = Math.round(
           (now.getTime() - gap.startedAt.getTime()) / 1000,
@@ -450,7 +450,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
       }),
       async () => {
-        const map = await this.prisma.orm.public.EventMap.where((row) =>
+        const map = await this.prisma.db.orm.public.EventMap.where((row) =>
           and(
             row.id.eq(mapId),
             row.heroNpc.some((related) =>
@@ -466,7 +466,7 @@ export class EventTrackingService implements OnModuleInit {
           throw new NotFoundException("Map not found");
         }
 
-        return this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+        return this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
           row.mapId.eq(mapId),
         )
           .orderBy((row) => row.startedAt.desc())
@@ -481,7 +481,7 @@ export class EventTrackingService implements OnModuleInit {
         heroNpcId,
       }),
       async () => {
-        const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+        const hero = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
           and(
             row.id.eq(heroNpcId),
             row.eventId.eq(eventId),
@@ -493,7 +493,7 @@ export class EventTrackingService implements OnModuleInit {
           throw new NotFoundException("Hero not found");
         }
 
-        return this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+        return this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
           row.heroNpcId.eq(heroNpcId),
         )
           .include("map", (relation) => relation.select("mapName", "mapId"))
@@ -509,7 +509,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
       }),
       async () => {
-        const map = await this.prisma.orm.public.EventMap.where((row) =>
+        const map = await this.prisma.db.orm.public.EventMap.where((row) =>
           and(
             row.id.eq(mapId),
             row.heroNpc.some((related) =>
@@ -525,7 +525,7 @@ export class EventTrackingService implements OnModuleInit {
           throw new NotFoundException("Map not found");
         }
 
-        return this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+        return this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
           and(row.mapId.eq(mapId), row.endedAt.isNull()),
         ).first();
       },
@@ -538,7 +538,7 @@ export class EventTrackingService implements OnModuleInit {
         heroNpcId,
       }),
       async () => {
-        const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+        const hero = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
           and(
             row.id.eq(heroNpcId),
             row.eventId.eq(eventId),
@@ -550,7 +550,7 @@ export class EventTrackingService implements OnModuleInit {
           throw new NotFoundException("Hero not found");
         }
 
-        return this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+        return this.prisma.db.orm.public.EventMapCoverageGap.where((row) =>
           and(row.heroNpcId.eq(heroNpcId), row.endedAt.isNull()),
         ).all();
       },
@@ -600,7 +600,7 @@ export class EventTrackingService implements OnModuleInit {
     const member = await this.getMemberByDiscordId(discordId, guildId);
     const referenceTime = new Date();
 
-    const eventMapRows = await this.prisma.orm.public.EventMap.where((row) =>
+    const eventMapRows = await this.prisma.db.orm.public.EventMap.where((row) =>
       and(
         row.mapName.eq(mapName),
         row.heroNpc.some((heroNpc) =>
@@ -621,7 +621,7 @@ export class EventTrackingService implements OnModuleInit {
       )
       .all();
     const eventMaps = await attachAssignedMembersToMaps(
-      this.prisma,
+      this.prisma.db,
       eventMapRows as any[],
     );
 
@@ -660,7 +660,7 @@ export class EventTrackingService implements OnModuleInit {
 
         if (member) {
           if (hasPlayer) {
-            await this.prisma.orm.public.EventPresenceLog.where((row) =>
+            await this.prisma.db.orm.public.EventPresenceLog.where((row) =>
               and(
                 row.mapId.eq(map.id),
                 row.memberId.eq(member.id),
@@ -668,7 +668,7 @@ export class EventTrackingService implements OnModuleInit {
               ),
             ).updateAndCount({ endedAt: now });
 
-            await this.prisma.orm.public.EventPresenceLog.create({
+            await this.prisma.db.orm.public.EventPresenceLog.create({
               id: createId(),
               mapId: map.id,
               memberId: member.id,
@@ -688,14 +688,14 @@ export class EventTrackingService implements OnModuleInit {
               nonAfkMembers.add(member.id);
             }
           } else {
-            const result = await this.prisma.orm.public.EventPresenceLog.where(
-              (row) =>
+            const result =
+              await this.prisma.db.orm.public.EventPresenceLog.where((row) =>
                 and(
                   row.mapId.eq(map.id),
                   row.memberId.eq(member.id),
                   row.endedAt.isNull(),
                 ),
-            ).updateAndCount({ endedAt: now });
+              ).updateAndCount({ endedAt: now });
 
             if (result > 0) {
               this.logger.debug({
@@ -751,7 +751,7 @@ export class EventTrackingService implements OnModuleInit {
       return new Map();
     }
 
-    const activeLogs = await this.prisma.orm.public.EventPresenceLog.where(
+    const activeLogs = await this.prisma.db.orm.public.EventPresenceLog.where(
       (row) =>
         and(row.mapId.in(mapIds), row.endedAt.isNull(), row.isAfk.eq(false)),
     )
@@ -775,7 +775,7 @@ export class EventTrackingService implements OnModuleInit {
   }
 
   async getActivePlayersOnMap(mapId: string): Promise<number[]> {
-    const activeLogs = await this.prisma.orm.public.EventPresenceLog.where(
+    const activeLogs = await this.prisma.db.orm.public.EventPresenceLog.where(
       (row) => and(row.mapId.eq(mapId), row.endedAt.isNull()),
     )
       .select("memberId")
@@ -827,7 +827,7 @@ export class EventTrackingService implements OnModuleInit {
       afkPercentage: number;
     }>;
   }> {
-    const heroRow = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const heroRow = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       and(
         row.id.eq(heroNpcId),
         row.eventId.eq(eventId),
@@ -840,7 +840,7 @@ export class EventTrackingService implements OnModuleInit {
     const hero = heroRow
       ? {
           ...heroRow,
-          maps: await attachAssignedMembersToMaps(this.prisma, heroRow.maps),
+          maps: await attachAssignedMembersToMaps(this.prisma.db, heroRow.maps),
         }
       : null;
 
@@ -864,7 +864,7 @@ export class EventTrackingService implements OnModuleInit {
       }
     }
 
-    const presenceLogs = await this.prisma.orm.public.EventPresenceLog.where(
+    const presenceLogs = await this.prisma.db.orm.public.EventPresenceLog.where(
       (row) => row.mapId.in(mapIds),
     )
       .include("member", (relation) => relation.select("id", "name", "avatar"))

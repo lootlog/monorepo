@@ -1,7 +1,7 @@
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { Permission } from "#src/db/domain";
-import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { mockFn } from "#src/test/mock-fn";
 import { UserLootlogConfigService } from "./user-lootlog-config.service.js";

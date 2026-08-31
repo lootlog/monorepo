@@ -3,7 +3,7 @@ import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberSyncInterceptor } from "./member-sync.interceptor.js";
-import { PRISMA_DB } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
@@ -53,7 +53,7 @@ describe("MemberSyncInterceptor", () => {
       providers: [
         MemberSyncInterceptor,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
-        { provide: PRISMA_DB, useValue: mockPrisma },
+        { provide: PrismaService, useValue: { db: mockPrisma } },
         { provide: MembersService, useValue: mockMembersService },
         { provide: RedisService, useValue: mockRedisService },
       ],

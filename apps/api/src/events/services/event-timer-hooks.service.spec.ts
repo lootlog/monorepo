@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { mockFn } from "#src/test/mock-fn";
-import { PRISMA_DB } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant.js";
 import { EventTimerHooksService } from "./event-timer-hooks.service.js";
 
@@ -42,7 +42,7 @@ describe("EventTimerHooksService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventTimerHooksService,
-        { provide: PRISMA_DB, useValue: mockPrisma },
+        { provide: PrismaService, useValue: { db: mockPrisma } },
         {
           provide: getQueueToken(EVENT_HERO_KILL_QUEUE),
           useValue: mockQueue,

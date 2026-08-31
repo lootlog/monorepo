@@ -9,7 +9,6 @@ import { GuildsService } from "./guilds.service.js";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
-import { PRISMA_DB } from "#src/db/prisma.provider";
 import { ChannelsService } from "#src/channels/channels.service";
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
@@ -129,22 +128,6 @@ describe("GuildsService", () => {
         {
           provide: PrismaService,
           useValue: attachPrismaOrmMock(mockPrismaService),
-        },
-        {
-          provide: PRISMA_DB,
-          useValue: {
-            orm: {
-              public: {
-                Guild: {
-                  where: mockFn(() => ({
-                    where: mockFn(() => ({
-                      all: () => mockPrismaService.orm.public.Guild.all(),
-                    })),
-                  })),
-                },
-              },
-            },
-          },
         },
         {
           provide: MembersService,

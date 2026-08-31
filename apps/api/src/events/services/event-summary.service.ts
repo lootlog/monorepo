@@ -46,7 +46,7 @@ export class EventSummaryService {
     maxSpawnTime: Date,
     wasManualClose: boolean,
   ): Promise<void> {
-    const maps = (await this.prisma.orm.public.EventMap.where((row) =>
+    const maps = (await this.prisma.db.orm.public.EventMap.where((row) =>
       row.heroNpcId.eq(heroNpcId),
     )
       .select("id", "mapName", "mapId")
@@ -63,8 +63,8 @@ export class EventSummaryService {
     const mapIds = maps.map((m) => m.id);
     const mapNameById = new Map(maps.map((m) => [m.id, m.mapName]));
 
-    const presenceLogs = (await this.prisma.orm.public.EventPresenceLog.where(
-      (row) =>
+    const presenceLogs =
+      (await this.prisma.db.orm.public.EventPresenceLog.where((row) =>
         and(
           row.mapId.in(mapIds),
           or(
@@ -78,11 +78,13 @@ export class EventSummaryService {
             ),
           ),
         ),
-    )
-      .include("member", (relation) => relation.select("id", "name", "avatar"))
-      .all()) as any[];
+      )
+        .include("member", (relation) =>
+          relation.select("id", "name", "avatar"),
+        )
+        .all()) as any[];
 
-    const gaps = (await this.prisma.orm.public.EventMapCoverageGap.where(
+    const gaps = (await this.prisma.db.orm.public.EventMapCoverageGap.where(
       (row) =>
         and(
           row.heroNpcId.eq(heroNpcId),
@@ -237,7 +239,7 @@ export class EventSummaryService {
         ? Math.round((totalCoverageSeconds / totalWindowSeconds) * 10000) / 100
         : 0;
 
-    await this.prisma.transaction(async (tx) => {
+    await this.prisma.db.transaction(async (tx) => {
       await tx.orm.public.EventRespawnWindowSummary.create({
         id: createId(),
         heroNpcId,
@@ -300,7 +302,7 @@ export class EventSummaryService {
     limit = 20,
     cursor?: string,
   ) {
-    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const hero = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       and(
         row.id.eq(heroNpcId),
         row.eventId.eq(eventId),
@@ -312,9 +314,10 @@ export class EventSummaryService {
       return { data: [], nextCursor: null };
     }
 
-    let summariesQuery = this.prisma.orm.public.EventRespawnWindowSummary.where(
-      (row) => row.heroNpcId.eq(heroNpcId),
-    );
+    let summariesQuery =
+      this.prisma.db.orm.public.EventRespawnWindowSummary.where((row) =>
+        row.heroNpcId.eq(heroNpcId),
+      );
     if (cursor) {
       summariesQuery = summariesQuery.where((row) => row.id.lt(cursor));
     }

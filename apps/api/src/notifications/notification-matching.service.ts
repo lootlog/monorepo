@@ -4,7 +4,7 @@ import type { NotificationFilters } from "@lootlog/types";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
 import type { Pool } from "pg";
 import { Permission, type Permission as PermissionValue } from "#src/db/domain";
-import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 
 type LootCreatedEvent = {
   lootId: number;

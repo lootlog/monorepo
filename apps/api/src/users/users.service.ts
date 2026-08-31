@@ -97,16 +97,16 @@ export class UsersService {
   async getUserPreferences(userId: string) {
     const [userSettings, notificationMutesSettings, appearanceDocument] =
       await Promise.all([
-        this.prisma.orm.public.UserSettings.where((row) =>
+        this.prisma.db.orm.public.UserSettings.where((row) =>
           row.userId.eq(userId),
         ).first(),
-        this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+        this.prisma.db.orm.public.UserGameAccountSettings.where((row) =>
           and(
             row.userId.eq(userId),
             row.accountId.eq(GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID),
           ),
         ).first(),
-        this.prisma.orm.public.UserSettingDocument.where((row) =>
+        this.prisma.db.orm.public.UserSettingDocument.where((row) =>
           and(
             row.userId.eq(userId),
             row.domain.eq("appearance"),
@@ -145,7 +145,7 @@ export class UsersService {
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
     await this.triggerBattlelogCleanup(authUserId);
 
-    const deletedMembers = await this.prisma.transaction(async (tx) => {
+    const deletedMembers = await this.prisma.db.transaction(async (tx) => {
       const members = await tx.orm.public.Member.where((row) =>
         row.userId.eq(discordId),
       )
@@ -251,11 +251,11 @@ export class UsersService {
   ) {
     const [currentUserSettings, currentMutes, currentAppearanceDocument] =
       await Promise.all([
-        this.prisma.orm.public.UserSettings.where((row) =>
+        this.prisma.db.orm.public.UserSettings.where((row) =>
           row.userId.eq(userId),
         ).first(),
         this.getUserNotificationMutes(userId),
-        this.prisma.orm.public.UserSettingDocument.where((row) =>
+        this.prisma.db.orm.public.UserSettingDocument.where((row) =>
           and(
             row.userId.eq(userId),
             row.domain.eq("appearance"),
@@ -293,7 +293,7 @@ export class UsersService {
 
     const [userSettings] = await Promise.all([
       shouldUpdateUserSettings
-        ? this.prisma.orm.public.UserSettings.where((row) =>
+        ? this.prisma.db.orm.public.UserSettings.where((row) =>
             row.userId.eq(userId),
           ).upsert({
             create: {
@@ -309,7 +309,7 @@ export class UsersService {
           })
         : Promise.resolve(currentUserSettings),
       preferences.mutes
-        ? this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+        ? this.prisma.db.orm.public.UserGameAccountSettings.where((row) =>
             and(
               row.userId.eq(userId),
               row.accountId.eq(GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID),
@@ -332,7 +332,7 @@ export class UsersService {
           })
         : Promise.resolve(null),
       nextChatAppearance
-        ? this.prisma.orm.public.UserSettingDocument.where((row) =>
+        ? this.prisma.db.orm.public.UserSettingDocument.where((row) =>
             and(
               row.userId.eq(userId),
               row.domain.eq("appearance"),
@@ -389,7 +389,7 @@ export class UsersService {
     accountId: string,
   ): Promise<UserGameAccountPreferences> {
     const gameAccountSettings =
-      await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+      await this.prisma.db.orm.public.UserGameAccountSettings.where((row) =>
         and(row.userId.eq(userId), row.accountId.eq(accountId)),
       ).first();
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
@@ -431,7 +431,7 @@ export class UsersService {
     preferences: UpdateUserGameAccountPreferencesDto,
   ): Promise<UserGameAccountPreferences> {
     const gameAccountSettings =
-      await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+      await this.prisma.db.orm.public.UserGameAccountSettings.where((row) =>
         and(row.userId.eq(userId), row.accountId.eq(accountId)),
       ).first();
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
@@ -500,7 +500,7 @@ export class UsersService {
       ...(hasStoredAirTags ? { airTags: nextAirTags } : {}),
     };
 
-    await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+    await this.prisma.db.orm.public.UserGameAccountSettings.where((row) =>
       and(row.userId.eq(userId), row.accountId.eq(accountId)),
     ).upsert({
       create: {
@@ -593,7 +593,7 @@ export class UsersService {
 
   private async getUserNotificationMutes(userId: string) {
     const notificationMutesSettings =
-      await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+      await this.prisma.db.orm.public.UserGameAccountSettings.where((row) =>
         and(
           row.userId.eq(userId),
           row.accountId.eq(GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID),

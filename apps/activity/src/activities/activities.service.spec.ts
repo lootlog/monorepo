@@ -1,6 +1,6 @@
 import { ActivitySource, ActivityType } from "../shared/db/domain.js";
 import { ActivitiesService } from "./activities.service.js";
-import type { PrismaDb } from "#src/shared/db/prisma.provider";
+import type { PrismaService } from "#src/prisma.service";
 
 describe("ActivitiesService", () => {
   const execute = vi.fn().mockResolvedValue({ affectedRows: 1 });
@@ -42,7 +42,7 @@ describe("ActivitiesService", () => {
   const rawBuilder = {
     affectedCount: vi.fn(() => ({ build: vi.fn(() => ({ kind: "raw" })) })),
   };
-  const prisma = {
+  const db = {
     raw: { sql: vi.fn(() => rawBuilder) },
     runtime: vi.fn(() => ({ execute })),
     transaction: vi.fn(async (callback) => callback(transaction)),
@@ -58,7 +58,8 @@ describe("ActivitiesService", () => {
         ActivityActorSnapshot: { where: vi.fn() },
       },
     },
-  } as unknown as PrismaDb;
+  };
+  const prisma = { db } as unknown as PrismaService;
   const service = new ActivitiesService(prisma);
 
   beforeEach(() => vi.clearAllMocks());
@@ -79,7 +80,7 @@ describe("ActivitiesService", () => {
       type: ActivityType.CONNECT_EVENT,
     });
 
-    expect(prisma.transaction).toHaveBeenCalledOnce();
+    expect(db.transaction).toHaveBeenCalledOnce();
     expect(activityCreate).toHaveBeenCalledOnce();
     expect(execute).toHaveBeenCalledTimes(2);
   });

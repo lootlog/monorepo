@@ -1,6 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import type { Pool } from "pg";
 import {
   NpcType,
   type ItemRarity,
@@ -32,8 +34,17 @@ export class LootStatsService {
 
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(POSTGRES_POOL) private readonly postgres: Pool,
     private readonly redis: RedisService,
   ) {}
+
+  private async query<Result>(
+    statement: string,
+    ...values: unknown[]
+  ): Promise<Result> {
+    const result = await this.postgres.query(statement, values);
+    return result.rows as Result;
+  }
 
   async invalidateCache(guildIds: string[]) {
     const uniqueGuildIds = [...new Set(guildIds)];
@@ -297,7 +308,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.query<
+    const result = await this.query<
       Array<{
         total_loots: bigint;
         total_items: bigint;
@@ -383,7 +394,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.query<
+    const result = await this.query<
       Array<{
         rarity: ItemRarity;
         count: bigint;
@@ -468,7 +479,7 @@ export class LootStatsService {
     const truncUnit = this.getTimelineTruncUnit(period);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.query<
+    const result = await this.query<
       Array<{
         date: Date;
         rarity: ItemRarity | null;
@@ -589,7 +600,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.query<
+    const result = await this.query<
       Array<{
         npc_id: number;
         name: string;
@@ -694,7 +705,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.query<
+    const result = await this.query<
       Array<{
         member_id: number;
         name: string;
@@ -812,7 +823,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.query<
+    const result = await this.query<
       Array<{
         item_id: number;
         hid: string;

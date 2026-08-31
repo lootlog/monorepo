@@ -3,8 +3,8 @@ import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
-import { PRISMA_DB } from "#src/db/prisma.provider";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventsService } from "./events.service.js";
 import { EventAccessService } from "./services/event-access.service.js";
@@ -165,41 +165,11 @@ describe("EventsService", () => {
           useValue: attachPrismaOrmMock(mockPrismaService),
         },
         {
-          provide: PRISMA_DB,
+          provide: POSTGRES_POOL,
           useValue: {
-            orm: {
-              public: {
-                Event: {
-                  where: mockFn((where: Record<string, unknown>) => ({
-                    first: async () =>
-                      (await mockPrismaService.orm.public.Event.first()) ?? {
-                        id: where.id,
-                      },
-                    select: mockFn(() => ({
-                      first: () =>
-                        mockPrismaService.orm.public.Event.select("id").first(),
-                    })),
-                  })),
-                },
-                EventHeroNpc: {
-                  where: mockFn((where: Record<string, unknown>) => ({
-                    first: () =>
-                      mockPrismaService.orm.public.EventHeroNpc.first(),
-                    select: mockFn(() => ({
-                      all: () =>
-                        mockPrismaService.orm.public.EventHeroNpc.select(
-                          "id",
-                        ).all(),
-                    })),
-                  })),
-                },
-                EventMap: {
-                  where: mockFn((where: Record<string, unknown>) => ({
-                    first: () => mockPrismaService.orm.public.EventMap.first(),
-                  })),
-                },
-              },
-            },
+            query: async (...arguments_: unknown[]) => ({
+              rows: await mockPrismaService.sql(...arguments_),
+            }),
           },
         },
         { provide: RedisService, useValue: mockRedisService },

@@ -1,4 +1,4 @@
-import type { PrismaDb } from "#src/db/prisma.provider";
+import type { PrismaService } from "#src/db/prisma.service";
 import { ReservationsCleanupService } from "./reservations-cleanup.service.js";
 
 describe("ReservationsCleanupService", () => {
@@ -6,10 +6,11 @@ describe("ReservationsCleanupService", () => {
     const execute = vi.fn().mockResolvedValue({ affectedRows: 4 });
     const build = vi.fn(() => ({ kind: "cleanup" }));
     const affectedCount = vi.fn(() => ({ build }));
-    const prisma = {
+    const db = {
       raw: { sql: vi.fn(() => ({ affectedCount })) },
       runtime: vi.fn(() => ({ execute })),
-    } as unknown as PrismaDb;
+    };
+    const prisma = { db } as unknown as PrismaService;
     const service = new ReservationsCleanupService(prisma);
 
     await expect(service.cleanupExpiredReservationsManual(30)).resolves.toBe(4);

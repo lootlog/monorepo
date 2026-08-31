@@ -26,14 +26,14 @@ export class ReservationsService {
     const [spots, visibleGuildIds, pinnedSpots] = await Promise.all([
       this.catalogService.getSpots(),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.orm.public.UserPinnedReservationSpot.where((row) =>
+      this.prisma.db.orm.public.UserPinnedReservationSpot.where((row) =>
         and(row.userId.eq(context.userId), row.guildId.eq(context.guildId)),
       )
         .select("spotId")
         .all(),
     ]);
-    const reservations = await this.prisma.orm.public.Reservation.where((row) =>
-      and(row.guildId.in(visibleGuildIds), row.endsAt.gt(now)),
+    const reservations = await this.prisma.db.orm.public.Reservation.where(
+      (row) => and(row.guildId.in(visibleGuildIds), row.endsAt.gt(now)),
     )
       .include("guild")
       .orderBy([(row) => row.startsAt.asc(), (row) => row.id.asc()])
@@ -91,13 +91,14 @@ export class ReservationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservations = await this.prisma.orm.public.Reservation.where((row) =>
-      and(
-        row.guildId.in(visibleGuildIds),
-        row.spotId.eq(spotId),
-        row.startsAt.lt(to),
-        row.endsAt.gt(from),
-      ),
+    const reservations = await this.prisma.db.orm.public.Reservation.where(
+      (row) =>
+        and(
+          row.guildId.in(visibleGuildIds),
+          row.spotId.eq(spotId),
+          row.startsAt.lt(to),
+          row.endsAt.gt(from),
+        ),
     )
       .include("guild")
       .orderBy([(row) => row.startsAt.asc(), (row) => row.id.asc()])
@@ -118,7 +119,7 @@ export class ReservationsService {
     spotId: string,
   ): Promise<void> {
     await this.catalogService.getSpot(spotId);
-    await this.prisma.orm.public.UserPinnedReservationSpot.where((row) =>
+    await this.prisma.db.orm.public.UserPinnedReservationSpot.where((row) =>
       and(
         row.userId.eq(userId),
         row.guildId.eq(guildId),
@@ -135,7 +136,7 @@ export class ReservationsService {
     guildId: string,
     spotId: string,
   ): Promise<void> {
-    await this.prisma.orm.public.UserPinnedReservationSpot.where((row) =>
+    await this.prisma.db.orm.public.UserPinnedReservationSpot.where((row) =>
       and(
         row.userId.eq(userId),
         row.guildId.eq(guildId),
@@ -156,7 +157,7 @@ export class ReservationsService {
       );
     const now = new Date();
     const retentionStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    let reservationsQuery = this.prisma.orm.public.Reservation.where((row) =>
+    let reservationsQuery = this.prisma.db.orm.public.Reservation.where((row) =>
       and(
         row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
         or(

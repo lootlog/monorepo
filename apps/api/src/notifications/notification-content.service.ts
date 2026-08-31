@@ -416,7 +416,7 @@ export class NotificationContentService {
     scheduledFor: Date,
   ) {
     if (notificationRule.guildId) {
-      let timersQuery = this.prisma.orm.public.Timer.where((row) =>
+      let timersQuery = this.prisma.db.orm.public.Timer.where((row) =>
         and(row.guildId.eq(notificationRule.guildId), row.deletedAt.isNull()),
       );
       if (notificationRule.world) {

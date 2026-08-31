@@ -73,7 +73,7 @@ export class LootsService {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 
-    const actor = await this.prisma.orm.public.Member.where((row) =>
+    const actor = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(options.discordId), row.guildId.eq(options.guild.id)),
     )
       .select("id")
@@ -82,18 +82,18 @@ export class LootsService {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 
-    const archived = await this.prisma.orm.public.OrganizationLootRecord.where(
-      (row) =>
+    const archived =
+      await this.prisma.db.orm.public.OrganizationLootRecord.where((row) =>
         and(
           row.guildId.eq(options.guild.id),
           row.lootId.eq(options.lootId),
           row.archivedAt.isNull(),
         ),
-    ).updateAndCount({
-      archivedAt: new Date(),
-      archivedByMemberId: actor.id,
-      updatedAt: new Date(),
-    });
+      ).updateAndCount({
+        archivedAt: new Date(),
+        archivedByMemberId: actor.id,
+        updatedAt: new Date(),
+      });
     if (archived === 0) {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }

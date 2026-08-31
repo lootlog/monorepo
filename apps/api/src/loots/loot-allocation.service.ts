@@ -68,15 +68,15 @@ export class LootAllocationService {
       return { share: {}, source: LootShareSource.NONE };
     }
 
-    const ambiguousNpcVariant = await this.prisma.orm.public.NpcSnapshot.where(
-      (row) =>
+    const ambiguousNpcVariant =
+      await this.prisma.db.orm.public.NpcSnapshot.where((row) =>
         and(
           row.name.eq(primaryNpc.name),
           or(row.type.neq(NpcType.COLOSSUS), row.type.isNull()),
         ),
-    )
-      .select("id")
-      .first();
+      )
+        .select("id")
+        .first();
     if (ambiguousNpcVariant) {
       return { share: {}, source: LootShareSource.NONE };
     }
@@ -104,7 +104,7 @@ export class LootAllocationService {
       Date.now() - LOOT_SHARE_SUBMISSION_WINDOW_MS,
     );
     const authorizedLoot = this.applyAuthorizedLootFilter(
-      this.prisma.orm.public.Loot,
+      this.prisma.db.orm.public.Loot,
       options.actorUserId,
       options.lootId,
       submissionCutoff,
@@ -356,7 +356,7 @@ export class LootAllocationService {
     submissionCutoff: Date;
   }): Promise<LootShare> {
     const loot = await this.applyAuthorizedLootFilter(
-      this.prisma.orm.public.Loot,
+      this.prisma.db.orm.public.Loot,
       options.actorUserId,
       options.lootId,
       options.submissionCutoff,

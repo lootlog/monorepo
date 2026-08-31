@@ -53,7 +53,7 @@ export class NotificationsEventsHandler {
     npc?: { name?: string } | null;
   }) {
     const notificationRules =
-      await this.prisma.orm.public.NotificationRule.where((row) =>
+      await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.GUILD),
           row.ownerId.eq(event.guildId),
@@ -125,7 +125,7 @@ export class NotificationsEventsHandler {
   })
   async handleLootCreated(event: LootCreatedNotificationEventV2) {
     const watchedItems = (
-      await this.prisma.orm.public.WatchedItem.where((row) =>
+      await this.prisma.db.orm.public.WatchedItem.where((row) =>
         and(
           row.enabled.eq(true),
           row.itemId.in(event.itemIds),

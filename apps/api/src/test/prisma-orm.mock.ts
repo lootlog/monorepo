@@ -512,6 +512,14 @@ export function attachPrismaOrmMock<T extends LegacyPrismaMock>(prisma: T): T {
   mutablePrisma.__eventMaps = [];
   mutablePrisma.__members = [];
 
+  if (!("db" in prisma)) {
+    Object.defineProperty(prisma, "db", {
+      configurable: true,
+      enumerable: true,
+      get: () => prisma,
+    });
+  }
+
   if (!("orm" in prisma)) {
     Object.defineProperty(prisma, "orm", {
       configurable: true,

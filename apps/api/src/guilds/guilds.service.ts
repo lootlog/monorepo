@@ -344,7 +344,7 @@ export class GuildsService {
       }
     }
 
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       and(
         row.active.eq(true),
         or(row.id.eq(idOrVanityURL), row.vanityUrl.eq(idOrVanityURL)),
@@ -475,10 +475,10 @@ export class GuildsService {
     discordId: string,
     requiredPermissions: Permission[],
   ) {
-    const guilds = await this.prisma.orm.public.Guild.where((row) =>
+    const guilds = await this.prisma.db.orm.public.Guild.where((row) =>
       row.active.eq(true),
     ).all();
-    const memberRows = await this.prisma.orm.public.Member.where((row) =>
+    const memberRows = await this.prisma.db.orm.public.Member.where((row) =>
       and(
         row.guildId.in(guilds.map((guild) => guild.id)),
         row.userId.eq(discordId),
@@ -487,7 +487,7 @@ export class GuildsService {
       ),
     ).all();
     const members = await attachRolesToMembers(
-      this.prisma,
+      this.prisma.db,
       memberRows as any[],
     );
     const membersByGuildId = new Map(
@@ -511,10 +511,10 @@ export class GuildsService {
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
     const [guilds, members] = (await Promise.all([
-      this.prisma.orm.public.Guild.where((row) =>
+      this.prisma.db.orm.public.Guild.where((row) =>
         and(row.id.in(guildIds), row.active.eq(true)),
       ).all(),
-      this.prisma.orm.public.Member.where((row) =>
+      this.prisma.db.orm.public.Member.where((row) =>
         and(
           row.userId.eq(discordId),
           row.active.eq(true),
@@ -523,7 +523,7 @@ export class GuildsService {
       ).all(),
     ])) as [any[], Array<{ id: number; guildId: string }>];
     const membersWithRoles = (await attachRolesToMembers(
-      this.prisma,
+      this.prisma.db,
       members,
     )) as Array<{ guildId: string; roles: Role[] }>;
 
@@ -621,7 +621,7 @@ export class GuildsService {
       return [];
     }
 
-    const members = await this.prisma.orm.public.Member.where((row) =>
+    const members = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.guildId.in(guildIds)),
     )
       .select(
@@ -634,7 +634,7 @@ export class GuildsService {
       )
       .all();
     return attachRolesToMembers(
-      this.prisma,
+      this.prisma.db,
       members as GuildPermissionMember[],
     );
   }
@@ -835,7 +835,7 @@ export class GuildsService {
     userId: string,
     entries: T[],
   ): Promise<T[]> {
-    const userPreferences = await this.prisma.orm.public.UserSettings.where(
+    const userPreferences = await this.prisma.db.orm.public.UserSettings.where(
       (row) => row.userId.eq(userId),
     )
       .select("guildsOrder")
@@ -1023,7 +1023,7 @@ export class GuildsService {
       });
     }
 
-    const oldGuild = await this.prisma.orm.public.Guild.where((row) =>
+    const oldGuild = await this.prisma.db.orm.public.Guild.where((row) =>
       row.id.eq(guildId),
     )
       .select(
@@ -1055,7 +1055,7 @@ export class GuildsService {
       });
     }
 
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       row.id.eq(guildId),
     ).update(this.buildGuildConfigUpdateData(data));
 
@@ -1111,7 +1111,7 @@ export class GuildsService {
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.prisma.orm.public.Timer.where((row) =>
+    const worlds = await this.prisma.db.orm.public.Timer.where((row) =>
       row.guildId.eq(guildId),
     )
       .select("world")
@@ -1122,7 +1122,7 @@ export class GuildsService {
   }
 
   getMultipleGuildsByIds(ids: string[]) {
-    return this.prisma.orm.public.Guild.where((row) => row.id.in(ids)).all();
+    return this.prisma.db.orm.public.Guild.where((row) => row.id.in(ids)).all();
   }
 
   async createGuild(data: CreateGuildDto) {
@@ -1142,7 +1142,7 @@ export class GuildsService {
     let guild;
 
     try {
-      guild = await this.prisma.orm.public.Guild.where((row) =>
+      guild = await this.prisma.db.orm.public.Guild.where((row) =>
         row.id.eq(data.guildId),
       ).upsert({
         create: {
@@ -1177,7 +1177,7 @@ export class GuildsService {
       throw error;
     }
 
-    const existingGuild = await this.prisma.orm.public.Guild.where((row) =>
+    const existingGuild = await this.prisma.db.orm.public.Guild.where((row) =>
       row.id.eq(data.guildId),
     ).first();
 
@@ -1222,13 +1222,13 @@ export class GuildsService {
 
   async updateGuild(data: UpdateGuildDto) {
     try {
-      const oldGuild = await this.prisma.orm.public.Guild.where((row) =>
+      const oldGuild = await this.prisma.db.orm.public.Guild.where((row) =>
         row.id.eq(data.guildId),
       )
         .select("vanityUrl")
         .first();
 
-      await this.prisma.orm.public.Guild.where((row) =>
+      await this.prisma.db.orm.public.Guild.where((row) =>
         row.id.eq(data.guildId),
       ).update({
         name: data.name,
@@ -1258,7 +1258,7 @@ export class GuildsService {
 
   async deleteGuild({ guildId }: DeleteGuildDto) {
     try {
-      const guild = await this.prisma.orm.public.Guild.where((row) =>
+      const guild = await this.prisma.db.orm.public.Guild.where((row) =>
         row.id.eq(guildId),
       )
         .select("vanityUrl")
@@ -1270,7 +1270,7 @@ export class GuildsService {
         >["affectedMembers"],
       };
 
-      await this.prisma.transaction(async (tx) => {
+      await this.prisma.db.transaction(async (tx) => {
         await tx.orm.public.LootlogConfigNpc.where((row) =>
           row.lootlogConfigId.eq(guildId),
         ).deleteAndCount();
@@ -1312,7 +1312,7 @@ export class GuildsService {
   }
 
   private loadGuildDiscordSyncState(guildId: string) {
-    return this.prisma.orm.public.DiscordGuildSyncState.where((row) =>
+    return this.prisma.db.orm.public.DiscordGuildSyncState.where((row) =>
       row.guildId.eq(guildId),
     ).first();
   }
@@ -1382,7 +1382,7 @@ export class GuildsService {
   }
 
   private async createDefaultLootlogConfig(guildId: string) {
-    const config = await this.prisma.orm.public.LootlogConfig.where((row) =>
+    const config = await this.prisma.db.orm.public.LootlogConfig.where((row) =>
       row.id.eq(guildId),
     ).upsert({
       create: {
@@ -1391,7 +1391,7 @@ export class GuildsService {
       },
       update: {},
     });
-    const existingNpcs = await this.prisma.orm.public.LootlogConfigNpc.where(
+    const existingNpcs = await this.prisma.db.orm.public.LootlogConfigNpc.where(
       (row) => row.lootlogConfigId.eq(guildId),
     )
       .select("npcType")
@@ -1401,7 +1401,7 @@ export class GuildsService {
       (npcType) => !existingTypes.has(npcType),
     );
     if (missingTypes.length > 0) {
-      await this.prisma.orm.public.LootlogConfigNpc.createAndCount(
+      await this.prisma.db.orm.public.LootlogConfigNpc.createAndCount(
         missingTypes.map((npcType) => ({
           lootlogConfigId: guildId,
           npcType,

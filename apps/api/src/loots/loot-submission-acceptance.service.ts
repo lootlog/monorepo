@@ -150,7 +150,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     submission: CreateLootDto;
     uniqueId: string;
   }): Promise<CreateLootResponse> {
-    const existingLoot = await this.prisma.orm.public.Loot.where((row) =>
+    const existingLoot = await this.prisma.db.orm.public.Loot.where((row) =>
       row.uniqueId.eq(options.uniqueId),
     )
       .select("id")
@@ -186,7 +186,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
 
     const [lootlogConfigs, members] = await Promise.all([
       this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
-      this.prisma.orm.public.Member.where((row) =>
+      this.prisma.db.orm.public.Member.where((row) =>
         and(row.guildId.in(filteredGuildIds), row.userId.eq(options.discordId)),
       )
         .select("id", "guildId")
@@ -322,7 +322,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     socketNpcs: LootEventNpc[],
   ): Promise<void> {
     const existingRecords =
-      await this.prisma.orm.public.OrganizationLootRecord.where((row) =>
+      await this.prisma.db.orm.public.OrganizationLootRecord.where((row) =>
         and(
           row.lootId.eq(lootId),
           row.guildId.in(submissions.map((submission) => submission.guildId)),
@@ -345,7 +345,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       return;
     }
 
-    const organizationRecords = await this.prisma.transaction(async (tx) => {
+    const organizationRecords = await this.prisma.db.transaction(async (tx) => {
       for (const guildId of this.getUniqueOrganizationIds(newSubmissions)) {
         await tx.orm.public.OrganizationLootRecord.where((row) =>
           and(row.guildId.eq(guildId), row.lootId.eq(lootId)),
@@ -422,7 +422,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       options.npcData.primary,
       options.primaryNpcType,
     );
-    const loot = await this.prisma.transaction(async (transaction) => {
+    const loot = await this.prisma.db.transaction(async (transaction) => {
       const savedLoot = await transaction.orm.public.Loot.create({
         uniqueId: options.uniqueId,
         world: options.submission.world,

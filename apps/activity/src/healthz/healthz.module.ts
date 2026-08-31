@@ -2,11 +2,11 @@ import { Module } from "@nestjs/common";
 import { TerminusModule } from "@nestjs/terminus";
 import { HttpModule } from "@nestjs/axios";
 import { HealthzController } from "./healthz.controller.js";
-import { prismaProvider } from "#src/shared/db/prisma.provider";
+import { PrismaService } from "#src/prisma.service";
 
 @Module({
   imports: [TerminusModule, HttpModule],
-  providers: [prismaProvider],
+  providers: [PrismaService],
   controllers: [HealthzController],
 })
 export class HealthzModule {}

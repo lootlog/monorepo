@@ -6,15 +6,15 @@ import {
   ActivityType,
   type ActivityType as ActivityTypeValue,
 } from "../shared/db/domain.js";
-import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
+import { PrismaService } from "#src/prisma.service";
 import { temporalToDate } from "#src/shared/db/temporal";
 import { CreateActivityDto } from "./dto/create-activity.dto.js";
 import type { ActivityResponse } from "./dto/activity-response.dto.js";
 import { mapActivityDetails } from "./utils/map-activity-details.js";
 
-type PrismaTransaction = Parameters<PrismaDb["transaction"]>[0] extends (
-  transaction: infer Transaction,
-) => PromiseLike<unknown>
+type PrismaTransaction = Parameters<
+  PrismaService["db"]["transaction"]
+>[0] extends (transaction: infer Transaction) => PromiseLike<unknown>
   ? Transaction
   : never;
 
@@ -22,7 +22,7 @@ type PrismaTransaction = Parameters<PrismaDb["transaction"]>[0] extends (
 export class ActivitiesService {
   private readonly logger = new Logger(ActivitiesService.name);
 
-  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async create(dto: CreateActivityDto): Promise<ActivityResponse> {
     let actorSnapshotId: string | undefined;
@@ -34,7 +34,7 @@ export class ActivitiesService {
     }
 
     try {
-      const activity = await this.prisma.transaction(async (transaction) => {
+      const activity = await this.prisma.db.transaction(async (transaction) => {
         const createdActivity = await transaction.orm.public.Activity.create({
           id: createId(),
           userId: dto.userId,
@@ -71,7 +71,7 @@ export class ActivitiesService {
           `Duplicate activity detected via idempotency key: ${dto.idempotencyKey}`,
         );
 
-        const existing = await this.prisma.orm.public.Activity.where({
+        const existing = await this.prisma.db.orm.public.Activity.where({
           idempotencyKey: dto.idempotencyKey,
         }).first();
 
@@ -80,7 +80,7 @@ export class ActivitiesService {
         }
 
         const actorSnapshot = existing.actorSnapshotId
-          ? await this.prisma.orm.public.ActivityActorSnapshot.first({
+          ? await this.prisma.db.orm.public.ActivityActorSnapshot.first({
               id: existing.actorSnapshotId,
             })
           : null;
@@ -121,7 +121,7 @@ export class ActivitiesService {
     const lastSeenAtIso = lastSeenAt.toISOString();
     const userAgent = this.getDetailsString(dto, "userAgent") ?? null;
     const world = dto.world ?? null;
-    const insertSessionPlan = this.prisma.raw.sql`
+    const insertSessionPlan = this.prisma.db.raw.sql`
       INSERT INTO "MemberActivitySession"
         ("guildId", "discordId", "source", "sessionId", "userId", "userAgent", "world", "lastSeenAt")
       VALUES
@@ -140,7 +140,7 @@ export class ActivitiesService {
       }).count(),
     );
 
-    const updateStatsPlan = this.prisma.raw.sql`
+    const updateStatsPlan = this.prisma.db.raw.sql`
       INSERT INTO "MemberActivityStats"
         ("guildId", "discordId", "source", "lastSeenAt", "visitCount", "activeSessionCount", "updatedAt")
       VALUES
@@ -187,7 +187,7 @@ export class ActivitiesService {
     guildId: string;
     discordId: string;
   }): Promise<void> {
-    await this.prisma.transaction(async (transaction) => {
+    await this.prisma.db.transaction(async (transaction) => {
       await transaction.orm.public.MemberActivitySession.where({
         guildId: member.guildId,
         discordId: member.discordId,
@@ -230,7 +230,7 @@ export class ActivitiesService {
   }
 
   async deleteOne(id: string, guildId: string): Promise<number> {
-    const activity = await this.prisma.orm.public.Activity.where({
+    const activity = await this.prisma.db.orm.public.Activity.where({
       id,
       guildId,
     }).first();
@@ -239,7 +239,7 @@ export class ActivitiesService {
       throw new NotFoundException(`Activity with ID ${id} not found`);
     }
 
-    await this.prisma.orm.public.Activity.where({
+    await this.prisma.db.orm.public.Activity.where({
       id: activity.id,
       createdAt: activity.createdAt,
     }).delete();
@@ -249,16 +249,16 @@ export class ActivitiesService {
 
   async deleteMany(guildId: string, type?: ActivityTypeValue): Promise<number> {
     const deleted = type
-      ? await this.prisma.runtime().execute(
-          this.prisma.raw.sql`
+      ? await this.prisma.db.runtime().execute(
+          this.prisma.db.raw.sql`
             DELETE FROM "Activity"
             WHERE "guildId" = ${guildId} AND "type" = ${type}
           `
             .affectedCount()
             .build(),
         )
-      : await this.prisma.runtime().execute(
-          this.prisma.raw.sql`
+      : await this.prisma.db.runtime().execute(
+          this.prisma.db.raw.sql`
             DELETE FROM "Activity"
             WHERE "guildId" = ${guildId}
           `
@@ -272,7 +272,7 @@ export class ActivitiesService {
   async getStatsByGuild(
     guildId: string,
   ): Promise<Record<ActivityTypeValue, number>> {
-    const stats = await this.prisma.orm.public.Activity.where({ guildId })
+    const stats = await this.prisma.db.orm.public.Activity.where({ guildId })
       .groupBy("_type")
       .aggregate((aggregate) => ({ count: aggregate.count() }));
 
@@ -297,7 +297,7 @@ export class ActivitiesService {
 
     try {
       const actorSnapshot =
-        await this.prisma.orm.public.ActivityActorSnapshot.where({
+        await this.prisma.db.orm.public.ActivityActorSnapshot.where({
           fingerprint,
         })
           .select("id")

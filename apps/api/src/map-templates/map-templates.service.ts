@@ -2,7 +2,7 @@ import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { createId } from "@paralleldrive/cuid2";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
-import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 import { temporalToDate } from "#src/db/temporal";
 import {
   type MapTemplateResponse,
@@ -12,10 +12,10 @@ import type { CreateMapTemplateDto } from "./dto/create-map-template.dto.js";
 
 @Injectable()
 export class MapTemplatesService {
-  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getTemplates(guildId: string): Promise<MapTemplateResponse[]> {
-    const templates = await this.prisma.orm.public.MapTemplate.where((row) =>
+    const templates = await this.prisma.db.orm.public.MapTemplate.where((row) =>
       row.guildId.eq(guildId),
     )
       .select("id", "guildId", "name", "maps", "createdAt")
@@ -29,7 +29,7 @@ export class MapTemplatesService {
     guildId: string,
     data: CreateMapTemplateDto,
   ): Promise<MapTemplateResponse> {
-    const template = await this.prisma.orm.public.MapTemplate.create({
+    const template = await this.prisma.db.orm.public.MapTemplate.create({
       id: createId(),
       guildId,
       name: data.name,
@@ -44,7 +44,7 @@ export class MapTemplatesService {
     templateId: string,
     data: CreateMapTemplateDto,
   ): Promise<MapTemplateResponse> {
-    const template = await this.prisma.orm.public.MapTemplate.where((row) =>
+    const template = await this.prisma.db.orm.public.MapTemplate.where((row) =>
       and(row.id.eq(templateId), row.guildId.eq(guildId)),
     ).first();
 
@@ -52,7 +52,7 @@ export class MapTemplatesService {
       throw new NotFoundException("Template not found");
     }
 
-    const templateToUpdate = await this.prisma.orm.public.MapTemplate.where(
+    const templateToUpdate = await this.prisma.db.orm.public.MapTemplate.where(
       (row) => row.id.eq(templateId),
     ).update({ name: data.name, maps: data.maps as JsonValue });
 
@@ -60,7 +60,7 @@ export class MapTemplatesService {
   }
 
   async deleteTemplate(guildId: string, templateId: string) {
-    const template = await this.prisma.orm.public.MapTemplate.where((row) =>
+    const template = await this.prisma.db.orm.public.MapTemplate.where((row) =>
       and(row.id.eq(templateId), row.guildId.eq(guildId)),
     ).first();
 
@@ -68,7 +68,7 @@ export class MapTemplatesService {
       throw new NotFoundException("Template not found");
     }
 
-    await this.prisma.orm.public.MapTemplate.where((row) =>
+    await this.prisma.db.orm.public.MapTemplate.where((row) =>
       row.id.eq(templateId),
     ).delete();
 

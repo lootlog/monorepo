@@ -133,7 +133,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.transaction(async (tx) => {
+    await this.prisma.db.transaction(async (tx) => {
       await this.upsertGuildChannelSnapshot(tx, event.guildId, event.channel);
       await this.syncGuildNotificationTarget(tx, event.guildId, event.channel);
 
@@ -147,7 +147,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.transaction(async (tx) => {
+    await this.prisma.db.transaction(async (tx) => {
       await tx.orm.public.DiscordGuildChannelSnapshot.where((row) =>
         and(row.guildId.eq(event.guildId), row.channelId.eq(event.channelId)),
       ).deleteAndCount();
@@ -186,12 +186,12 @@ export class ChannelsService {
 
   private async loadGuildDiscordState(guildId: string) {
     const [channels, syncState] = await Promise.all([
-      this.prisma.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+      this.prisma.db.orm.public.DiscordGuildChannelSnapshot.where((row) =>
         row.guildId.eq(guildId),
       )
         .orderBy([(row) => row.position.asc(), (row) => row.name.asc()])
         .all(),
-      this.prisma.orm.public.DiscordGuildSyncState.where((row) =>
+      this.prisma.db.orm.public.DiscordGuildSyncState.where((row) =>
         row.guildId.eq(guildId),
       ).first(),
     ]);
@@ -204,7 +204,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.orm.public.DiscordGuildSyncState.where((row) =>
+    await this.prisma.db.orm.public.DiscordGuildSyncState.where((row) =>
       row.guildId.eq(guildId),
     ).upsert({
       create: {
@@ -254,7 +254,7 @@ export class ChannelsService {
 
   private async reconcileGuildChannels(event: DiscordGuildChannelsSyncedEvent) {
     const existingChannels =
-      await this.prisma.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+      await this.prisma.db.orm.public.DiscordGuildChannelSnapshot.where((row) =>
         row.guildId.eq(event.guildId),
       )
         .select("channelId")
@@ -266,7 +266,7 @@ export class ChannelsService {
       .map((channel) => channel.channelId)
       .filter((channelId) => !nextChannelIds.has(channelId));
 
-    await this.prisma.transaction(async (tx) => {
+    await this.prisma.db.transaction(async (tx) => {
       await Promise.all(
         event.channels.map(async (channel) => {
           await this.upsertGuildChannelSnapshot(tx, event.guildId, channel);
@@ -494,7 +494,7 @@ export class ChannelsService {
   }
 
   private async guildExists(guildId: string) {
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       row.id.eq(guildId),
     )
       .select("id")

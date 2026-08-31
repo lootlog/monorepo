@@ -65,7 +65,7 @@ export class EventRespawnService {
     const { createNewWindow, newMinSpawnTime, newMaxSpawnTime, isAutoClose } =
       normalizeCloseRespawnWindowOptions(options);
 
-    const heroRow = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const heroRow = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       and(
         row.id.eq(heroId),
         row.event.some((related) =>
@@ -79,7 +79,7 @@ export class EventRespawnService {
     const hero = heroRow
       ? {
           ...heroRow,
-          maps: await attachAssignedMembersToMaps(this.prisma, heroRow.maps),
+          maps: await attachAssignedMembersToMaps(this.prisma.db, heroRow.maps),
         }
       : null;
 
@@ -108,7 +108,7 @@ export class EventRespawnService {
       const closedAt = new Date();
 
       try {
-        await this.prisma.transaction(async (tx) => {
+        await this.prisma.db.transaction(async (tx) => {
           if (hero.maps.length > 0) {
             for (const map of hero.maps) {
               await setMapAssignedMembers(tx, map.id, []);
@@ -220,7 +220,7 @@ export class EventRespawnService {
     heroId: string,
     options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
-    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const hero = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       and(
         row.id.eq(heroId),
         row.event.some((related) =>
@@ -248,7 +248,7 @@ export class EventRespawnService {
       maxSpawnTime,
     });
 
-    const firstMember = await this.prisma.orm.public.Member.where((row) =>
+    const firstMember = await this.prisma.db.orm.public.Member.where((row) =>
       row.guildId.eq(guildId),
     )
       .select("id")
@@ -273,11 +273,11 @@ export class EventRespawnService {
     const windowOpenedAt = timer.windowOpenedAt ?? new Date();
     await this.cancelScheduledAutoClose(heroId);
 
-    const heroMapRows = await this.prisma.orm.public.EventMap.where((row) =>
+    const heroMapRows = await this.prisma.db.orm.public.EventMap.where((row) =>
       row.heroNpcId.eq(heroId),
     ).all();
     const heroMaps = await attachAssignedMembersToMaps(
-      this.prisma,
+      this.prisma.db,
       heroMapRows,
     );
 
@@ -360,7 +360,7 @@ export class EventRespawnService {
     maxSpawnTime: Date | null;
     overdueMs: number | null;
   }> {
-    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+    const hero = await this.prisma.db.orm.public.EventHeroNpc.where((row) =>
       and(
         row.id.eq(heroId),
         row.event.some((related) =>

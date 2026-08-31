@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { TimersCleanupService } from "./timers-cleanup.service.js";
-import { PRISMA_DB } from "#src/db/prisma.provider";
+import { PrismaService } from "#src/db/prisma.service";
 
 const mockEnv = {
   TIMER_CLEANUP_ENABLED: "true",
@@ -36,8 +36,8 @@ describe("TimersCleanupService", () => {
       providers: [
         TimersCleanupService,
         {
-          provide: PRISMA_DB,
-          useValue: mockPrisma,
+          provide: PrismaService,
+          useValue: { db: mockPrisma },
         },
       ],
     }).compile();

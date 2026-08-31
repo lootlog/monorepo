@@ -60,7 +60,7 @@ export class SettingsDocumentsService {
     const scopes = this.getContextScopes(userId, context);
     await this.validateScopes(userId, scopes);
 
-    const documents = await this.prisma.orm.public.UserSettingDocument.where(
+    const documents = await this.prisma.db.orm.public.UserSettingDocument.where(
       (row) =>
         and(
           row.userId.eq(userId),
@@ -120,9 +120,9 @@ export class SettingsDocumentsService {
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
-        await this.prisma.transaction(async (transaction) => {
+        await this.prisma.db.transaction(async (transaction) => {
           await transaction.execute(
-            this.prisma.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
+            this.prisma.db.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
               .affectedCount()
               .build(),
           );
@@ -322,7 +322,7 @@ export class SettingsDocumentsService {
         continue;
       }
 
-      const member = await this.prisma.orm.public.Member.where((row) =>
+      const member = await this.prisma.db.orm.public.Member.where((row) =>
         and(
           row.globalUserId.eq(userId),
           row.guildId.eq(scope.id),

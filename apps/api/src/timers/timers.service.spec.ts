@@ -25,6 +25,7 @@ import {
   Profession,
   TimerHistoryAction,
 } from "#src/db/domain";
+import { POSTGRES_POOL } from "#src/db/postgres.provider";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -115,6 +116,14 @@ describe("TimersService", () => {
         {
           provide: PrismaService,
           useValue: attachPrismaOrmMock(mockPrismaService),
+        },
+        {
+          provide: POSTGRES_POOL,
+          useValue: {
+            query: async (...arguments_: unknown[]) => ({
+              rows: await mockPrismaService.sql(...arguments_),
+            }),
+          },
         },
         {
           provide: AmqpConnection,

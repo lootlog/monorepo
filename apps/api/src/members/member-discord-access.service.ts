@@ -180,7 +180,7 @@ export class MemberDiscordAccessService {
     guildId: string;
     skipTtlCheck?: boolean;
   }): Promise<MemberWithRoles | null> {
-    const member = await this.prisma.orm.public.Member.where((row) =>
+    const member = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(options.discordId), row.guildId.eq(options.guildId)),
     ).first();
 
@@ -225,7 +225,7 @@ export class MemberDiscordAccessService {
   }
 
   private async resolveActiveGuildId(guildId: string): Promise<string> {
-    const guild = await this.prisma.orm.public.Guild.where((row) =>
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
       and(
         row.active.eq(true),
         or(row.id.eq(guildId), row.vanityUrl.eq(guildId)),
@@ -247,11 +247,11 @@ export class MemberDiscordAccessService {
     discordId: string,
     guildId: string,
   ): Promise<StoredMemberWithRoles | null> {
-    const member = await this.prisma.orm.public.Member.where((row) =>
+    const member = await this.prisma.db.orm.public.Member.where((row) =>
       and(row.userId.eq(discordId), row.guildId.eq(guildId)),
     ).first();
     return member
-      ? ((await attachRolesToMembers(this.prisma, [member]))[0] ?? null)
+      ? ((await attachRolesToMembers(this.prisma.db, [member]))[0] ?? null)
       : null;
   }
 
