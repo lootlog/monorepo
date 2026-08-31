@@ -1,4 +1,4 @@
-import { NestFactory } from "@nestjs/core";
+import { type AbstractHttpAdapter, NestFactory } from "@nestjs/core";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -12,9 +12,10 @@ import {
 import { AppModule } from "./app.module.js";
 
 export async function createApp(): Promise<NestFastifyApplication> {
+  const adapter = new FastifyAdapter() as unknown as AbstractHttpAdapter;
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    adapter,
     {
       bodyParser: false,
       bufferLogs: true,

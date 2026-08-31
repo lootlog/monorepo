@@ -15,7 +15,9 @@ export class RedisIoAdapter extends IoAdapter {
   private readonly gatewayAuthService: GatewayAuthService;
 
   constructor(app: INestApplication) {
-    super(app);
+    // Pass the actual HTTP server instead of relying on Nest's instanceof
+    // detection, which is not stable across pnpm peer-dependency instances.
+    super(app.getHttpServer());
     this.gatewayAuthService = app.get(GatewayAuthService);
   }
 

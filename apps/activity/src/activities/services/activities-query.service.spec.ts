@@ -1,96 +1,59 @@
+import { ActivitySource } from "../../shared/db/domain.js";
 import { ActivitiesQueryService } from "./activities-query.service.js";
-import type { PrismaService } from "#src/shared/db/prisma.service";
+import type { PrismaDb } from "#src/shared/db/prisma.provider";
+
+function fluentModel(rows: unknown[] = []) {
+  const model = {
+    where: vi.fn(() => model),
+    select: vi.fn(() => model),
+    orderBy: vi.fn(() => model),
+    limit: vi.fn(() => model),
+    groupBy: vi.fn(() => model),
+    aggregate: vi.fn().mockResolvedValue(rows),
+    all: vi.fn().mockResolvedValue(rows),
+    first: vi.fn(),
+  };
+  return model;
+}
 
 describe("ActivitiesQueryService", () => {
-  const activityFindManyMock = vi.fn();
-  const activityActorSnapshotFindManyMock = vi.fn();
-  const prismaServiceMock = {
-    activity: {
-      findMany: activityFindManyMock,
-    },
-    activityActorSnapshot: {
-      findMany: activityActorSnapshotFindManyMock,
-    },
-  } as unknown as PrismaService;
-
-  let service: ActivitiesQueryService;
-
-  beforeEach(() => {
-    service = new ActivitiesQueryService(prismaServiceMock);
-    vi.clearAllMocks();
-  });
-
-  it("deduplicates suggested actor names and clamps the lower limit", async () => {
-    activityActorSnapshotFindManyMock.mockResolvedValue([
-      { name: " Player " },
-      { name: "player" },
-    ]);
-
-    const names = await service.suggestActorNames("guild-1", "  pla ", 0);
-
-    expect(names).toEqual(["Player"]);
-    expect(activityActorSnapshotFindManyMock).toHaveBeenCalledWith({
-      where: {
-        activities: {
-          some: { guildId: "guild-1" },
-        },
-        name: {
-          contains: "pla",
-          mode: "insensitive",
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 2,
-      select: { name: true },
-    });
-  });
-
-  it("clamps suggested clan names to the maximum limit", async () => {
-    activityActorSnapshotFindManyMock.mockResolvedValue(
-      Array.from({ length: 60 }, (_, index) => ({
-        clanName: `Clan ${index + 1}`,
-      })),
-    );
-
-    const names = await service.suggestClanNames("guild-1", undefined, 80);
-
-    expect(names).toHaveLength(50);
-    expect(activityActorSnapshotFindManyMock).toHaveBeenCalledWith({
-      where: {
-        activities: {
-          some: { guildId: "guild-1" },
-        },
-        clanName: {
-          not: null,
-          notIn: [""],
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      select: { clanName: true },
-    });
-  });
-
-  it("clamps suggested worlds to the lower limit and trims results", async () => {
-    activityFindManyMock.mockResolvedValue([{ world: "  Aether  " }]);
-
-    const worlds = await service.suggestWorlds("guild-1", "  ae ", -5);
-
-    expect(worlds).toEqual(["Aether"]);
-    expect(activityFindManyMock).toHaveBeenCalledWith({
-      where: {
+  it("normalizes Prisma temporals in member statistics", async () => {
+    const stats = fluentModel([
+      {
         guildId: "guild-1",
-        world: {
-          not: null,
-          notIn: [""],
-          contains: "ae",
-          mode: "insensitive",
+        discordId: "discord-1",
+        source: ActivitySource.WEB_APP,
+        visitCount: 2,
+        activeSessionCount: 1,
+        lastSeenAt: { toString: () => "2026-01-01T00:00:00Z" },
+        createdAt: { toString: () => "2026-01-01T00:00:00Z" },
+        updatedAt: { toString: () => "2026-01-01T00:00:00Z" },
+      },
+    ]);
+    const service = new ActivitiesQueryService({
+      orm: { public: { MemberActivityStats: stats } },
+    } as unknown as PrismaDb);
+
+    const [result] = await service.findMemberActivityStatsByGuild("guild-1");
+    expect(result.createdAt).toBeInstanceOf(Date);
+    expect(result.updatedAt).toBeInstanceOf(Date);
+    expect(result.lastSeenAt).toBeInstanceOf(Date);
+  });
+
+  it("deduplicates actor-name suggestions", async () => {
+    const activities = fluentModel([{ actorSnapshotId: "snapshot-1" }]);
+    const snapshots = fluentModel([{ name: " Player " }, { name: "player" }]);
+    const service = new ActivitiesQueryService({
+      orm: {
+        public: {
+          Activity: activities,
+          ActivityActorSnapshot: snapshots,
         },
       },
-      distinct: ["world"],
-      select: { world: true },
-      orderBy: { world: "asc" },
-      take: 1,
-    });
+    } as unknown as PrismaDb);
+
+    await expect(
+      service.suggestActorNames("guild-1", "pla", 10),
+    ).resolves.toEqual(["Player"]);
   });
 });

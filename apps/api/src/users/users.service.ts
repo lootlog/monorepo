@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   Inject,
   Injectable,
@@ -8,12 +9,13 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger as WinstonLogger } from "winston";
 import { firstValueFrom } from "rxjs";
 import { PrismaService } from "#src/db/prisma.service";
+import { setMemberRoles } from "#src/db/many-to-many";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { Prisma } from "#src/generated/prisma/client";
+import type { InputJsonValue, JsonObject, JsonValue } from "#src/db/domain";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -95,27 +97,23 @@ export class UsersService {
   async getUserPreferences(userId: string) {
     const [userSettings, notificationMutesSettings, appearanceDocument] =
       await Promise.all([
-        this.prisma.userSettings.findUnique({
-          where: { userId },
-        }),
-        this.prisma.userGameAccountSettings.findUnique({
-          where: {
-            userId_accountId: {
-              userId,
-              accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-            },
-          },
-        }),
-        this.prisma.userSettingDocument?.findUnique({
-          where: {
-            userId_domain_scopeType_scopeId: {
-              userId,
-              domain: "appearance",
-              scopeType: "USER",
-              scopeId: userId,
-            },
-          },
-        }),
+        this.prisma.orm.public.UserSettings.where((row) =>
+          row.userId.eq(userId),
+        ).first(),
+        this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+          and(
+            row.userId.eq(userId),
+            row.accountId.eq(GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID),
+          ),
+        ).first(),
+        this.prisma.orm.public.UserSettingDocument.where((row) =>
+          and(
+            row.userId.eq(userId),
+            row.domain.eq("appearance"),
+            row.scopeType.eq("USER"),
+            row.scopeId.eq(userId),
+          ),
+        ).first(),
       ]);
 
     const settings = userSettings ?? this.createDefaultUserPreferences(userId);
@@ -147,58 +145,58 @@ export class UsersService {
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
     await this.triggerBattlelogCleanup(authUserId);
 
-    const deletedMembers = await this.prisma.$transaction(async (tx) => {
-      const members = await tx.member.findMany({
-        where: { userId: discordId },
-        select: {
-          id: true,
-          guildId: true,
-          globalUserId: true,
-          userId: true,
-        },
-      });
+    const deletedMembers = await this.prisma.transaction(async (tx) => {
+      const members = await tx.orm.public.Member.where((row) =>
+        row.userId.eq(discordId),
+      )
+        .select("id", "guildId", "globalUserId", "userId")
+        .all();
 
       const memberIds = members.map((member) => member.id);
 
       if (memberIds.length > 0) {
-        await tx.npcKillStats.deleteMany({
-          where: { memberId: { in: memberIds } },
-        });
+        await tx.orm.public.NpcKillStats.where((row) =>
+          row.memberId.in(memberIds),
+        ).deleteAndCount();
       }
 
-      await tx.userKillStats.deleteMany({ where: { userId: discordId } });
-      await tx.userCharactersLootlogSettings.deleteMany({
-        where: { userId: discordId },
-      });
-      await tx.userSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userSettingDocument.deleteMany({
-        where: { userId: authUserId },
-      });
-      await tx.userGameAccountSettings.deleteMany({
-        where: { userId: authUserId },
-      });
-      await tx.userTimerSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userSoundSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userGuildTimerSettings.deleteMany({
-        where: { userId: authUserId },
-      });
-      await tx.userPinnedEvent.deleteMany({
-        where: { userId: authUserId },
-      });
+      await tx.orm.public.UserKillStats.where((row) =>
+        row.userId.eq(discordId),
+      ).deleteAndCount();
+      await tx.orm.public.UserCharactersLootlogSettings.where((row) =>
+        row.userId.eq(discordId),
+      ).deleteAndCount();
+      await tx.orm.public.UserSettings.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
+      await tx.orm.public.UserSettingDocument.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
+      await tx.orm.public.UserGameAccountSettings.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
+      await tx.orm.public.UserTimerSettings.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
+      await tx.orm.public.UserSoundSettings.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
+      await tx.orm.public.UserGuildTimerSettings.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
+      await tx.orm.public.UserPinnedEvent.where((row) =>
+        row.userId.eq(authUserId),
+      ).deleteAndCount();
 
-      await Promise.all(
-        members.map((member) =>
-          tx.member.update({
-            where: { id: member.id },
-            data: {
-              active: false,
-              lastDiscordAttemptAt: new Date(),
-              lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.ACCOUNT_DELETED,
-              roles: { set: [] },
-            },
-          }),
-        ),
-      );
+      for (const member of members) {
+        await tx.orm.public.Member.where((row) => row.id.eq(member.id)).update({
+          active: false,
+          lastDiscordAttemptAt: new Date(),
+          lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.ACCOUNT_DELETED,
+          updatedAt: new Date(),
+        });
+        await setMemberRoles(tx, member.id, []);
+      }
 
       return members.map((member) => ({
         discordId: member.userId,
@@ -253,18 +251,18 @@ export class UsersService {
   ) {
     const [currentUserSettings, currentMutes, currentAppearanceDocument] =
       await Promise.all([
-        this.prisma.userSettings.findUnique({ where: { userId } }),
+        this.prisma.orm.public.UserSettings.where((row) =>
+          row.userId.eq(userId),
+        ).first(),
         this.getUserNotificationMutes(userId),
-        this.prisma.userSettingDocument?.findUnique({
-          where: {
-            userId_domain_scopeType_scopeId: {
-              userId,
-              domain: "appearance",
-              scopeType: "USER",
-              scopeId: userId,
-            },
-          },
-        }),
+        this.prisma.orm.public.UserSettingDocument.where((row) =>
+          and(
+            row.userId.eq(userId),
+            row.domain.eq("appearance"),
+            row.scopeType.eq("USER"),
+            row.scopeId.eq(userId),
+          ),
+        ).first(),
       ]);
     const legacyChatAppearance = (
       currentUserSettings as { chatAppearance?: unknown } | null
@@ -295,52 +293,53 @@ export class UsersService {
 
     const [userSettings] = await Promise.all([
       shouldUpdateUserSettings
-        ? this.prisma.userSettings.upsert({
-            where: { userId },
-            update: {
-              ...nextUserSettingsPayload,
-              updatedAt: new Date(),
-            },
+        ? this.prisma.orm.public.UserSettings.where((row) =>
+            row.userId.eq(userId),
+          ).upsert({
             create: {
               userId,
               ...this.getDefaultUserPreferencesData(),
               ...nextUserSettingsPayload,
+              updatedAt: new Date(),
+            },
+            update: {
+              ...nextUserSettingsPayload,
+              updatedAt: new Date(),
             },
           })
         : Promise.resolve(currentUserSettings),
       preferences.mutes
-        ? this.prisma.userGameAccountSettings.upsert({
-            where: {
-              userId_accountId: {
-                userId,
-                accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-              },
-            },
-            update: {
-              settings: {
-                mutes: nextMutes,
-              } as unknown as Prisma.InputJsonValue,
-              updatedAt: new Date(),
-            },
+        ? this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+            and(
+              row.userId.eq(userId),
+              row.accountId.eq(GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID),
+            ),
+          ).upsert({
             create: {
               userId,
               accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
               settings: {
                 mutes: nextMutes,
-              } as unknown as Prisma.InputJsonValue,
+              } as unknown as InputJsonValue,
+              updatedAt: new Date(),
+            },
+            update: {
+              settings: {
+                mutes: nextMutes,
+              } as unknown as InputJsonValue,
+              updatedAt: new Date(),
             },
           })
         : Promise.resolve(null),
-      nextChatAppearance && this.prisma.userSettingDocument
-        ? this.prisma.userSettingDocument.upsert({
-            where: {
-              userId_domain_scopeType_scopeId: {
-                userId,
-                domain: "appearance",
-                scopeType: "USER",
-                scopeId: userId,
-              },
-            },
+      nextChatAppearance
+        ? this.prisma.orm.public.UserSettingDocument.where((row) =>
+            and(
+              row.userId.eq(userId),
+              row.domain.eq("appearance"),
+              row.scopeType.eq("USER"),
+              row.scopeId.eq(userId),
+            ),
+          ).upsert({
             create: {
               userId,
               domain: "appearance",
@@ -348,8 +347,9 @@ export class UsersService {
               scopeId: userId,
               overrides: {
                 chat: nextChatAppearance,
-              } as unknown as Prisma.InputJsonValue,
+              } as unknown as InputJsonValue,
               schemaVersion: 1,
+              updatedAt: new Date(),
             },
             update: {
               overrides: applySettingsPatch({
@@ -366,7 +366,7 @@ export class UsersService {
                     : {},
                 set: { chat: nextChatAppearance },
                 unset: [],
-              }) as Prisma.InputJsonValue,
+              }) as InputJsonValue,
               schemaVersion: 1,
             },
           })
@@ -389,14 +389,9 @@ export class UsersService {
     accountId: string,
   ): Promise<UserGameAccountPreferences> {
     const gameAccountSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId,
-          },
-        },
-      });
+      await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+        and(row.userId.eq(userId), row.accountId.eq(accountId)),
+      ).first();
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
       gameAccountSettings?.settings,
     );
@@ -436,14 +431,9 @@ export class UsersService {
     preferences: UpdateUserGameAccountPreferencesDto,
   ): Promise<UserGameAccountPreferences> {
     const gameAccountSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId,
-          },
-        },
-      });
+      await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+        and(row.userId.eq(userId), row.accountId.eq(accountId)),
+      ).first();
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
       gameAccountSettings?.settings,
     );
@@ -510,21 +500,18 @@ export class UsersService {
       ...(hasStoredAirTags ? { airTags: nextAirTags } : {}),
     };
 
-    await this.prisma.userGameAccountSettings.upsert({
-      where: {
-        userId_accountId: {
-          userId,
-          accountId,
-        },
-      },
-      update: {
-        settings: nextSettings as Prisma.InputJsonValue,
-        updatedAt: new Date(),
-      },
+    await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+      and(row.userId.eq(userId), row.accountId.eq(accountId)),
+    ).upsert({
       create: {
         userId,
         accountId,
-        settings: nextSettings as Prisma.InputJsonValue,
+        settings: nextSettings as InputJsonValue,
+        updatedAt: new Date(),
+      },
+      update: {
+        settings: nextSettings as InputJsonValue,
+        updatedAt: new Date(),
       },
     });
 
@@ -606,38 +593,36 @@ export class UsersService {
 
   private async getUserNotificationMutes(userId: string) {
     const notificationMutesSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-          },
-        },
-      });
+      await this.prisma.orm.public.UserGameAccountSettings.where((row) =>
+        and(
+          row.userId.eq(userId),
+          row.accountId.eq(GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID),
+        ),
+      ).first();
 
     return this.getStoredNotificationMutes(notificationMutesSettings?.settings);
   }
 
   private getStoredNotificationMutes(
-    settings: Prisma.JsonValue | undefined,
+    settings: JsonValue | undefined,
   ): NotificationMutes {
     if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
       return this.cloneNotificationMutes();
     }
 
-    const settingsObject = settings as Prisma.JsonObject & {
+    const settingsObject = settings as JsonObject & {
       mutes?: Partial<NotificationMutes>;
     };
 
     return this.normalizeNotificationMutes(settingsObject.mutes);
   }
 
-  private getStoredGameAccountSettings(settings: Prisma.JsonValue | undefined) {
+  private getStoredGameAccountSettings(settings: JsonValue | undefined) {
     if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
       return null;
     }
 
-    return settings as Prisma.JsonObject & {
+    return settings as JsonObject & {
       notifications?: Partial<NotificationsSettings>;
       detector?: Partial<DetectorSettings>;
       pings?: Partial<MapPingPreferences>;

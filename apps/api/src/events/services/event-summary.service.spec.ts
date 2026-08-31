@@ -1,7 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import { CoverageGapType } from "#src/generated/prisma/client";
+import { CoverageGapType } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { EventSummaryService } from "./event-summary.service.js";
 
 describe("EventSummaryService", () => {
@@ -39,7 +40,7 @@ describe("EventSummaryService", () => {
         EventSummaryService,
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
         },
       ],
     }).compile();
@@ -140,7 +141,7 @@ describe("EventSummaryService", () => {
           ],
         },
         include: {
-          member: { select: { id: true, name: true, avatar: true } },
+          member: true,
         },
       });
 
@@ -642,7 +643,7 @@ describe("EventSummaryService", () => {
         where: {
           id: heroNpcId,
           eventId,
-          event: { guildId },
+          event: { some: { guildId } },
         },
       });
 

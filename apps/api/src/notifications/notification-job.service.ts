@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -19,10 +20,13 @@ import {
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTriggerType as DbNotificationTriggerType,
   type NotificationTargetType as DbNotificationTargetType,
-  Prisma,
-} from "#src/generated/prisma/client";
+  type InputJsonValue,
+  type JsonObject,
+  type JsonValue,
+} from "#src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
+import { isUniqueConstraintError } from "#src/db/database-errors";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/constants/notification-schedule-timezone.constant";
@@ -113,19 +117,21 @@ export class NotificationJobService {
   }) {
     const { jobId, ...remainingFilters } = filters;
 
-    const jobs = await this.prisma.notificationJob.findMany({
-      where: {
-        ...remainingFilters,
-        ...(jobId ? { id: jobId } : {}),
-        status: {
-          in: [
-            DbNotificationJobStatus.PENDING,
-            DbNotificationJobStatus.BLOCKED,
-          ],
-        },
-      },
-      select: { id: true },
-    });
+    let jobsQuery = this.prisma.orm.public.NotificationJob.where((row) =>
+      row.status.in([
+        DbNotificationJobStatus.PENDING,
+        DbNotificationJobStatus.BLOCKED,
+      ]),
+    );
+    for (const [field, value] of Object.entries(remainingFilters)) {
+      if (value !== undefined) {
+        jobsQuery = jobsQuery.where((row) => row[field].eq(value));
+      }
+    }
+    if (jobId) {
+      jobsQuery = jobsQuery.where((row) => row.id.eq(jobId));
+    }
+    const jobs = await jobsQuery.select("id").all();
 
     await Promise.all(
       jobs.map(async (job) => {
@@ -138,22 +144,18 @@ export class NotificationJobService {
       return;
     }
 
-    await this.prisma.notificationJob.updateMany({
-      where: {
-        id: {
-          in: jobs.map((job) => job.id),
-        },
-        status: {
-          in: [
-            DbNotificationJobStatus.PENDING,
-            DbNotificationJobStatus.BLOCKED,
-          ],
-        },
-      },
-      data: {
-        status: DbNotificationJobStatus.CANCELED,
-        processedAt: new Date(),
-      },
+    await this.prisma.orm.public.NotificationJob.where((row) =>
+      and(
+        row.id.in(jobs.map((job) => job.id)),
+        row.status.in([
+          DbNotificationJobStatus.PENDING,
+          DbNotificationJobStatus.BLOCKED,
+        ]),
+      ),
+    ).updateAndCount({
+      status: DbNotificationJobStatus.CANCELED,
+      processedAt: new Date(),
+      updatedAt: new Date(),
     });
   }
 
@@ -177,7 +179,7 @@ export class NotificationJobService {
     sourceEntityType?: string;
     sourceEntityId?: string;
     sourceEventId?: string;
-    payloadSnapshot: Prisma.InputJsonValue;
+    payloadSnapshot: InputJsonValue;
     forceBlocked?: boolean;
   }) {
     const idempotencyKey =
@@ -198,70 +200,65 @@ export class NotificationJobService {
           ].join(":");
 
     try {
-      return await this.prisma.notificationJob.create({
-        data: {
-          id: randomUUID(),
-          ruleId: options.notificationRule.id,
-          targetId: options.target.id,
-          ownerType: options.notificationRule.ownerType,
-          ownerId: options.notificationRule.ownerId,
-          jobKind: options.jobKind,
-          scheduledFor: options.scheduledFor,
-          status: options.forceBlocked
-            ? DbNotificationJobStatus.BLOCKED
-            : DbNotificationJobStatus.PENDING,
-          idempotencyKey,
-          sourceEntityType: options.sourceEntityType ?? null,
-          sourceEntityId: options.sourceEntityId ?? null,
-          sourceEventId: options.sourceEventId ?? null,
-          payloadSnapshot: options.payloadSnapshot,
-          blockedReason: options.forceBlocked
-            ? "Missing Discord bot permissions or target access"
-            : null,
-        },
+      return await this.prisma.orm.public.NotificationJob.create({
+        id: randomUUID(),
+        ruleId: options.notificationRule.id,
+        targetId: options.target.id,
+        ownerType: options.notificationRule.ownerType,
+        ownerId: options.notificationRule.ownerId,
+        jobKind: options.jobKind,
+        scheduledFor: options.scheduledFor,
+        status: options.forceBlocked
+          ? DbNotificationJobStatus.BLOCKED
+          : DbNotificationJobStatus.PENDING,
+        idempotencyKey,
+        sourceEntityType: options.sourceEntityType ?? null,
+        sourceEntityId: options.sourceEntityId ?? null,
+        sourceEventId: options.sourceEventId ?? null,
+        payloadSnapshot: options.payloadSnapshot,
+        blockedReason: options.forceBlocked
+          ? "Missing Discord bot permissions or target access"
+          : null,
+        updatedAt: new Date(),
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        const existingJob = await this.prisma.notificationJob.findUnique({
-          where: { idempotencyKey },
-        });
+      if (isUniqueConstraintError(error)) {
+        const existingJob = await this.prisma.orm.public.NotificationJob.where(
+          (row) => row.idempotencyKey.eq(idempotencyKey),
+        ).first();
 
         if (existingJob?.status !== DbNotificationJobStatus.CANCELED) {
           return null;
         }
 
-        return this.prisma.$transaction(async (tx) => {
-          await tx.notificationJob.update({
-            where: { id: existingJob.id },
-            data: {
-              idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
-            },
+        return this.prisma.transaction(async (tx) => {
+          await tx.orm.public.NotificationJob.where((row) =>
+            row.id.eq(existingJob.id),
+          ).update({
+            idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
+            updatedAt: new Date(),
           });
 
-          return tx.notificationJob.create({
-            data: {
-              id: randomUUID(),
-              ruleId: options.notificationRule.id,
-              targetId: options.target.id,
-              ownerType: options.notificationRule.ownerType,
-              ownerId: options.notificationRule.ownerId,
-              jobKind: options.jobKind,
-              scheduledFor: options.scheduledFor,
-              status: options.forceBlocked
-                ? DbNotificationJobStatus.BLOCKED
-                : DbNotificationJobStatus.PENDING,
-              idempotencyKey,
-              sourceEntityType: options.sourceEntityType ?? null,
-              sourceEntityId: options.sourceEntityId ?? null,
-              sourceEventId: options.sourceEventId ?? null,
-              payloadSnapshot: options.payloadSnapshot,
-              blockedReason: options.forceBlocked
-                ? "Missing Discord bot permissions or target access"
-                : null,
-            },
+          return tx.orm.public.NotificationJob.create({
+            id: randomUUID(),
+            ruleId: options.notificationRule.id,
+            targetId: options.target.id,
+            ownerType: options.notificationRule.ownerType,
+            ownerId: options.notificationRule.ownerId,
+            jobKind: options.jobKind,
+            scheduledFor: options.scheduledFor,
+            status: options.forceBlocked
+              ? DbNotificationJobStatus.BLOCKED
+              : DbNotificationJobStatus.PENDING,
+            idempotencyKey,
+            sourceEntityType: options.sourceEntityType ?? null,
+            sourceEntityId: options.sourceEntityId ?? null,
+            sourceEventId: options.sourceEventId ?? null,
+            payloadSnapshot: options.payloadSnapshot,
+            blockedReason: options.forceBlocked
+              ? "Missing Discord bot permissions or target access"
+              : null,
+            updatedAt: new Date(),
           });
         });
       }
@@ -284,13 +281,12 @@ export class NotificationJobService {
   }
 
   async dispatchNotificationJob(notificationJobId: string) {
-    const notificationJob = await this.prisma.notificationJob.findUnique({
-      where: { id: notificationJobId },
-      include: {
-        rule: true,
-        target: true,
-      },
-    });
+    const notificationJob = await this.prisma.orm.public.NotificationJob.where(
+      (row) => row.id.eq(notificationJobId),
+    )
+      .include("rule")
+      .include("target")
+      .first();
 
     if (!notificationJob) {
       return;
@@ -301,13 +297,13 @@ export class NotificationJobService {
     );
 
     if (targetBlockedReason) {
-      await this.prisma.notificationJob.update({
-        where: { id: notificationJob.id },
-        data: {
-          status: DbNotificationJobStatus.BLOCKED,
-          blockedReason: targetBlockedReason,
-          lastError: targetBlockedReason,
-        },
+      await this.prisma.orm.public.NotificationJob.where((row) =>
+        row.id.eq(notificationJob.id),
+      ).update({
+        status: DbNotificationJobStatus.BLOCKED,
+        blockedReason: targetBlockedReason,
+        lastError: targetBlockedReason,
+        updatedAt: new Date(),
       });
       return;
     }
@@ -318,42 +314,41 @@ export class NotificationJobService {
         notificationJob.ownerId,
       ))
     ) {
-      await this.prisma.notificationJob.update({
-        where: { id: notificationJob.id },
-        data: {
-          status: DbNotificationJobStatus.BLOCKED,
-          blockedReason: "Missing Discord bot permissions",
-          lastError: "Missing Discord bot permissions",
-        },
+      await this.prisma.orm.public.NotificationJob.where((row) =>
+        row.id.eq(notificationJob.id),
+      ).update({
+        status: DbNotificationJobStatus.BLOCKED,
+        blockedReason: "Missing Discord bot permissions",
+        lastError: "Missing Discord bot permissions",
+        updatedAt: new Date(),
       });
       return;
     }
 
-    const updateResult = await this.prisma.notificationJob.updateMany({
-      where: {
-        id: notificationJob.id,
-        status: {
-          in: [
-            DbNotificationJobStatus.PENDING,
-            DbNotificationJobStatus.BLOCKED,
-          ],
-        },
-      },
-      data: {
-        status: DbNotificationJobStatus.PROCESSING,
-        blockedReason: null,
-        attemptCount: {
-          increment: 1,
-        },
-      },
-    });
+    const { affectedRows: updateResult } = await this.prisma.runtime().execute(
+      this.prisma.raw.sql`
+        UPDATE "NotificationJob"
+        SET
+          "status" = ${DbNotificationJobStatus.PROCESSING},
+          "blockedReason" = NULL,
+          "attemptCount" = "attemptCount" + 1,
+          "updatedAt" = NOW()
+        WHERE "id" = ${notificationJob.id}
+          AND "status" IN (
+            ${DbNotificationJobStatus.PENDING},
+            ${DbNotificationJobStatus.BLOCKED}
+          )
+      `
+        .affectedCount()
+        .build(),
+    );
 
-    if (updateResult.count === 0) {
+    if (updateResult === 0) {
       return;
     }
 
     const payload = notificationJob.payloadSnapshot as
-      | Prisma.JsonObject
+      | JsonObject
       | null
       | undefined;
 
@@ -401,12 +396,12 @@ export class NotificationJobService {
         `AMQP publish failed for job ${notificationJob.id}: ${errorMessage}`,
       );
 
-      await this.prisma.notificationJob.update({
-        where: { id: notificationJob.id },
-        data: {
-          status: DbNotificationJobStatus.PENDING,
-          lastError: `AMQP publish failed: ${errorMessage}`,
-        },
+      await this.prisma.orm.public.NotificationJob.where((row) =>
+        row.id.eq(notificationJob.id),
+      ).update({
+        status: DbNotificationJobStatus.PENDING,
+        lastError: `AMQP publish failed: ${errorMessage}`,
+        updatedAt: new Date(),
       });
 
       const retryDelay = Math.min(
@@ -418,9 +413,9 @@ export class NotificationJobService {
   }
 
   async handleDeliveryResult(event: DiscordNotificationDeliveryResultEvent) {
-    const notificationJob = await this.prisma.notificationJob.findUnique({
-      where: { id: event.notificationJobId },
-    });
+    const notificationJob = await this.prisma.orm.public.NotificationJob.where(
+      (row) => row.id.eq(event.notificationJobId),
+    ).first();
 
     if (!notificationJob) {
       return;
@@ -431,23 +426,23 @@ export class NotificationJobService {
     }
 
     if (event.success) {
-      await this.prisma.$transaction(async (tx) => {
-        await tx.notificationJob.update({
-          where: { id: notificationJob.id },
-          data: {
-            status: DbNotificationJobStatus.SENT,
-            processedAt: new Date(event.deliveredAt),
-            providerMessageId: event.providerMessageId ?? null,
-            lastError: null,
-          },
+      await this.prisma.transaction(async (tx) => {
+        await tx.orm.public.NotificationJob.where((row) =>
+          row.id.eq(notificationJob.id),
+        ).update({
+          status: DbNotificationJobStatus.SENT,
+          processedAt: new Date(event.deliveredAt),
+          providerMessageId: event.providerMessageId ?? null,
+          lastError: null,
+          updatedAt: new Date(),
         });
 
-        await tx.notificationTarget.update({
-          where: { id: notificationJob.targetId },
-          data: {
-            lastDeliveryAt: new Date(event.deliveredAt),
-            lastDeliveryError: null,
-          },
+        await tx.orm.public.NotificationTarget.where((row) =>
+          row.id.eq(notificationJob.targetId),
+        ).update({
+          lastDeliveryAt: new Date(event.deliveredAt),
+          lastDeliveryError: null,
+          updatedAt: new Date(),
         });
       });
 
@@ -466,26 +461,28 @@ export class NotificationJobService {
     const nextAttemptCount = notificationJob.attemptCount;
     const shouldRetry = event.retryable && nextAttemptCount <= 3;
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.notificationTarget.update({
-        where: { id: notificationJob.targetId },
-        data: {
-          lastDeliveryError:
-            event.errorMessage ??
-            event.errorCode ??
-            "Notification delivery failed",
-        },
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.NotificationTarget.where((row) =>
+        row.id.eq(notificationJob.targetId),
+      ).update({
+        lastDeliveryError:
+          event.errorMessage ??
+          event.errorCode ??
+          "Notification delivery failed",
+        updatedAt: new Date(),
       });
 
-      await tx.notificationJob.update({
-        where: { id: notificationJob.id },
-        data: shouldRetry
+      await tx.orm.public.NotificationJob.where((row) =>
+        row.id.eq(notificationJob.id),
+      ).update(
+        shouldRetry
           ? {
               status: DbNotificationJobStatus.PENDING,
               lastError:
                 event.errorMessage ??
                 event.errorCode ??
                 "Notification delivery failed",
+              updatedAt: new Date(),
             }
           : {
               status: DbNotificationJobStatus.FAILED,
@@ -494,8 +491,9 @@ export class NotificationJobService {
                 event.errorMessage ??
                 event.errorCode ??
                 "Notification delivery failed",
+              updatedAt: new Date(),
             },
-      });
+      );
     });
 
     if (shouldRetry) {
@@ -517,9 +515,10 @@ export class NotificationJobService {
   }
 
   async rebuildJobsForRule(ruleId: number) {
-    const notificationRule = await this.prisma.notificationRule.findUnique({
-      where: { id: ruleId },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        row.id.eq(ruleId),
+      ).first();
 
     if (!notificationRule) {
       return;
@@ -550,22 +549,25 @@ export class NotificationJobService {
       return;
     }
 
-    const timers = await this.prisma.timer.findMany({
-      where: {
-        guildId: notificationRule.guildId,
-        deletedAt: null,
-        ...(notificationRule.world ? { world: notificationRule.world } : {}),
-      },
-      select: {
-        guildId: true,
-        world: true,
-        npcId: true,
-        timerKey: true,
-        minSpawnTime: true,
-        maxSpawnTime: true,
-        npc: true,
-      },
-    });
+    let timersQuery = this.prisma.orm.public.Timer.where((row) =>
+      and(row.guildId.eq(notificationRule.guildId), row.deletedAt.isNull()),
+    );
+    if (notificationRule.world) {
+      timersQuery = timersQuery.where((row) =>
+        row.world.eq(notificationRule.world),
+      );
+    }
+    const timers = await timersQuery
+      .select(
+        "guildId",
+        "world",
+        "npcId",
+        "timerKey",
+        "minSpawnTime",
+        "maxSpawnTime",
+        "npc",
+      )
+      .all();
 
     await Promise.all(
       timers.map(async (timer) => {
@@ -597,16 +599,12 @@ export class NotificationJobService {
   }
 
   async rebuildTimerJobsForRule(ruleId: number, event: TimerUpdatedEvent) {
-    const notificationRule = await this.prisma.notificationRule.findUnique({
-      where: { id: ruleId },
-      include: {
-        targets: {
-          include: {
-            target: true,
-          },
-        },
-      },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        row.id.eq(ruleId),
+      )
+        .include("targets", (relation) => relation.include("target"))
+        .first();
 
     if (
       !notificationRule ||
@@ -688,16 +686,12 @@ export class NotificationJobService {
   }
 
   async rebuildScheduledMessageJobsForRule(ruleId: number) {
-    const notificationRule = await this.prisma.notificationRule.findUnique({
-      where: { id: ruleId },
-      include: {
-        targets: {
-          include: {
-            target: true,
-          },
-        },
-      },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        row.id.eq(ruleId),
+      )
+        .include("targets", (relation) => relation.include("target"))
+        .first();
 
     if (
       !notificationRule ||
@@ -763,14 +757,12 @@ export class NotificationJobService {
   }
 
   async scheduleNextRecurringJob(ruleId: number) {
-    const notificationRule = await this.prisma.notificationRule.findUnique({
-      where: { id: ruleId },
-      include: {
-        targets: {
-          include: { target: true },
-        },
-      },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        row.id.eq(ruleId),
+      )
+        .include("targets", (relation) => relation.include("target"))
+        .first();
 
     if (
       !notificationRule ||
@@ -783,14 +775,16 @@ export class NotificationJobService {
       return;
     }
 
-    const currentCycleJobs = await this.prisma.notificationJob.findMany({
-      where: {
-        ruleId,
-        scheduledFor: notificationRule.scheduledAt,
-        sourceEntityType: "scheduled-message",
-      },
-      select: { status: true },
-    });
+    const currentCycleJobs = await this.prisma.orm.public.NotificationJob.where(
+      (row) =>
+        and(
+          row.ruleId.eq(ruleId),
+          row.scheduledFor.eq(notificationRule.scheduledAt),
+          row.sourceEntityType.eq("scheduled-message"),
+        ),
+    )
+      .select("status")
+      .all();
 
     if (
       currentCycleJobs.some((job) => !FINAL_JOB_STATUSES.includes(job.status))
@@ -822,12 +816,11 @@ export class NotificationJobService {
       return;
     }
 
-    const updated = await this.prisma.notificationRule.updateMany({
-      where: { id: ruleId, scheduledAt: notificationRule.scheduledAt },
-      data: { scheduledAt: nextScheduledAt },
-    });
+    const updated = await this.prisma.orm.public.NotificationRule.where((row) =>
+      and(row.id.eq(ruleId), row.scheduledAt.eq(notificationRule.scheduledAt)),
+    ).updateAndCount({ scheduledAt: nextScheduledAt, updatedAt: new Date() });
 
-    if (updated.count === 0) {
+    if (updated === 0) {
       return;
     }
 
@@ -874,17 +867,11 @@ export class NotificationJobService {
   }
 
   getRuleById(ruleId: number) {
-    return this.prisma.notificationRule
-      .findUnique({
-        where: { id: ruleId },
-        include: {
-          targets: {
-            include: {
-              target: true,
-            },
-          },
-        },
-      })
+    return this.prisma.orm.public.NotificationRule.where((row) =>
+      row.id.eq(ruleId),
+    )
+      .include("targets", (relation) => relation.include("target"))
+      .first()
       .then((rule) => (rule ? this.mapRuleResponse(rule) : null));
   }
 
@@ -913,7 +900,7 @@ export class NotificationJobService {
   private getNotificationTargetBlockedReason(target: {
     active: boolean;
     canSend: boolean;
-    metadata?: Prisma.JsonValue | null;
+    metadata?: JsonValue | null;
   }) {
     if (!target.active) {
       return "Notification target is disabled";
@@ -925,7 +912,7 @@ export class NotificationJobService {
 
     const metadata =
       target.metadata && typeof target.metadata === "object"
-        ? (target.metadata as Prisma.JsonObject)
+        ? (target.metadata as JsonObject)
         : null;
     const missingPermissions = Array.isArray(metadata?.missingPermissions)
       ? metadata.missingPermissions.filter(
@@ -942,79 +929,70 @@ export class NotificationJobService {
 
   private async getJobsForOwner(owner: OwnerContext) {
     const [pending, history] = await Promise.all([
-      this.prisma.notificationJob.findMany({
-        where: {
-          ownerType: owner.ownerType,
-          ownerId: owner.ownerId,
-          status: {
-            in: [
-              DbNotificationJobStatus.PENDING,
-              DbNotificationJobStatus.PROCESSING,
-              DbNotificationJobStatus.BLOCKED,
-            ],
-          },
-        },
-        include: {
-          rule: true,
-          target: true,
-        },
-        orderBy: [{ scheduledFor: "asc" }],
-      }),
-      this.prisma.notificationJob.findMany({
-        where: {
-          ownerType: owner.ownerType,
-          ownerId: owner.ownerId,
-          status: {
-            in: [...FINAL_JOB_STATUSES],
-          },
-        },
-        include: {
-          rule: true,
-          target: true,
-        },
-        orderBy: [{ updatedAt: "desc" }],
-        take: NOTIFICATIONS_HISTORY_RESPONSE_LIMIT,
-      }),
+      this.prisma.orm.public.NotificationJob.where((row) =>
+        and(
+          row.ownerType.eq(owner.ownerType),
+          row.ownerId.eq(owner.ownerId),
+          row.status.in([
+            DbNotificationJobStatus.PENDING,
+            DbNotificationJobStatus.PROCESSING,
+            DbNotificationJobStatus.BLOCKED,
+          ]),
+        ),
+      )
+        .include("rule")
+        .include("target")
+        .orderBy([(row) => row.scheduledFor.asc()])
+        .all(),
+      this.prisma.orm.public.NotificationJob.where((row) =>
+        and(
+          row.ownerType.eq(owner.ownerType),
+          row.ownerId.eq(owner.ownerId),
+          row.status.in([...FINAL_JOB_STATUSES]),
+        ),
+      )
+        .include("rule")
+        .include("target")
+        .orderBy([(row) => row.updatedAt.desc()])
+        .limit(NOTIFICATIONS_HISTORY_RESPONSE_LIMIT)
+        .all(),
     ]);
 
     return { pending, history };
   }
 
   private async pruneHistory(owner: OwnerContext) {
-    const staleJobs = await this.prisma.notificationJob.findMany({
-      where: {
-        ownerType: owner.ownerType,
-        ownerId: owner.ownerId,
-        status: {
-          in: [...FINAL_JOB_STATUSES],
-        },
-      },
-      orderBy: [{ updatedAt: "desc" }],
-      skip: NOTIFICATIONS_HISTORY_RETENTION_LIMIT,
-      select: { id: true },
-    });
+    const staleJobs = await this.prisma.orm.public.NotificationJob.where(
+      (row) =>
+        and(
+          row.ownerType.eq(owner.ownerType),
+          row.ownerId.eq(owner.ownerId),
+          row.status.in([...FINAL_JOB_STATUSES]),
+        ),
+    )
+      .select("id")
+      .orderBy([(row) => row.updatedAt.desc()])
+      .offset(NOTIFICATIONS_HISTORY_RETENTION_LIMIT)
+      .all();
 
     if (staleJobs.length === 0) {
       return;
     }
 
-    await this.prisma.notificationJob.deleteMany({
-      where: {
-        id: {
-          in: staleJobs.map((job) => job.id),
-        },
-      },
-    });
+    await this.prisma.orm.public.NotificationJob.where((row) =>
+      row.id.in(staleJobs.map((job) => job.id)),
+    ).deleteAndCount();
   }
 
   private async ensureGuildJob(guildId: string, jobId: string) {
-    const notificationJob = await this.prisma.notificationJob.findFirst({
-      where: {
-        id: jobId,
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-    });
+    const notificationJob = await this.prisma.orm.public.NotificationJob.where(
+      (row) =>
+        and(
+          row.id.eq(jobId),
+          row.ownerType.eq(DbNotificationOwnerType.GUILD),
+          row.ownerId.eq(guildId),
+        ),
+    ).first();
 
     if (!notificationJob) {
       throw new NotFoundException(Error.NOTIFICATION_JOB_NOT_FOUND);
@@ -1035,9 +1013,9 @@ export class NotificationJobService {
 
   private mapJobResponse<
     T extends {
-      payloadSnapshot: Prisma.JsonValue | null;
+      payloadSnapshot: JsonValue | null;
       rule: {
-        filters: Prisma.JsonValue | null;
+        filters: JsonValue | null;
       };
     },
   >(job: T) {
@@ -1050,7 +1028,7 @@ export class NotificationJobService {
 
   private mapRuleResponse<
     T extends {
-      filters: Prisma.JsonValue | null;
+      filters: JsonValue | null;
     },
   >(rule: T) {
     return {
@@ -1059,7 +1037,7 @@ export class NotificationJobService {
     };
   }
 
-  private parseNotificationFilters(filters: Prisma.JsonValue | null) {
+  private parseNotificationFilters(filters: JsonValue | null) {
     if (filters === null) {
       return null;
     }
@@ -1067,7 +1045,7 @@ export class NotificationJobService {
     return NotificationFiltersResponseDto.schema.parse(filters);
   }
 
-  private parsePayloadSnapshot(payloadSnapshot: Prisma.JsonValue | null) {
+  private parsePayloadSnapshot(payloadSnapshot: JsonValue | null) {
     return NotificationJobPayloadSnapshotResponseDto.schema.parse(
       payloadSnapshot,
     );

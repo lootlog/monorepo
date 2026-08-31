@@ -1,4 +1,4 @@
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { AppModule } from "../src/app.module.js";
@@ -14,7 +14,7 @@ import {
   Permission,
   NpcType,
   ItemRarity,
-} from "../src/generated/prisma/client.js";
+} from "../src/db/domain.js";
 
 describe("Loots E2E Tests (Whitelist)", () => {
   let app: INestApplication;

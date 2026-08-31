@@ -1,4 +1,4 @@
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "#src/db/domain";
 import {
   canViewNpcTimer,
   type NpcPermissionData,

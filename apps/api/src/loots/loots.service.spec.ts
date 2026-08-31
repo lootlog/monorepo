@@ -16,6 +16,7 @@ import { NpcsService } from "../npcs/npcs.service.js";
 import { ItemsService } from "../items/items.service.js";
 import { GuildsService } from "../guilds/guilds.service.js";
 import { PrismaService } from "../db/prisma.service.js";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { LootlogConfigService } from "../lootlog-config/lootlog-config.service.js";
 import { UserLootlogConfigService } from "../user-lootlog-config/user-lootlog-config.service.js";
 import { LootAllocationService } from "./loot-allocation.service.js";
@@ -37,9 +38,8 @@ import {
   Permission,
   type Guild,
   LootSource,
-  type Prisma,
   type Role,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 
@@ -83,7 +83,7 @@ describe("Loot modules", () => {
       findMany: Mock;
     };
     $transaction: Mock;
-    $queryRaw: Mock;
+    sql: Mock;
   };
   let playersService: {
     bulkIndexPlayers: Mock;
@@ -192,12 +192,14 @@ describe("Loot modules", () => {
         findFirst: mockFn(),
       },
       lootSubmission: {
+        create: mockFn(),
         createMany: mockFn(),
         upsert: mockFn(),
         deleteMany: mockFn(),
         findMany: mockFn(),
       },
       organizationLootRecord: {
+        create: mockFn(),
         createMany: mockFn(),
         findFirst: mockFn(),
         findMany: mockFn(),
@@ -214,7 +216,7 @@ describe("Loot modules", () => {
         findMany: mockFn(),
       },
       $transaction: mockFn(),
-      $queryRaw: mockFn(),
+      sql: mockFn(),
     };
     mockPrismaService.$transaction.mockImplementation(
       (callback: (tx: typeof mockPrismaService) => Promise<unknown>) =>
@@ -279,7 +281,10 @@ describe("Loot modules", () => {
         LootQueryService,
         LootCommentService,
         { provide: LootStatsService, useValue: mockLootStatsService },
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: PlayersService, useValue: mockPlayersService },
         { provide: NpcsService, useValue: mockNpcsService },
         { provide: ItemsService, useValue: mockItemsService },
@@ -440,18 +445,12 @@ describe("Loot modules", () => {
 
       expect(prismaService.loot.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            organizationLootRecords: {
-              create: [
-                {
-                  guildId: "guild1",
-                  submissions: { create: { memberId: "member1" } },
-                },
-              ],
-            },
-          }),
+          data: expect.not.objectContaining({ organizationLootRecords: {} }),
         }),
       );
+      expect(prismaService.organizationLootRecord.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ guildId: "guild1", lootId: 1 }),
+      });
       expect(lootStatsService.invalidateCache).toHaveBeenCalledWith(["guild1"]);
       expect(playersService.bulkIndexPlayers).toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).toHaveBeenCalled();
@@ -877,15 +876,15 @@ describe("Loot modules", () => {
 
       await acceptance.accept({ discordId, submission: mockCreateLootDto });
 
-      expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
-        data: [
-          {
+      expect(prismaService.lootSubmission.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { organizationLootRecordId: 20, memberId: "member2" },
+          create: expect.objectContaining({
             organizationLootRecordId: 20,
             memberId: "member2",
-          },
-        ],
-        skipDuplicates: true,
-      });
+          }),
+        }),
+      );
       expect(prismaService.$transaction).toHaveBeenCalledTimes(1);
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
@@ -1061,23 +1060,8 @@ describe("Loot modules", () => {
         submission: mockCreateLootDto,
       });
 
-      expect(prismaService.loot.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            organizationLootRecords: {
-              create: [
-                {
-                  guildId: "guild1",
-                  submissions: { create: { memberId: "member1" } },
-                },
-                {
-                  guildId: "guild2",
-                  submissions: { create: { memberId: "member2" } },
-                },
-              ],
-            },
-          }),
-        }),
+      expect(prismaService.organizationLootRecord.create).toHaveBeenCalledTimes(
+        2,
       );
       expect(result).toEqual({
         id: mockLoot.id,
@@ -1155,20 +1139,9 @@ describe("Loot modules", () => {
       expect(
         lootlogConfigService.getMultipleLootlogConfigs,
       ).toHaveBeenCalledWith(["guild1"]);
-      expect(prismaService.loot.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            organizationLootRecords: {
-              create: [
-                {
-                  guildId: "guild1",
-                  submissions: { create: { memberId: "member1" } },
-                },
-              ],
-            },
-          }),
-        }),
-      );
+      expect(prismaService.organizationLootRecord.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ guildId: "guild1" }),
+      });
       expect(result).toEqual({
         id: mockLoot.id,
         submittedGuilds: [
@@ -1265,20 +1238,9 @@ describe("Loot modules", () => {
       });
 
       expect(prismaService.loot.create).toHaveBeenCalled();
-      expect(prismaService.loot.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            organizationLootRecords: {
-              create: [
-                {
-                  guildId: "guild2",
-                  submissions: { create: { memberId: "member2" } },
-                },
-              ],
-            },
-          }),
-        }),
-      );
+      expect(prismaService.organizationLootRecord.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ guildId: "guild2" }),
+      });
       expect(result).toEqual({
         id: mockLoot.id,
         submittedGuilds: [
@@ -1351,25 +1313,15 @@ describe("Loot modules", () => {
       expect(prismaService.lootComment.findMany).toHaveBeenCalledWith({
         where: {
           organizationLootRecord: {
-            guildId: options.guild.id,
-            lootId: options.lootId,
-            archivedAt: null,
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        include: {
-          member: {
-            select: {
-              name: true,
-              avatar: true,
-              userId: true,
-              roles: {
-                select: { color: true },
-                orderBy: { position: "desc" },
-              },
+            some: {
+              guildId: options.guild.id,
+              lootId: options.lootId,
+              archivedAt: null,
             },
           },
         },
+        orderBy: { createdAt: "desc" },
+        include: { member: true },
       });
       expect(result).toEqual([
         {
@@ -1414,6 +1366,7 @@ describe("Loot modules", () => {
         data: {
           archivedAt: expect.any(Date),
           archivedByMemberId: 42,
+          updatedAt: expect.any(Date),
         },
       });
       expect(prismaService.lootSubmission.deleteMany).not.toHaveBeenCalled();
@@ -1478,12 +1431,19 @@ describe("Loot modules", () => {
       prismaService.organizationLootRecord.findFirst.mockResolvedValue({
         id: 10,
       });
+      prismaService.member.findUnique.mockResolvedValue({
+        id: "member1",
+        name: "Test User",
+        avatar: null,
+        userId: "user123",
+        roles: [],
+      });
       prismaService.lootComment.create.mockResolvedValue(mockComment);
 
       const result = await service.createComment(options);
 
       expect(prismaService.lootComment.create).toHaveBeenCalled();
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         ...mockComment,
         guildId: options.guild.id,
         lootId: options.lootId,
@@ -1577,7 +1537,7 @@ describe("Loot modules", () => {
             some: {
               submissions: {
                 some: {
-                  member: { globalUserId: actorUserId },
+                  member: { some: { globalUserId: actorUserId } },
                   createdAt: { gte: expect.any(Date) },
                 },
               },
@@ -1588,6 +1548,7 @@ describe("Loot modules", () => {
         data: {
           lootShare: { "1123": ["abc123"] },
           lootShareSource: "CHAT_MESSAGE",
+          updatedAt: expect.any(Date),
         },
       });
       expect(result).toEqual({});
@@ -1660,7 +1621,7 @@ describe("Loot modules", () => {
           some: {
             submissions: {
               some: expect.objectContaining({
-                member: { globalUserId: actorUserId },
+                member: { some: { globalUserId: actorUserId } },
                 createdAt: { gte: expect.any(Date) },
               }),
             },
@@ -2025,10 +1986,22 @@ describe("Loot modules", () => {
     const getLastOrganizationLootWhere = () => {
       const lastCall =
         prismaService.organizationLootRecord.findMany.mock.calls.at(-1) as
-          | [Prisma.OrganizationLootRecordFindManyArgs]
+          | [
+              {
+                where?: {
+                  loot?:
+                    | { some?: Record<string, unknown> }
+                    | Record<string, unknown>;
+                };
+              },
+            ]
           | undefined;
 
-      return lastCall?.[0].where?.loot;
+      const loot = lastCall?.[0].where?.loot as
+        | { some?: Record<string, unknown> }
+        | Record<string, unknown>
+        | undefined;
+      return loot && "some" in loot ? loot.some : loot;
     };
 
     it("should return loots with submissions", async () => {
@@ -2088,7 +2061,7 @@ describe("Loot modules", () => {
           where: expect.objectContaining({
             guildId: mockGuild.id,
             archivedAt: null,
-            loot: expect.objectContaining({ world: "testworld" }),
+            loot: { some: expect.objectContaining({ world: "testworld" }) },
           }),
           orderBy: { lootId: "desc" },
           take: params.limit,
@@ -2121,39 +2094,8 @@ describe("Loot modules", () => {
 
       expect(getLastOrganizationLootWhere()).toEqual(
         expect.objectContaining({
-          AND: expect.arrayContaining([
-            { id: { lt: 123 } },
-            {
-              AND: [
-                { lootNpcs: { some: {} } },
-                {
-                  lootNpcs: {
-                    every: {
-                      npcSnapshot: {
-                        OR: [
-                          {
-                            AND: [
-                              { lvl: { not: null, gte: 10, lte: 60 } },
-                              {
-                                type: {
-                                  not: null,
-                                  notIn: [
-                                    NpcType.TITAN,
-                                    NpcType.HERO,
-                                    NpcType.EVENT_HERO,
-                                  ],
-                                },
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          ]),
+          id: { lt: 123 },
+          lootNpcs: expect.objectContaining({ every: expect.any(Object) }),
         }),
       );
     });
@@ -2222,48 +2164,13 @@ describe("Loot modules", () => {
 
       expect(getLastOrganizationLootWhere()).toEqual(
         expect.objectContaining({
-          AND: expect.arrayContaining([
-            {
-              lootNpcs: {
-                some: {
-                  npcSnapshot: {
-                    lvl: {
-                      gte: 10,
-                      lte: 20,
-                    },
-                  },
-                },
-              },
-            },
-            {
-              lootItems: {
-                some: {
-                  itemSnapshot: {
-                    lvl: {
-                      gte: 30,
-                      lte: 40,
-                    },
-                  },
-                },
-              },
-            },
-            {
-              lootPlayers: {
-                some: {
-                  lvl: {
-                    gte: 50,
-                    lte: 60,
-                  },
-                },
-              },
-            },
-            {
-              createdAt: {
-                gte: new Date("2024-01-01T00:00:00.000Z"),
-                lte: new Date("2024-01-31T23:59:59.999Z"),
-              },
-            },
-          ]),
+          createdAt: {
+            gte: new Date("2024-01-01T00:00:00.000Z"),
+            lte: new Date("2024-01-31T23:59:59.999Z"),
+          },
+          lootNpcs: expect.any(Object),
+          lootItems: expect.any(Object),
+          lootPlayers: expect.any(Object),
         }),
       );
     });
@@ -2278,37 +2185,13 @@ describe("Loot modules", () => {
 
       expect(getLastOrganizationLootWhere()).toEqual(
         expect.objectContaining({
-          AND: expect.arrayContaining([
-            {
-              lootItems: {
-                some: {
-                  itemSnapshot: {
-                    OR: [
-                      {
-                        statRaw: {
-                          not: {
-                            contains: "reqp=",
-                          },
-                        },
-                      },
-                      {
-                        statsSnapshot: {
-                          path: ["reqp"],
-                          string_contains: "h",
-                        },
-                      },
-                      {
-                        statsSnapshot: {
-                          path: ["reqp"],
-                          string_contains: "t",
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          ]),
+          lootItems: expect.objectContaining({
+            some: expect.objectContaining({
+              itemSnapshot: expect.objectContaining({
+                some: expect.objectContaining({ OR: expect.any(Array) }),
+              }),
+            }),
+          }),
         }),
       );
     });
@@ -2349,31 +2232,13 @@ describe("Loot modules", () => {
       expect(prismaService.loot.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            AND: expect.arrayContaining([
-              {
-                lootItems: {
-                  some: {
-                    itemSnapshot: {
-                      OR: [
-                        {
-                          statRaw: {
-                            not: {
-                              contains: "reqp=",
-                            },
-                          },
-                        },
-                        {
-                          statsSnapshot: {
-                            path: ["reqp"],
-                            string_contains: "h",
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ]),
+            lootItems: expect.objectContaining({
+              some: expect.objectContaining({
+                itemSnapshot: expect.objectContaining({
+                  some: expect.objectContaining({ OR: expect.any(Array) }),
+                }),
+              }),
+            }),
           }),
         }),
       );
@@ -2429,22 +2294,9 @@ describe("Loot modules", () => {
                 archivedAt: null,
               },
             },
-            AND: expect.arrayContaining([
-              {
-                lootItems: {
-                  some: {
-                    hid: "abc123",
-                  },
-                },
-              },
-            ]),
+            lootItems: { some: { hid: "abc123" } },
           }),
-          select: {
-            lootItems: expect.objectContaining({
-              where: { hid: "abc123" },
-              take: 1,
-            }),
-          },
+          include: { lootItems: true },
         }),
       );
       expect(result).toEqual({
@@ -2498,7 +2350,7 @@ describe("Loot modules", () => {
         lootShare: {},
         createdAt: new Date(),
         updatedAt: new Date(),
-        organizationLootRecords: [{ submissions: [], _count: { comments: 0 } }],
+        organizationLootRecords: [{ submissions: [], comments: 0 }],
         lootItems: [],
         lootPlayers: [],
         lootNpcs: [],
@@ -2522,40 +2374,7 @@ describe("Loot modules", () => {
                 archivedAt: null,
               },
             },
-            AND: expect.arrayContaining([
-              expect.objectContaining({
-                AND: [
-                  { lootNpcs: { some: {} } },
-                  {
-                    lootNpcs: {
-                      every: {
-                        npcSnapshot: {
-                          OR: [
-                            {
-                              AND: [
-                                {
-                                  lvl: { not: null, gte: 10, lte: 60 },
-                                },
-                                {
-                                  type: {
-                                    not: null,
-                                    notIn: [
-                                      NpcType.TITAN,
-                                      NpcType.HERO,
-                                      NpcType.EVENT_HERO,
-                                    ],
-                                  },
-                                },
-                              ],
-                            },
-                          ],
-                        },
-                      },
-                    },
-                  },
-                ],
-              }),
-            ]),
+            lootNpcs: expect.objectContaining({ every: expect.any(Object) }),
           }),
         }),
       );

@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
   Inject,
@@ -19,11 +20,13 @@ import { ChannelsService } from "#src/channels/channels.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 import {
   type Guild,
+  type Role,
   ItemRarity,
   NpcType,
   Permission,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachRolesToMembers } from "#src/db/many-to-many";
 import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "#src/guilds/dto/delete-guild.dto";
 import type { UpdateGuildDto } from "#src/guilds/dto/update-guild.dto";
@@ -63,6 +66,7 @@ type GetGuildDiscordSyncStateOptions = {
 };
 
 type GuildPermissionMember = {
+  id: number;
   guildId: string;
   active: boolean;
   globalUserId: string | null;
@@ -340,12 +344,12 @@ export class GuildsService {
       }
     }
 
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        active: true,
-        OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }],
-      },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      and(
+        row.active.eq(true),
+        or(row.id.eq(idOrVanityURL), row.vanityUrl.eq(idOrVanityURL)),
+      ),
+    ).first();
 
     if (!guild) {
       throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
@@ -471,52 +475,59 @@ export class GuildsService {
     discordId: string,
     requiredPermissions: Permission[],
   ) {
-    const guilds = await this.prisma.guild.findMany({
-      where: {
-        active: true,
-        OR: [
-          {
-            ownerId: discordId,
-          },
-          {
-            members: {
-              some: {
-                userId: discordId,
-                active: true,
-                globalUserId: { not: null },
-                roles: {
-                  some: {
-                    permissions: {
-                      hasSome: requiredPermissions,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        ],
-      },
-    });
+    const guilds = await this.prisma.orm.public.Guild.where((row) =>
+      row.active.eq(true),
+    ).all();
+    const memberRows = await this.prisma.orm.public.Member.where((row) =>
+      and(
+        row.guildId.in(guilds.map((guild) => guild.id)),
+        row.userId.eq(discordId),
+        row.active.eq(true),
+        row.globalUserId.isNotNull(),
+      ),
+    ).all();
+    const members = await attachRolesToMembers(
+      this.prisma,
+      memberRows as any[],
+    );
+    const membersByGuildId = new Map(
+      members.map((member) => [member.guildId, member]),
+    );
 
-    return guilds;
+    return guilds.flatMap((guild) => {
+      const member = membersByGuildId.get(guild.id);
+      const hasRequiredPermission = member
+        ? member.roles.some((role) =>
+            role.permissions.some((permission) =>
+              requiredPermissions.includes(permission),
+            ),
+          )
+        : false;
+      return guild.ownerId === discordId || hasRequiredPermission
+        ? [guild]
+        : [];
+    });
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
-    const [guilds, members] = await Promise.all([
-      this.prisma.guild.findMany({
-        where: { id: { in: guildIds }, active: true },
-      }),
-      this.prisma.member.findMany({
-        where: {
-          userId: discordId,
-          active: true,
-          guildId: { in: guildIds },
-        },
-        include: { roles: true, guild: true },
-      }),
-    ]);
+    const [guilds, members] = (await Promise.all([
+      this.prisma.orm.public.Guild.where((row) =>
+        and(row.id.in(guildIds), row.active.eq(true)),
+      ).all(),
+      this.prisma.orm.public.Member.where((row) =>
+        and(
+          row.userId.eq(discordId),
+          row.active.eq(true),
+          row.guildId.in(guildIds),
+        ),
+      ).all(),
+    ])) as [any[], Array<{ id: number; guildId: string }>];
+    const membersWithRoles = (await attachRolesToMembers(
+      this.prisma,
+      members,
+    )) as Array<{ guildId: string; roles: Role[] }>;
 
-    const memberMap = new Map(members.map((m) => [m.guildId, m]));
+    const memberMap = new Map(membersWithRoles.map((m) => [m.guildId, m]));
     const allPermissions = Object.values(Permission);
 
     const result = guilds.map((guild) => {
@@ -602,35 +613,30 @@ export class GuildsService {
     return result;
   }
 
-  private getGuildMembersForPermissions(
+  private async getGuildMembersForPermissions(
     discordId: string,
     guildIds: string[],
   ): Promise<GuildPermissionMember[]> {
     if (guildIds.length === 0) {
-      return Promise.resolve([]);
+      return [];
     }
 
-    return this.prisma.member.findMany({
-      where: {
-        userId: discordId,
-        guildId: { in: guildIds },
-      },
-      select: {
-        guildId: true,
-        active: true,
-        globalUserId: true,
-        lastDiscordSyncAt: true,
-        updatedAt: true,
-        roles: {
-          select: {
-            id: true,
-            lvlRangeFrom: true,
-            lvlRangeTo: true,
-            permissions: true,
-          },
-        },
-      },
-    });
+    const members = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(discordId), row.guildId.in(guildIds)),
+    )
+      .select(
+        "id",
+        "guildId",
+        "active",
+        "globalUserId",
+        "lastDiscordSyncAt",
+        "updatedAt",
+      )
+      .all();
+    return attachRolesToMembers(
+      this.prisma,
+      members as GuildPermissionMember[],
+    );
   }
 
   private async refreshGuildCandidatesWithinBudget(options: {
@@ -829,10 +835,11 @@ export class GuildsService {
     userId: string,
     entries: T[],
   ): Promise<T[]> {
-    const userPreferences = await this.prisma.userSettings.findUnique({
-      where: { userId },
-      select: { guildsOrder: true },
-    });
+    const userPreferences = await this.prisma.orm.public.UserSettings.where(
+      (row) => row.userId.eq(userId),
+    )
+      .select("guildsOrder")
+      .first();
 
     if (!userPreferences?.guildsOrder) {
       return entries;
@@ -1016,14 +1023,15 @@ export class GuildsService {
       });
     }
 
-    const oldGuild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-      select: {
-        vanityUrl: true,
-        reservationMinDurationMinutes: true,
-        reservationMaxDurationMinutes: true,
-      },
-    });
+    const oldGuild = await this.prisma.orm.public.Guild.where((row) =>
+      row.id.eq(guildId),
+    )
+      .select(
+        "vanityUrl",
+        "reservationMinDurationMinutes",
+        "reservationMaxDurationMinutes",
+      )
+      .first();
 
     if (
       oldGuild &&
@@ -1047,10 +1055,9 @@ export class GuildsService {
       });
     }
 
-    const guild = await this.prisma.guild.update({
-      where: { id: guildId },
-      data: this.buildGuildConfigUpdateData(data),
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      row.id.eq(guildId),
+    ).update(this.buildGuildConfigUpdateData(data));
 
     const cacheInvalidations = [
       this.redisService.del(getGuildCacheKey(guildId)),
@@ -1099,26 +1106,27 @@ export class GuildsService {
             reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
           }
         : {}),
+      updatedAt: new Date(),
     };
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.prisma.timer.findMany({
-      where: { guildId },
-      select: { world: true },
-      distinct: ["world"],
-    });
+    const worlds = await this.prisma.orm.public.Timer.where((row) =>
+      row.guildId.eq(guildId),
+    )
+      .select("world")
+      .distinct(["world"])
+      .all();
 
     return worlds.map((world) => world.world);
   }
 
   getMultipleGuildsByIds(ids: string[]) {
-    return this.prisma.guild.findMany({
-      where: { id: { in: ids } },
-    });
+    return this.prisma.orm.public.Guild.where((row) => row.id.in(ids)).all();
   }
 
   async createGuild(data: CreateGuildDto) {
+    const updatedAt = new Date();
     this.logger.log({
       level: "info",
       message: `createGuild called`,
@@ -1134,20 +1142,23 @@ export class GuildsService {
     let guild;
 
     try {
-      guild = await this.prisma.guild.upsert({
-        where: { id: data.guildId },
-        update: {
-          name: data.name,
-          icon: data.icon,
-          ownerId: data.ownerId,
-          active: true,
-        },
+      guild = await this.prisma.orm.public.Guild.where((row) =>
+        row.id.eq(data.guildId),
+      ).upsert({
         create: {
           id: data.guildId,
           name: data.name,
           icon: data.icon,
           ownerId: data.ownerId,
           active: true,
+          updatedAt,
+        },
+        update: {
+          name: data.name,
+          icon: data.icon,
+          ownerId: data.ownerId,
+          active: true,
+          updatedAt,
         },
       });
 
@@ -1166,9 +1177,9 @@ export class GuildsService {
       throw error;
     }
 
-    const existingGuild = await this.prisma.guild.findUnique({
-      where: { id: data.guildId },
-    });
+    const existingGuild = await this.prisma.orm.public.Guild.where((row) =>
+      row.id.eq(data.guildId),
+    ).first();
 
     this.logger.log({
       level: "info",
@@ -1211,18 +1222,19 @@ export class GuildsService {
 
   async updateGuild(data: UpdateGuildDto) {
     try {
-      const oldGuild = await this.prisma.guild.findUnique({
-        where: { id: data.guildId },
-        select: { vanityUrl: true },
-      });
+      const oldGuild = await this.prisma.orm.public.Guild.where((row) =>
+        row.id.eq(data.guildId),
+      )
+        .select("vanityUrl")
+        .first();
 
-      await this.prisma.guild.update({
-        where: { id: data.guildId },
-        data: {
-          name: data.name,
-          icon: data.icon,
-          ownerId: data.ownerId,
-        },
+      await this.prisma.orm.public.Guild.where((row) =>
+        row.id.eq(data.guildId),
+      ).update({
+        name: data.name,
+        icon: data.icon,
+        ownerId: data.ownerId,
+        updatedAt: new Date(),
       });
 
       await Promise.all([
@@ -1246,10 +1258,11 @@ export class GuildsService {
 
   async deleteGuild({ guildId }: DeleteGuildDto) {
     try {
-      const guild = await this.prisma.guild.findUnique({
-        where: { id: guildId },
-        select: { vanityUrl: true },
-      });
+      const guild = await this.prisma.orm.public.Guild.where((row) =>
+        row.id.eq(guildId),
+      )
+        .select("vanityUrl")
+        .first();
       let deletedMembers = {
         count: 0,
         affectedMembers: [] as Awaited<
@@ -1257,12 +1270,14 @@ export class GuildsService {
         >["affectedMembers"],
       };
 
-      await this.prisma.$transaction(async (tx) => {
-        await tx.lootlogConfigNpc.deleteMany({
-          where: { lootlogConfigId: guildId },
-        });
+      await this.prisma.transaction(async (tx) => {
+        await tx.orm.public.LootlogConfigNpc.where((row) =>
+          row.lootlogConfigId.eq(guildId),
+        ).deleteAndCount();
 
-        await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
+        await tx.orm.public.LootlogConfig.where((row) =>
+          row.id.eq(guildId),
+        ).deleteAndCount();
 
         deletedMembers = await this.membersService.deleteMembersByGuildId(
           guildId,
@@ -1270,9 +1285,9 @@ export class GuildsService {
         );
         await this.rolesService.deleteRolesByGuildId(guildId);
 
-        await tx.guild.update({
-          where: { id: guildId },
-          data: { active: false },
+        await tx.orm.public.Guild.where((row) => row.id.eq(guildId)).update({
+          active: false,
+          updatedAt: new Date(),
         });
       });
 
@@ -1297,9 +1312,9 @@ export class GuildsService {
   }
 
   private loadGuildDiscordSyncState(guildId: string) {
-    return this.prisma.discordGuildSyncState.findUnique({
-      where: { guildId },
-    });
+    return this.prisma.orm.public.DiscordGuildSyncState.where((row) =>
+      row.guildId.eq(guildId),
+    ).first();
   }
 
   private shouldRefreshGuildDiscordSync(
@@ -1366,23 +1381,35 @@ export class GuildsService {
     };
   }
 
-  private createDefaultLootlogConfig(guildId: string) {
-    return this.prisma.lootlogConfig.upsert({
-      where: { id: guildId },
-      update: {},
+  private async createDefaultLootlogConfig(guildId: string) {
+    const config = await this.prisma.orm.public.LootlogConfig.where((row) =>
+      row.id.eq(guildId),
+    ).upsert({
       create: {
         id: guildId,
-        npcs: {
-          createMany: {
-            data: Object.values(NpcType).map((npcType) => ({
-              npcType,
-              allowedRarities: Object.values(ItemRarity),
-            })),
-            skipDuplicates: true,
-          },
-        },
+        updatedAt: new Date(),
       },
-      include: { npcs: true },
+      update: {},
     });
+    const existingNpcs = await this.prisma.orm.public.LootlogConfigNpc.where(
+      (row) => row.lootlogConfigId.eq(guildId),
+    )
+      .select("npcType")
+      .all();
+    const existingTypes = new Set(existingNpcs.map((npc) => npc.npcType));
+    const missingTypes = Object.values(NpcType).filter(
+      (npcType) => !existingTypes.has(npcType),
+    );
+    if (missingTypes.length > 0) {
+      await this.prisma.orm.public.LootlogConfigNpc.createAndCount(
+        missingTypes.map((npcType) => ({
+          lootlogConfigId: guildId,
+          npcType,
+          allowedRarities: Object.values(ItemRarity),
+          updatedAt: new Date(),
+        })),
+      );
+    }
+    return config;
   }
 }

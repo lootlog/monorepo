@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
@@ -9,8 +10,8 @@ import type { Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { serviceConfig } from "#src/config/service.config";
-import { PrismaService } from "#src/db/prisma.service";
-import type { MemberRefreshJob } from "#src/generated/prisma/client";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { temporalToDate } from "#src/db/temporal";
 import { RuntimeEnvironment } from "@lootlog/types";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant.js";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
@@ -30,7 +31,7 @@ export class MemberBulkRefreshService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
     private readonly bulkRefreshQueue: BullQueue<MemberBulkRefreshJobData>,
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
     private readonly memberReadService: MemberReadService,
     private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,
   ) {
@@ -42,31 +43,29 @@ export class MemberBulkRefreshService {
     requestedBy: string,
   ): Promise<RefreshJobWithCooldown> {
     const rateLimit = getAdminBulkRefreshRateLimit(this.env);
-    const recentJob = await this.prisma.memberRefreshJob.findFirst({
-      where: {
-        guildId,
-        createdAt: {
-          gte: new Date(Date.now() - rateLimit),
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const recentJob = await this.prisma.orm.public.MemberRefreshJob.where(
+      (row) => row.guildId.eq(guildId),
+    )
+      .where((job) => job.createdAt.gte(new Date(Date.now() - rateLimit)))
+      .orderBy((job) => job.createdAt.desc())
+      .first();
 
     if (recentJob) {
       throw new BadRequestException({
         message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
-        nextAvailableAt: new Date(recentJob.createdAt.getTime() + rateLimit),
+        nextAvailableAt: new Date(
+          temporalToDate(recentJob.createdAt).getTime() + rateLimit,
+        ),
       });
     }
 
     const members = await this.memberReadService.getGuildMembers(guildId);
-    const job = await this.prisma.memberRefreshJob.create({
-      data: {
-        guildId,
-        requestedBy,
-        status: "PENDING",
-        totalMembers: members.length,
-      },
+    const job = await this.prisma.orm.public.MemberRefreshJob.create({
+      guildId,
+      requestedBy,
+      status: "PENDING",
+      totalMembers: members.length,
+      updatedAt: new Date(),
     });
 
     try {
@@ -93,12 +92,12 @@ export class MemberBulkRefreshService {
         stack: (error as Error).stack,
       });
 
-      await this.prisma.memberRefreshJob.update({
-        where: { id: job.id },
-        data: {
-          status: "FAILED",
-          completedAt: new Date(),
-        },
+      await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+        row.id.eq(job.id),
+      ).update({
+        status: "FAILED",
+        completedAt: new Date(),
+        updatedAt: new Date(),
       });
       await this.memberRefreshJobEventsService.emitJobUpdate(job.id);
       throw error;
@@ -110,10 +109,11 @@ export class MemberBulkRefreshService {
   async getLatestRefreshJob(
     guildId: string,
   ): Promise<RefreshJobWithCooldown | null> {
-    const job = await this.prisma.memberRefreshJob.findFirst({
-      where: { guildId },
-      orderBy: { createdAt: "desc" },
-    });
+    const job = await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+      row.guildId.eq(guildId),
+    )
+      .orderBy((refreshJob) => refreshJob.createdAt.desc())
+      .first();
 
     return job ? this.withRefreshJobCooldown(job) : null;
   }
@@ -122,12 +122,9 @@ export class MemberBulkRefreshService {
     guildId: string;
     jobId: number;
   }): Promise<RefreshJobWithCooldown> {
-    const job = await this.prisma.memberRefreshJob.findFirst({
-      where: {
-        id: options.jobId,
-        guildId: options.guildId,
-      },
-    });
+    const job = await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+      and(row.id.eq(options.jobId), row.guildId.eq(options.guildId)),
+    ).first();
 
     if (!job) {
       throw new NotFoundException({
@@ -138,13 +135,27 @@ export class MemberBulkRefreshService {
     return this.withRefreshJobCooldown(job);
   }
 
-  private withRefreshJobCooldown(
-    job: MemberRefreshJob,
-  ): RefreshJobWithCooldown {
+  private withRefreshJobCooldown(job: {
+    id: number;
+    guildId: string;
+    requestedBy: string;
+    status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+    totalMembers: number;
+    processedMembers: number;
+    failedMembers: number;
+    createdAt: Date | { toString(): string };
+    updatedAt: Date | { toString(): string };
+    completedAt: Date | { toString(): string } | null;
+  }): RefreshJobWithCooldown {
+    const createdAt = temporalToDate(job.createdAt);
     return {
       ...job,
+      createdAt,
+      updatedAt: temporalToDate(job.updatedAt),
+      completedAt:
+        job.completedAt === null ? null : temporalToDate(job.completedAt),
       nextAvailableAt: new Date(
-        job.createdAt.getTime() + getAdminBulkRefreshRateLimit(this.env),
+        createdAt.getTime() + getAdminBulkRefreshRateLimit(this.env),
       ),
     };
   }

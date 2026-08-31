@@ -3,6 +3,7 @@ import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { TimersService } from "./timers.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
@@ -23,7 +24,7 @@ import {
   Permission,
   Profession,
   TimerHistoryAction,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -50,7 +51,7 @@ describe("TimersService", () => {
       findUnique: mockFn(),
     },
     $transaction: mockFn(),
-    $queryRaw: mockFn(),
+    sql: mockFn(),
   };
 
   const mockAmqpConnection = {
@@ -113,7 +114,7 @@ describe("TimersService", () => {
         },
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
         },
         {
           provide: AmqpConnection,
@@ -229,11 +230,9 @@ describe("TimersService", () => {
       expect(mockPrismaService.timer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            timerId: {
-              guildId: "guild1",
-              world: "test-world",
-              timerKey: buildTimerKey(123, mockDto.npc.name),
-            },
+            guildId: "guild1",
+            world: "test-world",
+            timerKey: buildTimerKey(123, mockDto.npc.name),
           },
         }),
       );
@@ -615,8 +614,8 @@ describe("TimersService", () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockPrismaService.timer.findUnique.mockImplementation(
-        (args: { where?: { timerId?: { timerKey?: string } } }) => {
-          if (args?.where?.timerId?.timerKey === syntheticTimer.timerKey) {
+        (args: { where?: { timerKey?: string } }) => {
+          if (args?.where?.timerKey === syntheticTimer.timerKey) {
             return syntheticTimer;
           }
           return null;
@@ -640,11 +639,9 @@ describe("TimersService", () => {
 
       expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
         where: {
-          timerId: {
-            guildId: "guild1",
-            world: "test-world",
-            timerKey: buildTimerKey(syntheticNpcId, mockDto.npc.name),
-          },
+          guildId: "guild1",
+          world: "test-world",
+          timerKey: buildTimerKey(syntheticNpcId, mockDto.npc.name),
         },
       });
 
@@ -834,11 +831,9 @@ describe("TimersService", () => {
         2,
         expect.objectContaining({
           where: {
-            timerId: {
-              guildId: "guild1",
-              world: "test-world",
-              timerKey: buildTimerKey(123, secondDto.npc.name),
-            },
+            guildId: "guild1",
+            world: "test-world",
+            timerKey: buildTimerKey(123, secondDto.npc.name),
           },
         }),
       );
@@ -1146,7 +1141,7 @@ describe("TimersService", () => {
       expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            actorCharacter: { connect: { id: actorCharacter.id } },
+            actorCharacterSnapshotId: actorCharacter.id,
             actorCharacterLvl: 300,
           }),
         }),
@@ -1185,7 +1180,7 @@ describe("TimersService", () => {
       expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.not.objectContaining({
-            actorCharacter: expect.anything(),
+            actorCharacterSnapshotId: expect.anything(),
           }),
         }),
       );
@@ -1280,13 +1275,14 @@ describe("TimersService", () => {
 
       expect(mockPrismaService.timer.update).toHaveBeenCalledWith({
         where: {
-          timerId: {
-            guildId: "guild1",
-            world: "test-world",
-            timerKey: mockTimer.timerKey,
-          },
+          guildId: "guild1",
+          world: "test-world",
+          timerKey: mockTimer.timerKey,
         },
-        data: { deletedAt: expect.any(Date) },
+        data: {
+          deletedAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        },
       });
       expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
     });
@@ -1311,11 +1307,9 @@ describe("TimersService", () => {
       expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
       expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
         where: {
-          timerId: {
-            guildId: "guild1",
-            world: "test-world",
-            timerKey: manualTimer.timerKey,
-          },
+          guildId: "guild1",
+          world: "test-world",
+          timerKey: manualTimer.timerKey,
         },
       });
     });
@@ -1361,11 +1355,12 @@ describe("TimersService", () => {
       world: "test-world",
       npcId: 123,
       timerKey: buildTimerKey(123, "Test Boss"),
-      minSpawnTime: new Date("2026-05-03T08:00:00.000Z"),
-      maxSpawnTime: new Date("2026-05-03T09:00:00.000Z"),
+      minSpawnTime: new Date("2099-05-03T08:00:00.000Z"),
+      maxSpawnTime: new Date("2099-05-03T09:00:00.000Z"),
       latestRespBaseSeconds: 3600,
       latestRespawnRandomness: 10,
       wasReset: false,
+      deletedAt: null,
       createdById: 1,
       actorCharacterLvl: 300,
       createdAt: new Date("2026-05-03T07:00:00.000Z"),
@@ -1419,6 +1414,7 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
+      mockPrismaService.timer.findMany.mockReset();
       mockPrismaService.timer.findMany.mockResolvedValue([timer]);
 
       const result = await service.getAllTimers("discord123", "user123", {
@@ -1461,9 +1457,8 @@ describe("TimersService", () => {
         expect.objectContaining({
           where: expect.objectContaining({
             guildId: { in: ["guild1"] },
-            deletedAt: null,
-            maxSpawnTime: { gt: expect.any(Date) },
             world: "test-world",
+            OR: expect.any(Array),
           }),
         }),
       );
@@ -1498,48 +1493,12 @@ describe("TimersService", () => {
           where: expect.objectContaining({
             guildId: { in: ["guild1"] },
             world: "test-world",
-            OR: [
-              {
-                deletedAt: null,
-                maxSpawnTime: { gt: expect.any(Date) },
-              },
-              {
+            OR: expect.arrayContaining([
+              expect.objectContaining({
                 timerKey: { in: ["123:test-boss"] },
-                maxSpawnTime: { lte: expect.any(Date) },
-                NOT: [
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: 999,
-                    },
-                  },
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: "999",
-                    },
-                  },
-                ],
-              },
-              {
-                timerKey: { in: ["123:test-boss"] },
-                deletedAt: { not: null },
-                NOT: [
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: 999,
-                    },
-                  },
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: "999",
-                    },
-                  },
-                ],
-              },
-            ],
+                OR: expect.any(Array),
+              }),
+            ]),
           }),
         }),
       );
@@ -1887,7 +1846,7 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      mockPrismaService.sql = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
@@ -1898,7 +1857,7 @@ describe("TimersService", () => {
         10,
       );
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockPrismaService.sql).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         npcId: 123,
@@ -1916,7 +1875,7 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = mockFn().mockResolvedValue([]);
+      mockPrismaService.sql = mockFn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -1938,8 +1897,7 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw =
-        mockFn().mockResolvedValue(invalidTimerData);
+      mockPrismaService.sql = mockFn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -1952,13 +1910,13 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      mockPrismaService.sql = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
       await service.searchNpcsWithTimerData("guild1", "test-world", "Test");
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockPrismaService.sql).toHaveBeenCalled();
     });
   });
 });

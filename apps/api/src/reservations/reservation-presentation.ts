@@ -1,4 +1,4 @@
-import type { Guild, Reservation } from "#src/generated/prisma/client";
+import type { Guild, Reservation } from "#src/db/domain";
 
 export type ReservationWithGuild = Reservation & {
   guild: Pick<
@@ -48,7 +48,7 @@ export function presentReservation(
 ) {
   const isMine =
     reservation.createdByUserId === viewer.userId ||
-    reservation.legacyCreatedByDiscordId === viewer.discordId;
+    reservation.createdBy === viewer.discordId;
   const sourceIsCurrent = reservation.guildId === viewer.guildId;
   const canEdit = isMine && (sourceIsCurrent || viewer.guildId === null);
 

@@ -1,4 +1,4 @@
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { AppModule } from "../src/app.module.js";
@@ -14,7 +14,7 @@ import {
   type Member,
   Permission,
   type Role,
-} from "../src/generated/prisma/client.js";
+} from "../src/db/domain.js";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 
@@ -135,10 +135,10 @@ export async function createMemberFixture(
       name: `${auth.discordId} member`,
       globalUserId: auth.userId,
       type: params.type ?? "USER",
+      lastDiscordSyncAt: new Date(),
       roles: { connect: { id: role.id } },
     },
   });
-
   return { role, member };
 }
 

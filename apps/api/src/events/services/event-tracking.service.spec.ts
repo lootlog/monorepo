@@ -6,9 +6,10 @@ import { EventTrackingService } from "./event-tracking.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
-import { CoverageGapType } from "#src/generated/prisma/client";
+import { CoverageGapType } from "#src/db/domain";
 import { TimersService } from "#src/timers/timers.service";
 
 describe("EventTrackingService", () => {
@@ -20,6 +21,11 @@ describe("EventTrackingService", () => {
       findMany: mockFn(),
       findUnique: mockFn(),
       update: mockFn(),
+    },
+    eventMapToMember: {
+      createMany: mockFn(),
+      deleteMany: mockFn(),
+      findMany: mockFn(),
     },
     eventMapAssignmentHistory: {
       create: mockFn(),
@@ -97,7 +103,10 @@ describe("EventTrackingService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventTrackingService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: EventEmitterService, useValue: mockEventEmitter },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
@@ -415,13 +424,9 @@ describe("EventTrackingService", () => {
 
       await service.unassignMemberFromMap(guildId, eventId, mapId);
 
-      expect(mockPrismaService.eventMap.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: {
-            assignedMembers: { set: [] },
-          },
-        }),
-      );
+      expect(
+        mockPrismaService.eventMapToMember.deleteMany,
+      ).toHaveBeenCalledWith({ where: { a: mapId } });
     });
 
     it("should throw NotFoundException when map not found", async () => {
@@ -545,11 +550,12 @@ describe("EventTrackingService", () => {
       );
 
       expect(mockPrismaService.eventPresenceLog.create).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
+          id: expect.any(String),
           mapId: mockEventMap.id,
           memberId: mockMember.id,
           isAfk: false,
-        },
+        }),
       });
     });
 

@@ -1,4 +1,4 @@
-import type { Prisma } from "#src/generated/prisma/client";
+import type { JsonValue } from "#src/db/domain";
 import { jsonValueSchema } from "#src/shared/dto/zod-response-codecs";
 
 export const GuildDocumentContentSchema = jsonValueSchema.refine(
@@ -15,4 +15,4 @@ export const GuildDocumentContentSchema = jsonValueSchema.refine(
   },
 );
 
-export type GuildDocumentContent = Prisma.JsonValue;
+export type GuildDocumentContent = JsonValue;

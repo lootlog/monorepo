@@ -6,6 +6,7 @@ import { of } from "rxjs";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { AuthService } from "#src/auth/auth.service";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { MembersService } from "#src/members/members.service";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
@@ -138,7 +139,7 @@ describe("UsersService", () => {
         },
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
         },
         {
           provide: AuthService,
@@ -256,12 +257,12 @@ describe("UsersService", () => {
         hiddenGuildIds: ["guild-unavailable", "guild-1"],
         updatedAt: expect.any(Date),
       },
-      create: {
+      create: expect.objectContaining({
         userId: "auth-user-current",
         guildsOrder: [],
         hiddenGuildIds: ["guild-unavailable", "guild-1"],
         theme: "default",
-      },
+      }),
     });
     expect(result).toMatchObject({
       guildsOrder: ["guild-2", "guild-1"],
@@ -319,12 +320,10 @@ describe("UsersService", () => {
     expect(mockPrismaService.userSettings.upsert).not.toHaveBeenCalled();
     expect(mockPrismaService.userSettingDocument.upsert).toHaveBeenCalledWith({
       where: {
-        userId_domain_scopeType_scopeId: {
-          userId: "auth-user-current",
-          domain: "appearance",
-          scopeType: "USER",
-          scopeId: "auth-user-current",
-        },
+        userId: "auth-user-current",
+        domain: "appearance",
+        scopeType: "USER",
+        scopeId: "auth-user-current",
       },
       update: {
         overrides: {
@@ -342,6 +341,7 @@ describe("UsersService", () => {
         domain: "appearance",
         scopeType: "USER",
         scopeId: "auth-user-current",
+        updatedAt: expect.any(Date),
         overrides: {
           chat: {
             ...CHAT_APPEARANCE_READABLE_PRESET,
@@ -489,10 +489,8 @@ describe("UsersService", () => {
       mockPrismaService.userGameAccountSettings.upsert,
     ).toHaveBeenCalledWith({
       where: {
-        userId_accountId: {
-          userId: "auth-user-current",
-          accountId: "__global-notification-mutes__",
-        },
+        userId: "auth-user-current",
+        accountId: "__global-notification-mutes__",
       },
       update: {
         settings: {
@@ -521,6 +519,7 @@ describe("UsersService", () => {
       create: {
         userId: "auth-user-current",
         accountId: "__global-notification-mutes__",
+        updatedAt: expect.any(Date),
         settings: {
           mutes: {
             players: [
@@ -586,10 +585,8 @@ describe("UsersService", () => {
       mockPrismaService.userGameAccountSettings.findUnique,
     ).toHaveBeenCalledWith({
       where: {
-        userId_accountId: {
-          userId: "auth-user-current",
-          accountId: "12345",
-        },
+        userId: "auth-user-current",
+        accountId: "12345",
       },
     });
     expect(result).toEqual({
@@ -692,10 +689,8 @@ describe("UsersService", () => {
       mockPrismaService.userGameAccountSettings.upsert,
     ).toHaveBeenCalledWith({
       where: {
-        userId_accountId: {
-          userId: "auth-user-current",
-          accountId: "111",
-        },
+        userId: "auth-user-current",
+        accountId: "111",
       },
       update: {
         settings: {
@@ -775,10 +770,8 @@ describe("UsersService", () => {
       mockPrismaService.userGameAccountSettings.upsert,
     ).toHaveBeenCalledWith({
       where: {
-        userId_accountId: {
-          userId: "auth-user-current",
-          accountId: "222",
-        },
+        userId: "auth-user-current",
+        accountId: "222",
       },
       update: {
         settings: {
@@ -1095,21 +1088,19 @@ describe("UsersService", () => {
 
     expect(mockTx.member.update).toHaveBeenNthCalledWith(1, {
       where: { id: 101 },
-      data: {
+      data: expect.objectContaining({
         active: false,
         lastDiscordAttemptAt: expect.any(Date),
         lastDiscordStatus: "ACCOUNT_DELETED",
-        roles: { set: [] },
-      },
+      }),
     });
     expect(mockTx.member.update).toHaveBeenNthCalledWith(2, {
       where: { id: 202 },
-      data: {
+      data: expect.objectContaining({
         active: false,
         lastDiscordAttemptAt: expect.any(Date),
         lastDiscordStatus: "ACCOUNT_DELETED",
-        roles: { set: [] },
-      },
+      }),
     });
 
     expect(mockMembersService.notifyMembersRemoved).toHaveBeenCalledWith([

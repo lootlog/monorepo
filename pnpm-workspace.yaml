@@ -45,7 +45,6 @@ catalog:
   zod: ^4.4.3
 allowBuilds:
   "@nestjs/core": true
-  "@prisma/client": true
   "@prisma/engines": true
   "@scarf/scarf": true
   "@tailwindcss/oxide": true

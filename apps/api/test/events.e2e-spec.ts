@@ -1,7 +1,7 @@
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { Permission } from "../src/generated/prisma/client.js";
+import { Permission } from "../src/db/domain.js";
 import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/db/prisma.service.js";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";

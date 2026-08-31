@@ -1,6 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "#src/generated/prisma/client";
+import { CoverageGapType } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { mockFn } from "#src/test/mock-fn";
@@ -32,7 +33,7 @@ describe("EventCoordinationService", () => {
     vi.clearAllMocks();
 
     service = new EventCoordinationService(
-      mockPrisma as unknown as PrismaService,
+      attachPrismaOrmMock(mockPrisma) as unknown as PrismaService,
       mockTimersService as unknown as TimersService,
     );
 

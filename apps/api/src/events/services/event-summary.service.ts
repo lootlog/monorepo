@@ -1,5 +1,7 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { createId } from "@paralleldrive/cuid2";
 import { Injectable, Logger } from "@nestjs/common";
-import { CoverageGapType, type Prisma } from "#src/generated/prisma/client";
+import { CoverageGapType, type InputJsonValue } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { clipToWindow } from "../utils/tracking-window.util.js";
 
@@ -44,10 +46,11 @@ export class EventSummaryService {
     maxSpawnTime: Date,
     wasManualClose: boolean,
   ): Promise<void> {
-    const maps = await this.prisma.eventMap.findMany({
-      where: { heroNpcId },
-      select: { id: true, mapName: true, mapId: true },
-    });
+    const maps = (await this.prisma.orm.public.EventMap.where((row) =>
+      row.heroNpcId.eq(heroNpcId),
+    )
+      .select("id", "mapName", "mapId")
+      .all()) as Array<{ id: string; mapName: string; mapId: number }>;
 
     if (maps.length === 0) {
       this.logger.debug({
@@ -60,38 +63,41 @@ export class EventSummaryService {
     const mapIds = maps.map((m) => m.id);
     const mapNameById = new Map(maps.map((m) => [m.id, m.mapName]));
 
-    const presenceLogs = await this.prisma.eventPresenceLog.findMany({
-      where: {
-        mapId: { in: mapIds },
-        OR: [
-          {
-            startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
-          },
-          {
-            startedAt: { lt: windowOpenedAt },
-            OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
-          },
-        ],
-      },
-      include: {
-        member: { select: { id: true, name: true, avatar: true } },
-      },
-    });
+    const presenceLogs = (await this.prisma.orm.public.EventPresenceLog.where(
+      (row) =>
+        and(
+          row.mapId.in(mapIds),
+          or(
+            and(
+              row.startedAt.gte(windowOpenedAt),
+              row.startedAt.lte(windowClosedAt),
+            ),
+            and(
+              row.startedAt.lt(windowOpenedAt),
+              or(row.endedAt.isNull(), row.endedAt.gt(windowOpenedAt)),
+            ),
+          ),
+        ),
+    )
+      .include("member", (relation) => relation.select("id", "name", "avatar"))
+      .all()) as any[];
 
-    const gaps = await this.prisma.eventMapCoverageGap.findMany({
-      where: {
-        heroNpcId,
-        OR: [
-          {
-            startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
-          },
-          {
-            startedAt: { lt: windowOpenedAt },
-            OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
-          },
-        ],
-      },
-    });
+    const gaps = (await this.prisma.orm.public.EventMapCoverageGap.where(
+      (row) =>
+        and(
+          row.heroNpcId.eq(heroNpcId),
+          or(
+            and(
+              row.startedAt.gte(windowOpenedAt),
+              row.startedAt.lte(windowClosedAt),
+            ),
+            and(
+              row.startedAt.lt(windowOpenedAt),
+              or(row.endedAt.isNull(), row.endedAt.gt(windowOpenedAt)),
+            ),
+          ),
+        ),
+    ).all()) as any[];
 
     const totalWindowSeconds = Math.max(
       0,
@@ -231,48 +237,48 @@ export class EventSummaryService {
         ? Math.round((totalCoverageSeconds / totalWindowSeconds) * 10000) / 100
         : 0;
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.eventRespawnWindowSummary.create({
-        data: {
-          heroNpcId,
-          killId,
-          windowOpenedAt,
-          windowClosedAt,
-          minSpawnTime,
-          maxSpawnTime,
-          wasManualClose,
-          totalWindowSeconds,
-          totalCoverageSeconds,
-          totalUncoveredSeconds,
-          totalUnassignedSeconds,
-          coveragePercentage,
-          memberStats: memberStats as unknown as Prisma.InputJsonValue,
-          mapStats: mapStats as unknown as Prisma.InputJsonValue,
-          gapsTimeline: gapsTimeline as unknown as Prisma.InputJsonValue,
-        },
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.EventRespawnWindowSummary.create({
+        id: createId(),
+        heroNpcId,
+        killId,
+        windowOpenedAt,
+        windowClosedAt,
+        minSpawnTime,
+        maxSpawnTime,
+        wasManualClose,
+        totalWindowSeconds,
+        totalCoverageSeconds,
+        totalUncoveredSeconds,
+        totalUnassignedSeconds,
+        coveragePercentage,
+        memberStats: memberStats as unknown as InputJsonValue,
+        mapStats: mapStats as unknown as InputJsonValue,
+        gapsTimeline: gapsTimeline as unknown as InputJsonValue,
       });
 
-      const deletedLogs = await tx.eventPresenceLog.deleteMany({
-        where: {
-          mapId: { in: mapIds },
-          OR: [
-            {
-              startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
-            },
-            {
-              startedAt: { lt: windowOpenedAt },
-              endedAt: { lte: windowClosedAt },
-            },
-          ],
-        },
-      });
+      const deletedLogs = await tx.orm.public.EventPresenceLog.where((row) =>
+        and(
+          row.mapId.in(mapIds),
+          or(
+            and(
+              row.startedAt.gte(windowOpenedAt),
+              row.startedAt.lte(windowClosedAt),
+            ),
+            and(
+              row.startedAt.lt(windowOpenedAt),
+              row.endedAt.lte(windowClosedAt),
+            ),
+          ),
+        ),
+      ).deleteAndCount();
 
-      const deletedGaps = await tx.eventMapCoverageGap.deleteMany({
-        where: {
-          heroNpcId,
-          endedAt: { not: null, lte: windowClosedAt },
-        },
-      });
+      const deletedGaps = await tx.orm.public.EventMapCoverageGap.where((row) =>
+        and(
+          row.heroNpcId.eq(heroNpcId),
+          and(row.endedAt.isNotNull(), row.endedAt.lte(windowClosedAt)),
+        ),
+      ).deleteAndCount();
 
       this.logger.log({
         message: "Created respawn window summary",
@@ -281,8 +287,8 @@ export class EventSummaryService {
         totalWindowSeconds,
         coveragePercentage,
         memberCount: memberStats.length,
-        deletedLogs: deletedLogs.count,
-        deletedGaps: deletedGaps.count,
+        deletedLogs,
+        deletedGaps,
       });
     });
   }
@@ -294,26 +300,28 @@ export class EventSummaryService {
     limit = 20,
     cursor?: string,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: {
-        id: heroNpcId,
-        eventId,
-        event: { guildId },
-      },
-    });
+    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+      and(
+        row.id.eq(heroNpcId),
+        row.eventId.eq(eventId),
+        row.event.some((related) => related.guildId.eq(guildId)),
+      ),
+    ).first();
 
     if (!hero) {
       return { data: [], nextCursor: null };
     }
 
-    const summaries = await this.prisma.eventRespawnWindowSummary.findMany({
-      where: {
-        heroNpcId,
-        ...(cursor && { id: { lt: cursor } }),
-      },
-      orderBy: { windowClosedAt: "desc" },
-      take: limit + 1,
-    });
+    let summariesQuery = this.prisma.orm.public.EventRespawnWindowSummary.where(
+      (row) => row.heroNpcId.eq(heroNpcId),
+    );
+    if (cursor) {
+      summariesQuery = summariesQuery.where((row) => row.id.lt(cursor));
+    }
+    const summaries = await summariesQuery
+      .orderBy((row) => row.windowClosedAt.desc())
+      .limit(limit + 1)
+      .all();
 
     const hasMore = summaries.length > limit;
     const data = hasMore ? summaries.slice(0, limit) : summaries;

@@ -6,7 +6,7 @@ import {
   type ItemRarity,
   type Permission,
   type Role,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { createHash } from "node:crypto";
 import { createLootAccessFingerprint } from "@lootlog/loot-visibility";
 import {
@@ -297,7 +297,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.prisma.query<
       Array<{
         total_loots: bigint;
         total_items: bigint;
@@ -383,7 +383,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.prisma.query<
       Array<{
         rarity: ItemRarity;
         count: bigint;
@@ -468,7 +468,7 @@ export class LootStatsService {
     const truncUnit = this.getTimelineTruncUnit(period);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.prisma.query<
       Array<{
         date: Date;
         rarity: ItemRarity | null;
@@ -589,7 +589,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.prisma.query<
       Array<{
         npc_id: number;
         name: string;
@@ -694,7 +694,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.prisma.query<
       Array<{
         member_id: number;
         name: string;
@@ -812,7 +812,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.prisma.query<
       Array<{
         item_id: number;
         hid: string;

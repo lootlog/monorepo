@@ -1,9 +1,9 @@
 import type {
   Member,
   MemberRefreshJob,
-  Prisma,
+  DatabaseTransaction,
   Role,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,
@@ -89,7 +89,7 @@ export type DeleteMembersByGuildIdResult = {
 };
 
 export type DeleteMembersByGuildIdOptions = {
-  tx?: Prisma.TransactionClient;
+  tx?: DatabaseTransaction;
 };
 
 export type DeactivateMembersMissingFromDiscordGuildsOptions = {

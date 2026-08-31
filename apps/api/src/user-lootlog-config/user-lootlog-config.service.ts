@@ -1,8 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { PrismaService } from "#src/db/prisma.service";
+import type { Pool } from "pg";
+import { Permission } from "#src/db/domain";
+import { POSTGRES_POOL } from "#src/db/prisma.provider";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission } from "#src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "#src/user-lootlog-config/dto/create-user-account-config.dto";
 import {
@@ -13,12 +14,19 @@ import {
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
 
+type LootlogCharacterConfigRow = {
+  userId: string;
+  accountId: string;
+  characterId: string;
+  catchingGuildIds: string[];
+};
+
 @Injectable()
 export class UserLootlogConfigService {
   private readonly logger = new Logger(UserLootlogConfigService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(POSTGRES_POOL) private readonly postgres: Pool,
     private readonly guildsService: GuildsService,
     private readonly redis: RedisService,
   ) {}
@@ -75,19 +83,17 @@ export class UserLootlogConfigService {
     accountId: string,
   ) {
     const [accountConfig, writableGuildIds] = await Promise.all([
-      this.prisma.userCharactersLootlogSettings.findMany({
-        where: {
-          userId: discordId,
-          accountId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      }),
+      this.postgres.query<LootlogCharacterConfigRow>(
+        `SELECT "userId", "accountId", "characterId", "catchingGuildIds"
+         FROM "UserCharactersLootlogSettings"
+         WHERE "userId" = $1 AND "accountId" = $2
+         ORDER BY "createdAt" DESC`,
+        [discordId, accountId],
+      ),
       this.getWritableLootlogGuildIds(discordId),
     ]);
 
-    return accountConfig.reduce<
+    return accountConfig.rows.reduce<
       Record<string, ReturnType<typeof toUserLootlogConfigResponse>>
     >((result, config) => {
       result[config.characterId] = toUserLootlogConfigResponse({
@@ -107,23 +113,24 @@ export class UserLootlogConfigService {
     discordId: string,
     accountId: string,
     characterId: string,
-  ) {
+  ): Promise<LootlogCharacterConfigRow | null> {
     return this.redis.getOrSetJsonBestEffort({
       key: this.getCharacterConfigCacheKey(discordId, accountId, characterId),
       ttlSeconds: USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
       onError: (error) =>
         this.logger.warn("User lootlog character cache unavailable", error),
-      factory: () =>
-        this.prisma.userCharactersLootlogSettings.findFirst({
-          where: {
-            userId: discordId,
-            accountId,
-            characterId,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        }),
+      factory: async () => {
+        const result = await this.postgres.query<LootlogCharacterConfigRow>(
+          `SELECT "userId", "accountId", "characterId", "catchingGuildIds"
+           FROM "UserCharactersLootlogSettings"
+           WHERE "userId" = $1 AND "accountId" = $2 AND "characterId" = $3
+           ORDER BY "createdAt" DESC
+           LIMIT 1`,
+          [discordId, accountId, characterId],
+        );
+
+        return result.rows[0] ?? null;
+      },
     });
   }
 
@@ -132,9 +139,10 @@ export class UserLootlogConfigService {
     players: Array<{ userId: string; accountId: string; characterId: string }>,
   ): Promise<UserLootlogPlayersCatchingGuildsResponse> {
     const accessibleGuilds = await this.getAccessibleLootlogGuilds(discordId);
-    const accessibleGuildsById = new Map(
-      accessibleGuilds.map((guild) => [guild.id, guild] as const),
-    );
+    const accessibleGuildsById = new Map<
+      string,
+      (typeof accessibleGuilds)[number]
+    >(accessibleGuilds.map((guild) => [guild.id, guild] as const));
     const accessibleGuildIds = [...accessibleGuildsById.keys()];
 
     if (players.length === 0 || accessibleGuildIds.length === 0) {
@@ -146,27 +154,33 @@ export class UserLootlogConfigService {
       };
     }
 
-    const configs = await this.prisma.userCharactersLootlogSettings.findMany({
-      where: {
-        OR: players.map((player) => ({
-          userId: player.userId,
-          accountId: player.accountId,
-          characterId: player.characterId,
-        })),
-        catchingGuildIds: {
-          hasSome: accessibleGuildIds,
-        },
-      },
-      select: {
-        userId: true,
-        accountId: true,
-        characterId: true,
-        catchingGuildIds: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const playerRecords = players.map((player) => [
+      player.userId,
+      player.accountId,
+      player.characterId,
+    ]);
+    const configsResult = await this.postgres.query<LootlogCharacterConfigRow>(
+      `SELECT settings."userId", settings."accountId", settings."characterId", settings."catchingGuildIds"
+       FROM "UserCharactersLootlogSettings" AS settings
+       JOIN jsonb_to_recordset($1::jsonb)
+         AS requested("userId" text, "accountId" text, "characterId" text)
+         ON requested."userId" = settings."userId"
+        AND requested."accountId" = settings."accountId"
+        AND requested."characterId" = settings."characterId"
+       WHERE settings."catchingGuildIds" && $2::text[]
+       ORDER BY settings."createdAt" DESC`,
+      [
+        JSON.stringify(
+          playerRecords.map(([userId, accountId, characterId]) => ({
+            userId,
+            accountId,
+            characterId,
+          })),
+        ),
+        accessibleGuildIds,
+      ],
+    );
+    const configs = configsResult.rows;
 
     const visibleGuildIdsByPlayerKey = new Map<string, Set<string>>();
     for (const config of configs) {
@@ -234,24 +248,19 @@ export class UserLootlogConfigService {
       ...new Set(data.catchingGuildIds),
     ].filter((guildId) => writableGuildIds.has(guildId));
 
-    const config = await this.prisma.userCharactersLootlogSettings.upsert({
-      where: {
-        userId_accountId_characterId: {
-          userId: discordId,
-          accountId,
-          characterId: data.characterId,
-        },
-      },
-      update: {
-        catchingGuildIds: normalizedCatchingGuildIds,
-      },
-      create: {
-        userId: discordId,
-        accountId,
-        characterId: data.characterId,
-        catchingGuildIds: normalizedCatchingGuildIds,
-      },
-    });
+    const result = await this.postgres.query<LootlogCharacterConfigRow>(
+      `INSERT INTO "UserCharactersLootlogSettings"
+         ("userId", "accountId", "characterId", "catchingGuildIds", "updatedAt")
+       VALUES ($1, $2, $3, $4::text[], NOW())
+       ON CONFLICT ("userId", "accountId", "characterId") DO UPDATE
+       SET "catchingGuildIds" = EXCLUDED."catchingGuildIds", "updatedAt" = NOW()
+       RETURNING "userId", "accountId", "characterId", "catchingGuildIds"`,
+      [discordId, accountId, data.characterId, normalizedCatchingGuildIds],
+    );
+    const config = result.rows[0];
+    if (!config) {
+      throw new Error("Failed to persist user Lootlog configuration");
+    }
 
     await this.invalidateUserLootlogConfig(discordId);
 

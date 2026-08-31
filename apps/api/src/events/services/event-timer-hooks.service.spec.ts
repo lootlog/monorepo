@@ -1,16 +1,34 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { mockFn } from "#src/test/mock-fn";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB } from "#src/db/prisma.provider";
 import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant.js";
 import { EventTimerHooksService } from "./event-timer-hooks.service.js";
+
+function prismaHeroRow(hero: Record<string, unknown>) {
+  const event = hero.event as { id?: string } | undefined;
+  return {
+    eventId: event?.id,
+    npcIcon: null,
+    npcLvl: null,
+    createdAt: new Date(),
+    ...hero,
+  };
+}
 
 describe("EventTimerHooksService", () => {
   let service: EventTimerHooksService;
 
-  const mockPrismaService = {
-    eventHeroNpc: {
-      findMany: mockFn(),
+  const heroAll = mockFn();
+  const mockPrisma = {
+    orm: {
+      public: {
+        EventHeroNpc: {
+          where: mockFn(() => ({
+            include: mockFn(() => ({ all: heroAll })),
+          })),
+        },
+      },
     },
   };
 
@@ -24,7 +42,7 @@ describe("EventTimerHooksService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventTimerHooksService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PRISMA_DB, useValue: mockPrisma },
         {
           provide: getQueueToken(EVENT_HERO_KILL_QUEUE),
           useValue: mockQueue,
@@ -49,9 +67,7 @@ describe("EventTimerHooksService", () => {
         event: { id: "event-1", guildId, world, createdAt: new Date() },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([hero]);
+      heroAll.mockResolvedValue([prismaHeroRow(hero)]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -91,9 +107,10 @@ describe("EventTimerHooksService", () => {
         },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([olderHero, newerHero]);
+      heroAll.mockResolvedValue([
+        prismaHeroRow(olderHero),
+        prismaHeroRow(newerHero),
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -119,9 +136,7 @@ describe("EventTimerHooksService", () => {
         },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([hero])
-        .mockResolvedValueOnce([hero]);
+      heroAll.mockResolvedValue([prismaHeroRow(hero)]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -131,7 +146,7 @@ describe("EventTimerHooksService", () => {
       );
 
       expect(result?.eventHero.id).toBe("hero-1");
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(heroAll).toHaveBeenCalledTimes(1);
     });
   });
 });

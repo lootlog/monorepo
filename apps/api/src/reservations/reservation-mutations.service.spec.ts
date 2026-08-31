@@ -1,6 +1,7 @@
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "#src/db/domain";
 import { ReservationMutationsService } from "./reservation-mutations.service.js";
 import type { ReservationViewerContext } from "./reservation-viewer.js";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 
 describe("ReservationMutationsService", () => {
   const guild = {
@@ -31,11 +32,11 @@ describe("ReservationMutationsService", () => {
       "https://cdn.discordapp.com/avatars/discord-1/avatar-hash.webp?size=128",
     reminderMinutesBefore: null,
     comment: null,
-    legacyReservationId: null,
-    legacyCreatedDate: null,
-    legacyFromDate: null,
-    legacyToDate: null,
-    legacyCreatedByDiscordId: null,
+    reservationId: null,
+    createdDate: null,
+    fromDate: null,
+    toDate: null,
+    createdBy: null,
     createdAt: new Date("2026-08-26T12:00:00.000Z"),
     updatedAt: new Date("2026-08-26T12:00:00.000Z"),
     guild,
@@ -115,7 +116,7 @@ describe("ReservationMutationsService", () => {
     eventsPublisher.updated.mockResolvedValue(undefined);
 
     service = new ReservationMutationsService(
-      prisma as never,
+      attachPrismaOrmMock(prisma) as never,
       guildsService as never,
       catalogService as never,
       sharingService as never,
@@ -143,10 +144,9 @@ describe("ReservationMutationsService", () => {
         createdByUserId: context.userId,
         authorDisplayName: member.name,
       }),
-      include: { guild: true },
     });
     const createInput = transaction.reservation.create.mock.calls[0]?.[0];
-    expect(createInput?.data).not.toHaveProperty("legacyCreatedByDiscordId");
+    expect(createInput?.data).not.toHaveProperty("createdBy");
     expect(eventsPublisher.created).toHaveBeenCalledWith(
       expect.objectContaining({
         audienceGuildIds: [guild.id, "partner-guild"],
@@ -208,7 +208,7 @@ describe("ReservationMutationsService", () => {
       ...reservation,
       guildId: "partner-guild",
       createdByUserId: "another-user",
-      legacyCreatedByDiscordId: "another-discord-user",
+      createdBy: "another-discord-user",
     });
 
     await expect(
@@ -321,13 +321,13 @@ describe("ReservationMutationsService", () => {
     });
     expect(transaction.reservation.update).toHaveBeenCalledWith({
       where: { id: reservation.id },
-      data: {
+      data: expect.objectContaining({
         startsAt: updatedReservation.startsAt,
         endsAt: updatedReservation.endsAt,
         comment: "Po aktualizacji",
         reminderMinutesBefore: 15,
-      },
-      include: { guild: true },
+        updatedAt: expect.any(Date),
+      }),
     });
     expect(reminderService.cancel).toHaveBeenCalledWith(reservation.id);
     expect(reminderService.schedule).toHaveBeenCalledWith(
@@ -430,7 +430,7 @@ describe("ReservationMutationsService", () => {
         guildId: { in: [guild.id] },
         OR: [
           { createdByUserId: context.userId },
-          { legacyCreatedByDiscordId: context.discordId },
+          { createdBy: context.discordId },
         ],
       },
     });

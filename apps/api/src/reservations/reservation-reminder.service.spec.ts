@@ -1,7 +1,8 @@
 import { UnprocessableEntityException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NotificationTargetType } from "#src/generated/prisma/client";
+import { NotificationTargetType } from "#src/db/domain";
 import { ReservationReminderService } from "./reservation-reminder.service.js";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 
 describe("ReservationReminderService", () => {
   const target = {
@@ -31,7 +32,10 @@ describe("ReservationReminderService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prisma.notificationTarget.findFirst.mockResolvedValue(target);
-    service = new ReservationReminderService(prisma as never, jobs as never);
+    service = new ReservationReminderService(
+      attachPrismaOrmMock(prisma) as never,
+      jobs as never,
+    );
   });
 
   it("does not resolve a DM target when no reminder was requested", async () => {

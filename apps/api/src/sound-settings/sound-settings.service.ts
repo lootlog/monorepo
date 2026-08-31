@@ -3,7 +3,7 @@ import type {
   NpcTypeSoundConfig,
   SettingsDomainResolution,
 } from "@lootlog/types";
-import type { Prisma } from "#src/generated/prisma/client";
+import type { JsonValue } from "#src/db/domain";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto.js";
 
@@ -113,15 +113,15 @@ export class SoundSettingsService {
       notificationsConfig: this.mergeSoundConfigMap(
         effective.notificationsConfig,
         defaults.notificationsConfig,
-      ) as unknown as Prisma.JsonValue,
+      ) as unknown as JsonValue,
       detectorConfig: this.mergeSoundConfigMap(
         effective.detectorConfig,
         defaults.detectorConfig,
-      ) as unknown as Prisma.JsonValue,
+      ) as unknown as JsonValue,
       timersConfig: this.mergeSoundConfigMap(
         effective.timersConfig,
         defaults.timersConfig,
-      ) as unknown as Prisma.JsonValue,
+      ) as unknown as JsonValue,
       createdAt: updatedAt,
       updatedAt,
     };

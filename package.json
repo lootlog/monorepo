@@ -72,7 +72,8 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish",
-    "prepare": "husky"
+    "prepare": "husky",
+    "react-doctor": "npx react-doctor@latest"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
@@ -84,6 +85,7 @@
     "lint-staged": "^17.4.1",
     "oxfmt": "^0.60.0",
     "oxlint": "^1.80.0",
+    "react-doctor": "^0.9.12",
     "socket.io-client": "^4.8.3",
     "tsx": "catalog:",
     "turbo": "^2.10.12",

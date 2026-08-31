@@ -8,7 +8,7 @@ import type {
   Guild,
   Permission,
   Role,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto.js";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
 import type { CreateEventDto } from "./dto/create-event.dto.js";

@@ -2,12 +2,7 @@ import {
   LOOT_PERMISSION,
   type LootVisibilityRole,
 } from "@lootlog/loot-visibility";
-import {
-  NpcType,
-  Permission,
-  type Prisma,
-  type Role,
-} from "#src/generated/prisma/client";
+import { NpcType, Permission, type Role } from "#src/db/domain";
 
 export function toLootVisibilityRoles(
   roles: readonly Role[],
@@ -18,36 +13,6 @@ export function toLootVisibilityRoles(
     levelTo: role.lvlRangeTo ?? 500,
     permissions: role.permissions,
   }));
-}
-
-export function buildLootNpcVisibilityWhere(
-  permissions: readonly Permission[],
-  roles: readonly Role[],
-): Prisma.LootWhereInput | null {
-  if (permissions.includes(Permission.OWNER)) {
-    return null;
-  }
-
-  const completeRoleConditions = toLootVisibilityRoles(roles)
-    .filter((role) => role.permissions.includes(LOOT_PERMISSION.read))
-    .map(buildCompleteRoleNpcCondition);
-
-  if (completeRoleConditions.length === 0) {
-    return { id: { equals: -1 } };
-  }
-
-  return {
-    AND: [
-      { lootNpcs: { some: {} } },
-      {
-        lootNpcs: {
-          every: {
-            npcSnapshot: { OR: completeRoleConditions },
-          },
-        },
-      },
-    ],
-  };
 }
 
 export function buildLootNpcVisibilitySql(
@@ -83,29 +48,6 @@ export function buildLootNpcVisibilitySql(
         AND NOT (${roleConditions})
     )
   `;
-}
-
-function buildCompleteRoleNpcCondition(
-  role: LootVisibilityRole,
-): Prisma.NpcSnapshotWhereInput {
-  const excludedTypes: NpcType[] = [];
-
-  if (!role.permissions.includes(LOOT_PERMISSION.readTitans)) {
-    excludedTypes.push(NpcType.TITAN);
-  }
-
-  if (!role.permissions.includes(LOOT_PERMISSION.readHeroes)) {
-    excludedTypes.push(NpcType.HERO, NpcType.EVENT_HERO);
-  }
-
-  return {
-    AND: [
-      { lvl: { not: null, gte: role.levelFrom, lte: role.levelTo } },
-      excludedTypes.length === 0
-        ? { type: { not: null } }
-        : { type: { not: null, notIn: excludedTypes } },
-    ],
-  };
 }
 
 function buildCompleteRoleNpcSqlCondition(role: LootVisibilityRole): string {

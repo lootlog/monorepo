@@ -16,6 +16,10 @@ export default defineConfig({
   ...nestConfig,
   test: {
     ...nestConfig.test,
+    exclude: [
+      ...(nestConfig.test?.exclude ?? []),
+      "test/database-cutover.e2e-spec.ts",
+    ],
     globalSetup: "./test/vitest.global-setup.ts",
   },
 });

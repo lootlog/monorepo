@@ -1,8 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { canViewLoot, type LootVisibilityNpc } from "@lootlog/loot-visibility";
 import type { NotificationFilters } from "@lootlog/types";
-import { Permission, type Prisma } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
+import type { Pool } from "pg";
+import { Permission, type Permission as PermissionValue } from "#src/db/domain";
+import { POSTGRES_POOL } from "#src/db/prisma.provider";
 
 type LootCreatedEvent = {
   lootId: number;
@@ -17,7 +19,7 @@ type MemberRoleInfo = {
   isGuildOwner: boolean;
   roles: {
     id: string;
-    permissions: Permission[];
+    permissions: PermissionValue[];
     lvlRangeFrom: number | null;
     lvlRangeTo: number | null;
   }[];
@@ -25,9 +27,9 @@ type MemberRoleInfo = {
 
 @Injectable()
 export class NotificationMatchingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(POSTGRES_POOL) private readonly postgres: Pool) {}
 
-  matchesTimerRule(filtersValue: Prisma.JsonValue, npcId: number) {
+  matchesTimerRule(filtersValue: JsonValue, npcId: number) {
     const filters = this.parseFilters(filtersValue);
 
     if (filters.npcId && filters.npcId !== npcId) {
@@ -41,7 +43,7 @@ export class NotificationMatchingService {
     return true;
   }
 
-  matchesLootRule(filtersValue: Prisma.JsonValue, event: LootCreatedEvent) {
+  matchesLootRule(filtersValue: JsonValue, event: LootCreatedEvent) {
     const filters = this.parseFilters(filtersValue);
 
     if (filters.itemId && !event.itemIds.includes(filters.itemId)) {
@@ -69,7 +71,7 @@ export class NotificationMatchingService {
     return true;
   }
 
-  parseFilters(filtersValue: Prisma.JsonValue): NotificationFilters {
+  parseFilters(filtersValue: JsonValue): NotificationFilters {
     if (
       !filtersValue ||
       typeof filtersValue !== "object" ||
@@ -81,10 +83,7 @@ export class NotificationMatchingService {
     return filtersValue as unknown as NotificationFilters;
   }
 
-  getMatchingLootGuildIds(
-    filtersValue: Prisma.JsonValue,
-    eventGuildIds: string[],
-  ) {
+  getMatchingLootGuildIds(filtersValue: JsonValue, eventGuildIds: string[]) {
     const filters = this.parseFilters(filtersValue);
 
     if (filters.guildIds?.length) {
@@ -108,36 +107,43 @@ export class NotificationMatchingService {
       return result;
     }
 
-    const memberships = await this.prisma.member.findMany({
-      where: {
-        userId: { in: uniqueOwnerIds },
-        guildId: { in: uniqueGuildIds },
-        active: true,
-      },
-      select: {
-        userId: true,
-        guildId: true,
-        guild: {
-          select: {
-            ownerId: true,
-          },
-        },
-        roles: {
-          select: {
-            id: true,
-            permissions: true,
-            lvlRangeFrom: true,
-            lvlRangeTo: true,
-          },
-        },
-      },
-    });
+    const memberships = await this.postgres.query<{
+      userId: string;
+      guildId: string;
+      ownerId: string;
+      roles: MemberRoleInfo["roles"];
+    }>(
+      `SELECT
+         member."userId",
+         member."guildId",
+         guild."ownerId",
+         COALESCE(
+           jsonb_agg(
+             jsonb_build_object(
+               'id', role."id",
+               'permissions', COALESCE(role."permissions", ARRAY[]::"Permission"[]),
+               'lvlRangeFrom', role."lvlRangeFrom",
+               'lvlRangeTo', role."lvlRangeTo"
+             ) ORDER BY role."position" DESC
+           ) FILTER (WHERE role."id" IS NOT NULL),
+           '[]'::jsonb
+         ) AS "roles"
+       FROM "Member" AS member
+       INNER JOIN "Guild" AS guild ON guild."id" = member."guildId"
+       LEFT JOIN "_MemberToRole" AS member_role ON member_role."A" = member."id"
+       LEFT JOIN "Role" AS role ON role."id" = member_role."B"
+       WHERE member."userId" = ANY($1::text[])
+         AND member."guildId" = ANY($2::text[])
+         AND member."active" = TRUE
+       GROUP BY member."id", guild."ownerId"`,
+      [uniqueOwnerIds, uniqueGuildIds],
+    );
 
-    for (const membership of memberships) {
+    for (const membership of memberships.rows) {
       const existing = result.get(membership.userId) ?? [];
       existing.push({
         guildId: membership.guildId,
-        isGuildOwner: membership.guild.ownerId === membership.userId,
+        isGuildOwner: membership.ownerId === membership.userId,
         roles: membership.roles,
       });
       result.set(membership.userId, existing);

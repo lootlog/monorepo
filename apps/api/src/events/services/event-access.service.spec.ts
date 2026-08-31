@@ -1,5 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission, type Role } from "#src/db/domain";
 import { EventAccessService } from "./event-access.service.js";
 
 function createRole(
@@ -22,12 +22,16 @@ function createRole(
 }
 
 describe("EventAccessService", () => {
+  const eventFirst = vi.fn();
+  const heroFirst = vi.fn();
+  const mapFirst = vi.fn();
   const mockPrisma = {
-    eventHeroNpc: {
-      findFirst: vi.fn(),
-    },
-    eventMap: {
-      findFirst: vi.fn(),
+    orm: {
+      public: {
+        Event: { where: vi.fn(() => ({ first: eventFirst })) },
+        EventHeroNpc: { where: vi.fn(() => ({ first: heroFirst })) },
+        EventMap: { where: vi.fn(() => ({ first: mapFirst })) },
+      },
     },
   };
 
@@ -35,6 +39,7 @@ describe("EventAccessService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    eventFirst.mockResolvedValue({ id: "event-1" });
     service = new EventAccessService(mockPrisma as never);
   });
 
@@ -68,7 +73,7 @@ describe("EventAccessService", () => {
 
   it("returns the hero when access check passes", async () => {
     const hero = { id: "hero-1", npcLvl: 150 };
-    mockPrisma.eventHeroNpc.findFirst.mockResolvedValue(hero);
+    heroFirst.mockResolvedValue(hero);
 
     await expect(
       service.getHeroWithAccessCheck(
@@ -82,7 +87,7 @@ describe("EventAccessService", () => {
   });
 
   it("throws when the hero is not visible to the caller", async () => {
-    mockPrisma.eventHeroNpc.findFirst.mockResolvedValue({
+    heroFirst.mockResolvedValue({
       id: "hero-1",
       npcLvl: 320,
     });
@@ -99,13 +104,8 @@ describe("EventAccessService", () => {
   });
 
   it("throws when the map hero is not visible to the caller", async () => {
-    mockPrisma.eventMap.findFirst.mockResolvedValue({
-      id: "map-1",
-      heroNpc: {
-        id: "hero-1",
-        npcLvl: 320,
-      },
-    });
+    mapFirst.mockResolvedValue({ id: "map-1", heroNpcId: "hero-1" });
+    heroFirst.mockResolvedValue({ id: "hero-1", npcLvl: 320 });
 
     await expect(
       service.getMapWithHeroAccessCheck(

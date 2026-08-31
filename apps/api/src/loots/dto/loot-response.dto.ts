@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { ItemRarity, NpcType } from "#src/generated/prisma/client";
+import { ItemRarity, NpcType } from "#src/db/domain";
 
 const CreateLootSubmittedGuildSchema = z.object({
   guildId: z.string(),

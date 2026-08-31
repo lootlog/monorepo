@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   ConflictException,
   ForbiddenException,
@@ -10,7 +11,7 @@ import {
   type ReservationSettings,
 } from "@lootlog/reservations";
 import { PrismaService } from "#src/db/prisma.service";
-import { Prisma, type Reservation } from "#src/generated/prisma/client";
+import type { DatabaseTransaction, Reservation } from "#src/db/domain";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { CreateReservationDto } from "./dto/create-reservation.dto.js";
 import type { UpdateReservationDto } from "./dto/update-reservation.dto.js";
@@ -58,20 +59,27 @@ export class ReservationMutationsService {
     const { context, data } = options;
     const [spot, guild, settings, visibleGuildIds, member] = await Promise.all([
       this.catalogService.getSpot(options.spotId),
-      this.prisma.guild.findUniqueOrThrow({
-        where: { id: context.guildId },
-      }),
+      this.prisma.orm.public.Guild.where((row) =>
+        row.id.eq(context.guildId),
+      ).first(),
       this.getReservationSettings(context.guildId),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.member.findFirst({
-        where: {
-          guildId: context.guildId,
-          active: true,
-          OR: [{ globalUserId: context.userId }, { userId: context.discordId }],
-        },
-        orderBy: { updatedAt: "desc" },
-      }),
+      this.prisma.orm.public.Member.where((row) =>
+        and(
+          row.guildId.eq(context.guildId),
+          row.active.eq(true),
+          or(
+            row.globalUserId.eq(context.userId),
+            row.userId.eq(context.discordId),
+          ),
+        ),
+      )
+        .orderBy((row) => row.updatedAt.desc())
+        .first(),
     ]);
+    if (!guild) {
+      throw new NotFoundException({ code: "RESERVATION_GUILD_NOT_FOUND" });
+    }
     if (!member) {
       throw new ForbiddenException({ code: "RESERVATION_MEMBER_REQUIRED" });
     }
@@ -88,52 +96,51 @@ export class ReservationMutationsService {
       reminderMinutesBefore,
     });
 
-    const created = await this.prisma.$transaction(
-      async (transaction) => {
-        await this.assertNoOverlap(transaction, {
-          ...range,
-          guildId: context.guildId,
-          spotId: spot.id,
-        });
+    const createdRow = await this.prisma.transaction(async (transaction) => {
+      await transaction.execute(
+        this.prisma.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
+          .affectedCount()
+          .build(),
+      );
+      await this.assertNoOverlap(transaction, {
+        ...range,
+        guildId: context.guildId,
+        spotId: spot.id,
+      });
 
-        const activeReservationsCount = await transaction.reservation.count({
-          where: {
-            guildId: context.guildId,
-            spotId: spot.id,
-            endsAt: { gt: new Date() },
-            OR: [
-              { createdByUserId: context.userId },
-              { legacyCreatedByDiscordId: context.discordId },
-            ],
-          },
-        });
-        if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
-          throw new UnprocessableEntityException({
-            code: "ACTIVE_LIMIT_REACHED",
-            limit: settings.reservationActiveLimitPerSpot,
-          });
-        }
-
-        return transaction.reservation.create({
-          data: {
-            guildId: context.guildId,
-            spotId: spot.id,
-            spotName: spot.name,
-            ...range,
-            createdByUserId: context.userId,
-            authorDisplayName: member.name,
-            authorAvatarUrl: getDiscordAvatarUrl(
-              context.discordId,
-              member.avatar,
+      const activeReservationsCount =
+        await transaction.orm.public.Reservation.where((row) =>
+          and(
+            row.guildId.eq(context.guildId),
+            row.spotId.eq(spot.id),
+            row.endsAt.gt(new Date()),
+            or(
+              row.createdByUserId.eq(context.userId),
+              row.createdBy.eq(context.discordId),
             ),
-            reminderMinutesBefore,
-            comment: data.comment || null,
-          },
-          include: { guild: true },
+          ),
+        ).count();
+      if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
+        throw new UnprocessableEntityException({
+          code: "ACTIVE_LIMIT_REACHED",
+          limit: settings.reservationActiveLimitPerSpot,
         });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+      }
+
+      return transaction.orm.public.Reservation.create({
+        guildId: context.guildId,
+        spotId: spot.id,
+        spotName: spot.name,
+        ...range,
+        createdByUserId: context.userId,
+        authorDisplayName: member.name,
+        authorAvatarUrl: getDiscordAvatarUrl(context.discordId, member.avatar),
+        reminderMinutesBefore,
+        comment: data.comment || null,
+        updatedAt: new Date(),
+      });
+    });
+    const created = { ...createdRow, guild };
 
     try {
       await this.reminderService.schedule({
@@ -145,7 +152,9 @@ export class ReservationMutationsService {
         startsAt: range.startsAt,
       });
     } catch (error) {
-      await this.prisma.reservation.delete({ where: { id: created.id } });
+      await this.prisma.orm.public.Reservation.where((row) =>
+        row.id.eq(created.id),
+      ).delete();
       throw error;
     }
 
@@ -175,17 +184,18 @@ export class ReservationMutationsService {
         options.discordId,
         options.userId,
       );
-    const reservation = await this.prisma.reservation.findFirst({
-      where: {
-        id: options.reservationId,
-        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
-        OR: [
-          { createdByUserId: options.userId },
-          { legacyCreatedByDiscordId: options.discordId },
-        ],
-      },
-      include: { guild: true },
-    });
+    const reservation = await this.prisma.orm.public.Reservation.where((row) =>
+      and(
+        row.id.eq(options.reservationId),
+        row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
+        or(
+          row.createdByUserId.eq(options.userId),
+          row.createdBy.eq(options.discordId),
+        ),
+      ),
+    )
+      .include("guild")
+      .first();
     if (!reservation) {
       throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
     }
@@ -232,29 +242,31 @@ export class ReservationMutationsService {
       reminderNeedsReschedule,
     });
 
-    const updated = await this.prisma.$transaction(
-      async (transaction) => {
-        if (timeChanged) {
-          await this.assertNoOverlap(transaction, {
-            ...range,
-            guildId: reservation.guildId,
-            spotId: reservation.spotId,
-            excludedReservationId: reservation.id,
-          });
-        }
-
-        return transaction.reservation.update({
-          where: { id: reservation.id },
-          data: {
-            ...range,
-            comment,
-            reminderMinutesBefore,
-          },
-          include: { guild: true },
+    const updatedRow = await this.prisma.transaction(async (transaction) => {
+      await transaction.execute(
+        this.prisma.raw.sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`
+          .affectedCount()
+          .build(),
+      );
+      if (timeChanged) {
+        await this.assertNoOverlap(transaction, {
+          ...range,
+          guildId: reservation.guildId,
+          spotId: reservation.spotId,
+          excludedReservationId: reservation.id,
         });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+      }
+
+      return transaction.orm.public.Reservation.where((row) =>
+        row.id.eq(reservation.id),
+      ).update({
+        ...range,
+        comment,
+        reminderMinutesBefore,
+        updatedAt: new Date(),
+      });
+    });
+    const updated = { ...updatedRow, guild: reservation.guild };
 
     if (reminderNeedsReschedule) {
       try {
@@ -281,7 +293,7 @@ export class ReservationMutationsService {
       sourceGuildId: updated.guildId,
       audienceGuildIds: visibleGuildIds,
       reservation: updated,
-      actorDiscordId: reservation.legacyCreatedByDiscordId ?? options.discordId,
+      actorDiscordId: reservation.createdBy ?? options.discordId,
     });
 
     return presentReservation(updated, {
@@ -300,19 +312,16 @@ export class ReservationMutationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservation = await this.prisma.reservation.findFirst({
-      where: {
-        id: options.reservationId,
-        guildId: { in: visibleGuildIds },
-      },
-    });
+    const reservation = await this.prisma.orm.public.Reservation.where((row) =>
+      and(row.id.eq(options.reservationId), row.guildId.in(visibleGuildIds)),
+    ).first();
     if (!reservation) {
       throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
     }
 
     const isOwned =
       reservation.createdByUserId === context.userId ||
-      reservation.legacyCreatedByDiscordId === context.discordId;
+      reservation.createdBy === context.discordId;
     const canModerateSource =
       reservation.guildId === context.guildId &&
       canModerateReservations(context);
@@ -327,7 +336,7 @@ export class ReservationMutationsService {
     await this.deletePersistedReservation({
       reservation,
       audienceGuildIds,
-      actorDiscordId: reservation.legacyCreatedByDiscordId ?? context.discordId,
+      actorDiscordId: reservation.createdBy ?? context.discordId,
     });
   }
 
@@ -341,16 +350,16 @@ export class ReservationMutationsService {
         options.discordId,
         options.userId,
       );
-    const reservation = await this.prisma.reservation.findFirst({
-      where: {
-        id: options.reservationId,
-        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
-        OR: [
-          { createdByUserId: options.userId },
-          { legacyCreatedByDiscordId: options.discordId },
-        ],
-      },
-    });
+    const reservation = await this.prisma.orm.public.Reservation.where((row) =>
+      and(
+        row.id.eq(options.reservationId),
+        row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
+        or(
+          row.createdByUserId.eq(options.userId),
+          row.createdBy.eq(options.discordId),
+        ),
+      ),
+    ).first();
     if (!reservation) {
       throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
     }
@@ -361,30 +370,32 @@ export class ReservationMutationsService {
     await this.deletePersistedReservation({
       reservation,
       audienceGuildIds,
-      actorDiscordId: reservation.legacyCreatedByDiscordId ?? options.discordId,
+      actorDiscordId: reservation.createdBy ?? options.discordId,
     });
   }
 
   private async assertNoOverlap(
-    transaction: Prisma.TransactionClient,
+    transaction: DatabaseTransaction,
     options: ReservationRange & {
       guildId: string;
       spotId: string;
       excludedReservationId?: number;
     },
   ): Promise<void> {
-    const overlappingReservation = await transaction.reservation.findFirst({
-      where: {
-        ...(options.excludedReservationId === undefined
-          ? {}
-          : { id: { not: options.excludedReservationId } }),
-        guildId: options.guildId,
-        spotId: options.spotId,
-        startsAt: { lt: options.endsAt },
-        endsAt: { gt: options.startsAt },
-      },
-      select: { id: true },
-    });
+    let overlapQuery = transaction.orm.public.Reservation.where((row) =>
+      and(
+        row.guildId.eq(options.guildId),
+        row.spotId.eq(options.spotId),
+        row.startsAt.lt(options.endsAt),
+        row.endsAt.gt(options.startsAt),
+      ),
+    );
+    if (options.excludedReservationId !== undefined) {
+      overlapQuery = overlapQuery.where((row) =>
+        row.id.neq(options.excludedReservationId),
+      );
+    }
+    const overlappingReservation = await overlapQuery.select("id").first();
     if (overlappingReservation) {
       throw new ConflictException({ code: "RESERVATION_OVERLAP" });
     }
@@ -438,14 +449,14 @@ export class ReservationMutationsService {
     >;
   }): Promise<void> {
     const { reservation } = options;
-    await this.prisma.reservation.update({
-      where: { id: reservation.id },
-      data: {
-        startsAt: reservation.startsAt,
-        endsAt: reservation.endsAt,
-        comment: reservation.comment,
-        reminderMinutesBefore: reservation.reminderMinutesBefore,
-      },
+    await this.prisma.orm.public.Reservation.where((row) =>
+      row.id.eq(reservation.id),
+    ).update({
+      startsAt: reservation.startsAt,
+      endsAt: reservation.endsAt,
+      comment: reservation.comment,
+      reminderMinutesBefore: reservation.reminderMinutesBefore,
+      updatedAt: new Date(),
     });
     await this.reminderService.cancel(reservation.id);
     await this.reminderService.schedule({
@@ -462,9 +473,9 @@ export class ReservationMutationsService {
     options: DeletePersistedReservationOptions,
   ): Promise<void> {
     await this.reminderService.cancel(options.reservation.id);
-    await this.prisma.reservation.delete({
-      where: { id: options.reservation.id },
-    });
+    await this.prisma.orm.public.Reservation.where((row) =>
+      row.id.eq(options.reservation.id),
+    ).delete();
     await this.eventsPublisher.deleted({
       sourceGuildId: options.reservation.guildId,
       audienceGuildIds: options.audienceGuildIds,
@@ -476,16 +487,17 @@ export class ReservationMutationsService {
   private async getReservationSettings(
     guildId: string,
   ): Promise<ReservationSettings> {
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-      select: {
-        reservationMaxDurationMinutes: true,
-        reservationMinDurationMinutes: true,
-        reservationTimeGranularityMinutes: true,
-        reservationMaxAdvanceDays: true,
-        reservationActiveLimitPerSpot: true,
-      },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      row.id.eq(guildId),
+    )
+      .select(
+        "reservationMaxDurationMinutes",
+        "reservationMinDurationMinutes",
+        "reservationTimeGranularityMinutes",
+        "reservationMaxAdvanceDays",
+        "reservationActiveLimitPerSpot",
+      )
+      .first();
 
     return resolveReservationSettings(guild);
   }

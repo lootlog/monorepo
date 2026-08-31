@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
 import type {
@@ -9,7 +10,7 @@ import {
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -51,16 +52,17 @@ export class NotificationsEventsHandler {
     maxSpawnTime: string;
     npc?: { name?: string } | null;
   }) {
-    const notificationRules = await this.prisma.notificationRule.findMany({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: event.guildId,
-        guildId: event.guildId,
-        enabled: true,
-        triggerType: DbNotificationTriggerType.TIMER_BEFORE_SPAWN,
-        OR: [{ world: null }, { world: event.world }],
-      },
-    });
+    const notificationRules =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        and(
+          row.ownerType.eq(DbNotificationOwnerType.GUILD),
+          row.ownerId.eq(event.guildId),
+          row.guildId.eq(event.guildId),
+          row.enabled.eq(true),
+          row.triggerType.eq(DbNotificationTriggerType.TIMER_BEFORE_SPAWN),
+          or(row.world.isNull(), row.world.eq(event.world)),
+        ),
+      ).all();
 
     await Promise.all(
       notificationRules.map(async (notificationRule) => {
@@ -122,36 +124,28 @@ export class NotificationsEventsHandler {
     },
   })
   async handleLootCreated(event: LootCreatedNotificationEventV2) {
-    const watchedItems = await this.prisma.watchedItem.findMany({
-      where: {
-        enabled: true,
-        itemId: {
-          in: event.itemIds,
-        },
-        world: event.world,
-        notificationRule: {
-          is: {
-            enabled: true,
-            triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-            world: event.world,
-            targets: {
-              some: {},
-            },
-          },
-        },
-      },
-      include: {
-        notificationRule: {
-          include: {
-            targets: {
-              include: {
-                target: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const watchedItems = (
+      await this.prisma.orm.public.WatchedItem.where((row) =>
+        and(
+          row.enabled.eq(true),
+          row.itemId.in(event.itemIds),
+          row.world.eq(event.world),
+        ),
+      )
+        .include("notificationRule", (relation) =>
+          relation.include("targets", (relationChild) =>
+            relationChild.include("target"),
+          ),
+        )
+        .all()
+    ).filter(
+      (watchedItem) =>
+        watchedItem.notificationRule?.enabled === true &&
+        watchedItem.notificationRule.triggerType ===
+          DbNotificationTriggerType.WATCHED_ITEM_DROPPED &&
+        watchedItem.notificationRule.world === event.world &&
+        watchedItem.notificationRule.targets.length > 0,
+    );
 
     const guilds = await this.guildsService.getMultipleGuildsByIds(
       event.guildIds,

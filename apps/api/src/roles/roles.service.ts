@@ -4,10 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Permission, type Prisma } from "#src/generated/prisma/client";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Pool } from "pg";
 import type { Logger } from "winston";
-import { PrismaService } from "#src/db/prisma.service";
+import { Permission, type Permission as PermissionValue } from "#src/db/domain";
+import { POSTGRES_POOL } from "#src/db/prisma.provider";
+import { withPostgresTransaction } from "#src/db/postgres-transaction";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
 import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
@@ -16,45 +18,78 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
 import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
+type RoleRow = {
+  id: string;
+  guildId: string;
+  name: string;
+  color: number | null;
+  position: number | null;
+  permissions: PermissionValue[] | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lvlRangeFrom: number | null;
+  lvlRangeTo: number | null;
+};
+
 @Injectable()
 export class RolesService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(POSTGRES_POOL) private readonly postgres: Pool,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 
-  private getAdminPermissions(admin: boolean): Permission[] {
+  private getAdminPermissions(admin: boolean): PermissionValue[] {
     return admin
-      ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
+      ? Object.values(Permission).filter(
+          (permission) => permission !== Permission.OWNER,
+        )
       : [];
   }
 
   async getRolesByGuildId(guildId: string) {
-    const roles = await this.prisma.role.findMany({
-      where: { guildId },
-      orderBy: { position: "desc" },
-    });
-
-    return roles;
+    const roles = await this.postgres.query<RoleRow>(
+      `SELECT "id", "guildId", "name", "color", "position", "permissions",
+              "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo"
+       FROM "Role"
+       WHERE "guildId" = $1
+       ORDER BY "position" DESC`,
+      [guildId],
+    );
+    return roles.rows;
   }
 
-  bulkCreateRoles(
+  async bulkCreateRoles(
     guildId: string,
     roles: GuildRoleDto[],
-  ): Promise<Prisma.BatchPayload | undefined> {
+  ): Promise<{ count: number } | undefined> {
     try {
-      return this.prisma.role.createMany({
-        skipDuplicates: true,
-        data: roles.map(({ id, name, color, admin, position }) => ({
-          id,
-          guildId,
-          name,
-          color,
-          position,
-          permissions: this.getAdminPermissions(admin),
-        })),
-      });
+      const count = await withPostgresTransaction(
+        this.postgres,
+        async (transaction) => {
+          let createdCount = 0;
+          for (const role of roles) {
+            const created = await transaction.query(
+              `INSERT INTO "Role"
+                 ("id", "guildId", "name", "color", "position", "permissions",
+                  "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo")
+               VALUES ($1, $2, $3, $4, $5, $6::"Permission"[], NOW(), NOW(), 0, 500)
+               ON CONFLICT ("id") DO NOTHING`,
+              [
+                role.id,
+                guildId,
+                role.name,
+                role.color,
+                role.position,
+                this.getAdminPermissions(role.admin),
+              ],
+            );
+            createdCount += created.rowCount ?? 0;
+          }
+          return createdCount;
+        },
+      );
+      return { count };
     } catch (error) {
       this.logger.log({
         level: "error",
@@ -62,6 +97,7 @@ export class RolesService {
         guildId,
         error: error instanceof Error ? error.stack : error,
       });
+      return undefined;
     }
   }
 
@@ -69,37 +105,44 @@ export class RolesService {
     const permissions = this.getAdminPermissions(data.admin);
 
     try {
-      const existingRole = await this.prisma.role.findUnique({
-        where: { id: data.id, guildId: data.guildId },
-        select: { permissions: true },
-      });
-
-      const updateData: Prisma.RoleUpdateInput = {
-        name: data.name,
-        color: data.color,
-        position: data.position,
-      };
-
-      const roleIsAdministrative = existingRole
-        ? PermissionResolver.isAdministrative(existingRole.permissions)
+      const existingRole = await this.postgres.query<
+        Pick<RoleRow, "permissions">
+      >(`SELECT "permissions" FROM "Role" WHERE "id" = $1 AND "guildId" = $2`, [
+        data.id,
+        data.guildId,
+      ]);
+      const existingPermissions = existingRole.rows[0]?.permissions;
+      const roleIsAdministrative = existingPermissions
+        ? PermissionResolver.isAdministrative(existingPermissions)
         : false;
+      const shouldUpdatePermissions =
+        existingPermissions !== undefined &&
+        roleIsAdministrative !== data.admin;
 
-      if (existingRole && roleIsAdministrative !== data.admin) {
-        updateData.permissions = permissions;
-      }
-
-      await this.prisma.role.upsert({
-        where: { id: data.id },
-        update: updateData,
-        create: {
-          id: data.id,
-          guildId: data.guildId,
-          name: data.name,
-          color: data.color,
-          position: data.position,
+      await this.postgres.query(
+        `INSERT INTO "Role"
+           ("id", "guildId", "name", "color", "position", "permissions",
+            "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo")
+         VALUES ($1, $2, $3, $4, $5, $6::"Permission"[], NOW(), NOW(), 0, 500)
+         ON CONFLICT ("id") DO UPDATE SET
+           "name" = EXCLUDED."name",
+           "color" = EXCLUDED."color",
+           "position" = EXCLUDED."position",
+           "permissions" = CASE
+             WHEN $7::boolean THEN EXCLUDED."permissions"
+             ELSE "Role"."permissions"
+           END,
+           "updatedAt" = NOW()`,
+        [
+          data.id,
+          data.guildId,
+          data.name,
+          data.color,
+          data.position,
           permissions,
-        },
-      });
+          shouldUpdatePermissions,
+        ],
+      );
 
       await this.redisService.deleteByPattern(
         getPermissionsCachePattern(data.guildId),
@@ -121,62 +164,52 @@ export class RolesService {
     roleId: string,
     data: UpdateRolePermissionsDto,
   ) {
-    const role = await this.prisma.role.findUnique({
-      where: { id: roleId, guildId },
-    });
-
+    const role = await this.findRole(roleId, guildId);
     if (!role) {
       throw new NotFoundException();
     }
 
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-    });
-
-    const isOwner = guild.ownerId === discordId;
-
+    const guild = await this.postgres.query<{ ownerId: string }>(
+      `SELECT "ownerId" FROM "Guild" WHERE "id" = $1`,
+      [guildId],
+    );
+    const isOwner = guild.rows[0]?.ownerId === discordId;
     const roleIsAdministrative = PermissionResolver.isAdministrative(
       role.permissions,
     );
     const newPermissionsAreAdministrative = PermissionResolver.isAdministrative(
       data.permissions,
     );
-    const isAdministrativePermissionChanging =
-      roleIsAdministrative !== newPermissionsAreAdministrative;
 
-    if (isAdministrativePermissionChanging && !isOwner) {
+    if (roleIsAdministrative !== newPermissionsAreAdministrative && !isOwner) {
       throw new ForbiddenException();
     }
 
-    const updatedRole = await this.prisma.role.update({
-      where: { id: roleId },
-      data: {
-        permissions: data.permissions,
-        lvlRangeFrom: data.lvlRangeFrom,
-        lvlRangeTo: data.lvlRangeTo,
-      },
-    });
+    const updated = await this.postgres.query<RoleRow>(
+      `UPDATE "Role"
+       SET "permissions" = $2::"Permission"[],
+           "lvlRangeFrom" = $3,
+           "lvlRangeTo" = $4,
+           "updatedAt" = NOW()
+       WHERE "id" = $1
+       RETURNING "id", "guildId", "name", "color", "position", "permissions",
+                 "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo"`,
+      [roleId, data.permissions, data.lvlRangeFrom, data.lvlRangeTo],
+    );
 
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(guildId),
     );
-
-    return updatedRole;
+    return updated.rows[0];
   }
 
   async deleteRole(data: DeleteRoleDto) {
-    const role = await this.prisma.role.findUnique({
-      where: { id: data.id, guildId: data.guildId },
-    });
-
+    const role = await this.findRole(data.id, data.guildId);
     if (!role) {
       return;
     }
 
-    await this.prisma.role.delete({
-      where: { id: data.id },
-    });
-
+    await this.postgres.query(`DELETE FROM "Role" WHERE "id" = $1`, [data.id]);
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(data.guildId),
     );
@@ -184,10 +217,9 @@ export class RolesService {
 
   async deleteRolesByGuildId(guildId: string) {
     try {
-      await this.prisma.role.deleteMany({
-        where: { guildId },
-      });
-
+      await this.postgres.query(`DELETE FROM "Role" WHERE "guildId" = $1`, [
+        guildId,
+      ]);
       await this.redisService.deleteByPattern(
         getPermissionsCachePattern(guildId),
       );
@@ -199,5 +231,16 @@ export class RolesService {
         error: error instanceof Error ? error.stack : error,
       });
     }
+  }
+
+  private async findRole(roleId: string, guildId: string) {
+    const role = await this.postgres.query<RoleRow>(
+      `SELECT "id", "guildId", "name", "color", "position", "permissions",
+              "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo"
+       FROM "Role"
+       WHERE "id" = $1 AND "guildId" = $2`,
+      [roleId, guildId],
+    );
+    return role.rows[0] ?? null;
   }
 }

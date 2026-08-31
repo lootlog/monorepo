@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
@@ -18,11 +19,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import {
-  LootShareSource,
-  NpcType,
-  type Prisma,
-} from "#src/generated/prisma/client";
+import { LootShareSource, NpcType } from "#src/db/domain";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
@@ -71,13 +68,15 @@ export class LootAllocationService {
       return { share: {}, source: LootShareSource.NONE };
     }
 
-    const ambiguousNpcVariant = await this.prisma.npcSnapshot.findFirst({
-      where: {
-        name: primaryNpc.name,
-        OR: [{ type: { not: NpcType.COLOSSUS } }, { type: null }],
-      },
-      select: { id: true },
-    });
+    const ambiguousNpcVariant = await this.prisma.orm.public.NpcSnapshot.where(
+      (row) =>
+        and(
+          row.name.eq(primaryNpc.name),
+          or(row.type.neq(NpcType.COLOSSUS), row.type.isNull()),
+        ),
+    )
+      .select("id")
+      .first();
     if (ambiguousNpcVariant) {
       return { share: {}, source: LootShareSource.NONE };
     }
@@ -104,38 +103,24 @@ export class LootAllocationService {
     const submissionCutoff = new Date(
       Date.now() - LOOT_SHARE_SUBMISSION_WINDOW_MS,
     );
-    const authorizedLootWhere = this.getAuthorizedLootUpdateWhere(
+    const authorizedLoot = this.applyAuthorizedLootFilter(
+      this.prisma.orm.public.Loot,
       options.actorUserId,
       options.lootId,
       submissionCutoff,
     );
-    const loot = await this.prisma.loot.findFirst({
-      where: authorizedLootWhere,
-      include: {
-        lootItems: {
-          include: {
-            itemSnapshot: true,
-          },
-        },
-        lootPlayers: {
-          include: {
-            playerSnapshot: true,
-          },
-        },
-        lootNpcs: {
-          include: {
-            npcSnapshot: true,
-          },
-          orderBy: { id: "asc" },
-        },
-        organizationLootRecords: {
-          where: { archivedAt: null },
-          select: {
-            guildId: true,
-          },
-        },
-      },
-    });
+    const loot = await authorizedLoot
+      .include("lootItems", (relation) => relation.include("itemSnapshot"))
+      .include("lootPlayers", (relation) => relation.include("playerSnapshot"))
+      .include("lootNpcs", (relation) =>
+        relation
+          .include("npcSnapshot")
+          .orderBy((relationRow) => relationRow.id.asc()),
+      )
+      .include("organizationLootRecords", (relation) =>
+        relation.select("guildId").where((row) => row.archivedAt.isNull()),
+      )
+      .first();
     if (!loot) {
       throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
     }
@@ -194,17 +179,14 @@ export class LootAllocationService {
       });
     }
 
-    const updateResult = await this.prisma.loot.updateMany({
-      where: {
-        ...authorizedLootWhere,
-        lootShareSource: { not: LootShareSource.CHAT_MESSAGE },
-      },
-      data: {
+    const updateResult = await authorizedLoot
+      .where((row) => row.lootShareSource.neq(LootShareSource.CHAT_MESSAGE))
+      .updateAndCount({
         lootShare: mappedLootShare,
         lootShareSource: LootShareSource.CHAT_MESSAGE,
-      },
-    });
-    if (updateResult.count === 0) {
+        updatedAt: new Date(),
+      });
+    if (updateResult === 0) {
       return this.acknowledgeConcurrentUpdate({
         actorUserId: options.actorUserId,
         expectedLootShare: mappedLootShare,
@@ -344,24 +326,27 @@ export class LootAllocationService {
     return allocation;
   }
 
-  private getAuthorizedLootUpdateWhere(
+  private applyAuthorizedLootFilter(
+    collection: any,
     actorUserId: string,
     lootId: number,
     submissionCutoff: Date,
-  ): Prisma.LootWhereInput {
-    return {
-      id: lootId,
-      organizationLootRecords: {
-        some: {
-          submissions: {
-            some: {
-              member: { globalUserId: actorUserId },
-              createdAt: { gte: submissionCutoff },
-            },
-          },
-        },
-      },
-    };
+  ) {
+    return collection.where((loot) =>
+      and(
+        loot.id.eq(lootId),
+        loot.organizationLootRecords.some((record) =>
+          record.submissions.some((submission) =>
+            and(
+              submission.createdAt.gte(submissionCutoff),
+              submission.member.some((member) =>
+                member.globalUserId.eq(actorUserId),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   private async acknowledgeConcurrentUpdate(options: {
@@ -370,14 +355,14 @@ export class LootAllocationService {
     lootId: number;
     submissionCutoff: Date;
   }): Promise<LootShare> {
-    const loot = await this.prisma.loot.findFirst({
-      where: this.getAuthorizedLootUpdateWhere(
-        options.actorUserId,
-        options.lootId,
-        options.submissionCutoff,
-      ),
-      select: { lootShare: true, lootShareSource: true },
-    });
+    const loot = await this.applyAuthorizedLootFilter(
+      this.prisma.orm.public.Loot,
+      options.actorUserId,
+      options.lootId,
+      options.submissionCutoff,
+    )
+      .select("lootShare", "lootShareSource")
+      .first();
     if (!loot) {
       throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
     }

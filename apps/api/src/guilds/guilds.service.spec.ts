@@ -8,6 +8,8 @@ import { mockFn } from "#src/test/mock-fn";
 import { GuildsService } from "./guilds.service.js";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
+import { PRISMA_DB } from "#src/db/prisma.provider";
 import { ChannelsService } from "#src/channels/channels.service";
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
@@ -15,7 +17,7 @@ import { DiscordService } from "#src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { type Guild, Permission } from "#src/db/domain";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import { UserGuildAccessResolver } from "./user-guild-access-resolver.service.js";
 
@@ -126,7 +128,23 @@ describe("GuildsService", () => {
         },
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
+        {
+          provide: PRISMA_DB,
+          useValue: {
+            orm: {
+              public: {
+                Guild: {
+                  where: mockFn(() => ({
+                    where: mockFn(() => ({
+                      all: () => mockPrismaService.orm.public.Guild.all(),
+                    })),
+                  })),
+                },
+              },
+            },
+          },
         },
         {
           provide: MembersService,
@@ -1199,6 +1217,7 @@ describe("GuildsService", () => {
           reservationTimeGranularityMinutes: 5,
           reservationMaxAdvanceDays: 14,
           reservationActiveLimitPerSpot: 4,
+          updatedAt: expect.any(Date),
         }),
       ).resolves.toEqual(updatedGuild);
 
@@ -1210,6 +1229,7 @@ describe("GuildsService", () => {
           reservationTimeGranularityMinutes: 5,
           reservationMaxAdvanceDays: 14,
           reservationActiveLimitPerSpot: 4,
+          updatedAt: expect.any(Date),
         },
       });
       expect(mockRedisService.del).toHaveBeenCalledWith("guild:guild-123");

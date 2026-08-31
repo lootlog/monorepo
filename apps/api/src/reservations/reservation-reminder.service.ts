@@ -1,4 +1,9 @@
-import { Injectable, UnprocessableEntityException } from "@nestjs/common";
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import {
+  Inject,
+  Injectable,
+  UnprocessableEntityException,
+} from "@nestjs/common";
 import {
   NotificationJobKind,
   NotificationOwnerType,
@@ -6,9 +11,8 @@ import {
   NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-  type Prisma,
-} from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+} from "#src/db/domain";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
 
@@ -29,7 +33,7 @@ type ReminderContext = {
 @Injectable()
 export class ReservationReminderService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
     private readonly notificationJobService: NotificationJobService,
   ) {}
 
@@ -51,17 +55,20 @@ export class ReservationReminderService {
       });
     }
 
-    const target = await this.prisma.notificationTarget.findFirst({
-      where: {
-        ownerType: NotificationOwnerType.USER,
-        ownerId: options.discordId,
-        provider: NotificationProvider.DISCORD,
-        targetType: NotificationTargetType.DM,
-        active: true,
-        canSend: true,
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+    const target = await this.prisma.orm.public.NotificationTarget.where(
+      (row) =>
+        and(
+          row.ownerType.eq(NotificationOwnerType.USER),
+          row.ownerId.eq(options.discordId),
+          row.provider.eq(NotificationProvider.DISCORD),
+          row.targetType.eq(NotificationTargetType.DM),
+          row.active.eq(true),
+          row.canSend.eq(true),
+        ),
+    )
+      .select("id", "externalId", "targetType", "active", "canSend")
+      .orderBy((notificationTarget) => notificationTarget.updatedAt.desc())
+      .first();
     if (!target) {
       throw new UnprocessableEntityException({ code: "DM_TARGET_REQUIRED" });
     }
@@ -108,7 +115,7 @@ export class ReservationReminderService {
           spotName: options.spotName,
           organizationName: options.organizationName,
           startsAt: startsAtIso,
-        } satisfies Prisma.InputJsonObject,
+        },
       });
 
     if (!notificationJob) {
@@ -136,43 +143,51 @@ export class ReservationReminderService {
   }
 
   private async getOrCreateRule(discordId: string) {
-    const existingRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        ownerType: NotificationOwnerType.USER,
-        ownerId: discordId,
-        name: RESERVATION_REMINDER_RULE_NAME,
-      },
-    });
+    const existingRule = await this.prisma.orm.public.NotificationRule.where(
+      (row) =>
+        and(
+          row.ownerType.eq(NotificationOwnerType.USER),
+          row.ownerId.eq(discordId),
+          row.name.eq(RESERVATION_REMINDER_RULE_NAME),
+        ),
+    )
+      .select("id", "ownerType", "ownerId", "guildId", "triggerType")
+      .first();
     if (existingRule) {
       return existingRule;
     }
 
-    return this.prisma.notificationRule.create({
-      data: {
+    return this.prisma.transaction(async (transaction) => {
+      const target = await transaction.orm.public.NotificationTarget.where(
+        (row) =>
+          and(
+            row.ownerType.eq(NotificationOwnerType.USER),
+            row.ownerId.eq(discordId),
+            row.targetType.eq(NotificationTargetType.DM),
+            row.active.eq(true),
+            row.canSend.eq(true),
+          ),
+      )
+        .select("id")
+        .orderBy((notificationTarget) => notificationTarget.updatedAt.desc())
+        .first();
+      if (!target) {
+        throw new UnprocessableEntityException({ code: "DM_TARGET_REQUIRED" });
+      }
+      const rule = await transaction.orm.public.NotificationRule.create({
         ownerType: NotificationOwnerType.USER,
         ownerId: discordId,
         triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
         name: RESERVATION_REMINDER_RULE_NAME,
         scheduleStrategy: NotificationScheduleStrategy.FIXED_DATETIME,
         enabled: true,
-        targets: {
-          create: {
-            targetId: (
-              await this.prisma.notificationTarget.findFirstOrThrow({
-                where: {
-                  ownerType: NotificationOwnerType.USER,
-                  ownerId: discordId,
-                  targetType: NotificationTargetType.DM,
-                  active: true,
-                  canSend: true,
-                },
-                orderBy: { updatedAt: "desc" },
-                select: { id: true },
-              })
-            ).id,
-          },
-        },
-      },
+        updatedAt: new Date(),
+      });
+      await transaction.orm.public.NotificationRuleTarget.create({
+        ruleId: rule.id,
+        targetId: target.id,
+      });
+      return rule;
     });
   }
 }

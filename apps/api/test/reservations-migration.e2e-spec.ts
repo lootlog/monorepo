@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-const migrationsRoot = path.resolve(dirname, "../prisma/migrations");
+const migrationsRoot = path.resolve(dirname, "fixtures/prisma7/migrations");
 const reservationMigrations = [
   "20260826120000_reservations_v2",
   "20260826120500_reservations_v2_rollout_bridge",

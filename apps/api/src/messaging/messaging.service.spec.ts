@@ -7,7 +7,7 @@ import { GuildsService } from "#src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { NpcType } from "#src/generated/prisma/client";
+import { NpcType } from "#src/db/domain";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";

@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   HttpException,
   HttpStatus,
@@ -12,6 +13,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachRolesToMembers, setMemberRoles } from "#src/db/many-to-many";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordService } from "#src/discord/discord.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -226,44 +228,52 @@ export class MemberDiscordSyncService {
       const existingRoleIds =
         roleIds.length > 0
           ? (
-              await this.prisma.role.findMany({
-                where: { id: { in: roleIds } },
-                select: { id: true },
-              })
+              await this.prisma.orm.public.Role.where((row) =>
+                row.id.in(roleIds),
+              )
+                .select("id")
+                .all()
             ).map((role) => role.id)
           : [];
 
       const memberName = nick ?? user.global_name ?? user.username;
       const memberAvatar = avatar ?? user.avatar;
 
-      const member = await this.prisma.member.upsert({
-        where: { memberId: { userId: id, guildId } },
-        update: {
-          avatar: memberAvatar,
-          banner,
-          name: memberName,
-          active: true,
-          globalUserId,
-          lastDiscordAttemptAt: syncTimestamp,
-          lastDiscordSyncAt: syncTimestamp,
-          lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-          roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
-        },
-        create: {
-          userId: id,
-          guild: { connect: { id: guildId } },
-          avatar: memberAvatar,
-          active: true,
-          name: memberName,
-          globalUserId,
-          banner,
-          lastDiscordAttemptAt: syncTimestamp,
-          lastDiscordSyncAt: syncTimestamp,
-          lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-          roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
-        },
-        include: { roles: true },
+      const member = await this.prisma.transaction(async (transaction) => {
+        const savedMember = await transaction.orm.public.Member.where((row) =>
+          and(row.userId.eq(id), row.guildId.eq(guildId)),
+        ).upsert({
+          create: {
+            userId: id,
+            guildId,
+            avatar: memberAvatar,
+            active: true,
+            name: memberName,
+            globalUserId,
+            banner,
+            lastDiscordAttemptAt: syncTimestamp,
+            lastDiscordSyncAt: syncTimestamp,
+            lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
+            updatedAt: syncTimestamp,
+          },
+          update: {
+            avatar: memberAvatar,
+            banner,
+            name: memberName,
+            active: true,
+            globalUserId,
+            lastDiscordAttemptAt: syncTimestamp,
+            lastDiscordSyncAt: syncTimestamp,
+            lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
+            updatedAt: syncTimestamp,
+          },
+        });
+        await setMemberRoles(transaction, savedMember.id, existingRoleIds);
+        return savedMember;
       });
+      const [memberWithRoles] = await attachRolesToMembers(this.prisma, [
+        member,
+      ]);
 
       await Promise.all([
         this.amqpConnection.publish(
@@ -281,7 +291,7 @@ export class MemberDiscordSyncService {
         this.redisService.deleteByPattern(getMemberReadCachePattern(guildId)),
       ]);
 
-      return member;
+      return memberWithRoles as MemberWithRoles;
     } catch (error) {
       this.logger.log({
         level: "error",
@@ -306,33 +316,29 @@ export class MemberDiscordSyncService {
       deactivate = false,
       markSynced = false,
     } = options;
-    const existingMember = await this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-    });
+    const existingMember = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(discordId), row.guildId.eq(guildId)),
+    ).first();
 
     if (!existingMember) {
       return null;
     }
 
     const attemptTimestamp = new Date();
-    const member = await this.prisma.member.update({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-      data: {
+    const member = await this.prisma.transaction(async (transaction) => {
+      const updatedMember = await transaction.orm.public.Member.where((row) =>
+        and(row.userId.eq(discordId), row.guildId.eq(guildId)),
+      ).update({
         lastDiscordAttemptAt: attemptTimestamp,
         lastDiscordStatus: status,
         ...(markSynced ? { lastDiscordSyncAt: attemptTimestamp } : {}),
-        ...(deactivate
-          ? {
-              active: false,
-              roles: { set: [] },
-            }
-          : {}),
-      },
-      include: { roles: true },
+        ...(deactivate ? { active: false } : {}),
+        updatedAt: attemptTimestamp,
+      });
+      if (deactivate) {
+        await setMemberRoles(transaction, updatedMember.id, []);
+      }
+      return updatedMember;
     });
 
     if (deactivate && existingMember.active) {

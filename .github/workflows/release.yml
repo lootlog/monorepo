@@ -288,8 +288,8 @@ jobs:
               current_tag="$package_name@$version"
 
               case "$service" in
-                api) migration_path="apps/api/prisma/migrations" ;;
-                activity) migration_path="apps/activity/prisma/migrations" ;;
+                api) migration_path="apps/api/migrations/app" ;;
+                activity) migration_path="apps/activity/migrations/app" ;;
                 auth) migration_path="apps/auth/drizzle" ;;
                 battlelog-service) migration_path="apps/battlelog-service/drizzle" ;;
                 *) continue ;;
@@ -313,6 +313,24 @@ jobs:
 
               echo "### $service ($comparison)"
               echo
+              if [[ "$service" == "api" || "$service" == "activity" ]]; then
+                echo "Before the first Prisma deployment, apply every pending migration from the previous immutable Prisma 7 release. Prisma signing verifies the schema and does not apply missing legacy migrations."
+                echo
+                if [[ "$service" == "api" ]]; then
+                  echo "The final Prisma 7 migration must be \`20260829043000_archive_comment_only_organization_loot_records\`."
+                else
+                  echo "The final Prisma 7 migration must be \`20260623090000_add_member_activity_sessions\`."
+                fi
+                echo
+                echo "After the Prisma 7 deploy, run from the Prisma release checkout:"
+                echo
+                echo "1. \`pnpm --filter @lootlog/$service $service:db:sign\`"
+                echo "2. \`pnpm --filter @lootlog/$service $service:migration:status\`"
+                echo "3. \`pnpm --filter @lootlog/$service $service:db:verify\`"
+                echo
+                echo "A sign, status, or verify mismatch blocks release. API, Activity, and Search must be deployed together for the first Prisma cutover."
+                echo
+              fi
               if [[ -z "$migration_files" ]]; then
                 echo "No migration files detected."
               else

@@ -1,15 +1,11 @@
-import { NpcType, Permission } from "#src/generated/prisma/client";
+import { NpcType, Permission } from "#src/db/domain";
 import { NotificationMatchingService } from "./notification-matching.service.js";
 
 describe("NotificationMatchingService", () => {
   let service: NotificationMatchingService;
 
   beforeEach(() => {
-    service = new NotificationMatchingService({
-      member: {
-        findMany: vi.fn<() => Promise<unknown[]>>(),
-      },
-    } as never);
+    service = new NotificationMatchingService({ query: vi.fn() } as never);
   });
 
   it("returns empty filters for invalid filter payloads", () => {

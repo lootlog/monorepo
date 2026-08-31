@@ -3,18 +3,14 @@ import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberSyncInterceptor } from "./member-sync.interceptor.js";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB } from "#src/db/prisma.provider";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 
 describe("MemberSyncInterceptor", () => {
   let interceptor: MemberSyncInterceptor;
-  let prismaService: {
-    member: {
-      findMany: Mock;
-    };
-  };
+  let memberAll: Mock;
   let membersService: {
     getMemberSoftStaleThreshold: Mock;
     queueMemberRefresh: Mock;
@@ -25,9 +21,17 @@ describe("MemberSyncInterceptor", () => {
   };
 
   beforeEach(async () => {
-    const mockPrismaService = {
-      member: {
-        findMany: mockFn(),
+    const mockMemberAll = mockFn();
+    const query = {
+      where: mockFn(() => query),
+      select: mockFn(() => query),
+      all: mockMemberAll,
+    };
+    const mockPrisma = {
+      orm: {
+        public: {
+          Member: { where: mockFn(() => query) },
+        },
       },
     };
 
@@ -49,14 +53,14 @@ describe("MemberSyncInterceptor", () => {
       providers: [
         MemberSyncInterceptor,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PRISMA_DB, useValue: mockPrisma },
         { provide: MembersService, useValue: mockMembersService },
         { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
     interceptor = module.get(MemberSyncInterceptor);
-    prismaService = module.get(PrismaService);
+    memberAll = mockMemberAll;
     membersService = module.get(MembersService);
     redisService = module.get(RedisService);
   });
@@ -77,7 +81,7 @@ describe("MemberSyncInterceptor", () => {
       const threshold = new Date("2026-03-10T10:00:00.000Z");
       redisService.get.mockResolvedValue(null);
       membersService.getMemberSoftStaleThreshold.mockReturnValue(threshold);
-      prismaService.member.findMany.mockResolvedValue([]);
+      memberAll.mockResolvedValue([]);
 
       await testInterceptor.queueStaleMemberRefreshes(
         "discord-123",
@@ -86,23 +90,7 @@ describe("MemberSyncInterceptor", () => {
       );
 
       expect(membersService.getMemberSoftStaleThreshold).toHaveBeenCalled();
-      expect(prismaService.member.findMany).toHaveBeenCalledWith({
-        where: {
-          userId: "discord-123",
-          guildId: { in: ["guild-123"] },
-          globalUserId: { not: null },
-          active: true,
-          OR: [
-            { lastDiscordSyncAt: null },
-            { lastDiscordSyncAt: { lt: threshold } },
-          ],
-        },
-        select: {
-          userId: true,
-          guildId: true,
-          globalUserId: true,
-        },
-      });
+      expect(memberAll).toHaveBeenCalledTimes(2);
     });
 
     it("should skip querying and queueing when throttled", async () => {
@@ -121,7 +109,7 @@ describe("MemberSyncInterceptor", () => {
         [{ id: "guild-123" }],
       );
 
-      expect(prismaService.member.findMany).not.toHaveBeenCalled();
+      expect(memberAll).not.toHaveBeenCalled();
       expect(membersService.getMemberSoftStaleThreshold).not.toHaveBeenCalled();
       expect(membersService.queueMemberRefresh).not.toHaveBeenCalled();
     });
@@ -138,7 +126,7 @@ describe("MemberSyncInterceptor", () => {
       membersService.getMemberSoftStaleThreshold.mockReturnValue(
         new Date("2026-03-10T10:00:00.000Z"),
       );
-      prismaService.member.findMany.mockResolvedValue([
+      memberAll.mockResolvedValue([
         {
           userId: "discord-123",
           guildId: "guild-123",

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { NpcType } from "#src/generated/prisma/client";
+import { NpcType } from "#src/db/domain";
 import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
 
 const CreateManualTimerSchema = z.object({

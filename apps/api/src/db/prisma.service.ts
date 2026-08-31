@@ -1,92 +1,52 @@
+import { Inject, Injectable } from "@nestjs/common";
 import {
-  Injectable,
-  Logger,
-  Optional,
-  type OnModuleInit,
-} from "@nestjs/common";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, type Prisma } from "#src/generated/prisma/client";
-import { env } from "#src/config/env";
-import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
-
-const isDev = process.env.ENV === "local" || process.env.ENV === "dev";
+  POSTGRES_POOL,
+  PRISMA_DB,
+  type PrismaDb,
+} from "#src/db/prisma.provider";
+import type { Pool } from "pg";
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
-  private readonly logger = new Logger(PrismaService.name);
-  private readonly SLOW_QUERY_THRESHOLD_MS = 100;
-
+export class PrismaService {
   constructor(
-    @Optional()
-    private readonly perfDiagnosticsService?: PerfDiagnosticsService,
-  ) {
-    const connectionString = process.env.POSTGRESQL_CONNECTION_URI;
-    if (!connectionString) {
-      throw new Error("Missing POSTGRESQL_CONNECTION_URI");
-    }
+    @Inject(PRISMA_DB) private readonly client: PrismaDb,
+    @Inject(POSTGRES_POOL) private readonly postgres: Pool,
+  ) {}
 
-    const enableQueryEvents = isDev || env.PERF_DIAGNOSTICS_ENABLED;
-
-    const adapter = new PrismaPg({
-      connectionString,
-      max: 20,
-    });
-
-    super({
-      adapter,
-      log: enableQueryEvents
-        ? [
-            { emit: "event", level: "query" },
-            ...(isDev
-              ? [{ emit: "stdout" as const, level: "info" as const }]
-              : []),
-            { emit: "stdout", level: "warn" },
-            { emit: "stdout", level: "error" },
-          ]
-        : [
-            { emit: "stdout", level: "warn" },
-            { emit: "stdout", level: "error" },
-          ],
-      errorFormat: "colorless",
-    });
-
-    if (enableQueryEvents) {
-      this.$on("query", (event: Prisma.QueryEvent) => {
-        const { duration, query, params, target } = event;
-
-        if (isDev && duration >= this.SLOW_QUERY_THRESHOLD_MS) {
-          this.logger.warn(
-            `Slow query (${duration} ms) [${target}]:
-          ${query}
-          params: ${params}`,
-          );
-        }
-
-        if (!isDev) {
-          this.perfDiagnosticsService?.logSpan("prisma.query", duration, {
-            query: this.truncateQuery(query),
-            target,
-          });
-        }
-      });
-    }
+  get orm(): any {
+    return this.client.orm;
   }
 
-  async onModuleInit() {
-    await this.$connect();
+  get raw(): PrismaDb["raw"] {
+    return this.client.raw;
   }
 
-  async onModuleDestroy() {
-    await this.$disconnect();
+  transaction<T>(operation: (transaction: any) => Promise<T>): Promise<T> {
+    return this.client.transaction(operation);
   }
 
-  private truncateQuery(query: string) {
-    const normalized = query.replace(/\s+/g, " ").trim();
+  runtime(): ReturnType<PrismaDb["runtime"]> {
+    return this.client.runtime();
+  }
 
-    if (normalized.length <= 2000) {
-      return normalized;
+  async sql<Result>(
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<Result> {
+    let statement = strings[0] ?? "";
+    for (let index = 0; index < values.length; index += 1) {
+      statement += `$${index + 1}${strings[index + 1] ?? ""}`;
     }
 
-    return `${normalized.slice(0, 2000)}...`;
+    const result = await this.postgres.query(statement, values);
+    return result.rows as Result;
+  }
+
+  async query<Result>(
+    statement: string,
+    ...values: unknown[]
+  ): Promise<Result> {
+    const result = await this.postgres.query(statement, values);
+    return result.rows as Result;
   }
 }

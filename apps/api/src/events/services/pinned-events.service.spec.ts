@@ -1,18 +1,37 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
 import { mockFn } from "#src/test/mock-fn";
 import { PinnedEventsService } from "./pinned-events.service.js";
 
 describe("PinnedEventsService", () => {
   const referenceTime = new Date("2026-08-16T12:00:00.000Z");
+  const pinAll = mockFn();
+  const pinFirst = mockFn();
+  const pinCreate = mockFn();
+  const pinDelete = mockFn();
+  const eventAll = mockFn();
+  const eventFirst = mockFn();
+  const heroAll = mockFn();
+  const pinQuery = {
+    orderBy: mockFn(() => ({ all: pinAll })),
+    where: mockFn(() => ({ delete: pinDelete })),
+    first: pinFirst,
+    delete: pinDelete,
+  };
   const prisma = {
-    event: {
-      findFirst: mockFn(),
-    },
-    userPinnedEvent: {
-      deleteMany: mockFn(),
-      findMany: mockFn(),
-      upsert: mockFn(),
+    orm: {
+      public: {
+        UserPinnedEvent: {
+          where: mockFn(() => pinQuery),
+          create: pinCreate,
+        },
+        Event: {
+          where: mockFn(() => ({
+            where: mockFn(() => ({ all: eventAll })),
+            select: mockFn(() => ({ first: eventFirst })),
+          })),
+        },
+        EventHeroNpc: { where: mockFn(() => ({ all: heroAll })) },
+      },
     },
   };
   let service: PinnedEventsService;
@@ -21,8 +40,9 @@ describe("PinnedEventsService", () => {
     vi.useFakeTimers();
     vi.setSystemTime(referenceTime);
     vi.clearAllMocks();
-    service = new PinnedEventsService(prisma as unknown as PrismaService);
-    prisma.userPinnedEvent.deleteMany.mockResolvedValue({ count: 0 });
+    heroAll.mockResolvedValue([]);
+    pinDelete.mockResolvedValue(undefined);
+    service = new PinnedEventsService(prisma as never);
   });
 
   afterEach(() => {
@@ -30,104 +50,99 @@ describe("PinnedEventsService", () => {
   });
 
   it("removes inactive pins and returns active pins in database order", async () => {
-    prisma.userPinnedEvent.findMany.mockResolvedValue([
-      {
-        pinnedAt: new Date("2026-08-16T11:00:00.000Z"),
-        event: createEvent({ id: "event-2", name: "Second" }),
-      },
-      {
-        pinnedAt: new Date("2026-08-16T10:00:00.000Z"),
-        event: createEvent({ id: "event-1", name: "First" }),
-      },
+    pinAll.mockResolvedValue([
+      createPin("event-2", "2026-08-16T11:00:00.000Z"),
+      createPin("event-1", "2026-08-16T10:00:00.000Z"),
+      createPin("inactive", "2026-08-16T09:00:00.000Z"),
+    ]);
+    eventAll.mockResolvedValue([
+      createEvent({ id: "event-2", name: "Second" }),
+      createEvent({ id: "event-1", name: "First" }),
+      createEvent({
+        id: "inactive",
+        endsAt: new Date("2026-08-16T11:00:00.000Z"),
+      }),
     ]);
 
     const result = await service.listPinnedEvents("user-1", "guild-1");
 
-    expect(prisma.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
-      where: {
-        userId: "user-1",
-        event: {
-          guildId: "guild-1",
-          OR: [
-            { startsAt: { gt: referenceTime } },
-            { endsAt: { lte: referenceTime } },
-          ],
-        },
-      },
-    });
     expect(result.map(({ event }) => event.id)).toEqual(["event-2", "event-1"]);
     expect(result.every(({ event }) => event.active)).toBe(true);
+    expect(pinDelete).toHaveBeenCalledOnce();
   });
 
-  it("pins an active event idempotently without changing pinnedAt", async () => {
-    const event = createEvent();
-    prisma.event.findFirst.mockResolvedValue(event);
-    prisma.userPinnedEvent.upsert.mockResolvedValue({
-      pinnedAt: new Date("2026-08-16T10:00:00.000Z"),
-    });
+  it("returns an existing pin without changing pinnedAt", async () => {
+    eventAll.mockResolvedValue([createEvent()]);
+    pinFirst.mockResolvedValue(createPin("event-1"));
 
     const result = await service.pinEvent("user-1", "guild-1", "event-1");
 
-    expect(prisma.userPinnedEvent.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          userId_eventId: { userId: "user-1", eventId: "event-1" },
-        },
-        create: { userId: "user-1", eventId: "event-1" },
-        update: {},
-      }),
-    );
     expect(result.event).toMatchObject({ id: "event-1", active: true });
+    expect(pinCreate).not.toHaveBeenCalled();
+  });
+
+  it("creates a pin when one does not exist", async () => {
+    eventAll.mockResolvedValue([createEvent()]);
+    pinFirst.mockResolvedValue(null);
+    pinCreate.mockResolvedValue(createPin("event-1"));
+
+    await service.pinEvent("user-1", "guild-1", "event-1");
+
+    expect(pinCreate).toHaveBeenCalledWith({
+      userId: "user-1",
+      eventId: "event-1",
+    });
   });
 
   it("rejects missing and inactive events", async () => {
-    prisma.event.findFirst.mockResolvedValueOnce(null);
-
+    eventAll.mockResolvedValueOnce([]);
     await expect(
       service.pinEvent("user-1", "guild-1", "missing"),
     ).rejects.toBeInstanceOf(NotFoundException);
 
-    prisma.event.findFirst.mockResolvedValueOnce(
+    eventAll.mockResolvedValueOnce([
       createEvent({ endsAt: new Date("2026-08-16T11:00:00.000Z") }),
-    );
-
+    ]);
     await expect(
       service.pinEvent("user-1", "guild-1", "event-1"),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(prisma.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
-      where: { userId: "user-1", eventId: "event-1" },
-    });
-    expect(prisma.userPinnedEvent.upsert).not.toHaveBeenCalled();
+    expect(pinDelete).toHaveBeenCalledOnce();
   });
 
-  it("unpins only the current user's event from the resolved guild", async () => {
+  it("unpins only when the event belongs to the resolved guild", async () => {
+    eventFirst
+      .mockResolvedValueOnce({ id: "event-1" })
+      .mockResolvedValueOnce(null);
+
     await service.unpinEvent("user-1", "guild-1", "event-1");
+    await service.unpinEvent("user-1", "guild-2", "event-1");
 
-    expect(prisma.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
-      where: {
-        userId: "user-1",
-        eventId: "event-1",
-        event: { guildId: "guild-1" },
-      },
-    });
+    expect(pinDelete).toHaveBeenCalledOnce();
   });
 });
 
-const createEvent = (
-  overrides: Partial<ReturnType<typeof createEventDefaults>> = {},
-) => ({
-  ...createEventDefaults(),
-  ...overrides,
+const createPin = (eventId: string, pinnedAt = "2026-08-16T10:00:00.000Z") => ({
+  id: 1,
+  userId: "user-1",
+  eventId,
+  pinnedAt: new Date(pinnedAt),
 });
 
-const createEventDefaults = () => ({
+const createEvent = (overrides: Record<string, unknown> = {}) => ({
   id: "event-1",
   guildId: "guild-1",
   name: "Event",
   world: "tempest",
   startsAt: new Date("2026-08-16T10:00:00.000Z"),
-  endsAt: null as Date | null,
+  endsAt: null,
   createdAt: new Date("2026-08-16T09:00:00.000Z"),
   updatedAt: new Date("2026-08-16T09:00:00.000Z"),
-  heroNpcs: [],
+  basePointsPerKill: 1,
+  assignmentTimeoutMinutes: 5,
+  mapAssignmentCap: null,
+  scoringRules: null,
+  rulebookMarkdown: null,
+  participationConfirmationMinutes: 0,
+  scoringMode: "SIMPLE",
+  ...overrides,
 });

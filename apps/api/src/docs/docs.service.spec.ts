@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { DocsService } from "./docs.service.js";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 
 const baseContent = {
   root: {
@@ -70,7 +71,7 @@ const createPrismaMock = () => {
 
   prisma.$transaction.mockImplementation((callback) => callback(prisma));
 
-  return prisma;
+  return attachPrismaOrmMock(prisma);
 };
 
 describe("DocsService", () => {
@@ -256,7 +257,8 @@ describe("DocsService", () => {
       data: expect.objectContaining({
         title: "Plan v2",
         updatedByMemberId: "discord-2",
-        version: { increment: 1 },
+        version: 2,
+        updatedAt: expect.any(Date),
       }),
     });
     expect(prisma.guildDocumentHistory.create).toHaveBeenCalledWith({
@@ -393,11 +395,12 @@ describe("DocsService", () => {
 
     expect(prisma.guildDocument.update).toHaveBeenCalledWith({
       where: { id: "doc-1" },
-      data: {
+      data: expect.objectContaining({
         deletedAt: null,
         deletedByMemberId: null,
         updatedByMemberId: "discord-admin",
-      },
+        updatedAt: expect.any(Date),
+      }),
     });
     expect(prisma.guildDocumentHistory.create).toHaveBeenCalledWith({
       data: expect.objectContaining({

@@ -1,7 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import type { Guild } from "#src/generated/prisma/client";
+import type { Guild } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { LootsService } from "#src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service.js";
@@ -48,7 +49,7 @@ describe("EventWrappedService", () => {
         EventWrappedService,
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
         },
         {
           provide: RedisService,

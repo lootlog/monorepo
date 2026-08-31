@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { DiscordGuildSyncStatus } from "#src/generated/prisma/client";
+import { DiscordGuildSyncStatus } from "#src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,

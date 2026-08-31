@@ -6,37 +6,19 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MembersService } from "./members.service.js";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB } from "#src/db/prisma.provider";
 
 describe("MemberBulkRefreshProcessor", () => {
   let processor: MemberBulkRefreshProcessor;
   let membersService: {
     refreshMember: Mock;
   };
-  let prismaService: {
-    memberRefreshJob: {
-      update: Mock;
-      findUnique: Mock;
-    };
-  };
+  let jobUpdate: Mock;
   let memberRefreshJobEventsService: {
     emitJobUpdate: Mock;
   };
   let logger: {
     log: Mock;
-  };
-
-  const mockJobRecord = {
-    id: 1,
-    guildId: "guild-123",
-    requestedBy: "discord-999",
-    status: "PROCESSING",
-    totalMembers: 3,
-    processedMembers: 0,
-    failedMembers: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    completedAt: null,
   };
 
   const createJob = (): Job<{
@@ -65,11 +47,20 @@ describe("MemberBulkRefreshProcessor", () => {
       refreshMember: mockFn(),
     };
 
-    const mockPrismaService = {
-      memberRefreshJob: {
-        update: mockFn(),
-        findUnique: mockFn().mockResolvedValue(mockJobRecord),
+    const mockJobUpdate = mockFn();
+    const mockPrisma = {
+      orm: {
+        public: {
+          MemberRefreshJob: {
+            where: mockFn((where: Record<string, unknown>) => ({
+              update: (data: Record<string, unknown>) =>
+                mockJobUpdate({ where, data }),
+            })),
+          },
+        },
       },
+      raw: { sql: mockFn() },
+      runtime: mockFn(),
     };
 
     const mockMemberRefreshJobEventsService = {
@@ -88,8 +79,8 @@ describe("MemberBulkRefreshProcessor", () => {
           useValue: mockMembersService,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: PRISMA_DB,
+          useValue: mockPrisma,
         },
         {
           provide: MemberRefreshJobEventsService,
@@ -106,7 +97,7 @@ describe("MemberBulkRefreshProcessor", () => {
       MemberBulkRefreshProcessor,
     );
     membersService = module.get(MembersService);
-    prismaService = module.get(PrismaService);
+    jobUpdate = mockJobUpdate;
     memberRefreshJobEventsService = module.get(MemberRefreshJobEventsService);
     logger = module.get(WINSTON_MODULE_PROVIDER);
   });
@@ -135,12 +126,13 @@ describe("MemberBulkRefreshProcessor", () => {
       skipTtlCheck: true,
     });
 
-    expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-      where: { id: 1 },
+    expect(jobUpdate).toHaveBeenLastCalledWith({
+      where: expect.any(Function),
       data: {
         status: "COMPLETED",
         processedMembers: 3,
         completedAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       },
     });
 

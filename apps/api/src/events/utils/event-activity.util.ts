@@ -1,4 +1,4 @@
-import type { Prisma } from "#src/generated/prisma/client";
+import { and, or } from "@prisma/orm-family-sql/orm-client";
 
 type EventActivityWindow = {
   startsAt: Date | null;
@@ -20,19 +20,13 @@ export function isEventActiveAt(
   );
 }
 
-export function buildActiveEventWhere(
-  referenceTime: Date,
-): Prisma.EventWhereInput {
-  return {
-    AND: [
-      {
-        OR: [{ startsAt: null }, { startsAt: { lte: referenceTime } }],
-      },
-      {
-        OR: [{ endsAt: null }, { endsAt: { gt: referenceTime } }],
-      },
-    ],
-  };
+export function applyActiveEventFilter(collection: any, referenceTime: Date) {
+  return collection.where((event) =>
+    and(
+      or(event.startsAt.isNull(), event.startsAt.lte(referenceTime)),
+      or(event.endsAt.isNull(), event.endsAt.gt(referenceTime)),
+    ),
+  );
 }
 
 export function attachComputedEventActive<T extends EventActivityWindow>(

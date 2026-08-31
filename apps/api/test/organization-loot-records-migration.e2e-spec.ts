@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-const migrationsRoot = path.resolve(dirname, "../prisma/migrations");
+const migrationsRoot = path.resolve(dirname, "fixtures/prisma7/migrations");
 const expandMigration = "20260829040000_organization_loot_records_expand";
 const backfillMigration = "20260829041000_organization_loot_records_backfill";
 const archiveCommentOnlyMigration =

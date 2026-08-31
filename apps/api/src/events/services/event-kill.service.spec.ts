@@ -9,9 +9,10 @@ import { EventPointsService } from "./event-points.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
-import type { Event, EventHeroNpc } from "#src/generated/prisma/client";
+import type { Event, EventHeroNpc } from "#src/db/domain";
 import { TimersService } from "#src/timers/timers.service";
 
 describe("EventKillService", () => {
@@ -63,7 +64,7 @@ describe("EventKillService", () => {
       findMany: mockFn(),
     },
     $transaction: mockFn(),
-    $queryRaw: mockFn(),
+    sql: mockFn(),
   };
 
   const mockQueue = {
@@ -188,7 +189,10 @@ describe("EventKillService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventKillService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: RedisService, useValue: mockRedisService },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
@@ -311,14 +315,14 @@ describe("EventKillService", () => {
             npcId: 123,
             npcName: "Hero 1",
             npcLvl: 100,
-            _count: { kills: 3 },
+            kills: 3,
           },
           {
             id: "hero-2",
             npcId: 456,
             npcName: "Hero 2",
             npcLvl: 120,
-            _count: { kills: 1 },
+            kills: 1,
           },
         ],
       };
@@ -364,9 +368,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHeroNpc])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -387,9 +391,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([mockHeroNpc]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -399,7 +403,7 @@ describe("EventKillService", () => {
       );
 
       expect(result).not.toBeNull();
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(1);
     });
 
     it("should find hero by name even when stored npcId is incorrect", async () => {
@@ -410,9 +414,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([mockHeroNpc]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -434,9 +438,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHeroNpc])
-        .mockResolvedValueOnce([mockHeroNpc]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroesByNpc(
         guildId,
@@ -450,9 +454,7 @@ describe("EventKillService", () => {
     });
 
     it("should return null if hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -558,9 +560,7 @@ describe("EventKillService", () => {
     });
 
     it("should skip if NPC is not an event hero", async () => {
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([]);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -587,9 +587,7 @@ describe("EventKillService", () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -641,9 +639,7 @@ describe("EventKillService", () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([mockHero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -694,9 +690,7 @@ describe("EventKillService", () => {
         event: { id: "event-1" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([mockHero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -727,9 +721,7 @@ describe("EventKillService", () => {
         event: { id: "event-1" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
@@ -806,9 +798,10 @@ describe("EventKillService", () => {
         event: { id: "event-2" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([heroA, heroB])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        heroA,
+        heroB,
+      ]);
       mockRedisService.get.mockResolvedValue(null);
 
       const recordSpy = vi
@@ -856,9 +849,7 @@ describe("EventKillService", () => {
         redisValues.add(key);
         return "OK";
       });
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
 
       const recordSpy = vi
         .spyOn(service, "recordHeroKill")
@@ -882,7 +873,7 @@ describe("EventKillService", () => {
       );
 
       expect(recordSpy).toHaveBeenCalledTimes(1);
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(1);
       recordSpy.mockRestore();
     });
 
@@ -898,9 +889,7 @@ describe("EventKillService", () => {
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       mockPrismaService.$transaction.mockRejectedValue(new Error("boom"));
 

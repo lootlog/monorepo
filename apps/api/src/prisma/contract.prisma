@@ -1,0 +1,1499 @@
+// use prisma-next
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+namespace public {
+  model Guild {
+    id                                                    String                        @id(map: "Guild_pkey")
+    name                                                  String
+    icon                                                  String?
+    ownerId                                               String
+    vanityUrl                                             String?
+    createdAt                                             Timestamp(3)                  @default(now())
+    updatedAt                                             Timestamp(3)
+    active                                                Boolean                       @default(true)
+    notificationRuleLimit                                 Int                           @default(20)
+    publicStatsCardEnabled                                Boolean                       @default(false)
+    reservationMaxDurationMinutes                         Int                           @default(180)
+    reservationMinDurationMinutes                         Int                           @default(30)
+    reservationTimeGranularityMinutes                     Int                           @default(15)
+    reservationMaxAdvanceDays                             Int                           @default(7)
+    reservationActiveLimitPerSpot                         Int                           @default(3)
+    documentLimit                                         Int                           @default(50)
+    discordChannelSnapshots                          DiscordGuildChannelSnapshot[]
+    discordSyncState                                 DiscordGuildSyncState?
+    events                                                Event[]
+    documents                                        GuildDocument[]
+    documentHistory                                GuildDocumentHistory[]
+    guildKillSummary                                    GuildKillSummary[]
+    guildKillSummaryBuckets                               GuildKillSummaryBucket[]
+    mapTemplates                                          MapTemplate[]
+    members                                               Member[]
+    notificationRules                                     NotificationRule[]
+    npcKillStats                                          NpcKillStats[]
+    npcKillStatsBuckets                                   NpcKillStatsBucket[]
+    organizationLootRecords                               OrganizationLootRecord[]
+    reservations                                          Reservation[]
+    roles                                                 Role[]
+    timers                                                Timer[]
+    timerHistoryEntries                                   TimerHistoryEntry[]
+    pinnedReservationSpots                            UserPinnedReservationSpot[]
+    reservationSharesAsFirst                                     ReservationShare[]            @relation(name: "ReservationShare_firstGuildId_fkey")
+    reservationSharesAsSecond                     ReservationShare[]            @relation(name: "ReservationShare_secondGuildId_fkey")
+    reservationShareInvitations                           ReservationShareInvitation[]  @relation(name: "ReservationShareInvitation_sourceGuildId_fkey")
+    acceptedReservationInvitations ReservationShareInvitation[]  @relation(name: "ReservationShareInvitation_targetGuildId_fkey")
+
+    @@index([vanityUrl], map: "Guild_vanityUrl_idx")
+    @@index([vanityUrl], map: "Guild_vanityUrl_key", unique: true)
+
+    @@map("Guild")
+  }
+
+  model DiscordGuildChannelSnapshot {
+    id                     Int          @id(map: "DiscordGuildChannelSnapshot_pkey") @default(autoincrement())
+    guildId                String
+    channelId              String
+    name                   String
+    channelType            String
+    parentId               String?
+    position               Int
+    active                 Boolean      @default(true)
+    canView                Boolean      @default(true)
+    canSend                Boolean      @default(true)
+    hasRequiredPermissions Boolean      @default(false)
+    requiredPermissions    String[]?    @noCheck(elementNotNull)
+    grantedPermissions     String[]?    @noCheck(elementNotNull)
+    missingPermissions     String[]?    @noCheck(elementNotNull)
+    lastSyncedAt           Timestamp(3)
+    createdAt              Timestamp(3) @default(now())
+    updatedAt              Timestamp(3)
+    guild                  Guild        @relation(fields:[guildId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "DiscordGuildChannelSnapshot_guildId_fkey", index: false)
+
+    @@index([guildId, active, canSend], map: "DiscordGuildChannelSnapshot_guildId_active_canSend_idx")
+    @@index([guildId, channelId], map: "DiscordGuildChannelSnapshot_guildId_channelId_key", unique: true)
+
+    @@map("DiscordGuildChannelSnapshot")
+  }
+
+  model DiscordGuildSyncState {
+    guildId                String                          @id(map: "DiscordGuildSyncState_pkey")
+    status                 pg.enum(DiscordGuildSyncStatus) @default("STALE")
+    hasRequiredPermissions Boolean                         @default(false)
+    requiredPermissions    String[]?                       @noCheck(elementNotNull)
+    grantedPermissions     String[]?                       @noCheck(elementNotNull)
+    missingPermissions     String[]?                       @noCheck(elementNotNull)
+    channelCount           Int                             @default(0)
+    selectableChannelCount Int                             @default(0)
+    lastAttemptAt          Timestamp(3)?
+    lastSuccessAt          Timestamp(3)?
+    lastError              String?
+    createdAt              Timestamp(3)                    @default(now())
+    updatedAt              Timestamp(3)
+    guild                  Guild                           @relation(fields:[guildId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "DiscordGuildSyncState_guildId_fkey")
+
+    @@map("DiscordGuildSyncState")
+  }
+
+  model Event {
+    id                               String                    @id(map: "Event_pkey")
+    guildId                          String
+    name                             String
+    world                            String
+    startsAt                         Timestamp(3)?
+    endsAt                           Timestamp(3)?
+    createdAt                        Timestamp(3)              @default(now())
+    updatedAt                        Timestamp(3)
+    basePointsPerKill                Int                       @default(1)
+    assignmentTimeoutMinutes         Int                       @default(5)
+    mapAssignmentCap                 Int?
+    scoringRules                     Jsonb?
+    rulebookMarkdown                 String?
+    participationConfirmationMinutes Int                       @default(0)
+    scoringMode                      pg.enum(EventScoringMode) @default("SIMPLE")
+    heroNpcs                    EventHeroNpc[]
+    rankings                    EventRanking[]
+    pinnedBy                 UserPinnedEvent[]
+    guild                            Guild                     @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "Event_guildId_fkey", index: false)
+
+    @@index([guildId, startsAt, endsAt], map: "Event_guildId_startsAt_endsAt_idx")
+    @@index([world], map: "Event_world_idx")
+
+    @@map("Event")
+  }
+
+  model EventHeroNpc {
+    id                          String                      @id(map: "EventHeroNpc_pkey")
+    eventId                     String
+    npcId                       Int?
+    npcName                     String
+    createdAt                   Timestamp(3)                @default(now())
+    npcIcon                     String?
+    npcLvl                      Int?
+    kills              EventHeroKill[]
+    maps                   EventMap[]
+    mapAssignmentHistory EventMapAssignmentHistory[]
+    coverageGaps        EventMapCoverageGap[]
+    eventMapLocations           EventMapLocation[]
+    windowSummaries EventRespawnWindowSummary[]
+    event                       Event                       @relation(fields:[eventId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventHeroNpc_eventId_fkey", index: false)
+
+    @@index([eventId, npcName], map: "EventHeroNpc_eventId_npcName_key", unique: true)
+    @@index([npcId], map: "EventHeroNpc_npcId_idx")
+
+    @@map("EventHeroNpc")
+  }
+
+  model Member {
+    id                                   Int                         @id(map: "Member_pkey") @default(autoincrement())
+    userId                               String
+    guildId                              String
+    _type                                pg.enum(MemberType)         @default("USER") @map("type")
+    name                                 String
+    avatar                               String?
+    banner                               String?
+    active                               Boolean                     @default(true)
+    createdAt                            Timestamp(3)                @default(now())
+    updatedAt                            Timestamp(3)
+    globalUserId                         String?
+    lastDiscordSyncAt                    Timestamp(3)?
+    lastDiscordAttemptAt                 Timestamp(3)?
+    lastDiscordStatus                    String?
+    detectedKills                       EventHeroKill[]
+    points                      EventKillPoint[]
+    mapAssignmentHistory          EventMapAssignmentHistory[]
+    presenceLogs                    EventPresenceLog[]
+    rankings                        EventRanking[]
+    comments                         LootComment[]
+    submissions                      LootSubmission[]
+    npcKillStats                         NpcKillStats[]
+    npcKillStatsBuckets                  NpcKillStatsBucket[]
+    archivedOrganizationLootRecords              OrganizationLootRecord[]
+    timers                               Timer[]
+    eventMapToMembers                    EventMapToMember[]
+    memberToRoles                        MemberToRole[]
+    guild                                Guild                       @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "Member_guildId_fkey", index: false)
+    timerHistoryEntries                  TimerHistoryEntry[]         @relation(name: "TimerHistoryEntry_actorMemberId_fkey")
+    restoredTimerHistoryEntries TimerHistoryEntry[]         @relation(name: "TimerHistoryEntry_timerCreatedById_fkey")
+
+    @@index([globalUserId, guildId, active], map: "Member_globalUserId_guildId_active_idx")
+    @@index([id, guildId], map: "Member_id_guildId_idx")
+    @@index([userId, guildId, active, lastDiscordSyncAt], map: "Member_userId_guildId_active_lastDiscordSyncAt_idx")
+    @@index([userId, guildId], map: "Member_userId_guildId_key", unique: true)
+
+    @@map("Member")
+  }
+
+  model EventHeroKill {
+    id                        String                      @id(map: "EventHeroKill_pkey")
+    heroNpcId                 String
+    killedAt                  Timestamp(3)                @default(now())
+    maxSpawnTimeAtKill        Timestamp(3)
+    minSpawnTimeAtKill        Timestamp(3)
+    timerCreatedById          Int?
+    isManualClose             Boolean                     @default(false)
+    points           EventKillPoint[]
+    windowSummary EventRespawnWindowSummary[]
+    heroNpc                   EventHeroNpc                @relation(fields:[heroNpcId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventHeroKill_heroNpcId_fkey")
+    timerCreatedBy            Member?                     @relation(fields:[timerCreatedById], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "EventHeroKill_timerCreatedById_fkey", index: false)
+
+    @@index([heroNpcId], map: "EventHeroKill_heroNpcId_idx")
+    @@index([heroNpcId, killedAt], map: "EventHeroKill_heroNpcId_killedAt_idx")
+    @@index([killedAt], map: "EventHeroKill_killedAt_idx")
+
+    @@map("EventHeroKill")
+  }
+
+  model EventKillPoint {
+    id                                String        @id(map: "EventKillPoint_pkey")
+    killId                            String
+    memberId                          Int
+    points                            Float
+    timeOnMapSeconds                  Int
+    afkPercentage                     Float
+    wasPresent                        Boolean
+    createdAt                         Timestamp(3)  @default(now())
+    basePoints                        Float
+    trackingDurationSeconds           Int?
+    mapPresenceData                   Jsonb?
+    trackingDurationPercentage        Float?
+    confirmationDeadlineAt            Timestamp(3)?
+    confirmedAt                       Timestamp(3)?
+    bonusBreakdown                    Jsonb?
+    manualAdjustmentPoints            Float         @default(0)
+    confirmationExpiredAcknowledgedAt Timestamp(3)?
+    kill                              EventHeroKill @relation(fields:[killId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventKillPoint_killId_fkey", index: false)
+    member                            Member        @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "EventKillPoint_memberId_fkey")
+
+    @@index([killId, memberId], map: "EventKillPoint_killId_memberId_key", unique: true)
+    @@index([memberId, confirmationDeadlineAt, confirmedAt], map: "EventKillPoint_memberId_confirmationDeadlineAt_confirmedAt_idx")
+    @@index([memberId], map: "EventKillPoint_memberId_idx")
+
+    @@map("EventKillPoint")
+  }
+
+  model EventMapLocation {
+    id        String       @id(map: "EventMapLocation_pkey")
+    heroNpcId String
+    name      String
+    order     Int          @default(0)
+    createdAt Timestamp(3) @default(now())
+    updatedAt Timestamp(3)
+    maps EventMap[]
+    heroNpc   EventHeroNpc @relation(fields:[heroNpcId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventMapLocation_heroNpcId_fkey", index: false)
+
+    @@index([heroNpcId, name], map: "EventMapLocation_heroNpcId_name_key", unique: true)
+    @@index([heroNpcId, order], map: "EventMapLocation_heroNpcId_order_idx")
+
+    @@map("EventMapLocation")
+  }
+
+  model EventMap {
+    id                          String                      @id(map: "EventMap_pkey")
+    mapName                     String
+    createdAt                   Timestamp(3)                @default(now())
+    updatedAt                   Timestamp(3)
+    heroNpcId                   String
+    mapId                       Int
+    locationId                  String?
+    mapAssignmentHistory EventMapAssignmentHistory[]
+    coverageGaps        EventMapCoverageGap[]
+    presenceLogs           EventPresenceLog[]
+    eventMapToMembers           EventMapToMember[]
+    heroNpc                     EventHeroNpc                @relation(fields:[heroNpcId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventMap_heroNpcId_fkey", index: false)
+    location                    EventMapLocation?           @relation(fields:[locationId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "EventMap_locationId_fkey")
+
+    @@index([heroNpcId, mapId], map: "EventMap_heroNpcId_mapId_key", unique: true)
+    @@index([locationId], map: "EventMap_locationId_idx")
+    @@index([mapId], map: "EventMap_mapId_idx")
+    @@index([mapName], map: "EventMap_mapName_idx")
+
+    @@map("EventMap")
+  }
+
+  model EventMapAssignmentHistory {
+    id           String        @id(map: "EventMapAssignmentHistory_pkey")
+    mapId        String
+    heroNpcId    String
+    memberId     Int
+    assignedAt   Timestamp(3)  @default(now())
+    unassignedAt Timestamp(3)?
+    heroNpc      EventHeroNpc  @relation(fields:[heroNpcId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventMapAssignmentHistory_heroNpcId_fkey", index: false)
+    map          EventMap      @relation(fields:[mapId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventMapAssignmentHistory_mapId_fkey", index: false)
+    member       Member        @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "EventMapAssignmentHistory_memberId_fkey")
+
+    @@index([heroNpcId, assignedAt], map: "EventMapAssignmentHistory_heroNpcId_assignedAt_idx")
+    @@index([mapId, assignedAt], map: "EventMapAssignmentHistory_mapId_assignedAt_idx")
+    @@index([memberId], map: "EventMapAssignmentHistory_memberId_idx")
+
+    @@map("EventMapAssignmentHistory")
+  }
+
+  model EventMapCoverageGap {
+    id                 String                   @id(map: "EventMapCoverageGap_pkey")
+    mapId              String
+    heroNpcId          String
+    gapType            pg.enum(CoverageGapType)
+    startedAt          Timestamp(3)
+    endedAt            Timestamp(3)?
+    durationSeconds    Int?
+    hadAssignedMembers Boolean?
+    heroNpc            EventHeroNpc             @relation(fields:[heroNpcId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventMapCoverageGap_heroNpcId_fkey", index: false)
+    map                EventMap                 @relation(fields:[mapId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventMapCoverageGap_mapId_fkey", index: false)
+
+    @@index([heroNpcId, endedAt], map: "EventMapCoverageGap_heroNpcId_endedAt_idx")
+    @@index([heroNpcId, startedAt], map: "EventMapCoverageGap_heroNpcId_startedAt_idx")
+    @@index([mapId, gapType, endedAt], map: "EventMapCoverageGap_mapId_gapType_endedAt_idx")
+    @@index([mapId, startedAt], map: "EventMapCoverageGap_mapId_startedAt_idx")
+
+    @@map("EventMapCoverageGap")
+  }
+
+  model EventMapToMember {
+    a        String   @map("A")
+    b        Int      @map("B")
+    eventMap EventMap @relation(fields:[a], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "_EventMapToMember_A_fkey", index: false)
+    member   Member   @relation(fields:[b], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "_EventMapToMember_B_fkey")
+
+    @@id([a, b], map: "_EventMapToMember_AB_pkey")
+    @@index([b], map: "_EventMapToMember_B_index")
+    @@map("_EventMapToMember")
+  }
+
+  model EventRanking {
+    id                       String                   @id(map: "EventRanking_pkey")
+    eventId                  String
+    memberId                 Int
+    totalPoints              Float                    @default(0)
+    totalKills               Int                      @default(0)
+    totalTimeSeconds         Int                      @default(0)
+    avgAfkPercentage         Float                    @default(0)
+    updatedAt                Timestamp(3)
+    heroNpcName              String
+    pointsModified           Boolean                  @default(false)
+    manualAdjustmentPoints   Float                    @default(0)
+    editHistory EventPointsEditHistory[]
+    event                    Event                    @relation(fields:[eventId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventRanking_eventId_fkey", index: false)
+    member                   Member                   @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "EventRanking_memberId_fkey", index: false)
+
+    @@index([eventId, memberId, heroNpcName], map: "EventRanking_eventId_memberId_heroNpcName_key", unique: true)
+    @@index([eventId, totalPoints], map: "EventRanking_eventId_totalPoints_idx")
+
+    @@map("EventRanking")
+  }
+
+  model EventPointsEditHistory {
+    id             String                  @id(map: "EventPointsEditHistory_pkey")
+    rankingId      String
+    previousPoints Float
+    newPoints      Float
+    editType       pg.enum(PointsEditType)
+    editedByUserId String
+    editedAt       Timestamp(3)            @default(now())
+    comment        String?
+    ranking        EventRanking            @relation(fields:[rankingId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventPointsEditHistory_rankingId_fkey", index: false)
+
+    @@index([rankingId, editedAt], map: "EventPointsEditHistory_rankingId_editedAt_idx")
+
+    @@map("EventPointsEditHistory")
+  }
+
+  model EventPresenceLog {
+    id        String        @id(map: "EventPresenceLog_pkey")
+    mapId     String
+    memberId  Int
+    isAfk     Boolean
+    startedAt Timestamp(3)  @default(now())
+    endedAt   Timestamp(3)?
+    map       EventMap      @relation(fields:[mapId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventPresenceLog_mapId_fkey", index: false)
+    member    Member        @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "EventPresenceLog_memberId_fkey", index: false)
+
+    @@index([mapId, endedAt, isAfk, memberId], map: "EventPresenceLog_mapId_endedAt_isAfk_memberId_idx")
+    @@index([mapId, memberId], map: "EventPresenceLog_mapId_memberId_idx")
+    @@index([startedAt, endedAt], map: "EventPresenceLog_startedAt_endedAt_idx")
+
+    @@map("EventPresenceLog")
+  }
+
+  model EventRespawnWindowSummary {
+    id                     String         @id(map: "EventRespawnWindowSummary_pkey")
+    heroNpcId              String
+    killId                 String?
+    windowOpenedAt         Timestamp(3)
+    windowClosedAt         Timestamp(3)
+    minSpawnTime           Timestamp(3)
+    maxSpawnTime           Timestamp(3)
+    wasManualClose         Boolean        @default(false)
+    totalWindowSeconds     Int
+    totalCoverageSeconds   Int
+    totalUncoveredSeconds  Int
+    totalUnassignedSeconds Int
+    coveragePercentage     Float
+    memberStats            Jsonb
+    mapStats               Jsonb
+    gapsTimeline           Jsonb
+    createdAt              Timestamp(3)   @default(now())
+    heroNpc                EventHeroNpc   @relation(fields:[heroNpcId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "EventRespawnWindowSummary_heroNpcId_fkey")
+    kill                   EventHeroKill? @relation(fields:[killId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "EventRespawnWindowSummary_killId_fkey")
+
+    @@index([heroNpcId], map: "EventRespawnWindowSummary_heroNpcId_idx")
+    @@index([killId], map: "EventRespawnWindowSummary_killId_key", unique: true)
+    @@index([windowClosedAt], map: "EventRespawnWindowSummary_windowClosedAt_idx")
+
+    @@map("EventRespawnWindowSummary")
+  }
+
+  model GuildDocument {
+    id                     String                 @id(map: "GuildDocument_pkey")
+    guildId                String
+    title                  String
+    content                Jsonb
+    version                Int                    @default(1)
+    createdAt              Timestamp(3)           @default(now())
+    updatedAt              Timestamp(3)
+    createdByMemberId      String
+    updatedByMemberId      String
+    deletedAt              Timestamp(3)?
+    deletedByMemberId      String?
+    history GuildDocumentHistory[]
+    guild                  Guild                  @relation(fields:[guildId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "GuildDocument_guildId_fkey", index: false)
+
+    @@index([guildId, deletedAt], map: "GuildDocument_guildId_deletedAt_idx")
+    @@index([guildId, deletedAt, updatedAt], map: "GuildDocument_guildId_deletedAt_updatedAt_idx")
+
+    @@map("GuildDocument")
+  }
+
+  model GuildDocumentHistory {
+    id            String                              @id(map: "GuildDocumentHistory_pkey")
+    documentId    String
+    guildId       String
+    version       Int
+    title         String
+    content       Jsonb
+    editedAt      Timestamp(3)                        @default(now())
+    action        pg.enum(GuildDocumentHistoryAction) @default("SAVE")
+    actorMemberId String
+    document      GuildDocument                       @relation(fields:[documentId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "GuildDocumentHistory_documentId_fkey", index: false)
+    guild         Guild                               @relation(fields:[guildId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "GuildDocumentHistory_guildId_fkey", index: false)
+
+    @@index([documentId, editedAt], map: "GuildDocumentHistory_documentId_editedAt_idx")
+    @@index([documentId, version], map: "GuildDocumentHistory_documentId_version_idx")
+    @@index([guildId, editedAt], map: "GuildDocumentHistory_guildId_editedAt_idx")
+
+    @@map("GuildDocumentHistory")
+  }
+
+  model GuildKillSummary {
+    id           String           @id(map: "GuildKillSummary_pkey")
+    guildId      String
+    world        String
+    npcId        Int
+    npcName      String
+    npcType      pg.enum(NpcType)
+    npcLvl       Int
+    npcProf      String?
+    npcIcon      String?
+    uniqueKills  Int              @default(0)
+    lastKilledAt Timestamp(3)     @default(now())
+    updatedAt    Timestamp(3)
+    guild        Guild            @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "GuildKillSummary_guildId_fkey")
+
+    @@index([guildId], map: "GuildKillSummary_guildId_idx")
+    @@index([guildId, npcType], map: "GuildKillSummary_guildId_npcType_idx")
+    @@index([guildId, world, npcId], map: "GuildKillSummary_guildId_world_npcId_key", unique: true)
+    @@index([guildId, world, npcType], map: "GuildKillSummary_guildId_world_npcType_idx")
+
+    @@map("GuildKillSummary")
+  }
+
+  model GuildKillSummaryBucket {
+    id           String           @id(map: "GuildKillSummaryBucket_pkey")
+    guildId      String
+    world        String
+    npcId        Int
+    npcName      String
+    npcType      pg.enum(NpcType)
+    npcLvl       Int
+    npcProf      String?
+    npcIcon      String?
+    uniqueKills  Int              @default(0)
+    periodStart  Timestamp(3)
+    lastKilledAt Timestamp(3)     @default(now())
+    updatedAt    Timestamp(3)
+    guild        Guild            @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "GuildKillSummaryBucket_guildId_fkey", index: false)
+
+    @@index([guildId, npcType, periodStart], map: "GuildKillSummaryBucket_guildId_npcType_periodStart_idx")
+    @@index([guildId, periodStart], map: "GuildKillSummaryBucket_guildId_periodStart_idx")
+    @@index([guildId, world, npcId, periodStart], map: "GuildKillSummaryBucket_guildId_world_npcId_periodStart_key", unique: true)
+    @@index([guildId, world, npcType, periodStart], map: "GuildKillSummaryBucket_guildId_world_npcType_periodStart_idx")
+
+    @@map("GuildKillSummaryBucket")
+  }
+
+  model ItemSnapshot {
+    id            Int                  @id(map: "ItemSnapshot_pkey") @default(autoincrement())
+    itemId        Int
+    statsHash     String
+    name          String
+    icon          String
+    lvl           Int?
+    rarity        pg.enum(ItemRarity)?
+    itemType      String?
+    statRaw       String
+    statsSnapshot Jsonb
+    createdAt     Timestamp(3)         @default(now())
+    lootItems     LootItem[]
+
+    @@index([itemId, statsHash], map: "ItemSnapshot_itemId_statsHash_key", unique: true)
+    @@index([name], map: "ItemSnapshot_name_idx")
+    @@index([rarity, lvl], map: "ItemSnapshot_rarity_lvl_idx")
+
+    @@map("ItemSnapshot")
+  }
+
+  model Loot {
+    id                      Int                      @id(map: "Loot_pkey") @default(autoincrement())
+    uniqueId                String
+    world                   String
+    source                  pg.enum(LootSource)
+    location                String
+    createdAt               Timestamp(3)             @default(now())
+    updatedAt               Timestamp(3)
+    lootShare               Jsonb                    @default(dbgenerated("'{}'::jsonb"))
+    lootShareSource         pg.enum(LootShareSource) @default("NONE")
+    lootItems               LootItem[]
+    lootNpcs                LootNpc[]
+    lootPlayers             LootPlayer[]
+    organizationLootRecords OrganizationLootRecord[]
+
+    @@index([createdAt], map: "Loot_createdAt_idx")
+    @@index([uniqueId], map: "Loot_uniqueId_key", unique: true)
+    @@index([world, createdAt], map: "Loot_world_createdAt_idx")
+    @@index([world, id], map: "Loot_world_id_idx")
+
+    @@map("Loot")
+  }
+
+  model OrganizationLootRecord {
+    id                 Int              @id(map: "OrganizationLootRecord_pkey") @default(autoincrement())
+    lootId             Int
+    guildId            String
+    archivedAt         Timestamp(3)?
+    archivedByMemberId Int?
+    createdAt          Timestamp(3)     @default(now())
+    updatedAt          Timestamp(3)
+    comments       LootComment[]
+    submissions    LootSubmission[]
+    archivedBy   Member?          @relation(fields:[archivedByMemberId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "OrganizationLootRecord_archivedByMemberId_fkey")
+    guild              Guild            @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "OrganizationLootRecord_guildId_fkey", index: false)
+    loot               Loot             @relation(fields:[lootId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "OrganizationLootRecord_lootId_fkey")
+
+    @@index([archivedByMemberId], map: "OrganizationLootRecord_archivedByMemberId_idx")
+    @@index([guildId, archivedAt, lootId], map: "OrganizationLootRecord_guildId_archivedAt_lootId_idx")
+    @@index([guildId, lootId], map: "OrganizationLootRecord_guildId_lootId_key", unique: true)
+    @@index([lootId], map: "OrganizationLootRecord_lootId_idx")
+
+    @@map("OrganizationLootRecord")
+  }
+
+  model LootComment {
+    id                       Int                    @id(map: "LootComment_pkey") @default(autoincrement())
+    memberId                 Int
+    content                  String
+    createdAt                Timestamp(3)           @default(now())
+    updatedAt                Timestamp(3)
+    organizationLootRecordId Int
+    member                   Member                 @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootComment_memberId_fkey")
+    organizationLootRecord   OrganizationLootRecord @relation(fields:[organizationLootRecordId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "LootComment_organizationLootRecordId_fkey", index: false)
+
+    @@index([memberId], map: "LootComment_memberId_idx")
+    @@index([organizationLootRecordId, createdAt], map: "LootComment_organizationLootRecordId_createdAt_idx")
+
+    @@map("LootComment")
+  }
+
+  model LootItem {
+    id             Int          @id(map: "LootItem_pkey") @default(autoincrement())
+    lootId         Int
+    itemSnapshotId Int
+    hid            String
+    itemSnapshot   ItemSnapshot @relation(fields:[itemSnapshotId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootItem_itemSnapshotId_fkey", index: false)
+    loot           Loot         @relation(fields:[lootId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootItem_lootId_fkey", index: false)
+
+    @@index([hid, lootId], map: "LootItem_hid_lootId_idx")
+    @@index([itemSnapshotId, lootId], map: "LootItem_itemSnapshotId_lootId_idx")
+    @@index([lootId, itemSnapshotId], map: "LootItem_lootId_itemSnapshotId_idx")
+
+    @@map("LootItem")
+  }
+
+  model NpcSnapshot {
+    id           Int                  @id(map: "NpcSnapshot_pkey") @default(autoincrement())
+    npcId        Int
+    name         String
+    _type        pg.enum(NpcType)?    @map("type")
+    lvl          Int?
+    createdAt    Timestamp(3)         @default(now())
+    icon         String?
+    margonemType Int?
+    prof         pg.enum(Profession)?
+    wt           Int?
+    lootNpcs     LootNpc[]
+
+    @@index([name], map: "NpcSnapshot_name_idx")
+    @@index([npcId, name], map: "NpcSnapshot_npcId_name_key", unique: true)
+    @@index([_type, lvl], map: "NpcSnapshot_type_lvl_idx")
+
+    @@map("NpcSnapshot")
+  }
+
+  model LootNpc {
+    id            Int         @id(map: "LootNpc_pkey") @default(autoincrement())
+    lootId        Int
+    npcSnapshotId Int
+    loot          Loot        @relation(fields:[lootId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootNpc_lootId_fkey")
+    npcSnapshot   NpcSnapshot @relation(fields:[npcSnapshotId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootNpc_npcSnapshotId_fkey")
+
+    @@index([lootId], map: "LootNpc_lootId_idx")
+    @@index([npcSnapshotId], map: "LootNpc_npcSnapshotId_idx")
+
+    @@map("LootNpc")
+  }
+
+  model PlayerSnapshot {
+    id                                   Int                  @id(map: "PlayerSnapshot_pkey") @default(autoincrement())
+    world                                String
+    accountId                            Int
+    characterId                          Int
+    snapshotHash                         String
+    name                                 String
+    prof                                 pg.enum(Profession)?
+    icon                                 String?
+    createdAt                            Timestamp(3)         @default(now())
+    lootPlayers                          LootPlayer[]
+    timerActorCharacters                               Timer[]
+    timerHistoryEntries                  TimerHistoryEntry[]  @relation(name: "TimerHistoryEntry_actorCharacterSnapshotId_fkey")
+    restoredTimerHistoryEntries TimerHistoryEntry[]  @relation(name: "TimerHistoryEntry_timerActorCharacterSnapshotId_fkey")
+
+    @@index([accountId, characterId], map: "PlayerSnapshot_accountId_characterId_idx")
+    @@index([name], map: "PlayerSnapshot_name_idx")
+    @@index([world, accountId, characterId, snapshotHash], map: "PlayerSnapshot_world_accountId_characterId_snapshotHash_key", unique: true)
+    @@index([world, name], map: "PlayerSnapshot_world_name_idx")
+
+    @@map("PlayerSnapshot")
+  }
+
+  model LootPlayer {
+    id               Int            @id(map: "LootPlayer_pkey") @default(autoincrement())
+    lootId           Int
+    playerSnapshotId Int
+    hpp              Int?
+    lvl              Int?
+    loot             Loot           @relation(fields:[lootId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootPlayer_lootId_fkey")
+    playerSnapshot   PlayerSnapshot @relation(fields:[playerSnapshotId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootPlayer_playerSnapshotId_fkey")
+
+    @@index([lootId], map: "LootPlayer_lootId_idx")
+    @@index([playerSnapshotId], map: "LootPlayer_playerSnapshotId_idx")
+
+    @@map("LootPlayer")
+  }
+
+  model LootSubmission {
+    id                       Int                    @id(map: "LootSubmission_pkey") @default(autoincrement())
+    memberId                 Int
+    createdAt                Timestamp(3)           @default(now())
+    updatedAt                Timestamp(3)
+    organizationLootRecordId Int
+    member                   Member                 @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootSubmission_memberId_fkey")
+    organizationLootRecord   OrganizationLootRecord @relation(fields:[organizationLootRecordId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "LootSubmission_organizationLootRecordId_fkey", index: false)
+
+    @@index([memberId], map: "LootSubmission_memberId_idx")
+    @@index([organizationLootRecordId, memberId], map: "LootSubmission_organizationLootRecordId_memberId_key", unique: true)
+
+    @@map("LootSubmission")
+  }
+
+  model LootlogConfig {
+    id                String             @id(map: "LootlogConfig_pkey")
+    createdAt         Timestamp(3)       @default(now())
+    updatedAt         Timestamp(3)
+    npcs LootlogConfigNpc[]
+
+    @@map("LootlogConfig")
+  }
+
+  model LootlogConfigNpc {
+    id              Int                    @id(map: "LootlogConfigNpc_pkey") @default(autoincrement())
+    lootlogConfigId String
+    npcType         pg.enum(NpcType)
+    allowedRarities pg.enum(ItemRarity)[]? @noCheck(elementNotNull)
+    createdAt       Timestamp(3)           @default(now())
+    updatedAt       Timestamp(3)
+    lootlogConfig   LootlogConfig          @relation(fields:[lootlogConfigId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "LootlogConfigNpc_lootlogConfigId_fkey", index: false)
+
+    @@map("LootlogConfigNpc")
+  }
+
+  model MapTemplate {
+    id        String       @id(map: "MapTemplate_pkey")
+    guildId   String
+    name      String
+    maps      Jsonb
+    createdAt Timestamp(3) @default(now())
+    guild     Guild        @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "MapTemplate_guildId_fkey")
+
+    @@index([guildId], map: "MapTemplate_guildId_idx")
+    @@index([guildId, name], map: "MapTemplate_guildId_name_key", unique: true)
+
+    @@map("MapTemplate")
+  }
+
+  model MemberRefreshJob {
+    id               Int                       @id(map: "MemberRefreshJob_pkey") @default(autoincrement())
+    guildId          String
+    requestedBy      String
+    status           pg.enum(RefreshJobStatus) @default("PENDING")
+    totalMembers     Int                       @default(0)
+    processedMembers Int                       @default(0)
+    failedMembers    Int                       @default(0)
+    createdAt        Timestamp(3)              @default(now())
+    updatedAt        Timestamp(3)
+    completedAt      Timestamp(3)?
+
+    @@index([guildId], map: "MemberRefreshJob_guildId_idx")
+    @@index([status], map: "MemberRefreshJob_status_idx")
+
+    @@map("MemberRefreshJob")
+  }
+
+  model Role {
+    id            String                 @id(map: "Role_pkey")
+    guildId       String
+    name          String
+    color         Int?
+    position      Int?
+    permissions   pg.enum(Permission)[]? @noCheck(elementNotNull)
+    createdAt     Timestamp(3)           @default(now())
+    updatedAt     Timestamp(3)
+    lvlRangeFrom  Int?                   @default(0)
+    lvlRangeTo    Int?                   @default(500)
+    memberToRoles MemberToRole[]
+    guild         Guild                  @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "Role_guildId_fkey", index: false)
+
+    @@index([id, guildId], map: "Role_id_guildId_idx")
+    @@index([id, guildId], map: "Role_id_guildId_key", unique: true)
+
+    @@map("Role")
+  }
+
+  model MemberToRole {
+    a      Int    @map("A")
+    b      String @map("B")
+    member Member @relation(fields:[a], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "_MemberToRole_A_fkey", index: false)
+    role   Role   @relation(fields:[b], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "_MemberToRole_B_fkey")
+
+    @@id([a, b], map: "_MemberToRole_AB_pkey")
+    @@index([b], map: "_MemberToRole_B_index")
+    @@map("_MemberToRole")
+  }
+
+  model NotificationRule {
+    id                      Int                                        @id(map: "NotificationRule_pkey") @default(autoincrement())
+    ownerType               pg.enum(NotificationOwnerType)
+    ownerId                 String
+    triggerType             pg.enum(NotificationTriggerType)
+    guildId                 String?
+    world                   String?
+    name                    String?
+    filters                 Jsonb?
+    enabled                 Boolean                                    @default(true)
+    dedupeWindowSeconds     Int                                        @default(0)
+    createdAt               Timestamp(3)                               @default(now())
+    updatedAt               Timestamp(3)
+    scheduleStrategy        pg.enum(NotificationScheduleStrategy)?
+    scheduleAnchor          pg.enum(NotificationScheduleAnchor)?
+    scheduleOffsetMinutes   Int?
+    contentTemplate         String?
+    scheduledAt             Timestamp(3)?
+    scheduleIntervalType    pg.enum(NotificationScheduleIntervalType)?
+    scheduleIntervalValue   Int?
+    scheduleWeekday         Int?
+    scheduleTimeOfDay       String?
+    scheduledUntil          Timestamp(3)?
+    scheduleTimezone        String?
+    jobs        NotificationJob[]
+    targets NotificationRuleTarget[]
+    watchedItems             WatchedItem[]
+    guild                   Guild?                                     @relation(fields:[guildId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "NotificationRule_guildId_fkey", index: false)
+
+    @@index([guildId, world, triggerType, enabled], map: "NotificationRule_guildId_world_triggerType_enabled_idx")
+    @@index([ownerType, ownerId, enabled], map: "NotificationRule_ownerType_ownerId_enabled_idx")
+
+    @@map("NotificationRule")
+  }
+
+  model NotificationTarget {
+    id                      Int                             @id(map: "NotificationTarget_pkey") @default(autoincrement())
+    ownerType               pg.enum(NotificationOwnerType)
+    ownerId                 String
+    provider                pg.enum(NotificationProvider)
+    targetType              pg.enum(NotificationTargetType)
+    externalId              String
+    displayName             String?
+    guildName               String?
+    metadata                Jsonb?
+    active                  Boolean                         @default(true)
+    canSend                 Boolean                         @default(true)
+    lastSyncedAt            Timestamp(3)?
+    lastDeliveryAt          Timestamp(3)?
+    lastDeliveryError       String?
+    createdAt               Timestamp(3)                    @default(now())
+    updatedAt               Timestamp(3)
+    jobs        NotificationJob[]
+    rules NotificationRuleTarget[]
+
+    @@index([ownerType, ownerId, active], map: "NotificationTarget_ownerType_ownerId_active_idx")
+    @@index([ownerType, ownerId, provider, targetType, externalId], map: "NotificationTarget_ownerType_ownerId_provider_targetType_ex_key", unique: true)
+
+    @@map("NotificationTarget")
+  }
+
+  model NotificationJob {
+    id                String                         @id(map: "NotificationJob_pkey")
+    ruleId            Int
+    targetId          Int
+    ownerType         pg.enum(NotificationOwnerType)
+    ownerId           String
+    jobKind           pg.enum(NotificationJobKind)
+    scheduledFor      Timestamp(3)
+    status            pg.enum(NotificationJobStatus) @default("PENDING")
+    idempotencyKey    String
+    sourceEntityType  String?
+    sourceEntityId    String?
+    sourceEventId     String?
+    payloadSnapshot   Jsonb
+    attemptCount      Int                            @default(0)
+    lastError         String?
+    blockedReason     String?
+    providerMessageId String?
+    processedAt       Timestamp(3)?
+    createdAt         Timestamp(3)                   @default(now())
+    updatedAt         Timestamp(3)
+    rule              NotificationRule               @relation(fields:[ruleId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "NotificationJob_ruleId_fkey", index: false)
+    target            NotificationTarget             @relation(fields:[targetId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "NotificationJob_targetId_fkey", index: false)
+
+    @@index([idempotencyKey], map: "NotificationJob_idempotencyKey_key", unique: true)
+    @@index([ownerType, ownerId, status, scheduledFor], map: "NotificationJob_ownerType_ownerId_status_scheduledFor_idx")
+    @@index([ruleId, status], map: "NotificationJob_ruleId_status_idx")
+    @@index([status, scheduledFor], map: "NotificationJob_status_scheduledFor_idx")
+    @@index([targetId, status], map: "NotificationJob_targetId_status_idx")
+
+    @@map("NotificationJob")
+  }
+
+  model NotificationRuleTarget {
+    ruleId    Int
+    targetId  Int
+    createdAt Timestamp(3)       @default(now())
+    rule      NotificationRule   @relation(fields:[ruleId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "NotificationRuleTarget_ruleId_fkey", index: false)
+    target    NotificationTarget @relation(fields:[targetId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "NotificationRuleTarget_targetId_fkey")
+
+    @@id([ruleId, targetId], map: "NotificationRuleTarget_pkey")
+    @@index([targetId], map: "NotificationRuleTarget_targetId_idx")
+
+    @@map("NotificationRuleTarget")
+  }
+
+  model NpcKillStats {
+    id           String           @id(map: "NpcKillStats_pkey")
+    guildId      String
+    memberId     Int
+    world        String
+    npcId        Int
+    npcName      String
+    npcType      pg.enum(NpcType)
+    npcLvl       Int
+    npcIcon      String?
+    lastKilledAt Timestamp(3)     @default(now())
+    updatedAt    Timestamp(3)
+    npcProf      String?
+    userId       String
+    memberKills  Int              @default(0)
+    guild        Guild            @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "NpcKillStats_guildId_fkey")
+    member       Member           @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "NpcKillStats_memberId_fkey")
+
+    @@index([guildId], map: "NpcKillStats_guildId_idx")
+    @@index([guildId, memberId, world, npcId], map: "NpcKillStats_guildId_memberId_world_npcId_key", unique: true)
+    @@index([guildId, npcType], map: "NpcKillStats_guildId_npcType_idx")
+    @@index([guildId, world, npcType], map: "NpcKillStats_guildId_world_npcType_idx")
+    @@index([memberId], map: "NpcKillStats_memberId_idx")
+
+    @@map("NpcKillStats")
+  }
+
+  model NpcKillStatsBucket {
+    id           String           @id(map: "NpcKillStatsBucket_pkey")
+    guildId      String
+    memberId     Int
+    userId       String
+    world        String
+    npcId        Int
+    npcName      String
+    npcType      pg.enum(NpcType)
+    npcLvl       Int
+    npcProf      String?
+    npcIcon      String?
+    memberKills  Int              @default(0)
+    periodStart  Timestamp(3)
+    lastKilledAt Timestamp(3)     @default(now())
+    updatedAt    Timestamp(3)
+    guild        Guild            @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "NpcKillStatsBucket_guildId_fkey", index: false)
+    member       Member           @relation(fields:[memberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "NpcKillStatsBucket_memberId_fkey", index: false)
+
+    @@index([guildId, memberId, world, npcId, periodStart], map: "NpcKillStatsBucket_guildId_memberId_world_npcId_periodStart_key", unique: true)
+    @@index([guildId, npcType, periodStart], map: "NpcKillStatsBucket_guildId_npcType_periodStart_idx")
+    @@index([guildId, periodStart], map: "NpcKillStatsBucket_guildId_periodStart_idx")
+    @@index([guildId, world, npcType, periodStart], map: "NpcKillStatsBucket_guildId_world_npcType_periodStart_idx")
+    @@index([memberId, periodStart], map: "NpcKillStatsBucket_memberId_periodStart_idx")
+
+    @@map("NpcKillStatsBucket")
+  }
+
+  model Reservation {
+    id                    Int           @id(map: "Reservation_pkey") @default(autoincrement())
+    guildId               String
+    reservationId         String?
+    createdDate           Timestamp(3)?
+    fromDate              Timestamp(3)?
+    toDate                Timestamp(3)?
+    createdBy             String?
+    createdAt             Timestamp(3)  @default(now())
+    updatedAt             Timestamp(3)
+    comment               String?
+    spotId                String
+    spotName              String
+    startsAt              Timestamp(3)
+    endsAt                Timestamp(3)
+    createdByUserId       String?
+    authorDisplayName     String
+    authorAvatarUrl       String?
+    reminderMinutesBefore Int?
+    guild                 Guild         @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "Reservation_guildId_fkey", index: false)
+
+    @@index([createdByUserId, endsAt], map: "Reservation_createdByUserId_endsAt_idx")
+    @@index([guildId, endsAt], map: "Reservation_guildId_endsAt_idx")
+    @@index([guildId, spotId, startsAt, endsAt], map: "Reservation_guildId_spotId_startsAt_endsAt_idx")
+    @@check(expression: "((\"reminderMinutesBefore\" IS NULL) OR (\"reminderMinutesBefore\" = ANY (ARRAY[0, 5, 15, 30])))", map: "Reservation_reminder_minutes_check")
+    @@check(expression: "(\"endsAt\" > \"startsAt\")", map: "Reservation_valid_time_range_check")
+
+    @@map("Reservation")
+  }
+
+  model ReservationShare {
+    id               String        @id(map: "ReservationShare_pkey")
+    firstGuildId     String
+    secondGuildId    String
+    createdByUserId  String
+    acceptedByUserId String
+    revokedAt        Timestamp(3)?
+    createdAt        Timestamp(3)  @default(now())
+    updatedAt        Timestamp(3)
+    firstGuild       Guild         @relation(name: "ReservationShare_firstGuildId_fkey", fields:[firstGuildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "ReservationShare_firstGuildId_fkey", index: false)
+    secondGuild      Guild         @relation(name: "ReservationShare_secondGuildId_fkey", fields:[secondGuildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "ReservationShare_secondGuildId_fkey", index: false)
+
+    @@index([firstGuildId, revokedAt], map: "ReservationShare_firstGuildId_revokedAt_idx")
+    @@index([firstGuildId, secondGuildId], map: "ReservationShare_firstGuildId_secondGuildId_key", unique: true)
+    @@index([secondGuildId, revokedAt], map: "ReservationShare_secondGuildId_revokedAt_idx")
+    @@check(expression: "(\"firstGuildId\" < \"secondGuildId\")", map: "ReservationShare_distinct_guilds_check")
+
+    @@map("ReservationShare")
+  }
+
+  model ReservationShareInvitation {
+    id               String        @id(map: "ReservationShareInvitation_pkey")
+    sourceGuildId    String
+    tokenHash        String
+    createdByUserId  String
+    expiresAt        Timestamp(3)
+    acceptedAt       Timestamp(3)?
+    acceptedByUserId String?
+    targetGuildId    String?
+    revokedAt        Timestamp(3)?
+    createdAt        Timestamp(3)  @default(now())
+    updatedAt        Timestamp(3)
+    sourceGuild      Guild         @relation(name: "ReservationShareInvitation_sourceGuildId_fkey", fields:[sourceGuildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "ReservationShareInvitation_sourceGuildId_fkey", index: false)
+    targetGuild      Guild?        @relation(name: "ReservationShareInvitation_targetGuildId_fkey", fields:[targetGuildId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "ReservationShareInvitation_targetGuildId_fkey")
+
+    @@index([expiresAt], map: "ReservationShareInvitation_expiresAt_idx")
+    @@index([sourceGuildId, createdAt], map: "ReservationShareInvitation_sourceGuildId_createdAt_idx")
+    @@index([targetGuildId], map: "ReservationShareInvitation_targetGuildId_idx")
+    @@index([tokenHash], map: "ReservationShareInvitation_tokenHash_key", unique: true)
+
+    @@map("ReservationShareInvitation")
+  }
+
+  model Timer {
+    createdById              Int
+    guildId                  String
+    npcId                    Int
+    world                    String
+    minSpawnTime             Timestamp(3)
+    maxSpawnTime             Timestamp(3)
+    latestRespBaseSeconds    Int             @default(0)
+    latestRespawnRandomness  Int             @default(0)
+    createdAt                Timestamp(3)    @default(now())
+    updatedAt                Timestamp(3)
+    npc                      Jsonb
+    tempId                   String?
+    wasReset                 Boolean         @default(false)
+    windowOpenedAt           Timestamp(3)?
+    timerKey                 String
+    actorCharacterSnapshotId Int?
+    actorCharacterLvl        Int?
+    deletedAt                Timestamp(3)?
+    actorCharacter   PlayerSnapshot? @relation(fields:[actorCharacterSnapshotId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "Timer_actorCharacterSnapshotId_fkey")
+    member                Member          @relation(fields:[createdById], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "Timer_createdById_fkey")
+    guild                    Guild           @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "Timer_guildId_fkey", index: false)
+
+    @@id([guildId, world, timerKey], map: "Timer_pkey")
+    @@index([actorCharacterSnapshotId], map: "Timer_actorCharacterSnapshotId_idx")
+    @@index([createdById], map: "Timer_createdById_idx")
+    @@index([guildId, maxSpawnTime], map: "Timer_guildId_maxSpawnTime_idx")
+    @@index([guildId, world, deletedAt, maxSpawnTime], map: "Timer_guildId_world_deletedAt_maxSpawnTime_idx")
+    @@index([guildId, world, timerKey], map: "Timer_guildId_world_timerKey_idx")
+    @@index([npcId, guildId], map: "Timer_npcId_guildId_idx")
+    @@index([world, guildId], map: "Timer_world_guildId_idx")
+    @@index(expression: "(npc ->> 'name'::text)", map: "idx_timer_npc_name")
+
+    @@map("Timer")
+  }
+
+  model TimerHistoryEntry {
+    id                            Int                         @id(map: "TimerHistoryEntry_pkey") @default(autoincrement())
+    guildId                       String
+    world                         String
+    timerKey                      String
+    npcId                         Int
+    npc                           Jsonb
+    action                        pg.enum(TimerHistoryAction)
+    actorMemberId                 Int
+    actorCharacterSnapshotId      Int?
+    actorCharacterLvl             Int?
+    minSpawnTime                  Timestamp(3)?
+    maxSpawnTime                  Timestamp(3)?
+    latestRespBaseSeconds         Int?
+    latestRespawnRandomness       Int?
+    wasReset                      Boolean?
+    windowOpenedAt                Timestamp(3)?
+    timerCreatedById              Int?
+    timerActorCharacterSnapshotId Int?
+    timerActorCharacterLvl        Int?
+    createdAt                     Timestamp(3)                @default(now())
+    actorCharacter        PlayerSnapshot?             @relation(name: "TimerHistoryEntry_actorCharacterSnapshotId_fkey", fields:[actorCharacterSnapshotId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "TimerHistoryEntry_actorCharacterSnapshotId_fkey")
+    actorMember                   Member                      @relation(name: "TimerHistoryEntry_actorMemberId_fkey", fields:[actorMemberId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "TimerHistoryEntry_actorMemberId_fkey")
+    guild                         Guild                       @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "TimerHistoryEntry_guildId_fkey", index: false)
+    timerActorCharacter   PlayerSnapshot?             @relation(name: "TimerHistoryEntry_timerActorCharacterSnapshotId_fkey", fields:[timerActorCharacterSnapshotId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "TimerHistoryEntry_timerActorCharacterSnapshotId_fkey")
+    timerCreatedBy                Member?                     @relation(name: "TimerHistoryEntry_timerCreatedById_fkey", fields:[timerCreatedById], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "TimerHistoryEntry_timerCreatedById_fkey")
+
+    @@index([actorCharacterSnapshotId], map: "TimerHistoryEntry_actorCharacterSnapshotId_idx")
+    @@index([actorMemberId], map: "TimerHistoryEntry_actorMemberId_idx")
+    @@index([guildId, world, createdAt], map: "TimerHistoryEntry_guildId_world_createdAt_idx")
+    @@index([guildId, world, timerKey, createdAt], map: "TimerHistoryEntry_guildId_world_timerKey_createdAt_idx")
+    @@index([timerActorCharacterSnapshotId], map: "TimerHistoryEntry_timerActorCharacterSnapshotId_idx")
+    @@index([timerCreatedById], map: "TimerHistoryEntry_timerCreatedById_idx")
+
+    @@map("TimerHistoryEntry")
+  }
+
+  model UserCharactersLootlogSettings {
+    id               Int          @id(map: "UserCharactersLootlogSettings_pkey") @default(autoincrement())
+    userId           String
+    accountId        String
+    characterId      String
+    createdAt        Timestamp(3) @default(now())
+    updatedAt        Timestamp(3)
+    catchingGuildIds String[]     @noCheck(elementNotNull)
+
+    @@index([userId, accountId, characterId], map: "UserCharactersLootlogSettings_userId_accountId_characterId_key", unique: true)
+
+    @@map("UserCharactersLootlogSettings")
+  }
+
+  model UserGameAccountSettings {
+    id        Int          @id(map: "UserGameAccountSettings_pkey") @default(autoincrement())
+    userId    String
+    accountId String
+    settings  Jsonb        @default(dbgenerated("'{}'::jsonb"))
+    createdAt Timestamp(3) @default(now())
+    updatedAt Timestamp(3)
+
+    @@index([userId, accountId], map: "UserGameAccountSettings_userId_accountId_key", unique: true)
+    @@index([userId], map: "UserGameAccountSettings_userId_idx")
+
+    @@map("UserGameAccountSettings")
+  }
+
+  model UserGuildTimerSettings {
+    id           Int          @id(map: "UserGuildTimerSettings_pkey") @default(autoincrement())
+    userId       String
+    guildId      String
+    hiddenTimers String[]?    @noCheck(elementNotNull)
+    pinnedTimers String[]?    @noCheck(elementNotNull)
+    createdAt    Timestamp(3) @default(now())
+    updatedAt    Timestamp(3)
+
+    @@index([guildId], map: "UserGuildTimerSettings_guildId_idx")
+    @@index([userId, guildId], map: "UserGuildTimerSettings_userId_guildId_key", unique: true)
+    @@index([userId], map: "UserGuildTimerSettings_userId_idx")
+
+    @@map("UserGuildTimerSettings")
+  }
+
+  model UserKillStats {
+    id           String           @id(map: "UserKillStats_pkey")
+    userId       String
+    world        String
+    npcId        Int
+    npcName      String
+    npcType      pg.enum(NpcType)
+    npcLvl       Int
+    npcIcon      String?
+    totalKills   Int              @default(0)
+    lastKilledAt Timestamp(3)     @default(now())
+    updatedAt    Timestamp(3)
+    npcProf      String?
+
+    @@index([userId], map: "UserKillStats_userId_idx")
+    @@index([userId, npcType], map: "UserKillStats_userId_npcType_idx")
+    @@index([userId, world, npcId], map: "UserKillStats_userId_world_npcId_key", unique: true)
+    @@index([userId, world, npcType], map: "UserKillStats_userId_world_npcType_idx")
+
+    @@map("UserKillStats")
+  }
+
+  model UserKillStatsBucket {
+    id           String           @id(map: "UserKillStatsBucket_pkey")
+    userId       String
+    world        String
+    npcId        Int
+    npcName      String
+    npcType      pg.enum(NpcType)
+    npcLvl       Int
+    npcProf      String?
+    npcIcon      String?
+    totalKills   Int              @default(0)
+    periodStart  Timestamp(3)
+    lastKilledAt Timestamp(3)     @default(now())
+    updatedAt    Timestamp(3)
+
+    @@index([userId, npcType, periodStart], map: "UserKillStatsBucket_userId_npcType_periodStart_idx")
+    @@index([userId, periodStart], map: "UserKillStatsBucket_userId_periodStart_idx")
+    @@index([userId, world, npcId, periodStart], map: "UserKillStatsBucket_userId_world_npcId_periodStart_key", unique: true)
+    @@index([userId, world, npcType, periodStart], map: "UserKillStatsBucket_userId_world_npcType_periodStart_idx")
+
+    @@map("UserKillStatsBucket")
+  }
+
+  model UserPinnedEvent {
+    id       Int          @id(map: "UserPinnedEvent_pkey") @default(autoincrement())
+    userId   String
+    eventId  String
+    pinnedAt Timestamp(3) @default(now())
+    event    Event        @relation(fields:[eventId], references:[id], onDelete: Cascade, onUpdate: Cascade, map: "UserPinnedEvent_eventId_fkey")
+
+    @@index([eventId], map: "UserPinnedEvent_eventId_idx")
+    @@index([userId, eventId], map: "UserPinnedEvent_userId_eventId_key", unique: true)
+    @@index([userId, pinnedAt], map: "UserPinnedEvent_userId_pinnedAt_idx")
+
+    @@map("UserPinnedEvent")
+  }
+
+  model UserPinnedReservationSpot {
+    id       Int          @id(map: "UserPinnedReservationSpot_pkey") @default(autoincrement())
+    userId   String
+    guildId  String
+    spotId   String
+    pinnedAt Timestamp(3) @default(now())
+    guild    Guild        @relation(fields:[guildId], references:[id], onDelete: Restrict, onUpdate: Cascade, map: "UserPinnedReservationSpot_guildId_fkey", index: false)
+
+    @@index([userId, guildId, pinnedAt], map: "UserPinnedReservationSpot_userId_guildId_pinnedAt_idx")
+    @@index([userId, guildId, spotId], map: "UserPinnedReservationSpot_userId_guildId_spotId_key", unique: true)
+
+    @@map("UserPinnedReservationSpot")
+  }
+
+  model UserSettingDocument {
+    id            Int                        @id(map: "UserSettingDocument_pkey") @default(autoincrement())
+    userId        String
+    domain        String
+    scopeType     pg.enum(SettingsScopeType)
+    scopeId       String
+    overrides     Jsonb                      @default(dbgenerated("'{}'::jsonb"))
+    schemaVersion Int                        @default(1)
+    createdAt     Timestamp(3)               @default(now())
+    updatedAt     Timestamp(3)
+
+    @@index([userId, domain], map: "UserSettingDocument_userId_domain_idx")
+    @@index([userId, domain, scopeType, scopeId], map: "UserSettingDocument_userId_domain_scopeType_scopeId_key", unique: true)
+    @@index([userId, scopeType, scopeId], map: "UserSettingDocument_userId_scopeType_scopeId_idx")
+
+    @@map("UserSettingDocument")
+  }
+
+  model UserSettings {
+    id             Int          @id(map: "UserSettings_pkey") @default(autoincrement())
+    userId         String
+    guildsOrder    String[]?    @noCheck(elementNotNull)
+    createdAt      Timestamp(3) @default(now())
+    updatedAt      Timestamp(3)
+    theme          String       @default("default")
+    hiddenGuildIds String[]     @noCheck(elementNotNull)
+
+    @@index([userId], map: "UserSettings_userId_idx")
+    @@index([userId], map: "UserSettings_userId_key", unique: true)
+
+    @@map("UserSettings")
+  }
+
+  model UserSoundSettings {
+    id                  Int          @id(map: "UserSoundSettings_pkey") @default(autoincrement())
+    userId              String
+    masterVolume        Float        @default(0.5)
+    notificationsVolume Float        @default(0.5)
+    detectorVolume      Float        @default(0.5)
+    timersVolume        Float        @default(0.5)
+    notificationsConfig Jsonb        @default(dbgenerated("'{}'::jsonb"))
+    detectorConfig      Jsonb        @default(dbgenerated("'{}'::jsonb"))
+    timersConfig        Jsonb        @default(dbgenerated("'{}'::jsonb"))
+    createdAt           Timestamp(3) @default(now())
+    updatedAt           Timestamp(3)
+    pingsVolume         Float        @default(0)
+
+    @@index([userId], map: "UserSoundSettings_userId_idx")
+    @@index([userId], map: "UserSoundSettings_userId_key", unique: true)
+
+    @@map("UserSoundSettings")
+  }
+
+  model UserTimerSettings {
+    id                         Int          @id(map: "UserTimerSettings_pkey") @default(autoincrement())
+    userId                     String
+    generalConfig              Jsonb
+    displayConfig              Jsonb
+    customColors               Jsonb
+    timersColors               Jsonb
+    defaultColorNames          Jsonb
+    overriddenDefaultColors    Jsonb
+    hiddenDefaultColors        Jsonb
+    timerFiltersEnabled        Boolean      @default(true)
+    timersSortOrder            String       @default("asc")
+    createdAt                  Timestamp(3) @default(now())
+    updatedAt                  Timestamp(3)
+    syncEnabled                Boolean      @default(true)
+    colorFiltersEnabled        Boolean      @default(false)
+    alwaysVisibleExpiredTimers Jsonb        @default(dbgenerated("'{}'::jsonb"))
+
+    @@index([userId], map: "UserTimerSettings_userId_idx")
+    @@index([userId], map: "UserTimerSettings_userId_key", unique: true)
+
+    @@map("UserTimerSettings")
+  }
+
+  model WatchedItem {
+    id                 Int               @id(map: "WatchedItem_pkey") @default(autoincrement())
+    userId             String
+    itemId             Int
+    enabled            Boolean           @default(true)
+    notificationRuleId Int?
+    createdAt          Timestamp(3)      @default(now())
+    updatedAt          Timestamp(3)
+    itemName           String
+    world              String
+    notificationRule   NotificationRule? @relation(fields:[notificationRuleId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "WatchedItem_notificationRuleId_fkey")
+
+    @@index([itemId, world, enabled], map: "WatchedItem_itemId_world_enabled_idx")
+    @@index([notificationRuleId], map: "WatchedItem_notificationRuleId_key", unique: true)
+    @@index([userId, enabled], map: "WatchedItem_userId_enabled_idx")
+    @@index([userId, itemId, world], map: "WatchedItem_userId_itemId_world_key", unique: true)
+
+    @@map("WatchedItem")
+  }
+
+  native_enum CoverageGapType {
+    UNASSIGNED = "UNASSIGNED"
+    UNCOVERED = "UNCOVERED"
+  }
+
+  native_enum DiscordGuildSyncStatus {
+    SYNCED = "SYNCED"
+    SYNCING = "SYNCING"
+    FAILED = "FAILED"
+    STALE = "STALE"
+    NOT_FOUND = "NOT_FOUND"
+  }
+
+  native_enum EventScoringMode {
+    SIMPLE = "SIMPLE"
+    ADVANCED = "ADVANCED"
+  }
+
+  native_enum GuildDocumentHistoryAction {
+    SAVE = "SAVE"
+    DELETE = "DELETE"
+    RESTORE = "RESTORE"
+  }
+
+  native_enum ItemRarity {
+    UNIQUE = "UNIQUE"
+    HEROIC = "HEROIC"
+    LEGENDARY = "LEGENDARY"
+    UPGRADED = "UPGRADED"
+  }
+
+  native_enum ItemType {
+    ONE_HAND_WEAPON = "ONE_HAND_WEAPON"
+    TWO_HAND_WEAPON = "TWO_HAND_WEAPON"
+    ONE_AND_HALF_HAND_WEAPON = "ONE_AND_HALF_HAND_WEAPON"
+    DISTANCE_WEAPON = "DISTANCE_WEAPON"
+    HELP_WEAPON = "HELP_WEAPON"
+    WAND_WEAPON = "WAND_WEAPON"
+    ORB_WEAPON = "ORB_WEAPON"
+    ARMOR = "ARMOR"
+    HELMET = "HELMET"
+    BOOTS = "BOOTS"
+    GLOVES = "GLOVES"
+    RING = "RING"
+    NECKLACE = "NECKLACE"
+    SHIELD = "SHIELD"
+    NEUTRAL = "NEUTRAL"
+    CONSUME = "CONSUME"
+    GOLD = "GOLD"
+    KEYS = "KEYS"
+    QUEST = "QUEST"
+    RENEWABLE = "RENEWABLE"
+    ARROWS = "ARROWS"
+    TALISMAN = "TALISMAN"
+    BOOK = "BOOK"
+    BAG = "BAG"
+    BLESS = "BLESS"
+    UPGRADE = "UPGRADE"
+    RECIPE = "RECIPE"
+    COINAGE = "COINAGE"
+    QUIVER = "QUIVER"
+    OUTFITS = "OUTFITS"
+    PETS = "PETS"
+    TELEPORTS = "TELEPORTS"
+  }
+
+  native_enum LootShareSource {
+    NONE = "NONE"
+    ITEM_OWNER = "ITEM_OWNER"
+    CHAT_MESSAGE = "CHAT_MESSAGE"
+  }
+
+  native_enum LootSource {
+    LOOTBOX = "LOOTBOX"
+    DIALOG = "DIALOG"
+    FIGHT = "FIGHT"
+  }
+
+  native_enum MemberType {
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    USER = "USER"
+    BOT = "BOT"
+  }
+
+  native_enum NotificationJobKind {
+    SCHEDULED = "SCHEDULED"
+    INSTANT = "INSTANT"
+    TEST = "TEST"
+  }
+
+  native_enum NotificationJobStatus {
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SENT = "SENT"
+    FAILED = "FAILED"
+    BLOCKED = "BLOCKED"
+    CANCELED = "CANCELED"
+  }
+
+  native_enum NotificationOwnerType {
+    GUILD = "GUILD"
+    USER = "USER"
+  }
+
+  native_enum NotificationProvider {
+    DISCORD = "DISCORD"
+  }
+
+  native_enum NotificationScheduleAnchor {
+    MIN_SPAWN = "MIN_SPAWN"
+    MAX_SPAWN = "MAX_SPAWN"
+  }
+
+  native_enum NotificationScheduleIntervalType {
+    ONCE = "ONCE"
+    HOURLY = "HOURLY"
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+  }
+
+  native_enum NotificationScheduleStrategy {
+    SPAWN_WINDOW_RELATIVE = "SPAWN_WINDOW_RELATIVE"
+    FIXED_DATETIME = "FIXED_DATETIME"
+  }
+
+  native_enum NotificationTargetType {
+    CHANNEL = "CHANNEL"
+    DM = "DM"
+  }
+
+  native_enum NotificationTriggerType {
+    TIMER_BEFORE_SPAWN = "TIMER_BEFORE_SPAWN"
+    NPC_SPAWNED = "NPC_SPAWNED"
+    WATCHED_ITEM_DROPPED = "WATCHED_ITEM_DROPPED"
+    SCHEDULED_MESSAGE = "SCHEDULED_MESSAGE"
+  }
+
+  native_enum NpcType {
+    COMMON = "COMMON"
+    ELITE = "ELITE"
+    ELITE2 = "ELITE2"
+    ELITE3 = "ELITE3"
+    HERO = "HERO"
+    EVENT_HERO = "EVENT_HERO"
+    TITAN = "TITAN"
+    COLOSSUS = "COLOSSUS"
+    NPC = "NPC"
+  }
+
+  native_enum Permission {
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    LOOTLOG_MANAGE = "LOOTLOG_MANAGE"
+    LOOTLOG_ACCESS = "LOOTLOG_ACCESS"
+    LOOTLOG_LOOTS_READ = "LOOTLOG_LOOTS_READ"
+    LOOTLOG_LOOTS_WRITE = "LOOTLOG_LOOTS_WRITE"
+    LOOTLOG_LOOTS_TITANS_READ = "LOOTLOG_LOOTS_TITANS_READ"
+    LOOTLOG_LOOTS_HEROES_READ = "LOOTLOG_LOOTS_HEROES_READ"
+    LOOTLOG_TIMERS_READ = "LOOTLOG_TIMERS_READ"
+    LOOTLOG_TIMERS_WRITE = "LOOTLOG_TIMERS_WRITE"
+    LOOTLOG_TIMERS_RESET = "LOOTLOG_TIMERS_RESET"
+    LOOTLOG_TIMERS_DELETE = "LOOTLOG_TIMERS_DELETE"
+    LOOTLOG_TIMERS_TITANS_READ = "LOOTLOG_TIMERS_TITANS_READ"
+    LOOTLOG_TIMERS_HEROES_READ = "LOOTLOG_TIMERS_HEROES_READ"
+    LOOTLOG_RESERVATIONS_READ = "LOOTLOG_RESERVATIONS_READ"
+    LOOTLOG_RESERVATIONS_WRITE = "LOOTLOG_RESERVATIONS_WRITE"
+    LOOTLOG_MEMBERS_READ = "LOOTLOG_MEMBERS_READ"
+    LOOTLOG_CHAT_READ = "LOOTLOG_CHAT_READ"
+    LOOTLOG_CHAT_WRITE = "LOOTLOG_CHAT_WRITE"
+    LOOTLOG_CHAT_TITANS_READ = "LOOTLOG_CHAT_TITANS_READ"
+    LOOTLOG_CHAT_HEROES_READ = "LOOTLOG_CHAT_HEROES_READ"
+    LOOTLOG_NOTIFICATIONS_READ = "LOOTLOG_NOTIFICATIONS_READ"
+    LOOTLOG_NOTIFICATIONS_SEND = "LOOTLOG_NOTIFICATIONS_SEND"
+    LOOTLOG_NOTIFICATIONS_TITANS_READ = "LOOTLOG_NOTIFICATIONS_TITANS_READ"
+    LOOTLOG_NOTIFICATIONS_HEROES_READ = "LOOTLOG_NOTIFICATIONS_HEROES_READ"
+    LOOTLOG_EVENTS_MANAGE = "LOOTLOG_EVENTS_MANAGE"
+    LOOTLOG_EVENTS_READ = "LOOTLOG_EVENTS_READ"
+    LOOTLOG_EVENTS_WRITE = "LOOTLOG_EVENTS_WRITE"
+    LOOTLOG_ONLINE_PLAYERS_READ = "LOOTLOG_ONLINE_PLAYERS_READ"
+    LOOTLOG_DOCS_READ = "LOOTLOG_DOCS_READ"
+    LOOTLOG_DOCS_WRITE = "LOOTLOG_DOCS_WRITE"
+    LOOTLOG_LOOTS_ARCHIVE = "LOOTLOG_LOOTS_ARCHIVE"
+  }
+
+  native_enum PointsEditType {
+    KILL_POINT = "KILL_POINT"
+    RANKING = "RANKING"
+  }
+
+  native_enum Profession {
+    WARRIOR = "WARRIOR"
+    PALADIN = "PALADIN"
+    HUNTER = "HUNTER"
+    MAGE = "MAGE"
+    BLADE_DANCER = "BLADE_DANCER"
+    TRACKER = "TRACKER"
+  }
+
+  native_enum RefreshJobStatus {
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+  }
+
+  native_enum SettingsScopeType {
+    USER = "USER"
+    GAME_ACCOUNT = "GAME_ACCOUNT"
+    CHARACTER = "CHARACTER"
+    GUILD = "GUILD"
+  }
+
+  native_enum TimerHistoryAction {
+    CREATE = "CREATE"
+    RESET = "RESET"
+    DELETE = "DELETE"
+    RESTORE = "RESTORE"
+  }
+}

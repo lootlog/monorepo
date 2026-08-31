@@ -20,7 +20,7 @@ import {
 } from "@nestjs/swagger";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission, type Role } from "#src/db/domain";
 import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,

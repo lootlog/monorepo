@@ -1,8 +1,8 @@
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service.js";
-import { Permission } from "../src/generated/prisma/client.js";
+import { Permission } from "../src/db/domain.js";
 import {
   closeE2EApp,
   createE2EApp,

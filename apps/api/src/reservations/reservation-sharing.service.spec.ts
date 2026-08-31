@@ -3,6 +3,7 @@ import {
   GoneException,
   NotFoundException,
 } from "@nestjs/common";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReservationSharingService } from "./reservation-sharing.service.js";
 
@@ -41,7 +42,7 @@ describe("ReservationSharingService", () => {
         Promise.resolve(callback(transaction)),
     );
     service = new ReservationSharingService(
-      prisma as never,
+      attachPrismaOrmMock(prisma) as never,
       guildsService as never,
       eventsPublisher as never,
     );
@@ -179,6 +180,7 @@ describe("ReservationSharingService", () => {
         acceptedAt: expect.any(Date),
         acceptedByUserId: "user",
         targetGuildId: "b",
+        updatedAt: expect.any(Date),
       },
     });
     expect(transaction.reservationShare.upsert).not.toHaveBeenCalled();

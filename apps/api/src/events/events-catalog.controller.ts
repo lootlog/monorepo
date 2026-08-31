@@ -19,11 +19,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import {
-  Permission,
-  type Guild,
-  type Role,
-} from "#src/generated/prisma/client";
+import { Permission, type Guild, type Role } from "#src/db/domain";
 import { CreateEventDto } from "./dto/create-event.dto.js";
 import {
   EventListItemResponseDto,

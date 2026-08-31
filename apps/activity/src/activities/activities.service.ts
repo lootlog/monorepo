@@ -1,17 +1,30 @@
 import { createHash } from "node:crypto";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { ActivityType, Prisma } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/shared/db/prisma.service";
+import { createId } from "@paralleldrive/cuid2";
+import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
+import {
+  ActivityType,
+  type ActivityType as ActivityTypeValue,
+} from "../shared/db/domain.js";
+import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
+import { temporalToDate } from "#src/shared/db/temporal";
 import { CreateActivityDto } from "./dto/create-activity.dto.js";
+import type { ActivityResponse } from "./dto/activity-response.dto.js";
 import { mapActivityDetails } from "./utils/map-activity-details.js";
+
+type PrismaTransaction = Parameters<PrismaDb["transaction"]>[0] extends (
+  transaction: infer Transaction,
+) => PromiseLike<unknown>
+  ? Transaction
+  : never;
 
 @Injectable()
 export class ActivitiesService {
   private readonly logger = new Logger(ActivitiesService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {}
 
-  async create(dto: CreateActivityDto) {
+  async create(dto: CreateActivityDto): Promise<ActivityResponse> {
     let actorSnapshotId: string | undefined;
     if (dto.actorSnapshot) {
       actorSnapshotId = await this.findOrCreateActorSnapshot(
@@ -21,59 +34,62 @@ export class ActivitiesService {
     }
 
     try {
-      const activity = await this.prisma.$transaction(async (tx) => {
-        const createdActivity = await tx.activity.create({
-          data: {
-            userId: dto.userId,
-            guildId: dto.guildId,
-            discordId: dto.discordId,
-            type: dto.type,
-            source: dto.source,
-            idempotencyKey: dto.idempotencyKey,
-            world: dto.world,
-            details: dto.details
-              ? (dto.details as Prisma.InputJsonValue)
-              : undefined,
-            actorSnapshotId,
-          },
-          include: {
-            actorSnapshot: true,
-          },
+      const activity = await this.prisma.transaction(async (transaction) => {
+        const createdActivity = await transaction.orm.public.Activity.create({
+          id: createId(),
+          userId: dto.userId,
+          guildId: dto.guildId,
+          discordId: dto.discordId,
+          _type: dto.type,
+          source: dto.source,
+          idempotencyKey: dto.idempotencyKey,
+          world: dto.world ?? null,
+          details: (dto.details ?? null) as JsonValue,
+          actorSnapshotId: actorSnapshotId ?? null,
         });
 
-        await this.updateMemberActivityStats(tx, dto);
+        await this.updateMemberActivityStats(transaction, dto);
 
-        return createdActivity;
+        const actorSnapshot = actorSnapshotId
+          ? await transaction.orm.public.ActivityActorSnapshot.first({
+              id: actorSnapshotId,
+            })
+          : null;
+
+        return { ...createdActivity, actorSnapshot };
       });
 
       return {
-        ...activity,
+        ...this.mapActivityTemporalFields(activity),
+        type: activity._type,
         actorSnapshot: activity.actorSnapshot ?? undefined,
         details: mapActivityDetails(activity.details),
       };
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
+      if (this.isUniqueViolation(error)) {
         this.logger.log(
           `Duplicate activity detected via idempotency key: ${dto.idempotencyKey}`,
         );
 
-        const existing = await this.prisma.activity.findFirst({
-          where: { idempotencyKey: dto.idempotencyKey },
-          include: {
-            actorSnapshot: true,
-          },
-        });
+        const existing = await this.prisma.orm.public.Activity.where({
+          idempotencyKey: dto.idempotencyKey,
+        }).first();
 
         if (!existing) {
           throw error;
         }
 
+        const actorSnapshot = existing.actorSnapshotId
+          ? await this.prisma.orm.public.ActivityActorSnapshot.first({
+              id: existing.actorSnapshotId,
+            })
+          : null;
+        const existingWithSnapshot = { ...existing, actorSnapshot };
+
         return {
-          ...existing,
-          actorSnapshot: existing.actorSnapshot ?? undefined,
+          ...this.mapActivityTemporalFields(existingWithSnapshot),
+          type: existing._type,
+          actorSnapshot: actorSnapshot ?? undefined,
           details: mapActivityDetails(existing.details),
         };
       }
@@ -83,129 +99,106 @@ export class ActivitiesService {
   }
 
   private async updateMemberActivityStats(
-    tx: Prisma.TransactionClient,
+    transaction: PrismaTransaction,
     dto: CreateActivityDto,
   ): Promise<void> {
     if (dto.type === ActivityType.CONNECT_EVENT) {
-      await this.updateMemberActivityStatsForConnect(tx, dto);
+      await this.updateMemberActivityStatsForConnect(transaction, dto);
       return;
     }
 
     if (dto.type === ActivityType.DISCONNECT_EVENT) {
-      await this.updateMemberActivityStatsForDisconnect(tx, dto);
+      await this.updateMemberActivityStatsForDisconnect(transaction, dto);
     }
   }
 
   private async updateMemberActivityStatsForConnect(
-    tx: Prisma.TransactionClient,
+    transaction: PrismaTransaction,
     dto: CreateActivityDto,
   ): Promise<void> {
     const sessionId = this.getActivitySessionId(dto);
     const lastSeenAt = new Date();
-    const createdSession = await tx.memberActivitySession.createMany({
-      data: {
+    const lastSeenAtIso = lastSeenAt.toISOString();
+    const userAgent = this.getDetailsString(dto, "userAgent") ?? null;
+    const world = dto.world ?? null;
+    const insertSessionPlan = this.prisma.raw.sql`
+      INSERT INTO "MemberActivitySession"
+        ("guildId", "discordId", "source", "sessionId", "userId", "userAgent", "world", "lastSeenAt")
+      VALUES
+        (${dto.guildId}, ${dto.discordId}, ${dto.source}, ${sessionId}, ${dto.userId}, ${userAgent}, ${world}, ${lastSeenAtIso}::timestamptz)
+      ON CONFLICT DO NOTHING
+    `
+      .affectedCount()
+      .build();
+    const { affectedRows: visitCountIncrement } =
+      await transaction.execute(insertSessionPlan);
+    const activeSessionCount = Number(
+      await transaction.orm.public.MemberActivitySession.where({
         guildId: dto.guildId,
         discordId: dto.discordId,
         source: dto.source,
-        sessionId,
-        userId: dto.userId,
-        userAgent: this.getDetailsString(dto, "userAgent"),
-        world: dto.world,
-        lastSeenAt,
-      },
-      skipDuplicates: true,
-    });
-    const activeSessionCount = await tx.memberActivitySession.count({
-      where: {
-        guildId: dto.guildId,
-        discordId: dto.discordId,
-        source: dto.source,
-      },
-    });
-    const visitCountIncrement = createdSession.count;
+      }).count(),
+    );
 
-    await tx.memberActivityStats.upsert({
-      where: {
-        guildId_discordId_source: {
-          guildId: dto.guildId,
-          discordId: dto.discordId,
-          source: dto.source,
-        },
-      },
-      update: {
-        lastSeenAt,
-        ...(visitCountIncrement > 0
-          ? { visitCount: { increment: visitCountIncrement } }
-          : {}),
-        activeSessionCount,
-      },
-      create: {
-        guildId: dto.guildId,
-        discordId: dto.discordId,
-        source: dto.source,
-        lastSeenAt,
-        visitCount: visitCountIncrement,
-        activeSessionCount,
-      },
-    });
+    const updateStatsPlan = this.prisma.raw.sql`
+      INSERT INTO "MemberActivityStats"
+        ("guildId", "discordId", "source", "lastSeenAt", "visitCount", "activeSessionCount", "updatedAt")
+      VALUES
+        (${dto.guildId}, ${dto.discordId}, ${dto.source}, ${lastSeenAtIso}::timestamptz, ${visitCountIncrement}, ${activeSessionCount}, NOW())
+      ON CONFLICT ("guildId", "discordId", "source") DO UPDATE SET
+        "lastSeenAt" = EXCLUDED."lastSeenAt",
+        "visitCount" = "MemberActivityStats"."visitCount" + EXCLUDED."visitCount",
+        "activeSessionCount" = EXCLUDED."activeSessionCount",
+        "updatedAt" = NOW()
+    `
+      .affectedCount()
+      .build();
+    await transaction.execute(updateStatsPlan);
   }
 
   private async updateMemberActivityStatsForDisconnect(
-    tx: Prisma.TransactionClient,
+    transaction: PrismaTransaction,
     dto: CreateActivityDto,
   ): Promise<void> {
     const sessionId = this.getActivitySessionId(dto);
 
-    await tx.memberActivitySession.deleteMany({
-      where: {
+    await transaction.orm.public.MemberActivitySession.where({
+      guildId: dto.guildId,
+      discordId: dto.discordId,
+      source: dto.source,
+      sessionId,
+    }).delete();
+    const activeSessionCount = Number(
+      await transaction.orm.public.MemberActivitySession.where({
         guildId: dto.guildId,
         discordId: dto.discordId,
         source: dto.source,
-        sessionId,
-      },
-    });
-    const activeSessionCount = await tx.memberActivitySession.count({
-      where: {
-        guildId: dto.guildId,
-        discordId: dto.discordId,
-        source: dto.source,
-      },
-    });
+      }).count(),
+    );
 
-    await tx.memberActivityStats.updateMany({
-      where: {
-        guildId: dto.guildId,
-        discordId: dto.discordId,
-        source: dto.source,
-      },
-      data: {
-        activeSessionCount,
-      },
-    });
+    await transaction.orm.public.MemberActivityStats.where({
+      guildId: dto.guildId,
+      discordId: dto.discordId,
+      source: dto.source,
+    }).update({ activeSessionCount, updatedAt: new Date() });
   }
 
   async clearActiveSessionsForMember(member: {
     guildId: string;
     discordId: string;
   }): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.memberActivitySession.deleteMany({
-        where: {
-          guildId: member.guildId,
-          discordId: member.discordId,
-        },
-      });
+    await this.prisma.transaction(async (transaction) => {
+      await transaction.orm.public.MemberActivitySession.where({
+        guildId: member.guildId,
+        discordId: member.discordId,
+      }).delete();
 
-      await tx.memberActivityStats.updateMany({
-        where: {
-          guildId: member.guildId,
-          discordId: member.discordId,
-          activeSessionCount: { gt: 0 },
-        },
-        data: {
-          activeSessionCount: 0,
-        },
-      });
+      await transaction.orm.public.MemberActivityStats.where({
+        guildId: member.guildId,
+        discordId: member.discordId,
+      })
+        .where((stats) => stats.activeSessionCount.gt(0))
+        .update({ activeSessionCount: 0, updatedAt: new Date() });
     });
   }
 
@@ -237,55 +230,58 @@ export class ActivitiesService {
   }
 
   async deleteOne(id: string, guildId: string): Promise<number> {
-    const activity = await this.prisma.activity.findFirst({
-      where: {
-        id,
-        guildId,
-      },
-    });
+    const activity = await this.prisma.orm.public.Activity.where({
+      id,
+      guildId,
+    }).first();
 
     if (!activity) {
       throw new NotFoundException(`Activity with ID ${id} not found`);
     }
 
-    await this.prisma.activity.delete({
-      where: {
-        id_createdAt: {
-          id: activity.id,
-          createdAt: activity.createdAt,
-        },
-      },
-    });
+    await this.prisma.orm.public.Activity.where({
+      id: activity.id,
+      createdAt: activity.createdAt,
+    }).delete();
 
     return 1;
   }
 
-  async deleteMany(guildId: string, type?: ActivityType): Promise<number> {
-    const result = await this.prisma.activity.deleteMany({
-      where: {
-        guildId,
-        type,
-      },
-    });
+  async deleteMany(guildId: string, type?: ActivityTypeValue): Promise<number> {
+    const deleted = type
+      ? await this.prisma.runtime().execute(
+          this.prisma.raw.sql`
+            DELETE FROM "Activity"
+            WHERE "guildId" = ${guildId} AND "type" = ${type}
+          `
+            .affectedCount()
+            .build(),
+        )
+      : await this.prisma.runtime().execute(
+          this.prisma.raw.sql`
+            DELETE FROM "Activity"
+            WHERE "guildId" = ${guildId}
+          `
+            .affectedCount()
+            .build(),
+        );
 
-    return result.count;
+    return deleted.affectedRows;
   }
 
   async getStatsByGuild(
     guildId: string,
-  ): Promise<Record<ActivityType, number>> {
-    const stats = await this.prisma.activity.groupBy({
-      by: ["type"],
-      where: { guildId },
-      _count: { type: true },
-    });
+  ): Promise<Record<ActivityTypeValue, number>> {
+    const stats = await this.prisma.orm.public.Activity.where({ guildId })
+      .groupBy("_type")
+      .aggregate((aggregate) => ({ count: aggregate.count() }));
 
     return stats.reduce(
       (acc, stat) => {
-        acc[stat.type] = stat._count.type;
+        acc[stat._type] = stat.count;
         return acc;
       },
-      {} as Record<ActivityType, number>,
+      {} as Record<ActivityTypeValue, number>,
     );
   }
 
@@ -300,23 +296,27 @@ export class ActivitiesService {
     const fingerprint = this.generateFingerprint(snapshot, source);
 
     try {
-      const actorSnapshot = await this.prisma.activityActorSnapshot.upsert({
-        where: { fingerprint },
-        update: {},
-        create: {
-          accountId: snapshot.accountId,
-          characterId: snapshot.characterId,
-          clanName: snapshot.clanName,
-          clanId: snapshot.clanId,
-          name: snapshot.name,
-          icon: snapshot.icon,
-          lvl: snapshot.lvl,
-          prof: snapshot.prof,
-          source,
+      const actorSnapshot =
+        await this.prisma.orm.public.ActivityActorSnapshot.where({
           fingerprint,
-        },
-        select: { id: true },
-      });
+        })
+          .select("id")
+          .upsert({
+            update: { fingerprint },
+            create: {
+              id: createId(),
+              accountId: snapshot.accountId,
+              characterId: snapshot.characterId,
+              clanName: snapshot.clanName,
+              clanId: snapshot.clanId,
+              name: snapshot.name,
+              icon: snapshot.icon,
+              lvl: snapshot.lvl,
+              prof: snapshot.prof,
+              source,
+              fingerprint,
+            },
+          });
 
       return actorSnapshot.id;
     } catch (error) {
@@ -346,5 +346,34 @@ export class ActivitiesService {
     });
 
     return createHash("sha256").update(data).digest("hex");
+  }
+
+  private mapActivityTemporalFields<
+    Activity extends {
+      createdAt: Date | { toString(): string };
+      actorSnapshot: null | {
+        createdAt: Date | { toString(): string };
+      };
+    },
+  >(activity: Activity) {
+    return {
+      ...activity,
+      createdAt: temporalToDate(activity.createdAt),
+      actorSnapshot: activity.actorSnapshot
+        ? {
+            ...activity.actorSnapshot,
+            createdAt: temporalToDate(activity.actorSnapshot.createdAt),
+          }
+        : null,
+    };
+  }
+
+  private isUniqueViolation(error: unknown): boolean {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "sqlState" in error &&
+      error.sqlState === "23505"
+    );
   }
 }

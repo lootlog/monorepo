@@ -1,4 +1,4 @@
-import type { Prisma } from "#src/generated/prisma/client";
+import type { JsonValue } from "#src/db/domain";
 import { z } from "zod";
 
 export const isoDatetimeCodec = z.codec(z.iso.datetime(), z.date(), {
@@ -22,7 +22,7 @@ export const nullableFlexibleIsoDatetimeCodec =
 
 export const unknownRecordSchema = z.record(z.string(), z.unknown());
 
-const rawJsonValueSchema: z.ZodType<Prisma.JsonValue> = z.lazy(() =>
+const rawJsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([
     z.string(),
     z.number(),

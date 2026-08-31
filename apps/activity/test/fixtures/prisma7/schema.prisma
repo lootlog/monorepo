@@ -1,0 +1,91 @@
+datasource db {
+  provider = "postgresql"
+}
+
+enum ActivityType {
+  CONNECT_EVENT
+  DISCONNECT_EVENT
+}
+
+enum ActivitySource {
+  GAME
+  WEB_APP
+}
+
+// TimescaleDB hypertable with 1-day chunks and 7-day retention policy
+model Activity {
+  id             String       @default(cuid())
+  userId         String
+  guildId        String
+  discordId      String
+  type           ActivityType
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  idempotencyKey String
+
+  source ActivitySource
+
+  world String? @db.Text
+
+  details Json?
+
+  actorSnapshotId String?
+  actorSnapshot   ActivityActorSnapshot? @relation("ActivityActorSnapshot_Activity", fields: [actorSnapshotId], references: [id])
+
+  @@id([id, createdAt])
+  @@unique([idempotencyKey, createdAt])
+  @@index([createdAt(sort: Desc), guildId])
+  @@index([createdAt(sort: Desc), userId])
+  @@index([createdAt(sort: Desc), type])
+  @@index([guildId, createdAt(sort: Desc)])
+}
+
+model ActivityActorSnapshot {
+  id String @id @default(cuid())
+
+  accountId   Int
+  characterId Int
+  name        String     @db.Text
+  clanName    String?    @db.Text
+  clanId      Int?
+  icon        String
+  lvl         Int
+  prof        String
+
+  source      ActivitySource
+  fingerprint String         @unique
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  activities Activity[] @relation("ActivityActorSnapshot_Activity")
+}
+
+model MemberActivityStats {
+  guildId            String
+  discordId          String
+  source             ActivitySource
+  lastSeenAt         DateTime?      @db.Timestamptz
+  visitCount         Int            @default(0)
+  activeSessionCount Int            @default(0)
+  createdAt          DateTime       @default(now()) @db.Timestamptz
+  updatedAt          DateTime       @updatedAt @db.Timestamptz
+
+  @@id([guildId, discordId, source])
+  @@index([guildId, source])
+}
+
+model MemberActivitySession {
+  guildId     String
+  discordId   String
+  source      ActivitySource
+  sessionId   String
+  userId      String?
+  userAgent   String?        @db.Text
+  world       String?        @db.Text
+  connectedAt DateTime       @default(now()) @db.Timestamptz
+  lastSeenAt  DateTime       @default(now()) @db.Timestamptz
+
+  @@id([guildId, discordId, source, sessionId])
+  @@index([guildId, discordId, source])
+  @@index([guildId, source])
+  @@index([lastSeenAt])
+}

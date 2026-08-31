@@ -13,6 +13,8 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MembersService } from "./members.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
+import { PRISMA_DB } from "#src/db/prisma.provider";
 import { DiscordService } from "#src/discord/discord.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
@@ -25,7 +27,7 @@ import {
   type Member,
   type Guild,
   MemberType,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -65,6 +67,10 @@ type MockPrismaService = {
   };
   role: {
     findMany: Mock;
+  };
+  memberToRole: {
+    createMany: Mock;
+    deleteMany: Mock;
   };
   memberRefreshJob: {
     findFirst: Mock;
@@ -174,6 +180,10 @@ describe("MembersService", () => {
       role: {
         findMany: mockFn(),
       },
+      memberToRole: {
+        createMany: mockFn(),
+        deleteMany: mockFn(),
+      },
       memberRefreshJob: {
         findFirst: mockFn(),
         findUnique: mockFn(),
@@ -247,7 +257,14 @@ describe("MembersService", () => {
         MemberRefreshJobEventsService,
         MemberRemovalService,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
+        {
+          provide: PRISMA_DB,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
         {
@@ -468,15 +485,11 @@ describe("MembersService", () => {
 
       expect(result).toBeNull();
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: {
-          memberId: { userId: options.discordId, guildId: options.guildId },
-        },
+        where: { userId: options.discordId, guildId: options.guildId },
         data: expect.objectContaining({
           active: false,
           lastDiscordStatus: "NOT_FOUND",
-          roles: { set: [] },
         }),
-        include: { roles: true },
       });
     });
 
@@ -496,15 +509,11 @@ describe("MembersService", () => {
 
       expect(result).toBeNull();
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: {
-          memberId: { userId: options.discordId, guildId: options.guildId },
-        },
+        where: { userId: options.discordId, guildId: options.guildId },
         data: expect.objectContaining({
           active: false,
           lastDiscordStatus: "NOT_FOUND",
-          roles: { set: [] },
         }),
-        include: { roles: true },
       });
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
@@ -550,13 +559,10 @@ describe("MembersService", () => {
         }),
       );
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: {
-          memberId: { userId: options.discordId, guildId: options.guildId },
-        },
+        where: { userId: options.discordId, guildId: options.guildId },
         data: expect.objectContaining({
           lastDiscordStatus: "UNAUTHORIZED",
         }),
-        include: { roles: true },
       });
       expect(amqpConnection.publish).not.toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
@@ -925,13 +931,10 @@ describe("MembersService", () => {
 
       expect(result).toEqual(unauthorizedMember);
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: {
-          memberId: { userId: options.discordId, guildId: options.guildId },
-        },
+        where: { userId: options.discordId, guildId: options.guildId },
         data: expect.objectContaining({
           lastDiscordStatus: "UNAUTHORIZED",
         }),
-        include: { roles: true },
       });
     });
   });
@@ -949,11 +952,6 @@ describe("MembersService", () => {
           guildId: "guild-123",
           active: true,
           globalUserId: { not: null },
-        },
-        include: {
-          roles: {
-            orderBy: { position: "desc" },
-          },
         },
         orderBy: { name: "asc" },
       });
@@ -999,11 +997,11 @@ describe("MembersService", () => {
           userId: "discord-123",
           name: "Alpha",
           avatar: "avatar.png",
-          roles: [{ color: 123456 }],
+          roles: [{ color: 123456, permissions: [Permission.LOOTLOG_ACCESS] }],
         },
         {
           id: 456,
-          userId: "discord-456",
+          userId: "owner-123",
           name: "Beta",
           avatar: null,
           roles: [],
@@ -1022,7 +1020,7 @@ describe("MembersService", () => {
         },
         {
           id: 456,
-          userId: "discord-456",
+          userId: "owner-123",
           name: "Beta",
           avatar: null,
           color: null,
@@ -1033,39 +1031,12 @@ describe("MembersService", () => {
           guildId: "guild-123",
           active: true,
           globalUserId: { not: null },
-          OR: [
-            {
-              userId: "owner-123",
-            },
-            {
-              roles: {
-                some: {
-                  permissions: {
-                    hasSome: [
-                      Permission.OWNER,
-                      Permission.ADMIN,
-                      Permission.LOOTLOG_ACCESS,
-                    ],
-                  },
-                },
-              },
-            },
-          ],
         },
         select: {
           id: true,
           userId: true,
           name: true,
           avatar: true,
-          roles: {
-            select: {
-              color: true,
-            },
-            orderBy: {
-              position: "desc",
-            },
-            take: 1,
-          },
         },
         orderBy: {
           name: "asc",
@@ -1165,14 +1136,17 @@ describe("MembersService", () => {
       await service.createOrUpdateMember(memberWithRoles);
 
       const upsertCall = prismaService.member.upsert.mock.calls[0][0];
-      expect(upsertCall.update.roles.set).toEqual([
-        { id: "role-1" },
-        { id: "role-2" },
-      ]);
-      expect(upsertCall.create.roles.connect).toEqual([
-        { id: "role-1" },
-        { id: "role-2" },
-      ]);
+      expect(upsertCall.update).not.toHaveProperty("roles");
+      expect(upsertCall.create).not.toHaveProperty("roles");
+      expect(prismaService.memberToRole.deleteMany).toHaveBeenCalledWith({
+        where: { a: mockMember.id },
+      });
+      expect(prismaService.memberToRole.createMany).toHaveBeenCalledWith({
+        data: [
+          { a: mockMember.id, b: "role-1" },
+          { a: mockMember.id, b: "role-2" },
+        ],
+      });
     });
 
     it("should log error and rethrow on failure", async () => {
@@ -1227,15 +1201,11 @@ describe("MembersService", () => {
 
       expect(result).toEqual(deactivatedMember);
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: {
-          memberId: { userId: options.discordId, guildId: options.guildId },
-        },
+        where: { id: mockMember.id },
         data: expect.objectContaining({
           active: false,
           lastDiscordStatus: "MANUALLY_DEACTIVATED",
-          roles: { set: [] },
         }),
-        include: { roles: true },
       });
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
@@ -1277,8 +1247,8 @@ describe("MembersService", () => {
           userId: "discord-123",
           globalUserId: "user-123",
           active: true,
-          guildId: { notIn: ["guild-present"] },
-          guild: { active: true },
+          NOT: { guildId: { in: ["guild-present"] } },
+          guild: { some: { active: true } },
         },
         select: {
           userId: true,
@@ -1287,13 +1257,10 @@ describe("MembersService", () => {
         },
       });
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: {
-          memberId: { userId: "discord-123", guildId: "guild-missing" },
-        },
+        where: { userId: "discord-123", guildId: "guild-missing" },
         data: expect.objectContaining({
           active: false,
           lastDiscordStatus: "GUILD_NOT_IN_DISCORD_LIST",
-          roles: { set: [] },
         }),
       });
       expect(discordService.clearGuildMemberDataCache).toHaveBeenCalledWith({
@@ -1409,6 +1376,8 @@ describe("MembersService", () => {
         processedMembers: 0,
         failedMembers: 0,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        completedAt: null,
       };
       prismaService.memberRefreshJob.create.mockResolvedValue(mockJob);
 
@@ -1461,11 +1430,13 @@ describe("MembersService", () => {
         status: "FAILED",
         completedAt: new Date(),
       });
-      prismaService.memberRefreshJob.findUnique.mockResolvedValue({
-        ...mockJob,
-        status: "FAILED",
-        completedAt: new Date(),
-      });
+      prismaService.memberRefreshJob.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          ...mockJob,
+          status: "FAILED",
+          completedAt: new Date(),
+        });
       bulkRefreshQueue.add.mockRejectedValue(queueError);
 
       await expect(
@@ -1477,6 +1448,7 @@ describe("MembersService", () => {
         data: {
           status: "FAILED",
           completedAt: expect.any(Date),
+          updatedAt: expect.any(Date),
         },
       });
       expect(amqpConnection.publish).toHaveBeenCalledWith(
@@ -1516,8 +1488,14 @@ describe("MembersService", () => {
       const mockJob = {
         id: 1,
         guildId: "guild-123",
+        requestedBy: "discord-123",
         status: "COMPLETED",
+        totalMembers: 10,
+        processedMembers: 10,
+        failedMembers: 0,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        completedAt: new Date(),
       };
       prismaService.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
 
@@ -1547,10 +1525,14 @@ describe("MembersService", () => {
       const mockJob = {
         id: 1,
         guildId: "guild-123",
+        requestedBy: "discord-123",
         status: "PROCESSING",
         processedMembers: 5,
         totalMembers: 10,
+        failedMembers: 0,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        completedAt: null,
       };
       prismaService.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
 

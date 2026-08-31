@@ -5,7 +5,7 @@ import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/reservations";
 describe("Reservation settings defaults", () => {
   it("keeps TypeScript fallbacks aligned with persisted Guild defaults", () => {
     const prismaSchema = readFileSync(
-      new URL("../../prisma/schema.prisma", import.meta.url),
+      new URL("../../test/fixtures/prisma7/schema.prisma", import.meta.url),
       "utf8",
     );
 

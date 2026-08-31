@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { Prisma } from "#src/generated/prisma/client";
+import type { JsonObject } from "#src/db/domain";
 import {
   SettingsDocumentsService,
   type SettingsDocumentsResponse,
@@ -21,7 +21,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const asRecord = (value: unknown) => (isRecord(value) ? value : {});
-const asJsonObject = (value: unknown) => asRecord(value) as Prisma.JsonObject;
+const asJsonObject = (value: unknown) => asRecord(value) as JsonObject;
 const asStringArray = (value: unknown) =>
   Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")

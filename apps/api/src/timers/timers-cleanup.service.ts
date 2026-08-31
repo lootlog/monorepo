@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
 import { env } from "#src/config/env";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 
@@ -10,7 +10,7 @@ export class TimersCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {
     this.enabled = env.TIMER_CLEANUP_ENABLED !== "false";
     this.retentionDays = env.TIMER_RETENTION_DAYS;
   }
@@ -83,11 +83,16 @@ export class TimersCleanupService {
     return cutoffDate;
   }
 
-  private deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {
-    return this.prisma.$executeRaw<number>`
-      DELETE FROM "Timer"
-      WHERE "maxSpawnTime" < ${cutoffDate}
-        AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
-    `;
+  private async deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {
+    const result = await this.prisma.runtime().execute(
+      this.prisma.raw.sql`
+        DELETE FROM "Timer"
+        WHERE "maxSpawnTime" < ${cutoffDate.toISOString().slice(0, -1)}::timestamp
+          AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
+      `
+        .affectedCount()
+        .build(),
+    );
+    return result.affectedRows;
   }
 }

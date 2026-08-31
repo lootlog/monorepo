@@ -3,7 +3,7 @@ import { z } from "zod";
 import { MemberResponseDto } from "./member-response.dto.js";
 import { TimerNpcResponseDto } from "./timer-npc-response.dto.js";
 import { isoDatetimeCodec } from "./zod-response-codecs.js";
-import { Profession } from "#src/generated/prisma/client";
+import { Profession } from "#src/db/domain";
 
 const TimerActorCharacterResponseSchema = z
   .object({

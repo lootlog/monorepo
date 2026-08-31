@@ -1,10 +1,6 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type {
-  Guild,
-  ItemRarity,
-  Permission,
-  Role,
-} from "#src/generated/prisma/client";
+import type { Guild, ItemRarity, Permission, Role } from "#src/db/domain";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import { LootsService } from "#src/loots/loots.service";
 import { PrismaService } from "#src/db/prisma.service";
@@ -142,30 +138,16 @@ export class EventWrappedService {
     permissions: Permission[],
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId: guild.id },
-      select: {
-        id: true,
-        name: true,
-        world: true,
-        startsAt: true,
-        endsAt: true,
-        createdAt: true,
-        heroNpcs: {
-          select: {
-            id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            maps: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const event = await this.prisma.orm.public.Event.where((row) =>
+      and(row.id.eq(eventId), row.guildId.eq(guild.id)),
+    )
+      .select("id", "name", "world", "startsAt", "endsAt", "createdAt")
+      .include("heroNpcs", (row) =>
+        row
+          .select("id", "npcId", "npcName", "npcIcon")
+          .include("maps", (rowRow) => rowRow.select("id")),
+      )
+      .first();
 
     if (!event) {
       throw new NotFoundException("Event not found");
@@ -174,68 +156,56 @@ export class EventWrappedService {
     const eventWindowStart = event.startsAt ?? event.createdAt;
     const eventWindowEnd = event.endsAt ?? new Date();
     const heroIds = event.heroNpcs.map((hero) => hero.id);
-    const heroByName = new Map(
-      event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
-    );
+    const heroByName = new Map<
+      string,
+      { id: string; npcName: string; npcIcon: string | null }
+    >(event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]));
 
     const [rankings, kills, windowSummaries, assignments, loots] =
       await Promise.all([
-        this.prisma.eventRanking.findMany({
-          where: { eventId },
-          select: {
-            memberId: true,
-            heroNpcName: true,
-            totalPoints: true,
-            totalKills: true,
-            totalTimeSeconds: true,
-            avgAfkPercentage: true,
-            member: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
-        }) as Promise<RankingRow[]>,
-        this.prisma.eventHeroKill.findMany({
-          where: { heroNpcId: { in: heroIds } },
-          select: {
-            id: true,
-            heroNpcId: true,
-            killedAt: true,
-            minSpawnTimeAtKill: true,
-          },
-          orderBy: { killedAt: "asc" },
-        }),
-        this.prisma.eventRespawnWindowSummary.findMany({
-          where: { heroNpcId: { in: heroIds } },
-          select: {
-            heroNpcId: true,
-            totalWindowSeconds: true,
-            totalCoverageSeconds: true,
-            totalUncoveredSeconds: true,
-            totalUnassignedSeconds: true,
-            mapStats: true,
-          },
-        }) as Promise<SummaryRow[]>,
-        this.prisma.eventMapAssignmentHistory.findMany({
-          where: { heroNpcId: { in: heroIds } },
-          select: {
-            mapId: true,
-            heroNpcId: true,
-            memberId: true,
-            assignedAt: true,
-            unassignedAt: true,
-            member: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
-        }) as Promise<AssignmentRow[]>,
+        this.prisma.orm.public.EventRanking.where((row) =>
+          row.eventId.eq(eventId),
+        )
+          .select(
+            "memberId",
+            "heroNpcName",
+            "totalPoints",
+            "totalKills",
+            "totalTimeSeconds",
+            "avgAfkPercentage",
+          )
+          .include("member", (row) => row.select("id", "name", "avatar"))
+          .all() as Promise<RankingRow[]>,
+        this.prisma.orm.public.EventHeroKill.where((row) =>
+          row.heroNpcId.in(heroIds),
+        )
+          .select("id", "heroNpcId", "killedAt", "minSpawnTimeAtKill")
+          .orderBy((row) => row.killedAt.asc())
+          .all(),
+        this.prisma.orm.public.EventRespawnWindowSummary.where((row) =>
+          row.heroNpcId.in(heroIds),
+        )
+          .select(
+            "heroNpcId",
+            "totalWindowSeconds",
+            "totalCoverageSeconds",
+            "totalUncoveredSeconds",
+            "totalUnassignedSeconds",
+            "mapStats",
+          )
+          .all() as Promise<SummaryRow[]>,
+        this.prisma.orm.public.EventMapAssignmentHistory.where((row) =>
+          row.heroNpcId.in(heroIds),
+        )
+          .select(
+            "mapId",
+            "heroNpcId",
+            "memberId",
+            "assignedAt",
+            "unassignedAt",
+          )
+          .include("member", (row) => row.select("id", "name", "avatar"))
+          .all() as Promise<AssignmentRow[]>,
         this.getEventLoots({
           guild,
           permissions,

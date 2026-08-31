@@ -10,7 +10,7 @@ import {
 import { getNpcTypeByWt } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { NpcType, Permission } from "#src/generated/prisma/client";
+import { NpcType, Permission } from "#src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { CreateNotificationDto } from "#src/messaging/dto/create-notification.dto";

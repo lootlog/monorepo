@@ -18,6 +18,7 @@ const MapTemplateResponseSchema = z.object({
   maps: MapTemplateMapsResponseSchema,
   createdAt: isoDatetimeCodec,
 });
+export type MapTemplateResponse = z.output<typeof MapTemplateResponseSchema>;
 
 export class MapTemplateResponseDto extends createZodDto(
   MapTemplateResponseSchema,

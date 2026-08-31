@@ -5,6 +5,7 @@ import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { ChannelsService } from "./channels.service.js";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
@@ -109,7 +110,7 @@ describe("ChannelsService", () => {
         ChannelsService,
         {
           provide: PrismaService,
-          useValue: mockPrisma,
+          useValue: attachPrismaOrmMock(mockPrisma),
         },
         {
           provide: DiscordBotClientService,
@@ -252,6 +253,7 @@ describe("ChannelsService", () => {
           missingPermissions: [],
           hasRequiredPermissions: true,
         },
+        updatedAt: expect.any(Date),
       },
     });
     expect(mockAmqpConnection.publish).toHaveBeenCalledWith(

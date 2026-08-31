@@ -1,4 +1,5 @@
-import { NotificationJobKind as DbNotificationJobKind } from "#src/generated/prisma/client";
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { NotificationJobKind as DbNotificationJobKind } from "#src/db/domain";
 import type { PrismaService } from "#src/db/prisma.service";
 
 export type TestTriggerUsage = {
@@ -22,18 +23,16 @@ export async function computeTestTriggerUsage(
   }
 
   const threshold = new Date(Date.now() - windowMs);
-  const testJobs = await prisma.notificationJob.findMany({
-    where: {
-      targetId: { in: targetIds },
-      jobKind: DbNotificationJobKind.TEST,
-      createdAt: { gte: threshold },
-    },
-    select: {
-      targetId: true,
-      createdAt: true,
-    },
-    orderBy: [{ createdAt: "asc" }],
-  });
+  const testJobs = await prisma.orm.public.NotificationJob.where((row) =>
+    and(
+      row.targetId.in(targetIds),
+      row.jobKind.eq(DbNotificationJobKind.TEST),
+      row.createdAt.gte(threshold),
+    ),
+  )
+    .select("targetId", "createdAt")
+    .orderBy([(row) => row.createdAt.asc()])
+    .all();
 
   const jobsByTargetId = new Map<number, Date[]>();
 

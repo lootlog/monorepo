@@ -1,7 +1,9 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { PrismaService } from "#src/db/prisma.service";
-import { Permission, type PlayerSnapshot } from "#src/generated/prisma/client";
+import { attachRolesToMembers } from "#src/db/many-to-many";
+import { Permission, type PlayerSnapshot } from "#src/db/domain";
 import {
   getGuildMemberReferencesCacheKey,
   getGuildMembersSummaryCacheKey,
@@ -27,23 +29,18 @@ export class MemberReadService {
     private readonly redisService: RedisService,
   ) {}
 
-  getGuildMembers(
+  async getGuildMembers(
     guildId: string,
     includeInactive = false,
   ): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
-      where: {
-        guildId,
-        ...(includeInactive ? {} : { active: true }),
-        globalUserId: { not: null },
-      },
-      include: {
-        roles: {
-          orderBy: { position: "desc" },
-        },
-      },
-      orderBy: { name: "asc" },
-    });
+    let membersQuery = this.prisma.orm.public.Member.where((row) =>
+      and(row.guildId.eq(guildId), row.globalUserId.isNotNull()),
+    );
+    if (!includeInactive) {
+      membersQuery = membersQuery.where((row) => row.active.eq(true));
+    }
+    const members = await membersQuery.orderBy((row) => row.name.asc()).all();
+    return attachRolesToMembers(this.prisma, members);
   }
 
   getGuildMemberReferences(
@@ -55,32 +52,20 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild member references",
       async () => {
-        const members = await this.prisma.member.findMany({
-          where: {
-            guildId,
-            ...(includeInactive ? {} : { active: true }),
-            globalUserId: { not: null },
-          },
-          select: {
-            id: true,
-            userId: true,
-            name: true,
-            avatar: true,
-            active: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-              take: 1,
-            },
-          },
-          orderBy: {
-            name: "asc",
-          },
-        });
+        let membersQuery = this.prisma.orm.public.Member.where((row) =>
+          and(row.guildId.eq(guildId), row.globalUserId.isNotNull()),
+        );
+        if (!includeInactive) {
+          membersQuery = membersQuery.where((row) => row.active.eq(true));
+        }
+        const memberRows = await membersQuery
+          .select("id", "userId", "name", "avatar", "active")
+          .orderBy((row) => row.name.asc())
+          .all();
+        const members = await attachRolesToMembers(
+          this.prisma,
+          memberRows as Omit<MemberReference, "color">[],
+        );
 
         return members.map(({ roles, ...member }) => ({
           ...member,
@@ -96,68 +81,52 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild members summary",
       async () => {
-        const guild = await this.prisma.guild.findFirst({
-          where: {
-            id: guildId,
-            active: true,
-          },
-          select: {
-            ownerId: true,
-          },
-        });
+        const guild = await this.prisma.orm.public.Guild.where((row) =>
+          and(row.id.eq(guildId), row.active.eq(true)),
+        )
+          .select("ownerId")
+          .first();
 
         if (!guild) {
           return [];
         }
 
-        const members = await this.prisma.member.findMany({
-          where: {
-            guildId,
-            active: true,
-            globalUserId: { not: null },
-            OR: [
-              {
-                userId: guild.ownerId,
-              },
-              {
-                roles: {
-                  some: {
-                    permissions: {
-                      hasSome: [
-                        Permission.OWNER,
-                        Permission.ADMIN,
-                        Permission.LOOTLOG_ACCESS,
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-          select: {
-            id: true,
-            userId: true,
-            name: true,
-            avatar: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-              take: 1,
-            },
-          },
-          orderBy: {
-            name: "asc",
-          },
-        });
+        const memberRows = await this.prisma.orm.public.Member.where((row) =>
+          and(
+            row.guildId.eq(guildId),
+            row.active.eq(true),
+            row.globalUserId.isNotNull(),
+          ),
+        )
+          .select("id", "userId", "name", "avatar")
+          .orderBy((row) => row.name.asc())
+          .all();
+        const members = await attachRolesToMembers(
+          this.prisma,
+          memberRows as Omit<MemberSummary, "color">[],
+        );
 
-        return members.map(({ roles, ...member }) => ({
-          ...member,
-          color: roles[0]?.color ?? null,
-        }));
+        const summaryPermissions = new Set([
+          Permission.OWNER,
+          Permission.ADMIN,
+          Permission.LOOTLOG_ACCESS,
+        ]);
+        return members
+          .filter(
+            (member) =>
+              member.userId === guild.ownerId ||
+              member.roles.some((role) =>
+                role.permissions
+                  ? role.permissions.some((permission) =>
+                      summaryPermissions.has(permission),
+                    )
+                  : true,
+              ),
+          )
+          .map(({ roles, ...member }) => ({
+            ...member,
+            color: roles[0]?.color ?? null,
+          }));
       },
     );
   }
@@ -195,27 +164,25 @@ export class MemberReadService {
       MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS,
       "member lootlog config summary",
       async () => {
-        const member = await this.prisma.member.findUnique({
-          where: {
-            memberId: { userId: discordId, guildId },
-          },
-          select: {
-            userId: true,
-            active: true,
-          },
-        });
+        const member = await this.prisma.orm.public.Member.where((row) =>
+          and(row.userId.eq(discordId), row.guildId.eq(guildId)),
+        )
+          .select("userId", "active")
+          .first();
 
         if (!member) {
           throw new NotFoundException("Member not found");
         }
 
         const configs =
-          await this.prisma.userCharactersLootlogSettings.findMany({
-            where: {
-              userId: discordId,
-            },
-            orderBy: [{ accountId: "asc" }, { characterId: "asc" }],
-          });
+          await this.prisma.orm.public.UserCharactersLootlogSettings.where(
+            (row) => row.userId.eq(discordId),
+          )
+            .orderBy([
+              (row) => row.accountId.asc(),
+              (row) => row.characterId.asc(),
+            ])
+            .all();
 
         const validCharacterRefs = this.getValidLootlogCharacterRefs(configs);
         const latestSnapshotsByCharacterKey =
@@ -299,24 +266,17 @@ export class MemberReadService {
       return new Map();
     }
 
-    const snapshots = await this.prisma.playerSnapshot.findMany({
-      where: {
-        OR: characterRefs.map(({ accountId, characterId }) => ({
-          accountId,
-          characterId,
-        })),
-      },
-      select: {
-        accountId: true,
-        characterId: true,
-        name: true,
-        world: true,
-        icon: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const snapshots = (await this.prisma.orm.public.PlayerSnapshot.where(
+      (row) =>
+        or(
+          ...characterRefs.map(({ accountId, characterId }) =>
+            and(row.accountId.eq(accountId), row.characterId.eq(characterId)),
+          ),
+        ),
+    )
+      .select("accountId", "characterId", "name", "world", "icon")
+      .orderBy((row) => row.createdAt.desc())
+      .all()) as PlayerSnapshot[];
 
     return snapshots.reduce<
       Map<

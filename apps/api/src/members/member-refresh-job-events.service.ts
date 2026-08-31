@@ -3,7 +3,8 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
+import { temporalToDate } from "#src/db/temporal";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 
 export type MemberRefreshJobUpdateDetails = {
@@ -16,7 +17,7 @@ export type MemberRefreshJobUpdateDetails = {
 export class MemberRefreshJobEventsService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
@@ -25,9 +26,9 @@ export class MemberRefreshJobEventsService {
     details: MemberRefreshJobUpdateDetails = {},
   ): Promise<void> {
     try {
-      const job = await this.prisma.memberRefreshJob.findUnique({
-        where: { id: jobId },
-      });
+      const job = await this.prisma.orm.public.MemberRefreshJob.where((row) =>
+        row.id.eq(jobId),
+      ).first();
 
       if (!job) {
         this.logger.log({
@@ -47,7 +48,8 @@ export class MemberRefreshJobEventsService {
           totalMembers: job.totalMembers,
           processedMembers: job.processedMembers,
           failedMembers: job.failedMembers,
-          completedAt: job.completedAt,
+          completedAt:
+            job.completedAt === null ? null : temporalToDate(job.completedAt),
           ...details,
         },
       );

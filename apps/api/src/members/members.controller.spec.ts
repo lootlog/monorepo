@@ -6,7 +6,7 @@ import {
   type Member,
   MemberType,
   Permission,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";

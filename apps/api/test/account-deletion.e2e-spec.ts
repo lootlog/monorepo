@@ -1,12 +1,12 @@
 import { HttpService } from "@nestjs/axios";
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import request from "supertest";
 import { vi } from "vitest";
-import { NpcType } from "../src/generated/prisma/client.js";
+import { NpcType } from "../src/db/domain.js";
 import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/db/prisma.service.js";
 import { createMockAmqpConnection } from "./test-module-helpers.js";

@@ -1,8 +1,9 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "#src/db/domain";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { MembersService } from "#src/members/members.service";
 import {
   getGuildCacheKey,
@@ -53,7 +54,7 @@ describe("MemberContextService", () => {
         },
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
         },
         {
           provide: RedisService,

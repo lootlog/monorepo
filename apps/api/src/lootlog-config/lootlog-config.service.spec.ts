@@ -1,31 +1,20 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { LootlogConfigService } from "./lootlog-config.service.js";
-import { PrismaService } from "#src/db/prisma.service";
+import { POSTGRES_POOL } from "#src/db/prisma.provider";
 
 describe("LootlogConfigService", () => {
   let service: LootlogConfigService;
 
-  const mockPrismaService = {
-    lootlogConfig: {
-      findUnique: mockFn(),
-      findMany: mockFn(),
-      create: mockFn(),
-      update: mockFn(),
-    },
-    lootlogConfigNpc: {
-      upsert: mockFn(),
-      delete: mockFn(),
-    },
-  };
+  const mockPostgres = { query: mockFn(), connect: mockFn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LootlogConfigService,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: POSTGRES_POOL,
+          useValue: mockPostgres,
         },
       ],
     }).compile();

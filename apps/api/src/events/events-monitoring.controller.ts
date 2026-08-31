@@ -15,7 +15,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission, type Role } from "#src/db/domain";
 import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto.js";
 import { EventCoordinationResponseDto } from "./dto/event-coordination-response.dto.js";
 import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto.js";

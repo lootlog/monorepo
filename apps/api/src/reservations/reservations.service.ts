@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
@@ -25,19 +26,18 @@ export class ReservationsService {
     const [spots, visibleGuildIds, pinnedSpots] = await Promise.all([
       this.catalogService.getSpots(),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.userPinnedReservationSpot.findMany({
-        where: { userId: context.userId, guildId: context.guildId },
-        select: { spotId: true },
-      }),
+      this.prisma.orm.public.UserPinnedReservationSpot.where((row) =>
+        and(row.userId.eq(context.userId), row.guildId.eq(context.guildId)),
+      )
+        .select("spotId")
+        .all(),
     ]);
-    const reservations = await this.prisma.reservation.findMany({
-      where: {
-        guildId: { in: visibleGuildIds },
-        endsAt: { gt: now },
-      },
-      include: { guild: true },
-      orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    });
+    const reservations = await this.prisma.orm.public.Reservation.where((row) =>
+      and(row.guildId.in(visibleGuildIds), row.endsAt.gt(now)),
+    )
+      .include("guild")
+      .orderBy([(row) => row.startsAt.asc(), (row) => row.id.asc()])
+      .all();
     const pinnedSpotIds = new Set(pinnedSpots.map(({ spotId }) => spotId));
     const viewer = this.toPresentationViewer(context);
 
@@ -91,16 +91,17 @@ export class ReservationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservations = await this.prisma.reservation.findMany({
-      where: {
-        guildId: { in: visibleGuildIds },
-        spotId,
-        startsAt: { lt: to },
-        endsAt: { gt: from },
-      },
-      include: { guild: true },
-      orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    });
+    const reservations = await this.prisma.orm.public.Reservation.where((row) =>
+      and(
+        row.guildId.in(visibleGuildIds),
+        row.spotId.eq(spotId),
+        row.startsAt.lt(to),
+        row.endsAt.gt(from),
+      ),
+    )
+      .include("guild")
+      .orderBy([(row) => row.startsAt.asc(), (row) => row.id.asc()])
+      .all();
     const viewer = this.toPresentationViewer(context);
 
     return {
@@ -117,8 +118,13 @@ export class ReservationsService {
     spotId: string,
   ): Promise<void> {
     await this.catalogService.getSpot(spotId);
-    await this.prisma.userPinnedReservationSpot.upsert({
-      where: { userId_guildId_spotId: { userId, guildId, spotId } },
+    await this.prisma.orm.public.UserPinnedReservationSpot.where((row) =>
+      and(
+        row.userId.eq(userId),
+        row.guildId.eq(guildId),
+        row.spotId.eq(spotId),
+      ),
+    ).upsert({
       create: { userId, guildId, spotId },
       update: {},
     });
@@ -129,9 +135,13 @@ export class ReservationsService {
     guildId: string,
     spotId: string,
   ): Promise<void> {
-    await this.prisma.userPinnedReservationSpot.deleteMany({
-      where: { userId, guildId, spotId },
-    });
+    await this.prisma.orm.public.UserPinnedReservationSpot.where((row) =>
+      and(
+        row.userId.eq(userId),
+        row.guildId.eq(guildId),
+        row.spotId.eq(spotId),
+      ),
+    ).deleteAndCount();
   }
 
   async listMine(options: {
@@ -146,25 +156,29 @@ export class ReservationsService {
       );
     const now = new Date();
     const retentionStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const statusFilter =
+    let reservationsQuery = this.prisma.orm.public.Reservation.where((row) =>
+      and(
+        row.guildId.in(accessibleGuilds.map((guild) => guild.id)),
+        or(
+          row.createdByUserId.eq(options.userId),
+          row.createdBy.eq(options.discordId),
+        ),
+      ),
+    );
+    reservationsQuery =
       options.query.status === "past"
-        ? { endsAt: { gte: retentionStart, lt: now } }
-        : { endsAt: { gte: now } };
-    const reservations = await this.prisma.reservation.findMany({
-      where: {
-        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
-        ...statusFilter,
-        OR: [
-          { createdByUserId: options.userId },
-          { legacyCreatedByDiscordId: options.discordId },
-        ],
-      },
-      include: { guild: true },
-      orderBy:
+        ? reservationsQuery.where((row) =>
+            and(row.endsAt.gte(retentionStart), row.endsAt.lt(now)),
+          )
+        : reservationsQuery.where((row) => row.endsAt.gte(now));
+    const reservations = await reservationsQuery
+      .include("guild")
+      .orderBy(
         options.query.status === "past"
-          ? [{ endsAt: "desc" }, { id: "desc" }]
-          : [{ startsAt: "asc" }, { id: "asc" }],
-    });
+          ? [(row) => row.endsAt.desc(), (row) => row.id.desc()]
+          : [(row) => row.startsAt.asc(), (row) => row.id.asc()],
+      )
+      .all();
     const viewer = {
       guildId: null,
       userId: options.userId,

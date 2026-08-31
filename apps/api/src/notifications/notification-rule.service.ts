@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { randomUUID } from "node:crypto";
 import {
   BadRequestException,
@@ -12,8 +13,10 @@ import {
   NotificationScheduleIntervalType as DbNotificationScheduleIntervalType,
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTriggerType as DbNotificationTriggerType,
-  Prisma,
-} from "#src/generated/prisma/client";
+  type InputJsonObject,
+  type InputJsonValue,
+  type JsonValue,
+} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/constants/notification-schedule-timezone.constant";
@@ -66,26 +69,20 @@ export class NotificationRuleService {
   // ── Guild Rules ──────────────────────────────────────────────────────
 
   async listGuildRules(guildId: string) {
-    const [guildSettings, rules] = await Promise.all([
-      this.prisma.guild.findUnique({
-        where: { id: guildId },
-        select: { notificationRuleLimit: true },
-      }),
-      this.prisma.notificationRule.findMany({
-        where: {
-          ownerType: DbNotificationOwnerType.GUILD,
-          ownerId: guildId,
-        },
-        include: {
-          targets: {
-            include: {
-              target: true,
-            },
-          },
-        },
-        orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
-      }),
-    ]);
+    const [guildSettings, rules] = (await Promise.all([
+      this.prisma.orm.public.Guild.where((row) => row.id.eq(guildId))
+        .select("notificationRuleLimit")
+        .first(),
+      this.prisma.orm.public.NotificationRule.where((row) =>
+        and(
+          row.ownerType.eq(DbNotificationOwnerType.GUILD),
+          row.ownerId.eq(guildId),
+        ),
+      )
+        .include("targets", (relation) => relation.include("target"))
+        .orderBy([(row) => row.enabled.desc(), (row) => row.updatedAt.desc()])
+        .all(),
+    ])) as [any, any[]];
 
     const allTargetIds = [
       ...new Set(
@@ -170,20 +167,16 @@ export class NotificationRuleService {
   async triggerGuildRuleTest(guildId: string, ruleId: number) {
     await this.ensureGuildNotificationPermissions(guildId);
 
-    const notificationRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        id: ruleId,
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-      include: {
-        targets: {
-          include: {
-            target: true,
-          },
-        },
-      },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        and(
+          row.id.eq(ruleId),
+          row.ownerType.eq(DbNotificationOwnerType.GUILD),
+          row.ownerId.eq(guildId),
+        ),
+      )
+        .include("targets", (relation) => relation.include("target"))
+        .first();
 
     if (!notificationRule) {
       throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
@@ -277,21 +270,15 @@ export class NotificationRuleService {
   // ── User Rules ───────────────────────────────────────────────────────
 
   listUserRules(discordId: string) {
-    return this.prisma.notificationRule
-      .findMany({
-        where: {
-          ownerType: DbNotificationOwnerType.USER,
-          ownerId: discordId,
-        },
-        include: {
-          targets: {
-            include: {
-              target: true,
-            },
-          },
-        },
-        orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
-      })
+    return this.prisma.orm.public.NotificationRule.where((row) =>
+      and(
+        row.ownerType.eq(DbNotificationOwnerType.USER),
+        row.ownerId.eq(discordId),
+      ),
+    )
+      .include("targets", (relation) => relation.include("target"))
+      .orderBy([(row) => row.enabled.desc(), (row) => row.updatedAt.desc()])
+      .all()
       .then((rules) => rules.map((rule) => this.mapRuleResponse(rule)));
   }
 
@@ -348,15 +335,15 @@ export class NotificationRuleService {
       targetIds: data.targetIds,
     });
 
-    return this.prisma.notificationRule.create({
-      data: {
+    return this.prisma.transaction(async (transaction) => {
+      const rule = await transaction.orm.public.NotificationRule.create({
         ownerType,
         ownerId,
         triggerType,
         guildId: options?.guildId ?? null,
         world: ruleWorld,
         name: data.name ?? null,
-        filters: isScheduledMessage ? Prisma.DbNull : this.buildFilters(data),
+        filters: isScheduledMessage ? null : this.buildFilters(data),
         contentTemplate: this.normalizeContentTemplate(data.contentTemplate),
         ...this.resolveScheduleConfig({
           triggerType,
@@ -368,12 +355,14 @@ export class NotificationRuleService {
         }),
         enabled: data.enabled ?? true,
         dedupeWindowSeconds: 0,
-        targets: {
-          createMany: {
-            data: targetIds.map((targetId) => ({ targetId })),
-          },
-        },
-      },
+        updatedAt: new Date(),
+      });
+      if (targetIds.length > 0) {
+        await transaction.orm.public.NotificationRuleTarget.createAndCount(
+          targetIds.map((targetId) => ({ ruleId: rule.id, targetId })),
+        );
+      }
+      return rule;
     });
   }
 
@@ -413,61 +402,57 @@ export class NotificationRuleService {
       nextWorld = data.world ?? null;
     }
 
-    let nextFilters:
-      | Prisma.InputJsonObject
-      | Prisma.JsonValue
-      | typeof Prisma.DbNull = existingRule.filters;
+    let nextFilters: InputJsonObject | JsonValue | null = existingRule.filters;
 
     if (isScheduledMessage) {
-      nextFilters = Prisma.DbNull;
+      nextFilters = null;
     } else if (hasFilterSelectionUpdate) {
       nextFilters = this.buildFilters(data);
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.notificationRule.update({
-        where: { id: ruleId },
-        data: {
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.NotificationRule.where((row) =>
+        row.id.eq(ruleId),
+      ).update({
+        triggerType: nextTriggerType,
+        world: nextWorld,
+        name: hasName ? (data.name ?? null) : existingRule.name,
+        contentTemplate: hasContentTemplate
+          ? this.normalizeContentTemplate(data.contentTemplate)
+          : existingRule.contentTemplate,
+        filters: nextFilters,
+        ...this.resolveScheduleConfig({
           triggerType: nextTriggerType,
-          world: nextWorld,
-          name: hasName ? (data.name ?? null) : existingRule.name,
-          contentTemplate: hasContentTemplate
-            ? this.normalizeContentTemplate(data.contentTemplate)
-            : existingRule.contentTemplate,
-          filters: nextFilters,
-          ...this.resolveScheduleConfig({
-            triggerType: nextTriggerType,
-            data,
-            existingRule,
-          }),
-          ...this.resolveScheduledMessageFields({
-            ownerType,
-            data: isScheduledMessage ? data : null,
-            existingRule: isScheduledMessage
-              ? {
-                  scheduledAt: existingRule.scheduledAt,
-                  scheduleIntervalType: existingRule.scheduleIntervalType,
-                  scheduleIntervalValue: existingRule.scheduleIntervalValue,
-                  scheduleWeekday: existingRule.scheduleWeekday,
-                  scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
-                  scheduledUntil: existingRule.scheduledUntil,
-                  scheduleTimezone: existingRule.scheduleTimezone,
-                }
-              : undefined,
-          }),
-          enabled: data.enabled ?? existingRule.enabled,
-          dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
-        },
+          data,
+          existingRule,
+        }),
+        ...this.resolveScheduledMessageFields({
+          ownerType,
+          data: isScheduledMessage ? data : null,
+          existingRule: isScheduledMessage
+            ? {
+                scheduledAt: existingRule.scheduledAt,
+                scheduleIntervalType: existingRule.scheduleIntervalType,
+                scheduleIntervalValue: existingRule.scheduleIntervalValue,
+                scheduleWeekday: existingRule.scheduleWeekday,
+                scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
+                scheduledUntil: existingRule.scheduledUntil,
+                scheduleTimezone: existingRule.scheduleTimezone,
+              }
+            : undefined,
+        }),
+        updatedAt: new Date(),
+        enabled: data.enabled ?? existingRule.enabled,
+        dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
       });
 
       if (targetIds) {
-        await tx.notificationRuleTarget.deleteMany({
-          where: { ruleId },
-        });
-        await tx.notificationRuleTarget.createMany({
-          data: targetIds.map((targetId) => ({ ruleId, targetId })),
-          skipDuplicates: true,
-        });
+        await tx.orm.public.NotificationRuleTarget.where((row) =>
+          row.ruleId.eq(ruleId),
+        ).deleteAndCount();
+        await tx.orm.public.NotificationRuleTarget.createAndCount(
+          targetIds.map((targetId) => ({ ruleId, targetId })),
+        );
       }
     });
   }
@@ -479,7 +464,9 @@ export class NotificationRuleService {
   ) {
     await this.ensureRule({ ownerType, ownerId, ruleId });
     await this.jobService.cancelPendingJobs({ ruleId });
-    await this.prisma.notificationRule.delete({ where: { id: ruleId } });
+    await this.prisma.orm.public.NotificationRule.where((row) =>
+      row.id.eq(ruleId),
+    ).delete();
     return { success: true };
   }
 
@@ -505,21 +492,23 @@ export class NotificationRuleService {
   }
 
   private async ensureGuildRuleLimitNotExceeded(guildId: string) {
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-      select: { notificationRuleLimit: true },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      row.id.eq(guildId),
+    )
+      .select("notificationRuleLimit")
+      .first();
 
     if (!guild) {
       throw new NotFoundException(Error.GUILD_NOT_FOUND);
     }
 
-    const currentRuleCount = await this.prisma.notificationRule.count({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-    });
+    const currentRuleCount =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        and(
+          row.ownerType.eq(DbNotificationOwnerType.GUILD),
+          row.ownerId.eq(guildId),
+        ),
+      ).count();
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -533,12 +522,13 @@ export class NotificationRuleService {
   }
 
   private async ensureUserRuleLimitNotExceeded(discordId: string) {
-    const currentRuleCount = await this.prisma.notificationRule.count({
-      where: {
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
-      },
-    });
+    const currentRuleCount =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        and(
+          row.ownerType.eq(DbNotificationOwnerType.USER),
+          row.ownerId.eq(discordId),
+        ),
+      ).count();
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -556,13 +546,14 @@ export class NotificationRuleService {
     ownerId: string;
     ruleId: number;
   }) {
-    const notificationRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        id: params.ruleId,
-        ownerType: params.ownerType,
-        ownerId: params.ownerId,
-      },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.where((row) =>
+        and(
+          row.id.eq(params.ruleId),
+          row.ownerType.eq(params.ownerType),
+          row.ownerId.eq(params.ownerId),
+        ),
+      ).first();
 
     if (!notificationRule) {
       throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
@@ -604,8 +595,8 @@ export class NotificationRuleService {
     > & {
       guildIds?: string[];
     },
-  ): Prisma.InputJsonObject {
-    const filters: Record<string, Prisma.InputJsonValue> = {};
+  ): InputJsonObject {
+    const filters: Record<string, InputJsonValue> = {};
 
     if (data.guildIds !== undefined) {
       filters.guildIds = data.guildIds;
@@ -627,7 +618,7 @@ export class NotificationRuleService {
       filters.itemIds = data.itemIds;
     }
 
-    return filters as Prisma.InputJsonObject;
+    return filters as InputJsonObject;
   }
 
   private normalizeContentTemplate(contentTemplate?: string | null) {
@@ -932,7 +923,7 @@ export class NotificationRuleService {
 
   private mapRuleResponse<
     T extends {
-      filters: Prisma.JsonValue | null;
+      filters: JsonValue | null;
     },
   >(rule: T) {
     return {
@@ -941,7 +932,7 @@ export class NotificationRuleService {
     };
   }
 
-  private parseNotificationFilters(filters: Prisma.JsonValue | null) {
+  private parseNotificationFilters(filters: JsonValue | null) {
     if (filters === null) {
       return null;
     }

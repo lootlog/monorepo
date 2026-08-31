@@ -1,6 +1,8 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "#src/generated/prisma/client";
+import { CoverageGapType } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachAssignedMembersToHeroes } from "#src/db/many-to-many";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import {
@@ -74,34 +76,29 @@ export class EventCoordinationService {
   ) {}
 
   async getCoordination(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: {
-        assignmentTimeoutMinutes: true,
-        id: true,
-        world: true,
-        heroNpcs: {
-          select: {
-            id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            npcLvl: true,
-            maps: {
-              orderBy: { mapId: "asc" },
-              select: {
-                id: true,
-                mapId: true,
-                mapName: true,
-                assignedMembers: {
-                  select: { id: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const eventRow = await this.prisma.orm.public.Event.where((row) =>
+      and(row.id.eq(eventId), row.guildId.eq(guildId)),
+    )
+      .select("assignmentTimeoutMinutes", "id", "world")
+      .include("heroNpcs", (row) =>
+        row
+          .select("id", "npcId", "npcName", "npcIcon", "npcLvl")
+          .include("maps", (rowRow) =>
+            rowRow
+              .select("id", "mapId", "mapName")
+              .orderBy((rowRowRow) => rowRowRow.mapId.asc()),
+          ),
+      )
+      .first();
+    const event = eventRow
+      ? {
+          ...eventRow,
+          heroNpcs: await attachAssignedMembersToHeroes(
+            this.prisma,
+            eventRow.heroNpcs,
+          ),
+        }
+      : null;
 
     if (!event) {
       throw new NotFoundException("Event not found");
@@ -114,26 +111,22 @@ export class EventCoordinationService {
         event.world,
         event.heroNpcs,
       ),
-      this.prisma.eventMapCoverageGap.findMany({
-        where: {
-          heroNpcId: { in: event.heroNpcs.map((hero) => hero.id) },
-          endedAt: null,
-        },
-        select: {
-          id: true,
-          mapId: true,
-          heroNpcId: true,
-          gapType: true,
-          startedAt: true,
-          durationSeconds: true,
-          map: {
-            select: {
-              mapId: true,
-              mapName: true,
-            },
-          },
-        },
-      }),
+      this.prisma.orm.public.EventMapCoverageGap.where((row) =>
+        and(
+          row.heroNpcId.in(event.heroNpcs.map((hero) => hero.id)),
+          row.endedAt.isNull(),
+        ),
+      )
+        .select(
+          "id",
+          "mapId",
+          "heroNpcId",
+          "gapType",
+          "startedAt",
+          "durationSeconds",
+        )
+        .include("map", (row) => row.select("mapId", "mapName"))
+        .all(),
     ]);
 
     const timersByKey = new Map(timers.map((timer) => [timer.timerKey, timer]));

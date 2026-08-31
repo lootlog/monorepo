@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/shared/db/prisma.service";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
+import { temporalToDate } from "#src/shared/db/temporal";
+import type { MemberActivityStatsResponse } from "../dto/member-activity-stats-response.dto.js";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto.js";
 import { mapActivityDetails } from "../utils/map-activity-details.js";
 
@@ -10,75 +11,61 @@ const MAX_SUGGESTION_LIMIT = 50;
 
 @Injectable()
 export class ActivitiesQueryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {}
 
   async findMany(query: QueryActivitiesDto) {
     const limit = Math.min(query.limit ?? 50, 100);
-    const where: Prisma.ActivityWhereInput = {};
-
-    if (query.userId) {
-      where.userId = query.userId;
-    }
-
-    if (query.guildId) {
-      where.guildId = query.guildId;
-    }
-
+    let activitiesQuery = this.prisma.orm.public.Activity;
+    if (query.userId)
+      activitiesQuery = activitiesQuery.where({ userId: query.userId });
+    if (query.guildId)
+      activitiesQuery = activitiesQuery.where({ guildId: query.guildId });
     if (query.type?.length) {
-      where.type = { in: query.type };
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity._type.in(query.type!),
+      );
     }
-
     if (query.source?.length) {
-      where.source = { in: query.source };
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity.source.in(query.source!),
+      );
     }
-
     if (query.world) {
-      where.world = {
-        contains: query.world,
-        mode: "insensitive",
-      };
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity.world.ilike(`%${query.world}%`),
+      );
     }
-
-    if (query.playerName ?? query.clanName) {
-      where.actorSnapshot = {};
-
-      if (query.playerName) {
-        where.actorSnapshot.name = {
-          contains: query.playerName,
-          mode: "insensitive",
-        };
-      }
-
-      if (query.clanName) {
-        where.actorSnapshot.clanName = {
-          contains: query.clanName,
-          mode: "insensitive",
-        };
-      }
+    if (query.startDate) {
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity.createdAt.gte(query.startDate!),
+      );
     }
-
-    if (query.startDate || query.endDate) {
-      where.createdAt = {};
-      if (query.startDate) {
-        where.createdAt.gte = new Date(query.startDate);
-      }
-      if (query.endDate) {
-        where.createdAt.lte = new Date(query.endDate);
-      }
+    if (query.endDate) {
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity.createdAt.lte(query.endDate!),
+      );
     }
-
     if (query.cursor) {
-      where.id = { lt: query.cursor };
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity.id.lt(query.cursor!),
+      );
     }
 
-    const activities = await this.prisma.activity.findMany({
-      where,
-      take: limit + 1,
-      orderBy: { createdAt: "desc" },
-      include: {
-        actorSnapshot: true,
-      },
-    });
+    const actorSnapshotIds = await this.findMatchingActorSnapshotIds(query);
+    if (actorSnapshotIds) {
+      if (actorSnapshotIds.length === 0) {
+        return { data: [], nextCursor: undefined, hasMore: false };
+      }
+      activitiesQuery = activitiesQuery.where((activity) =>
+        activity.actorSnapshotId.in(actorSnapshotIds),
+      );
+    }
+
+    const activities = await activitiesQuery
+      .orderBy((activity) => activity.createdAt.desc())
+      .limit(limit + 1)
+      .all();
+    const snapshotsById = await this.loadActorSnapshots(activities);
 
     const hasMore = activities.length > limit;
     const data = hasMore ? activities.slice(0, limit) : activities;
@@ -87,7 +74,11 @@ export class ActivitiesQueryService {
     return {
       data: data.map((activity) => ({
         ...activity,
-        actorSnapshot: activity.actorSnapshot ?? undefined,
+        type: activity._type,
+        createdAt: temporalToDate(activity.createdAt),
+        actorSnapshot: activity.actorSnapshotId
+          ? snapshotsById.get(activity.actorSnapshotId)
+          : undefined,
         details: mapActivityDetails(activity.details),
       })),
       nextCursor,
@@ -103,25 +94,21 @@ export class ActivitiesQueryService {
     const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
-    const where: Prisma.ActivityActorSnapshotWhereInput = {
-      activities: {
-        some: { guildId },
-      },
-    };
-
+    const snapshotIds = await this.findGuildActorSnapshotIds(guildId);
+    if (snapshotIds.length === 0) return [];
+    let snapshotsQuery = this.prisma.orm.public.ActivityActorSnapshot.where(
+      (snapshot) => snapshot.id.in(snapshotIds),
+    );
     if (trimmedSearch) {
-      where.name = {
-        contains: trimmedSearch,
-        mode: "insensitive",
-      };
+      snapshotsQuery = snapshotsQuery.where((snapshot) =>
+        snapshot.name.ilike(`%${trimmedSearch}%`),
+      );
     }
-
-    const snapshots = await this.prisma.activityActorSnapshot.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limitValue * 2,
-      select: { name: true },
-    });
+    const snapshots = await snapshotsQuery
+      .select("name")
+      .orderBy((snapshot) => snapshot.createdAt.desc())
+      .limit(limitValue * 2)
+      .all();
 
     return this.deduplicateNames(
       snapshots.map((snapshot) => snapshot.name),
@@ -137,20 +124,19 @@ export class ActivitiesQueryService {
     const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
-    const worldFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
-
-    const where: Prisma.ActivityWhereInput = {
-      guildId,
-      world: worldFilter,
-    };
-
-    const worlds = await this.prisma.activity.findMany({
-      where,
-      distinct: ["world"],
-      select: { world: true },
-      orderBy: { world: "asc" },
-      take: limitValue,
-    });
+    let worldsQuery = this.prisma.orm.public.Activity.where({ guildId })
+      .where((activity) => activity.world.isNotNull())
+      .where((activity) => activity.world.neq(""));
+    if (trimmedSearch) {
+      worldsQuery = worldsQuery.where((activity) =>
+        activity.world.ilike(`%${trimmedSearch}%`),
+      );
+    }
+    const worlds = await worldsQuery
+      .groupBy("world")
+      .orderBy((activity) => activity.world.asc())
+      .limit(limitValue)
+      .aggregate((aggregate) => ({ count: aggregate.count() }));
 
     return worlds
       .map((item) => item.world?.trim())
@@ -165,21 +151,23 @@ export class ActivitiesQueryService {
     const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
-    const clanNameFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
-
-    const where: Prisma.ActivityActorSnapshotWhereInput = {
-      activities: {
-        some: { guildId },
-      },
-      clanName: clanNameFilter,
-    };
-
-    const snapshots = await this.prisma.activityActorSnapshot.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limitValue * 2,
-      select: { clanName: true },
-    });
+    const snapshotIds = await this.findGuildActorSnapshotIds(guildId);
+    if (snapshotIds.length === 0) return [];
+    let snapshotsQuery = this.prisma.orm.public.ActivityActorSnapshot.where(
+      (snapshot) => snapshot.id.in(snapshotIds),
+    )
+      .where((snapshot) => snapshot.clanName.isNotNull())
+      .where((snapshot) => snapshot.clanName.neq(""));
+    if (trimmedSearch) {
+      snapshotsQuery = snapshotsQuery.where((snapshot) =>
+        snapshot.clanName.ilike(`%${trimmedSearch}%`),
+      );
+    }
+    const snapshots = await snapshotsQuery
+      .select("clanName")
+      .orderBy((snapshot) => snapshot.createdAt.desc())
+      .limit(limitValue * 2)
+      .all();
 
     return this.deduplicateNames(
       snapshots.map((snapshot) => snapshot.clanName),
@@ -195,31 +183,25 @@ export class ActivitiesQueryService {
     return this.findMany({ ...query, userId, guildId });
   }
 
-  findMemberActivityStatsByGuild(guildId: string) {
-    return this.prisma.memberActivityStats.findMany({
-      where: { guildId },
-      orderBy: [
-        { activeSessionCount: "desc" },
-        { lastSeenAt: "desc" },
-        { source: "asc" },
-      ],
-    });
-  }
+  async findMemberActivityStatsByGuild(
+    guildId: string,
+  ): Promise<MemberActivityStatsResponse[]> {
+    const rows = await this.prisma.orm.public.MemberActivityStats.where({
+      guildId,
+    })
+      .orderBy([
+        (stats) => stats.activeSessionCount.desc(),
+        (stats) => stats.lastSeenAt.desc(),
+        (stats) => stats.source.asc(),
+      ])
+      .all();
 
-  private buildNonEmptyNullableFilter(
-    search?: string,
-  ): Prisma.StringNullableFilter {
-    const filter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
-    };
-
-    if (search) {
-      filter.contains = search;
-      filter.mode = "insensitive";
-    }
-
-    return filter;
+    return rows.map((row) => ({
+      ...row,
+      lastSeenAt: row.lastSeenAt ? temporalToDate(row.lastSeenAt) : undefined,
+      createdAt: temporalToDate(row.createdAt),
+      updatedAt: temporalToDate(row.updatedAt),
+    }));
   }
 
   private normalizeSuggestionLimit(limit: number): number {
@@ -259,24 +241,82 @@ export class ActivitiesQueryService {
   }
 
   async findOne(id: string, guildId: string) {
-    const activity = await this.prisma.activity.findFirst({
-      where: {
-        id,
-        guildId,
-      },
-      include: {
-        actorSnapshot: true,
-      },
-    });
+    const activity = await this.prisma.orm.public.Activity.where({
+      id,
+      guildId,
+    }).first();
 
     if (!activity) {
       throw new NotFoundException(`Activity with ID ${id} not found`);
     }
 
+    const actorSnapshot = activity.actorSnapshotId
+      ? await this.prisma.orm.public.ActivityActorSnapshot.first({
+          id: activity.actorSnapshotId,
+        })
+      : null;
+
     return {
       ...activity,
-      actorSnapshot: activity.actorSnapshot ?? undefined,
+      type: activity._type,
+      createdAt: temporalToDate(activity.createdAt),
+      actorSnapshot: actorSnapshot
+        ? {
+            ...actorSnapshot,
+            createdAt: temporalToDate(actorSnapshot.createdAt),
+          }
+        : undefined,
       details: mapActivityDetails(activity.details),
     };
+  }
+
+  private async findGuildActorSnapshotIds(guildId: string): Promise<string[]> {
+    const activities = await this.prisma.orm.public.Activity.where({ guildId })
+      .where((activity) => activity.actorSnapshotId.isNotNull())
+      .select("actorSnapshotId")
+      .all();
+    return [
+      ...new Set(
+        activities.flatMap(({ actorSnapshotId }) => actorSnapshotId ?? []),
+      ),
+    ];
+  }
+
+  private async findMatchingActorSnapshotIds(
+    query: QueryActivitiesDto,
+  ): Promise<string[] | null> {
+    if (!query.playerName && !query.clanName) return null;
+    let snapshots = this.prisma.orm.public.ActivityActorSnapshot.select("id");
+    if (query.playerName) {
+      snapshots = snapshots.where((snapshot) =>
+        snapshot.name.ilike(`%${query.playerName}%`),
+      );
+    }
+    if (query.clanName) {
+      snapshots = snapshots.where((snapshot) =>
+        snapshot.clanName.ilike(`%${query.clanName}%`),
+      );
+    }
+    return (await snapshots.all()).map(({ id }) => id);
+  }
+
+  private async loadActorSnapshots(
+    activities: Array<{ actorSnapshotId: string | null }>,
+  ) {
+    const ids = [
+      ...new Set(
+        activities.flatMap(({ actorSnapshotId }) => actorSnapshotId ?? []),
+      ),
+    ];
+    if (ids.length === 0) return new Map();
+    const snapshots = await this.prisma.orm.public.ActivityActorSnapshot.where(
+      (snapshot) => snapshot.id.in(ids),
+    ).all();
+    return new Map(
+      snapshots.map((snapshot) => [
+        snapshot.id,
+        { ...snapshot, createdAt: temporalToDate(snapshot.createdAt) },
+      ]),
+    );
   }
 }

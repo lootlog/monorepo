@@ -15,7 +15,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
@@ -23,7 +23,10 @@ import { MapTemplatesService } from "./map-templates.service.js";
 import { CreateMapTemplateDto } from "./dto/create-map-template.dto.js";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { StatusOkResponseDto } from "#src/shared/dto/common-response.dto";
-import { MapTemplateResponseDto } from "#src/shared/dto/map-template-response.dto";
+import {
+  type MapTemplateResponse,
+  MapTemplateResponseDto,
+} from "#src/shared/dto/map-template-response.dto";
 
 @ApiTags("map-templates")
 @ApiBearerAuth()
@@ -45,7 +48,9 @@ export class MapTemplatesController {
     description: "List of map templates",
     type: [MapTemplateResponseDto],
   })
-  getTemplates(@GuildData() guildData: { id: string }) {
+  getTemplates(
+    @GuildData() guildData: { id: string },
+  ): Promise<MapTemplateResponse[]> {
     return this.mapTemplatesService.getTemplates(guildData.id);
   }
 

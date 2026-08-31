@@ -37,6 +37,7 @@ COPY --from=pruner-api /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/cle
 RUN pnpm exec turbo run build --filter=@lootlog/api
 RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     node /usr/local/lib/prune-production-deploy.mjs /prod/api
+RUN node -e 'require("/prod/api/dist/src/db/prisma.service.js")'
 
 FROM build-base AS pruner-auth
 COPY . .
@@ -116,6 +117,7 @@ COPY --from=pruner-activity /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/activity
 RUN pnpm deploy --filter=@lootlog/activity --prod /prod/activity && \
     node /usr/local/lib/prune-production-deploy.mjs /prod/activity
+RUN node -e 'require("/prod/activity/dist/src/shared/db/prisma.provider.js")'
 
 FROM build-base AS build-developer
 

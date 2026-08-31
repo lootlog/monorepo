@@ -4,10 +4,11 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { KillsService } from "./kills.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
+import { Permission, NpcType, type Role } from "#src/db/domain";
 import type { CreateKillDto } from "./dto/create-kill.dto.js";
 import {
   GetGuildKillStatsDto,
@@ -166,7 +167,10 @@ describe("KillsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         KillsService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: RedisService, useValue: mockRedisService },
         {
           provide: UserLootlogConfigService,
@@ -210,11 +214,9 @@ describe("KillsService", () => {
 
       expect(prismaService.userKillStats.upsert).toHaveBeenCalledWith({
         where: {
-          userId_world_npcId: {
-            userId: discordId,
-            world: "pandora",
-            npcId: 12345,
-          },
+          userId: discordId,
+          world: "pandora",
+          npcId: 12345,
         },
         create: expect.objectContaining({
           userId: discordId,
@@ -225,17 +227,15 @@ describe("KillsService", () => {
           totalKills: 1,
         }),
         update: expect.objectContaining({
-          totalKills: { increment: 1 },
+          totalKills: 1,
         }),
       });
       expect(prismaService.userKillStatsBucket.upsert).toHaveBeenCalledWith({
         where: {
-          userId_world_npcId_periodStart: {
-            userId: discordId,
-            world: "pandora",
-            npcId: 12345,
-            periodStart: expect.any(Date),
-          },
+          userId: discordId,
+          world: "pandora",
+          npcId: 12345,
+          periodStart: expect.any(Date),
         },
         create: expect.objectContaining({
           userId: discordId,
@@ -247,7 +247,7 @@ describe("KillsService", () => {
           periodStart: expect.any(Date),
         }),
         update: expect.objectContaining({
-          totalKills: { increment: 1 },
+          totalKills: 1,
         }),
       });
       expect(redisService.deleteByPattern).toHaveBeenCalledWith(
@@ -422,9 +422,7 @@ describe("KillsService", () => {
       expect(prismaService.userKillStats.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            userId_world_npcId: expect.objectContaining({
-              npcId: 12345,
-            }),
+            npcId: 12345,
           }),
         }),
       );
@@ -475,7 +473,7 @@ describe("KillsService", () => {
         await service.createKill(discordId, colossusKillDto);
 
         const upsertCall = prismaService.userKillStats.upsert.mock.calls[0][0];
-        expect(upsertCall.where.userId_world_npcId.npcId).toBeLessThan(0);
+        expect(upsertCall.where.npcId).toBeLessThan(0);
         expect(upsertCall.create.npcId).toBeLessThan(0);
         expect(upsertCall.create.npcType).toBe(NpcType.COLOSSUS);
       });
@@ -795,9 +793,7 @@ describe("KillsService", () => {
             where: expect.objectContaining({
               OR: [
                 expect.objectContaining({
-                  AND: expect.arrayContaining([
-                    { npcType: { not: NpcType.TITAN } },
-                  ]),
+                  npcType: { not: NpcType.TITAN },
                 }),
               ],
             }),
@@ -842,9 +838,9 @@ describe("KillsService", () => {
             where: expect.objectContaining({
               OR: [
                 expect.objectContaining({
-                  AND: expect.arrayContaining([
-                    { npcType: { notIn: [NpcType.HERO, NpcType.EVENT_HERO] } },
-                  ]),
+                  NOT: {
+                    npcType: { in: [NpcType.HERO, NpcType.EVENT_HERO] },
+                  },
                 }),
               ],
             }),
@@ -891,10 +887,7 @@ describe("KillsService", () => {
             where: expect.objectContaining({
               OR: [
                 expect.objectContaining({
-                  AND: expect.arrayContaining([
-                    { npcLvl: { gte: 100 } },
-                    { npcLvl: { lte: 300 } },
-                  ]),
+                  npcLvl: { gte: 100, lte: 300 },
                 }),
               ],
             }),

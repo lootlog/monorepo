@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
   HttpException,
@@ -6,9 +7,10 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachRolesToMembers } from "#src/db/many-to-many";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
-import type { Member } from "#src/generated/prisma/client";
+import type { Member } from "#src/db/domain";
 import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/types";
 import {
@@ -178,11 +180,9 @@ export class MemberDiscordAccessService {
     guildId: string;
     skipTtlCheck?: boolean;
   }): Promise<MemberWithRoles | null> {
-    const member = await this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: options.discordId, guildId: options.guildId },
-      },
-    });
+    const member = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(options.discordId), row.guildId.eq(options.guildId)),
+    ).first();
 
     if (!member || !member.globalUserId) {
       throw new NotFoundException(
@@ -225,15 +225,14 @@ export class MemberDiscordAccessService {
   }
 
   private async resolveActiveGuildId(guildId: string): Promise<string> {
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        active: true,
-        OR: [{ id: guildId }, { vanityUrl: guildId }],
-      },
-      select: {
-        id: true,
-      },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      and(
+        row.active.eq(true),
+        or(row.id.eq(guildId), row.vanityUrl.eq(guildId)),
+      ),
+    )
+      .select("id")
+      .first();
 
     if (!guild) {
       throw new NotFoundException({
@@ -244,16 +243,16 @@ export class MemberDiscordAccessService {
     return guild.id;
   }
 
-  private getStoredMember(
+  private async getStoredMember(
     discordId: string,
     guildId: string,
   ): Promise<StoredMemberWithRoles | null> {
-    return this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-      include: { roles: true },
-    });
+    const member = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(discordId), row.guildId.eq(guildId)),
+    ).first();
+    return member
+      ? ((await attachRolesToMembers(this.prisma, [member]))[0] ?? null)
+      : null;
   }
 
   private decorateMember(

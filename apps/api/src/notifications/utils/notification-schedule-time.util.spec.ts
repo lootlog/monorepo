@@ -1,4 +1,4 @@
-import { NotificationScheduleIntervalType } from "#src/generated/prisma/client";
+import { NotificationScheduleIntervalType } from "#src/db/domain";
 import {
   calculateFirstOccurrenceInTimeZone,
   calculateNextOccurrenceInTimeZone,

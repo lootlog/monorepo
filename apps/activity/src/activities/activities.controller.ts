@@ -24,7 +24,10 @@ import {
   PaginatedActivitiesResponseDto,
   WorldSuggestionsResponseDto,
 } from "./dto/activity-response.dto.js";
-import { MemberActivityStatsResponseDto } from "./dto/member-activity-stats-response.dto.js";
+import {
+  type MemberActivityStatsResponse,
+  MemberActivityStatsResponseDto,
+} from "./dto/member-activity-stats-response.dto.js";
 import { QueryActivitiesDto } from "./dto/query-activities.dto.js";
 import { SuggestActorNamesDto } from "./dto/suggest-actor-names.dto.js";
 import { SuggestClanNamesDto } from "./dto/suggest-clan-names.dto.js";
@@ -120,7 +123,9 @@ export class ActivitiesController {
   @RequiredPermissions(Permission.ADMIN)
   @ApiOperation({ summary: "Get activity stats for guild members by source" })
   @ZodResponse({ status: 200, type: [MemberActivityStatsResponseDto] })
-  getMemberActivityStats(@Param("guildId") guildId: string) {
+  getMemberActivityStats(
+    @Param("guildId") guildId: string,
+  ): Promise<MemberActivityStatsResponse[]> {
     return this.activitiesQueryService.findMemberActivityStatsByGuild(guildId);
   }
 

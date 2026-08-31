@@ -1,4 +1,4 @@
-import type { Prisma } from "#src/generated/prisma/client";
+import type { JsonValue, LootSource } from "#src/db/domain";
 import type { LootItemDto } from "./loot-item.dto.js";
 import type { LootNpcDto } from "./loot-npc.dto.js";
 import type { LootPlayerDto } from "./loot-player.dto.js";
@@ -15,18 +15,16 @@ export type SubmissionWithMember = {
   };
 };
 
-export type LootSelection = Prisma.LootGetPayload<{
-  select: {
-    id: true;
-    uniqueId: true;
-    world: true;
-    source: true;
-    location: true;
-    lootShare: true;
-    createdAt: true;
-    updatedAt: true;
-  };
-}>;
+export type LootSelection = {
+  id: number;
+  uniqueId: string;
+  world: string;
+  source: LootSource;
+  location: string;
+  lootShare: JsonValue;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 type LootQueryBase = Omit<LootSelection, "lootShare">;
 

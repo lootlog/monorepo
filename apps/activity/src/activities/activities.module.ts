@@ -7,7 +7,7 @@ import { ActivitiesQueryService } from "#src/activities/services/activities-quer
 import { ActivitiesEventsService } from "#src/activities/services/activities-events.service";
 import { RetryService } from "#src/shared/rabbitmq/retry.service";
 import { PermissionsModule } from "#src/permissions/permissions.module";
-import { PrismaService } from "#src/shared/db/prisma.service";
+import { prismaProvider } from "#src/shared/db/prisma.provider";
 import { cacheConfig } from "#src/config/cache.config";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 
@@ -19,7 +19,7 @@ import { rabbitmqConfig } from "#src/config/rabbitmq.config";
   ],
   controllers: [ActivitiesController],
   providers: [
-    PrismaService,
+    prismaProvider,
     ActivitiesService,
     ActivitiesQueryService,
     ActivitiesEventsService,

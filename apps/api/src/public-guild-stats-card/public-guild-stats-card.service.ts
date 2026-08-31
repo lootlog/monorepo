@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   HttpException,
   HttpStatus,
@@ -136,18 +137,11 @@ export class PublicGuildStatsCardService {
   }
 
   private async getCardGuild(guildId: string): Promise<GuildStatsCardGuild> {
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        id: guildId,
-        active: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        icon: true,
-        publicStatsCardEnabled: true,
-      },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      and(row.id.eq(guildId), row.active.eq(true)),
+    )
+      .select("id", "name", "icon", "publicStatsCardEnabled")
+      .first();
 
     if (!guild || !guild.publicStatsCardEnabled) {
       throw new NotFoundException("Guild not found");
@@ -160,7 +154,7 @@ export class PublicGuildStatsCardService {
     guildId: string,
   ): Promise<GuildStatsCardData["stats"]> {
     const dateFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const rows = await this.prisma.$queryRaw<LootStatsRow[]>`
+    const rows = await this.prisma.sql<LootStatsRow[]>`
       WITH valid_loots AS (
         SELECT DISTINCT l.id
         FROM "OrganizationLootRecord" olr

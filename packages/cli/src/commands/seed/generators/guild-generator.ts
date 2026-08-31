@@ -2,7 +2,7 @@ import { generate } from "random-words";
 import crypto from "node:crypto";
 import { v7 as uuidv7 } from "uuid";
 import { SEED_CONFIG } from "../config.js";
-import { Permission } from "../../../../../../apps/api/generated/client/index.js";
+import { Permission } from "../../../../../../apps/api/src/db/database-enums.js";
 
 interface GeneratedRole {
   id: string;
@@ -36,13 +36,13 @@ interface GeneratedGuild {
 const AVAILABLE_PERMISSIONS: Permission[] = [
   Permission.ADMIN,
   Permission.LOOTLOG_MANAGE,
-  Permission.LOOTLOG_READ,
-  Permission.LOOTLOG_WRITE,
-  Permission.LOOTLOG_RESERVATIONS,
-  Permission.LOOTLOG_READ_TIMERS_TITANS,
-  Permission.LOOTLOG_READ_LOOTS_TITANS,
-  Permission.LOOTLOG_READ_TIMERS_HEROES,
-  Permission.LOOTLOG_READ_LOOTS_HEROES,
+  Permission.LOOTLOG_ACCESS,
+  Permission.LOOTLOG_LOOTS_WRITE,
+  Permission.LOOTLOG_RESERVATIONS_READ,
+  Permission.LOOTLOG_TIMERS_TITANS_READ,
+  Permission.LOOTLOG_LOOTS_TITANS_READ,
+  Permission.LOOTLOG_TIMERS_HEROES_READ,
+  Permission.LOOTLOG_LOOTS_HEROES_READ,
   Permission.LOOTLOG_CHAT_READ,
   Permission.LOOTLOG_CHAT_WRITE,
   Permission.LOOTLOG_NOTIFICATIONS_SEND,

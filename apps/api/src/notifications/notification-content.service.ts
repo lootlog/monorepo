@@ -1,12 +1,15 @@
 import { randomUUID } from "node:crypto";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { Injectable } from "@nestjs/common";
 import {
   NotificationScheduleAnchor as DbNotificationScheduleAnchor,
   NotificationTargetType as DbNotificationTargetType,
   NotificationTriggerType as DbNotificationTriggerType,
-  type Prisma,
+  type InputJsonObject,
+  type JsonObject,
+  type JsonValue,
   type NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
@@ -33,7 +36,7 @@ import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord
 type AllowedMention = "roles" | "users" | "everyone";
 
 const parseAllowedMentionList = (
-  value: Prisma.JsonValue | undefined,
+  value: JsonValue | undefined,
 ): AllowedMention[] | undefined =>
   Array.isArray(value)
     ? value.filter(
@@ -42,9 +45,7 @@ const parseAllowedMentionList = (
       )
     : undefined;
 
-const parseStringList = (
-  value: Prisma.JsonValue | undefined,
-): string[] | undefined =>
+const parseStringList = (value: JsonValue | undefined): string[] | undefined =>
   Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : undefined;
@@ -134,7 +135,7 @@ export class NotificationContentService {
       contentTemplate:
         params.notificationRule.contentTemplate ??
         DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies InputJsonObject;
   }
 
   buildScheduledMessagePayload(params: {
@@ -176,7 +177,7 @@ export class NotificationContentService {
       contentTemplate:
         params.notificationRule.contentTemplate ??
         DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies InputJsonObject;
   }
 
   async buildTestNotificationPayload(params: {
@@ -188,7 +189,7 @@ export class NotificationContentService {
       name: string | null;
       world: string | null;
       triggerType: DbNotificationTriggerType;
-      filters: Prisma.JsonValue;
+      filters: JsonValue;
       scheduleStrategy: DbNotificationScheduleStrategy | null;
       scheduleAnchor: DbNotificationScheduleAnchor | null;
       scheduleOffsetMinutes: number | null;
@@ -235,7 +236,7 @@ export class NotificationContentService {
       ruleName: params.notificationRule.name,
       triggerType: params.notificationRule.triggerType,
       world: params.notificationRule.world,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies InputJsonObject;
   }
 
   /**
@@ -273,19 +274,22 @@ export class NotificationContentService {
       ...(parse.length > 0 ? { parse } : {}),
       ...(roleIds.length > 0 ? { roles: roleIds } : {}),
       repliedUser: false,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies InputJsonObject;
   }
 
-  parseAllowedMentions(value: Prisma.JsonValue | undefined) {
+  parseAllowedMentions(value: JsonValue | undefined) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       return undefined;
     }
 
-    const parse = parseAllowedMentionList(value.parse);
-    const roles = parseStringList(value.roles);
-    const users = parseStringList(value.users);
+    const objectValue = value as JsonObject;
+    const parse = parseAllowedMentionList(objectValue.parse);
+    const roles = parseStringList(objectValue.roles);
+    const users = parseStringList(objectValue.users);
     const repliedUser =
-      typeof value.repliedUser === "boolean" ? value.repliedUser : undefined;
+      typeof objectValue.repliedUser === "boolean"
+        ? objectValue.repliedUser
+        : undefined;
 
     if (!hasAllowedMentionValues({ parse, roles, users, repliedUser })) {
       return undefined;
@@ -405,30 +409,33 @@ export class NotificationContentService {
     notificationRule: {
       guildId: string | null;
       world: string | null;
-      filters: Prisma.JsonValue;
+      filters: JsonValue;
       scheduleAnchor: DbNotificationScheduleAnchor | null;
       scheduleOffsetMinutes: number | null;
     },
     scheduledFor: Date,
   ) {
     if (notificationRule.guildId) {
-      const timers = await this.prisma.timer.findMany({
-        where: {
-          guildId: notificationRule.guildId,
-          deletedAt: null,
-          ...(notificationRule.world ? { world: notificationRule.world } : {}),
-        },
-        select: {
-          npcId: true,
-          world: true,
-          timerKey: true,
-          minSpawnTime: true,
-          maxSpawnTime: true,
-          npc: true,
-        },
-        orderBy: [{ minSpawnTime: "asc" }],
-        take: 50,
-      });
+      let timersQuery = this.prisma.orm.public.Timer.where((row) =>
+        and(row.guildId.eq(notificationRule.guildId), row.deletedAt.isNull()),
+      );
+      if (notificationRule.world) {
+        timersQuery = timersQuery.where((row) =>
+          row.world.eq(notificationRule.world),
+        );
+      }
+      const timers = await timersQuery
+        .select(
+          "npcId",
+          "world",
+          "timerKey",
+          "minSpawnTime",
+          "maxSpawnTime",
+          "npc",
+        )
+        .orderBy([(row) => row.minSpawnTime.asc()])
+        .limit(50)
+        .all();
 
       const matchingTimer = timers.find((timer) =>
         this.matchingService.matchesTimerRule(

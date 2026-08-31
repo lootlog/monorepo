@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
@@ -8,6 +9,10 @@ import {
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import { PrismaService } from "#src/db/prisma.service";
+import {
+  attachAssignedMembersToMaps,
+  setMapAssignedMembers,
+} from "#src/db/many-to-many";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 import type {
@@ -60,15 +65,23 @@ export class EventRespawnService {
     const { createNewWindow, newMinSpawnTime, newMaxSpawnTime, isAutoClose } =
       normalizeCloseRespawnWindowOptions(options);
 
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: { id: heroId, event: { id: eventId, guildId } },
-      include: {
-        event: true,
-        maps: {
-          include: { assignedMembers: true },
-        },
-      },
-    });
+    const heroRow = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+      and(
+        row.id.eq(heroId),
+        row.event.some((related) =>
+          and(related.id.eq(eventId), related.guildId.eq(guildId)),
+        ),
+      ),
+    )
+      .include("event")
+      .include("maps")
+      .first();
+    const hero = heroRow
+      ? {
+          ...heroRow,
+          maps: await attachAssignedMembersToMaps(this.prisma, heroRow.maps),
+        }
+      : null;
 
     if (!hero) {
       throw new NotFoundException("Hero not found");
@@ -95,27 +108,19 @@ export class EventRespawnService {
       const closedAt = new Date();
 
       try {
-        await this.prisma.$transaction(async (tx) => {
+        await this.prisma.transaction(async (tx) => {
           if (hero.maps.length > 0) {
-            await Promise.all(
-              hero.maps.map((map) =>
-                tx.eventMap.update({
-                  where: { id: map.id },
-                  data: {
-                    assignedMembers: { set: [] },
-                  },
-                }),
-              ),
-            );
+            for (const map of hero.maps) {
+              await setMapAssignedMembers(tx, map.id, []);
+            }
 
-            await tx.eventMapAssignmentHistory.updateMany({
-              where: {
-                mapId: { in: hero.maps.map((map) => map.id) },
-                unassignedAt: null,
-              },
-              data: {
-                unassignedAt: closedAt,
-              },
+            await tx.orm.public.EventMapAssignmentHistory.where((row) =>
+              and(
+                row.mapId.in(hero.maps.map((map) => map.id)),
+                row.unassignedAt.isNull(),
+              ),
+            ).updateAndCount({
+              unassignedAt: closedAt,
             });
           }
         });
@@ -215,10 +220,16 @@ export class EventRespawnService {
     heroId: string,
     options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: { id: heroId, event: { id: eventId, guildId } },
-      include: { event: true },
-    });
+    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+      and(
+        row.id.eq(heroId),
+        row.event.some((related) =>
+          and(related.id.eq(eventId), related.guildId.eq(guildId)),
+        ),
+      ),
+    )
+      .include("event")
+      .first();
 
     if (!hero) {
       throw new NotFoundException("Hero not found");
@@ -237,10 +248,11 @@ export class EventRespawnService {
       maxSpawnTime,
     });
 
-    const firstMember = await this.prisma.member.findFirst({
-      where: { guildId },
-      select: { id: true },
-    });
+    const firstMember = await this.prisma.orm.public.Member.where((row) =>
+      row.guildId.eq(guildId),
+    )
+      .select("id")
+      .first();
 
     if (!firstMember) {
       throw new BadRequestException("No members found in guild");
@@ -261,12 +273,13 @@ export class EventRespawnService {
     const windowOpenedAt = timer.windowOpenedAt ?? new Date();
     await this.cancelScheduledAutoClose(heroId);
 
-    const heroMaps = await this.prisma.eventMap.findMany({
-      where: { heroNpcId: heroId },
-      include: {
-        assignedMembers: true,
-      },
-    });
+    const heroMapRows = await this.prisma.orm.public.EventMap.where((row) =>
+      row.heroNpcId.eq(heroId),
+    ).all();
+    const heroMaps = await attachAssignedMembersToMaps(
+      this.prisma,
+      heroMapRows,
+    );
 
     const gapResults = await Promise.all(
       heroMaps.map(async (map) => {
@@ -347,10 +360,16 @@ export class EventRespawnService {
     maxSpawnTime: Date | null;
     overdueMs: number | null;
   }> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: { id: heroId, event: { id: eventId, guildId } },
-      include: { event: true },
-    });
+    const hero = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+      and(
+        row.id.eq(heroId),
+        row.event.some((related) =>
+          and(related.id.eq(eventId), related.guildId.eq(guildId)),
+        ),
+      ),
+    )
+      .include("event")
+      .first();
 
     if (!hero) {
       throw new NotFoundException("Hero not found");

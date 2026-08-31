@@ -192,6 +192,31 @@ jobs:
       - name: Check formatting
         run: pnpm format:check
 
+      - name: Verify Prisma contracts and migration graphs
+        run: |
+          pnpm --filter @lootlog/api api:contract:emit
+          pnpm --filter @lootlog/activity activity:contract:emit
+          git diff --exit-code -- \
+            apps/api/src/prisma/contract.json \
+            apps/api/src/prisma/contract.d.ts \
+            apps/activity/src/prisma/contract.json \
+            apps/activity/src/prisma/contract.d.ts
+          pnpm --filter @lootlog/api api:migration:check
+          pnpm --filter @lootlog/activity activity:migration:check
+          pnpm --filter @lootlog/api typecheck
+          pnpm --filter @lootlog/activity typecheck
+          pnpm --filter @lootlog/api lint
+          pnpm --filter @lootlog/activity lint
+          pnpm --filter @lootlog/api build
+          pnpm --filter @lootlog/activity build
+          node -e 'require("./apps/api/dist/src/db/prisma.service.js")'
+          node -e 'require("./apps/activity/dist/src/shared/db/prisma.provider.js")'
+
+      - name: Test Prisma database cutover
+        run: |
+          pnpm --filter @lootlog/api test:database
+          pnpm --filter @lootlog/activity test:database
+
       - name: Lint and build affected workspaces
         env:
           PACKAGES: ${{ needs.plan.outputs.packages }}

@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
-import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
+import { Permission, NpcType, type Role } from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";

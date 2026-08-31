@@ -1,32 +1,35 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 
 @Injectable()
 export class EventQueueDiagnosticsService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
   async getAutoCloseJobsStatus(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: { id: true },
-    });
+    const event = await this.prisma.orm.public.Event.where((row) =>
+      and(row.id.eq(eventId), row.guildId.eq(guildId)),
+    )
+      .select("id")
+      .first();
 
     if (!event) {
       throw new NotFoundException("Event not found");
     }
 
-    const heroes = await this.prisma.eventHeroNpc.findMany({
-      where: { eventId },
-      select: { id: true },
-    });
+    const heroes = await this.prisma.orm.public.EventHeroNpc.where((row) =>
+      row.eventId.eq(eventId),
+    )
+      .select("id")
+      .all();
 
     const heroIds = new Set(heroes.map((hero) => hero.id));
 
@@ -71,10 +74,11 @@ export class EventQueueDiagnosticsService {
   }
 
   async getQueueHealth(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: { id: true },
-    });
+    const event = await this.prisma.orm.public.Event.where((row) =>
+      and(row.id.eq(eventId), row.guildId.eq(guildId)),
+    )
+      .select("id")
+      .first();
 
     if (!event) {
       throw new NotFoundException("Event not found");

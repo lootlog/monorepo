@@ -1,4 +1,4 @@
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { AppModule } from "../src/app.module.js";
 import { createTestLootPayload, TEST_USERS } from "./test-helpers.js";

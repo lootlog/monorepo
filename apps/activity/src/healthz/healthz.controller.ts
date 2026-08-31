@@ -1,14 +1,14 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Inject } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import {
   HealthCheckService,
   HttpHealthIndicator,
-  PrismaHealthIndicator,
+  HealthIndicatorService,
   MemoryHealthIndicator,
   DiskHealthIndicator,
   HealthCheck,
 } from "@nestjs/terminus";
-import { PrismaService } from "#src/shared/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
 import { apiServiceConfig } from "#src/config/api-service.config";
 
 @ApiTags("health")
@@ -17,8 +17,8 @@ export class HealthzController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly http: HttpHealthIndicator,
-    private readonly prismaHealth: PrismaHealthIndicator,
-    private readonly prisma: PrismaService,
+    private readonly healthIndicator: HealthIndicatorService,
+    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
   ) {}
@@ -40,7 +40,7 @@ export class HealthzController {
   })
   check() {
     return this.health.check([
-      () => this.prismaHealth.pingCheck("database", this.prisma),
+      () => this.checkDatabase(),
       () =>
         this.http.pingCheck("api-service", `${apiServiceConfig.url}/healthz`),
       () => this.memory.checkHeap("memory_heap", 150 * 1024 * 1024),
@@ -48,5 +48,20 @@ export class HealthzController {
       () =>
         this.disk.checkStorage("storage", { path: "/", thresholdPercent: 0.9 }),
     ]);
+  }
+
+  private async checkDatabase() {
+    const indicator = this.healthIndicator.check("database");
+    try {
+      await this.prisma.orm.public.MemberActivityStats.select("guildId")
+        .limit(1)
+        .all();
+      return indicator.up();
+    } catch (error) {
+      return indicator.down({
+        message:
+          error instanceof Error ? error.message : "Database unavailable",
+      });
+    }
   }
 }

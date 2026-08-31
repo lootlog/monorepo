@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { PointsEditType } from "#src/generated/prisma/client";
+import { PointsEditType } from "#src/db/domain";
 import {
   isoDatetimeCodec,
   jsonValueSchema,

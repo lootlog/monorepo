@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { APIGuildMember } from "discord-api-types/v10";
-import type { Member } from "#src/generated/prisma/client";
+import type { Member } from "#src/db/domain";
 import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
 import { MemberDiscordAccessService } from "./member-discord-access.service.js";
 import { MemberDiscordRefreshService } from "./member-discord-refresh.service.js";

@@ -17,7 +17,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Guild } from "#src/generated/prisma/client";
+import { Permission, type Guild } from "#src/db/domain";
 import { ChannelsService } from "#src/channels/channels.service";
 import { CreateNotificationRuleDto } from "#src/notifications/dto/create-notification-rule.dto";
 import {

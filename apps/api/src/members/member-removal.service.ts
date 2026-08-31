@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
   Inject,
@@ -10,6 +11,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachRolesToMembers, setMemberRoles } from "#src/db/many-to-many";
 import { DiscordService } from "#src/discord/discord.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
@@ -43,10 +45,12 @@ export class MemberRemovalService {
   }): Promise<MemberWithRoles> {
     const { discordId, guildId } = options;
 
-    const member = await this.prisma.member.findUnique({
-      where: { memberId: { userId: discordId, guildId } },
-      include: { roles: true },
-    });
+    const memberRow = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(discordId), row.guildId.eq(guildId)),
+    ).first();
+    const member = memberRow
+      ? (await attachRolesToMembers(this.prisma, [memberRow]))[0]
+      : null;
 
     if (!member) {
       throw new NotFoundException("Member not found");
@@ -56,16 +60,20 @@ export class MemberRemovalService {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
-    const deactivatedMember = await this.prisma.member.update({
-      where: { memberId: { userId: discordId, guildId } },
-      data: {
-        active: false,
-        lastDiscordAttemptAt: new Date(),
-        lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.MANUALLY_DEACTIVATED,
-        roles: { set: [] },
+    const deactivatedMember = await this.prisma.transaction(
+      async (transaction) => {
+        const updatedMember = await transaction.orm.public.Member.where((row) =>
+          row.id.eq(member.id),
+        ).update({
+          active: false,
+          lastDiscordAttemptAt: new Date(),
+          lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.MANUALLY_DEACTIVATED,
+          updatedAt: new Date(),
+        });
+        await setMemberRoles(transaction, member.id, []);
+        return { ...updatedMember, roles: [] };
       },
-      include: { roles: true },
-    });
+    );
 
     await this.notifyMemberRemoved({
       discordId,
@@ -80,42 +88,37 @@ export class MemberRemovalService {
     options: DeactivateMembersMissingFromDiscordGuildsOptions,
   ): Promise<number> {
     const { discordId, userId, activeDiscordGuildIds, status } = options;
-    const missingMembers = await this.prisma.member.findMany({
-      where: {
-        userId: discordId,
-        globalUserId: userId,
-        active: true,
-        guildId: { notIn: activeDiscordGuildIds },
-        guild: { active: true },
-      },
-      select: {
-        userId: true,
-        guildId: true,
-        globalUserId: true,
-      },
-    });
+    const missingMembers = await this.prisma.orm.public.Member.where((row) =>
+      and(
+        row.userId.eq(discordId),
+        row.globalUserId.eq(userId),
+        row.active.eq(true),
+        not(row.guildId.in(activeDiscordGuildIds)),
+        row.guild.some((related) => related.active.eq(true)),
+      ),
+    )
+      .select("userId", "guildId", "globalUserId")
+      .all();
 
     if (missingMembers.length === 0) {
       return 0;
     }
 
     const syncTimestamp = new Date();
-    await Promise.all(
-      missingMembers.map((member) =>
-        this.prisma.member.update({
-          where: {
-            memberId: { userId: member.userId, guildId: member.guildId },
-          },
-          data: {
-            active: false,
-            lastDiscordAttemptAt: syncTimestamp,
-            lastDiscordSyncAt: syncTimestamp,
-            lastDiscordStatus: status,
-            roles: { set: [] },
-          },
-        }),
-      ),
-    );
+    await this.prisma.transaction(async (transaction) => {
+      for (const member of missingMembers) {
+        const updatedMember = await transaction.orm.public.Member.where((row) =>
+          and(row.userId.eq(member.userId), row.guildId.eq(member.guildId)),
+        ).update({
+          active: false,
+          lastDiscordAttemptAt: syncTimestamp,
+          lastDiscordSyncAt: syncTimestamp,
+          lastDiscordStatus: status,
+          updatedAt: syncTimestamp,
+        });
+        await setMemberRoles(transaction, updatedMember.id, []);
+      }
+    });
 
     await this.notifyMembersRemoved(
       missingMembers.map((member) => ({
@@ -135,36 +138,27 @@ export class MemberRemovalService {
     const client = options?.tx ?? this.prisma;
 
     try {
-      const affectedMembers = await client.member.findMany({
-        where: {
-          guildId,
-          active: true,
-        },
-        select: {
-          userId: true,
-          guildId: true,
-          globalUserId: true,
-        },
-      });
+      const affectedMembers = await client.orm.public.Member.where((row) =>
+        and(row.guildId.eq(guildId), row.active.eq(true)),
+      )
+        .select("userId", "guildId", "globalUserId")
+        .all();
 
-      const result = await client.member.updateMany({
-        where: {
-          guildId,
-          active: true,
-        },
-        data: {
-          active: false,
-          lastDiscordAttemptAt: new Date(),
-          lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
-        },
+      const result = await client.orm.public.Member.where((row) =>
+        and(row.guildId.eq(guildId), row.active.eq(true)),
+      ).updateAndCount({
+        active: false,
+        lastDiscordAttemptAt: new Date(),
+        lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
+        updatedAt: new Date(),
       });
 
       this.logger.log({
         level: "info",
-        message: `Deactivated ${result.count} members from guild ${guildId}`,
+        message: `Deactivated ${result} members from guild ${guildId}`,
       });
       return {
-        count: result.count,
+        count: result,
         affectedMembers: affectedMembers.map((member) => ({
           discordId: member.userId,
           guildId: member.guildId,

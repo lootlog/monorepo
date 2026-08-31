@@ -3,6 +3,7 @@ import { mockFn } from "#src/test/mock-fn";
 import { EventPointsService } from "./event-points.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { EventEmitterService } from "./event-emitter.service.js";
 
 describe("EventPointsService", () => {
@@ -74,7 +75,10 @@ describe("EventPointsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventPointsService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventEmitterService, useValue: mockEventEmitter },
       ],
@@ -95,24 +99,8 @@ describe("EventPointsService", () => {
 
     expect(mockPrismaService.eventRanking.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        select: expect.objectContaining({
-          member: {
-            select: {
-              id: true,
-              name: true,
-              roles: {
-                select: {
-                  position: true,
-                  color: true,
-                },
-                orderBy: {
-                  position: "desc",
-                },
-                take: 1,
-              },
-            },
-          },
-        }),
+        include: { member: true },
+        select: expect.objectContaining({ memberId: true }),
       }),
     );
   });
@@ -396,10 +384,12 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.$transaction.mockImplementation((operation) =>
+        typeof operation === "function"
+          ? operation(mockPrismaService)
+          : Promise.all(operation),
       );
-      mockPrismaService.event.findUnique.mockResolvedValue({
+      mockPrismaService.event.findFirst.mockResolvedValue({
         id: eventId,
         guildId: "guild-1",
         scoringMode: "ADVANCED",
@@ -462,11 +452,13 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.$transaction.mockImplementation((operation) =>
+        typeof operation === "function"
+          ? operation(mockPrismaService)
+          : Promise.all(operation),
       );
 
-      mockPrismaService.event.findUnique.mockResolvedValue({
+      mockPrismaService.event.findFirst.mockResolvedValue({
         id: eventId,
         guildId: "guild-1",
         scoringMode: "ADVANCED",
@@ -514,7 +506,7 @@ describe("EventPointsService", () => {
         1,
       );
       expect(
-        Array.isArray(mockPrismaService.$transaction.mock.calls[0]?.[0]),
+        typeof mockPrismaService.$transaction.mock.calls[0]?.[0] === "function",
       ).toBe(true);
       expect(mockEventEmitter.emitRankingUpdate).toHaveBeenCalledWith(
         "guild-1",
@@ -562,11 +554,13 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.$transaction.mockImplementation((operation) =>
+        typeof operation === "function"
+          ? operation(mockPrismaService)
+          : Promise.all(operation),
       );
 
-      mockPrismaService.event.findUnique.mockResolvedValue({
+      mockPrismaService.event.findFirst.mockResolvedValue({
         id: eventId,
         guildId: "guild-1",
         scoringMode: "ADVANCED",
@@ -645,10 +639,12 @@ describe("EventPointsService", () => {
       ]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.update.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.$transaction.mockImplementation((operation) =>
+        typeof operation === "function"
+          ? operation(mockPrismaService)
+          : Promise.all(operation),
       );
-      mockPrismaService.event.findUnique.mockResolvedValue({
+      mockPrismaService.event.findFirst.mockResolvedValue({
         id: eventId,
         guildId: "guild-1",
         scoringMode: "ADVANCED",
@@ -738,14 +734,14 @@ describe("EventPointsService", () => {
       expect(
         mockPrismaService.eventPointsEditHistory.create,
       ).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           rankingId: "ranking-1",
           previousPoints: 10,
           newPoints: 12.5,
           editType: "KILL_POINT",
           editedByUserId: "user-1",
           comment: "Ręczna korekta",
-        },
+        }),
       });
     });
   });
@@ -776,23 +772,23 @@ describe("EventPointsService", () => {
       expect(
         mockPrismaService.eventPointsEditHistory.create,
       ).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           rankingId: "ranking-1",
           previousPoints: 10,
           newPoints: 11.5,
           editType: "RANKING",
           editedByUserId: "user-1",
           comment: "Korekta rankingu",
-        },
+        }),
       });
 
       expect(mockPrismaService.eventRanking.update).toHaveBeenCalledWith({
         where: { id: "ranking-1" },
-        data: {
+        data: expect.objectContaining({
           totalPoints: 11.5,
           manualAdjustmentPoints: 3,
           pointsModified: true,
-        },
+        }),
       });
     });
   });
@@ -824,10 +820,16 @@ describe("EventPointsService", () => {
           },
           confirmationExpiredAcknowledgedAt: null,
           kill: {
-            heroNpc: {
-              eventId: "event-1",
-              event: {
-                guildId: "guild-1",
+            some: {
+              heroNpc: {
+                some: {
+                  eventId: "event-1",
+                  event: {
+                    some: {
+                      guildId: "guild-1",
+                    },
+                  },
+                },
               },
             },
           },
@@ -910,9 +912,13 @@ describe("EventPointsService", () => {
             in: ["ranking-1", "ranking-2"],
           },
           ranking: {
-            eventId: "event-1",
-            event: {
-              guildId: "guild-1",
+            some: {
+              eventId: "event-1",
+              event: {
+                some: {
+                  guildId: "guild-1",
+                },
+              },
             },
           },
         },

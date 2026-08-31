@@ -8,7 +8,6 @@ export default defineConfig({
     alias: {
       "@lootlog/api-helpers/permissions":
         "../../packages/api-helpers/src/lib/permissions/can-view-npc-timer.ts",
-      "prisma/generated/client": "./prisma/generated/client.ts",
     },
     setupFiles: ["./test/vitest.setup.ts"],
   }),

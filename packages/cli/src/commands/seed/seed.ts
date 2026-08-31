@@ -1,5 +1,13 @@
-import { PrismaClient } from "../../../../../apps/api/generated/client/index.js";
-import { PrismaClient as BattlelogPrismaClient } from "../../../../../apps/battlelog-service/generated/client/index.js";
+import { all, and } from "@prisma/orm-family-sql/orm-client";
+import { createId } from "@paralleldrive/cuid2";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { db, postgresPool } from "../../../../../apps/api/src/prisma/db.js";
+import { buildTimerKey } from "../../../../../apps/api/src/timers/utils/timer-key.js";
+import {
+  battles as battlesTable,
+  battleWarriors,
+} from "../../../../../apps/battlelog-service/src/shared/modules/drizzle/schema.js";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
@@ -16,19 +24,14 @@ const __dirname = path.dirname(__filename);
 const rootPath = path.join(__dirname, "../../../../../");
 config({ path: path.join(rootPath, ".env") });
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
   process.env.BATTLELOG_DATABASE_URL || process.env.POSTGRESQL_CONNECTION_URI;
 
-const battlelogPrisma = new BattlelogPrismaClient({
-  datasources: {
-    db: {
-      url: battlelogConnectionUri,
-    },
-  },
-});
+const battlelogPool = new Pool({ connectionString: battlelogConnectionUri });
+const battlelogDb = drizzle({ client: battlelogPool });
 
 interface SeedOptions {
   guildsCount?: number;
@@ -41,20 +44,29 @@ interface SeedOptions {
 async function cleanDatabase() {
   console.log("🧹 Cleaning database...");
 
-  await prisma.$transaction([
-    prisma.lootComment.deleteMany(),
-    prisma.lootSubmission.deleteMany(),
-    prisma.loot.deleteMany(),
-    prisma.timer.deleteMany(),
-    prisma.member.deleteMany(),
-    prisma.role.deleteMany(),
-    prisma.guild.deleteMany(),
-    prisma.userCharactersLootlogSettings.deleteMany(),
-    prisma.userSettings.deleteMany(),
-    prisma.lootlogConfigNpc.deleteMany(),
-    prisma.lootlogConfig.deleteMany(),
-    prisma.memberRefreshJob.deleteMany(),
-  ]);
+  await prisma.transaction(async (transaction) => {
+    await transaction.orm.public.LootComment.where(all).deleteAndCount();
+    await transaction.orm.public.LootSubmission.where(all).deleteAndCount();
+    await transaction.orm.public.OrganizationLootRecord.where(
+      all,
+    ).deleteAndCount();
+    await transaction.orm.public.LootItem.where(all).deleteAndCount();
+    await transaction.orm.public.LootPlayer.where(all).deleteAndCount();
+    await transaction.orm.public.LootNpc.where(all).deleteAndCount();
+    await transaction.orm.public.Loot.where(all).deleteAndCount();
+    await transaction.orm.public.Timer.where(all).deleteAndCount();
+    await transaction.orm.public.MemberToRole.where(all).deleteAndCount();
+    await transaction.orm.public.Member.where(all).deleteAndCount();
+    await transaction.orm.public.Role.where(all).deleteAndCount();
+    await transaction.orm.public.Guild.where(all).deleteAndCount();
+    await transaction.orm.public.UserCharactersLootlogSettings.where(
+      all,
+    ).deleteAndCount();
+    await transaction.orm.public.UserSettings.where(all).deleteAndCount();
+    await transaction.orm.public.LootlogConfigNpc.where(all).deleteAndCount();
+    await transaction.orm.public.LootlogConfig.where(all).deleteAndCount();
+    await transaction.orm.public.MemberRefreshJob.where(all).deleteAndCount();
+  });
 
   console.log("✅ Database cleaned");
 }
@@ -92,12 +104,11 @@ async function seedGuilds(count: number) {
       if (!devGuildId) continue;
 
       // Check if dev guild already exists
-      const existingGuild = await prisma.guild.findUnique({
-        where: { id: devGuildId },
-        include: {
-          roles: true,
-        },
-      });
+      const existingGuild = await prisma.orm.public.Guild.where((row) =>
+        row.id.eq(devGuildId),
+      )
+        .include("roles")
+        .first();
 
       if (existingGuild) {
         console.log(
@@ -119,49 +130,48 @@ async function seedGuilds(count: number) {
       }
     }
 
-    const createdGuild = await prisma.guild.create({
-      data: {
-        id: guild.id,
-        name: guild.name,
-        icon: guild.icon,
-        ownerId: guild.ownerId,
-        vanityUrl: guild.vanityUrl,
-        active: guild.active,
-        roles: {
-          create: guild.roles.map((role) => ({
-            id: role.id,
-            name: role.name,
-            color: role.color,
-            position: role.position,
-            permissions: role.permissions,
-            lvlRangeFrom: role.lvlRangeFrom,
-            lvlRangeTo: role.lvlRangeTo,
-          })),
-        },
-      },
-      include: {
-        roles: true,
-      },
+    const createdGuild = await prisma.orm.public.Guild.create({
+      id: guild.id,
+      name: guild.name,
+      icon: guild.icon,
+      ownerId: guild.ownerId,
+      vanityUrl: guild.vanityUrl,
+      active: guild.active,
+      updatedAt: new Date(),
     });
+    if (guild.roles.length > 0) {
+      await prisma.orm.public.Role.createAndCount(
+        guild.roles.map((role) => ({
+          id: role.id,
+          guildId: createdGuild.id,
+          name: role.name,
+          color: role.color,
+          position: role.position,
+          permissions: role.permissions,
+          lvlRangeFrom: role.lvlRangeFrom,
+          lvlRangeTo: role.lvlRangeTo,
+          updatedAt: new Date(),
+        })),
+      );
+    }
 
     for (const member of guild.members) {
-      await prisma.member.create({
-        data: {
-          userId: member.userId,
-          guildId: createdGuild.id,
-          name: member.name,
-          avatar: member.avatar,
-          active: member.active,
-          roles: {
-            connect: member.roleIds.map((roleId) => ({
-              id_guildId: {
-                id: roleId,
-                guildId: createdGuild.id,
-              },
-            })),
-          },
-        },
+      const createdMember = await prisma.orm.public.Member.create({
+        userId: member.userId,
+        guildId: createdGuild.id,
+        name: member.name,
+        avatar: member.avatar,
+        active: member.active,
+        updatedAt: new Date(),
       });
+      if (member.roleIds.length > 0) {
+        await prisma.orm.public.MemberToRole.createAndCount(
+          member.roleIds.map((roleId) => ({
+            a: createdMember.id,
+            b: roleId,
+          })),
+        );
+      }
     }
 
     createdGuilds.push(createdGuild);
@@ -204,34 +214,28 @@ async function seedLoots(count: number, guilds: any[]) {
       : [];
 
   for (const loot of loots) {
-    const createdLoot = await prisma.loot.create({
-      data: {
-        uniqueId: `loot-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-        items: loot.loots as any,
-        world: loot.world,
-        source: loot.source as any,
-        location: loot.location,
-        players: loot.players as any,
-        npcs: loot.npcs as any,
-        lootShare: loot.lootShare,
-      },
+    const createdLoot = await prisma.orm.public.Loot.create({
+      uniqueId: `loot-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      world: loot.world,
+      source: loot.source as any,
+      location: loot.location,
+      lootShare: loot.lootShare,
+      updatedAt: new Date(),
     });
 
     if (guilds.length > 0) {
       const randomGuild = guilds[Math.floor(Math.random() * guilds.length)];
-      let members = await prisma.member.findMany({
-        where: { guildId: randomGuild.id },
-        take: Math.floor(Math.random() * 3) + 1,
-      });
+      let members = await prisma.orm.public.Member.where((row) =>
+        row.guildId.eq(randomGuild.id),
+      )
+        .limit(Math.floor(Math.random() * 3) + 1)
+        .all();
 
       const isDevGuild = devGuildIds.includes(randomGuild.id);
       if (isDevGuild && devUserId && devUserId !== "xxx") {
-        const devMember = await prisma.member.findFirst({
-          where: {
-            guildId: randomGuild.id,
-            userId: devUserId,
-          },
-        });
+        const devMember = await prisma.orm.public.Member.where((row) =>
+          and(row.guildId.eq(randomGuild.id), row.userId.eq(devUserId)),
+        ).first();
 
         if (devMember && !members.some((m) => m.id === devMember.id)) {
           members = [devMember, ...members.slice(0, -1)];
@@ -239,12 +243,29 @@ async function seedLoots(count: number, guilds: any[]) {
       }
 
       for (const member of members) {
-        await prisma.lootSubmission.create({
-          data: {
-            lootId: createdLoot.id,
-            guildId: randomGuild.id,
+        const organizationRecord =
+          await prisma.orm.public.OrganizationLootRecord.where((row) =>
+            and(row.lootId.eq(createdLoot.id), row.guildId.eq(randomGuild.id)),
+          ).upsert({
+            create: {
+              lootId: createdLoot.id,
+              guildId: randomGuild.id,
+              updatedAt: new Date(),
+            },
+            update: {},
+          });
+        await prisma.orm.public.LootSubmission.where((row) =>
+          and(
+            row.organizationLootRecordId.eq(organizationRecord.id),
+            row.memberId.eq(member.id),
+          ),
+        ).upsert({
+          create: {
+            organizationLootRecordId: organizationRecord.id,
             memberId: member.id,
+            updatedAt: new Date(),
           },
+          update: {},
         });
       }
     }
@@ -286,9 +307,9 @@ async function seedTimers(guilds: any[]) {
   let totalTimers = 0;
 
   for (const guild of guilds) {
-    const members = await prisma.member.findMany({
-      where: { guildId: guild.id },
-    });
+    const members = await prisma.orm.public.Member.where((row) =>
+      row.guildId.eq(guild.id),
+    ).all();
 
     if (members.length === 0) continue;
 
@@ -297,12 +318,9 @@ async function seedTimers(guilds: any[]) {
     const isDevGuild = devGuildIds.includes(guild.id);
     let devMember = null;
     if (isDevGuild && devUserId && devUserId !== "xxx") {
-      devMember = await prisma.member.findFirst({
-        where: {
-          guildId: guild.id,
-          userId: devUserId,
-        },
-      });
+      devMember = await prisma.orm.public.Member.where((row) =>
+        and(row.guildId.eq(guild.id), row.userId.eq(devUserId)),
+      ).first();
     }
 
     for (let i = 0; i < timerCount; i++) {
@@ -324,18 +342,18 @@ async function seedTimers(guilds: any[]) {
       );
 
       try {
-        await prisma.timer.create({
-          data: {
-            createdById: creatorMember.id,
-            guildId: guild.id,
-            npcId: randomNpc.id,
-            world: randomWorld,
-            minSpawnTime,
-            maxSpawnTime,
-            latestRespBaseSeconds: Math.floor(Math.random() * 7200),
-            latestRespawnRandomness: Math.floor(Math.random() * 1800),
-            npc: randomNpc,
-          },
+        await prisma.orm.public.Timer.create({
+          createdById: creatorMember.id,
+          guildId: guild.id,
+          npcId: randomNpc.id,
+          timerKey: buildTimerKey(randomNpc.id, randomNpc.name),
+          world: randomWorld,
+          minSpawnTime,
+          maxSpawnTime,
+          latestRespBaseSeconds: Math.floor(Math.random() * 7200),
+          latestRespawnRandomness: Math.floor(Math.random() * 1800),
+          npc: randomNpc,
+          updatedAt: new Date(),
         });
 
         totalTimers++;
@@ -501,8 +519,10 @@ async function seedBattles(count: number) {
         0,
       );
 
-      const battle = await battlelogPrisma.battle.create({
-        data: {
+      await battlelogDb.transaction(async (transaction) => {
+        const battleId = createId();
+        await transaction.insert(battlesTable).values({
+          id: battleId,
           userId,
           accountId: battlePayload.accountId,
           characterId: battlePayload.characterId,
@@ -515,11 +535,15 @@ async function seedBattles(count: number) {
           losingTeam: analysis.outcome.losingTeam,
           honorPoints: totalPH,
           hasFlee: analysis.outcome.hasFlee,
-          statistics: analysis.statistics as any,
-          warriors: {
-            create: analysis.warriors.map(toSeedBattleWarrior),
-          },
-        },
+          statistics: analysis.statistics,
+        });
+        await transaction.insert(battleWarriors).values(
+          analysis.warriors.map((warrior) => ({
+            id: createId(),
+            battleId,
+            ...toSeedBattleWarrior(warrior),
+          })),
+        );
       });
 
       createdCount++;
@@ -570,7 +594,7 @@ export async function seed(options: SeedOptions = {}) {
     console.error("❌ Seeding failed:", error);
     throw error;
   } finally {
-    await prisma.$disconnect();
-    await battlelogPrisma.$disconnect();
+    await postgresPool.end();
+    await battlelogPool.end();
   }
 }

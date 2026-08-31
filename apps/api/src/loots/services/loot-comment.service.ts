@@ -1,5 +1,7 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachRolesToMembers } from "#src/db/many-to-many";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { ErrorKey } from "../enum/error-key.enum.js";
 
@@ -10,42 +12,32 @@ export class LootCommentService {
   async getComments(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
-    const comments = await this.prisma.lootComment.findMany({
-      where: {
-        organizationLootRecord: {
-          guildId,
-          lootId,
-          archivedAt: null,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        member: {
-          select: {
-            name: true,
-            avatar: true,
-            userId: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-            },
-          },
-        },
-      },
-    });
+    const comments = await this.prisma.orm.public.LootComment.where((row) =>
+      row.organizationLootRecord.some((related) =>
+        and(
+          related.guildId.eq(guildId),
+          related.lootId.eq(lootId),
+          related.archivedAt.isNull(),
+        ),
+      ),
+    )
+      .include("member", (relation) =>
+        relation.select("id", "name", "avatar", "userId"),
+      )
+      .orderBy((row) => row.createdAt.desc())
+      .all();
+    const members = await attachRolesToMembers(
+      this.prisma,
+      comments.map((comment) => comment.member),
+    );
+    const membersById = new Map(members.map((member) => [member.id, member]));
 
     return comments.map((comment) => ({
       id: comment.id,
       lootId,
       guildId,
       content: comment.content,
-      member: comment.member,
+      member: membersById.get(comment.member.id) ?? comment.member,
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
     }));
@@ -59,51 +51,32 @@ export class LootCommentService {
   }) {
     const { discordId, lootId, body, guildId } = options;
     const organizationLootRecord =
-      await this.prisma.organizationLootRecord.findFirst({
-        where: {
-          lootId,
-          guildId,
-          archivedAt: null,
-        },
-        select: { id: true },
-      });
+      await this.prisma.orm.public.OrganizationLootRecord.where((row) =>
+        and(
+          row.lootId.eq(lootId),
+          row.guildId.eq(guildId),
+          row.archivedAt.isNull(),
+        ),
+      )
+        .select("id")
+        .first();
 
     if (!organizationLootRecord) {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
 
-    const comment = await this.prisma.lootComment.create({
-      data: {
-        content: body.content,
-        organizationLootRecord: {
-          connect: { id: organizationLootRecord.id },
-        },
-        member: {
-          connect: {
-            memberId: {
-              userId: discordId,
-              guildId: guildId,
-            },
-          },
-        },
-      },
-      include: {
-        member: {
-          select: {
-            name: true,
-            avatar: true,
-            userId: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-            },
-          },
-        },
-      },
+    const member = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(discordId), row.guildId.eq(guildId)),
+    ).first();
+    if (!member) {
+      throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
+    }
+    const [memberWithRoles] = await attachRolesToMembers(this.prisma, [member]);
+    const comment = await this.prisma.orm.public.LootComment.create({
+      content: body.content,
+      organizationLootRecordId: organizationLootRecord.id,
+      memberId: member.id,
+      updatedAt: new Date(),
     });
 
     return {
@@ -111,7 +84,7 @@ export class LootCommentService {
       lootId,
       guildId,
       content: comment.content,
-      member: comment.member,
+      member: memberWithRoles,
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
     };

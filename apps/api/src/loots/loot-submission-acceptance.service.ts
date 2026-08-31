@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
@@ -27,8 +28,7 @@ import {
   type Guild,
   type ItemRarity,
   type LootlogConfigNpc,
-  type Prisma,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { ItemsService } from "#src/items/items.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
@@ -150,10 +150,11 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     submission: CreateLootDto;
     uniqueId: string;
   }): Promise<CreateLootResponse> {
-    const existingLoot = await this.prisma.loot.findUnique({
-      where: { uniqueId: options.uniqueId },
-      select: { id: true },
-    });
+    const existingLoot = await this.prisma.orm.public.Loot.where((row) =>
+      row.uniqueId.eq(options.uniqueId),
+    )
+      .select("id")
+      .first();
     const [guilds, characterConfig] = await Promise.all([
       this.guildsService.getGuildsForRequiredPermissions(options.discordId, [
         Permission.LOOTLOG_LOOTS_WRITE,
@@ -185,13 +186,11 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
 
     const [lootlogConfigs, members] = await Promise.all([
       this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
-      this.prisma.member.findMany({
-        where: {
-          guildId: { in: filteredGuildIds },
-          userId: options.discordId,
-        },
-        select: { id: true, guildId: true },
-      }),
+      this.prisma.orm.public.Member.where((row) =>
+        and(row.guildId.in(filteredGuildIds), row.userId.eq(options.discordId)),
+      )
+        .select("id", "guildId")
+        .all(),
     ]);
     const npcData = this.processNpcs(options.submission.npcs);
     if (npcData.primary.wt < 10) {
@@ -322,17 +321,16 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     submissions: LootSubmissionData[],
     socketNpcs: LootEventNpc[],
   ): Promise<void> {
-    const existingRecords = await this.prisma.organizationLootRecord.findMany({
-      where: {
-        lootId,
-        guildId: { in: submissions.map((submission) => submission.guildId) },
-      },
-      select: {
-        guildId: true,
-        archivedAt: true,
-        submissions: { select: { memberId: true } },
-      },
-    });
+    const existingRecords =
+      await this.prisma.orm.public.OrganizationLootRecord.where((row) =>
+        and(
+          row.lootId.eq(lootId),
+          row.guildId.in(submissions.map((submission) => submission.guildId)),
+        ),
+      )
+        .select("guildId", "archivedAt")
+        .include("submissions", (row) => row.select("memberId"))
+        .all();
     const existingSubmissions = existingRecords.flatMap((record) =>
       record.submissions.map((submission) => ({
         guildId: record.guildId,
@@ -347,21 +345,23 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       return;
     }
 
-    const organizationRecords = await this.prisma.$transaction(async (tx) => {
-      await tx.organizationLootRecord.createMany({
-        data: this.getUniqueOrganizationIds(newSubmissions).map((guildId) => ({
-          guildId,
-          lootId,
-        })),
-        skipDuplicates: true,
-      });
-      const records = await tx.organizationLootRecord.findMany({
-        where: {
-          lootId,
-          guildId: { in: newSubmissions.map(({ guildId }) => guildId) },
-        },
-        select: { id: true, guildId: true, archivedAt: true },
-      });
+    const organizationRecords = await this.prisma.transaction(async (tx) => {
+      for (const guildId of this.getUniqueOrganizationIds(newSubmissions)) {
+        await tx.orm.public.OrganizationLootRecord.where((row) =>
+          and(row.guildId.eq(guildId), row.lootId.eq(lootId)),
+        ).upsert({
+          create: { guildId, lootId, updatedAt: new Date() },
+          update: {},
+        });
+      }
+      const records = await tx.orm.public.OrganizationLootRecord.where((row) =>
+        and(
+          row.lootId.eq(lootId),
+          row.guildId.in(newSubmissions.map(({ guildId }) => guildId)),
+        ),
+      )
+        .select("id", "guildId", "archivedAt")
+        .all();
       const recordIdByGuildId = new Map(
         records.map((record) => [record.guildId, record.id]),
       );
@@ -379,10 +379,19 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
           memberId: submission.memberId,
         };
       });
-      await tx.lootSubmission.createMany({
-        data: submissionRows,
-        skipDuplicates: true,
-      });
+      for (const submission of submissionRows) {
+        await tx.orm.public.LootSubmission.where((row) =>
+          and(
+            row.organizationLootRecordId.eq(
+              submission.organizationLootRecordId,
+            ),
+            row.memberId.eq(submission.memberId),
+          ),
+        ).upsert({
+          create: { ...submission, updatedAt: new Date() },
+          update: {},
+        });
+      }
       return records;
     });
 
@@ -413,33 +422,114 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       options.npcData.primary,
       options.primaryNpcType,
     );
-    const loot = await this.prisma.loot.create({
-      data: {
+    const loot = await this.prisma.transaction(async (transaction) => {
+      const savedLoot = await transaction.orm.public.Loot.create({
         uniqueId: options.uniqueId,
         world: options.submission.world,
         source: options.submission.source,
         location: options.submission.location,
         lootShare: initialAllocation.share,
         lootShareSource: initialAllocation.source,
-        lootItems: {
-          create: this.mapLootItemsToPersistence(options.submission.loots),
-        },
-        lootPlayers: {
-          create: this.mapLootPlayersToPersistence(
-            options.submission.players,
-            options.submission.world,
-          ),
-        },
-        lootNpcs: {
-          create: this.mapLootNpcsToPersistence(options.submission.npcs),
-        },
-        organizationLootRecords: {
-          create: options.outcome.submissionData.map((submission) => ({
+        updatedAt: new Date(),
+      });
+
+      for (const item of options.submission.loots) {
+        const { lvl, rarity, type } = this.getItemStats(item);
+        const statsHash = this.generateStatsHash(item.stat);
+        const snapshot = await transaction.orm.public.ItemSnapshot.where(
+          (row) => and(row.itemId.eq(item.id), row.statsHash.eq(statsHash)),
+        ).upsert({
+          create: {
+            itemId: item.id,
+            statsHash,
+            name: item.name,
+            icon: item.icon,
+            lvl,
+            rarity,
+            itemType: type,
+            statRaw: item.stat,
+            statsSnapshot: this.parseItemStats(item.stat),
+          },
+          update: {},
+        });
+        await transaction.orm.public.LootItem.create({
+          lootId: savedLoot.id,
+          itemSnapshotId: snapshot.id,
+          hid: item.hid,
+        });
+      }
+
+      for (const player of options.submission.players) {
+        const { accountId, characterId } = this.normalizeCharacterAndAccount(
+          player.id,
+          player.accountId,
+        );
+        const snapshotHash = createHash("sha256")
+          .update(`${player.name}${player.prof}${player.icon}`)
+          .digest("hex");
+        const snapshot = await transaction.orm.public.PlayerSnapshot.where(
+          (row) =>
+            and(
+              row.world.eq(options.submission.world),
+              row.accountId.eq(accountId),
+              row.characterId.eq(characterId),
+              row.snapshotHash.eq(snapshotHash),
+            ),
+        ).upsert({
+          create: {
+            world: options.submission.world,
+            accountId,
+            characterId,
+            snapshotHash,
+            name: player.name,
+            prof: getProfByShortname(player.prof),
+            icon: player.icon,
+          },
+          update: {},
+        });
+        await transaction.orm.public.LootPlayer.create({
+          lootId: savedLoot.id,
+          playerSnapshotId: snapshot.id,
+          lvl: player.lvl,
+        });
+      }
+
+      for (const npc of options.submission.npcs) {
+        const snapshot = await transaction.orm.public.NpcSnapshot.where((row) =>
+          and(row.npcId.eq(npc.id), row.name.eq(npc.name)),
+        ).upsert({
+          create: {
+            npcId: npc.id,
+            name: npc.name,
+            _type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+            lvl: npc.lvl,
+            icon: npc.icon,
+            wt: npc.wt,
+            margonemType: npc.type,
+            prof: npc.prof ? getProfByShortname(npc.prof) : null,
+          },
+          update: {},
+        });
+        await transaction.orm.public.LootNpc.create({
+          lootId: savedLoot.id,
+          npcSnapshotId: snapshot.id,
+        });
+      }
+
+      for (const submission of options.outcome.submissionData) {
+        const record =
+          await transaction.orm.public.OrganizationLootRecord.create({
+            lootId: savedLoot.id,
             guildId: submission.guildId,
-            submissions: { create: { memberId: submission.memberId } },
-          })),
-        },
-      },
+            updatedAt: new Date(),
+          });
+        await transaction.orm.public.LootSubmission.create({
+          organizationLootRecordId: record.id,
+          memberId: submission.memberId,
+          updatedAt: new Date(),
+        });
+      }
+      return savedLoot;
     });
     return loot.id;
   }
@@ -601,72 +691,6 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     });
   }
 
-  private mapLootItemsToPersistence(items: CreateLootDto["loots"]) {
-    return items.map((item) => {
-      const { lvl, rarity, type } = this.getItemStats(item);
-      const statsHash = this.generateStatsHash(item.stat);
-      return {
-        itemSnapshot: {
-          connectOrCreate: {
-            where: { itemId_statsHash: { itemId: item.id, statsHash } },
-            create: {
-              itemId: item.id,
-              statsHash,
-              name: item.name,
-              icon: item.icon,
-              lvl,
-              rarity,
-              itemType: type,
-              statRaw: item.stat,
-              statsSnapshot: this.parseItemStats(item.stat),
-            },
-          },
-        },
-        hid: item.hid,
-      };
-    });
-  }
-
-  private mapLootPlayersToPersistence(
-    players: CreateLootDto["players"],
-    world: string,
-  ): Prisma.LootPlayerCreateWithoutLootInput[] {
-    return players.map((player) => {
-      const prof = getProfByShortname(player.prof);
-      const { accountId, characterId } = this.normalizeCharacterAndAccount(
-        player.id,
-        player.accountId,
-      );
-      const snapshotHash = createHash("sha256")
-        .update(`${player.name}${player.prof}${player.icon}`)
-        .digest("hex");
-      return {
-        lvl: player.lvl,
-        playerSnapshot: {
-          connectOrCreate: {
-            where: {
-              world_accountId_characterId_snapshotHash: {
-                world,
-                accountId,
-                characterId,
-                snapshotHash,
-              },
-            },
-            create: {
-              world,
-              accountId,
-              characterId,
-              snapshotHash,
-              name: player.name,
-              prof,
-              icon: player.icon,
-            },
-          },
-        },
-      };
-    });
-  }
-
   private normalizeCharacterAndAccount(
     id: string | number,
     accountId: string | number,
@@ -684,26 +708,6 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       };
     }
     return { characterId: Number(character), accountId: Number(account) };
-  }
-
-  private mapLootNpcsToPersistence(npcs: CreateLootDto["npcs"]) {
-    return npcs.map((npc) => ({
-      npcSnapshot: {
-        connectOrCreate: {
-          where: { npcId_name: { npcId: npc.id, name: npc.name } },
-          create: {
-            npcId: npc.id,
-            name: npc.name,
-            type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
-            lvl: npc.lvl,
-            icon: npc.icon,
-            wt: npc.wt,
-            margonemType: npc.type,
-            prof: npc.prof ? getProfByShortname(npc.prof) : null,
-          },
-        },
-      },
-    }));
   }
 
   private generateStatsHash(stats: string): string {

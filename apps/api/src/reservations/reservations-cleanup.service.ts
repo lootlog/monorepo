@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
 import { env } from "#src/config/env";
 
 @Injectable()
@@ -9,7 +9,7 @@ export class ReservationsCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(@Inject(PRISMA_DB) private readonly prisma: PrismaDb) {
     this.enabled = env.RESERVATIONS_CLEANUP_ENABLED !== "false";
     this.retentionDays = env.RESERVATIONS_RETENTION_DAYS;
   }
@@ -36,11 +36,7 @@ export class ReservationsCleanupService {
     const startTime = Date.now();
 
     try {
-      const { count } = await this.prisma.reservation.deleteMany({
-        where: {
-          endsAt: { lt: cutoffDate },
-        },
-      });
+      const count = await this.deleteExpiredReservations(cutoffDate);
 
       const duration = Date.now() - startTime;
 
@@ -64,11 +60,7 @@ export class ReservationsCleanupService {
       `Manual cleanup of expired reservations (cutoff: ${cutoffDate.toISOString()}, retention: ${retentionDays} days)`,
     );
 
-    const { count } = await this.prisma.reservation.deleteMany({
-      where: {
-        endsAt: { lt: cutoffDate },
-      },
-    });
+    const count = await this.deleteExpiredReservations(cutoffDate);
 
     this.logger.log(`Manual cleanup deleted ${count} expired reservations`);
 
@@ -80,5 +72,18 @@ export class ReservationsCleanupService {
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
     return cutoffDate;
+  }
+
+  private async deleteExpiredReservations(cutoffDate: Date): Promise<number> {
+    const result = await this.prisma.runtime().execute(
+      this.prisma.raw.sql`
+        DELETE FROM "Reservation"
+        WHERE "endsAt" < ${cutoffDate.toISOString().slice(0, -1)}::timestamp
+      `
+        .affectedCount()
+        .build(),
+    );
+
+    return result.affectedRows;
   }
 }

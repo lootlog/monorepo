@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import {
@@ -15,7 +16,7 @@ import {
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationProvider as DbNotificationProvider,
   NotificationTargetType as DbNotificationTargetType,
-} from "#src/generated/prisma/client";
+} from "#src/db/domain";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
@@ -28,15 +29,13 @@ type GetGuildDiscordChannelsOptions = {
   refreshIfStale?: boolean;
 };
 
-type GuildSyncStatePersistenceClient = Pick<
-  PrismaService,
-  "discordGuildSyncState"
->;
+type GuildSyncStatePersistenceClient = {
+  orm: any;
+};
 
-type GuildChannelPersistenceClient = Pick<
-  PrismaService,
-  "discordGuildChannelSnapshot" | "notificationTarget"
->;
+type GuildChannelPersistenceClient = {
+  orm: any;
+};
 
 @Injectable()
 export class ChannelsService {
@@ -134,7 +133,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.transaction(async (tx) => {
       await this.upsertGuildChannelSnapshot(tx, event.guildId, event.channel);
       await this.syncGuildNotificationTarget(tx, event.guildId, event.channel);
 
@@ -148,13 +147,10 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.discordGuildChannelSnapshot.deleteMany({
-        where: {
-          guildId: event.guildId,
-          channelId: event.channelId,
-        },
-      });
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+        and(row.guildId.eq(event.guildId), row.channelId.eq(event.channelId)),
+      ).deleteAndCount();
 
       await this.upsertGuildSyncState(tx, event.guildId, event.syncState);
     });
@@ -167,7 +163,7 @@ export class ChannelsService {
     }
 
     await this.upsertGuildSyncState(
-      this.prisma,
+      this.prisma as unknown as GuildSyncStatePersistenceClient,
       event.guildId,
       event.syncState,
     );
@@ -181,18 +177,23 @@ export class ChannelsService {
       return;
     }
 
-    await this.upsertGuildSyncFailureState(this.prisma, event.guildId, event);
+    await this.upsertGuildSyncFailureState(
+      this.prisma as unknown as GuildSyncStatePersistenceClient,
+      event.guildId,
+      event,
+    );
   }
 
   private async loadGuildDiscordState(guildId: string) {
     const [channels, syncState] = await Promise.all([
-      this.prisma.discordGuildChannelSnapshot.findMany({
-        where: { guildId },
-        orderBy: [{ position: "asc" }, { name: "asc" }],
-      }),
-      this.prisma.discordGuildSyncState.findUnique({
-        where: { guildId },
-      }),
+      this.prisma.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+        row.guildId.eq(guildId),
+      )
+        .orderBy([(row) => row.position.asc(), (row) => row.name.asc()])
+        .all(),
+      this.prisma.orm.public.DiscordGuildSyncState.where((row) =>
+        row.guildId.eq(guildId),
+      ).first(),
     ]);
 
     return { channels, syncState };
@@ -203,8 +204,9 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.discordGuildSyncState.upsert({
-      where: { guildId },
+    await this.prisma.orm.public.DiscordGuildSyncState.where((row) =>
+      row.guildId.eq(guildId),
+    ).upsert({
       create: {
         guildId,
         status: DiscordGuildSyncStatus.STALE,
@@ -217,10 +219,12 @@ export class ChannelsService {
         lastAttemptAt: null,
         lastSuccessAt: null,
         lastError: lastError ?? null,
+        updatedAt: new Date(),
       },
       update: {
         status: DiscordGuildSyncStatus.STALE,
         lastError: lastError ?? null,
+        updatedAt: new Date(),
       },
     });
   }
@@ -250,10 +254,11 @@ export class ChannelsService {
 
   private async reconcileGuildChannels(event: DiscordGuildChannelsSyncedEvent) {
     const existingChannels =
-      await this.prisma.discordGuildChannelSnapshot.findMany({
-        where: { guildId: event.guildId },
-        select: { channelId: true },
-      });
+      await this.prisma.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+        row.guildId.eq(event.guildId),
+      )
+        .select("channelId")
+        .all();
     const nextChannelIds = new Set(
       event.channels.map((channel) => channel.channelId),
     );
@@ -261,7 +266,7 @@ export class ChannelsService {
       .map((channel) => channel.channelId)
       .filter((channelId) => !nextChannelIds.has(channelId));
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.transaction(async (tx) => {
       await Promise.all(
         event.channels.map(async (channel) => {
           await this.upsertGuildChannelSnapshot(tx, event.guildId, channel);
@@ -270,14 +275,12 @@ export class ChannelsService {
       );
 
       if (removedChannelIds.length > 0) {
-        await tx.discordGuildChannelSnapshot.deleteMany({
-          where: {
-            guildId: event.guildId,
-            channelId: {
-              in: removedChannelIds,
-            },
-          },
-        });
+        await tx.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+          and(
+            row.guildId.eq(event.guildId),
+            row.channelId.in(removedChannelIds),
+          ),
+        ).deleteAndCount();
       }
 
       await this.upsertGuildSyncState(tx, event.guildId, event.syncState);
@@ -326,8 +329,9 @@ export class ChannelsService {
       ? new Date(syncState.lastSuccessAt)
       : lastAttemptAt;
 
-    await client.discordGuildSyncState.upsert({
-      where: { guildId },
+    await client.orm.public.DiscordGuildSyncState.where((row) =>
+      row.guildId.eq(guildId),
+    ).upsert({
       create: {
         guildId,
         status: syncState.status,
@@ -340,6 +344,7 @@ export class ChannelsService {
         lastAttemptAt,
         lastSuccessAt,
         lastError: syncState.lastError,
+        updatedAt: new Date(),
       },
       update: {
         status: syncState.status,
@@ -354,6 +359,7 @@ export class ChannelsService {
         ...(syncState.status === DiscordGuildSyncStatus.SYNCED
           ? { lastSuccessAt }
           : {}),
+        updatedAt: new Date(),
       },
     });
   }
@@ -366,8 +372,9 @@ export class ChannelsService {
       "status" | "lastAttemptAt" | "lastError"
     >,
   ) {
-    await client.discordGuildSyncState.upsert({
-      where: { guildId },
+    await client.orm.public.DiscordGuildSyncState.where((row) =>
+      row.guildId.eq(guildId),
+    ).upsert({
       create: {
         guildId,
         status: failure.status,
@@ -380,11 +387,13 @@ export class ChannelsService {
         lastAttemptAt: new Date(failure.lastAttemptAt),
         lastSuccessAt: null,
         lastError: failure.lastError,
+        updatedAt: new Date(),
       },
       update: {
         status: failure.status,
         lastAttemptAt: new Date(failure.lastAttemptAt),
         lastError: failure.lastError,
+        updatedAt: new Date(),
       },
     });
   }
@@ -394,11 +403,15 @@ export class ChannelsService {
       return;
     }
 
-    await this.upsertGuildSyncFailureState(this.prisma, guildId, {
-      status: DiscordGuildSyncStatus.FAILED,
-      lastAttemptAt: new Date().toISOString(),
-      lastError: this.getErrorMessage(error),
-    });
+    await this.upsertGuildSyncFailureState(
+      this.prisma as unknown as GuildSyncStatePersistenceClient,
+      guildId,
+      {
+        status: DiscordGuildSyncStatus.FAILED,
+        lastAttemptAt: new Date().toISOString(),
+        lastError: this.getErrorMessage(error),
+      },
+    );
   }
 
   private async upsertGuildChannelSnapshot(
@@ -408,13 +421,9 @@ export class ChannelsService {
   ) {
     const channelData = this.createGuildChannelSnapshotData(guildId, channel);
 
-    await client.discordGuildChannelSnapshot.upsert({
-      where: {
-        guildId_channelId: {
-          guildId,
-          channelId: channel.channelId,
-        },
-      },
+    await client.orm.public.DiscordGuildChannelSnapshot.where((row) =>
+      and(row.guildId.eq(guildId), row.channelId.eq(channel.channelId)),
+    ).upsert({
       create: channelData,
       update: channelData,
     });
@@ -425,19 +434,19 @@ export class ChannelsService {
     guildId: string,
     channel: DiscordGuildChannelSnapshot,
   ) {
-    await client.notificationTarget.updateMany({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-        provider: DbNotificationProvider.DISCORD,
-        targetType: DbNotificationTargetType.CHANNEL,
-        externalId: channel.channelId,
-      },
-      data: {
-        canSend: channel.hasRequiredPermissions,
-        lastSyncedAt: new Date(channel.lastSyncedAt),
-        metadata: this.createGuildChannelTargetMetadata(channel),
-      },
+    await client.orm.public.NotificationTarget.where((row) =>
+      and(
+        row.ownerType.eq(DbNotificationOwnerType.GUILD),
+        row.ownerId.eq(guildId),
+        row.provider.eq(DbNotificationProvider.DISCORD),
+        row.targetType.eq(DbNotificationTargetType.CHANNEL),
+        row.externalId.eq(channel.channelId),
+      ),
+    ).updateAndCount({
+      canSend: channel.hasRequiredPermissions,
+      lastSyncedAt: new Date(channel.lastSyncedAt),
+      metadata: this.createGuildChannelTargetMetadata(channel),
+      updatedAt: new Date(),
     });
   }
 
@@ -460,6 +469,7 @@ export class ChannelsService {
       grantedPermissions: channel.grantedPermissions,
       missingPermissions: channel.missingPermissions,
       lastSyncedAt: new Date(channel.lastSyncedAt),
+      updatedAt: new Date(),
     };
   }
 
@@ -484,10 +494,11 @@ export class ChannelsService {
   }
 
   private async guildExists(guildId: string) {
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-      select: { id: true },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      row.id.eq(guildId),
+    )
+      .select("id")
+      .first();
 
     return guild !== null;
   }

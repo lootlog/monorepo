@@ -1,12 +1,9 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "#src/db/prisma.service";
-import {
-  Permission,
-  type Guild,
-  type Role,
-} from "#src/generated/prisma/client";
+import { Permission, type Guild, type Role } from "#src/db/domain";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import type { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
@@ -76,31 +73,28 @@ export class LootsService {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 
-    const actor = await this.prisma.member.findUnique({
-      where: {
-        memberId: {
-          userId: options.discordId,
-          guildId: options.guild.id,
-        },
-      },
-      select: { id: true },
-    });
+    const actor = await this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(options.discordId), row.guildId.eq(options.guild.id)),
+    )
+      .select("id")
+      .first();
     if (!actor) {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 
-    const archived = await this.prisma.organizationLootRecord.updateMany({
-      where: {
-        guildId: options.guild.id,
-        lootId: options.lootId,
-        archivedAt: null,
-      },
-      data: {
-        archivedAt: new Date(),
-        archivedByMemberId: actor.id,
-      },
+    const archived = await this.prisma.orm.public.OrganizationLootRecord.where(
+      (row) =>
+        and(
+          row.guildId.eq(options.guild.id),
+          row.lootId.eq(options.lootId),
+          row.archivedAt.isNull(),
+        ),
+    ).updateAndCount({
+      archivedAt: new Date(),
+      archivedByMemberId: actor.id,
+      updatedAt: new Date(),
     });
-    if (archived.count === 0) {
+    if (archived === 0) {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 

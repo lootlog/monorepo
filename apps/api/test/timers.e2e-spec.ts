@@ -1,4 +1,4 @@
-import { type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import request from "supertest";
 import { AppModule } from "../src/app.module.js";
@@ -9,7 +9,7 @@ import {
   TEST_USERS,
 } from "./test-helpers.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
-import { Permission } from "../src/generated/prisma/client.js";
+import { Permission } from "../src/db/domain.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";
 import { RoutingKey } from "../src/enum/routing-key.enum.js";

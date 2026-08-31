@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { TimersCleanupService } from "./timers-cleanup.service.js";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB } from "#src/db/prisma.provider";
 
 const mockEnv = {
   TIMER_CLEANUP_ENABLED: "true",
@@ -15,8 +15,14 @@ vi.mock("#src/config/env", () => ({
 }));
 
 describe("TimersCleanupService", () => {
-  const mockPrismaService = {
-    $executeRaw: mockFn(),
+  const execute = mockFn();
+  const mockPrisma = {
+    raw: {
+      sql: mockFn(() => ({
+        affectedCount: mockFn(() => ({ build: mockFn(() => ({})) })),
+      })),
+    },
+    runtime: mockFn(() => ({ execute })),
   };
 
   beforeEach(() => {
@@ -30,8 +36,8 @@ describe("TimersCleanupService", () => {
       providers: [
         TimersCleanupService,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: PRISMA_DB,
+          useValue: mockPrisma,
         },
       ],
     }).compile();
@@ -42,11 +48,11 @@ describe("TimersCleanupService", () => {
   describe("cleanupExpiredTimers", () => {
     it("should delete only expired manual timers with default retention", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockResolvedValue(42);
+      execute.mockResolvedValue({ affectedRows: 42 });
 
       await service.cleanupExpiredTimers();
 
-      expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
+      expect(execute).toHaveBeenCalled();
     });
 
     it("should skip cleanup when disabled", async () => {
@@ -55,52 +61,50 @@ describe("TimersCleanupService", () => {
 
       await service.cleanupExpiredTimers();
 
-      expect(mockPrismaService.$executeRaw).not.toHaveBeenCalled();
+      expect(execute).not.toHaveBeenCalled();
     });
 
     it("should use custom retention days from config", async () => {
       mockEnv.TIMER_RETENTION_DAYS = 14;
       const service = await createService();
-      mockPrismaService.$executeRaw.mockResolvedValue(10);
+      execute.mockResolvedValue({ affectedRows: 10 });
 
       await service.cleanupExpiredTimers();
 
-      expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
+      expect(execute).toHaveBeenCalled();
     });
 
     it("should handle cleanup errors gracefully", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockRejectedValue(
-        new Error("Database error"),
-      );
+      execute.mockRejectedValue(new Error("Database error"));
 
       await expect(service.cleanupExpiredTimers()).resolves.not.toThrow();
     });
 
     it("should preserve game NPC timers and only delete manual timers", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockResolvedValue(5);
+      execute.mockResolvedValue({ affectedRows: 5 });
 
       await service.cleanupExpiredTimers();
 
-      expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
+      expect(execute).toHaveBeenCalled();
     });
   });
 
   describe("cleanupExpiredTimersManual", () => {
     it("should delete only manual timers with specified retention period", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockResolvedValue(25);
+      execute.mockResolvedValue({ affectedRows: 25 });
 
       const result = await service.cleanupExpiredTimersManual(14);
 
       expect(result).toBe(25);
-      expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
+      expect(execute).toHaveBeenCalled();
     });
 
     it("should use default retention days if not specified", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockResolvedValue(15);
+      execute.mockResolvedValue({ affectedRows: 15 });
 
       const result = await service.cleanupExpiredTimersManual();
 
@@ -109,19 +113,17 @@ describe("TimersCleanupService", () => {
 
     it("should preserve game NPC timers in manual cleanup", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockResolvedValue(8);
+      execute.mockResolvedValue({ affectedRows: 8 });
 
       const result = await service.cleanupExpiredTimersManual(7);
 
       expect(result).toBe(8);
-      expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
+      expect(execute).toHaveBeenCalled();
     });
 
     it("should propagate cleanup errors in manual mode", async () => {
       const service = await createService();
-      mockPrismaService.$executeRaw.mockRejectedValue(
-        new Error("Database error"),
-      );
+      execute.mockRejectedValue(new Error("Database error"));
 
       await expect(service.cleanupExpiredTimersManual(7)).rejects.toThrow(
         "Database error",

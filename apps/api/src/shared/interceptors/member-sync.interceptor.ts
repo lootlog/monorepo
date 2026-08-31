@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   Inject,
   Injectable,
@@ -9,7 +10,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
-import { PrismaService } from "#src/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/db/prisma.provider";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MembersService } from "#src/members/members.service";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
@@ -20,7 +21,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_DB) private readonly prisma: PrismaDb,
     private readonly membersService: MembersService,
     private readonly redis: RedisService,
   ) {}
@@ -82,23 +83,26 @@ export class MemberSyncInterceptor implements NestInterceptor {
     const guildIds = guilds.map((g) => g.id);
     const staleThreshold = this.membersService.getMemberSoftStaleThreshold();
 
-    const staleMembers = await this.prisma.member.findMany({
-      where: {
-        userId: discordId,
-        guildId: { in: guildIds },
-        globalUserId: { not: null },
-        active: true,
-        OR: [
-          { lastDiscordSyncAt: null },
-          { lastDiscordSyncAt: { lt: staleThreshold } },
-        ],
-      },
-      select: {
-        userId: true,
-        guildId: true,
-        globalUserId: true,
-      },
-    });
+    const members = this.prisma.orm.public.Member.where((row) =>
+      and(row.userId.eq(discordId), row.active.eq(true)),
+    )
+      .where((member) => member.guildId.in(guildIds))
+      .where((member) => member.globalUserId.isNotNull())
+      .select("userId", "guildId", "globalUserId");
+    const [neverSyncedMembers, outdatedMembers] = await Promise.all([
+      members.where((member) => member.lastDiscordSyncAt.isNull()).all(),
+      members
+        .where((member) => member.lastDiscordSyncAt.lt(staleThreshold))
+        .all(),
+    ]);
+    const staleMembers = Array.from(
+      new Map(
+        [...neverSyncedMembers, ...outdatedMembers].map((member) => [
+          `${member.guildId}:${member.userId}`,
+          member,
+        ]),
+      ).values(),
+    );
 
     if (staleMembers.length === 0) {
       this.logger.log({

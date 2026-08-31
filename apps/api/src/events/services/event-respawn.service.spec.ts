@@ -13,6 +13,7 @@ import { EventKillService } from "./event-kill.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
 import { PrismaService } from "#src/db/prisma.service";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import { TimersService } from "#src/timers/timers.service";
 
@@ -91,7 +92,10 @@ describe("EventRespawnService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventRespawnService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: PrismaService,
+          useValue: attachPrismaOrmMock(mockPrismaService),
+        },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventEmitterService, useValue: mockEventEmitter },
@@ -159,7 +163,14 @@ describe("EventRespawnService", () => {
 
       expect(mockKillService.recordHeroKill).toHaveBeenCalledWith(
         guildId,
-        mockHero,
+        expect.objectContaining({
+          id: mockHero.id,
+          maps: [
+            expect.objectContaining({
+              assignedMembers: [expect.objectContaining({ id: 1, roles: [] })],
+            }),
+          ],
+        }),
         mockHero.event,
         expect.objectContaining({
           minSpawnTime: mockTimer.minSpawnTime,

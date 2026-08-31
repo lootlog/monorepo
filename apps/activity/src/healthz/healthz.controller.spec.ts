@@ -2,12 +2,12 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import {
   HealthCheckService,
   HttpHealthIndicator,
-  PrismaHealthIndicator,
+  HealthIndicatorService,
   MemoryHealthIndicator,
   DiskHealthIndicator,
 } from "@nestjs/terminus";
 import { HealthzController } from "./healthz.controller.js";
-import { PrismaService } from "#src/shared/db/prisma.service";
+import { PRISMA_DB, type PrismaDb } from "#src/shared/db/prisma.provider";
 
 describe("HealthzController", () => {
   let controller: HealthzController;
@@ -20,8 +20,21 @@ describe("HealthzController", () => {
     pingCheck: vi.fn(),
   };
 
-  const mockPrismaHealthIndicator = {
-    pingCheck: vi.fn(),
+  const databaseAll = vi.fn().mockResolvedValue([]);
+  const mockPrisma = {
+    orm: {
+      public: {
+        MemberActivityStats: {
+          select: vi.fn(() => ({ limit: vi.fn(() => ({ all: databaseAll })) })),
+        },
+      },
+    },
+  } as unknown as PrismaDb;
+  const mockHealthIndicatorService = {
+    check: vi.fn(() => ({
+      up: vi.fn(() => ({ database: { status: "up" } })),
+      down: vi.fn(),
+    })),
   };
 
   const mockMemoryHealthIndicator = {
@@ -32,8 +45,6 @@ describe("HealthzController", () => {
   const mockDiskHealthIndicator = {
     checkStorage: vi.fn(),
   };
-
-  const mockPrismaService = {};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -48,8 +59,8 @@ describe("HealthzController", () => {
           useValue: mockHttpHealthIndicator,
         },
         {
-          provide: PrismaHealthIndicator,
-          useValue: mockPrismaHealthIndicator,
+          provide: HealthIndicatorService,
+          useValue: mockHealthIndicatorService,
         },
         {
           provide: MemoryHealthIndicator,
@@ -60,8 +71,8 @@ describe("HealthzController", () => {
           useValue: mockDiskHealthIndicator,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: PRISMA_DB,
+          useValue: mockPrisma,
         },
       ],
     }).compile();

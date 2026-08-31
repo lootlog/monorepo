@@ -1,6 +1,6 @@
-import type { Event, EventHeroNpc } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
-import { buildActiveEventWhere } from "./event-activity.util.js";
+import { and, or } from "@prisma/orm-family-sql/orm-client";
+import type { Event, EventHeroNpc } from "#src/db/domain";
+import { temporalToDate } from "#src/db/temporal";
 
 export type ActiveEventHeroMatch = {
   eventHero: EventHeroNpc;
@@ -8,46 +8,49 @@ export type ActiveEventHeroMatch = {
 };
 
 export async function findActiveEventHeroesByNpc(
-  prisma: PrismaService,
+  prisma: { orm: any },
   guildId: string,
   world: string,
   npcId: number,
   npcName: string,
 ): Promise<ActiveEventHeroMatch[]> {
   const now = new Date();
-
-  const directIdMatches = await prisma.eventHeroNpc.findMany({
-    where: {
-      npcId,
-      event: {
-        guildId,
-        world,
-        ...buildActiveEventWhere(now),
-      },
-    },
-    include: {
-      event: true,
-    },
-  });
-
-  const nameMatches = await prisma.eventHeroNpc.findMany({
-    where: {
-      npcName,
-      event: {
-        guildId,
-        world,
-        ...buildActiveEventWhere(now),
-      },
-    },
-    include: {
-      event: true,
-    },
-  });
-
+  const activeEvent = (event: any) =>
+    and(
+      event.guildId.eq(guildId),
+      event.world.eq(world),
+      or(event.startsAt.isNull(), event.startsAt.lte(now)),
+      or(event.endsAt.isNull(), event.endsAt.gt(now)),
+    );
+  const matches = await prisma.orm.public.EventHeroNpc.where((hero) =>
+    and(
+      hero.event.some(activeEvent),
+      or(hero.npcId.eq(npcId), hero.npcName.eq(npcName)),
+    ),
+  )
+    .include("event")
+    .all();
   const uniqueMatches = new Map<string, ActiveEventHeroMatch>();
 
-  for (const hero of [...directIdMatches, ...nameMatches]) {
-    uniqueMatches.set(hero.id, { eventHero: hero, event: hero.event });
+  for (const hero of matches) {
+    const event = hero.event;
+    if (!event) {
+      continue;
+    }
+
+    uniqueMatches.set(hero.id, {
+      eventHero: {
+        ...hero,
+        ...(hero.createdAt && { createdAt: temporalToDate(hero.createdAt) }),
+      } as EventHeroNpc,
+      event: {
+        ...event,
+        ...(event.startsAt && { startsAt: temporalToDate(event.startsAt) }),
+        ...(event.endsAt && { endsAt: temporalToDate(event.endsAt) }),
+        ...(event.createdAt && { createdAt: temporalToDate(event.createdAt) }),
+        ...(event.updatedAt && { updatedAt: temporalToDate(event.updatedAt) }),
+      } as Event,
+    });
   }
 
   return Array.from(uniqueMatches.values()).sort((leftHero, rightHero) => {

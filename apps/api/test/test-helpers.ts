@@ -1,4 +1,4 @@
-import { LootSource } from "../src/generated/prisma/client.js";
+import { LootSource } from "../src/db/domain.js";
 
 export const TEST_GUILDS = {
   GUILD_1: {

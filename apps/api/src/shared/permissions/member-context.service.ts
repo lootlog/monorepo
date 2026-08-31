@@ -1,3 +1,4 @@
+import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import {
   Inject,
   Injectable,
@@ -7,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { type Guild, Permission } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { MembersService } from "#src/members/members.service";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
@@ -276,12 +277,12 @@ export class MemberContextService {
       });
     }
 
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        active: true,
-        OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }],
-      },
-    });
+    const guild = await this.prisma.orm.public.Guild.where((row) =>
+      and(
+        row.active.eq(true),
+        or(row.id.eq(idOrVanityURL), row.vanityUrl.eq(idOrVanityURL)),
+      ),
+    ).first();
 
     if (!guild) {
       throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });

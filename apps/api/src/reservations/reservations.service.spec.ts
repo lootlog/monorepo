@@ -1,5 +1,6 @@
 import { MyReservationsQueryDto } from "./dto/reservation-query.dto.js";
 import { ReservationsService } from "./reservations.service.js";
+import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 
 describe("ReservationsService", () => {
   const guild = {
@@ -13,7 +14,7 @@ describe("ReservationsService", () => {
     startsAt: new Date("2026-08-26T12:15:00.000Z"),
     endsAt: new Date("2026-08-26T13:15:00.000Z"),
     createdByUserId: "user-1",
-    legacyCreatedByDiscordId: null,
+    createdBy: null,
     guild,
   };
   const prisma = {
@@ -37,7 +38,7 @@ describe("ReservationsService", () => {
     vi.setSystemTime(new Date("2026-08-26T12:00:00.000Z"));
     vi.clearAllMocks();
     service = new ReservationsService(
-      prisma as never,
+      attachPrismaOrmMock(prisma) as never,
       guildsService as never,
       catalogService as never,
       sharingService as never,
@@ -146,11 +147,9 @@ describe("ReservationsService", () => {
 
     expect(prisma.userPinnedReservationSpot.upsert).toHaveBeenCalledWith({
       where: {
-        userId_guildId_spotId: {
-          userId: "user-1",
-          guildId: guild.id,
-          spotId: reservation.spotId,
-        },
+        userId: "user-1",
+        guildId: guild.id,
+        spotId: reservation.spotId,
       },
       create: {
         userId: "user-1",
