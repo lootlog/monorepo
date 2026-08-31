@@ -1,5 +1,20 @@
 # @lootlog/discord-bot
 
+## 1.0.10
+
+### Patch Changes
+
+- 2b571ba: Use unit-aware HTTP latency histogram buckets for accurate duration percentiles.
+- 2b571ba: Exclude health probes from HTTP telemetry and identify each service replica in
+  exported OpenTelemetry resources.
+- 2b571ba: Send application telemetry to the self-hosted observability stack, emit
+  structured JSON logs with active trace context, and remove the Axiom transport.
+- Updated dependencies [2b571ba]
+- Updated dependencies [2b571ba]
+- Updated dependencies [2b571ba]
+  - @lootlog/instrumentation@0.0.4
+  - @lootlog/nest-shared@1.0.10
+
 ## 1.0.9
 
 ### Patch Changes

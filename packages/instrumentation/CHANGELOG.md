@@ -1,5 +1,15 @@
 # @lootlog/instrumentation
 
+## 0.0.4
+
+### Patch Changes
+
+- 2b571ba: Use unit-aware HTTP latency histogram buckets for accurate duration percentiles.
+- 2b571ba: Exclude health probes from HTTP telemetry and identify each service replica in
+  exported OpenTelemetry resources.
+- 2b571ba: Send application telemetry to the self-hosted observability stack, emit
+  structured JSON logs with active trace context, and remove the Axiom transport.
+
 ## 0.0.3
 
 ### Patch Changes

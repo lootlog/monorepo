@@ -1,5 +1,12 @@
 # @lootlog/nest-shared
 
+## 1.0.10
+
+### Patch Changes
+
+- 2b571ba: Send application telemetry to the self-hosted observability stack, emit
+  structured JSON logs with active trace context, and remove the Axiom transport.
+
 ## 1.0.9
 
 ### Patch Changes
