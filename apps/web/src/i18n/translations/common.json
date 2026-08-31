@@ -1,8 +1,8 @@
 {
   "documentTitle": {
     "appName": "Lootlog.pl",
-    "template": "{{title}} | {{appName}}",
-    "contextTemplate": "{{title}} - {{context}} | {{appName}}",
+    "template": "{{title}} — {{appName}}",
+    "contextTemplate": "{{title}} — {{context}} — {{appName}}",
     "signin": "Logowanie",
     "init": "Start",
     "publicBattle": "Walka #{{id}}",
@@ -54,6 +54,7 @@
   "breadcrumbs": {
     "navigationLabel": "Ścieżka nawigacji",
     "guild": "Lootlog",
+    "page": "Strona",
     "lootsList": "Lista łupów",
     "timers": "Timery",
     "reservations": "Rezerwacje",

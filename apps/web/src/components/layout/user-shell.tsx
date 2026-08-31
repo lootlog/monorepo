@@ -2,19 +2,14 @@ import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { ROUTES } from "@/config/routes";
 import { UserHeaderActionsContext } from "@/contexts/user-header-actions-context";
-import {
-  getBattleRouteLabel,
-  type BattleRouteLabelMatch,
-} from "@/lib/battle/battle-route-label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useLocation, useMatches, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
-import { getUserNavigationInfo } from "./get-user-navigation-info";
+import { resolveAppNavigation } from "@/navigation/app-navigation";
 
 type UserShellProps = {
   children: ReactNode;
@@ -24,19 +19,11 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
   const location = useLocation();
   const matches = useMatches();
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [headerActionsElement, setHeaderActionsElement] =
     useState<HTMLElement | null>(null);
-  const currentMatch = matches[matches.length - 1] as
-    | BattleRouteLabelMatch
-    | undefined;
-
-  const navigationInfo = getUserNavigationInfo({
-    battleLabel: getBattleRouteLabel(currentMatch, t),
-    path: location.pathname,
-    t,
-  });
+  const navigationInfo = resolveAppNavigation({ matches });
+  const parentPath = navigationInfo.parentPath;
   const isFullHeightContent =
     location.pathname === ROUTES.user.battlePanel.h2h ||
     location.pathname === ROUTES.user.battlePanel.matchmakingH2h ||
@@ -53,7 +40,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
             <div className="flex w-full flex-row items-center justify-between gap-2">
               <div className="flex flex-row items-center gap-2">
                 <SidebarTrigger className="size-8!" />
-                {navigationInfo.showBack && (
+                {parentPath && (
                   <div
                     onMouseEnter={() => setHoveredButton("back")}
                     onMouseLeave={() => setHoveredButton(null)}
@@ -65,9 +52,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          navigate({ to: navigationInfo.backPath as string })
-                        }
+                        onClick={() => navigate({ to: parentPath })}
                         className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
                       >
                         <ArrowLeft className="h-4 w-4" />

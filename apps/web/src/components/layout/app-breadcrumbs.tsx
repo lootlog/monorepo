@@ -1,4 +1,4 @@
-import type { NavigationInfo } from "@/components/layout/get-navigation-info";
+import type { AppNavigation } from "@/navigation/app-navigation";
 import { ThemeInteractiveFrame } from "@/themes";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -14,7 +14,7 @@ import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 type AppBreadcrumbsProps = {
-  breadcrumbs: NavigationInfo["breadcrumbs"];
+  breadcrumbs: AppNavigation["breadcrumbs"];
   onNavigate: (path: string) => void;
 };
 
