@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { getBattlesControllerGetBattleQueryKey } from "@lootlog/api-client/react-query/battlelog/battles";
 import { getGuildsControllerGetGuildByIdQueryKey } from "@lootlog/api-client/react-query/main/guilds";
-import { resolveDocumentTitle } from "@/lib/router/document-title";
+import { resolveAppNavigation } from "@/navigation/app-navigation";
 
 type DocumentTitleUpdaterProps = {
   queryClient: QueryClient;
@@ -74,10 +74,11 @@ export function DocumentTitleUpdater({
   const cachedBattle = battleQueryKey
     ? queryClient.getQueryData<Battle>(battleQueryKey)
     : undefined;
-  const title = resolveDocumentTitle(matches, {
+  const title = resolveAppNavigation({
+    matches,
     currentBattle: cachedBattle,
-    guildName: cachedGuildName,
-  });
+    organizationName: cachedGuildName,
+  }).documentTitle;
 
   useEffect(() => {
     if (!guildQueryKeyHash) {
