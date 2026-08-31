@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createObservabilityComponents,
+  createHttpServerMetricViews,
   shouldSkipObservability,
 } from "./observability-base.js";
 
@@ -54,6 +55,23 @@ describe("createObservabilityComponents", () => {
     await hostnameComponents.metricReader.shutdown();
     await overrideComponents.spanProcessor.shutdown();
     await overrideComponents.metricReader.shutdown();
+  });
+});
+
+describe("createHttpServerMetricViews", () => {
+  it("uses unit-appropriate latency buckets", () => {
+    const views = createHttpServerMetricViews();
+
+    expect(views[0]?.aggregation).toMatchObject({
+      options: {
+        boundaries: [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000],
+      },
+    });
+    expect(views[1]?.aggregation).toMatchObject({
+      options: {
+        boundaries: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      },
+    });
   });
 });
 
