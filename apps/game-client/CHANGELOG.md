@@ -1,5 +1,16 @@
 # @lootlog/game-client
 
+## 1.3.0
+
+### Minor Changes
+
+- ab3c9c5: Expose authorized online-player snapshots and scoped presence updates through
+  the Game client API for addons.
+
+### Patch Changes
+
+- @lootlog/api-client@5.0.5
+
 ## 1.2.13
 
 ### Patch Changes
