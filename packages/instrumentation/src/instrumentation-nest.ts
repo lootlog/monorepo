@@ -153,6 +153,19 @@ function normalizePath(path: string | undefined | null): string {
     .replace(NUMERIC_PATH_SEGMENT_PATTERN, "/:id");
 }
 
+export function shouldIgnoreIncomingRequest(
+  request: InstrumentedRequest,
+): boolean {
+  const url =
+    request.url ??
+    request.path ??
+    request.raw?.url ??
+    request.originalUrl ??
+    "/";
+
+  return normalizePath(url) === "/healthz";
+}
+
 function createNestMetricViews(): ViewOptions[] {
   return [
     ...createHttpServerMetricViews(),
@@ -226,6 +239,7 @@ export function initObservability(config: ObservabilityConfig): void {
   const instrumentations = getNodeAutoInstrumentations({
     "@opentelemetry/instrumentation-http": {
       enabled: true,
+      ignoreIncomingRequestHook: shouldIgnoreIncomingRequest,
       ignoreOutgoingRequestHook: () => true,
       requestHook: (span: HttpServerSpan, req: InstrumentedRequest) => {
         try {

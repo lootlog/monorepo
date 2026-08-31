@@ -24,6 +24,7 @@ import { parseOtlpHeaders } from "./parse-otlp-headers.js";
 
 export interface BaseObservabilityConfig {
   serviceName: string;
+  serviceInstanceId?: string;
   otlpEndpoint?: string;
   otlpHeaders?: string;
   serviceEnvironment?: string;
@@ -73,6 +74,8 @@ export function createObservabilityComponents(
 ): ObservabilityComponents {
   const {
     serviceName,
+    serviceInstanceId = process.env.OTEL_SERVICE_INSTANCE_ID ??
+      process.env.HOSTNAME,
     otlpEndpoint,
     otlpHeaders,
     serviceEnvironment,
@@ -95,6 +98,10 @@ export function createObservabilityComponents(
 
   if (serviceNamespace) {
     resourceAttributes[SEMRESATTRS_SERVICE_NAMESPACE] = serviceNamespace;
+  }
+
+  if (serviceInstanceId) {
+    resourceAttributes["service.instance.id"] = serviceInstanceId;
   }
 
   const resource = resourceFromAttributes(resourceAttributes);
