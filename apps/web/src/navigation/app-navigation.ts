@@ -706,6 +706,7 @@ function getNavigationInfo(args: GetNavigationInfoArgs): NavigationInfo {
     resolveSimpleRoute(path, routes, guildBreadcrumb, t, args) ??
     resolveStatsRoute(path, routes, guildBreadcrumb, args) ??
     resolveEventRoutes(path, routes, guildBreadcrumb, args) ??
+    resolveNotificationRoutes(path, routes, guildBreadcrumb, t) ??
     resolveSettingsRoutes(path, routes, guildBreadcrumb, args) ??
     fallback(path, routes, guildBreadcrumb, t)
   );
@@ -856,7 +857,7 @@ function resolveSimpleRoute(
         {
           label: reservationId
             ? reservationId.charAt(0).toUpperCase() + reservationId.slice(1)
-            : (reservationId ?? ""),
+            : "",
           path: null,
         },
       ],
@@ -1080,6 +1081,51 @@ function resolveEventRoutes(
   };
 }
 
+function resolveNotificationRoutes(
+  path: string,
+  routes: Routes,
+  guildBreadcrumb: Breadcrumb,
+  t: GetNavigationInfoArgs["t"],
+): NavigationInfo | null {
+  if (
+    path !== routes.notifications &&
+    !path.startsWith(`${routes.notifications}/`)
+  ) {
+    return null;
+  }
+
+  if (path === routes.notifications) {
+    return {
+      breadcrumbs: [
+        guildBreadcrumb,
+        { label: t("common.breadcrumbs.notifications"), path: null },
+      ],
+      showBack: true,
+      backPath: routes.base,
+    };
+  }
+
+  let leafLabel = t("common.breadcrumbs.notificationEdit");
+  if (path === `${routes.notifications}/create`) {
+    leafLabel = t("common.breadcrumbs.notificationCreate");
+  } else if (path === `${routes.notifications}/history`) {
+    leafLabel = t("common.breadcrumbs.notificationHistory");
+  }
+
+  return {
+    breadcrumbs: [
+      guildBreadcrumb,
+      {
+        label: t("common.breadcrumbs.notifications"),
+        path: routes.notifications,
+      },
+      { label: leafLabel, path: null },
+    ],
+    showBack: true,
+    backPath: routes.notifications,
+  };
+}
+
 function resolveSettingsRoutes(
   path: string,
   routes: Routes,
@@ -1182,38 +1228,6 @@ function appendSettingsRouteBreadcrumbs(
       label: t("common.breadcrumbs.reservations"),
       path: null,
     });
-  } else if (path === routes.notifications) {
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notifications"),
-      path: null,
-    });
-  } else if (path === `${routes.notifications}/create`) {
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notifications"),
-      path: routes.notifications,
-    });
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notificationCreate"),
-      path: null,
-    });
-  } else if (path === `${routes.notifications}/history`) {
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notifications"),
-      path: routes.notifications,
-    });
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notificationHistory"),
-      path: null,
-    });
-  } else if (path.startsWith(`${routes.notifications}/`)) {
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notifications"),
-      path: routes.notifications,
-    });
-    breadcrumbs.push({
-      label: t("common.breadcrumbs.notificationEdit"),
-      path: null,
-    });
   } else if (path === `${routes.settings}/info`) {
     breadcrumbs.push({ label: t("common.breadcrumbs.info"), path: null });
   }
@@ -1221,13 +1235,11 @@ function appendSettingsRouteBreadcrumbs(
 
 function getSettingsBackPath(path: string, routes: Routes): string {
   if (path === routes.settings) return routes.base;
-  if (path.startsWith(`${routes.notifications}/`)) return routes.notifications;
   if (path.startsWith(`${routes.settingsRoles}/`)) return routes.settingsRoles;
   if (path.startsWith(`${routes.settingsMembers}/`)) {
     return routes.settingsMembers;
   }
   if (path.startsWith(`${routes.settingsNpcs}/`)) return routes.settingsNpcs;
-  if (path === routes.notifications) return routes.base;
   return routes.settings;
 }
 

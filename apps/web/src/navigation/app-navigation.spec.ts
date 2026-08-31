@@ -101,6 +101,78 @@ describe("resolveAppNavigation", () => {
     expect(navigation.documentTitle).toBe("Strona — Nocna Straż — Lootlog.pl");
   });
 
+  it.each([
+    {
+      breadcrumbs: [{ label: "Powiadomienia", path: null }],
+      parentPath: "/guild-1",
+      pathname: "/guild-1/notifications",
+      routeId: "/_authenticated/$guildId/notifications/",
+      title: "Powiadomienia — Nocna Straż — Lootlog.pl",
+    },
+    {
+      breadcrumbs: [
+        { label: "Powiadomienia", path: "/guild-1/notifications" },
+        { label: "Nowa reguła", path: null },
+      ],
+      parentPath: "/guild-1/notifications",
+      pathname: "/guild-1/notifications/create",
+      routeId: "/_authenticated/$guildId/notifications/create",
+      title: "Nowa reguła — Nocna Straż — Lootlog.pl",
+    },
+    {
+      breadcrumbs: [
+        { label: "Powiadomienia", path: "/guild-1/notifications" },
+        { label: "Historia", path: null },
+      ],
+      parentPath: "/guild-1/notifications",
+      pathname: "/guild-1/notifications/history",
+      routeId: "/_authenticated/$guildId/notifications/history",
+      title: "Historia — Nocna Straż — Lootlog.pl",
+    },
+    {
+      breadcrumbs: [
+        { label: "Powiadomienia", path: "/guild-1/notifications" },
+        { label: "Edycja reguły", path: null },
+      ],
+      parentPath: "/guild-1/notifications",
+      pathname: "/guild-1/notifications/rule-1",
+      routeId: "/_authenticated/$guildId/notifications/$ruleId",
+      title: "Edycja reguły — Nocna Straż — Lootlog.pl",
+    },
+  ])(
+    "resolves the Organization notification hierarchy for $pathname",
+    ({ breadcrumbs, parentPath, pathname, routeId, title }) => {
+      const navigation = resolveAppNavigation({
+        matches: [
+          createMatch({
+            loaderData: { guild: { name: "Nocna Straż" } },
+            params: { guildId: "guild-1" },
+            pathname: "/guild-1",
+            routeId: "/_authenticated/$guildId",
+          }),
+          createMatch({
+            params: { guildId: "guild-1", ruleId: "rule-1" },
+            pathname,
+            routeId,
+          }),
+        ],
+        permissions: ["ADMIN"],
+      });
+
+      expect(navigation.breadcrumbs).toEqual([
+        { label: "Nocna Straż", path: "/guild-1" },
+        ...breadcrumbs,
+      ]);
+      expect(navigation.parentPath).toBe(parentPath);
+      expect(navigation.documentTitle).toBe(title);
+      expect(
+        navigation.sidebarItems.find(
+          ({ id }) => id === "organization-notifications",
+        ),
+      ).toMatchObject({ active: true, visible: true });
+    },
+  );
+
   it("resolves personal navigation through the same seam", () => {
     const navigation = resolveAppNavigation({
       matches: [
