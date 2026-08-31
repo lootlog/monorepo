@@ -12,7 +12,7 @@ import type { RouterContext } from "@/App";
 import { DocumentTitleUpdater } from "@/components/router/document-title-updater";
 import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
-import { resolveDocumentTitle } from "@/lib/router/document-title";
+import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
@@ -87,7 +87,7 @@ function RootComponent() {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: ({ matches }) => ({
-    meta: [{ title: resolveDocumentTitle(matches) }],
+    meta: [{ title: resolveAppNavigation({ matches }).documentTitle }],
   }),
   component: RootComponent,
   errorComponent: RootRouteError,

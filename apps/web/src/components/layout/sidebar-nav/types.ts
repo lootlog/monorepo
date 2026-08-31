@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export interface MenuItem {
+  active: boolean;
   label: string;
   icon: ReactNode;
   path: string;
@@ -12,5 +13,4 @@ export interface MenuItem {
     variant?: "default" | "secondary" | "destructive" | "outline" | "white";
   };
   highlight?: boolean;
-  childPaths?: string[];
 }
