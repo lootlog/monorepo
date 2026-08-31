@@ -56,8 +56,8 @@
     "test": "vitest run src"
   },
   "dependencies": {
-    "@axiomhq/winston": "^1.8.0",
     "@lootlog/types": "workspace:*",
+    "@opentelemetry/api": "^1.9.1",
     "fastify": "5.12.1",
     "js-yaml": "^5.4.1",
     "nest-winston": "catalog:",

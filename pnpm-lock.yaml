@@ -202,6 +202,9 @@ importers:
       '@keyv/redis':
         specifier: ^5.1.6
         version: 5.1.6(@opentelemetry/api@1.9.1)(keyv@5.6.0)
+      '@lootlog/instrumentation':
+        specifier: workspace:*
+        version: link:../../packages/instrumentation
       '@lootlog/nest-shared':
         specifier: workspace:*
         version: link:../../packages/nest-shared
@@ -1685,6 +1688,9 @@ importers:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(@vitest/ui@4.1.11)(happy-dom@20.11.12)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/loot-visibility:
     devDependencies:
@@ -1712,12 +1718,12 @@ importers:
 
   packages/nest-shared:
     dependencies:
-      '@axiomhq/winston':
-        specifier: ^1.8.0
-        version: 1.8.0
       '@lootlog/types':
         specifier: workspace:*
         version: link:../types
+      '@opentelemetry/api':
+        specifier: ^1.9.1
+        version: 1.9.1
       fastify:
         specifier: 5.12.1
         version: 5.12.1
@@ -2018,14 +2024,6 @@ packages:
   '@aws/lambda-invoke-store@0.3.0':
     resolution: {integrity: sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==}
     engines: {node: '>=18.0.0'}
-
-  '@axiomhq/js@1.8.0':
-    resolution: {integrity: sha512-VRkqV9XH+pkj8d9eRdw8TuWvXdCkVDMtDOz2rix5UAg7x5SlOeWhUz9fwc0ZgySosMSMA7WP7X0fFX8N/jBHtQ==}
-    engines: {node: '>=20'}
-
-  '@axiomhq/winston@1.8.0':
-    resolution: {integrity: sha512-AGpIRa2TZbP3bLPFQrRQUuHrD4HCp3VALD2V1HZRHCapd9cQfYTV1XPYNcT+dZOmj/AGIWJGjVtTjFlV9aOWFg==}
-    engines: {node: '>=20'}
 
   '@azure-rest/core-client@2.8.0':
     resolution: {integrity: sha512-F1ybHeN+++QhyFCF/ehLUEvrOB6fehPdFBFtGdj0C3B2lpQ9zkPiO5JDgsqc6IfjuUe6b3dAbXK0a7+VgSGfhw==}
@@ -12335,15 +12333,6 @@ snapshots:
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.3.0': {}
-
-  '@axiomhq/js@1.8.0':
-    dependencies:
-      fetch-retry: 6.0.0
-
-  '@axiomhq/winston@1.8.0':
-    dependencies:
-      '@axiomhq/js': 1.8.0
-      winston-transport: 4.9.0
 
   '@azure-rest/core-client@2.8.0(supports-color@10.2.2)':
     dependencies:

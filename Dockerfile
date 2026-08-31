@@ -258,7 +258,7 @@ EXPOSE 4000
 
 ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["sh", "-lc", "APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/main.js"]
+CMD ["sh", "-lc", "APP_VERSION=$(node -p \"require('./package.json').version\") node --import ./dist/src/instrumentation.js dist/src/main.js"]
 
 FROM runtime-base AS developer
 

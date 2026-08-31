@@ -6,8 +6,6 @@ vi.mock("#src/config/env", () => ({
     PORT: 4000,
     SERVICE_NAME: "battlelog-service",
     POSTGRESQL_CONNECTION_URI: "postgresql://localhost:5432/battlelog",
-    AXIOM_DATASET: "",
-    AXIOM_TOKEN: "",
     REDIS_HOST: "localhost",
     REDIS_PORT: 6379,
     REDIS_PASSWORD: "",

@@ -91,8 +91,6 @@ const SHARED_KEYS = [
 const SHARED_KEY_SET = new Set<string>(SHARED_KEYS);
 
 const EXTERNAL_VALUE_KEYS = [
-  "AXIOM_DATASET",
-  "AXIOM_TOKEN",
   "DISCORD_BOT_TOKEN",
   "DISCORD_CLIENT_ID",
   "DISCORD_CLIENT_SECRET",
@@ -124,7 +122,7 @@ const shouldGenerateSecret = (lowerKey: string): boolean => {
     return true;
   }
 
-  return !includesAny(lowerKey, ["discord", "r2", "axiom"]);
+  return !includesAny(lowerKey, ["discord", "r2"]);
 };
 
 const isUnconfiguredPlaceholder = (value: string): boolean => {
