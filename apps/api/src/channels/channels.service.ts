@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
@@ -12,17 +14,25 @@ import {
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import {
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationProvider as DbNotificationProvider,
-  NotificationTargetType as DbNotificationTargetType,
-} from "#src/db/domain";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+
+const DbNotificationOwnerType =
+  prismaDb.nativeEnums.public.NotificationOwnerType.members;
+type DbNotificationOwnerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+const DbNotificationProvider =
+  prismaDb.nativeEnums.public.NotificationProvider.members;
+type DbNotificationProvider =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+const DbNotificationTargetType =
+  prismaDb.nativeEnums.public.NotificationTargetType.members;
+type DbNotificationTargetType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
 
 type GetGuildDiscordChannelsOptions = {
   forceRefresh?: boolean;

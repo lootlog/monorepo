@@ -1,8 +1,12 @@
+import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import type { Permission, Role } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
+
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 @Injectable()
 export class EventAccessService {

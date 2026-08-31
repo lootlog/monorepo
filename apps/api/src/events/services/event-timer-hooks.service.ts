@@ -1,7 +1,7 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import type { Event, EventHeroNpc } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import type { CheckEventHeroKillParams } from "../interfaces/check-event-hero-kill-params.interface.js";
 import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant.js";
@@ -12,6 +12,9 @@ import {
   getEventHeroKillWindowKey,
 } from "../utils/event-hero-kill-job.js";
 import { findActiveEventHeroesByNpc } from "../utils/find-active-event-heroes-by-npc.js";
+
+type Event = FieldOutputTypes["public"]["Event"];
+type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
 
 @Injectable()
 export class EventTimerHooksService {

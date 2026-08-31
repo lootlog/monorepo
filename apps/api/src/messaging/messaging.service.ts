@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
@@ -10,7 +12,6 @@ import {
 import { getNpcTypeByWt } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { NpcType, Permission } from "#src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { CreateNotificationDto } from "#src/messaging/dto/create-notification.dto";
@@ -21,6 +22,13 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 

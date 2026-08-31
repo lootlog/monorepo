@@ -1,4 +1,9 @@
-import { NpcType } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
 
 /**
  * For COLOSSUS type monsters, generates a stable ID from the name

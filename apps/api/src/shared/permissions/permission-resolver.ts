@@ -1,4 +1,9 @@
-import { Permission } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 /**
  * Utility class for resolving permissions with implicit grants.

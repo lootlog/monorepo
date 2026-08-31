@@ -1,17 +1,19 @@
-import type {
-  Member,
-  MemberRefreshJob,
-  DatabaseTransaction,
-  Role,
-} from "#src/db/domain";
+import type { FieldOutputTypes } from "../prisma/contract.js";
+import type { db as prismaDbType } from "#src/prisma/db";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,
 } from "./member-discord-sync-status.js";
 import type { MemberLastDiscordStatus } from "./constants/member-discord-status.constant.js";
+import type { MemberRole } from "./member-roles.repository.js";
 
+type Member = FieldOutputTypes["public"]["Member"];
+type MemberRefreshJob = FieldOutputTypes["public"]["MemberRefreshJob"];
+type DatabaseTransaction = Parameters<
+  Parameters<(typeof prismaDbType)["transaction"]>[0]
+>[0];
 export type MemberWithRoles = Member & {
-  roles: Role[];
+  roles: MemberRole[];
   isStale?: boolean;
   staleWarning?: string;
   refreshQueued?: boolean;
@@ -19,7 +21,7 @@ export type MemberWithRoles = Member & {
 };
 
 export type StoredMemberWithRoles = Member & {
-  roles: Role[];
+  roles: MemberRole[];
 };
 
 export type MemberSyncResult = {

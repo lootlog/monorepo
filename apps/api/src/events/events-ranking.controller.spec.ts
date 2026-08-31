@@ -1,7 +1,12 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { BadRequestException } from "@nestjs/common";
-import { Permission } from "#src/db/domain";
 import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
 import { EventsRankingController } from "./events-ranking.controller.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("EventsRankingController", () => {
   const mockEventsService = {

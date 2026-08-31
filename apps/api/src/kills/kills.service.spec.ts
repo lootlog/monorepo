@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -8,13 +10,20 @@ import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission, NpcType, type Role } from "#src/db/domain";
 import type { CreateKillDto } from "./dto/create-kill.dto.js";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto.js";
 import { GetMemberKillsDto } from "./dto/get-member-kills.dto.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 describe("KillsService", () => {
   let service: KillsService;

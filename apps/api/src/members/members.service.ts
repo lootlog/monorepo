@@ -1,6 +1,6 @@
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { Injectable } from "@nestjs/common";
 import type { APIGuildMember } from "discord-api-types/v10";
-import type { Member } from "#src/db/domain";
 import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
 import { MemberDiscordAccessService } from "./member-discord-access.service.js";
 import { MemberDiscordRefreshService } from "./member-discord-refresh.service.js";
@@ -21,6 +21,8 @@ import type {
   MemberWithRoles,
   RefreshJobWithCooldown,
 } from "./member.types.js";
+
+type Member = FieldOutputTypes["public"]["Member"];
 
 @Injectable()
 export class MembersService {

@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import {
@@ -16,12 +18,15 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "#src/db/domain";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { PinnedEventResponseDto } from "./dto/pinned-event-response.dto.js";
 import { PinnedEventsService } from "./services/pinned-events.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 @ApiTags("events")
 @ApiBearerAuth()

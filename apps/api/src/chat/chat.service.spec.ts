@@ -1,9 +1,15 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "#src/db/domain";
 import { MessageType } from "#src/chat/dto/send-message.dto";
 import { ChatService } from "./chat.service.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 function createRole(
   permissions: Permission[],

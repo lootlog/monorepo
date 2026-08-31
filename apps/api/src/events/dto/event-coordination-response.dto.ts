@@ -1,10 +1,15 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
-import { CoverageGapType } from "#src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
 } from "#src/shared/dto/zod-response-codecs";
 import { z } from "zod";
+
+const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
+type CoverageGapType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
 
 const EventCoordinationPrioritySchema = z.enum([
   "CRITICAL",

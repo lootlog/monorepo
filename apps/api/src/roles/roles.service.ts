@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import {
   ForbiddenException,
   Inject,
@@ -7,7 +9,6 @@ import {
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Pool } from "pg";
 import type { Logger } from "winston";
-import { Permission, type Permission as PermissionValue } from "#src/db/domain";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { withPostgresTransaction } from "#src/db/postgres-transaction";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
@@ -17,6 +18,12 @@ import type { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permis
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
 import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type PermissionValue =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 type RoleRow = {
   id: string;

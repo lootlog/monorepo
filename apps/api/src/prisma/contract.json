@@ -4446,16 +4446,6 @@
           },
           "Member": {
             "fields": {
-              "_type": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/enum@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "typeName": "MemberType"
-                  }
-                }
-              },
               "active": {
                 "nullable": false,
                 "type": {
@@ -4540,6 +4530,16 @@
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                }
+              },
+              "type": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "MemberType"
+                  }
                 }
               },
               "updatedAt": {
@@ -4740,9 +4740,6 @@
             },
             "storage": {
               "fields": {
-                "_type": {
-                  "column": "type"
-                },
                 "active": {
                   "column": "active"
                 },
@@ -4775,6 +4772,9 @@
                 },
                 "name": {
                   "column": "name"
+                },
+                "type": {
+                  "column": "type"
                 },
                 "updatedAt": {
                   "column": "updatedAt"

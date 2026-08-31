@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -11,7 +13,6 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "#src/db/domain";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { CreatePartyGatheringDto } from "#src/messaging/dto/create-party-gathering.dto";
 import { PartyReadyRoomApplicationDto } from "#src/messaging/ready-room/dto/party-ready-room-application.dto";
@@ -29,6 +30,10 @@ import {
 } from "#src/messaging/ready-room/dto/party-ready-room-projection.dto";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { AuthGuard } from "@lootlog/nest-shared";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 const READY_ROOM_PERMISSIONS = [
   Permission.LOOTLOG_NOTIFICATIONS_SEND,

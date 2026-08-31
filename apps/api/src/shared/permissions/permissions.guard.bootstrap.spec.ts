@@ -1,10 +1,11 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { Controller, Get, Module, UseGuards } from "@nestjs/common";
 import { mockFn } from "#src/test/mock-fn";
 import { MODULE_METADATA } from "@nestjs/common/constants";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { Permission } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { MembersModule } from "#src/members/members.module";
 import { MembersService } from "#src/members/members.service";
@@ -12,6 +13,10 @@ import { MemberContextModule } from "./member-context.module.js";
 import { MemberContextService } from "./member-context.service.js";
 import { Permissions } from "./permissions.decorator.js";
 import { PermissionsGuard } from "./permissions.guard.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 const mockLogger = {
   debug: mockFn(),

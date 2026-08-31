@@ -1,5 +1,7 @@
-import type { JsonValue } from "#src/db/domain";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { z } from "zod";
+
+type JsonValue = DatabaseJsonValue;
 
 export const isoDatetimeCodec = z.codec(z.iso.datetime(), z.date(), {
   decode: (value) => new Date(value),

@@ -1,6 +1,14 @@
-import { ActivitySource, ActivityType } from "../shared/db/domain.js";
+import { db as prismaDb } from "../prisma/db.js";
+import type { Contract } from "../prisma/contract.js";
 import { ActivitiesService } from "./activities.service.js";
 import type { PrismaService } from "#src/prisma.service";
+
+const ActivitySource = prismaDb.nativeEnums.public.ActivitySource.members;
+type ActivitySource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivitySource"]["values"][number];
+const ActivityType = prismaDb.nativeEnums.public.ActivityType.members;
+type ActivityType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivityType"]["values"][number];
 
 describe("ActivitiesService", () => {
   const execute = vi.fn().mockResolvedValue({ affectedRows: 1 });

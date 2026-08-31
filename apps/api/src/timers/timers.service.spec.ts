@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -19,13 +21,21 @@ import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import {
-  NpcType,
-  Permission,
-  Profession,
-  TimerHistoryAction,
-} from "#src/db/domain";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+const TimerHistoryAction =
+  prismaDb.nativeEnums.public.TimerHistoryAction.members;
+type TimerHistoryAction =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["TimerHistoryAction"]["values"][number];
 
 describe("TimersService", () => {
   let service: TimersService;

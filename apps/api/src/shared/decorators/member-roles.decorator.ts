@@ -1,6 +1,8 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
-import type { Role } from "#src/db/domain";
+
+type Role = FieldOutputTypes["public"]["Role"];
 
 export const MemberRoles = createRequiredRequestValueDecorator<Role[]>({
   createException: () => new ForbiddenException(),

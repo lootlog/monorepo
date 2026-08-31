@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -17,7 +19,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, type Member, Permission } from "#src/db/domain";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "#src/shared/decorators/member.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
@@ -34,6 +35,12 @@ import {
   GuildDocumentResponseDto,
   GuildDocumentTrashResponseDto,
 } from "./dto/guild-document-response.dto.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Member = FieldOutputTypes["public"]["Member"];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 const DOCS_READ_PERMISSIONS = [
   Permission.LOOTLOG_DOCS_READ,

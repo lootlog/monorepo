@@ -1,11 +1,13 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import type { Guild } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { LootsService } from "#src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
 
 describe("EventWrappedService", () => {
   let service: EventWrappedService;

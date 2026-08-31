@@ -1,14 +1,20 @@
-import type { Member, Role } from "#src/db/domain";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import type { PrismaService } from "#src/db/prisma.service";
+
+type Member = FieldOutputTypes["public"]["Member"];
+type Role = FieldOutputTypes["public"]["Role"];
+export type MemberRole = Omit<Role, "permissions"> & {
+  permissions: Array<NonNullable<Role["permissions"]>[number]>;
+};
 
 type DatabaseClient = Pick<PrismaService["db"], "orm">;
 
-export type MemberWithRoles = Member & { roles: Role[] };
+export type MemberWithRoles = Member & { roles: MemberRole[] };
 
 export async function attachRolesToMembers<T extends { id: number }>(
   prisma: DatabaseClient,
   members: T[],
-): Promise<Array<T & { roles: Role[] }>> {
+): Promise<Array<T & { roles: MemberRole[] }>> {
   if (members.length === 0) {
     return [];
   }
@@ -18,11 +24,16 @@ export async function attachRolesToMembers<T extends { id: number }>(
   )
     .include("role")
     .all()) as unknown as Array<{ a: number; role: Role }>;
-  const rolesByMemberId = new Map<number, Role[]>();
+  const rolesByMemberId = new Map<number, MemberRole[]>();
 
   for (const link of links) {
     const roles = rolesByMemberId.get(link.a) ?? [];
-    roles.push(link.role);
+    roles.push({
+      ...link.role,
+      ...(link.role.permissions && {
+        permissions: [...link.role.permissions],
+      }),
+    } as MemberRole);
     rolesByMemberId.set(link.a, roles);
   }
 

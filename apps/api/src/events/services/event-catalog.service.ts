@@ -1,3 +1,4 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -9,7 +10,6 @@ import {
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import type { Pool } from "pg";
-import type { Event } from "#src/db/domain";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { PrismaService } from "#src/db/prisma.service";
 import {
@@ -44,6 +44,8 @@ import {
   compareEventsByActivityAndStart,
   isEventActiveAt,
 } from "../utils/event-activity.util.js";
+
+type Event = FieldOutputTypes["public"]["Event"];
 
 interface TimerNpcData {
   id: number;

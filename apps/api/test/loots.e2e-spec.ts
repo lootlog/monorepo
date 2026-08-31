@@ -9,12 +9,20 @@ import {
   TEST_USERS,
 } from "./test-helpers.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
-import {
-  LootShareSource,
-  Permission,
-  NpcType,
-  ItemRarity,
-} from "../src/db/domain.js";
+import { db as prismaDb } from "../src/prisma/db.js";
+import type { Contract } from "../src/prisma/contract.js";
+const LootShareSource = prismaDb.nativeEnums.public.LootShareSource.members;
+type LootShareSource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootShareSource"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
 
 describe("Loots E2E Tests (Whitelist)", () => {
   let app: INestApplication;

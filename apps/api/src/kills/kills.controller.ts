@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -17,7 +19,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { NpcType, Permission, type Guild, type Role } from "#src/db/domain";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
@@ -44,6 +45,15 @@ import { GetNpcKillersDto } from "./dto/get-npc-killers.dto.js";
 import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto.js";
 import { KillsService } from "./kills.service.js";
 import { normalizeKillStatsPeriod } from "./utils/kill-stats-period.js";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Role = FieldOutputTypes["public"]["Role"];
 
 @ApiTags("kills")
 @ApiBearerAuth()

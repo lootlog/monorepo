@@ -1,3 +1,5 @@
+import type { FieldOutputTypes } from "../prisma/contract.js";
+import type { db as prismaDbType } from "#src/prisma/db";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   ConflictException,
@@ -11,7 +13,6 @@ import {
   type ReservationSettings,
 } from "@lootlog/reservations";
 import { PrismaService } from "#src/db/prisma.service";
-import type { DatabaseTransaction, Reservation } from "#src/db/domain";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { CreateReservationDto } from "./dto/create-reservation.dto.js";
 import type { UpdateReservationDto } from "./dto/update-reservation.dto.js";
@@ -28,6 +29,11 @@ import {
   canModerateReservations,
   type ReservationViewerContext,
 } from "./reservation-viewer.js";
+
+type DatabaseTransaction = Parameters<
+  Parameters<(typeof prismaDbType)["transaction"]>[0]
+>[0];
+type Reservation = FieldOutputTypes["public"]["Reservation"];
 
 type ReservationRange = {
   startsAt: Date;

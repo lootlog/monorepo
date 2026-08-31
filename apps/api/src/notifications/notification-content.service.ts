@@ -1,15 +1,9 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { randomUUID } from "node:crypto";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { Injectable } from "@nestjs/common";
-import {
-  NotificationScheduleAnchor as DbNotificationScheduleAnchor,
-  NotificationTargetType as DbNotificationTargetType,
-  NotificationTriggerType as DbNotificationTriggerType,
-  type InputJsonObject,
-  type JsonObject,
-  type JsonValue,
-  type NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
@@ -32,6 +26,24 @@ import {
 } from "#src/notifications/constants/notification-messages.constant";
 import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
+
+const DbNotificationScheduleAnchor =
+  prismaDb.nativeEnums.public.NotificationScheduleAnchor.members;
+type DbNotificationScheduleAnchor =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleAnchor"]["values"][number];
+const DbNotificationTargetType =
+  prismaDb.nativeEnums.public.NotificationTargetType.members;
+type DbNotificationTargetType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+const DbNotificationTriggerType =
+  prismaDb.nativeEnums.public.NotificationTriggerType.members;
+type DbNotificationTriggerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+type InputJsonObject = Record<string, DatabaseJsonValue | undefined>;
+type JsonObject = Record<string, DatabaseJsonValue | undefined>;
+type JsonValue = DatabaseJsonValue;
+type DbNotificationScheduleStrategy =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleStrategy"]["values"][number];
 
 type AllowedMention = "roles" | "users" | "everyone";
 

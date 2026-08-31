@@ -1,9 +1,11 @@
-import type { Member } from "#src/db/domain";
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import type { PrismaService } from "#src/db/prisma.service";
 import {
   attachRolesToMembers,
   type MemberWithRoles,
 } from "#src/members/member-roles.repository";
+
+type Member = FieldOutputTypes["public"]["Member"];
 
 type DatabaseClient = Pick<PrismaService["db"], "orm">;
 

@@ -916,7 +916,7 @@ export type FieldOutputTypes = {
       readonly id: CodecTypes["pg/int4@1"]["output"];
       readonly userId: CodecTypes["pg/text@1"]["output"];
       readonly guildId: CodecTypes["pg/text@1"]["output"];
-      readonly _type: "OWNER" | "ADMIN" | "USER" | "BOT";
+      readonly type: "OWNER" | "ADMIN" | "USER" | "BOT";
       readonly name: CodecTypes["pg/text@1"]["output"];
       readonly avatar: CodecTypes["pg/text@1"]["output"] | null;
       readonly banner: CodecTypes["pg/text@1"]["output"] | null;
@@ -1858,7 +1858,7 @@ export type FieldInputTypes = {
       readonly id: CodecTypes["pg/int4@1"]["input"];
       readonly userId: CodecTypes["pg/text@1"]["input"];
       readonly guildId: CodecTypes["pg/text@1"]["input"];
-      readonly _type: "OWNER" | "ADMIN" | "USER" | "BOT";
+      readonly type: "OWNER" | "ADMIN" | "USER" | "BOT";
       readonly name: CodecTypes["pg/text@1"]["input"];
       readonly avatar: CodecTypes["pg/text@1"]["input"] | null;
       readonly banner: CodecTypes["pg/text@1"]["input"] | null;
@@ -14963,7 +14963,7 @@ type ContractBase = Omit<
                   readonly codecId: "pg/text@1";
                 };
               };
-              readonly _type: {
+              readonly type: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: "scalar";
@@ -15231,7 +15231,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: "id" };
                 readonly userId: { readonly column: "userId" };
                 readonly guildId: { readonly column: "guildId" };
-                readonly _type: { readonly column: "type" };
+                readonly type: { readonly column: "type" };
                 readonly name: { readonly column: "name" };
                 readonly avatar: { readonly column: "avatar" };
                 readonly banner: { readonly column: "banner" };

@@ -1,4 +1,9 @@
-import type { ItemRarity, Profession } from "#src/db/domain";
+import type { Contract } from "../../prisma/contract.js";
+
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
 
 export type LootItemDto = {
   id: number;

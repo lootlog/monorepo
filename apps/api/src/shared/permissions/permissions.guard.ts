@@ -1,3 +1,4 @@
+import type { Contract } from "../../prisma/contract.js";
 import {
   Injectable,
   Optional,
@@ -7,10 +8,12 @@ import {
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator.js";
 import { MemberContextService } from "./member-context.service.js";
-import type { Permission } from "#src/db/domain";
 import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
 import { setRequestDiagnosticsRoute } from "#src/shared/diagnostics/request-diagnostics-context";
 import { PermissionResolver } from "./permission-resolver.js";
+
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 interface RequestWithPermissions {
   userId?: string;

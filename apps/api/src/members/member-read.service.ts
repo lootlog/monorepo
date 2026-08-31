@@ -1,9 +1,10 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachRolesToMembers } from "./member-roles.repository.js";
-import { Permission, type PlayerSnapshot } from "#src/db/domain";
 import {
   getGuildMemberReferencesCacheKey,
   getGuildMembersSummaryCacheKey,
@@ -16,6 +17,11 @@ import type {
   MemberSummary,
   MemberWithRoles,
 } from "./member.types.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type PlayerSnapshot = FieldOutputTypes["public"]["PlayerSnapshot"];
 
 const MEMBER_READ_CACHE_TTL_SECONDS = 30;
 const MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS = 60;

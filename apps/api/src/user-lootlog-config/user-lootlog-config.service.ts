@@ -1,7 +1,8 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import type { Pool } from "pg";
-import { Permission } from "#src/db/domain";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
@@ -11,6 +12,10 @@ import {
   type UserLootlogPlayersCatchingGuildsRequest,
   type UserLootlogPlayersCatchingGuildsResponse,
 } from "#src/shared/dto/user-lootlog-config-response.dto";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
 

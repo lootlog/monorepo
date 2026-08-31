@@ -1,3 +1,4 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
@@ -12,8 +13,10 @@ import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
-import type { Event, EventHeroNpc } from "#src/db/domain";
 import { TimersService } from "#src/timers/timers.service";
+
+type Event = FieldOutputTypes["public"]["Event"];
+type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
 
 describe("EventKillService", () => {
   let service: EventKillService;

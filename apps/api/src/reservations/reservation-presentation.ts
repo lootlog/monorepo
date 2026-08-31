@@ -1,4 +1,7 @@
-import type { Guild, Reservation } from "#src/db/domain";
+import type { FieldOutputTypes } from "../prisma/contract.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Reservation = FieldOutputTypes["public"]["Reservation"];
 
 export type ReservationWithGuild = Reservation & {
   guild: Pick<

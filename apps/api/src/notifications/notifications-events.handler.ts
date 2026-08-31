@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
@@ -6,11 +8,6 @@ import type {
   DiscordNotificationDeliveryResultEvent,
   LootCreatedNotificationEventV2,
 } from "@lootlog/types";
-import {
-  NotificationJobKind as DbNotificationJobKind,
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationTriggerType as DbNotificationTriggerType,
-} from "#src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -22,6 +19,19 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "#src/notifications/constants/notification-messages.constant";
+
+const DbNotificationJobKind =
+  prismaDb.nativeEnums.public.NotificationJobKind.members;
+type DbNotificationJobKind =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+const DbNotificationOwnerType =
+  prismaDb.nativeEnums.public.NotificationOwnerType.members;
+type DbNotificationOwnerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+const DbNotificationTriggerType =
+  prismaDb.nativeEnums.public.NotificationTriggerType.members;
+type DbNotificationTriggerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
 
 @Injectable()
 export class NotificationsEventsHandler {

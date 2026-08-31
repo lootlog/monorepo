@@ -1,3 +1,4 @@
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import {
   Inject,
@@ -15,7 +16,6 @@ import { battlelogConfig } from "#src/config/battlelog.config";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { InputJsonValue, JsonObject, JsonValue } from "#src/db/domain";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -51,6 +51,10 @@ import {
 } from "#src/guilds/guilds.service";
 import type { UpdateUserGameAccountPreferencesDto } from "#src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "#src/users/dto/update-user-preferences.dto";
+
+type InputJsonValue = DatabaseJsonValue;
+type JsonObject = Record<string, DatabaseJsonValue | undefined>;
+type JsonValue = DatabaseJsonValue;
 
 type DeleteAccountParams = {
   authUserId: string;

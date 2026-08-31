@@ -1,10 +1,17 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { Inject, Injectable } from "@nestjs/common";
 import { canViewLoot, type LootVisibilityNpc } from "@lootlog/loot-visibility";
 import type { NotificationFilters } from "@lootlog/types";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
 import type { Pool } from "pg";
-import { Permission, type Permission as PermissionValue } from "#src/db/domain";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type PermissionValue =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 type LootCreatedEvent = {
   lootId: number;

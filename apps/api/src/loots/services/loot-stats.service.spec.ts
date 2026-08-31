@@ -1,6 +1,12 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
 import { describe, expect, it } from "vitest";
-import { Permission, type Role } from "#src/db/domain";
 import { LootStatsService } from "./loot-stats.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 function role(id: string, permissions: Permission[]): Role {
   return {

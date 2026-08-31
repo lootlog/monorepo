@@ -1,10 +1,16 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { DiscordGuildSyncStatus } from "#src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
 } from "#src/shared/dto/zod-response-codecs";
+
+const DiscordGuildSyncStatus =
+  prismaDb.nativeEnums.public.DiscordGuildSyncStatus.members;
+type DiscordGuildSyncStatus =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["DiscordGuildSyncStatus"]["values"][number];
 
 const DiscordGuildChannelSnapshotResponseSchema = z.object({
   id: z.number().int(),

@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import type { Mock, Mocked } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
@@ -21,12 +23,6 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import { RuntimeEnvironment } from "@lootlog/types";
 import type { APIGuildMember } from "discord-api-types/v10";
-import {
-  Permission,
-  type Member,
-  type Guild,
-  MemberType,
-} from "#src/db/domain";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -42,6 +38,15 @@ import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.cons
 import { MemberReadService } from "./member-read.service.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MemberRemovalService } from "./member-removal.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Member = FieldOutputTypes["public"]["Member"];
+type Guild = FieldOutputTypes["public"]["Guild"];
+const MemberType = prismaDb.nativeEnums.public.MemberType.members;
+type MemberType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
 
 vi.mock("#src/config/service.config", () => ({
   serviceConfig: { env: "local" },

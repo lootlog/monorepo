@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -20,7 +22,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "#src/db/domain";
 import { AssignMemberDto } from "./dto/assign-member.dto.js";
 import { AssignMapLocationDto } from "./dto/assign-map-location.dto.js";
 import { CreateHeroDto } from "./dto/create-hero.dto.js";
@@ -38,6 +39,11 @@ import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 @ApiTags("events")
 @ApiBearerAuth()

@@ -1,6 +1,9 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
-import type { Event, EventHeroNpc } from "#src/db/domain";
 import { temporalToDate } from "#src/db/temporal";
+
+type Event = FieldOutputTypes["public"]["Event"];
+type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
 
 export type ActiveEventHeroMatch = {
   eventHero: EventHeroNpc;

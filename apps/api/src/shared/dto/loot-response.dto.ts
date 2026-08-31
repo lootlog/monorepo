@@ -1,7 +1,21 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { ItemRarity, LootSource, NpcType, Profession } from "#src/db/domain";
 import { isoDatetimeCodec } from "./zod-response-codecs.js";
+
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+const LootSource = prismaDb.nativeEnums.public.LootSource.members;
+type LootSource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
 
 const LootItemResponseSchema = z
   .object({

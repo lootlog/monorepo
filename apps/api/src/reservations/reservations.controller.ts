@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import {
@@ -21,7 +23,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "#src/db/domain";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
@@ -35,6 +36,11 @@ import {
 import type { ReservationViewerContext } from "./reservation-viewer.js";
 import { ReservationMutationsService } from "./reservation-mutations.service.js";
 import { ReservationsService } from "./reservations.service.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 type ReservationRequest = {
   permissions?: Permission[];

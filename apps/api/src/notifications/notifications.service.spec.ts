@@ -1,9 +1,11 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
-import { NpcType, Permission, type JsonValue } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
@@ -19,6 +21,14 @@ import { NotificationRuleService } from "./notification-rule.service.js";
 import { NotificationTargetService } from "./notification-target.service.js";
 import { NotificationsEventsHandler } from "./notifications-events.handler.js";
 import { WatchedItemService } from "./watched-item.service.js";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type JsonValue = DatabaseJsonValue;
 
 describe("Notification Services", () => {
   let targetService: NotificationTargetService;

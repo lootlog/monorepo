@@ -1,9 +1,11 @@
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
 import type { ReservationChangedEventV2 } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import type { Reservation } from "#src/db/domain";
+
+type Reservation = FieldOutputTypes["public"]["Reservation"];
 
 type ReservationEventInput = {
   sourceGuildId: string;

@@ -1,3 +1,5 @@
+import type { Contract } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   SETTINGS_CATALOG,
@@ -14,16 +16,16 @@ import {
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
-import type {
-  InputJsonValue,
-  SettingsScopeType as PrismaSettingsScopeType,
-} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto.js";
 import {
   applySettingsPatch,
   resolveSettingsDomain,
 } from "./settings-resolver.js";
+
+type InputJsonValue = DatabaseJsonValue;
+type PrismaSettingsScopeType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["SettingsScopeType"]["values"][number];
 
 type JsonRecord = Record<string, unknown>;
 

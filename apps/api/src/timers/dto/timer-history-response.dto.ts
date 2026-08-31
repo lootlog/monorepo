@@ -1,9 +1,18 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { Profession, TimerHistoryAction } from "#src/db/domain";
 import { MemberResponseDto } from "#src/shared/dto/member-response.dto";
 import { TimerNpcResponseDto } from "#src/shared/dto/timer-npc-response.dto";
 import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
+
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+const TimerHistoryAction =
+  prismaDb.nativeEnums.public.TimerHistoryAction.members;
+type TimerHistoryAction =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["TimerHistoryAction"]["values"][number];
 
 const TimerHistoryActorCharacterSchema = z
   .object({

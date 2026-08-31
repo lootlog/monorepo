@@ -1,11 +1,16 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { MemberType } from "#src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
 } from "#src/shared/dto/zod-response-codecs";
 import { RoleResponseDto } from "./role-response.dto.js";
+
+const MemberType = prismaDb.nativeEnums.public.MemberType.members;
+type MemberType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
 
 const MemberResponseSchema = z.object({
   id: z.number(),

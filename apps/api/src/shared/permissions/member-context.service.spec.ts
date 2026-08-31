@@ -1,5 +1,6 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { NotFoundException } from "@nestjs/common";
-import { Permission } from "#src/db/domain";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "#src/db/prisma.service";
@@ -12,6 +13,10 @@ import {
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { MemberContextService } from "./member-context.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("MemberContextService", () => {
   let service: MemberContextService;

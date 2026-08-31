@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -21,14 +23,6 @@ import { ExecutionError } from "redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import {
-  NpcType,
-  Permission,
-  Profession,
-  type Guild,
-  type ItemRarity,
-  type LootlogConfigNpc,
-} from "#src/db/domain";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { ItemsService } from "#src/items/items.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
@@ -49,6 +43,20 @@ import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import type { Logger } from "winston";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type Guild = FieldOutputTypes["public"]["Guild"];
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type LootlogConfigNpc = FieldOutputTypes["public"]["LootlogConfigNpc"];
 
 type LootSubmissionData = {
   guildId: string;

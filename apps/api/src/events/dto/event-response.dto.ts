@@ -1,5 +1,6 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
-import { PointsEditType } from "#src/db/domain";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
@@ -7,6 +8,10 @@ import {
 } from "#src/shared/dto/zod-response-codecs";
 import { z } from "zod";
 import { EVENT_SCORING_MODES } from "@lootlog/scoring";
+
+const PointsEditType = prismaDb.nativeEnums.public.PointsEditType.members;
+type PointsEditType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["PointsEditType"]["values"][number];
 
 const EventHeroNpcResponseSchema = z.object({
   id: z.string(),

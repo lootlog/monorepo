@@ -1,6 +1,11 @@
-import { Permission } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
 import { DocsController } from "./docs.controller.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("DocsController", () => {
   const mockDocsService = {

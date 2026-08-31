@@ -1,6 +1,12 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
-import { NotificationJobKind as DbNotificationJobKind } from "#src/db/domain";
 import type { PrismaService } from "#src/db/prisma.service";
+
+const DbNotificationJobKind =
+  prismaDb.nativeEnums.public.NotificationJobKind.members;
+type DbNotificationJobKind =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
 
 export type TestTriggerUsage = {
   limit: number;

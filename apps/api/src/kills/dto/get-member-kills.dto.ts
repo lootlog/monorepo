@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import {
@@ -5,8 +7,11 @@ import {
   intFromString,
   optionalFromQuery,
 } from "@lootlog/nest-shared/validators/query-helpers";
-import { NpcType } from "#src/db/domain";
 import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
 
 const GetMemberKillsSchema = z.object({
   minLvl: optionalFromQuery(intFromString({ min: 0, max: 500 })),

@@ -1,7 +1,13 @@
-import { Permission, type Role } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
 import { MessageType } from "#src/chat/dto/send-message.dto";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import { canViewChatMessage } from "./can-view-chat-message.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 function createRole(
   permissions: Permission[],

@@ -9,7 +9,8 @@ import {
   TEST_USERS,
 } from "./test-helpers.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
-import { Permission } from "../src/db/domain.js";
+import { db as prismaDb } from "../src/prisma/db.js";
+import type { Contract } from "../src/prisma/contract.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";
 import { RoutingKey } from "../src/enum/routing-key.enum.js";
@@ -22,6 +23,10 @@ import {
   TEST_WORLD,
   withAuth,
 } from "./events-timers-e2e-helpers.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 async function truncateTimersState(
   prisma: PrismaService,

@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -19,7 +21,6 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission, type Role } from "#src/db/domain";
 import { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
@@ -48,6 +49,12 @@ import {
 import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 @ApiTags("loots")
 @ApiBearerAuth()

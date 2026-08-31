@@ -1,4 +1,7 @@
-import type { MemberType } from "#src/db/domain";
+import type { Contract } from "../../prisma/contract.js";
+
+type MemberType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
 
 export class GuildMemberDto {
   id: string;

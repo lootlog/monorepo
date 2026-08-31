@@ -1,6 +1,9 @@
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import type { NpcType } from "#src/db/domain";
+
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
 
 const KillsByTypeResponseSchema = z.object({
   COMMON: z.number().optional(),

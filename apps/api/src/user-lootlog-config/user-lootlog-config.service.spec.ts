@@ -1,10 +1,15 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { Permission } from "#src/db/domain";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { mockFn } from "#src/test/mock-fn";
 import { UserLootlogConfigService } from "./user-lootlog-config.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("UserLootlogConfigService", () => {
   let service: UserLootlogConfigService;

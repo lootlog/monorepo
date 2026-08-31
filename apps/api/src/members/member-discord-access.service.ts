@@ -1,3 +1,4 @@
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
@@ -10,7 +11,6 @@ import { PrismaService } from "#src/db/prisma.service";
 import { attachRolesToMembers } from "./member-roles.repository.js";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
-import type { Member } from "#src/db/domain";
 import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/types";
 import {
@@ -26,6 +26,8 @@ import type {
   MemberWithRoles,
   StoredMemberWithRoles,
 } from "./member.types.js";
+
+type Member = FieldOutputTypes["public"]["Member"];
 
 @Injectable()
 export class MemberDiscordAccessService {

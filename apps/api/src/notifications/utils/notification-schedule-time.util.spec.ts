@@ -1,10 +1,16 @@
-import { NotificationScheduleIntervalType } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import {
   calculateFirstOccurrenceInTimeZone,
   calculateNextOccurrenceInTimeZone,
   isRecurringScheduleInterval,
   isValidTimeZone,
 } from "./notification-schedule-time.util.js";
+
+const NotificationScheduleIntervalType =
+  prismaDb.nativeEnums.public.NotificationScheduleIntervalType.members;
+type NotificationScheduleIntervalType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleIntervalType"]["values"][number];
 
 describe("notification-schedule-time.util", () => {
   const timeZone = "Europe/Warsaw";

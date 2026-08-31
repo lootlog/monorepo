@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -31,17 +33,26 @@ import type { CreateLootDto } from "./dto/create-loot.dto.js";
 import type { UpdateLootDto } from "./dto/update-loot.dto.js";
 import type { CreateCommentDto } from "./dto/create-comment-dto.js";
 import type { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto.js";
-import {
-  ItemRarity,
-  Profession,
-  NpcType,
-  Permission,
-  type Guild,
-  LootSource,
-  type Role,
-} from "#src/db/domain";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Guild = FieldOutputTypes["public"]["Guild"];
+const LootSource = prismaDb.nativeEnums.public.LootSource.members;
+type LootSource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 describe("Loot modules", () => {
   let service: LootsService;

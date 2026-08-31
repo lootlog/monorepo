@@ -1,10 +1,11 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { and, not, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { Permission, NpcType, type Role } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
@@ -27,6 +28,14 @@ import {
   getKillStatsPeriodStart,
   type KillStatsPeriod,
 } from "./utils/kill-stats-period.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 const KILL_STATS_CACHE_TTL_SECONDS = 30;

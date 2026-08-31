@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   ForbiddenException,
@@ -21,7 +23,6 @@ import {
 } from "@lootlog/types";
 import { v6 } from "uuid";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission, type Role } from "#src/db/domain";
 import { canViewChatMessage } from "#src/shared/utils/can-view-chat-message";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import type { ChatMessageViewer } from "#src/chat/types/chat-message-viewer.type";
@@ -30,6 +31,11 @@ import {
   canEditChatMessage,
 } from "#src/chat/chat-message-permissions";
 import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 type MessageRouting = {
   tier: NpcRoutingTier;

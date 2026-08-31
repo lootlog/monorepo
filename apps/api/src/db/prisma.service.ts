@@ -29,8 +29,8 @@ type PrismaDatabase = Omit<typeof db, "orm" | "transaction"> & {
 export class PrismaService implements OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
-  // The current namespaced collection declaration drops relation metadata.
-  // Keep the workaround at this boundary until the runtime package fixes it.
+  // Prisma 8 RC currently loses relation metadata on namespaced collections.
+  // Remove this type-only adapter when the runtime package fixes that declaration.
   readonly db = db as PrismaDatabase;
 
   constructor(

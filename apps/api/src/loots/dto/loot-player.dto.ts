@@ -1,4 +1,7 @@
-import type { Profession } from "#src/db/domain";
+import type { Contract } from "../../prisma/contract.js";
+
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
 
 export type LootPlayerDto = {
   id: string;

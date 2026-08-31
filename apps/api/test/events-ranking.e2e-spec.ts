@@ -2,7 +2,8 @@ import type { INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service.js";
-import { Permission } from "../src/db/domain.js";
+import { db as prismaDb } from "../src/prisma/db.js";
+import type { Contract } from "../src/prisma/contract.js";
 import {
   closeE2EApp,
   createE2EApp,
@@ -17,6 +18,10 @@ import {
   TEST_WORLD,
   withAuth,
 } from "./events-timers-e2e-helpers.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("Events Ranking E2E", () => {
   let app: INestApplication;

@@ -1,3 +1,6 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -10,20 +13,6 @@ import {
 } from "@nestjs/common";
 import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/types";
 import type { Queue } from "bullmq";
-import {
-  NotificationJobKind as DbNotificationJobKind,
-  NotificationJobStatus as DbNotificationJobStatus,
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationProvider as DbNotificationProvider,
-  NotificationScheduleAnchor as DbNotificationScheduleAnchor,
-  NotificationScheduleIntervalType as DbNotificationScheduleIntervalType,
-  NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-  NotificationTriggerType as DbNotificationTriggerType,
-  type NotificationTargetType as DbNotificationTargetType,
-  type InputJsonValue,
-  type JsonObject,
-  type JsonValue,
-} from "#src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { PrismaService } from "#src/db/prisma.service";
 import { isUniqueConstraintError } from "#src/db/database-errors";
@@ -44,6 +33,44 @@ import { NotificationMatchingService } from "#src/notifications/notification-mat
 import { Error } from "#src/notifications/enum/error.enum";
 import type { NotificationDispatchJobData } from "#src/notifications/notifications-dispatch.processor";
 import { calculateNextOccurrenceInTimeZone } from "#src/notifications/utils/notification-schedule-time.util";
+
+const DbNotificationJobKind =
+  prismaDb.nativeEnums.public.NotificationJobKind.members;
+type DbNotificationJobKind =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+const DbNotificationJobStatus =
+  prismaDb.nativeEnums.public.NotificationJobStatus.members;
+type DbNotificationJobStatus =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobStatus"]["values"][number];
+const DbNotificationOwnerType =
+  prismaDb.nativeEnums.public.NotificationOwnerType.members;
+type DbNotificationOwnerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+const DbNotificationProvider =
+  prismaDb.nativeEnums.public.NotificationProvider.members;
+type DbNotificationProvider =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+const DbNotificationScheduleAnchor =
+  prismaDb.nativeEnums.public.NotificationScheduleAnchor.members;
+type DbNotificationScheduleAnchor =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleAnchor"]["values"][number];
+const DbNotificationScheduleIntervalType =
+  prismaDb.nativeEnums.public.NotificationScheduleIntervalType.members;
+type DbNotificationScheduleIntervalType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleIntervalType"]["values"][number];
+const DbNotificationScheduleStrategy =
+  prismaDb.nativeEnums.public.NotificationScheduleStrategy.members;
+type DbNotificationScheduleStrategy =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleStrategy"]["values"][number];
+const DbNotificationTriggerType =
+  prismaDb.nativeEnums.public.NotificationTriggerType.members;
+type DbNotificationTriggerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+type DbNotificationTargetType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+type InputJsonValue = DatabaseJsonValue;
+type JsonObject = Record<string, DatabaseJsonValue | undefined>;
+type JsonValue = DatabaseJsonValue;
 
 type OwnerContext = {
   ownerType: DbNotificationOwnerType;

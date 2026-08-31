@@ -1,13 +1,8 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
-import {
-  LootSource,
-  Permission,
-  Profession,
-  type Guild,
-  type Role,
-} from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";
@@ -23,6 +18,18 @@ import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.se
 import { LootsController } from "./loots.controller.js";
 import { LootsService } from "./loots.service.js";
 import { LootStatsService } from "./services/loot-stats.service.js";
+
+const LootSource = prismaDb.nativeEnums.public.LootSource.members;
+type LootSource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const Profession = prismaDb.nativeEnums.public.Profession.members;
+type Profession =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Profession"]["values"][number];
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Role = FieldOutputTypes["public"]["Role"];
 
 describe("LootsController", () => {
   let controller: LootsController;

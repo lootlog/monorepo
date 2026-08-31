@@ -1,7 +1,12 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { NpcType } from "#src/db/domain";
 import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
 
 const CreateManualTimerSchema = z.object({
   name: z.string().min(1).max(50),

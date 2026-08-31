@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import {
   Body,
   Controller,
@@ -15,7 +17,6 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
@@ -27,6 +28,10 @@ import {
   type MapTemplateResponse,
   MapTemplateResponseDto,
 } from "#src/shared/dto/map-template-response.dto";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 @ApiTags("map-templates")
 @ApiBearerAuth()

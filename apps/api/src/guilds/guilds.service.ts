@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
@@ -18,13 +20,6 @@ import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsService } from "#src/channels/channels.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
-import {
-  type Guild,
-  type Role,
-  ItemRarity,
-  NpcType,
-  Permission,
-} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
@@ -51,6 +46,18 @@ import {
   UserGuildAccessResolver,
   type GuildRefreshCandidate,
 } from "./user-guild-access-resolver.service.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Role = FieldOutputTypes["public"]["Role"];
+const ItemRarity = prismaDb.nativeEnums.public.ItemRarity.members;
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,

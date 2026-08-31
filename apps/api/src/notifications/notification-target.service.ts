@@ -1,3 +1,6 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
@@ -8,16 +11,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { DiscordGuildChannelSnapshot } from "@lootlog/types";
-import {
-  NotificationJobKind as DbNotificationJobKind,
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationProvider as DbNotificationProvider,
-  NotificationScheduleIntervalType as DbNotificationScheduleIntervalType,
-  NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-  NotificationTargetType as DbNotificationTargetType,
-  NotificationTriggerType as DbNotificationTriggerType,
-  type InputJsonObject,
-} from "#src/db/domain";
 import { ChannelsService } from "#src/channels/channels.service";
 import { PrismaService } from "#src/db/prisma.service";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
@@ -33,6 +26,36 @@ import {
   getDefaultTestTriggerUsage,
 } from "#src/notifications/utils/test-trigger-usage.util";
 import { hasOwnField } from "#src/shared/utils/has-own-field";
+
+const DbNotificationJobKind =
+  prismaDb.nativeEnums.public.NotificationJobKind.members;
+type DbNotificationJobKind =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+const DbNotificationOwnerType =
+  prismaDb.nativeEnums.public.NotificationOwnerType.members;
+type DbNotificationOwnerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+const DbNotificationProvider =
+  prismaDb.nativeEnums.public.NotificationProvider.members;
+type DbNotificationProvider =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+const DbNotificationScheduleIntervalType =
+  prismaDb.nativeEnums.public.NotificationScheduleIntervalType.members;
+type DbNotificationScheduleIntervalType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleIntervalType"]["values"][number];
+const DbNotificationScheduleStrategy =
+  prismaDb.nativeEnums.public.NotificationScheduleStrategy.members;
+type DbNotificationScheduleStrategy =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleStrategy"]["values"][number];
+const DbNotificationTargetType =
+  prismaDb.nativeEnums.public.NotificationTargetType.members;
+type DbNotificationTargetType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+const DbNotificationTriggerType =
+  prismaDb.nativeEnums.public.NotificationTriggerType.members;
+type DbNotificationTriggerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
+type InputJsonObject = Record<string, DatabaseJsonValue | undefined>;
 
 const USER_DM_TEST_TRIGGER_LIMIT = 5;
 const USER_DM_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;

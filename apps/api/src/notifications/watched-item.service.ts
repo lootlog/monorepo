@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
@@ -5,10 +7,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import {
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationTriggerType as DbNotificationTriggerType,
-} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
@@ -24,6 +22,15 @@ import { Error as NotificationError } from "#src/notifications/enum/error.enum";
 import { ensureLimitNotExceeded } from "#src/notifications/utils/ensure-limit-not-exceeded.util";
 import type { CreateWatchedItemQuickAddDto } from "#src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "#src/notifications/dto/create-watched-item.dto";
+
+const DbNotificationOwnerType =
+  prismaDb.nativeEnums.public.NotificationOwnerType.members;
+type DbNotificationOwnerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+const DbNotificationTriggerType =
+  prismaDb.nativeEnums.public.NotificationTriggerType.members;
+type DbNotificationTriggerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
 
 const USER_WATCHED_ITEM_LIMIT = 20;
 

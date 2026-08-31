@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createHash, randomBytes } from "node:crypto";
 import { createId } from "@paralleldrive/cuid2";
@@ -8,9 +10,13 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
-import { Permission, type Guild } from "#src/db/domain";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { ReservationEventsPublisher } from "./reservation-events.publisher.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Guild = FieldOutputTypes["public"]["Guild"];
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 

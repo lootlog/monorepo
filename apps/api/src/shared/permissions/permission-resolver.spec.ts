@@ -1,5 +1,10 @@
-import { Permission } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { PermissionResolver } from "./permission-resolver.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("PermissionResolver", () => {
   it("expands ADMIN capabilities without granting the OWNER recovery marker", () => {

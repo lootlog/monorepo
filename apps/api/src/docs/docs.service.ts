@@ -1,3 +1,4 @@
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -6,7 +7,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { InputJsonValue, JsonValue } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
@@ -16,6 +16,9 @@ import {
 import type { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
 import type { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto.js";
 import type { GuildDocumentContent } from "./dto/guild-document-content.schema.js";
+
+type InputJsonValue = DatabaseJsonValue;
+type JsonValue = DatabaseJsonValue;
 
 const EMPTY_DOCUMENT_CONTENT = {
   root: {

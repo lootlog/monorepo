@@ -1,6 +1,7 @@
 import { RABBIT_REQUEST_TYPE } from "@golevelup/nestjs-rabbitmq";
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants";
-import { ActivitySource, ActivityType } from "../../shared/db/domain.js";
+import { db as prismaDb } from "../../prisma/db.js";
+import type { Contract } from "../../prisma/contract.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { ActivitiesEventsService } from "./activities-events.service.js";
 import {
@@ -8,6 +9,13 @@ import {
   signActivityEvent,
 } from "#src/activities/utils/activity-event-signature";
 import { env } from "#src/config/env";
+
+const ActivitySource = prismaDb.nativeEnums.public.ActivitySource.members;
+type ActivitySource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivitySource"]["values"][number];
+const ActivityType = prismaDb.nativeEnums.public.ActivityType.members;
+type ActivityType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivityType"]["values"][number];
 
 const validPayload = {
   userId: "user-1",

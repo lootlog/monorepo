@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import {
@@ -8,7 +10,6 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "#src/db/domain";
 import { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
 import { RolesService } from "#src/roles/roles.service";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
@@ -16,6 +17,11 @@ import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { RoleResponseDto } from "#src/shared/dto/role-response.dto";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 @ApiTags("roles")
 @ApiBearerAuth()

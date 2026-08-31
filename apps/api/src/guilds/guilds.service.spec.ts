@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   HttpException,
@@ -16,9 +18,13 @@ import { DiscordService } from "#src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { type Guild, Permission } from "#src/db/domain";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import { UserGuildAccessResolver } from "./user-guild-access-resolver.service.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 vi.mock("#src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },

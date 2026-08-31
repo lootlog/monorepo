@@ -1,4 +1,8 @@
-import { LootSource } from "../src/db/domain.js";
+import { db as prismaDb } from "../src/prisma/db.js";
+import type { Contract } from "../src/prisma/contract.js";
+const LootSource = prismaDb.nativeEnums.public.LootSource.members;
+type LootSource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["LootSource"]["values"][number];
 
 export const TEST_GUILDS = {
   GUILD_1: {

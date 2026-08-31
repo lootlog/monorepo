@@ -1,3 +1,6 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createHash, randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -10,18 +13,6 @@ import {
   NotFoundException,
   type OnModuleInit,
 } from "@nestjs/common";
-import {
-  NpcType,
-  Permission,
-  TimerHistoryAction,
-  type InputJsonValue,
-  type JsonValue,
-  type Member,
-  type PlayerSnapshot,
-  type Timer,
-  type Guild,
-  type Role,
-} from "#src/db/domain";
 import { getNpcRoutingTier, getNpcTypeByWt } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { POSTGRES_POOL } from "#src/db/postgres.provider";
@@ -61,6 +52,24 @@ import type {
   CreateAutoTimerResponse,
   CreateAutoTimerSubmittedGuild,
 } from "#src/timers/dto/create-auto-timer-response.dto";
+
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const TimerHistoryAction =
+  prismaDb.nativeEnums.public.TimerHistoryAction.members;
+type TimerHistoryAction =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["TimerHistoryAction"]["values"][number];
+type InputJsonValue = DatabaseJsonValue;
+type JsonValue = DatabaseJsonValue;
+type Member = FieldOutputTypes["public"]["Member"];
+type PlayerSnapshot = FieldOutputTypes["public"]["PlayerSnapshot"];
+type Timer = FieldOutputTypes["public"]["Timer"];
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Role = FieldOutputTypes["public"]["Role"];
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -333,7 +342,10 @@ export class TimersService implements OnModuleInit {
       avatar: member.avatar,
       banner: member.banner,
       active: member.active,
-      roles: member.roles ?? [],
+      roles: (member.roles ?? []).map((role) => ({
+        ...role,
+        ...(role.permissions && { permissions: [...role.permissions] }),
+      })) as (typeof MemberResponseDto.schema._output)["roles"],
       globalUserId: member.globalUserId,
       lastDiscordSyncAt: this.toDate(member.lastDiscordSyncAt),
       updatedAt: this.toDate(member.updatedAt) ?? new Date(),

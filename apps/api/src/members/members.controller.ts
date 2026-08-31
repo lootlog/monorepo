@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import {
   Controller,
   ForbiddenException,
@@ -24,7 +26,6 @@ import { MembersService } from "./members.service.js";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { type Guild, Permission } from "#src/db/domain";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
 import {
@@ -39,6 +40,11 @@ import { MemberSummaryResponseDto } from "#src/shared/dto/member-summary-respons
 import { MemberLootlogConfigSummaryResponseDto } from "#src/shared/dto/member-lootlog-config-summary-response.dto";
 import { MemberReferenceResponseDto } from "#src/shared/dto/member-reference-response.dto";
 import { ErrorKey } from "./enum/error-key.enum.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 @ApiTags("members")
 @ApiBearerAuth()

@@ -1,5 +1,7 @@
-import type { JsonValue } from "#src/db/domain";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { jsonValueSchema } from "#src/shared/dto/zod-response-codecs";
+
+type JsonValue = DatabaseJsonValue;
 
 export const GuildDocumentContentSchema = jsonValueSchema.refine(
   (value) => {

@@ -1,5 +1,5 @@
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { Injectable } from "@nestjs/common";
-import type { JsonObject } from "#src/db/domain";
 import {
   SettingsDocumentsService,
   type SettingsDocumentsResponse,
@@ -7,6 +7,8 @@ import {
 import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto.js";
 import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto.js";
 import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto.js";
+
+type JsonObject = Record<string, DatabaseJsonValue | undefined>;
 
 const APPEARANCE_FIELDS = [
   "displayConfig",

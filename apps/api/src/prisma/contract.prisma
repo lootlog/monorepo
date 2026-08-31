@@ -145,7 +145,7 @@ namespace public {
     id                                   Int                         @id(map: "Member_pkey") @default(autoincrement())
     userId                               String
     guildId                              String
-    _type                                pg.enum(MemberType)         @default("USER") @map("type")
+    type                                 pg.enum(MemberType)         @default("USER") @map("type")
     name                                 String
     avatar                               String?
     banner                               String?

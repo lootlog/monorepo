@@ -1,6 +1,7 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
-import { Permission, NpcType, type Role } from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";
@@ -11,6 +12,14 @@ import {
 } from "./dto/get-kill-stats.dto.js";
 import { KillsController } from "./kills.controller.js";
 import { KillsService } from "./kills.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+const NpcType = prismaDb.nativeEnums.public.NpcType.members;
+type NpcType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NpcType"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 describe("KillsController", () => {
   let controller: KillsController;

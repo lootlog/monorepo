@@ -1,14 +1,7 @@
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import type {
-  Event,
-  EventHeroNpc,
-  EventKillPoint,
-  Guild,
-  Permission,
-  Role,
-} from "#src/db/domain";
 import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto.js";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
 import type { CreateEventDto } from "./dto/create-event.dto.js";
@@ -43,6 +36,14 @@ import { EventRespawnService } from "./services/event-respawn.service.js";
 import { EventTrackingService } from "./services/event-tracking.service.js";
 import { EventWrappedService } from "./services/event-wrapped.service.js";
 import { EventCoordinationService } from "./services/event-coordination.service.js";
+
+type Event = FieldOutputTypes["public"]["Event"];
+type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
+type EventKillPoint = FieldOutputTypes["public"]["EventKillPoint"];
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 @Injectable()
 export class EventsService {

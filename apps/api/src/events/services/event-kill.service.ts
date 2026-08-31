@@ -1,15 +1,10 @@
+import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import type { Queue } from "bullmq";
-import type {
-  CoverageGapType,
-  Event,
-  EventHeroNpc,
-  InputJsonValue,
-  JsonValue,
-} from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { setMapAssignedMembers } from "../event-map-members.repository.js";
 import { attachRolesToMembers } from "#src/members/member-roles.repository";
@@ -44,6 +39,13 @@ import {
   findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc,
   type ActiveEventHeroMatch,
 } from "../utils/find-active-event-heroes-by-npc.js";
+
+type CoverageGapType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
+type Event = FieldOutputTypes["public"]["Event"];
+type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
+type InputJsonValue = DatabaseJsonValue;
+type JsonValue = DatabaseJsonValue;
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;

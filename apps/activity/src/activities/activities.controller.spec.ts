@@ -1,11 +1,19 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { ActivitySource, ActivityType } from "../shared/db/domain.js";
+import { db as prismaDb } from "../prisma/db.js";
+import type { Contract } from "../prisma/contract.js";
 import { PermissionsGuard } from "#src/shared/guards/permissions.guard";
 import { ActivitiesController } from "./activities.controller.js";
 import { QueryActivitiesDto } from "./dto/query-activities.dto.js";
 import { ActivitiesService } from "./activities.service.js";
 import { ActivitiesQueryService } from "./services/activities-query.service.js";
+
+const ActivitySource = prismaDb.nativeEnums.public.ActivitySource.members;
+type ActivitySource =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivitySource"]["values"][number];
+const ActivityType = prismaDb.nativeEnums.public.ActivityType.members;
+type ActivityType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ActivityType"]["values"][number];
 
 describe("ActivitiesController", () => {
   let controller: ActivitiesController;

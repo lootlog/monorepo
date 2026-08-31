@@ -1,6 +1,6 @@
+import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
 import { and } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { Guild, ItemRarity, Permission, Role } from "#src/db/domain";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import { LootsService } from "#src/loots/loots.service";
 import { PrismaService } from "#src/db/prisma.service";
@@ -19,6 +19,13 @@ import type {
   EventWrappedResponseDto,
 } from "../dto/event-wrapped.dto.js";
 import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+type ItemRarity =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["ItemRarity"]["values"][number];
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 type RankingRow = {
   memberId: number;

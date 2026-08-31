@@ -1,11 +1,13 @@
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { Injectable } from "@nestjs/common";
 import type {
   NpcTypeSoundConfig,
   SettingsDomainResolution,
 } from "@lootlog/types";
-import type { JsonValue } from "#src/db/domain";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto.js";
+
+type JsonValue = DatabaseJsonValue;
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;

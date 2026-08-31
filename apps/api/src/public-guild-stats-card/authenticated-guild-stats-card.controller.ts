@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../prisma/contract.js";
 import { Controller, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -7,12 +9,15 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { RefreshStatsCardResponseDto } from "./dto/refresh-stats-card-response.dto.js";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
+
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 @ApiTags("guild-stats-card")
 @ApiBearerAuth()

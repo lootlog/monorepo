@@ -1,17 +1,22 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract, FieldOutputTypes } from "../prisma/contract.js";
 import { ForbiddenException } from "@nestjs/common";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
-import {
-  type Guild,
-  type Member,
-  MemberType,
-  Permission,
-} from "#src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";
 import { MembersController } from "./members.controller.js";
 import { MembersService } from "./members.service.js";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
+type Member = FieldOutputTypes["public"]["Member"];
+const MemberType = prismaDb.nativeEnums.public.MemberType.members;
+type MemberType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["MemberType"]["values"][number];
+const Permission = prismaDb.nativeEnums.public.Permission.members;
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 describe("MembersController", () => {
   let controller: MembersController;

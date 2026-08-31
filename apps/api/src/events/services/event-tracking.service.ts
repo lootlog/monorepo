@@ -1,3 +1,5 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -9,7 +11,6 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ExecutionError } from "redlock";
-import { CoverageGapType } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import {
   attachAssignedMembersToMaps,
@@ -24,6 +25,10 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { TimersService } from "#src/timers/timers.service";
+
+const CoverageGapType = prismaDb.nativeEnums.public.CoverageGapType.members;
+type CoverageGapType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["CoverageGapType"]["values"][number];
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {

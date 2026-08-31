@@ -1,5 +1,9 @@
-import type { Permission, Role } from "#src/db/domain";
+import type { Contract, FieldOutputTypes } from "../../prisma/contract.js";
 import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
+
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
+type Role = FieldOutputTypes["public"]["Role"];
 
 interface EventHeroWithLevel {
   npcLvl: number | null;

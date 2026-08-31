@@ -1,3 +1,5 @@
+import type { FieldOutputTypes } from "../../prisma/contract.js";
+import type { JsonValue as DatabaseJsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -5,7 +7,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { EventKillPoint, InputJsonValue } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachRolesToMembers } from "#src/members/member-roles.repository";
 import { EventEmitterService } from "./event-emitter.service.js";
@@ -24,6 +25,9 @@ import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
 } from "../utils/tracking-window.util.js";
+
+type EventKillPoint = FieldOutputTypes["public"]["EventKillPoint"];
+type InputJsonValue = DatabaseJsonValue;
 
 type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;

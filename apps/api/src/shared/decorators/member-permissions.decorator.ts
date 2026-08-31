@@ -1,6 +1,9 @@
+import type { Contract } from "../../prisma/contract.js";
 import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
-import type { Permission } from "#src/db/domain";
+
+type Permission =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["Permission"]["values"][number];
 
 export const MemberPermissions = createRequiredRequestValueDecorator<
   Permission[]

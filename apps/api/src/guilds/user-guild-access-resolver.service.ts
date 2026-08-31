@@ -1,3 +1,4 @@
+import type { FieldOutputTypes } from "../prisma/contract.js";
 import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import type { APIGuild } from "discord-api-types/v10";
 import { isDiscordAdministrator } from "@lootlog/nest-shared";
@@ -6,9 +7,10 @@ import type { Logger } from "winston";
 import { DiscordService } from "#src/discord/discord.service";
 import { PrismaService } from "#src/db/prisma.service";
 import { temporalToDate } from "#src/db/temporal";
-import type { Guild } from "#src/db/domain";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
 import { MembersService } from "#src/members/members.service";
+
+type Guild = FieldOutputTypes["public"]["Guild"];
 
 export interface GuildRefreshCandidate {
   guild: Guild;

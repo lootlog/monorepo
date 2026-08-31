@@ -1,16 +1,7 @@
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import {
-  NotificationJobKind,
-  NotificationJobStatus,
-  NotificationOwnerType,
-  NotificationProvider,
-  NotificationScheduleAnchor,
-  NotificationScheduleIntervalType,
-  NotificationScheduleStrategy,
-  NotificationTargetType,
-  NotificationTriggerType,
-} from "#src/db/domain";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
@@ -20,6 +11,43 @@ import {
   DiscordGuildChannelSnapshotResponseDto,
   DiscordGuildSyncStateResponseDto,
 } from "#src/shared/dto/discord-guild-sync-response.dto";
+
+const NotificationJobKind =
+  prismaDb.nativeEnums.public.NotificationJobKind.members;
+type NotificationJobKind =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobKind"]["values"][number];
+const NotificationJobStatus =
+  prismaDb.nativeEnums.public.NotificationJobStatus.members;
+type NotificationJobStatus =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationJobStatus"]["values"][number];
+const NotificationOwnerType =
+  prismaDb.nativeEnums.public.NotificationOwnerType.members;
+type NotificationOwnerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationOwnerType"]["values"][number];
+const NotificationProvider =
+  prismaDb.nativeEnums.public.NotificationProvider.members;
+type NotificationProvider =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationProvider"]["values"][number];
+const NotificationScheduleAnchor =
+  prismaDb.nativeEnums.public.NotificationScheduleAnchor.members;
+type NotificationScheduleAnchor =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleAnchor"]["values"][number];
+const NotificationScheduleIntervalType =
+  prismaDb.nativeEnums.public.NotificationScheduleIntervalType.members;
+type NotificationScheduleIntervalType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleIntervalType"]["values"][number];
+const NotificationScheduleStrategy =
+  prismaDb.nativeEnums.public.NotificationScheduleStrategy.members;
+type NotificationScheduleStrategy =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleStrategy"]["values"][number];
+const NotificationTargetType =
+  prismaDb.nativeEnums.public.NotificationTargetType.members;
+type NotificationTargetType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTargetType"]["values"][number];
+const NotificationTriggerType =
+  prismaDb.nativeEnums.public.NotificationTriggerType.members;
+type NotificationTriggerType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationTriggerType"]["values"][number];
 
 const NotificationTestTriggerUsageResponseSchema = z.object({
   limit: z.number().int(),

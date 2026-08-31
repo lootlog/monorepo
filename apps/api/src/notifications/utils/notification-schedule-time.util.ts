@@ -1,4 +1,5 @@
-import { NotificationScheduleIntervalType } from "#src/db/domain";
+import { db as prismaDb } from "#src/prisma/db";
+import type { Contract } from "../../prisma/contract.js";
 import {
   type LocalDate,
   addDays,
@@ -6,6 +7,11 @@ import {
   getLocalDate,
   toUtcDateFromLocal,
 } from "@lootlog/datetime";
+
+const NotificationScheduleIntervalType =
+  prismaDb.nativeEnums.public.NotificationScheduleIntervalType.members;
+type NotificationScheduleIntervalType =
+  Contract["storage"]["namespaces"]["public"]["entries"]["valueSet"]["NotificationScheduleIntervalType"]["values"][number];
 
 type TimeOfDayParts = {
   hours: number;
