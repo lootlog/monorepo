@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import {

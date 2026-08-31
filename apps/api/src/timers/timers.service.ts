@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { createHash, randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {

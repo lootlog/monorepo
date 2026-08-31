@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { Guild, ItemRarity, Permission, Role } from "#src/db/domain";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";

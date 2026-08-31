@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { NotificationJobKind as DbNotificationJobKind } from "#src/db/domain";
 import type { PrismaService } from "#src/db/prisma.service";
 

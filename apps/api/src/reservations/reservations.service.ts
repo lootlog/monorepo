@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and, or } from "@prisma/orm-family-sql/orm-client";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";

@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { createId } from "@paralleldrive/cuid2";
 import { InjectQueue } from "@nestjs/bullmq";
 import {
@@ -50,23 +50,6 @@ interface TimerNpcData {
   name: string;
   icon: string;
 }
-
-const memberSelectWithTopRole = {
-  id: true,
-  name: true,
-  avatar: true,
-  userId: true,
-  roles: {
-    select: {
-      position: true,
-      color: true,
-    },
-    orderBy: {
-      position: "desc" as const,
-    },
-    take: 1,
-  },
-};
 
 function resolveUpdatedEventDate(
   value: string | null | undefined,

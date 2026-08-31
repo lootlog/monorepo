@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { Permission, Role } from "#src/db/domain";
 import { PrismaService } from "#src/db/prisma.service";

@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and, not } from "@prisma/orm-family-sql/orm-client";
 import {
   BadRequestException,
   Inject,

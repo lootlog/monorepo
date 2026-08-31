@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { Queue } from "bullmq";

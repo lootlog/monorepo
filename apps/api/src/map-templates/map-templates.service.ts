@@ -1,4 +1,4 @@
-import { and, not, or } from "@prisma/orm-family-sql/orm-client";
+import { and } from "@prisma/orm-family-sql/orm-client";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { createId } from "@paralleldrive/cuid2";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";

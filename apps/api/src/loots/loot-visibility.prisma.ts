@@ -2,7 +2,7 @@ import {
   LOOT_PERMISSION,
   type LootVisibilityRole,
 } from "@lootlog/loot-visibility";
-import { NpcType, Permission, type Role } from "#src/db/domain";
+import { Permission, type Role } from "#src/db/domain";
 
 export function toLootVisibilityRoles(
   roles: readonly Role[],
