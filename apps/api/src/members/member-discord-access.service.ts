@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
+import { temporalToDate } from "#src/db/temporal";
 import { attachRolesToMembers } from "./member-roles.repository.js";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
@@ -275,7 +276,9 @@ export class MemberDiscordAccessService {
   private getLastDiscordSyncAt(
     member: Pick<Member, "lastDiscordSyncAt">,
   ): Date | null {
-    return member.lastDiscordSyncAt ?? null;
+    return member.lastDiscordSyncAt === null
+      ? null
+      : temporalToDate(member.lastDiscordSyncAt);
   }
 
   private isMemberFresh(
@@ -294,7 +297,7 @@ export class MemberDiscordAccessService {
     member: Pick<Member, "lastDiscordSyncAt">,
     now = new Date(),
   ): boolean {
-    const lastSyncAt = member.lastDiscordSyncAt;
+    const lastSyncAt = this.getLastDiscordSyncAt(member);
 
     return Boolean(
       lastSyncAt &&

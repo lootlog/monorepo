@@ -351,6 +351,31 @@ describe("MembersService", () => {
         }),
       ).toBe(false);
     });
+
+    it("should check Prisma temporal timestamps without treating them as Date", () => {
+      const threshold = new Date("2026-03-10T10:00:00.000Z");
+      vi.spyOn(
+        memberDiscordAccessService,
+        "getMemberSoftStaleThreshold",
+      ).mockReturnValue(threshold);
+
+      expect(
+        service.isMemberSoftStale({
+          lastDiscordSyncAt: Temporal.PlainDateTime.from(
+            "2026-03-10T09:59:59.000",
+          ),
+          updatedAt: Temporal.PlainDateTime.from("2026-03-10T10:05:00.000"),
+        }),
+      ).toBe(true);
+      expect(
+        service.isMemberSoftStale({
+          lastDiscordSyncAt: Temporal.PlainDateTime.from(
+            "2026-03-10T10:00:01.000",
+          ),
+          updatedAt: Temporal.PlainDateTime.from("2026-03-10T10:05:00.000"),
+        }),
+      ).toBe(false);
+    });
   });
 
   describe("getGuildMemberById", () => {
@@ -404,10 +429,13 @@ describe("MembersService", () => {
 
     it("should return recent stale data and queue refresh when rate limited", async () => {
       const nextRefreshAt = new Date(Date.now() + 5000);
+      const lastDiscordSyncAt = new Date(Date.now() - 10 * 60 * 1000);
       const staleMember = {
         ...mockMember,
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
-        lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
+        lastDiscordSyncAt: Temporal.PlainDateTime.from(
+          lastDiscordSyncAt.toISOString().slice(0, -1),
+        ),
       };
       prismaService.member.findUnique.mockResolvedValue(staleMember);
       _rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);

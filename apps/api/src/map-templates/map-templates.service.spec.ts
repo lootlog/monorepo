@@ -45,7 +45,7 @@ describe("MapTemplatesService", () => {
         guildId: "guild-1",
         name: "A template",
         maps: [{ id: 1, name: "Map" }],
-        createdAt: new Date("2026-08-31T08:00:00.000Z"),
+        createdAt: new Date("2026-08-31T10:00:00.000Z"),
       },
     ]);
 
