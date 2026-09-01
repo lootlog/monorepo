@@ -13,8 +13,8 @@ Main NestJS backend for Lootlog clan management.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/api api:generate
-pnpm --filter @lootlog/api api:migrate:dev
+pnpm db:api:generate
+pnpm db:api:migrate:dev
 pnpm --filter @lootlog/api dev
 ```
 
@@ -24,6 +24,8 @@ pnpm --filter @lootlog/api dev
 - `pnpm --filter @lootlog/api lint`
 - `pnpm --filter @lootlog/api test`
 - `pnpm --filter @lootlog/api test:e2e`
+- `pnpm db:api:migrate:deploy`
+- `pnpm db:api:studio`
 
 ## Notes
 

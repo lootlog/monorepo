@@ -3,6 +3,9 @@
   "version": "0.0.4",
   "private": true,
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/instrumentation-nest.cjs",
   "module": "dist/instrumentation-nest.mjs",
@@ -22,6 +25,7 @@
   "scripts": {
     "build": "tsdown",
     "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run src"
   },
   "dependencies": {

@@ -54,10 +54,10 @@ cd monorepo
 pnpm install
 pnpm env:generate
 docker compose up -d
-pnpm api:migrate:dev
-pnpm activity:migrate:dev
-pnpm auth:migrate:dev
-pnpm battlelog:migrate:dev
+pnpm db:api:migrate:dev
+pnpm db:activity:migrate:dev
+pnpm db:auth:migrate:dev
+pnpm db:battlelog:push
 pnpm dev
 ```
 

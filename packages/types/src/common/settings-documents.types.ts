@@ -83,7 +83,7 @@ const isStringArray = (value: unknown) =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 const isRecord = (value: unknown) =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-const isFiniteNumber = (value: unknown) =>
+const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 const isNumberInRange =
   (minimum: number, maximum: number) => (value: unknown) =>

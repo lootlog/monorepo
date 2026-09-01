@@ -17,8 +17,8 @@
     "build": "nest build",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "format": "oxfmt src test",
     "test": "vitest run --config ./vitest.config.ts",
     "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
@@ -26,15 +26,14 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "test:watch": "vitest --config ./vitest.config.ts",
     "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
-    "battlelog:audit-actions": "tsx --env-file=.env scripts/audit-r2-battle-actions.ts",
-    "battlelog:backfill-warrior-stats": "tsx --env-file=.env scripts/backfill-battle-warrior-stats.ts",
-    "battlelog:generate": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs generate",
-    "battlelog:migrate": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs migrate",
-    "battlelog:migrate:dev": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs push --force",
-    "battlelog:migrate:init": "tsx --env-file=.env scripts/migrate-init.ts",
-    "battlelog:pull": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs pull",
-    "battlelog:push": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs push",
-    "battlelog:studio": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs studio"
+    "db:generate": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate:deploy": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:migrate:init": "tsx --env-file=.env scripts/migrate-init.ts",
+    "db:pull": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs pull",
+    "db:push": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs push --force",
+    "db:studio": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs studio",
+    "maintenance:audit-actions": "tsx --env-file=.env scripts/audit-r2-battle-actions.ts",
+    "maintenance:backfill-warrior-stats": "tsx --env-file=.env scripts/backfill-battle-warrior-stats.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1120.0",
@@ -62,7 +61,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
     "@nestjs/cli": "catalog:",
+    "@nestjs/schematics": "catalog:",
     "@nestjs/testing": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",

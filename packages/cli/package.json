@@ -3,31 +3,40 @@
   "version": "1.0.10",
   "private": true,
   "license": "MIT",
-  "bin": {
-    "lootlog": "./dist/index.mjs"
-  },
   "type": "module",
-  "module": "ESNext",
-  "exports": "./dist/index.mjs",
   "scripts": {
     "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
     "test": "tsx src/utils/env-generator.test.ts",
-    "env:generate": "tsx src/commands/env/generate.ts"
+    "env:generate": "tsx src/commands/env/generate.ts",
+    "events": "tsx src/index.ts events",
+    "events:publish": "tsx src/index.ts events publish",
+    "seed": "tsx src/index.ts seed",
+    "seed:generate:players": "tsx src/index.ts seed generate:players",
+    "seed:scrape": "tsx src/index.ts seed scrape:all",
+    "seed:scrape:items": "tsx src/index.ts seed scrape:items",
+    "seed:scrape:npcs": "tsx src/index.ts seed scrape:npcs",
+    "seed:setup": "tsx src/index.ts seed setup"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/types": "workspace:*",
+    "@prisma/adapter-pg": "catalog:",
     "amqplib": "^2.0.1",
+    "drizzle-orm": "1.0.0-beta.20",
     "node-html-parser": "^9.0.2",
+    "pg": "^8.23.0",
     "random-words": "^2.0.1",
     "uuid": "^14.0.2",
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.10.8",
+    "@lootlog/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
     "dotenv": "^17.4.2",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -25,13 +25,9 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/tools/clean-swagger-metadata.mjs",
-        ".env*"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "env": ["GAME_CLIENT_URL"],
-      "outputs": ["dist/**", "generated/**"]
+      "outputs": ["dist/**"]
     },
     "transit": {
       "dependsOn": ["^transit"]
@@ -49,7 +45,7 @@
       ]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^build", "transit"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -75,7 +71,13 @@
       "persistent": true
     },
     "start": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "preview": {
+      "cache": false,
+      "persistent": true
     },
     "openapi:generate": {
       "dependsOn": ["^build"],
@@ -126,17 +128,6 @@
       "dependsOn": ["api-client:generate"],
       "outputs": []
     },
-    "api:migrate:dev": {
-      "cache": false,
-      "interactive": true
-    },
-    "api:generate": {
-      "cache": false
-    },
-    "api:studio": {
-      "cache": false,
-      "interactive": false
-    },
     "test:coverage": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
@@ -147,20 +138,12 @@
         "tsconfig.json"
       ]
     },
-    "auth:migrate:dev": {
-      "cache": false,
-      "interactive": false
-    },
-    "auth:migrate:prod": {
-      "cache": false,
-      "interactive": false
-    },
     "env:generate": {
       "cache": false,
       "interactive": true
     },
     "test": {
-      "dependsOn": ["^build", "api:generate", "activity:generate"],
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -172,7 +155,7 @@
       ]
     },
     "test:e2e": {
-      "dependsOn": ["^build", "api:generate", "activity:generate"],
+      "dependsOn": ["^build"],
       "cache": false,
       "outputs": [],
       "inputs": [
@@ -184,36 +167,85 @@
         "tsconfig.json"
       ]
     },
-    "format:check": {
-      "cache": false,
-      "outputs": []
-    },
-    "battlelog:migrate": {
+    "db:generate": {
       "cache": false
     },
-    "battlelog:migrate:init": {
-      "cache": false
-    },
-    "battlelog:migrate:dev": {
-      "cache": false
-    },
-    "battlelog:generate": {
-      "cache": false
-    },
-    "battlelog:studio": {
-      "cache": false,
-      "interactive": false
-    },
-    "activity:migrate:dev": {
+    "db:migrate:dev": {
       "cache": false,
       "interactive": true
     },
-    "activity:generate": {
+    "db:migrate:deploy": {
       "cache": false
     },
-    "activity:studio": {
+    "db:migrate:init": {
+      "cache": false
+    },
+    "db:pull": {
       "cache": false,
-      "interactive": false
+      "interactive": true
+    },
+    "db:push": {
+      "cache": false,
+      "interactive": true
+    },
+    "db:studio": {
+      "cache": false,
+      "interactive": true,
+      "persistent": true
+    },
+    "events": {
+      "cache": false,
+      "interactive": true
+    },
+    "events:publish": {
+      "cache": false,
+      "interactive": true
+    },
+    "seed": {
+      "cache": false,
+      "interactive": true
+    },
+    "seed:generate:players": {
+      "cache": false,
+      "interactive": true
+    },
+    "seed:scrape": {
+      "cache": false,
+      "interactive": true
+    },
+    "seed:scrape:items": {
+      "cache": false,
+      "interactive": true
+    },
+    "seed:scrape:npcs": {
+      "cache": false,
+      "interactive": true
+    },
+    "seed:setup": {
+      "cache": false,
+      "interactive": true
+    },
+    "maintenance:audit-actions": {
+      "cache": false
+    },
+    "maintenance:backfill-warrior-stats": {
+      "cache": false
+    },
+    "deploy": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "deploy:develop": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "deploy:version": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "deploy:version:develop": {
+      "dependsOn": ["build"],
+      "cache": false
     }
   }
 }
