@@ -1,0 +1,11 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "dependsOn": ["$TURBO_EXTENDS$", "db:generate"]
+    },
+    "test:e2e": {
+      "dependsOn": ["$TURBO_EXTENDS$", "db:generate"]
+    }
+  }
+}

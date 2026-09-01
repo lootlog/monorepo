@@ -9,13 +9,15 @@ interface PublishOptions {
 }
 
 class RabbitMQClient {
-  private connection: amqp.Connection | null = null;
+  private connection: amqp.ChannelModel | null = null;
   private channel: amqp.Channel | null = null;
 
   async connect(uri: string): Promise<void> {
     try {
-      this.connection = await amqp.connect(uri);
-      this.channel = await this.connection.createChannel();
+      const connection = await amqp.connect(uri);
+      const channel = await connection.createChannel();
+      this.connection = connection;
+      this.channel = channel;
     } catch (error) {
       throw new Error(
         `Failed to connect to RabbitMQ: ${error instanceof Error ? error.message : String(error)}`,

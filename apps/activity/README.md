@@ -13,8 +13,8 @@ NestJS service for guild activity logs and related admin queries.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/activity activity:generate
-pnpm --filter @lootlog/activity activity:migrate:dev
+pnpm db:activity:generate
+pnpm db:activity:migrate:dev
 pnpm --filter @lootlog/activity dev
 ```
 
@@ -24,6 +24,8 @@ pnpm --filter @lootlog/activity dev
 - `pnpm --filter @lootlog/activity lint`
 - `pnpm --filter @lootlog/activity test`
 - `pnpm --filter @lootlog/activity test:e2e`
+- `pnpm db:activity:migrate:deploy`
+- `pnpm db:activity:studio`
 
 ## Notes
 

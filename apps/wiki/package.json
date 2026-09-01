@@ -12,12 +12,13 @@
     "dev": "vite dev",
     "build": "vite build && tsc --noEmit",
     "preview": "vite preview",
-    "deploy": "pnpm build && wrangler deploy dist/server/index.js --config wrangler.jsonc --env=\"\" --assets dist/client",
-    "deploy:develop": "pnpm build && wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client",
-    "deploy:version": "pnpm build && wrangler versions upload dist/server/index.js --config wrangler.jsonc --env=\"\" --assets dist/client",
-    "deploy:version:develop": "pnpm build && wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client",
+    "deploy": "wrangler deploy dist/server/index.js --config wrangler.jsonc --env=\"\" --assets dist/client",
+    "deploy:develop": "wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client",
+    "deploy:version": "wrangler versions upload dist/server/index.js --config wrangler.jsonc --env=\"\" --assets dist/client",
+    "deploy:version:develop": "wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client",
     "cloudflare:typegen": "wrangler types",
     "lint": "oxlint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests --config ./vitest.config.ts"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.54.1",
+    "@lootlog/typescript-config": "workspace:*",
     "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

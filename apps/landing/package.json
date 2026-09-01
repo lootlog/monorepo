@@ -7,18 +7,16 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && tsc --noEmit && node scripts/verify-static-build.mjs",
-    "start": "vite preview",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
     "test": "vitest run",
-    "doctor": "npx -y react-doctor@latest ."
+    "doctor": "react-doctor ."
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.168.49",
-    "@types/mdx": "^2.0.14",
     "better-auth": "1.6.30",
     "framer-motion": "^12.43.0",
     "i18next": "^26.4.0",
@@ -31,6 +29,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@mdx-js/rollup": "^3.1.1",
     "@tailwindcss/vite": "catalog:",
+    "@types/mdx": "^2.0.14",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

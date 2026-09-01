@@ -28,4 +28,5 @@ Example:
 ## Notes
 
 - This workspace does not define build scripts; it only stores shared JSON config files.
+- `typecheck` and `test` do not apply because the workspace contains no TypeScript runtime or testable code; `lint` validates its files.
 - Update these presets carefully because they affect multiple apps and packages at once.

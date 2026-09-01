@@ -3,6 +3,9 @@
   "version": "3.0.2",
   "private": true,
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -15,10 +18,14 @@
   },
   "scripts": {
     "build": "tsdown",
-    "lint": "oxlint src"
+    "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "tsdown": "catalog:"
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

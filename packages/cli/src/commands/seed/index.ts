@@ -267,6 +267,10 @@ export const seedCommand = async (args: string[]): Promise<void> => {
   }
 
   const [subcommand, ...rest] = args;
+  if (!subcommand) {
+    displaySeedHelp();
+    return;
+  }
   const options = parseOptions(rest);
   const handler = SEED_SUBCOMMAND_HANDLERS[subcommand];
 
