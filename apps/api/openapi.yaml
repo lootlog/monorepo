@@ -663,7 +663,6 @@ paths:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -675,7 +674,6 @@ paths:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -687,8 +685,10 @@ paths:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
       security:
         - bearer: []
       summary: Get guild permissions
@@ -7251,7 +7251,6 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7263,7 +7262,6 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -7275,8 +7273,10 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
               lvlRangeFrom:
                 type: number
                 nullable: true
@@ -7384,7 +7384,6 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7396,7 +7395,6 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -7408,8 +7406,10 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
               lvlRangeFrom:
                 type: number
                 nullable: true
@@ -7710,7 +7710,6 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7722,7 +7721,6 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -7734,8 +7732,10 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
             required:
               - id
               - lvlRangeFrom
@@ -7952,7 +7952,6 @@ components:
                     - LOOTLOG_ACCESS
                     - LOOTLOG_LOOTS_READ
                     - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_ARCHIVE
                     - LOOTLOG_LOOTS_TITANS_READ
                     - LOOTLOG_LOOTS_HEROES_READ
                     - LOOTLOG_TIMERS_READ
@@ -7964,7 +7963,6 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -7976,8 +7974,10 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_LOOTS_ARCHIVE
             required:
               - id
               - lvlRangeFrom
@@ -8012,7 +8012,6 @@ components:
               - LOOTLOG_ACCESS
               - LOOTLOG_LOOTS_READ
               - LOOTLOG_LOOTS_WRITE
-              - LOOTLOG_LOOTS_ARCHIVE
               - LOOTLOG_LOOTS_TITANS_READ
               - LOOTLOG_LOOTS_HEROES_READ
               - LOOTLOG_TIMERS_READ
@@ -8024,7 +8023,6 @@ components:
               - LOOTLOG_RESERVATIONS_READ
               - LOOTLOG_RESERVATIONS_WRITE
               - LOOTLOG_MEMBERS_READ
-              - LOOTLOG_ONLINE_PLAYERS_READ
               - LOOTLOG_CHAT_READ
               - LOOTLOG_CHAT_WRITE
               - LOOTLOG_CHAT_TITANS_READ
@@ -8036,8 +8034,10 @@ components:
               - LOOTLOG_EVENTS_MANAGE
               - LOOTLOG_EVENTS_READ
               - LOOTLOG_EVENTS_WRITE
+              - LOOTLOG_ONLINE_PLAYERS_READ
               - LOOTLOG_DOCS_READ
               - LOOTLOG_DOCS_WRITE
+              - LOOTLOG_LOOTS_ARCHIVE
         lvlRangeFrom:
           type: number
           nullable: true
@@ -8064,7 +8064,6 @@ components:
               - LOOTLOG_ACCESS
               - LOOTLOG_LOOTS_READ
               - LOOTLOG_LOOTS_WRITE
-              - LOOTLOG_LOOTS_ARCHIVE
               - LOOTLOG_LOOTS_TITANS_READ
               - LOOTLOG_LOOTS_HEROES_READ
               - LOOTLOG_TIMERS_READ
@@ -8076,7 +8075,6 @@ components:
               - LOOTLOG_RESERVATIONS_READ
               - LOOTLOG_RESERVATIONS_WRITE
               - LOOTLOG_MEMBERS_READ
-              - LOOTLOG_ONLINE_PLAYERS_READ
               - LOOTLOG_CHAT_READ
               - LOOTLOG_CHAT_WRITE
               - LOOTLOG_CHAT_TITANS_READ
@@ -8088,8 +8086,10 @@ components:
               - LOOTLOG_EVENTS_MANAGE
               - LOOTLOG_EVENTS_READ
               - LOOTLOG_EVENTS_WRITE
+              - LOOTLOG_ONLINE_PLAYERS_READ
               - LOOTLOG_DOCS_READ
               - LOOTLOG_DOCS_WRITE
+              - LOOTLOG_LOOTS_ARCHIVE
         lvlRangeFrom:
           type: number
         lvlRangeTo:
@@ -8252,7 +8252,6 @@ components:
                         - LOOTLOG_ACCESS
                         - LOOTLOG_LOOTS_READ
                         - LOOTLOG_LOOTS_WRITE
-                        - LOOTLOG_LOOTS_ARCHIVE
                         - LOOTLOG_LOOTS_TITANS_READ
                         - LOOTLOG_LOOTS_HEROES_READ
                         - LOOTLOG_TIMERS_READ
@@ -8264,7 +8263,6 @@ components:
                         - LOOTLOG_RESERVATIONS_READ
                         - LOOTLOG_RESERVATIONS_WRITE
                         - LOOTLOG_MEMBERS_READ
-                        - LOOTLOG_ONLINE_PLAYERS_READ
                         - LOOTLOG_CHAT_READ
                         - LOOTLOG_CHAT_WRITE
                         - LOOTLOG_CHAT_TITANS_READ
@@ -8276,8 +8274,10 @@ components:
                         - LOOTLOG_EVENTS_MANAGE
                         - LOOTLOG_EVENTS_READ
                         - LOOTLOG_EVENTS_WRITE
+                        - LOOTLOG_ONLINE_PLAYERS_READ
                         - LOOTLOG_DOCS_READ
                         - LOOTLOG_DOCS_WRITE
+                        - LOOTLOG_LOOTS_ARCHIVE
                   lvlRangeFrom:
                     type: number
                     nullable: true
@@ -8464,7 +8464,6 @@ components:
                         - LOOTLOG_ACCESS
                         - LOOTLOG_LOOTS_READ
                         - LOOTLOG_LOOTS_WRITE
-                        - LOOTLOG_LOOTS_ARCHIVE
                         - LOOTLOG_LOOTS_TITANS_READ
                         - LOOTLOG_LOOTS_HEROES_READ
                         - LOOTLOG_TIMERS_READ
@@ -8476,7 +8475,6 @@ components:
                         - LOOTLOG_RESERVATIONS_READ
                         - LOOTLOG_RESERVATIONS_WRITE
                         - LOOTLOG_MEMBERS_READ
-                        - LOOTLOG_ONLINE_PLAYERS_READ
                         - LOOTLOG_CHAT_READ
                         - LOOTLOG_CHAT_WRITE
                         - LOOTLOG_CHAT_TITANS_READ
@@ -8488,8 +8486,10 @@ components:
                         - LOOTLOG_EVENTS_MANAGE
                         - LOOTLOG_EVENTS_READ
                         - LOOTLOG_EVENTS_WRITE
+                        - LOOTLOG_ONLINE_PLAYERS_READ
                         - LOOTLOG_DOCS_READ
                         - LOOTLOG_DOCS_WRITE
+                        - LOOTLOG_LOOTS_ARCHIVE
                   lvlRangeFrom:
                     type: number
                     nullable: true
