@@ -13,10 +13,6 @@ on:
         description: Base commit used for affected package detection
         required: true
         type: string
-      head_sha:
-        description: Head commit to validate
-        required: true
-        type: string
       pull_request_number:
         description: Pull request associated with an automated dispatch
         required: false
@@ -37,7 +33,6 @@ jobs:
     timeout-minutes: 10
     outputs:
       base-sha: ${{ steps.context.outputs.base_sha }}
-      head-sha: ${{ steps.context.outputs.head_sha }}
       packages: ${{ steps.plan.outputs.packages }}
       docker-services: ${{ steps.plan.outputs.docker_services }}
       run-api-client-check: ${{ steps.plan.outputs.run_api_client_check }}
@@ -47,7 +42,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || inputs.head_sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -66,7 +61,6 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_BASE_SHA: ${{ inputs.base_sha }}
-          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
           INPUT_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
           MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
           MERGE_GROUP_HEAD_REF: ${{ github.event.merge_group.head_ref }}
@@ -97,7 +91,7 @@ jobs:
               ;;
             workflow_dispatch)
               base_sha="$INPUT_BASE_SHA"
-              head_sha="$INPUT_HEAD_SHA"
+              head_sha="$GITHUB_SHA"
               if [[ -n "$INPUT_PULL_REQUEST_NUMBER" ]]; then
                 pull_request_heads="$(
                   gh pr view "$INPUT_PULL_REQUEST_NUMBER" \
@@ -168,7 +162,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ needs.plan.outputs.head-sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -311,7 +305,7 @@ jobs:
       - name: Checkout validation commit
         uses: actions/checkout@v7
         with:
-          ref: ${{ needs.plan.outputs.head-sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -325,7 +319,7 @@ jobs:
           load: true
           tags: lootlog-${{ matrix.service }}:ci
           build-args: |
-            GITHUB_SHA=${{ needs.plan.outputs.head-sha }}
+            GITHUB_SHA=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
             GITHUB_REF=${{ github.ref }}
           cache-from: type=gha,scope=docker-${{ matrix.service }}
           cache-to: type=gha,mode=min,scope=docker-${{ matrix.service }}
@@ -386,7 +380,7 @@ jobs:
         env:
           CI_RESULT: ${{ needs.ci-success.result }}
           GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ needs.plan.outputs.head-sha }}
+          HEAD_SHA: ${{ github.sha }}
           TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           state="failure"

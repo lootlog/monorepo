@@ -96,7 +96,6 @@ export const dispatchAutomatedPullRequestCi = async ({
       body: JSON.stringify({
         inputs: {
           base_sha: baseSha,
-          head_sha: headSha,
           pull_request_number: pullRequestNumber,
         },
         ref: headRef,
