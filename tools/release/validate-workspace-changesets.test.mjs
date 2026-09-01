@@ -112,9 +112,9 @@ test("CLI fails when one changed workspace is missing from the changeset release
   git("add", ".");
   git("commit", "-m", "change api and ui");
 
-  const fakePnpmPath = join(fakeBinDirectory, "pnpm");
+  const fakeBunxPath = join(fakeBinDirectory, "bunx");
   writeFileSync(
-    fakePnpmPath,
+    fakeBunxPath,
     `#!/bin/sh
 for argument in "$@"; do
   case "$argument" in
@@ -124,7 +124,7 @@ done
 printf '%s' '{"releases":[{"name":"@lootlog/ui"}]}' > "$output_file"
 `,
   );
-  chmodSync(fakePnpmPath, 0o755);
+  chmodSync(fakeBunxPath, 0o755);
 
   const scriptPath = fileURLToPath(
     new URL("./validate-workspace-changesets.mjs", import.meta.url),

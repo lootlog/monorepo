@@ -13,10 +13,10 @@
     }
   },
   "scripts": {
-    "dev": "APP_VERSION=$(node -p \"require('./package.json').version\") nest start --watch",
-    "prebuild": "pnpm db:generate",
+    "dev": "APP_VERSION=$(bun -p \"require('./package.json').version\") nest start --watch",
+    "prebuild": "bun run db:generate",
     "build": "nest build",
-    "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node --import ./dist/src/instrumentation.js dist/src/main.js",
+    "start": "APP_VERSION=$(bun -p \"require('./package.json').version\") bun --preload ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
@@ -26,7 +26,7 @@
     "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "test:watch": "vitest --config ./vitest.config.ts",
-    "openapi:generate": "OPENAPI_GENERATION=true APP_VERSION=$(node -p \"require('./package.json').version\") pnpm build && OPENAPI_GENERATION=true APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/openapi/generate-openapi.js",
+    "openapi:generate": "OPENAPI_GENERATION=true APP_VERSION=$(bun -p \"require('./package.json').version\") bun run build && OPENAPI_GENERATION=true APP_VERSION=$(bun -p \"require('./package.json').version\") bun dist/src/openapi/generate-openapi.js",
     "db:generate": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",

@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
+    "start": "bun --preload ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",

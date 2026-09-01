@@ -1,0 +1,28 @@
+{
+  "name": "@lootlog/protocol",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./http": "./src/http/http-contract.ts",
+    "./rabbit/events": "./src/rabbit/events.ts",
+    "./rabbit/topology": "./src/rabbit/topology.ts",
+    "./realtime": "./src/realtime/protocol.ts",
+    "./realtime/codec": "./src/realtime/codec.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@lootlog/schema": "workspace:*",
+    "@msgpack/msgpack": "^3.1.3",
+    "effect": "4.0.0-rc.112"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

@@ -49,24 +49,13 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        if: github.event_name != 'workflow_dispatch'
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
-
-      - name: Setup Node.js without dependency cache
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/setup-node@v6
-        with:
-          node-version: 26.8.1
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Resolve validation context
         id: context
@@ -143,7 +132,7 @@ jobs:
           PULL_REQUEST_HEADS: ${{ steps.context.outputs.pull_request_heads }}
         run: |
           affected="$(
-            pnpm exec turbo query affected \
+            bunx turbo query affected \
               --base "$BASE_SHA" \
               --head "$HEAD_SHA" \
               --packages
@@ -182,24 +171,13 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || needs.plan.outputs.head-sha }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        if: github.event_name != 'workflow_dispatch'
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
-
-      - name: Setup Node.js without dependency cache
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/setup-node@v6
-        with:
-          node-version: 26.8.1
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Test CI and release tooling
         run: node --test tools/release/*.test.mjs apps/developer/server-handler.test.js
@@ -209,10 +187,10 @@ jobs:
         run: node tools/release/validate-workspace-changesets.mjs "${{ needs.plan.outputs.base-sha }}"
 
       - name: Check formatting
-        run: pnpm format:check
+        run: bun run format:check
 
       - name: Check dependencies
-        run: pnpm deps:check
+        run: bun run deps:check
 
       - name: Lint, typecheck, and build affected workspaces
         env:
@@ -223,7 +201,7 @@ jobs:
             echo "No affected workspaces."
             exit 0
           fi
-          pnpm exec turbo run lint typecheck build "${filters[@]}"
+          bunx turbo run lint typecheck build "${filters[@]}"
 
       - name: Test affected workspaces except Game Client
         env:
@@ -236,16 +214,16 @@ jobs:
             echo "No non-Game Client tests to run."
             exit 0
           fi
-          pnpm exec turbo run test "${filters[@]}"
+          bunx turbo run test "${filters[@]}"
 
       - name: Test Game Client coverage
         if: contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
         env:
           COVERAGE_BASE_REF: ${{ needs.plan.outputs.base-sha }}
         run: |
-          pnpm --filter=@lootlog/game-client typecheck
-          pnpm --filter=@lootlog/game-client test:coverage
-          pnpm --filter=@lootlog/game-client test:coverage:changed
+          bun run --filter=@lootlog/game-client typecheck
+          bun run --filter=@lootlog/game-client test:coverage
+          bun run --filter=@lootlog/game-client test:coverage:changed
 
       - name: Upload Game Client coverage
         if: always() && contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
@@ -288,7 +266,7 @@ jobs:
           R2_ENDPOINT: http://localhost
           R2_BUCKET_NAME: ci
           API_SERVICE_URL: http://localhost:4000
-        run: pnpm api-client:check
+        run: bun run api-client:check
 
   docker:
     name: Docker ${{ matrix.service }}

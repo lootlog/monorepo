@@ -7,10 +7,10 @@
   "scripts": {
     "dev": "BASE_PATH=/developer/ vite dev",
     "build": "vite build",
-    "start": "node server.js",
+    "start": "bun server.js",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
-    "test": "node --test server-handler.test.js"
+    "test": "bun test server-handler.test.js"
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",

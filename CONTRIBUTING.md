@@ -45,20 +45,20 @@ does not guarantee permanent public support.
 Requirements:
 
 - Node.js 26.8.1
-- pnpm 12.1.0
+- Bun 1.4.0
 - Docker with Docker Compose
 
 ```bash
 git clone https://github.com/lootlog/monorepo.git
 cd monorepo
-pnpm install
-pnpm env:generate
+bun install
+bun run env:generate
 docker compose up -d
-pnpm db:api:migrate:dev
-pnpm db:activity:migrate:dev
-pnpm db:auth:migrate:dev
-pnpm db:battlelog:push
-pnpm dev
+bun run db:api:migrate:dev
+bun run db:activity:migrate:dev
+bun run db:auth:migrate:dev
+bun run db:battlelog:push
+bun run dev
 ```
 
 The app is normally already running in the maintainer environment. Agents must
@@ -76,11 +76,11 @@ not start another copy unless asked.
 Common checks:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:e2e
-pnpm format:check
+bun run lint
+bun run typecheck
+bun run test
+bun run test:e2e
+bun run format:check
 ```
 
 Use the narrowest relevant workspace checks while developing. Run every gate

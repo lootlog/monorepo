@@ -26,8 +26,7 @@ checkOpenApi();
 
 for (const service of services) {
   for (const layer of layers) {
-    run("pnpm", [
-      "exec",
+    run("bunx", [
       "orval",
       "--config",
       "./orval.config.ts",

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && tsc --noEmit && node scripts/verify-static-build.mjs",
+    "build": "vite build && tsc --noEmit && bun scripts/verify-static-build.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",

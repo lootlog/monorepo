@@ -73,7 +73,7 @@ boundaries, deployment, and known gaps.
 
 ## Technology
 
-- pnpm workspaces and Turborepo
+- Bun workspaces and Turborepo
 - TypeScript, React 19, Vite, TanStack Start, and TanStack Router/Query
 - NestJS with Fastify and Better Auth
 - PostgreSQL, TimescaleDB, Prisma, Drizzle, and R2
@@ -85,20 +85,20 @@ boundaries, deployment, and known gaps.
 Requirements:
 
 - Node.js 26.8.1
-- pnpm 12.1.0
+- Bun 1.4.0
 - Docker with Docker Compose
 
 ```bash
 git clone https://github.com/lootlog/monorepo.git
 cd monorepo
-pnpm install
-pnpm env:generate
+bun install
+bun run env:generate
 docker compose up -d
-pnpm db:api:migrate:dev
-pnpm db:activity:migrate:dev
-pnpm db:auth:migrate:dev
-pnpm db:battlelog:push
-pnpm dev
+bun run db:api:migrate:dev
+bun run db:activity:migrate:dev
+bun run db:auth:migrate:dev
+bun run db:battlelog:push
+bun run dev
 ```
 
 `docker-compose.yml` starts local infrastructure: four PostgreSQL-compatible
@@ -108,15 +108,15 @@ production deployment.
 ## Common commands
 
 ```bash
-pnpm dev
-pnpm build
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:e2e
-pnpm format
-pnpm format:check
-pnpm changeset
+bun run dev
+bun run build
+bun run lint
+bun run typecheck
+bun run test
+bun run test:e2e
+bun run format
+bun run format:check
+bunx changeset
 ```
 
 Workspace-specific commands are documented in each app or package README.

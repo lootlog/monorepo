@@ -34,20 +34,20 @@ tracked files or command output.
 Run the whole read-only smoke matrix:
 
 ```bash
-pnpm perf:k6:smoke
+bun run perf:k6:smoke
 ```
 
 Run a single service:
 
 ```bash
-pnpm perf:k6 -- --service api
-pnpm perf:k6 -- --service search --profile load
+bun run perf:k6 -- --service api
+bun run perf:k6 -- --service search --profile load
 ```
 
 Target dev:
 
 ```bash
-pnpm perf:k6 -- --target-env dev --service all
+bun run perf:k6 -- --target-env dev --service all
 ```
 
 Useful environment variables:
@@ -74,7 +74,7 @@ Dev is read-only by default. `K6_ENABLE_WRITES=true` is blocked when
 Run a small Socket.IO smoke test:
 
 ```bash
-pnpm perf:gateway
+bun run perf:gateway
 ```
 
 Useful gateway variables:

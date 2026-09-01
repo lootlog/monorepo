@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
+    "start": "bun --preload ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
@@ -25,15 +25,15 @@
     "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "test:watch": "vitest --config ./vitest.config.ts",
-    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
-    "db:generate": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs generate",
-    "db:migrate:deploy": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs migrate",
-    "db:migrate:init": "tsx --env-file=.env scripts/migrate-init.ts",
-    "db:pull": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs pull",
-    "db:push": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs push --force",
-    "db:studio": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs studio",
-    "maintenance:audit-actions": "tsx --env-file=.env scripts/audit-r2-battle-actions.ts",
-    "maintenance:backfill-warrior-stats": "tsx --env-file=.env scripts/backfill-battle-warrior-stats.ts"
+    "openapi:generate": "OPENAPI_GENERATION=true bun run build && OPENAPI_GENERATION=true bun --preload ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate:deploy": "bunx drizzle-kit migrate",
+    "db:migrate:init": "bun --env-file=.env scripts/migrate-init.ts",
+    "db:pull": "bunx drizzle-kit pull",
+    "db:push": "bunx drizzle-kit push --force",
+    "db:studio": "bunx drizzle-kit studio",
+    "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
+    "maintenance:backfill-warrior-stats": "bun --env-file=.env scripts/backfill-battle-warrior-stats.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1120.0",

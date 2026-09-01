@@ -4,15 +4,15 @@ set -e
 echo "🚀 Running pre-commit checks..."
 
 echo "\n📝 Formatting staged files..."
-pnpm lint-staged
+bunx lint-staged
 
 echo "\n🔍 Linting changed packages..."
-pnpm turbo run lint --filter=[HEAD]
+bunx turbo run lint --filter=[HEAD]
 
 echo "\n🎨 Checking code formatting..."
-pnpm format:check
+bun run format:check
 
 echo "\n🧪 Running tests for changed packages..."
-pnpm turbo run test --filter=[HEAD]
+bunx turbo run test --filter=[HEAD]
 
 echo "\n✅ All pre-commit checks passed!"

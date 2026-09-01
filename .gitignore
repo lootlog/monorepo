@@ -78,6 +78,8 @@ playground/**
 !/docs/adr/
 !/docs/adr/**
 !/docs/product-evidence.md
+!/docs/rewrite/
+!/docs/rewrite/**
 **/.impeccable/direction-question.json
 **/.impeccable/questions/
 .superpowers/

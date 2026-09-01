@@ -1,0 +1,31 @@
+name	path	kind	responsibility	build	typecheck	lint	test
+@lootlog/activity	apps/activity	app	activity and audit projections	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src test	vitest run --config ./vitest.config.ts
+@lootlog/api	apps/api	app	organizations and core domains	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src test	vitest run --config ./vitest.config.ts
+@lootlog/auth	apps/auth	app	Discord identity and sessions	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src	vitest run --config ./vitest.config.ts
+@lootlog/battlelog-service	apps/battlelog-service	app	battle ingestion storage and analytics	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src test	vitest run --config ./vitest.config.ts
+@lootlog/developer	apps/developer	app	future developer surface	vite build	tsc --noEmit	oxlint .	node --test server-handler.test.js
+@lootlog/discord-bot	apps/discord-bot	app	Discord sync notifications and commands	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src test	vitest run --config ./vitest.config.ts
+@lootlog/docs	apps/docs	app	static user documentation	vite build plus static verification	tsc --noEmit	oxlint .	vitest run
+@lootlog/game-client	apps/game-client	app	Margonem integration and in-game UI	tsc and vite build	tsc --noEmit	oxlint src --deny-warnings	vitest run
+@lootlog/gateway	apps/gateway	app	Socket.IO realtime and presence	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src test	vitest run --config ./vitest.config.ts
+@lootlog/landing	apps/landing	app	static public landing	vite build plus static verification	tsc --noEmit	oxlint .	vitest run
+@lootlog/search	apps/search	app	Meilisearch projections and public search	nest build	tsc --noEmit -p tsconfig.build.json	oxlint src	vitest run --config ./vitest.config.ts
+@lootlog/traffic-splitter	apps/traffic-splitter	app	Cloudflare edge route selection	wrangler dry-run	tsc --noEmit	oxlint .	vitest run
+@lootlog/web	apps/web	app	authenticated web application	tsc -b and vite build	tsc -b	oxlint .	vitest run
+@lootlog/wiki	apps/wiki	app	public Margonem wiki	vite build and tsc	tsc --noEmit	oxlint .	vitest run --passWithNoTests
+@lootlog/access-policy	packages/access-policy	package	authorization policy	tsdown	tsc --noEmit	oxlint src	vitest run
+@lootlog/api-client	packages/api-client	package	Orval clients for five OpenAPI documents	—	tsc --noEmit	oxlint sources and scripts	vitest run
+@lootlog/api-helpers	packages/api-helpers	package	shared HTTP helpers	tsdown	tsc --noEmit	oxlint src	vitest run --passWithNoTests
+@lootlog/battle-processor	packages/battle-processor	package	battle payload processing	tsdown	tsc --noEmit	oxlint src	vitest run --passWithNoTests
+@lootlog/cli	packages/cli	package	seed events and environment tools	—	tsc --noEmit	oxlint src	tsx env-generator test
+@lootlog/datetime	packages/datetime	package	date and time utilities	tsdown	tsc --noEmit	oxlint src	vitest run
+@lootlog/instrumentation	packages/instrumentation	package	logging metrics and tracing	tsdown	tsc --noEmit	oxlint src	vitest run src
+@lootlog/loot-visibility	packages/loot-visibility	package	loot visibility rules	tsdown	tsc --noEmit	oxlint src	vitest run
+@lootlog/margonem	packages/margonem	package	Margonem runtime models and adapters	tsdown	tsc --noEmit	oxlint src	vitest run --passWithNoTests
+@lootlog/nest-shared	packages/nest-shared	package	Nest HTTP Redis Rabbit and infrastructure helpers	tsc	tsc --noEmit	oxlint src	vitest run src
+@lootlog/reservations	packages/reservations	package	reservation domain rules	tsdown	tsc --noEmit	oxlint src	vitest run
+@lootlog/scoring	packages/scoring	package	event scoring rules	tsdown	tsc --noEmit	oxlint src	vitest run
+@lootlog/socket-parser	packages/socket-parser	package	Socket.IO payload parsing	tsdown	tsc --noEmit	oxlint src	vitest run --passWithNoTests
+@lootlog/types	packages/types	package	shared runtime and TypeScript contracts	tsdown	tsc --noEmit	oxlint src	vitest run --passWithNoTests
+@lootlog/typescript-config	packages/typescript-config	package	shared TypeScript configuration	—	—	oxlint . --no-error-on-unmatched-pattern	—
+@lootlog/ui	packages/ui	package	shared React UI	tsc --noEmit	tsc --noEmit	oxlint .	vitest run
