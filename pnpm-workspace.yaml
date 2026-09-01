@@ -42,7 +42,7 @@ catalog:
   typescript: ^7.0.2
   vite: ^8.2.2
   vitest: ^4.1.11
-  zod: ^4.4.3
+  zod: ^4.5.4
 allowBuilds:
   "@nestjs/core": true
   "@prisma/client": true
@@ -71,6 +71,7 @@ minimumReleaseAgeExclude:
   - esbuild@0.28.1
 overrides:
   typescript: "catalog:"
+  zod: "catalog:"
   "@nestjs/platform-fastify@11.1.28>@fastify/static": "^8.0.0 || ^9.0.0 || ^10.0.0"
   deepmerge-ts@<=7.1.5: ">=8.0.2"
   esbuild@<=0.25.12: ">=0.28.2"
@@ -86,6 +87,7 @@ packageExtensions:
     peerDependencies:
       "@nestjs/common": ^11.1.21 || ^12.0.0
       "@nestjs/core": ^11.1.21 || ^12.0.0
+      "@nestjs/microservices": ^11.1.21 || ^12.0.0
   "@nestjs/cli@^12.0.0":
     dependencies:
       typescript-legacy: "npm:typescript@6.0.3"
@@ -116,6 +118,7 @@ peerDependencyRules:
     "@golevelup/nestjs-discovery@7.0.3>@nestjs/core": "12"
     "@golevelup/nestjs-rabbitmq@9.0.2>@nestjs/common": "12"
     "@golevelup/nestjs-rabbitmq@9.0.2>@nestjs/core": "12"
+    "@golevelup/nestjs-rabbitmq@9.0.2>@nestjs/microservices": "12"
     "@nestjs/mapped-types@2.1.1>@nestjs/common": "12"
     "@nestjs/terminus@11.1.1>@nestjs/axios": "12"
     "@nestjs/terminus@11.1.1>@nestjs/common": "12"
@@ -131,3 +134,4 @@ verifyDepsBeforeRun: false
 patchedDependencies:
   "@nestjs/cli@12.0.0": patches/@nestjs__cli@12.0.0.patch
   "@nestjs/swagger@12.0.1": patches/@nestjs__swagger@12.0.1.patch
+  "nestjs-zod@5.5.0": patches/nestjs-zod@5.5.0.patch

@@ -74,6 +74,10 @@ export const CreateActivitySchema = z
     }
   });
 
+export const CompiledCreateActivitySchema = z.compile(CreateActivitySchema, {
+  strict: true,
+});
+
 const CreateActivityDtoBase: ZodDto<typeof CreateActivitySchema> =
   createZodDto(CreateActivitySchema);
 

@@ -16,6 +16,12 @@ const indexNpcSchema = z.object({
 });
 
 export const indexNpcsPayloadSchema = z.array(indexNpcSchema);
+export const compiledIndexNpcsPayloadSchema = z.compile(
+  indexNpcsPayloadSchema,
+  {
+    strict: true,
+  },
+);
 
 export type IndexNpcsDto = {
   npcs: z.infer<typeof indexNpcsPayloadSchema>;

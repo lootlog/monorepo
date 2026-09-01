@@ -13,12 +13,14 @@ import type { DeleteMemberRoleDto } from "#src/gateway/dto/delete-member-role.dt
 import type { DeleteMemberDto } from "#src/gateway/dto/delete-member.dto";
 import type { DeleteTimerDto } from "#src/gateway/dto/delete-timer.dto";
 import {
-  LootCreateEventV2Dto,
-  LootShareUpdateEventV2Dto,
+  CompiledLootCreateEventV2Schema,
+  CompiledLootShareUpdateEventV2Schema,
+  type LootCreateEventV2Dto,
+  type LootShareUpdateEventV2Dto,
 } from "#src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "#src/gateway/dto/refresh-job-update.dto";
 import {
-  ReservationChangedEventV2Dto,
+  CompiledReservationChangedEventV2Schema,
   type ReservationCreateEventDto,
   type ReservationDeleteEventDto,
 } from "#src/gateway/dto/reservation-event.dto";
@@ -147,7 +149,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsLootCreate(rawData: unknown, amqpMsg: AmqpMessage) {
-    const result = LootCreateEventV2Dto.schema.safeParse(rawData);
+    const result = CompiledLootCreateEventV2Schema.safeParse(rawData);
     if (!result.success) {
       await this.handleWithRetry(
         rawData,
@@ -183,7 +185,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsLootShareUpdate(rawData: unknown, amqpMsg: AmqpMessage) {
-    const result = LootShareUpdateEventV2Dto.schema.safeParse(rawData);
+    const result = CompiledLootShareUpdateEventV2Schema.safeParse(rawData);
     if (!result.success) {
       await this.handleWithRetry(
         rawData,
@@ -270,7 +272,7 @@ export class GatewayQueueHandler {
     rawData: unknown,
     amqpMsg: AmqpMessage,
   ) {
-    const result = ReservationChangedEventV2Dto.schema.safeParse(rawData);
+    const result = CompiledReservationChangedEventV2Schema.safeParse(rawData);
     if (!result.success) {
       await this.handleWithRetry(
         rawData,

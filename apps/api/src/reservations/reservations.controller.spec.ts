@@ -82,4 +82,20 @@ describe("ReservationsController", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("requires seconds in reservation timestamps", () => {
+    expect(
+      CreateReservationDto.schema.safeParse({
+        startsAt: "2026-08-26T12:00:00+02:00",
+        endsAt: "2026-08-26T13:00:00+02:00",
+      }).success,
+    ).toBe(true);
+
+    expect(
+      CreateReservationDto.schema.safeParse({
+        startsAt: "2026-08-26T12:00+02:00",
+        endsAt: "2026-08-26T13:00+02:00",
+      }).success,
+    ).toBe(false);
+  });
 });

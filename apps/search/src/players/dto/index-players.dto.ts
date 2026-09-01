@@ -12,6 +12,10 @@ const indexPlayerSchema = z.object({
 });
 
 export const indexPlayersPayloadSchema = z.array(indexPlayerSchema);
+export const compiledIndexPlayersPayloadSchema = z.compile(
+  indexPlayersPayloadSchema,
+  { strict: true },
+);
 
 export type IndexPlayersDto = {
   players: z.infer<typeof indexPlayersPayloadSchema>;

@@ -3,7 +3,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { indexNpcsPayloadSchema } from "./dto/index-npcs.dto.js";
+import { compiledIndexNpcsPayloadSchema } from "./dto/index-npcs.dto.js";
 import { Queue } from "./enum/queue.enum.js";
 import { RoutingKey } from "./enum/routing-key.enum.js";
 import { NpcsService } from "./npcs.service.js";
@@ -24,7 +24,7 @@ export class NpcsHandlers {
     },
   })
   async handleNpcsIndex(@RabbitPayload() payload: unknown) {
-    const validationResult = indexNpcsPayloadSchema.safeParse(payload);
+    const validationResult = compiledIndexNpcsPayloadSchema.safeParse(payload);
 
     if (!validationResult.success) {
       this.logger.error("Validation error in npcs index handler", {

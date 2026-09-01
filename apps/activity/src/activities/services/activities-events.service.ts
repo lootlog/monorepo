@@ -16,8 +16,8 @@ import {
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { RetryService } from "#src/shared/rabbitmq/retry.service";
 import {
+  CompiledCreateActivitySchema,
   CreateActivityDto,
-  CreateActivitySchema,
 } from "#src/activities/dto/create-activity.dto";
 import { ActivitiesService } from "#src/activities/activities.service";
 import { z } from "zod";
@@ -27,12 +27,17 @@ import {
   verifyActivityEventSignature,
 } from "#src/activities/utils/activity-event-signature";
 
-const GuildMemberRemovedSchema = z.object({
+export const GuildMemberRemovedSchema = z.object({
   discordId: z.string().min(1),
   guildId: z.string().min(1),
   userId: z.string().optional(),
   id: z.string().optional(),
 });
+
+export const CompiledGuildMemberRemovedSchema = z.compile(
+  GuildMemberRemovedSchema,
+  { strict: true },
+);
 
 interface AmqpMessage {
   properties: {
@@ -94,7 +99,7 @@ export class ActivitiesEventsService {
       return;
     }
 
-    const result = CreateActivitySchema.safeParse(data);
+    const result = CompiledCreateActivitySchema.safeParse(data);
 
     if (!result.success) {
       this.logger.error({
@@ -164,7 +169,7 @@ export class ActivitiesEventsService {
     @RabbitRequest()
     amqpMsg: AmqpMessage,
   ) {
-    const result = GuildMemberRemovedSchema.safeParse(data);
+    const result = CompiledGuildMemberRemovedSchema.safeParse(data);
 
     if (!result.success) {
       this.logger.error({

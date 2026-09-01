@@ -1,0 +1,93 @@
+diff --git a/dist/dto-CHeB-l1i.mjs b/dist/dto-CHeB-l1i.mjs
+--- a/dist/dto-CHeB-l1i.mjs
++++ b/dist/dto-CHeB-l1i.mjs
+@@ -9,6 +9,7 @@ function assert(condition, message = "Assertion failed") {
+ //#region src/const.ts
+ const PREFIX = "x-nestjs_zod";
+ const EMPTY_TYPE_KEY = `${PREFIX}-empty-type`;
++const TYPE_ARRAY_KEY = `${PREFIX}-type-array`;
+ const DEFS_KEY = `${PREFIX}-$defs`;
+ const PARENT_ID_KEY = `${PREFIX}-parent-id`;
+ const PARENT_ADDITIONAL_PROPERTIES_KEY = `${PREFIX}-parent-additional-properties`;
+@@ -49,6 +50,21 @@ const PARENT_METADATA_KEY = `${PREFIX}-parent-metadata`;
+ function convertToOpenApi3Point0(schema) {
+ 	return walkJsonSchema(schema, (s) => {
+ 		if ("id" in s) delete s.id;
++		if (Array.isArray(s.type)) {
++			const nullable = s.type.includes("null");
++			const concreteTypes = s.type.filter((type) => type !== "null");
++			const { type: _type, ...rest } = s;
++			if (concreteTypes.length === 1) return {
++				...rest,
++				type: concreteTypes[0],
++				...nullable && { nullable: true }
++			};
++			return {
++				...rest,
++				anyOf: concreteTypes.map((type) => ({ type })),
++				...nullable && { nullable: true }
++			};
++		}
+ 		if (s.anyOf) {
+ 			const nullSchema = s.anyOf.findIndex((subSchema) => subSchema.type === "null");
+ 			if (nullSchema === -1) return s;
+@@ -337,13 +355,15 @@ function openApiMetadataFactory({ schema, io }) {
+ 	const { hasRefs, usesThreePointOneSyntax } = getSchemaMetadata(jsonSchema);
+ 	const properties = {};
+ 	for (const [propertyKey, propertySchema] of Object.entries(jsonSchema.properties || {})) {
++		const typeArray = Array.isArray(propertySchema.type) ? propertySchema.type : void 0;
+ 		const newPropertySchema = {
+ 			...propertySchema,
+-			type: propertySchema.type || ""
++			type: typeArray ? "" : propertySchema.type || ""
+ 		};
+ 		if (usesThreePointOneSyntax) newPropertySchema[USES_THREE_POINT_ONE_SYNTAX_KEY] = true;
+ 		if (hasRefs) newPropertySchema[PARENT_HAS_REFS_KEY] = true;
+ 		if (typeof propertySchema.type !== "string") newPropertySchema[EMPTY_TYPE_KEY] = true;
++		if (typeArray) newPropertySchema[TYPE_ARRAY_KEY] = typeArray;
+ 		const required = Boolean("required" in jsonSchema && jsonSchema.required?.includes(propertyKey));
+ 		if (newPropertySchema.type === "object") {
+ 			newPropertySchema.selfRequired = required;
+@@ -400,7 +420,7 @@ function getSchemaMetadata(jsonSchema) {
+ 	let hasRefs = false;
+ 	let usesThreePointOneSyntax = false;
+ 	walkJsonSchema(jsonSchema, (schema) => {
+-		if (schema.type === "null" || schema.const || schema.id || "propertyNames" in schema || typeof schema.exclusiveMinimum === "number" || typeof schema.exclusiveMaximum === "number") usesThreePointOneSyntax = true;
++		if (Array.isArray(schema.type) || schema.type === "null" || schema.const || schema.id || "propertyNames" in schema || typeof schema.exclusiveMinimum === "number" || typeof schema.exclusiveMaximum === "number") usesThreePointOneSyntax = true;
+ 		if (schema.$ref) hasRefs = true;
+ 		return schema;
+ 	});
+@@ -416,4 +436,4 @@ function isObjectTypeWithProperties(jsonSchema) {
+ 	return jsonSchema.type === "object" && !!jsonSchema.properties && Object.keys(jsonSchema.properties).length > 0;
+ }
+ //#endregion
+-export { convertToOpenApi3Point0 as a, EMPTY_TYPE_KEY as c, PARENT_ID_KEY as d, PARENT_METADATA_KEY as f, assert as g, USES_THREE_POINT_ONE_SYNTAX_KEY as h, zodV3ToOpenAPI as i, PARENT_ADDITIONAL_PROPERTIES_KEY as l, UNWRAP_ROOT_KEY as m, isZodDto as n, fixAllRefs as o, SELF_REQUIRED_KEY as p, ioSymbol as r, DEFS_KEY as s, createZodDto as t, PARENT_HAS_REFS_KEY as u };
++export { convertToOpenApi3Point0 as a, EMPTY_TYPE_KEY as c, PARENT_ID_KEY as d, PARENT_METADATA_KEY as f, assert as g, USES_THREE_POINT_ONE_SYNTAX_KEY as h, zodV3ToOpenAPI as i, PARENT_ADDITIONAL_PROPERTIES_KEY as l, UNWRAP_ROOT_KEY as m, isZodDto as n, fixAllRefs as o, SELF_REQUIRED_KEY as p, ioSymbol as r, DEFS_KEY as s, createZodDto as t, PARENT_HAS_REFS_KEY as u, TYPE_ARRAY_KEY as v };
+diff --git a/dist/index.mjs b/dist/index.mjs
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -1,4 +1,4 @@
+-import { a as convertToOpenApi3Point0, c as EMPTY_TYPE_KEY, d as PARENT_ID_KEY, f as PARENT_METADATA_KEY, g as assert, h as USES_THREE_POINT_ONE_SYNTAX_KEY, i as zodV3ToOpenAPI, l as PARENT_ADDITIONAL_PROPERTIES_KEY, m as UNWRAP_ROOT_KEY, n as isZodDto, o as fixAllRefs, p as SELF_REQUIRED_KEY, r as ioSymbol, s as DEFS_KEY, t as createZodDto, u as PARENT_HAS_REFS_KEY } from "./dto-CHeB-l1i.mjs";
++import { a as convertToOpenApi3Point0, c as EMPTY_TYPE_KEY, d as PARENT_ID_KEY, f as PARENT_METADATA_KEY, g as assert, h as USES_THREE_POINT_ONE_SYNTAX_KEY, i as zodV3ToOpenAPI, l as PARENT_ADDITIONAL_PROPERTIES_KEY, m as UNWRAP_ROOT_KEY, n as isZodDto, o as fixAllRefs, p as SELF_REQUIRED_KEY, r as ioSymbol, s as DEFS_KEY, t as createZodDto, u as PARENT_HAS_REFS_KEY, v as TYPE_ARRAY_KEY } from "./dto-CHeB-l1i.mjs";
+ import { createRequire } from "node:module";
+ import deepmerge from "deepmerge";
+ import { BadRequestException, HttpCode, HttpStatus, Inject, Injectable, InternalServerErrorException, Optional, SetMetadata, StreamableFile, UseGuards, applyDecorators } from "@nestjs/common";
+@@ -367,6 +368,10 @@ function cleanupSchema({ oldSchemaName, oldOpenapiSchema, version }) {
+ 			delete propertySchema[SELF_REQUIRED_KEY];
+ 			if ("selfRequired" in propertySchema) delete propertySchema.selfRequired;
+ 		}
++		if (TYPE_ARRAY_KEY in propertySchema && Array.isArray(propertySchema[TYPE_ARRAY_KEY])) {
++			propertySchema.type = propertySchema[TYPE_ARRAY_KEY];
++			delete propertySchema[TYPE_ARRAY_KEY];
++		}
+ 		if (USES_THREE_POINT_ONE_SYNTAX_KEY in propertySchema) {
+ 			usesThreePointOneSyntax = Boolean(propertySchema[USES_THREE_POINT_ONE_SYNTAX_KEY]);
+ 			delete propertySchema[USES_THREE_POINT_ONE_SYNTAX_KEY];
+@@ -419,6 +424,7 @@ function cleanupSchema({ oldSchemaName, oldOpenapiSchema, version }) {
+ 		delete newOpenapiSchema.properties.root[UNWRAP_ROOT_KEY];
+ 		if (replaceRoot) newOpenapiSchema = newOpenapiSchema.properties.root;
+ 	}
++	if (additionalNewSchemas[newSchemaName] && newOpenapiSchema.$ref === `#/components/schemas/${newSchemaName}`) newOpenapiSchema = additionalNewSchemas[newSchemaName];
+ 	if (additionalNewSchemas[newSchemaName] && !isDeepStrictEqual(additionalNewSchemas[newSchemaName], newOpenapiSchema)) throw new Error(`[cleanupOpenApiDoc] Found multiple schemas with name \`${newSchemaName}\`.  Please review your schemas to ensure that you are not using the same schema name for different schemas`);
+ 	return {
+ 		newSchema: newOpenapiSchema,

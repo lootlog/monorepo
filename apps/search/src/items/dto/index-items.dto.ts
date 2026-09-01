@@ -13,6 +13,10 @@ const indexItemSchema = z.object({
 });
 
 export const indexItemsPayloadSchema = z.array(indexItemSchema);
+export const compiledIndexItemsPayloadSchema = z.compile(
+  indexItemsPayloadSchema,
+  { strict: true },
+);
 
 export type IndexItemsDto = {
   items: z.infer<typeof indexItemsPayloadSchema>;
