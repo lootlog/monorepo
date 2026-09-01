@@ -1,4 +1,4 @@
-import { AuthGuard } from "@lootlog/nest-shared";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import {
   Controller,
@@ -18,7 +18,6 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { Permission } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { PinnedEventResponseDto } from "./dto/pinned-event-response.dto.js";
 import { PinnedEventsService } from "./services/pinned-events.service.js";
@@ -30,7 +29,7 @@ import { PinnedEventsService } from "./services/pinned-events.service.js";
 export class EventsPinsController {
   constructor(private readonly pinnedEventsService: PinnedEventsService) {}
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/pinned-events")
   @ApiOperation({
@@ -49,7 +48,7 @@ export class EventsPinsController {
     return this.pinnedEventsService.listPinnedEvents(userId, guildData.id);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Put("/guilds/:guildId/events/:eventId/pin")
   @ApiOperation({
@@ -71,7 +70,7 @@ export class EventsPinsController {
     return this.pinnedEventsService.pinEvent(userId, guildData.id, eventId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId/pin")
   @HttpCode(204)

@@ -24,6 +24,7 @@ import {
   Profession,
   TimerHistoryAction,
 } from "#src/generated/prisma/client";
+import { createAccessPolicy } from "@lootlog/access-policy";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -1589,7 +1590,7 @@ describe("TimersService", () => {
         "user123",
         { world: "test-world" },
         { id: "guild1" } as never,
-        [Permission.OWNER],
+        createAccessPolicy({ capabilities: [Permission.OWNER] }),
         [],
       );
 
@@ -1641,7 +1642,9 @@ describe("TimersService", () => {
         "test-world",
         timer.timerKey,
         {
-          permissions: [Permission.OWNER],
+          accessPolicy: createAccessPolicy({
+            capabilities: [Permission.OWNER],
+          }),
           roles: [],
         },
       );

@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingsLayout } from "@/components/layout/settings-layout";
 import {
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/settings")({
         permissionsQueryOptions,
       );
 
-      if (!canManageGuild(permissions)) {
+      if (!canManageGuild(createAccessPolicy({ capabilities: permissions }))) {
         throwForbiddenRouteError();
       }
 

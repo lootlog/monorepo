@@ -33,6 +33,7 @@
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^9.0.2",
     "@keyv/redis": "^5.1.6",
+    "@lootlog/access-policy": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",

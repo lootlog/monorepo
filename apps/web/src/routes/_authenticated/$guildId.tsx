@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/types";
+import { Capability, createAccessPolicy } from "@lootlog/access-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
 import { GuildRouteError } from "@/components/router/guild-route-error";
@@ -75,9 +75,9 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
           ),
         ]);
 
+        const accessPolicy = createAccessPolicy({ capabilities: permissions });
         const canAccessGuild =
-          permissions.includes(Permission.OWNER) ||
-          Boolean(guildMember?.active);
+          accessPolicy.allows(Capability.OWNER) || Boolean(guildMember?.active);
 
         if (!canAccessGuild) {
           throwForbiddenRouteError();
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
         return {
           guild,
           guildMember,
-          permissions,
+          accessPolicy,
         };
       } catch (error) {
         rethrowNotFoundOrError(error);

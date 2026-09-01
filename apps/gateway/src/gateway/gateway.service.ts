@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/access-policy";
 import { Injectable, Logger } from "@nestjs/common";
 import { canViewLoot } from "@lootlog/loot-visibility";
 import type { PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
@@ -23,7 +24,7 @@ import type { SendPartyGatheringDto } from "#src/gateway/dto/send-party-gatherin
 import type { VolunteerNotificationDto } from "#src/gateway/dto/volunteer-notification.dto";
 import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
 import { Gateway } from "#src/gateway/gateway";
-import { isAdministrativeUserFromRoles } from "#src/guilds/utils/is-administrative-user";
+import { createGuildAccessPolicy } from "#src/guilds/utils/access-policy.adapter";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { UserGuildData } from "#src/guilds/types/guild.types";
@@ -112,7 +113,10 @@ export class GatewayService {
 
             // Owner/Admin bypass level checks
             const isOwner = guildData.guild.ownerId === socket.data.discordId;
-            if (isOwner || isAdministrativeUserFromRoles(guildData.roles)) {
+            if (
+              isOwner ||
+              createGuildAccessPolicy(guildData.roles).allows(Capability.ADMIN)
+            ) {
               socket.emit(event, data);
               return;
             }
@@ -297,7 +301,8 @@ export class GatewayService {
 
           const isOwner = guildData.guild.ownerId === socket.data.discordId;
           const isOwnerOrAdmin =
-            isOwner || isAdministrativeUserFromRoles(guildData.roles);
+            isOwner ||
+            createGuildAccessPolicy(guildData.roles).allows(Capability.ADMIN);
 
           if (
             routing.npcLevel !== undefined &&

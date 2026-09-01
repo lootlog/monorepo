@@ -41,7 +41,9 @@ vi.mock("@/hooks/auth/use-session", () => ({
 }));
 
 vi.mock("@/hooks/api/use-guild-permissions", () => ({
-  useGuildPermissions: () => ({ data: [] }),
+  useGuildPermissions: () => ({
+    data: { allows: () => false, allowsAny: () => false },
+  }),
 }));
 
 vi.mock("./components/dialogs/event-participation-confirmation-dialog", () => ({

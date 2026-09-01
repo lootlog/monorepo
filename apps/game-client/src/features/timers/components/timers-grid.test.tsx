@@ -114,7 +114,7 @@ describe("TimersGrid", () => {
       1,
       expect.objectContaining({
         guildIds: ["guild-1"],
-        guildPermissions: ["LOOTLOG_TIMERS_DELETE"],
+        accessPolicy: expect.anything(),
         guildNamesById: { "guild-1": "Alpha" },
         settingsKey: "guild-1",
         isHidden: false,
@@ -158,7 +158,7 @@ describe("TimersGrid", () => {
     expect(singleTimerSpy).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining({
-        guildPermissions: ["LOOTLOG_TIMERS_RESET"],
+        accessPolicy: expect.anything(),
       }),
     );
   });

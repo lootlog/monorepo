@@ -60,7 +60,7 @@ export function ReservationsSchedule() {
   const guildId = useGuildId() ?? "";
   const { containerRef, isCompact } = useCompactScheduleLayout();
   const isOwner = useIsOwner();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
   const findingNearestFreeSlotRef = useRef(false);
@@ -101,8 +101,8 @@ export function ReservationsSchedule() {
   const canManageReservationSettings =
     isOwner ||
     Boolean(
-      permissions?.includes(Permission.OWNER) ||
-      permissions?.includes(Permission.ADMIN),
+      accessPolicy?.allows(Permission.OWNER) ||
+      accessPolicy?.allows(Permission.ADMIN),
     );
   const cancelMutation = useDeleteReservation({
     mutation: {

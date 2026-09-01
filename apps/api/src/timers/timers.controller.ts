@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   Body,
   Controller,
@@ -25,11 +26,10 @@ import {
   type Role,
 } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { TimerResponseDto } from "#src/shared/dto/timer-response.dto";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { CreateManualTimerDto } from "#src/timers/dto/create-manual-timer.dto";
 import { CreateAutoTimerResponseDto } from "#src/timers/dto/create-auto-timer-response.dto";
@@ -96,7 +96,7 @@ export class TimersController {
     });
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/timers")
   @ApiOperation({
@@ -121,7 +121,7 @@ export class TimersController {
   getTimers(
     @Query("world") world: string,
     @UserId() userId: string,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
@@ -129,12 +129,12 @@ export class TimersController {
       userId,
       { world },
       guild,
-      permissions,
+      accessPolicy,
       roles,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/timers/npcs/search")
   @ApiOperation({
@@ -196,7 +196,7 @@ export class TimersController {
     return this.timersService.createAutoTimer(discordId, userId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_RESET)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_RESET)
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/timers/:timerIdentifier/reset")
   @ApiOperation({
@@ -233,7 +233,7 @@ export class TimersController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/timers/:timerIdentifier")
   @ApiOperation({
@@ -270,7 +270,7 @@ export class TimersController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/timers/:timerIdentifier/history")
   @ApiOperation({
@@ -295,17 +295,17 @@ export class TimersController {
     @Query("limit") limit: string | undefined,
     @Param("guildId") guildId: string,
     @Param("timerIdentifier") timerIdentifier: string,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
   ) {
     return this.timersService.getTimerHistory(guildId, world, timerIdentifier, {
       limit: limit ? Number.parseInt(limit, 10) : undefined,
-      permissions,
+      accessPolicy,
       roles,
     });
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/timers/history/:historyEntryId/restore")
   @ApiOperation({
@@ -335,7 +335,7 @@ export class TimersController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/timers/manual")
   @ApiOperation({

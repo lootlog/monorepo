@@ -60,7 +60,7 @@ export const MembersSettingsContent = () => {
   const { data: guildRoles } = useRolesControllerGetGuildRoles({
     guildId: routeGuildId ?? "",
   });
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const resolvedGuildId = resolveMemberPresenceGuildId(guild);
   const { data: memberActivityStats } = useQuery(
     memberActivityStatsQueryOptions(resolvedGuildId),
@@ -82,8 +82,8 @@ export const MembersSettingsContent = () => {
   }, [guildRoles]);
   const isMobile = useIsMobile();
   const canManageMembers = Boolean(
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER),
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER),
   );
 
   const memberStats = useMemo<MembersStats>(() => {

@@ -15,7 +15,7 @@ export class RedisIoAdapter extends IoAdapter {
   private readonly gatewayAuthService: GatewayAuthService;
 
   constructor(app: INestApplication) {
-    super(app);
+    super(app.getHttpServer());
     this.gatewayAuthService = app.get(GatewayAuthService);
   }
 

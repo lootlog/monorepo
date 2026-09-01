@@ -8,8 +8,7 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { Permission } from "#src/generated/prisma/client";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { RefreshStatsCardResponseDto } from "./dto/refresh-stats-card-response.dto.js";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
@@ -21,7 +20,7 @@ import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.j
 export class AuthenticatedGuildStatsCardController {
   constructor(private readonly statsCardService: PublicGuildStatsCardService) {}
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":guildId/stats-card/refresh")
   @HttpCode(200)

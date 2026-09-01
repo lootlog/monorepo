@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -21,13 +22,12 @@ import { TimerLiveTile } from "./timer-live-tile";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
-import type { GuildsControllerGetGuildPermissions200Item } from "@lootlog/api-client/models/main/guilds-controller-get-guild-permissions200-item";
 import { useShallow } from "zustand/react/shallow";
 
 type SingleTimerProps = {
   guildIds: string[];
   guildNamesById: Record<string, string>;
-  guildPermissions: GuildsControllerGetGuildPermissions200Item[];
+  accessPolicy: AccessPolicy | undefined;
   timer: TimerWithTimeLeft;
   settingsKey: string;
   isHidden?: boolean;
@@ -36,7 +36,7 @@ type SingleTimerProps = {
 export const SingleTimer: FC<SingleTimerProps> = ({
   guildIds,
   guildNamesById,
-  guildPermissions,
+  accessPolicy,
   timer,
   settingsKey,
   isHidden = false,
@@ -58,13 +58,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     })),
   );
 
-  const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-    guildPermissions.includes(perm),
-  );
+  const canDelete =
+    accessPolicy?.allowsAny(REQUIRED_DELETE_PERMISSIONS) ?? false;
 
-  const canReset = REQUIRED_RESET_PERMISSIONS.some((perm) =>
-    guildPermissions.includes(perm),
-  );
+  const canReset = accessPolicy?.allowsAny(REQUIRED_RESET_PERMISSIONS) ?? false;
 
   const {
     isPinned,

@@ -34,6 +34,7 @@
     "@discordjs/rest": "^2.6.3",
     "@fastify/static": "^10.1.3",
     "@golevelup/nestjs-rabbitmq": "^9.0.2",
+    "@lootlog/access-policy": "workspace:*",
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",

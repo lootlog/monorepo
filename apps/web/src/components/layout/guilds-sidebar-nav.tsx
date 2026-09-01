@@ -58,10 +58,10 @@ function getEventsIcon(hasActiveEvents: boolean) {
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
   const matches = useMatches();
-  const navigation = resolveAppNavigation({ matches, permissions });
+  const navigation = resolveAppNavigation({ matches, accessPolicy });
   const eventsNavigationItem = navigation.sidebarItems.find(
     ({ id }) => id === "organization-events",
   );

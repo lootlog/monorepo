@@ -1,18 +1,13 @@
-export const canWriteGuildDocs = (permissions: readonly string[] | undefined) =>
-  Boolean(
-    permissions?.includes("LOOTLOG_DOCS_WRITE") ||
-    permissions?.includes("ADMIN") ||
-    permissions?.includes("OWNER"),
-  );
+import { Capability, type AccessPolicy } from "@lootlog/access-policy";
 
-export const canManageGuildDocs = (
-  permissions: readonly string[] | undefined,
-) => Boolean(permissions?.includes("ADMIN") || permissions?.includes("OWNER"));
+export const canWriteGuildDocs = (accessPolicy: AccessPolicy | undefined) =>
+  accessPolicy?.allows(Capability.LOOTLOG_DOCS_WRITE) ?? false;
 
-export const canReadGuildDocs = (permissions: readonly string[] | undefined) =>
-  Boolean(
-    permissions?.includes("LOOTLOG_DOCS_READ") ||
-    permissions?.includes("LOOTLOG_DOCS_WRITE") ||
-    permissions?.includes("ADMIN") ||
-    permissions?.includes("OWNER"),
-  );
+export const canManageGuildDocs = (accessPolicy: AccessPolicy | undefined) =>
+  accessPolicy?.allows(Capability.ADMIN) ?? false;
+
+export const canReadGuildDocs = (accessPolicy: AccessPolicy | undefined) =>
+  accessPolicy?.allowsAny([
+    Capability.LOOTLOG_DOCS_READ,
+    Capability.LOOTLOG_DOCS_WRITE,
+  ]) ?? false;

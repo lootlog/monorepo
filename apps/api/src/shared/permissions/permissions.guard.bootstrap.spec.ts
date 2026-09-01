@@ -3,6 +3,7 @@ import { mockFn } from "#src/test/mock-fn";
 import { MODULE_METADATA } from "@nestjs/common/constants";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import { RequiresCapabilities } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Permission } from "#src/generated/prisma/client";
 import { PrismaService } from "#src/db/prisma.service";
@@ -10,7 +11,6 @@ import { MembersModule } from "#src/members/members.module";
 import { MembersService } from "#src/members/members.service";
 import { MemberContextModule } from "./member-context.module.js";
 import { MemberContextService } from "./member-context.service.js";
-import { Permissions } from "./permissions.decorator.js";
 import { PermissionsGuard } from "./permissions.guard.js";
 
 const mockLogger = {
@@ -23,7 +23,7 @@ const mockLogger = {
 @Controller("guarded")
 class GuardedPermissionsController {
   @Get()
-  @Permissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   read() {
     return true;

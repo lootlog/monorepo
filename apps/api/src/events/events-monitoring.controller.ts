@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   Body,
   Controller,
@@ -29,10 +30,9 @@ import {
 } from "./dto/event-monitoring-response.dto.js";
 import { EventsService } from "./events.service.js";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
@@ -42,7 +42,7 @@ import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 export class EventsMonitoringController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/coordination")
   @ApiOperation({
@@ -64,7 +64,7 @@ export class EventsMonitoringController {
     return this.eventsService.getCoordination(guildData.id, eventId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId/timeline")
   @ApiOperation({
@@ -89,14 +89,14 @@ export class EventsMonitoringController {
     @Param("heroId") heroId: string,
     @Param("killId") killId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getKillTimelineData(
@@ -107,7 +107,7 @@ export class EventsMonitoringController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/coverage-gaps")
   @ApiOperation({
@@ -128,14 +128,14 @@ export class EventsMonitoringController {
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getHeroCoverageGaps(
@@ -145,7 +145,7 @@ export class EventsMonitoringController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/maps/:mapId/coverage-gaps")
   @ApiOperation({
@@ -169,7 +169,7 @@ export class EventsMonitoringController {
     return this.eventsService.getMapCoverageGaps(guildData.id, eventId, mapId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/maps/:mapId/active-gap")
   @ApiOperation({
@@ -193,7 +193,7 @@ export class EventsMonitoringController {
     return this.eventsService.getActiveGapForMap(guildData.id, eventId, mapId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/active-gaps")
   @ApiOperation({
@@ -214,14 +214,14 @@ export class EventsMonitoringController {
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getActiveGapsForHero(
@@ -231,7 +231,7 @@ export class EventsMonitoringController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/presence-stats")
   @ApiOperation({
@@ -253,14 +253,14 @@ export class EventsMonitoringController {
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getHeroPresenceStats(
@@ -270,7 +270,7 @@ export class EventsMonitoringController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/respawn-config")
   @ApiOperation({
@@ -292,14 +292,14 @@ export class EventsMonitoringController {
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getHeroRespawnConfig(
@@ -309,7 +309,7 @@ export class EventsMonitoringController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/close-respawn-window")
   @HttpCode(200)
@@ -349,7 +349,7 @@ export class EventsMonitoringController {
     return { success: true };
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/open-respawn-window")
   @HttpCode(200)

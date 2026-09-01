@@ -1,5 +1,5 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { DocsController } from "./docs.controller.js";
 
 describe("DocsController", () => {
@@ -32,13 +32,13 @@ describe("DocsController", () => {
 
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.getDocuments,
       ),
     ).toEqual(expected);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.getDocument,
       ),
     ).toEqual(expected);
@@ -49,31 +49,37 @@ describe("DocsController", () => {
 
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.createDocument,
       ),
     ).toEqual(expected);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.updateDocument,
       ),
     ).toEqual(expected);
     expect(
-      Reflect.getMetadata(PERMISSIONS_KEY, DocsController.prototype.getHistory),
-    ).toEqual(expected);
-    expect(
-      Reflect.getMetadata(PERMISSIONS_KEY, DocsController.prototype.getTrash),
+      Reflect.getMetadata(
+        REQUIRED_CAPABILITIES_KEY,
+        DocsController.prototype.getHistory,
+      ),
     ).toEqual(expected);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
+        DocsController.prototype.getTrash,
+      ),
+    ).toEqual(expected);
+    expect(
+      Reflect.getMetadata(
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.deleteDocument,
       ),
     ).toEqual(expected);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.getHistorySnapshot,
       ),
     ).toEqual(expected);
@@ -84,13 +90,13 @@ describe("DocsController", () => {
 
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.restoreDocument,
       ),
     ).toEqual(expected);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         DocsController.prototype.purgeDocument,
       ),
     ).toEqual(expected);
