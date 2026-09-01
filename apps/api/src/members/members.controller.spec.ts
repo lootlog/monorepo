@@ -1,6 +1,7 @@
 import { ForbiddenException } from "@nestjs/common";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
+import { createAccessPolicy } from "@lootlog/access-policy";
 import {
   type Guild,
   type Member,
@@ -205,9 +206,10 @@ describe("MembersController", () => {
       ];
       membersService.getGuildMembers.mockResolvedValue(members);
 
-      const result = await controller.getGuildMembers(mockGuild, [
-        Permission.LOOTLOG_ACCESS,
-      ]);
+      const result = await controller.getGuildMembers(
+        mockGuild,
+        createAccessPolicy({ capabilities: [Permission.LOOTLOG_ACCESS] }),
+      );
 
       expect(result).toEqual(members);
       expect(membersService.getGuildMembers).toHaveBeenCalledWith(
@@ -219,9 +221,10 @@ describe("MembersController", () => {
     it("should return empty array when no members found", async () => {
       membersService.getGuildMembers.mockResolvedValue([]);
 
-      const result = await controller.getGuildMembers(mockGuild, [
-        Permission.LOOTLOG_ACCESS,
-      ]);
+      const result = await controller.getGuildMembers(
+        mockGuild,
+        createAccessPolicy({ capabilities: [Permission.LOOTLOG_ACCESS] }),
+      );
 
       expect(result).toEqual([]);
     });
@@ -232,7 +235,7 @@ describe("MembersController", () => {
 
       const result = await controller.getGuildMembers(
         mockGuild,
-        [Permission.ADMIN],
+        createAccessPolicy({ capabilities: [Permission.ADMIN] }),
         "true",
       );
 
@@ -247,7 +250,7 @@ describe("MembersController", () => {
       expect(() =>
         controller.getGuildMembers(
           mockGuild,
-          [Permission.LOOTLOG_ACCESS],
+          createAccessPolicy({ capabilities: [Permission.LOOTLOG_ACCESS] }),
           "true",
         ),
       ).toThrow(ForbiddenException);

@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { createAccessPolicy } from "@lootlog/access-policy";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { EventsRankingController } from "./events-ranking.controller.js";
 
 describe("EventsRankingController", () => {
@@ -33,19 +34,19 @@ describe("EventsRankingController", () => {
   it("declares permissions metadata for read/write/owner-admin endpoints", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsRankingController.prototype.getRanking,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsRankingController.prototype.confirmParticipationForKill,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_WRITE]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsRankingController.prototype.updateRankingPoints,
       ),
     ).toEqual([Permission.OWNER, Permission.ADMIN]);
@@ -64,9 +65,14 @@ describe("EventsRankingController", () => {
     });
 
     await expect(
-      controller.getRanking({ id: "guild-1" }, "event-1", [] as never, [
-        Permission.LOOTLOG_EVENTS_READ,
-      ]),
+      controller.getRanking(
+        { id: "guild-1" },
+        "event-1",
+        [] as never,
+        createAccessPolicy({
+          capabilities: [Permission.LOOTLOG_EVENTS_READ],
+        }),
+      ),
     ).resolves.toEqual([
       {
         id: "ranking-1",
@@ -103,9 +109,12 @@ describe("EventsRankingController", () => {
     );
 
     await expect(
-      controller.getRanking({ id: "guild-1" }, "event-1", [] as never, [
-        Permission.OWNER,
-      ]),
+      controller.getRanking(
+        { id: "guild-1" },
+        "event-1",
+        [] as never,
+        createAccessPolicy({ capabilities: [Permission.OWNER] }),
+      ),
     ).resolves.toEqual([
       {
         id: "ranking-1",
@@ -137,9 +146,12 @@ describe("EventsRankingController", () => {
     });
 
     await expect(
-      controller.getRanking({ id: "guild-1" }, "event-1", [] as never, [
-        Permission.OWNER,
-      ]),
+      controller.getRanking(
+        { id: "guild-1" },
+        "event-1",
+        [] as never,
+        createAccessPolicy({ capabilities: [Permission.OWNER] }),
+      ),
     ).resolves.toEqual([]);
     expect(mockEventsService.getRankingEditHistories).not.toHaveBeenCalled();
   });
@@ -180,7 +192,9 @@ describe("EventsRankingController", () => {
         "event-1",
         "berufs",
         [] as never,
-        [Permission.LOOTLOG_TIMERS_READ],
+        createAccessPolicy({
+          capabilities: [Permission.LOOTLOG_TIMERS_READ],
+        }),
       ),
     ).resolves.toEqual([{ npc: { lvl: 120 } }]);
   });
@@ -191,11 +205,13 @@ describe("EventsRankingController", () => {
         { id: "guild-1" },
         "event-1",
         "not-a-number",
+        createAccessPolicy({
+          capabilities: [Permission.LOOTLOG_EVENTS_READ],
+        }),
         undefined,
         undefined,
         undefined,
         [] as never,
-        [Permission.LOOTLOG_EVENTS_READ],
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });

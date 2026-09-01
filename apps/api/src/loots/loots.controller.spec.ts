@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
+import { createAccessPolicy } from "@lootlog/access-policy";
 import {
   LootSource,
   Permission,
@@ -263,6 +264,9 @@ describe("LootsController", () => {
     };
 
     it("should fetch loots for guild", async () => {
+      const accessPolicy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+      });
       const mockLoots = [
         {
           id: 1,
@@ -281,7 +285,7 @@ describe("LootsController", () => {
       service.fetchLootsByGuildId.mockResolvedValue(mockLoots);
 
       const result = await controller.fetchLootsByGuildId(
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [mockRole],
         mockGuild,
         params,
@@ -289,7 +293,7 @@ describe("LootsController", () => {
 
       expect(service.fetchLootsByGuildId).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [mockRole],
         params,
       );
@@ -300,7 +304,9 @@ describe("LootsController", () => {
       service.fetchLootsByGuildId.mockResolvedValue([]);
 
       const result = await controller.fetchLootsByGuildId(
-        [Permission.LOOTLOG_LOOTS_READ],
+        createAccessPolicy({
+          capabilities: [Permission.LOOTLOG_LOOTS_READ],
+        }),
         [mockRole],
         mockGuild,
         params,
@@ -312,6 +318,9 @@ describe("LootsController", () => {
 
   describe("resolveLootItemByHid", () => {
     it("should resolve a visible loot item by HID", async () => {
+      const accessPolicy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+      });
       const query = { hid: "item1", world: "testworld" };
       const mockItem = {
         id: 1,
@@ -328,7 +337,7 @@ describe("LootsController", () => {
       service.resolveLootItemByHid.mockResolvedValue(mockItem);
 
       const result = await controller.resolveLootItemByHid(
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [mockRole],
         mockGuild,
         query,
@@ -336,7 +345,7 @@ describe("LootsController", () => {
 
       expect(service.resolveLootItemByHid).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [mockRole],
         query,
       );
@@ -348,6 +357,9 @@ describe("LootsController", () => {
     const lootId = 1;
 
     it("should fetch loot by id for guild with member visibility context", async () => {
+      const accessPolicy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+      });
       const mockLoot = {
         id: lootId,
         uniqueId: "unique1",
@@ -357,14 +369,14 @@ describe("LootsController", () => {
 
       const result = await controller.fetchLootById(
         lootId,
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [mockRole],
         mockGuild,
       );
 
       expect(service.fetchLootById).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [mockRole],
         lootId,
       );
@@ -376,6 +388,9 @@ describe("LootsController", () => {
     const lootId = 1;
 
     it("should get comments for loot", async () => {
+      const accessPolicy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+      });
       const mockComments = [
         {
           id: 1,
@@ -397,7 +412,7 @@ describe("LootsController", () => {
 
       const result = await controller.getComments(
         lootId,
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [],
         mockGuild,
       );
@@ -405,7 +420,7 @@ describe("LootsController", () => {
       expect(service.getComments).toHaveBeenCalledWith({
         lootId,
         guild: mockGuild,
-        permissions: [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         roles: [],
       });
       expect(result).toEqual(mockComments);
@@ -418,6 +433,9 @@ describe("LootsController", () => {
     const body: CreateCommentDto = { content: "Test comment" };
 
     it("should create a comment", async () => {
+      const accessPolicy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+      });
       const mockComment = {
         id: 1,
         content: "Test comment",
@@ -433,7 +451,7 @@ describe("LootsController", () => {
         discordId,
         lootId,
         body,
-        [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         [],
         mockGuild,
       );
@@ -443,7 +461,7 @@ describe("LootsController", () => {
         lootId,
         body,
         guild: mockGuild,
-        permissions: [Permission.LOOTLOG_LOOTS_READ],
+        accessPolicy,
         roles: [],
       });
       expect(result).toEqual(mockComment);
@@ -455,14 +473,16 @@ describe("LootsController", () => {
 
     it("should archive an Organization Loot record", async () => {
       const discordId = "discord123";
-      const permissions = [Permission.LOOTLOG_LOOTS_ARCHIVE];
+      const accessPolicy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_ARCHIVE],
+      });
       const roles = [mockRole];
       service.archiveLoot.mockResolvedValue(undefined);
 
       await controller.deleteLoot(
         discordId,
         lootId,
-        permissions,
+        accessPolicy,
         roles,
         mockGuild,
       );
@@ -471,7 +491,7 @@ describe("LootsController", () => {
         discordId,
         guild: mockGuild,
         lootId,
-        permissions,
+        accessPolicy,
         roles,
       });
     });

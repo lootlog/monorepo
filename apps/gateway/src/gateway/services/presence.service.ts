@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/access-policy";
 import { Injectable, Logger } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import type { Server } from "socket.io";
@@ -13,7 +14,7 @@ import {
   hasOnlinePlayersAccess,
   parseRoomName,
 } from "#src/gateway/utils/room-utils";
-import { isAdministrativeUserFromRoles } from "#src/guilds/utils/is-administrative-user";
+import { createGuildAccessPolicy } from "#src/guilds/utils/access-policy.adapter";
 import type {
   Socket,
   SocketUser,
@@ -604,7 +605,7 @@ export class PresenceService {
     const isOwner = guildData.guild.ownerId === viewer.data.discordId;
     return (
       isOwner ||
-      isAdministrativeUserFromRoles(guildData.roles) ||
+      createGuildAccessPolicy(guildData.roles).allows(Capability.ADMIN) ||
       hasOnlinePlayersAccess(guildData.roles)
     );
   }

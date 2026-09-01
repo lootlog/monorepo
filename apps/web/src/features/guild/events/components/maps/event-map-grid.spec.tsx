@@ -12,7 +12,9 @@ vi.mock("react-i18next", () => ({
 }));
 
 vi.mock("@/hooks/api/use-guild-permissions", () => ({
-  useGuildPermissions: () => ({ data: [] }),
+  useGuildPermissions: () => ({
+    data: { allows: () => false, allowsAny: () => false },
+  }),
 }));
 
 vi.mock("./map-card", () => ({

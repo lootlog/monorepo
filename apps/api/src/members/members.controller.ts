@@ -1,3 +1,5 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import {
   Controller,
   ForbiddenException,
@@ -21,12 +23,10 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { MembersService } from "./members.service.js";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
-import { AuthGuard } from "@lootlog/nest-shared";
 import { type Guild, Permission } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import {
   MemberRefreshJobResponseDto,
   NullableMemberRefreshJobResponseDto,
@@ -100,7 +100,7 @@ export class MembersController {
     });
   }
 
-  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @RequiresCapabilities(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Post("/:discordId/refresh")
   @HttpCode(200)
@@ -135,7 +135,7 @@ export class MembersController {
     });
   }
 
-  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @RequiresCapabilities(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Patch("/:discordId/deactivate")
   @ApiOperation({
@@ -168,7 +168,7 @@ export class MembersController {
     });
   }
 
-  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @RequiresCapabilities(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Get("/:discordId/lootlog-config-summary")
   @ApiOperation({
@@ -202,7 +202,7 @@ export class MembersController {
     });
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
@@ -227,13 +227,13 @@ export class MembersController {
   })
   getGuildMembers(
     @GuildData() guild: Guild,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @Query("includeInactive") includeInactive?: string,
   ) {
     const includeInactiveBool = includeInactive === "true";
     if (
       includeInactiveBool &&
-      !this.canReadInactiveMemberDetails(permissions)
+      !this.canReadInactiveMemberDetails(accessPolicy)
     ) {
       throw new ForbiddenException(
         ErrorKey.INCLUDE_INACTIVE_MEMBERS_REQUIRES_ADMIN,
@@ -243,7 +243,7 @@ export class MembersController {
     return this.membersService.getGuildMembers(guild.id, includeInactiveBool);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("references")
   @ApiOperation({
@@ -277,7 +277,7 @@ export class MembersController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("summary")
   @ApiOperation({
@@ -299,7 +299,7 @@ export class MembersController {
     return this.membersService.getGuildMembersSummary(guild.id);
   }
 
-  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @RequiresCapabilities(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Post("refresh-all")
   @ApiOperation({
@@ -320,7 +320,7 @@ export class MembersController {
     return this.membersService.createBulkRefreshJob(guild.id, discordId);
   }
 
-  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @RequiresCapabilities(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Get("refresh-jobs/latest")
   @ApiOperation({
@@ -342,7 +342,7 @@ export class MembersController {
     return this.membersService.getLatestRefreshJob(guild.id);
   }
 
-  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @RequiresCapabilities(Permission.ADMIN, Permission.OWNER)
   @UseGuards(PermissionsGuard)
   @Get("refresh-jobs/:jobId")
   @ApiOperation({
@@ -371,10 +371,10 @@ export class MembersController {
     });
   }
 
-  private canReadInactiveMemberDetails(permissions: Permission[]): boolean {
+  private canReadInactiveMemberDetails(accessPolicy: AccessPolicy): boolean {
     return (
-      permissions.includes(Permission.ADMIN) ||
-      permissions.includes(Permission.OWNER)
+      accessPolicy.allows(Permission.ADMIN) ||
+      accessPolicy.allows(Permission.OWNER)
     );
   }
 }

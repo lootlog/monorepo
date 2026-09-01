@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
@@ -15,6 +16,7 @@ export const useGuildPermissions = () => {
         queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
           guildId: queryGuildId,
         }),
+        select: (capabilities) => createAccessPolicy({ capabilities }),
         staleTime: 30_000,
       },
     },

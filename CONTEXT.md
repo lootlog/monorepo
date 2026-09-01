@@ -93,6 +93,10 @@ A named set of Lootlog capabilities and data filters mapped to one or more
 Discord roles.
 _Avoid_: Discord role, ACL, permission role
 
+**Capability**:
+A named action in Lootlog that an Access policy may grant to a Member.
+_Avoid_: Permission, Discord permission
+
 **Visibility**:
 The result of applying an Access policy to a resource and its metadata.
 _Avoid_: Read permission

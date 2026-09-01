@@ -11,6 +11,7 @@ import {
 } from "./dto/get-kill-stats.dto.js";
 import { KillsController } from "./kills.controller.js";
 import { KillsService } from "./kills.service.js";
+import { createAccessPolicy } from "@lootlog/access-policy";
 
 describe("KillsController", () => {
   let controller: KillsController;
@@ -115,7 +116,9 @@ describe("KillsController", () => {
   describe("getGuildKillStats", () => {
     const guildId = "guild123";
     const mockGuildData = { id: guildId } as { id: string };
-    const permissions = [Permission.LOOTLOG_LOOTS_READ];
+    const accessPolicy = createAccessPolicy({
+      capabilities: [Permission.LOOTLOG_LOOTS_READ],
+    });
     const roles = [mockRole];
 
     it("should fetch guild kill stats", async () => {
@@ -165,7 +168,7 @@ describe("KillsController", () => {
 
       const query = new GetGuildKillStatsDto();
       const result = await controller.getGuildKillStats(
-        permissions,
+        accessPolicy,
         roles,
         query,
         mockGuildData,
@@ -173,7 +176,7 @@ describe("KillsController", () => {
 
       expect(service.getGuildKillStats).toHaveBeenCalledWith(
         guildId,
-        permissions,
+        accessPolicy,
         roles,
         query,
       );
@@ -194,7 +197,7 @@ describe("KillsController", () => {
 
       const query = new GetGuildKillStatsDto();
       const result = await controller.getGuildKillStats(
-        permissions,
+        accessPolicy,
         roles,
         query,
         mockGuildData,
@@ -221,7 +224,7 @@ describe("KillsController", () => {
       query.maxLvl = 400;
 
       await controller.getGuildKillStats(
-        permissions,
+        accessPolicy,
         roles,
         query,
         mockGuildData,
@@ -229,7 +232,7 @@ describe("KillsController", () => {
 
       expect(service.getGuildKillStats).toHaveBeenCalledWith(
         guildId,
-        permissions,
+        accessPolicy,
         roles,
         query,
       );

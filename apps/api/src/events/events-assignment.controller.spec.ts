@@ -1,6 +1,7 @@
 import { ForbiddenException } from "@nestjs/common";
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { createAccessPolicy } from "@lootlog/access-policy";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { EventsAssignmentController } from "./events-assignment.controller.js";
 
 describe("EventsAssignmentController", () => {
@@ -32,25 +33,28 @@ describe("EventsAssignmentController", () => {
   it("declares permissions metadata for manage/write/read endpoints", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsAssignmentController.prototype.assignMember,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_MANAGE]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsAssignmentController.prototype.selfAssignMember,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_WRITE]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsAssignmentController.prototype.getLocations,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
   });
 
   it("self-assigns only after hero access check passes", async () => {
+    const accessPolicy = createAccessPolicy({
+      capabilities: [Permission.LOOTLOG_EVENTS_WRITE],
+    });
     mockEventsService.getMapWithHeroAccessCheck.mockResolvedValue({
       id: "map-1",
     });
@@ -61,7 +65,7 @@ describe("EventsAssignmentController", () => {
       "map-1",
       { id: 12 },
       [] as never,
-      [Permission.LOOTLOG_EVENTS_WRITE],
+      accessPolicy,
     );
 
     expect(mockEventsService.getMapWithHeroAccessCheck).toHaveBeenCalledWith(
@@ -69,7 +73,7 @@ describe("EventsAssignmentController", () => {
       "event-1",
       "map-1",
       [],
-      [Permission.LOOTLOG_EVENTS_WRITE],
+      accessPolicy,
     );
     expect(mockEventsService.assignMemberToMap).toHaveBeenCalledWith(
       "guild-1",
@@ -80,6 +84,9 @@ describe("EventsAssignmentController", () => {
   });
 
   it("propagates a forbidden self-assign when hero access check fails", async () => {
+    const accessPolicy = createAccessPolicy({
+      capabilities: [Permission.LOOTLOG_EVENTS_WRITE],
+    });
     mockEventsService.getMapWithHeroAccessCheck.mockRejectedValue(
       new ForbiddenException(),
     );
@@ -91,12 +98,15 @@ describe("EventsAssignmentController", () => {
         "map-1",
         { id: 12 },
         [] as never,
-        [Permission.LOOTLOG_EVENTS_WRITE],
+        accessPolicy,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it("checks hero visibility before returning locations", async () => {
+    const accessPolicy = createAccessPolicy({
+      capabilities: [Permission.LOOTLOG_EVENTS_READ],
+    });
     mockEventsService.getLocations.mockResolvedValue([{ id: "location-1" }]);
 
     await controller.getLocations(
@@ -104,7 +114,7 @@ describe("EventsAssignmentController", () => {
       "event-1",
       "hero-1",
       [] as never,
-      [Permission.LOOTLOG_EVENTS_READ],
+      accessPolicy,
     );
 
     expect(mockEventsService.getHeroWithAccessCheck).toHaveBeenCalledWith(
@@ -112,7 +122,7 @@ describe("EventsAssignmentController", () => {
       "event-1",
       "hero-1",
       [],
-      [Permission.LOOTLOG_EVENTS_READ],
+      accessPolicy,
     );
   });
 });

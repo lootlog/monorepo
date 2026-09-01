@@ -1,3 +1,4 @@
+import { createAccessPolicy, type Capability } from "@lootlog/access-policy";
 import {
   Injectable,
   CanActivate,
@@ -6,9 +7,8 @@ import {
   Logger,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { REQUIRED_PERMISSIONS_KEY } from "@lootlog/nest-shared";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { PermissionsService } from "#src/permissions/permissions.service";
-import { Permission } from "@lootlog/types";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -20,12 +20,12 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
-      REQUIRED_PERMISSIONS_KEY,
+    const requiredCapabilities = this.reflector.getAllAndOverride<Capability[]>(
+      REQUIRED_CAPABILITIES_KEY,
       [context.getHandler(), context.getClass()],
     );
 
-    if (!requiredPermissions || requiredPermissions.length === 0) {
+    if (!requiredCapabilities || requiredCapabilities.length === 0) {
       return true;
     }
 
@@ -60,26 +60,24 @@ export class PermissionsGuard implements CanActivate {
 
     request.params.guildId = resolvedGuildId;
 
-    const userPermissions =
+    const capabilityGrants =
       await this.permissionsService.getUserGuildPermissions(
         discordId,
         userId,
         resolvedGuildId,
       );
 
-    const hasPermission = requiredPermissions.some((permission) =>
-      userPermissions.includes(permission),
-    );
+    const accessPolicy = createAccessPolicy({ capabilities: capabilityGrants });
 
-    if (!hasPermission) {
+    if (!accessPolicy.allowsAny(requiredCapabilities)) {
       this.logger.log({
         level: "warn",
-        message: "User lacks required permissions",
+        message: "User lacks required capabilities",
         userId,
         discordId,
         guildId: resolvedGuildId,
-        requiredPermissions,
-        userPermissions,
+        requiredCapabilities,
+        capabilityGrants,
       });
       throw new ForbiddenException("Insufficient permissions");
     }

@@ -26,6 +26,7 @@ import { LootStatsService } from "./services/loot-stats.service.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { ExecutionError } from "redlock";
+import { createAccessPolicy, type Capability } from "@lootlog/access-policy";
 import type { CreateLootDto } from "./dto/create-loot.dto.js";
 import type { UpdateLootDto } from "./dto/update-loot.dto.js";
 import type { CreateCommentDto } from "./dto/create-comment-dto.js";
@@ -42,6 +43,9 @@ import {
 } from "#src/generated/prisma/client";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+
+const policy = (...capabilities: Capability[]) =>
+  createAccessPolicy({ capabilities });
 
 describe("Loot modules", () => {
   let service: LootsService;
@@ -1324,7 +1328,7 @@ describe("Loot modules", () => {
     const options = {
       guild: mockGuild,
       lootId: 1,
-      permissions: [Permission.LOOTLOG_LOOTS_READ],
+      accessPolicy: policy(Permission.LOOTLOG_LOOTS_READ),
       roles: [] as Role[],
     };
 
@@ -1388,7 +1392,7 @@ describe("Loot modules", () => {
       discordId: "discord123",
       guild: mockGuild,
       lootId: 1,
-      permissions: [Permission.LOOTLOG_LOOTS_ARCHIVE],
+      accessPolicy: policy(Permission.LOOTLOG_LOOTS_ARCHIVE),
       roles: [] as Role[],
     };
 
@@ -1455,7 +1459,7 @@ describe("Loot modules", () => {
       guild: mockGuild,
       lootId: 1,
       body: { content: "Test comment" } as CreateCommentDto,
-      permissions: [Permission.LOOTLOG_LOOTS_READ],
+      accessPolicy: policy(Permission.LOOTLOG_LOOTS_READ),
       roles: [] as Role[],
     };
 
@@ -2070,7 +2074,7 @@ describe("Loot modules", () => {
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
-        [],
+        policy(),
         [],
         params,
       );
@@ -2114,7 +2118,7 @@ describe("Loot modules", () => {
 
       await service.fetchLootsByGuildId(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        policy(Permission.LOOTLOG_LOOTS_READ),
         [role],
         { ...params, cursor: 123 },
       );
@@ -2179,7 +2183,7 @@ describe("Loot modules", () => {
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
-        [],
+        policy(),
         [],
         params,
       );
@@ -2196,7 +2200,7 @@ describe("Loot modules", () => {
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
-        [],
+        policy(),
         [],
         params,
       );
@@ -2208,7 +2212,7 @@ describe("Loot modules", () => {
     it("should apply ranged loot filters to the Prisma query", async () => {
       prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
-      await service.fetchLootsByGuildId(mockGuild, [], [], {
+      await service.fetchLootsByGuildId(mockGuild, policy(), [], {
         ...params,
         npcLevelMin: 10,
         npcLevelMax: 20,
@@ -2271,7 +2275,7 @@ describe("Loot modules", () => {
     it("should apply item profession filters to the Prisma query", async () => {
       prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
-      await service.fetchLootsByGuildId(mockGuild, [], [], {
+      await service.fetchLootsByGuildId(mockGuild, policy(), [], {
         ...params,
         professions: [Profession.HUNTER, Profession.TRACKER, "INVALID"],
       });
@@ -2316,7 +2320,7 @@ describe("Loot modules", () => {
     it("should ignore invalid item profession filters", async () => {
       prismaService.organizationLootRecord.findMany.mockResolvedValue([]);
 
-      await service.fetchLootsByGuildId(mockGuild, [], [], {
+      await service.fetchLootsByGuildId(mockGuild, policy(), [], {
         ...params,
         professions: ["INVALID"],
       });
@@ -2341,7 +2345,7 @@ describe("Loot modules", () => {
     it("should use item profession filters when counting loots", async () => {
       prismaService.loot.count.mockResolvedValue(0);
 
-      await service.countLootsByGuildId(mockGuild, [], [], {
+      await service.countLootsByGuildId(mockGuild, policy(), [], {
         ...params,
         professions: [Profession.HUNTER],
       });
@@ -2414,7 +2418,7 @@ describe("Loot modules", () => {
 
       const result = await service.resolveLootItemByHid(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        policy(Permission.LOOTLOG_LOOTS_READ),
         [role],
         { hid: "abc123", world: "testworld" },
       );
@@ -2463,7 +2467,7 @@ describe("Loot modules", () => {
     it("should return null when HID is blank", async () => {
       const result = await service.resolveLootItemByHid(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        policy(Permission.LOOTLOG_LOOTS_READ),
         [role],
         { hid: "   ", world: "testworld" },
       );
@@ -2507,7 +2511,7 @@ describe("Loot modules", () => {
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
       const result = await service.fetchLootById(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        policy(Permission.LOOTLOG_LOOTS_READ),
         [role],
         lootId,
       );
@@ -2571,7 +2575,7 @@ describe("Loot modules", () => {
 
       const result = await service.fetchLootById(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        policy(Permission.LOOTLOG_LOOTS_READ),
         [role],
         lootId,
       );

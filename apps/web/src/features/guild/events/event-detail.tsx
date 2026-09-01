@@ -116,17 +116,17 @@ const getEventDateRangeLabel = (
 };
 
 const getEventAccess = (
-  permissions: ReturnType<typeof useGuildPermissions>["data"],
+  accessPolicy: ReturnType<typeof useGuildPermissions>["data"],
 ) => ({
   canManage: Boolean(
-    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER),
+    accessPolicy?.allows(Permission.LOOTLOG_MANAGE) ||
+    accessPolicy?.allows(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER),
   ),
   canDeleteEvent: Boolean(
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER),
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER),
   ),
 });
 
@@ -265,7 +265,7 @@ export const EventDetail = () => {
     },
   );
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
 
   const { data: heroTimers } = useListEventHeroTimers(
     {
@@ -375,7 +375,7 @@ export const EventDetail = () => {
   const heroes = getEventHeroes(event, eventMaps);
   const { scoringMode, scoringRules } = getEventScoring(event);
   const eventDateRangeLabel = getEventDateRangeLabel(event, t);
-  const { canManage, canDeleteEvent } = getEventAccess(permissions);
+  const { canManage, canDeleteEvent } = getEventAccess(accessPolicy);
   const {
     isActive: isEventActive,
     pinActionLabel,

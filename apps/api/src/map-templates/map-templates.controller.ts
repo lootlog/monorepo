@@ -16,8 +16,7 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { Permission } from "#src/generated/prisma/client";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { MapTemplatesService } from "./map-templates.service.js";
 import { CreateMapTemplateDto } from "./dto/create-map-template.dto.js";
@@ -32,7 +31,7 @@ import { MapTemplateResponseDto } from "#src/shared/dto/map-template-response.dt
 export class MapTemplatesController {
   constructor(private readonly mapTemplatesService: MapTemplatesService) {}
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/map-templates")
   @ApiOperation({
@@ -49,7 +48,7 @@ export class MapTemplatesController {
     return this.mapTemplatesService.getTemplates(guildData.id);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/map-templates")
   @ApiOperation({
@@ -69,7 +68,7 @@ export class MapTemplatesController {
     return this.mapTemplatesService.createTemplate(guildData.id, data);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
   @Put("/guilds/:guildId/map-templates/:templateId")
   @ApiOperation({
@@ -95,7 +94,7 @@ export class MapTemplatesController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/map-templates/:templateId")
   @ApiOperation({

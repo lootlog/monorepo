@@ -29,7 +29,7 @@ import {
   canDeleteChatMessage,
   canEditChatMessage,
 } from "#src/chat/chat-message-permissions";
-import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
+import { Capability, createAccessPolicy } from "@lootlog/access-policy";
 
 type MessageRouting = {
   tier: NpcRoutingTier;
@@ -121,7 +121,9 @@ export class ChatService {
       return [];
     }
 
-    const visibleMessages = isAdministrativeUser(viewer.permissions)
+    const visibleMessages = createAccessPolicy({
+      capabilities: viewer.permissions,
+    }).allows(Capability.ADMIN)
       ? messages
       : this.filterMessagesByPermissions(messages, viewer.roles);
 
@@ -140,7 +142,12 @@ export class ChatService {
   async clearMessages(discordId: string, guildId: string) {
     const viewer = await this.getChatMessageViewer(discordId, guildId);
 
-    if (!viewer || !isAdministrativeUser(viewer.permissions)) {
+    if (
+      !viewer ||
+      !createAccessPolicy({ capabilities: viewer.permissions }).allows(
+        Capability.ADMIN,
+      )
+    ) {
       throw new ForbiddenException("Only OWNER or ADMIN can clear chat");
     }
 
@@ -330,7 +337,9 @@ export class ChatService {
     const permissions = guildViewer.permissions ?? [];
     const roles = guildViewer.roles ?? [];
     const canReadChatMessages =
-      isAdministrativeUser(permissions) ||
+      createAccessPolicy({ capabilities: permissions }).allows(
+        Capability.ADMIN,
+      ) ||
       roles.some((role) =>
         role.permissions.includes(Permission.LOOTLOG_CHAT_READ),
       );

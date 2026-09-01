@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import type { FC } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
@@ -52,10 +53,12 @@ export const TimersGrid: FC<TimersGridProps> = ({
       ),
     ),
   });
-  const guildPermissionsById = Object.fromEntries(
+  const accessPoliciesByGuildId = Object.fromEntries(
     timerGuildIds.map((guildId, index) => [
       guildId,
-      guildPermissionQueries[index]?.data ?? [],
+      createAccessPolicy({
+        capabilities: guildPermissionQueries[index]?.data ?? [],
+      }),
     ]),
   );
   const hiddenTimerNames = new Set(hiddenTimers);
@@ -75,7 +78,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
               key={`${timer.timerKey}-${timer.guildId}`}
               guildIds={guildIds}
               guildNamesById={guildNamesById}
-              guildPermissions={guildPermissionsById[timer.guildId] ?? []}
+              accessPolicy={accessPoliciesByGuildId[timer.guildId]}
               timer={timer}
               settingsKey={settingsKey}
               isHidden={isHidden}

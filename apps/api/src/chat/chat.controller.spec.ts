@@ -1,5 +1,5 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { ChatController } from "./chat.controller.js";
 
 describe("ChatController", () => {
@@ -21,13 +21,13 @@ describe("ChatController", () => {
   it("declares permissions metadata for chat read and write endpoints", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         ChatController.prototype.getChatMessages,
       ),
     ).toEqual([Permission.LOOTLOG_CHAT_READ]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         ChatController.prototype.sendChatMessage,
       ),
     ).toEqual([Permission.LOOTLOG_CHAT_WRITE]);

@@ -4,13 +4,13 @@ import {
   SetMetadata,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { REQUIRED_PERMISSIONS_KEY } from "@lootlog/nest-shared";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { Permission } from "@lootlog/types";
 import { PermissionsService } from "#src/permissions/permissions.service";
 import { PermissionsGuard } from "./permissions.guard.js";
 
 class TestPermissionsController {
-  @SetMetadata(REQUIRED_PERMISSIONS_KEY, [Permission.ADMIN])
+  @SetMetadata(REQUIRED_CAPABILITIES_KEY, [Permission.ADMIN])
   protectedRoute() {}
 }
 

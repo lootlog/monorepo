@@ -1,3 +1,7 @@
+import {
+  getEffectiveCapabilities,
+  type AccessPolicy,
+} from "@lootlog/access-policy";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -54,13 +58,14 @@ export class LootStatsService {
 
   async getLootStats(
     guildId: string,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     period: Period = "7d",
     world?: string,
     npcTypes?: string[],
     excludeColossus?: boolean,
   ): Promise<LootStatsResponse> {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     const cacheKey = this.buildCacheKey(
       guildId,
       permissions,

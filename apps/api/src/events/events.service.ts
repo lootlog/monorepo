@@ -1,3 +1,7 @@
+import {
+  getEffectiveCapabilities,
+  type AccessPolicy,
+} from "@lootlog/access-policy";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
@@ -6,7 +10,6 @@ import type {
   EventHeroNpc,
   EventKillPoint,
   Guild,
-  Permission,
   Role,
 } from "#src/generated/prisma/client";
 import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto.js";
@@ -87,9 +90,10 @@ export class EventsService {
   getWrapped(
     guild: Guild,
     eventId: string,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.wrappedService.getWrapped(guild, eventId, permissions, roles);
   }
 
@@ -625,7 +629,8 @@ export class EventsService {
 
   filterEventHeroesByLevel<
     T extends { heroNpcs: Array<{ npcLvl: number | null }> },
-  >(event: T, roles: Role[], permissions: Permission[]): T {
+  >(event: T, roles: Role[], accessPolicy: AccessPolicy): T {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.accessService.filterEventHeroesByLevel(
       event,
       roles,
@@ -635,7 +640,8 @@ export class EventsService {
 
   filterEventsHeroesByLevel<
     T extends { heroNpcs: Array<{ npcLvl: number | null }> },
-  >(events: T[], roles: Role[], permissions: Permission[]): T[] {
+  >(events: T[], roles: Role[], accessPolicy: AccessPolicy): T[] {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.accessService.filterEventsHeroesByLevel(
       events,
       roles,
@@ -646,8 +652,9 @@ export class EventsService {
   isHeroVisibleToUser(
     hero: { npcLvl: number | null },
     roles: Role[],
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
   ): boolean {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.accessService.isHeroVisibleToUser(hero, roles, permissions);
   }
 
@@ -656,8 +663,9 @@ export class EventsService {
     eventId: string,
     heroId: string,
     roles: Role[],
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
   ) {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.accessService.getHeroWithAccessCheck(
       guildId,
       eventId,
@@ -672,8 +680,9 @@ export class EventsService {
     eventId: string,
     mapId: string,
     roles: Role[],
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
   ) {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.accessService.getMapWithHeroAccessCheck(
       guildId,
       eventId,

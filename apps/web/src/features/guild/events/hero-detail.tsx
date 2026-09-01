@@ -123,13 +123,13 @@ const getMapCoverageCountClassName = (
 type EventOverview = EventOverviewResponseDto;
 
 const canManageEvent = (
-  permissions: ReturnType<typeof useGuildPermissions>["data"],
+  accessPolicy: ReturnType<typeof useGuildPermissions>["data"],
 ) =>
   Boolean(
-    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER),
+    accessPolicy?.allows(Permission.LOOTLOG_MANAGE) ||
+    accessPolicy?.allows(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER),
   );
 
 const getEventHero = (
@@ -287,7 +287,7 @@ export const HeroDetail = () => {
   const [closeWindowOpen, setCloseWindowOpen] = useState(false);
   const [openWindowOpen, setOpenWindowOpen] = useState(false);
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const { data: currentMember } = useMembersControllerGetMe(
     { guildId: queryGuildId },
     {
@@ -379,7 +379,7 @@ export const HeroDetail = () => {
     },
   });
 
-  const canManage = canManageEvent(permissions);
+  const canManage = canManageEvent(accessPolicy);
 
   const {
     data: event,

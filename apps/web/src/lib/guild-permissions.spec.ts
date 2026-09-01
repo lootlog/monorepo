@@ -1,18 +1,28 @@
-import { Permission } from "@lootlog/types";
+import { Capability, createAccessPolicy } from "@lootlog/access-policy";
 import { describe, expect, it } from "vitest";
 import { canManageGuild } from "./guild-permissions";
 
 describe("canManageGuild", () => {
   it("returns true for admins", () => {
-    expect(canManageGuild([Permission.ADMIN])).toBe(true);
+    expect(
+      canManageGuild(createAccessPolicy({ capabilities: [Capability.ADMIN] })),
+    ).toBe(true);
   });
 
   it("returns true for owners", () => {
-    expect(canManageGuild([Permission.OWNER])).toBe(true);
+    expect(
+      canManageGuild(createAccessPolicy({ capabilities: [Capability.OWNER] })),
+    ).toBe(true);
   });
 
   it("returns false without management permissions", () => {
-    expect(canManageGuild([Permission.LOOTLOG_LOOTS_READ])).toBe(false);
+    expect(
+      canManageGuild(
+        createAccessPolicy({
+          capabilities: [Capability.LOOTLOG_LOOTS_READ],
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("returns false for empty permissions", () => {

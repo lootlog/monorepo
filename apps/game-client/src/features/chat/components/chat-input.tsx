@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { Permission } from "@lootlog/types";
 import { Label } from "@/components/ui/label";
 import type { MessageType } from "@/api/chat.api";
@@ -206,16 +207,13 @@ const shouldLoadChatMentionData = (
   isCommandInput: boolean,
 ) => selectedGuildId !== "" && hasMentionInput && !isCommandInput;
 
-const getChatMentionQueryData = <PermissionItem, MemberItem, RoleItem>({
-  permissions,
+const getChatMentionQueryData = <MemberItem, RoleItem>({
   members,
   roles,
 }: {
-  permissions: PermissionItem[] | undefined;
   members: MemberItem[] | undefined;
   roles: RoleItem[] | undefined;
 }) => ({
-  permissions: permissions ?? [],
   members: members ?? [],
   roles: roles ?? [],
 });
@@ -318,12 +316,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     },
   );
   const isFetchingRoleNames = guildRolesQuery.isFetching;
-  const {
-    permissions: guildPermissions,
-    members: guildMembers,
-    roles: guildRoles,
-  } = getChatMentionQueryData({
-    permissions: guildPermissionsQuery.data,
+  const { members: guildMembers, roles: guildRoles } = getChatMentionQueryData({
     members: guildMembersQuery.data,
     roles: guildRolesQuery.data,
   });
@@ -342,9 +335,10 @@ export const ChatInput: FC<ChatInputProps> = ({
   );
   const memberSuggestions = getChatMentionMemberSuggestions(guildMembers);
   const roleSuggestions = getChatMentionRoleSuggestions(guildRoles);
-  const canClearChat = REQUIRED_CLEAR_CHAT_PERMISSIONS.some((permission) =>
-    guildPermissions.includes(permission),
-  );
+  const accessPolicy = createAccessPolicy({
+    capabilities: guildPermissionsQuery.data ?? [],
+  });
+  const canClearChat = accessPolicy.allowsAny(REQUIRED_CLEAR_CHAT_PERMISSIONS);
   const commandSuggestions = getCommandSuggestions(tCommand, {
     includeClearChatCommand: canClearChat,
   });

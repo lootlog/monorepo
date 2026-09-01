@@ -45,7 +45,7 @@ const MemberSettingsDetailPageContent = () => {
     },
   );
   const { data: guild } = useGuildsControllerGetGuildById({ guildId });
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const resolvedGuildId = resolveMemberPresenceGuildId(guild);
   const { data: memberActivityStats } = useQuery(
     memberActivityStatsQueryOptions(resolvedGuildId),
@@ -63,8 +63,8 @@ const MemberSettingsDetailPageContent = () => {
   const [updatedMember, setUpdatedMember] = useState<GuildMember | null>(null);
   const member = updatedMember ?? queryMember;
   const canManageMembers = Boolean(
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER),
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER),
   );
 
   useEffect(() => {

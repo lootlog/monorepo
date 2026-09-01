@@ -17,6 +17,9 @@
     "build": "tsdown",
     "lint": "oxlint src"
   },
+  "dependencies": {
+    "@lootlog/access-policy": "workspace:*"
+  },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "tsdown": "catalog:"
