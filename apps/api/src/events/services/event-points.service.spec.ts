@@ -4,6 +4,7 @@ import { EventPointsService } from "./event-points.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { PrismaService } from "#src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 describe("EventPointsService", () => {
   let service: EventPointsService;
@@ -52,7 +53,7 @@ describe("EventPointsService", () => {
   };
 
   const mockEventEmitter = {
-    emitRankingUpdate: mockFn(),
+    emit: mockFn(),
   };
 
   const mockEventReadCache = {
@@ -516,9 +517,9 @@ describe("EventPointsService", () => {
       expect(
         Array.isArray(mockPrismaService.$transaction.mock.calls[0]?.[0]),
       ).toBe(true);
-      expect(mockEventEmitter.emitRankingUpdate).toHaveBeenCalledWith(
-        "guild-1",
-        eventId,
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        RoutingKey.EVENT_RANKING_UPDATE,
+        { guildId: "guild-1", eventId },
       );
     });
 
