@@ -19,6 +19,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@lootlog/types": "workspace:*"
+  },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "tsdown": "catalog:",

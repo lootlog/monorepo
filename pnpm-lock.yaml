@@ -1543,6 +1543,10 @@ importers:
         version: 4.127.0
 
   packages/access-policy:
+    dependencies:
+      '@lootlog/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@lootlog/typescript-config':
         specifier: workspace:*
@@ -1748,9 +1752,6 @@ importers:
 
   packages/nest-shared:
     dependencies:
-      '@lootlog/access-policy':
-        specifier: workspace:*
-        version: link:../access-policy
       '@lootlog/types':
         specifier: workspace:*
         version: link:../types
@@ -1849,10 +1850,6 @@ importers:
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.12)(typescript@7.0.2)
 
   packages/types:
-    dependencies:
-      '@lootlog/access-policy':
-        specifier: workspace:*
-        version: link:../access-policy
     devDependencies:
       '@lootlog/typescript-config':
         specifier: workspace:*
@@ -3817,22 +3814,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  '@lootlog/access-policy@file:packages/access-policy':
-    resolution: {directory: packages/access-policy, type: directory}
-
-  '@lootlog/nest-shared@file:packages/nest-shared':
-    resolution: {directory: packages/nest-shared, type: directory}
-    peerDependencies:
-      '@nestjs/common': ^12.0.0
-      '@nestjs/core': ^12.0.0
-      '@nestjs/platform-fastify': ^12.0.0
-      ioredis: ^5.0.0
-      reflect-metadata: ^0.2.0
-      rxjs: ^7.0.0
-
-  '@lootlog/types@file:packages/types':
-    resolution: {directory: packages/types, type: directory}
 
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -13966,46 +13947,6 @@ snapshots:
       yjs: 13.6.32
     optionalDependencies:
       typescript: 7.0.2
-
-  '@lootlog/access-policy@file:packages/access-policy': {}
-
-  '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/platform-fastify@12.0.1(@fastify/static@10.1.3)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1))(ioredis@5.11.1(supports-color@10.2.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
-    dependencies:
-      '@lootlog/access-policy': file:packages/access-policy
-      '@lootlog/types': file:packages/types
-      '@nestjs/common': 12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
-      '@nestjs/core': 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@12.0.1)(@nestjs/websockets@12.0.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/platform-fastify': 12.0.1(@fastify/static@10.1.3)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)
-      '@opentelemetry/api': 1.9.1
-      fastify: 5.12.1
-      ioredis: 5.11.1(supports-color@10.2.2)
-      js-yaml: 5.4.1
-      nest-winston: 1.10.2(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(winston@3.19.0)
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-      winston: 3.19.0
-      zod: 4.4.3
-
-  '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)(@nestjs/platform-fastify@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1))(ioredis@5.11.1(supports-color@10.2.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
-    dependencies:
-      '@lootlog/access-policy': file:packages/access-policy
-      '@lootlog/types': file:packages/types
-      '@nestjs/common': 12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
-      '@nestjs/core': 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)(@nestjs/websockets@12.0.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/platform-fastify': 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.0.1)
-      '@opentelemetry/api': 1.9.1
-      fastify: 5.12.1
-      ioredis: 5.11.1(supports-color@10.2.2)
-      js-yaml: 5.4.1
-      nest-winston: 1.10.2(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(winston@3.19.0)
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-      winston: 3.19.0
-      zod: 4.4.3
-
-  '@lootlog/types@file:packages/types':
-    dependencies:
-      '@lootlog/access-policy': file:packages/access-policy
 
   '@lukeed/csprng@1.1.0': {}
 
