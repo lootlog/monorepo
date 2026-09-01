@@ -40,8 +40,8 @@ pnpm perf:k6:smoke
 Run a single service:
 
 ```bash
-pnpm perf:k6:service -- --service api
-pnpm perf:k6:service -- --service search --profile load
+pnpm perf:k6 -- --service api
+pnpm perf:k6 -- --service search --profile load
 ```
 
 Target dev:

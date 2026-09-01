@@ -69,17 +69,23 @@ const toHex = (rgb: readonly number[]) =>
     .join("")
     .toUpperCase()}`;
 
-const relativeLuminance = (rgb: readonly number[]) => {
-  const [red, green, blue] = rgb.map((channel) => {
-    const normalized = channel / 255;
-    return normalized <= 0.04045
-      ? normalized / 12.92
-      : ((normalized + 0.055) / 1.055) ** 2.4;
-  });
+type RgbColor = readonly [number, number, number];
+
+const toLinearColorChannel = (channel: number) => {
+  const normalized = channel / 255;
+  return normalized <= 0.04045
+    ? normalized / 12.92
+    : ((normalized + 0.055) / 1.055) ** 2.4;
+};
+
+const relativeLuminance = (rgb: RgbColor) => {
+  const red = toLinearColorChannel(rgb[0]);
+  const green = toLinearColorChannel(rgb[1]);
+  const blue = toLinearColorChannel(rgb[2]);
   return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 };
 
-const contrastRatio = (left: readonly number[], right: readonly number[]) => {
+const contrastRatio = (left: RgbColor, right: RgbColor) => {
   const lighter = Math.max(relativeLuminance(left), relativeLuminance(right));
   const darker = Math.min(relativeLuminance(left), relativeLuminance(right));
   return (lighter + 0.05) / (darker + 0.05);
@@ -92,9 +98,11 @@ const getReadableTextColor = (accent: string) => {
   }
 
   for (let whiteMix = 0.05; whiteMix <= 1; whiteMix += 0.05) {
-    const mixed = accentRgb.map(
-      (channel) => channel + (255 - channel) * whiteMix,
-    );
+    const mixed = [
+      accentRgb[0] + (255 - accentRgb[0]) * whiteMix,
+      accentRgb[1] + (255 - accentRgb[1]) * whiteMix,
+      accentRgb[2] + (255 - accentRgb[2]) * whiteMix,
+    ] as const;
     if (contrastRatio(mixed, DARK_SURFACE_RGB) >= MINIMUM_TEXT_CONTRAST) {
       return toHex(mixed);
     }

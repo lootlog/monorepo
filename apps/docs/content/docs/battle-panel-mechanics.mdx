@@ -38,7 +38,7 @@ Historyczne obiekty R2 mają kształt `{ battleId, timestamp, rawData }`, gdzie 
 
 Eksploracja R2 znalazła 1000 parsowalnych gzip payloadów w kształcie `{ battleId, timestamp, rawData }`. Wszystkie użyte obiekty miały parsed moves, bez pierwotnych eventów źródłowych.
 
-Ważny caveat: bieżący `.env` Postgresa nie pokazywał tabeli `battles`, więc próba nie była pewnym “ostatnim 1000 walk”. Była pierwszą stroną listowania R2. Skrypt `pnpm --filter @lootlog/battlelog-service battlelog:audit-actions` raportuje to jawnie i używa DB po `createdAt` tylko wtedy, gdy tabela jest dostępna.
+Ważny caveat: bieżący `.env` Postgresa nie pokazywał tabeli `battles`, więc próba nie była pewnym “ostatnim 1000 walk”. Była pierwszą stroną listowania R2. Skrypt `pnpm --filter @lootlog/battlelog-service maintenance:audit-actions` raportuje to jawnie i używa DB po `createdAt` tylko wtedy, gdy tabela jest dostępna.
 
 Próbka pokazała 140 unikalnych typów akcji. Stary procesor pokrywał około 75% wystąpień i gubił ważne rodziny statystyk:
 
@@ -72,7 +72,7 @@ UI pojedynczej walki powinien wykorzystywać timeline jako podstawę wykresu HP/
 
 ## Checklist kolejnych audytów
 
-- Uruchom `pnpm --filter @lootlog/battlelog-service battlelog:audit-actions`.
+- Uruchom `pnpm --filter @lootlog/battlelog-service maintenance:audit-actions`.
 - Sprawdź, czy `source.kind` to `db-latest`; jeśli jest `r2-first-list-page`, raport nie dowodzi najnowszych 1000 walk.
 - Porównaj `unknownProcessorActions`, `missingUiActions` i `missingTranslations`.
-- Po zmianach parsera lub tłumaczeń odśwież dokument przez `pnpm --filter @lootlog/battlelog-service battlelog:audit-actions -- --write-doc`.
+- Po zmianach parsera lub tłumaczeń odśwież dokument przez `pnpm --filter @lootlog/battlelog-service maintenance:audit-actions -- --write-doc`.

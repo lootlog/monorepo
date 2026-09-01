@@ -319,7 +319,7 @@ The seeding system includes comprehensive error handling:
 
 - Ensure PostgreSQL is running: `docker compose up -d`
 - Check `DATABASE_URL` in `.env`
-- Run migrations: `pnpm api:migrate:dev`
+- Run migrations: `pnpm db:api:migrate:dev`
 
 ### "Unique constraint violation"
 

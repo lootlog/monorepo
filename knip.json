@@ -2,33 +2,79 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["packages/cli/src/index.ts"],
-      "project": ["packages/**/*.ts", "apps/**/*.ts"]
+      "entry": ["tools/**/*.{js,mjs}"],
+      "project": ["tools/**/*.{js,mjs}"],
+      "ignoreDependencies": [
+        "@nestjs/common",
+        "@nestjs/core",
+        "@nestjs/microservices",
+        "@nestjs/swagger",
+        "k6",
+        "zod"
+      ]
     },
     "apps/*": {
-      "entry": ["src/index.ts", "src/main.ts", "src/app.tsx", "src/App.tsx"]
+      "entry": [
+        "src/index.ts",
+        "src/main.ts",
+        "src/main.tsx",
+        "src/app.tsx",
+        "src/App.tsx",
+        "src/instrumentation.ts",
+        "src/openapi/generate-openapi.ts",
+        "src/generated/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}",
+        "server.js"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "test/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}",
+        "*.{ts,mts,js,mjs}",
+        "*.config.{ts,mts,js,mjs}",
+        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
+      ]
+    },
+    "apps/game-client": {
+      "entry": ["src/main.tsx", "scripts/**/*.{ts,mjs}"],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "test/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}",
+        "*.{ts,mts,js,mjs}",
+        "*.config.{ts,mts,js,mjs}",
+        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
+      ],
+      "vite": false
     },
     "packages/*": {
-      "entry": ["src/index.ts", "index.ts"]
+      "entry": [
+        "src/index.ts",
+        "index.ts",
+        "src/generated/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}",
+        "*.{ts,mts,js,mjs}",
+        "*.config.{ts,mts,js,mjs}",
+        "**/*.{spec,test}.{ts,tsx,js}"
+      ]
     }
   },
-  "ignore": [
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "**/*.e2e-spec.ts",
-    "**/dist/**",
-    "**/build/**",
-    "**/generated/**",
-    "**/node_modules/**"
-  ],
+  "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
   "ignoreDependencies": [
-    "@changesets/cli",
-    "husky",
-    "lint-staged",
-    "oxfmt",
-    "turbo",
-    "tsx"
+    "@fontsource-variable/geist",
+    "@fontsource-variable/geist-mono",
+    "@lootlog/ui",
+    "@prisma/client",
+    "@tailwindcss/postcss",
+    "@types/mdx",
+    "tailwindcss",
+    "tw-animate-css"
   ],
-  "vite": false,
-  "vitest": false
+  "ignoreBinaries": ["k6"],
+  "vite": true,
+  "vitest": true
 }

@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "private": true,
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

@@ -1,5 +1,10 @@
-import { PrismaClient } from "../../../../../apps/api/generated/client/index.js";
-import { PrismaClient as BattlelogPrismaClient } from "../../../../../apps/battlelog-service/generated/client/index.js";
+import { PrismaClient } from "../../../../../apps/api/src/generated/prisma/client.js";
+import { buildTimerKey } from "../../../../../apps/api/src/timers/utils/timer-key.js";
+import {
+  battles as battlesTable,
+  battleWarriors as battleWarriorsTable,
+} from "../../../../../apps/battlelog-service/src/shared/modules/drizzle/schema.js";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
@@ -8,6 +13,8 @@ import { SEED_CONFIG } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,19 +23,20 @@ const __dirname = path.dirname(__filename);
 const rootPath = path.join(__dirname, "../../../../../");
 config({ path: path.join(rootPath, ".env") });
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString:
+      process.env.POSTGRESQL_CONNECTION_URI ??
+      "postgresql://placeholder:placeholder@localhost:5433/placeholder",
+  }),
+});
 
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
   process.env.BATTLELOG_DATABASE_URL || process.env.POSTGRESQL_CONNECTION_URI;
 
-const battlelogPrisma = new BattlelogPrismaClient({
-  datasources: {
-    db: {
-      url: battlelogConnectionUri,
-    },
-  },
-});
+const battlelogPool = new pg.Pool({ connectionString: battlelogConnectionUri });
+const battlelogDatabase = drizzle({ client: battlelogPool });
 
 interface SeedOptions {
   guildsCount?: number;
@@ -219,6 +227,14 @@ async function seedLoots(count: number, guilds: any[]) {
 
     if (guilds.length > 0) {
       const randomGuild = guilds[Math.floor(Math.random() * guilds.length)];
+      const organizationLootRecord = await prisma.organizationLootRecord.create(
+        {
+          data: {
+            lootId: createdLoot.id,
+            guildId: randomGuild.id,
+          },
+        },
+      );
       let members = await prisma.member.findMany({
         where: { guildId: randomGuild.id },
         take: Math.floor(Math.random() * 3) + 1,
@@ -241,8 +257,7 @@ async function seedLoots(count: number, guilds: any[]) {
       for (const member of members) {
         await prisma.lootSubmission.create({
           data: {
-            lootId: createdLoot.id,
-            guildId: randomGuild.id,
+            organizationLootRecordId: organizationLootRecord.id,
             memberId: member.id,
           },
         });
@@ -329,6 +344,7 @@ async function seedTimers(guilds: any[]) {
             createdById: creatorMember.id,
             guildId: guild.id,
             npcId: randomNpc.id,
+            timerKey: buildTimerKey(randomNpc.id, randomNpc.name),
             world: randomWorld,
             minSpawnTime,
             maxSpawnTime,
@@ -501,8 +517,19 @@ async function seedBattles(count: number) {
         0,
       );
 
-      const battle = await battlelogPrisma.battle.create({
-        data: {
+      const winningTeam = analysis.outcome.winningTeam;
+      const losingTeam = analysis.outcome.losingTeam;
+      if (
+        winningTeam === undefined ||
+        winningTeam === null ||
+        losingTeam === undefined ||
+        losingTeam === null
+      ) {
+        throw new Error("Battle analysis did not determine both teams");
+      }
+
+      await battlelogDatabase.transaction(async (transaction) => {
+        const battleValues: typeof battlesTable.$inferInsert = {
           userId,
           accountId: battlePayload.accountId,
           characterId: battlePayload.characterId,
@@ -511,15 +538,27 @@ async function seedBattles(count: number) {
           type: analysis.type,
           winner: analysis.outcome.winner,
           loser: analysis.outcome.loser,
-          winningTeam: analysis.outcome.winningTeam,
-          losingTeam: analysis.outcome.losingTeam,
+          winningTeam,
+          losingTeam,
           honorPoints: totalPH,
           hasFlee: analysis.outcome.hasFlee,
-          statistics: analysis.statistics as any,
-          warriors: {
-            create: analysis.warriors.map(toSeedBattleWarrior),
-          },
-        },
+          statistics: analysis.statistics,
+        };
+        const [battle] = await transaction
+          .insert(battlesTable)
+          .values(battleValues)
+          .returning({ id: battlesTable.id });
+
+        if (!battle) {
+          throw new Error("Battle insert did not return an identifier");
+        }
+
+        await transaction.insert(battleWarriorsTable).values(
+          analysis.warriors.map((warrior) => ({
+            battleId: battle.id,
+            ...toSeedBattleWarrior(warrior),
+          })),
+        );
       });
 
       createdCount++;
@@ -571,6 +610,6 @@ export async function seed(options: SeedOptions = {}) {
     throw error;
   } finally {
     await prisma.$disconnect();
-    await battlelogPrisma.$disconnect();
+    await battlelogPool.end();
   }
 }

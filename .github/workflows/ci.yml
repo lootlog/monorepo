@@ -192,7 +192,10 @@ jobs:
       - name: Check formatting
         run: pnpm format:check
 
-      - name: Lint and build affected workspaces
+      - name: Check dependencies
+        run: pnpm deps:check
+
+      - name: Lint, typecheck, and build affected workspaces
         env:
           PACKAGES: ${{ needs.plan.outputs.packages }}
         run: |
@@ -201,7 +204,7 @@ jobs:
             echo "No affected workspaces."
             exit 0
           fi
-          pnpm exec turbo run lint build "${filters[@]}"
+          pnpm exec turbo run lint typecheck build "${filters[@]}"
 
       - name: Test affected workspaces except Game Client
         env:

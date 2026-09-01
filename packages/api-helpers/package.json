@@ -31,13 +31,17 @@
   },
   "scripts": {
     "build": "tsdown",
-    "lint": "oxlint src"
+    "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "jose": "^6.2.10"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "tsdown": "catalog:"
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

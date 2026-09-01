@@ -18,6 +18,7 @@
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "format": "oxfmt src test",
     "test": "vitest run --config ./vitest.config.ts",
     "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
@@ -55,7 +56,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
     "@nestjs/cli": "catalog:",
+    "@nestjs/schematics": "catalog:",
     "@nestjs/testing": "catalog:",
     "@types/node": "catalog:",
     "@types/supertest": "^7.2.1",

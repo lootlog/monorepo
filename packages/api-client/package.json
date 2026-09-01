@@ -36,8 +36,6 @@
     "@tanstack/react-query": "catalog:",
     "@types/node": "catalog:",
     "orval": "^8.26.0",
-    "oxfmt": "^0.60.0",
-    "oxlint": "^1.75.0",
     "react": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
