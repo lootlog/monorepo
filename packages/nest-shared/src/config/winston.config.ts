@@ -31,7 +31,6 @@ export const createWinstonConfig = ({
   const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.colorize({ all: true }),
-    traceContext(),
     winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
       const contextStr = context ? `[${context}]` : "";
       const metaStr = Object.keys(meta).length
@@ -50,11 +49,13 @@ export const createWinstonConfig = ({
   return {
     level: usePrettyConsole ? "debug" : "info",
     format: usePrettyConsole ? consoleFormat : jsonFormat,
-    defaultMeta: {
-      service: serviceName,
-      environment: ENV ?? "unknown",
-      commit: COMMIT_SHA?.slice(0, 7) ?? "unknown",
-    },
+    defaultMeta: usePrettyConsole
+      ? undefined
+      : {
+          service: serviceName,
+          environment: ENV ?? "unknown",
+          commit: COMMIT_SHA?.slice(0, 7) ?? "unknown",
+        },
     transports: [
       new winston.transports.Console({
         level: usePrettyConsole ? "debug" : "info",

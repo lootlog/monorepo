@@ -17,6 +17,7 @@ describe("createWinstonConfig", () => {
     const config = createWinstonConfig({ serviceName: "api" });
 
     expect(config.level).toBe("debug");
+    expect(config.defaultMeta).toBeUndefined();
     expect(config.transports).toHaveLength(1);
     expect(config.transports?.[0]).toBeInstanceOf(winston.transports.Console);
   });

@@ -1,4 +1,5 @@
 import type { RedisService } from "@lootlog/nest-shared/redis";
+import { dateToTemporal } from "#src/db/temporal";
 import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 
@@ -55,21 +56,22 @@ describe("EventReadCacheService", () => {
     expect(result.nested.label).toBe(arbitraryIsoString);
   });
 
-  it("keeps fresh factory Date instances intact", async () => {
-    const freshDate = new Date("2026-06-19T10:00:00.000Z");
+  it("serializes database temporal values before writing JSON cache", async () => {
+    const createdAt = dateToTemporal(new Date("2026-06-19T10:00:00.000Z"));
     const service = new EventReadCacheService(redis as unknown as RedisService);
 
-    redis.getOrSetJsonBestEffort.mockResolvedValue({
-      updatedAt: freshDate,
+    redis.getOrSetJsonBestEffort.mockImplementation(async (options) => {
+      const { factory } = options as { factory: () => Promise<unknown> };
+      return JSON.parse(JSON.stringify(await factory()));
     });
 
     const result = await service.getOrSet("event-read:test", () =>
       Promise.resolve({
-        updatedAt: freshDate,
+        createdAt,
       }),
     );
 
-    expect(result.updatedAt).toBe(freshDate);
+    expect(result.createdAt).toEqual(new Date("2026-06-19T10:00:00.000Z"));
   });
 
   it("revives cached event kill spawn dates before response encoding", async () => {

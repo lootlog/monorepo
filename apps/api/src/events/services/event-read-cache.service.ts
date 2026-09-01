@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import { temporalToDate, type DatabaseTemporal } from "#src/db/temporal";
 
 const EVENT_READ_CACHE_PREFIX = "event-read";
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
@@ -55,7 +56,7 @@ export class EventReadCacheService {
     const value = await this.redis.getOrSetJsonBestEffort({
       key,
       ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
-      factory,
+      factory: async () => reviveEventReadCacheDates(await factory()),
       onError: (error) =>
         this.logger.warn("Event read cache unavailable", error),
     });
@@ -128,6 +129,16 @@ export class EventReadCacheService {
 function reviveEventReadCacheDates(value: unknown, key?: string): unknown {
   if (value instanceof Date) {
     return value;
+  }
+
+  if (
+    key &&
+    EVENT_READ_CACHE_DATE_FIELDS.has(key) &&
+    value &&
+    typeof value === "object" &&
+    ("epochMilliseconds" in value || "toZonedDateTime" in value)
+  ) {
+    return temporalToDate(value as DatabaseTemporal);
   }
 
   if (
