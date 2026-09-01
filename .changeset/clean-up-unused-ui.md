@@ -1,5 +1,9 @@
 ---
 "@lootlog/ui": patch
+"@lootlog/web": patch
+"@lootlog/landing": patch
+"@lootlog/game-client": patch
+"@lootlog/battlelog-service": patch
 ---
 
-Remove unused visual-effect components and their dependencies.
+Remove unused UI components, obsolete feature fragments, and visual-effect dependencies.
