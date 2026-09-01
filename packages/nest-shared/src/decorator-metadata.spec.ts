@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { Capability } from "@lootlog/access-policy";
+import { Capability } from "@lootlog/types";
 import { Injectable } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import {

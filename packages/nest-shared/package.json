@@ -56,7 +56,6 @@
     "test": "vitest run src"
   },
   "dependencies": {
-    "@lootlog/access-policy": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@opentelemetry/api": "^1.9.1",
     "fastify": "5.12.1",
