@@ -84,14 +84,14 @@ const DestructionOverlay = lazy(() =>
 );
 
 const RukiaFrostOverlay = lazy(() =>
-  import("./rukia/rukia-frost-overlay").then((module) => ({
-    default: module.RukiaFrostOverlay,
+  import("./rukia/rukia-frost").then((module) => ({
+    default: module.GlobalFrostOverlay,
   })),
 );
 
 const RiasDestructionOverlay = lazy(() =>
-  import("./rias/rias-destruction-overlay").then((module) => ({
-    default: module.RiasDestructionOverlay,
+  import("./rias/rias-effects").then((module) => ({
+    default: module.GlobalDestructionOverlay,
   })),
 );
 

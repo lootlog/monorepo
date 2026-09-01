@@ -1,11 +1,8 @@
 import type { InflatedBattleWarrior } from "../battle-warrior-stats.js";
 import type { Battle } from "#src/shared/modules/drizzle/schema";
-import type { QueryBattlesDto } from "../dto/query-battles.dto.js";
-import type { UpdateBattleDto } from "../dto/update-battle.dto.js";
 import type { CreateBattleDto } from "../dto/create-battle.dto.js";
-import type { BattleTimelineResponseInput } from "../dto/battle-response.dto.js";
 import type { PaginationResult } from "./pagination.interface.js";
-import type { BattleAnalysis, ParsedMove } from "@lootlog/battle-processor";
+import type { ParsedMove } from "@lootlog/battle-processor";
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {
@@ -43,67 +40,4 @@ export interface RawBattleData {
     events: ParsedMove[];
     sourceEvents?: CreateBattleDto["events"];
   };
-}
-
-// Service interface
-export interface IBattlesService {
-  /**
-   * Creates a new battle, stores it in database and R2
-   */
-  createBattle(params: CreateBattleParams): Promise<CreateBattleResult>;
-
-  /**
-   * Retrieves public battles only with advanced pagination and filtering
-   */
-  getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult>;
-
-  /**
-   * Retrieves battles for dashboard (public + private for owner)
-   */
-  getDashboardBattles(
-    query: QueryBattlesDto,
-    requestingUserId: string,
-  ): Promise<GetAllBattlesResult>;
-
-  /**
-   * Retrieves a single battle from database with all relations
-   */
-  getBattleFromDatabase(
-    battleId: string,
-    requestingUserId?: string,
-  ): Promise<BattleWithRelations>;
-
-  /**
-   * Retrieves raw battle data from R2 storage
-   */
-  getBattleRawData(
-    battleId: string,
-    requestingUserId?: string,
-  ): Promise<RawBattleData>;
-
-  /**
-   * Retrieves computed battle timeline from R2 payload and DB warriors
-   */
-  getBattleTimeline(
-    battleId: string,
-    requestingUserId?: string,
-  ): Promise<BattleTimelineResponseInput>;
-
-  /**
-   * Updates a battle (only public field)
-   */
-  updateBattle(
-    battleId: string,
-    updateData: UpdateBattleDto,
-  ): Promise<BattleWithRelations>;
-
-  /**
-   * Deletes a battle from both database and R2 storage
-   */
-  deleteBattle(battleId: string): Promise<DeleteBattleResult>;
-
-  /**
-   * Analyzes raw battle data and returns processed statistics
-   */
-  analyzeBattle(dto: CreateBattleDto): BattleAnalysis;
 }
