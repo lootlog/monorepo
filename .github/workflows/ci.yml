@@ -301,6 +301,8 @@ jobs:
           build-args: |
             GITHUB_SHA=${{ needs.plan.outputs.head-sha }}
             GITHUB_REF=${{ github.ref }}
+          pull: true
+          no-cache-filters: runtime-base
           cache-from: type=gha,scope=docker-${{ matrix.service }}
           cache-to: type=gha,mode=min,scope=docker-${{ matrix.service }}
           provenance: false
