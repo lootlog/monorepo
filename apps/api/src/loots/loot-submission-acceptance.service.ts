@@ -357,6 +357,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
           and(row.guildId.eq(guildId), row.lootId.eq(lootId)),
         ).upsert({
           create: { guildId, lootId, updatedAt: dateToTemporal(new Date()) },
+          conflictOn: { guildId, lootId },
           update: {},
         });
       }
@@ -395,6 +396,10 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
           ),
         ).upsert({
           create: { ...submission, updatedAt: dateToTemporal(new Date()) },
+          conflictOn: {
+            organizationLootRecordId: submission.organizationLootRecordId,
+            memberId: submission.memberId,
+          },
           update: {},
         });
       }
@@ -442,9 +447,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       for (const item of options.submission.loots) {
         const { lvl, rarity, type } = this.getItemStats(item);
         const statsHash = this.generateStatsHash(item.stat);
-        const snapshot = await transaction.orm.public.ItemSnapshot.where(
-          (row) => and(row.itemId.eq(item.id), row.statsHash.eq(statsHash)),
-        ).upsert({
+        const snapshot = await transaction.orm.public.ItemSnapshot.upsert({
           create: {
             itemId: item.id,
             statsHash,
@@ -456,6 +459,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
             statRaw: item.stat,
             statsSnapshot: this.parseItemStats(item.stat),
           },
+          conflictOn: { itemId: item.id, statsHash },
           update: {},
         });
         await transaction.orm.public.LootItem.create({
@@ -473,15 +477,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
         const snapshotHash = createHash("sha256")
           .update(`${player.name}${player.prof}${player.icon}`)
           .digest("hex");
-        const snapshot = await transaction.orm.public.PlayerSnapshot.where(
-          (row) =>
-            and(
-              row.world.eq(options.submission.world),
-              row.accountId.eq(accountId),
-              row.characterId.eq(characterId),
-              row.snapshotHash.eq(snapshotHash),
-            ),
-        ).upsert({
+        const snapshot = await transaction.orm.public.PlayerSnapshot.upsert({
           create: {
             world: options.submission.world,
             accountId,
@@ -490,6 +486,12 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
             name: player.name,
             prof: getProfByShortname(player.prof),
             icon: player.icon,
+          },
+          conflictOn: {
+            world: options.submission.world,
+            accountId,
+            characterId,
+            snapshotHash,
           },
           update: {},
         });
@@ -501,9 +503,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       }
 
       for (const npc of options.submission.npcs) {
-        const snapshot = await transaction.orm.public.NpcSnapshot.where((row) =>
-          and(row.npcId.eq(npc.id), row.name.eq(npc.name)),
-        ).upsert({
+        const snapshot = await transaction.orm.public.NpcSnapshot.upsert({
           create: {
             npcId: npc.id,
             name: npc.name,
@@ -514,6 +514,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
             margonemType: npc.type,
             prof: npc.prof ? getProfByShortname(npc.prof) : null,
           },
+          conflictOn: { npcId: npc.id, name: npc.name },
           update: {},
         });
         await transaction.orm.public.LootNpc.create({

@@ -62,9 +62,13 @@ describe("Events Assignment E2E", () => {
         .send({ memberId: member.id }),
     ).expect(201);
     await expect(
-      prisma.eventMapAssignmentHistory.count({
-        where: { mapId: map.id, memberId: member.id, unassignedAt: null },
-      }),
+      prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
+        row.mapId.eq(map.id),
+      )
+        .where((row) => row.memberId.eq(member.id))
+        .where((row) => row.unassignedAt.isNull())
+        .aggregate((aggregate) => ({ count: aggregate.count() }))
+        .then(({ count }) => count),
     ).resolves.toBe(1);
 
     await withAuth(
@@ -73,9 +77,12 @@ describe("Events Assignment E2E", () => {
       ),
     ).expect(200);
     await expect(
-      prisma.eventMapAssignmentHistory.count({
-        where: { mapId: map.id, unassignedAt: null },
-      }),
+      prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
+        row.mapId.eq(map.id),
+      )
+        .where((row) => row.unassignedAt.isNull())
+        .aggregate((aggregate) => ({ count: aggregate.count() }))
+        .then(({ count }) => count),
     ).resolves.toBe(0);
 
     await withAuth(
@@ -116,9 +123,12 @@ describe("Events Assignment E2E", () => {
     ).expect(400);
 
     await expect(
-      prisma.eventMapAssignmentHistory.count({
-        where: { mapId: map.id, memberId: member.id },
-      }),
+      prisma.db.orm.public.EventMapAssignmentHistory.where((row) =>
+        row.mapId.eq(map.id),
+      )
+        .where((row) => row.memberId.eq(member.id))
+        .aggregate((aggregate) => ({ count: aggregate.count() }))
+        .then(({ count }) => count),
     ).resolves.toBe(0);
   });
 

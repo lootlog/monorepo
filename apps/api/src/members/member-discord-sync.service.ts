@@ -260,6 +260,7 @@ export class MemberDiscordSyncService {
             lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
             updatedAt: dateToTemporal(syncTimestamp),
           },
+          conflictOn: { userId: id, guildId },
           update: {
             avatar: memberAvatar,
             banner,

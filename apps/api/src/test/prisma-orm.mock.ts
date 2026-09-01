@@ -1,3 +1,5 @@
+import contractJson from "../prisma/contract.json" with { type: "json" };
+
 type MockFunction = (...arguments_: unknown[]) => unknown;
 type LegacyModelMock = Record<string, MockFunction | undefined>;
 type LegacyPrismaMock = Record<string, unknown> & {
@@ -16,6 +18,7 @@ type QueryState = {
 };
 
 type MockContext = {
+  includeRefinement?: boolean;
   modelName: string;
   prisma: LegacyPrismaMock;
 };
@@ -33,7 +36,6 @@ type MockExpression = {
 const terminalMethod = {
   all: "findMany",
   first: "findFirst",
-  count: "count",
 } as const;
 
 function legacyModelName(modelName: string) {
@@ -354,10 +356,32 @@ function createQuery(
         ),
       });
     },
-    include(relation: unknown) {
+    include(relation: unknown, refinement?: unknown) {
+      const relationName = String(relation);
+      const relationContract =
+        contractJson.domain.namespaces.public.models[context.modelName]
+          ?.relations?.[relationName];
+      if (!relationContract) {
+        throw new Error(
+          `Relation '${relationName}' not found on model '${context.modelName}'`,
+        );
+      }
+      if (typeof refinement === "function") {
+        const targetModelName = relationContract.to.model;
+        refinement(
+          createQuery(
+            {},
+            {
+              includeRefinement: true,
+              modelName: targetModelName,
+              prisma: context.prisma,
+            },
+          ),
+        );
+      }
       return createQuery(model, context, {
         ...state,
-        include: { ...state.include, [String(relation)]: true },
+        include: { ...state.include, [relationName]: true },
       });
     },
     orderBy(orderBy: unknown) {
@@ -444,6 +468,10 @@ function createQuery(
     },
   } as Record<string, unknown>;
 
+  if (context.includeRefinement) {
+    chain.count = () => ({ operation: "count" });
+  }
+
   for (const [nativeMethod, legacyMethod] of Object.entries(terminalMethod)) {
     chain[nativeMethod] = () => {
       const fallback = nativeMethod === "first" ? model.findUnique : undefined;
@@ -484,18 +512,30 @@ function createQuery(
     );
     const projected = projection(aggregate) as Record<
       string,
-      { field: string; operation: string }
+      { field?: string; operation: string }
     >;
     const legacyProjection: Record<string, Record<string, true>> = {};
     for (const { field, operation } of Object.values(projected)) {
       const legacyOperation = `_${operation}`;
       legacyProjection[legacyOperation] = {
         ...legacyProjection[legacyOperation],
-        [field]: true,
+        [field ?? "_all"]: true,
       };
     }
     const arguments_ = queryArguments(state);
     delete arguments_.groupBy;
+    const countEntry = Object.entries(projected).find(
+      ([, descriptor]) =>
+        descriptor.operation === "count" && descriptor.field === undefined,
+    );
+    if (!model.aggregate && countEntry) {
+      const [alias] = countEntry;
+      const countResult = model.count?.(arguments_) ?? 0;
+      const mapCount = (value: unknown) => ({ [alias]: normalizeCount(value) });
+      return countResult instanceof Promise
+        ? countResult.then(mapCount)
+        : mapCount(countResult);
+    }
     const operationResult = state.groupBy
       ? model.groupBy?.({
           ...arguments_,
@@ -521,7 +561,8 @@ function createQuery(
       return Object.fromEntries(
         Object.entries(projected).map(([alias, descriptor]) => [
           alias,
-          result[`_${descriptor.operation}`]?.[descriptor.field] ?? null,
+          result[`_${descriptor.operation}`]?.[descriptor.field ?? "_all"] ??
+            null,
         ]),
       );
     };

@@ -1355,9 +1355,12 @@ export class EventKillService {
     )
       .select("id", "mapName")
       .all();
+    const killedAt = temporalToDate(kill.killedAt);
+    const minSpawnTimeAtKill = temporalToDate(kill.minSpawnTimeAtKill);
+    const maxSpawnTimeAtKill = temporalToDate(kill.maxSpawnTimeAtKill);
     const effectiveKilledAt = this.getEffectiveWindowEndAt(
-      kill.killedAt,
-      kill.maxSpawnTimeAtKill,
+      killedAt,
+      maxSpawnTimeAtKill,
     );
     const windowStartByKillId = await this.getEffectiveWindowStartByKillId([
       kill,
@@ -1366,7 +1369,7 @@ export class EventKillService {
       windowStartByKillId.get(kill.id) ??
       getTrackingWindowStartTime({
         killedAt: effectiveKilledAt,
-        minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+        minSpawnTimeAtKill,
       });
 
     const mapIdToName = this.createMapNameLookup(heroMaps);
@@ -1378,13 +1381,13 @@ export class EventKillService {
     ];
     const trackingWindowStartTime = getTrackingWindowStartTime({
       killedAt: effectiveKilledAt,
-      minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+      minSpawnTimeAtKill,
     });
     const normalizedPoints = kill.points.map((point) =>
       this.normalizeKillPointTracking(
         point,
         effectiveKilledAt,
-        kill.minSpawnTimeAtKill,
+        minSpawnTimeAtKill,
       ),
     );
 
@@ -1525,19 +1528,18 @@ export class EventKillService {
       0,
       getTrackingWindowDurationSeconds({
         killedAt: effectiveKilledAt,
-        minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+        minSpawnTimeAtKill,
       }),
     );
     const resolvedAfterMaxSpawnTimeMs = Math.max(
       0,
-      temporalToDate(kill.killedAt).getTime() -
-        temporalToDate(kill.maxSpawnTimeAtKill).getTime(),
+      killedAt.getTime() - maxSpawnTimeAtKill.getTime(),
     );
     const windowDurationSeconds = Math.max(
       0,
       this.getSpawnWindowDurationSeconds(
-        kill.minSpawnTimeAtKill,
-        kill.maxSpawnTimeAtKill,
+        minSpawnTimeAtKill,
+        maxSpawnTimeAtKill,
       ),
     );
     const scoringMode = normalizeEventScoringMode(

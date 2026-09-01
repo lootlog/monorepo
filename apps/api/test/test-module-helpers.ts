@@ -8,6 +8,8 @@ import {
 } from "nest-winston";
 import { of } from "rxjs";
 import { vi } from "vitest";
+import { PrismaService } from "../src/db/prisma.service.js";
+import { db } from "../src/prisma/db.js";
 
 export function createMockAmqpConnection() {
   return {
@@ -46,6 +48,8 @@ export function createTestingModuleWithMocks(metadata: ModuleMetadata) {
     .useValue(createMockAmqpConnection())
     .overrideProvider(HttpService)
     .useValue(createMockHttpService())
+    .overrideProvider(PrismaService)
+    .useValue({ db })
     .overrideProvider(WINSTON_MODULE_PROVIDER)
     .useValue(createMockLogger())
     .overrideProvider(WINSTON_MODULE_NEST_PROVIDER)

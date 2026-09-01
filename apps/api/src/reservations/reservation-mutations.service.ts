@@ -116,7 +116,7 @@ export class ReservationMutationsService {
         spotId: spot.id,
       });
 
-      const activeReservationsCount =
+      const { count: activeReservationsCount } =
         await transaction.orm.public.Reservation.where((row) =>
           and(
             row.guildId.eq(context.guildId),
@@ -127,7 +127,7 @@ export class ReservationMutationsService {
               row.createdBy.eq(context.discordId),
             ),
           ),
-        ).count();
+        ).aggregate((aggregate) => ({ count: aggregate.count() }));
       if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
         throw new UnprocessableEntityException({
           code: "ACTIVE_LIMIT_REACHED",

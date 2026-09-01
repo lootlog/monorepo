@@ -287,7 +287,10 @@ export class LootQueryService {
       },
     );
 
-    return lootQuery.count();
+    const { count } = await lootQuery.aggregate((aggregate) => ({
+      count: aggregate.count(),
+    }));
+    return count;
   }
 
   async fetchLootById(

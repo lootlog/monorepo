@@ -109,7 +109,7 @@ export class EventCoordinationService {
     }
 
     const now = new Date();
-    const [timers, activeGaps] = await Promise.all([
+    const [timerRows, activeGaps] = await Promise.all([
       this.timersService.getTimersForEventHeroFilters(
         guildId,
         event.world,
@@ -132,6 +132,11 @@ export class EventCoordinationService {
         .include("map", (row) => row.select("mapId", "mapName"))
         .all(),
     ]);
+    const timers = timerRows.map((timer) => ({
+      ...timer,
+      minSpawnTime: temporalToDate(timer.minSpawnTime),
+      maxSpawnTime: temporalToDate(timer.maxSpawnTime),
+    }));
 
     const timersByKey = new Map(timers.map((timer) => [timer.timerKey, timer]));
     const timersByNpcName = new Map(

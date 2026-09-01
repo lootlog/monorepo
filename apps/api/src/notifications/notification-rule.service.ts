@@ -528,13 +528,13 @@ export class NotificationRuleService {
       throw new NotFoundException(Error.GUILD_NOT_FOUND);
     }
 
-    const currentRuleCount =
+    const { count: currentRuleCount } =
       await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.GUILD),
           row.ownerId.eq(guildId),
         ),
-      ).count();
+      ).aggregate((aggregate) => ({ count: aggregate.count() }));
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -548,13 +548,13 @@ export class NotificationRuleService {
   }
 
   private async ensureUserRuleLimitNotExceeded(discordId: string) {
-    const currentRuleCount =
+    const { count: currentRuleCount } =
       await this.prisma.db.orm.public.NotificationRule.where((row) =>
         and(
           row.ownerType.eq(DbNotificationOwnerType.USER),
           row.ownerId.eq(discordId),
         ),
-      ).count();
+      ).aggregate((aggregate) => ({ count: aggregate.count() }));
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,

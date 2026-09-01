@@ -1,13 +1,17 @@
-export function resolveEventWindowStart(params: {
-  killedAt: Date;
-  minSpawnTimeAtKill: Date;
-  windowOpenedAt?: Date | null;
-}): Date {
-  const effectiveWindowStart =
-    params.windowOpenedAt ?? params.minSpawnTimeAtKill;
+import { temporalToDate, type DatabaseTemporal } from "#src/db/temporal";
 
-  if (effectiveWindowStart > params.killedAt) {
-    return params.killedAt;
+export function resolveEventWindowStart(params: {
+  killedAt: DatabaseTemporal;
+  minSpawnTimeAtKill: DatabaseTemporal;
+  windowOpenedAt?: DatabaseTemporal | null;
+}): Date {
+  const killedAt = temporalToDate(params.killedAt);
+  const effectiveWindowStart = temporalToDate(
+    params.windowOpenedAt ?? params.minSpawnTimeAtKill,
+  );
+
+  if (effectiveWindowStart > killedAt) {
+    return killedAt;
   }
 
   return effectiveWindowStart;

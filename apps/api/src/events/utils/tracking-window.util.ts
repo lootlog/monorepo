@@ -1,3 +1,5 @@
+import { temporalToDate, type DatabaseTemporal } from "#src/db/temporal";
+
 type TrackingWindowInterval = {
   start: Date;
   end: Date;
@@ -8,17 +10,18 @@ type TrackingWindowInterval = {
  * clamped start/end as Dates. A `null` end is treated as `windowEnd`.
  */
 export function clipToWindow(params: {
-  start: Date;
-  end: Date | null;
-  windowStart: Date;
-  windowEnd: Date;
+  start: DatabaseTemporal;
+  end: DatabaseTemporal | null;
+  windowStart: DatabaseTemporal;
+  windowEnd: DatabaseTemporal;
 }): { start: Date; end: Date } {
-  const effectiveEnd = params.end ?? params.windowEnd;
+  const start = temporalToDate(params.start);
+  const windowStart = temporalToDate(params.windowStart);
+  const windowEnd = temporalToDate(params.windowEnd);
+  const effectiveEnd = temporalToDate(params.end) ?? windowEnd;
   return {
-    start: new Date(
-      Math.max(params.start.getTime(), params.windowStart.getTime()),
-    ),
-    end: new Date(Math.min(effectiveEnd.getTime(), params.windowEnd.getTime())),
+    start: new Date(Math.max(start.getTime(), windowStart.getTime())),
+    end: new Date(Math.min(effectiveEnd.getTime(), windowEnd.getTime())),
   };
 }
 
@@ -27,25 +30,27 @@ export function clipToWindow(params: {
  * clamped to a minimum of 0.
  */
 export function clipToWindowSeconds(params: {
-  start: Date;
-  end: Date | null;
-  windowStart: Date;
-  windowEnd: Date;
+  start: DatabaseTemporal;
+  end: DatabaseTemporal | null;
+  windowStart: DatabaseTemporal;
+  windowEnd: DatabaseTemporal;
 }): number {
   const { start, end } = clipToWindow(params);
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 1000));
 }
 
 export function clipIntervalToWindow(params: {
-  start: Date;
-  end: Date;
-  windowStart: Date;
-  windowEnd: Date;
+  start: DatabaseTemporal;
+  end: DatabaseTemporal;
+  windowStart: DatabaseTemporal;
+  windowEnd: DatabaseTemporal;
 }): TrackingWindowInterval | null {
-  const clippedStart =
-    params.start > params.windowStart ? params.start : params.windowStart;
-  const clippedEnd =
-    params.end < params.windowEnd ? params.end : params.windowEnd;
+  const start = temporalToDate(params.start);
+  const end = temporalToDate(params.end);
+  const windowStart = temporalToDate(params.windowStart);
+  const windowEnd = temporalToDate(params.windowEnd);
+  const clippedStart = start > windowStart ? start : windowStart;
+  const clippedEnd = end < windowEnd ? end : windowEnd;
 
   if (clippedEnd < clippedStart) {
     return null;
@@ -89,24 +94,23 @@ export function calculateTrackingDurationSeconds(
 }
 
 export function getTrackingWindowStartTime(params: {
-  killedAt: Date;
-  minSpawnTimeAtKill: Date;
+  killedAt: DatabaseTemporal;
+  minSpawnTimeAtKill: DatabaseTemporal;
 }): Date {
-  return params.minSpawnTimeAtKill > params.killedAt
-    ? params.killedAt
-    : params.minSpawnTimeAtKill;
+  const killedAt = temporalToDate(params.killedAt);
+  const minSpawnTimeAtKill = temporalToDate(params.minSpawnTimeAtKill);
+  return minSpawnTimeAtKill > killedAt ? killedAt : minSpawnTimeAtKill;
 }
 
 export function getTrackingWindowDurationSeconds(params: {
-  killedAt: Date;
-  minSpawnTimeAtKill: Date;
+  killedAt: DatabaseTemporal;
+  minSpawnTimeAtKill: DatabaseTemporal;
 }): number {
+  const killedAt = temporalToDate(params.killedAt);
   const trackingWindowStartTime = getTrackingWindowStartTime(params);
 
   return Math.max(
     0,
-    Math.floor(
-      (params.killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000,
-    ),
+    Math.floor((killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000),
   );
 }

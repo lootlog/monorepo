@@ -31,6 +31,20 @@ describe("tracking-window.util", () => {
 
       expect(result).toBeNull();
     });
+
+    it("should clip database temporal intervals", () => {
+      const result = clipIntervalToWindow({
+        start: dateToTemporal(new Date("2026-03-12T10:00:00.000Z")),
+        end: dateToTemporal(new Date("2026-03-12T11:00:00.000Z")),
+        windowStart: dateToTemporal(new Date("2026-03-12T10:15:00.000Z")),
+        windowEnd: dateToTemporal(new Date("2026-03-12T10:45:00.000Z")),
+      });
+
+      expect(result).toEqual({
+        start: new Date("2026-03-12T10:15:00.000Z"),
+        end: new Date("2026-03-12T10:45:00.000Z"),
+      });
+    });
   });
 
   describe("calculateTrackingDurationSeconds", () => {
@@ -74,3 +88,4 @@ describe("tracking-window.util", () => {
     });
   });
 });
+import { dateToTemporal } from "#src/db/temporal";

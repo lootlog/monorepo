@@ -235,6 +235,7 @@ export class ReservationSharingService {
           acceptedByUserId: options.userId,
           updatedAt: dateToTemporal(new Date()),
         },
+        conflictOn: { firstGuildId, secondGuildId },
         update: {
           createdByUserId: invitation.createdByUserId,
           acceptedByUserId: options.userId,

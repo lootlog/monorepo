@@ -133,6 +133,14 @@ export class EventPointsService {
   calculateMemberPoints(
     params: CalculateMemberPointsParams,
   ): CalculatedMemberPoints {
+    const killTime = temporalToDate(params.killTime);
+    const respawnStartTime = temporalToDate(params.respawnStartTime);
+    const maxRespawnTime = params.maxRespawnTime
+      ? temporalToDate(params.maxRespawnTime)
+      : params.maxRespawnTime;
+    const memberLeaveTime = params.memberLeaveTime
+      ? temporalToDate(params.memberLeaveTime)
+      : params.memberLeaveTime;
     const scoringMode = normalizeEventScoringMode(params.scoringMode);
     const scoringRules =
       scoringMode === "ADVANCED"
@@ -141,13 +149,11 @@ export class EventPointsService {
           )
         : DEFAULT_ADVANCED_EVENT_SCORING_RULES;
     const normalizedRespawnStartTime =
-      params.respawnStartTime > params.killTime
-        ? params.killTime
-        : params.respawnStartTime;
+      respawnStartTime > killTime ? killTime : respawnStartTime;
     const respawnProgressPercentage = this.calculateRespawnProgressPercentage({
-      killTime: params.killTime,
+      killTime,
       respawnStartTime: normalizedRespawnStartTime,
-      maxRespawnTime: params.maxRespawnTime,
+      maxRespawnTime,
     });
 
     return evaluateEventScoring({
@@ -159,9 +165,9 @@ export class EventPointsService {
         trackingDurationSeconds: params.trackingDurationSeconds,
         respawnProgressPercentage,
         assignedMembersCount: params.assignedMembersCount,
-        killTime: params.killTime,
+        killTime,
         respawnStartTime: normalizedRespawnStartTime,
-        memberLeaveTime: params.memberLeaveTime,
+        memberLeaveTime,
         memberPresentAtKill: params.memberPresentAtKill,
         timeOnMapSeconds: params.timeOnMapSeconds,
         afkPercentage: params.afkPercentage,

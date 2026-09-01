@@ -307,6 +307,7 @@ export class UsersService {
               ...nextUserSettingsPayload,
               updatedAt: dateToTemporal(new Date()),
             },
+            conflictOn: { userId },
             update: {
               ...nextUserSettingsPayload,
               updatedAt: dateToTemporal(new Date()),
@@ -327,6 +328,10 @@ export class UsersService {
                 mutes: nextMutes,
               } as unknown as InputJsonValue,
               updatedAt: dateToTemporal(new Date()),
+            },
+            conflictOn: {
+              userId,
+              accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
             },
             update: {
               settings: {
@@ -355,6 +360,12 @@ export class UsersService {
               } as unknown as InputJsonValue,
               schemaVersion: 1,
               updatedAt: dateToTemporal(new Date()),
+            },
+            conflictOn: {
+              userId,
+              domain: "appearance",
+              scopeType: "USER",
+              scopeId: userId,
             },
             update: {
               overrides: applySettingsPatch({
@@ -514,6 +525,7 @@ export class UsersService {
         settings: nextSettings as InputJsonValue,
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: { userId, accountId },
       update: {
         settings: nextSettings as InputJsonValue,
         updatedAt: dateToTemporal(new Date()),

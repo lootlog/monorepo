@@ -1,4 +1,5 @@
 import { db as prismaDb } from "#src/prisma/db";
+import { dateToTemporal } from "#src/db/temporal";
 import { NotFoundException } from "@nestjs/common";
 import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
@@ -347,8 +348,8 @@ function createTimer({
     npcId,
     timerKey: buildTimerKey(npcId, npcName),
     world: "tempest",
-    minSpawnTime: new Date(minSpawnTime),
-    maxSpawnTime: new Date(maxSpawnTime),
+    minSpawnTime: dateToTemporal(new Date(minSpawnTime)),
+    maxSpawnTime: dateToTemporal(new Date(maxSpawnTime)),
     npc: {
       name: npcName,
       icon: "hero.png",

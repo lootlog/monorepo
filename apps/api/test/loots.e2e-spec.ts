@@ -11,6 +11,8 @@ import {
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 import { db as prismaDb } from "../src/prisma/db.js";
 
+import { dateToTemporal } from "../src/db/temporal.js";
+import { insertDatabaseFixture } from "./database-fixtures.js";
 const LootShareSource = prismaDb.nativeEnums.public.LootShareSource.members;
 type LootShareSource = (typeof LootShareSource)[keyof typeof LootShareSource];
 const Permission = prismaDb.nativeEnums.public.Permission.members;
@@ -41,7 +43,6 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.$disconnect();
     }
     if (app) {
       await app.close();
@@ -51,17 +52,26 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
   beforeEach(async () => {
     await Promise.all([
-      prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Loot", "LootSubmission", "UserCharactersLootlogSettings", "LootlogConfig" CASCADE`,
+      prisma.db
+        .runtime()
+        .execute(
+          prisma.db.raw
+            .sql`TRUNCATE TABLE "Guild", "Role", "Member", "Loot", "LootSubmission", "UserCharactersLootlogSettings", "LootlogConfig" CASCADE`
+            .affectedCount()
+            .build(),
+        ),
       redis.getClient().flushall(),
     ]);
   });
 
   const createLootWriter = async (npcType: NpcType) => {
-    const guild = await prisma.guild.create({
-      data: TEST_GUILDS.GUILD_1,
+    const guild = await insertDatabaseFixture(prisma, "Guild", {
+      updatedAt: dateToTemporal(new Date()),
+      ...TEST_GUILDS.GUILD_1,
     });
-    const role = await prisma.role.create({
-      data: {
+    const role = await insertDatabaseFixture(prisma, "Role", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         id: "role-loot-writer",
         guildId: guild.id,
         name: "Loot writer",
@@ -69,8 +79,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
       },
     });
 
-    await prisma.member.create({
-      data: {
+    await insertDatabaseFixture(prisma, "Member", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         guildId: guild.id,
         name: "Test Member",
@@ -80,16 +91,18 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       },
     });
-    await prisma.userCharactersLootlogSettings.create({
-      data: {
+    await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         accountId: "12345",
         characterId: "1",
         catchingGuildIds: [guild.id],
       },
     });
-    await prisma.lootlogConfig.create({
-      data: {
+    await insertDatabaseFixture(prisma, "LootlogConfig", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         id: guild.id,
         npcs: {
           create: [
@@ -107,16 +120,19 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
   describe("POST /loots", () => {
     it("should create loot for guilds in whitelist", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const _guild2 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_2,
+      const _guild2 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_2,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -124,8 +140,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -136,8 +153,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -145,8 +163,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.lootlogConfig.create({
-        data: {
+      await insertDatabaseFixture(prisma, "LootlogConfig", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: guild1.id,
           npcs: {
             create: [
@@ -178,24 +197,27 @@ describe("Loots E2E Tests (Whitelist)", () => {
       ]);
       expect(response.body.rejectedGuilds).toEqual([]);
 
-      const lootSubmissions = await prisma.lootSubmission.findMany({
-        include: { organizationLootRecord: true },
-      });
+      const lootSubmissions = await prisma.db.orm.public.LootSubmission.include(
+        "organizationLootRecord",
+      ).all();
       expect(lootSubmissions).toHaveLength(1);
       expect(lootSubmissions[0].organizationLootRecord.guildId).toBe(guild1.id);
     });
 
     it("should not create loot for guilds not in whitelist", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_2,
+      const guild2 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_2,
       });
 
-      const role1 = await prisma.role.create({
-        data: {
+      const role1 = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -203,8 +225,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      const role2 = await prisma.role.create({
-        data: {
+      const role2 = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-2",
           guildId: guild2.id,
           name: "Member",
@@ -212,8 +235,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member 1",
@@ -224,8 +248,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild2.id,
           name: "Test Member 2",
@@ -236,8 +261,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -245,8 +271,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.lootlogConfig.create({
-        data: {
+      await insertDatabaseFixture(prisma, "LootlogConfig", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: guild1.id,
           npcs: {
             create: [
@@ -259,8 +286,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.lootlogConfig.create({
-        data: {
+      await insertDatabaseFixture(prisma, "LootlogConfig", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: guild2.id,
           npcs: {
             create: [
@@ -299,20 +327,22 @@ describe("Loots E2E Tests (Whitelist)", () => {
         ],
       });
 
-      const lootSubmissions = await prisma.lootSubmission.findMany({
-        include: { organizationLootRecord: true },
-      });
+      const lootSubmissions = await prisma.db.orm.public.LootSubmission.include(
+        "organizationLootRecord",
+      ).all();
       expect(lootSubmissions).toHaveLength(1);
       expect(lootSubmissions[0].organizationLootRecord.guildId).toBe(guild1.id);
     });
 
     it("should not create any loot when whitelist is empty", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -320,8 +350,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -332,8 +363,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -362,17 +394,19 @@ describe("Loots E2E Tests (Whitelist)", () => {
         ],
       });
 
-      const lootSubmissions = await prisma.lootSubmission.findMany();
+      const lootSubmissions = await prisma.db.orm.public.LootSubmission.all();
       expect(lootSubmissions).toHaveLength(0);
     });
 
     it("should not create loot when no whitelist config exists", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -380,8 +414,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -413,17 +448,19 @@ describe("Loots E2E Tests (Whitelist)", () => {
         ],
       });
 
-      const lootSubmissions = await prisma.lootSubmission.findMany();
+      const lootSubmissions = await prisma.db.orm.public.LootSubmission.all();
       expect(lootSubmissions).toHaveLength(0);
     });
 
     it("should return 403 when user has no LOOTLOG_LOOTS_WRITE permission", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -431,8 +468,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -454,12 +492,14 @@ describe("Loots E2E Tests (Whitelist)", () => {
     });
 
     it("should handle 10 concurrent requests with distributed locking", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -467,8 +507,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -479,8 +520,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -488,8 +530,9 @@ describe("Loots E2E Tests (Whitelist)", () => {
         },
       });
 
-      await prisma.lootlogConfig.create({
-        data: {
+      await insertDatabaseFixture(prisma, "LootlogConfig", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: guild1.id,
           npcs: {
             create: [
@@ -535,10 +578,17 @@ describe("Loots E2E Tests (Whitelist)", () => {
       );
       expect(allSameId).toBe(true);
 
-      const lootCount = await prisma.loot.count();
+      const { count: lootCount } = await prisma.db.orm.public.Loot.aggregate(
+        (aggregate) => ({
+          count: aggregate.count(),
+        }),
+      );
       expect(lootCount).toBe(1);
 
-      const submissionsCount = await prisma.lootSubmission.count();
+      const { count: submissionsCount } =
+        await prisma.db.orm.public.LootSubmission.aggregate((aggregate) => ({
+          count: aggregate.count(),
+        }));
       expect(submissionsCount).toBe(1);
     });
   });
@@ -581,10 +631,12 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .send(lootPayload)
         .expect(201);
 
-      const persistedLoot = await prisma.loot.findUniqueOrThrow({
-        where: { id: response.body.id },
-        select: { lootShare: true, lootShareSource: true },
-      });
+      const persistedLoot = await prisma.db.orm.public.Loot.where((row) =>
+        row.id.eq(response.body.id),
+      )
+        .select("lootShare", "lootShareSource")
+        .first();
+      expect(persistedLoot).not.toBeNull();
       expect(persistedLoot.lootShare).toEqual({
         "300112345": ["standard-colossus-item"],
       });
@@ -593,15 +645,13 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
     it("should keep loot share empty for a same-name non-colossus variant", async () => {
       await createLootWriter(NpcType.COLOSSUS);
-      await prisma.npcSnapshot.create({
-        data: {
-          npcId: 920_001,
-          name: "E2E Promoted Event Hero",
-          type: NpcType.HERO,
-          lvl: 268,
-          wt: 81,
-          margonemType: 2,
-        },
+      await insertDatabaseFixture(prisma, "NpcSnapshot", {
+        npcId: 920_001,
+        name: "E2E Promoted Event Hero",
+        type: NpcType.HERO,
+        lvl: 268,
+        wt: 81,
+        margonemType: 2,
       });
       const lootPayload = createTestLootPayload({
         loots: [
@@ -638,10 +688,12 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .send(lootPayload)
         .expect(201);
 
-      const persistedLoot = await prisma.loot.findUniqueOrThrow({
-        where: { id: response.body.id },
-        select: { lootShare: true, lootShareSource: true },
-      });
+      const persistedLoot = await prisma.db.orm.public.Loot.where((row) =>
+        row.id.eq(response.body.id),
+      )
+        .select("lootShare", "lootShareSource")
+        .first();
+      expect(persistedLoot).not.toBeNull();
       expect(persistedLoot.lootShare).toEqual({});
       expect(persistedLoot.lootShareSource).toBe(LootShareSource.NONE);
     });
@@ -693,10 +745,12 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
       expect(firstResponse.body).toEqual({});
       expect(secondResponse.body).toEqual({});
-      const persistedLoot = await prisma.loot.findUniqueOrThrow({
-        where: { id: createResponse.body.id },
-        select: { lootShare: true, lootShareSource: true },
-      });
+      const persistedLoot = await prisma.db.orm.public.Loot.where((row) =>
+        row.id.eq(createResponse.body.id),
+      )
+        .select("lootShare", "lootShareSource")
+        .first();
+      expect(persistedLoot).not.toBeNull();
       expect(persistedLoot.lootShare).toEqual(expectedLootShare);
       expect(persistedLoot.lootShareSource).toBe(LootShareSource.CHAT_MESSAGE);
     });
@@ -767,10 +821,12 @@ describe("Loots E2E Tests (Whitelist)", () => {
         )
         .expect(201);
 
-      const inferredLoot = await prisma.loot.findUniqueOrThrow({
-        where: { id: createResponse.body.id },
-        select: { lootShare: true, lootShareSource: true },
-      });
+      const inferredLoot = await prisma.db.orm.public.Loot.where((row) =>
+        row.id.eq(createResponse.body.id),
+      )
+        .select("lootShare", "lootShareSource")
+        .first();
+      expect(inferredLoot).not.toBeNull();
       expect(inferredLoot).toEqual({
         lootShare: {
           "300112345": ["aa11"],
@@ -792,10 +848,12 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .expect(200);
       expect(updateResponse.body).toEqual({});
 
-      const confirmedLoot = await prisma.loot.findUniqueOrThrow({
-        where: { id: createResponse.body.id },
-        select: { lootShare: true, lootShareSource: true },
-      });
+      const confirmedLoot = await prisma.db.orm.public.Loot.where((row) =>
+        row.id.eq(createResponse.body.id),
+      )
+        .select("lootShare", "lootShareSource")
+        .first();
+      expect(confirmedLoot).not.toBeNull();
       expect(confirmedLoot).toEqual({
         lootShare: {
           "300112345": ["bb22"],

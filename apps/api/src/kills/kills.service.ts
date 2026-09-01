@@ -216,6 +216,7 @@ export class KillsService {
           lastKilledAt: dateToTemporal(killedAt),
           updatedAt: dateToTemporal(killedAt),
         },
+        conflictOn: { userId: discordId, world: data.world, npcId },
         update: {
           totalKills: (userStats?.totalKills ?? 0) + 1,
           lastKilledAt: dateToTemporal(killedAt),
@@ -258,6 +259,12 @@ export class KillsService {
           periodStart: dateToTemporal(periodStart),
           lastKilledAt: dateToTemporal(killedAt),
           updatedAt: dateToTemporal(killedAt),
+        },
+        conflictOn: {
+          userId: discordId,
+          world: data.world,
+          npcId,
+          periodStart: dateToTemporal(periodStart),
         },
         update: {
           totalKills: (userStatsBucket?.totalKills ?? 0) + 1,
@@ -362,6 +369,12 @@ export class KillsService {
               lastKilledAt: dateToTemporal(killedAt),
               updatedAt: dateToTemporal(killedAt),
             },
+            conflictOn: {
+              guildId,
+              memberId: member.id,
+              world: data.world,
+              npcId,
+            },
             update: {
               memberKills: (memberStats?.memberKills ?? 0) + 1,
               lastKilledAt: dateToTemporal(killedAt),
@@ -408,6 +421,13 @@ export class KillsService {
               periodStart: dateToTemporal(periodStart),
               lastKilledAt: dateToTemporal(killedAt),
               updatedAt: dateToTemporal(killedAt),
+            },
+            conflictOn: {
+              guildId,
+              memberId: member.id,
+              world: data.world,
+              npcId,
+              periodStart: dateToTemporal(periodStart),
             },
             update: {
               memberKills: (memberStatsBucket?.memberKills ?? 0) + 1,
@@ -462,6 +482,7 @@ export class KillsService {
                 lastKilledAt: dateToTemporal(killedAt),
                 updatedAt: dateToTemporal(killedAt),
               },
+              conflictOn: { guildId, world: data.world, npcId },
               update: {
                 uniqueKills: (guildSummary?.uniqueKills ?? 0) + 1,
                 lastKilledAt: dateToTemporal(killedAt),
@@ -506,6 +527,12 @@ export class KillsService {
                 periodStart: dateToTemporal(periodStart),
                 lastKilledAt: dateToTemporal(killedAt),
                 updatedAt: dateToTemporal(killedAt),
+              },
+              conflictOn: {
+                guildId,
+                world: data.world,
+                npcId,
+                periodStart: dateToTemporal(periodStart),
               },
               update: {
                 uniqueKills: (guildSummaryBucket?.uniqueKills ?? 0) + 1,

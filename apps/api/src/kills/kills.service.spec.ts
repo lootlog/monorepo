@@ -220,6 +220,11 @@ describe("KillsService", () => {
       await service.createKill(discordId, mockCreateKillDto);
 
       expect(prismaService.userKillStats.upsert).toHaveBeenCalledWith({
+        conflictOn: {
+          userId: discordId,
+          world: "pandora",
+          npcId: 12345,
+        },
         where: {
           userId: discordId,
           world: "pandora",
@@ -238,6 +243,12 @@ describe("KillsService", () => {
         }),
       });
       expect(prismaService.userKillStatsBucket.upsert).toHaveBeenCalledWith({
+        conflictOn: {
+          userId: discordId,
+          world: "pandora",
+          npcId: 12345,
+          periodStart: expect.any(Date),
+        },
         where: {
           userId: discordId,
           world: "pandora",

@@ -26,7 +26,7 @@ import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
 import { TimersService } from "#src/timers/timers.service";
-import { dateToTemporal } from "#src/db/temporal";
+import { dateToTemporal, temporalToDate } from "#src/db/temporal";
 
 const normalizeCloseRespawnWindowOptions = (
   options: CloseRespawnWindowOptions,
@@ -156,12 +156,12 @@ export class EventRespawnService {
           hero,
           hero.event,
           {
-            minSpawnTime: timer.minSpawnTime,
-            maxSpawnTime: timer.maxSpawnTime,
+            minSpawnTime: temporalToDate(timer.minSpawnTime),
+            maxSpawnTime: temporalToDate(timer.maxSpawnTime),
             memberId: timer.createdById,
-            previousMinSpawnTime: timer.minSpawnTime,
-            previousMaxSpawnTime: timer.maxSpawnTime,
-            windowOpenedAt: timer.windowOpenedAt,
+            previousMinSpawnTime: temporalToDate(timer.minSpawnTime),
+            previousMaxSpawnTime: temporalToDate(timer.maxSpawnTime),
+            windowOpenedAt: temporalToDate(timer.windowOpenedAt),
           },
           true,
         );
@@ -390,28 +390,27 @@ export class EventRespawnService {
     let windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE" = "NONE";
     let hasActiveTimer = false;
     let overdueMs: number | null = null;
+    const minSpawnTime = timer ? temporalToDate(timer.minSpawnTime) : null;
+    const maxSpawnTime = timer ? temporalToDate(timer.maxSpawnTime) : null;
 
-    if (timer) {
-      const minTime = new Date(timer.minSpawnTime);
-      const maxTime = new Date(timer.maxSpawnTime);
-
-      if (now >= minTime && now < maxTime) {
+    if (minSpawnTime && maxSpawnTime) {
+      if (now >= minSpawnTime && now < maxSpawnTime) {
         windowStatus = "OPEN";
         hasActiveTimer = true;
-      } else if (now < minTime) {
+      } else if (now < minSpawnTime) {
         windowStatus = "WAITING";
-      } else if (now >= maxTime) {
+      } else if (now >= maxSpawnTime) {
         windowStatus = "OVERDUE";
         hasActiveTimer = true;
-        overdueMs = Math.max(0, now.getTime() - maxTime.getTime());
+        overdueMs = Math.max(0, now.getTime() - maxSpawnTime.getTime());
       }
     }
 
     return {
       hasTimer: hasActiveTimer,
       windowStatus,
-      minSpawnTime: timer?.minSpawnTime ?? null,
-      maxSpawnTime: timer?.maxSpawnTime ?? null,
+      minSpawnTime,
+      maxSpawnTime,
       overdueMs,
     };
   }

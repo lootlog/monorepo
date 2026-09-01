@@ -133,6 +133,13 @@ export class NotificationTargetService {
         lastSyncedAt: dateToTemporal(new Date(selectedChannel.lastSyncedAt)),
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: {
+        ownerType: DbNotificationOwnerType.GUILD,
+        ownerId: guildId,
+        provider: DbNotificationProvider.DISCORD,
+        targetType: DbNotificationTargetType.CHANNEL,
+        externalId: data.externalId,
+      },
       update: {
         displayName: data.displayName ?? selectedChannel.name,
         metadata: this.createGuildChannelTargetMetadata(selectedChannel),
@@ -231,6 +238,13 @@ export class NotificationTargetService {
         active: true,
         canSend: true,
         updatedAt: dateToTemporal(new Date()),
+      },
+      conflictOn: {
+        ownerType: DbNotificationOwnerType.USER,
+        ownerId: discordId,
+        provider: DbNotificationProvider.DISCORD,
+        targetType: DbNotificationTargetType.DM,
+        externalId: discordId,
       },
       update: {
         displayName: data.displayName ?? "Discord DM",

@@ -16,6 +16,7 @@ import { PrismaService } from "#src/db/prisma.service";
 import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import { TimersService } from "#src/timers/timers.service";
+import { dateToTemporal } from "#src/db/temporal";
 
 describe("EventRespawnService", () => {
   let service: EventRespawnService;
@@ -631,6 +632,25 @@ describe("EventRespawnService", () => {
 
       expect(result.windowStatus).toBe("OPEN");
       expect(result.hasTimer).toBe(true);
+    });
+
+    it("should handle database temporal spawn times", async () => {
+      const now = new Date();
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: dateToTemporal(new Date(now.getTime() - 60_000)),
+        maxSpawnTime: dateToTemporal(new Date(now.getTime() + 60_000)),
+      });
+
+      const result = await service.getHeroRespawnConfig(
+        guildId,
+        eventId,
+        heroId,
+      );
+
+      expect(result.windowStatus).toBe("OPEN");
+      expect(result.minSpawnTime).toBeInstanceOf(Date);
+      expect(result.maxSpawnTime).toBeInstanceOf(Date);
     });
 
     it("should return WAITING status when before spawn window", async () => {

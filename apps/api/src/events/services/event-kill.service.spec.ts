@@ -14,6 +14,7 @@ import { attachPrismaOrmMock } from "#src/test/prisma-orm.mock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import { TimersService } from "#src/timers/timers.service";
+import { dateToTemporal } from "#src/db/temporal";
 
 type Event = FieldOutputTypes["public"]["Event"];
 type EventHeroNpc = FieldOutputTypes["public"]["EventHeroNpc"];
@@ -2807,9 +2808,9 @@ describe("EventKillService", () => {
       const maxSpawnTimeAtKill = new Date("2026-02-20T06:07:46.133Z");
       const mockKill = {
         id: killId,
-        killedAt,
-        minSpawnTimeAtKill,
-        maxSpawnTimeAtKill,
+        killedAt: dateToTemporal(killedAt),
+        minSpawnTimeAtKill: dateToTemporal(minSpawnTimeAtKill),
+        maxSpawnTimeAtKill: dateToTemporal(maxSpawnTimeAtKill),
         points: [
           {
             id: "point-1",

@@ -231,6 +231,7 @@ export class ChannelsService {
         lastError: lastError ?? null,
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: { guildId },
       update: {
         status: DiscordGuildSyncStatus.STALE,
         lastError: lastError ?? null,
@@ -359,6 +360,7 @@ export class ChannelsService {
         lastError: syncState.lastError,
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: { guildId },
       update: {
         status: syncState.status,
         hasRequiredPermissions: syncState.hasRequiredPermissions,
@@ -402,6 +404,7 @@ export class ChannelsService {
         lastError: failure.lastError,
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: { guildId },
       update: {
         status: failure.status,
         lastAttemptAt: dateToTemporal(new Date(failure.lastAttemptAt)),
@@ -438,6 +441,7 @@ export class ChannelsService {
       and(row.guildId.eq(guildId), row.channelId.eq(channel.channelId)),
     ).upsert({
       create: channelData,
+      conflictOn: { guildId, channelId: channel.channelId },
       update: channelData,
     });
   }

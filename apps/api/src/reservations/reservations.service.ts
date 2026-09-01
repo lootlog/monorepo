@@ -133,6 +133,7 @@ export class ReservationsService {
       ),
     ).upsert({
       create: { userId, guildId, spotId },
+      conflictOn: { userId, guildId, spotId },
       update: {},
     });
   }

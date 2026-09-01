@@ -252,6 +252,7 @@ describe("UsersService", () => {
     });
 
     expect(mockPrismaService.userSettings.upsert).toHaveBeenCalledWith({
+      conflictOn: { userId: "auth-user-current" },
       where: { userId: "auth-user-current" },
       update: {
         hiddenGuildIds: ["guild-unavailable", "guild-1"],
@@ -319,6 +320,12 @@ describe("UsersService", () => {
 
     expect(mockPrismaService.userSettings.upsert).not.toHaveBeenCalled();
     expect(mockPrismaService.userSettingDocument.upsert).toHaveBeenCalledWith({
+      conflictOn: {
+        userId: "auth-user-current",
+        domain: "appearance",
+        scopeType: "USER",
+        scopeId: "auth-user-current",
+      },
       where: {
         userId: "auth-user-current",
         domain: "appearance",
@@ -488,6 +495,10 @@ describe("UsersService", () => {
     expect(
       mockPrismaService.userGameAccountSettings.upsert,
     ).toHaveBeenCalledWith({
+      conflictOn: {
+        userId: "auth-user-current",
+        accountId: "__global-notification-mutes__",
+      },
       where: {
         userId: "auth-user-current",
         accountId: "__global-notification-mutes__",
@@ -688,6 +699,10 @@ describe("UsersService", () => {
     expect(
       mockPrismaService.userGameAccountSettings.upsert,
     ).toHaveBeenCalledWith({
+      conflictOn: {
+        userId: "auth-user-current",
+        accountId: "111",
+      },
       where: {
         userId: "auth-user-current",
         accountId: "111",
@@ -769,6 +784,10 @@ describe("UsersService", () => {
     expect(
       mockPrismaService.userGameAccountSettings.upsert,
     ).toHaveBeenCalledWith({
+      conflictOn: {
+        userId: "auth-user-current",
+        accountId: "222",
+      },
       where: {
         userId: "auth-user-current",
         accountId: "222",

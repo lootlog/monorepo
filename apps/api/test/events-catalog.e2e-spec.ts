@@ -128,9 +128,11 @@ describe("Events Catalog E2E", () => {
     )
       .expect(200)
       .expect((response) => expect(response.body.success).toBe(true));
-    await expect(prisma.event.count({ where: { id: eventId } })).resolves.toBe(
-      0,
-    );
+    await expect(
+      prisma.db.orm.public.Event.where((row) => row.id.eq(eventId))
+        .aggregate((aggregate) => ({ count: aggregate.count() }))
+        .then(({ count }) => count),
+    ).resolves.toBe(0);
   });
 
   it("rejects invalid create/update payloads and missing events", async () => {

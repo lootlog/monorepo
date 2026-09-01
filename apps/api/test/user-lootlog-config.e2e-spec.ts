@@ -7,6 +7,11 @@ import { TEST_GUILDS, TEST_USERS } from "./test-helpers.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 import { db as prismaDb } from "../src/prisma/db.js";
 
+import { dateToTemporal } from "../src/db/temporal.js";
+import {
+  insertDatabaseFixture,
+  insertDatabaseFixtures,
+} from "./database-fixtures.js";
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
 
@@ -30,7 +35,6 @@ describe("User Lootlog Config E2E Tests", () => {
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.$disconnect();
     }
     if (app) {
       await app.close();
@@ -39,19 +43,28 @@ describe("User Lootlog Config E2E Tests", () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "UserCharactersLootlogSettings" CASCADE`;
+    await prisma.db
+      .runtime()
+      .execute(
+        prisma.db.raw
+          .sql`TRUNCATE TABLE "Guild", "Role", "Member", "UserCharactersLootlogSettings" CASCADE`
+          .affectedCount()
+          .build(),
+      );
     const redisClient = redis.getClient();
     await redisClient.flushall();
   });
 
   describe("GET /users/@me/lootlog-config/accounts/:accountId", () => {
     it("should return empty object when no config exists", async () => {
-      const guild = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild.id,
           name: "Member",
@@ -59,8 +72,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
           name: "Test Member",
@@ -81,12 +95,14 @@ describe("User Lootlog Config E2E Tests", () => {
     });
 
     it("should return config for account with single character", async () => {
-      const guild = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild.id,
           name: "Member",
@@ -94,8 +110,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
           name: "Test Member",
@@ -106,8 +123,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -131,12 +149,14 @@ describe("User Lootlog Config E2E Tests", () => {
     });
 
     it("should return config for account with multiple characters", async () => {
-      const guild = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild.id,
           name: "Member",
@@ -144,8 +164,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
           name: "Test Member",
@@ -156,22 +177,20 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.createMany({
-        data: [
-          {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: "12345",
-            characterId: "1",
-            catchingGuildIds: [guild.id],
-          },
-          {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: "12345",
-            characterId: "2",
-            catchingGuildIds: [guild.id],
-          },
-        ],
-      });
+      await insertDatabaseFixtures(prisma, "UserCharactersLootlogSettings", [
+        {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: "12345",
+          characterId: "1",
+          catchingGuildIds: [guild.id],
+        },
+        {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: "12345",
+          characterId: "2",
+          catchingGuildIds: [guild.id],
+        },
+      ]);
 
       const response = await request(app.getHttpServer())
         .get("/users/@me/lootlog-config/accounts/12345")
@@ -186,16 +205,19 @@ describe("User Lootlog Config E2E Tests", () => {
     });
 
     it("should filter out guilds where user has no LOOTLOG_LOOTS_WRITE permission", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_2,
+      const guild2 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_2,
       });
 
-      const roleWithWrite = await prisma.role.create({
-        data: {
+      const roleWithWrite = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Admin",
@@ -203,8 +225,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      const roleWithoutWrite = await prisma.role.create({
-        data: {
+      const roleWithoutWrite = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-2",
           guildId: guild2.id,
           name: "Viewer",
@@ -212,8 +235,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -224,8 +248,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild2.id,
           name: "Test Member",
@@ -236,8 +261,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -257,12 +283,14 @@ describe("User Lootlog Config E2E Tests", () => {
 
   describe("PUT /users/@me/lootlog-config/accounts/:accountId", () => {
     it("should create new config for character", async () => {
-      const guild = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild.id,
           name: "Member",
@@ -270,8 +298,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
           name: "Test Member",
@@ -301,29 +330,32 @@ describe("User Lootlog Config E2E Tests", () => {
         catchingGuildIds: [guild.id],
       });
 
-      const dbConfig = await prisma.userCharactersLootlogSettings.findFirst({
-        where: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: "12345",
-          characterId: "1",
-        },
-      });
+      const dbConfig =
+        await prisma.db.orm.public.UserCharactersLootlogSettings.where((row) =>
+          row.userId.eq(TEST_USERS.MEMBER_WITH_WRITE.discordId),
+        )
+          .where((row) => row.accountId.eq("12345"))
+          .where((row) => row.characterId.eq("1"))
+          .first();
 
       expect(dbConfig).toBeTruthy();
       expect(dbConfig?.catchingGuildIds).toEqual([guild.id]);
     });
 
     it("should update existing config for character", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_2,
+      const guild2 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_2,
       });
 
-      const role1 = await prisma.role.create({
-        data: {
+      const role1 = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
@@ -331,8 +363,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      const role2 = await prisma.role.create({
-        data: {
+      const role2 = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-2",
           guildId: guild2.id,
           name: "Member",
@@ -340,53 +373,26 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.createMany({
-        data: [
-          {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            guildId: guild1.id,
-            name: "Test Member",
-            globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          },
-          {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            guildId: guild2.id,
-            name: "Test Member",
-            globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          },
-        ],
-      });
+      await insertDatabaseFixtures(prisma, "Member", [
+        {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild1.id,
+          name: "Test Member",
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          roles: { connect: { id: role1.id } },
+        },
+        {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild2.id,
+          name: "Test Member",
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          roles: { connect: { id: role2.id } },
+        },
+      ]);
 
-      await prisma.member.update({
-        where: {
-          memberId: {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            guildId: guild1.id,
-          },
-        },
-        data: {
-          roles: {
-            connect: { id: role1.id },
-          },
-        },
-      });
-
-      await prisma.member.update({
-        where: {
-          memberId: {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            guildId: guild2.id,
-          },
-        },
-        data: {
-          roles: {
-            connect: { id: role2.id },
-          },
-        },
-      });
-
-      await prisma.userCharactersLootlogSettings.create({
-        data: {
+      await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
@@ -410,16 +416,19 @@ describe("User Lootlog Config E2E Tests", () => {
     });
 
     it("should filter out guilds without write access during write", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild1 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_2,
+      const guild2 = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_2,
       });
 
-      const roleWithWrite = await prisma.role.create({
-        data: {
+      const roleWithWrite = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild1.id,
           name: "Admin",
@@ -427,8 +436,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      const roleWithoutWrite = await prisma.role.create({
-        data: {
+      const roleWithoutWrite = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-2",
           guildId: guild2.id,
           name: "Viewer",
@@ -436,8 +446,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
           name: "Test Member",
@@ -448,8 +459,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild2.id,
           name: "Test Member",
@@ -503,12 +515,14 @@ describe("User Lootlog Config E2E Tests", () => {
     });
 
     it("should accept empty arrays for guild IDs", async () => {
-      const guild = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const guild = await insertDatabaseFixture(prisma, "Guild", {
+        updatedAt: dateToTemporal(new Date()),
+        ...TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
-        data: {
+      const role = await insertDatabaseFixture(prisma, "Role", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           id: "role-1",
           guildId: guild.id,
           name: "Member",
@@ -516,8 +530,9 @@ describe("User Lootlog Config E2E Tests", () => {
         },
       });
 
-      await prisma.member.create({
-        data: {
+      await insertDatabaseFixture(prisma, "Member", {
+        updatedAt: dateToTemporal(new Date()),
+        ...{
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
           name: "Test Member",

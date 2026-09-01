@@ -120,7 +120,7 @@ export class EventCatalogService {
 
     const now = new Date();
 
-    const createdEvent = await this.prisma.db.transaction(
+    const createdEventRow = await this.prisma.db.transaction(
       async (transaction) => {
         const event = await transaction.orm.public.Event.create({
           ...eventData,
@@ -141,6 +141,11 @@ export class EventCatalogService {
 
     await this.eventReadCache.invalidateGuild(guildId);
 
+    const createdEvent = await this.getEventMutationResult(
+      guildId,
+      createdEventRow.id,
+      createdEventRow,
+    );
     return attachComputedEventActive(createdEvent, now);
   }
 
@@ -246,7 +251,7 @@ export class EventCatalogService {
           .include("heroNpcs", (row) =>
             row
               .select("id", "npcId", "npcName", "npcIcon", "npcLvl")
-              .include("locations", (rowRow) =>
+              .include("eventMapLocations", (rowRow) =>
                 rowRow
                   .select("id", "name", "order")
                   .include("maps", (rowRowRow) =>
@@ -271,7 +276,10 @@ export class EventCatalogService {
 
         const heroNpcs = await attachAssignedMembersToHeroes(
           this.prisma.db,
-          event.heroNpcs,
+          event.heroNpcs.map(({ eventMapLocations, ...hero }) => ({
+            ...hero,
+            locations: eventMapLocations,
+          })),
         );
         return { ...event, heroNpcs };
       },
@@ -335,7 +343,7 @@ export class EventCatalogService {
       referenceTime,
     );
 
-    const updatedEvent = await this.prisma.db.transaction(
+    const savedEvent = await this.prisma.db.transaction(
       async (transactionClient) => {
         if (!currentEventIsActive || !updatedEventIsActive) {
           await transactionClient.orm.public.UserPinnedEvent.where((row) =>
@@ -395,6 +403,11 @@ export class EventCatalogService {
       this.eventReadCache.invalidateEvent(guildId, eventId),
     ]);
 
+    const updatedEvent = await this.getEventMutationResult(
+      guildId,
+      eventId,
+      savedEvent,
+    );
     return attachComputedEventActive(updatedEvent, referenceTime);
   }
 
@@ -607,7 +620,7 @@ export class EventCatalogService {
     await this.trackingService.openUnassignedGap(map.id, heroId);
     await this.eventReadCache.invalidateEvent(guildId, eventId);
 
-    return map;
+    return { ...map, assignedMembers: [] };
   }
 
   async deleteMap(
@@ -949,5 +962,32 @@ export class EventCatalogService {
         );
       }
     }
+  }
+
+  private async getEventMutationResult(
+    guildId: string,
+    eventId: string,
+    fallbackEvent?: Event,
+  ) {
+    const event = await this.prisma.db.orm.public.Event.where((row) =>
+      and(row.id.eq(eventId), row.guildId.eq(guildId)),
+    )
+      .include("heroNpcs", (row) =>
+        row.include("maps", (map) => map.orderBy((field) => field.mapId.asc())),
+      )
+      .first();
+
+    if (!event || !("heroNpcs" in event)) {
+      if (fallbackEvent) return fallbackEvent;
+      throw new NotFoundException("Event not found");
+    }
+
+    return {
+      ...event,
+      heroNpcs: await attachAssignedMembersToHeroes(
+        this.prisma.db,
+        event.heroNpcs,
+      ),
+    };
   }
 }

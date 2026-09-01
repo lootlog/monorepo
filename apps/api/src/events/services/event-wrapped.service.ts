@@ -162,8 +162,8 @@ export class EventWrappedService {
       throw new NotFoundException("Event not found");
     }
 
-    const eventWindowStart = event.startsAt ?? event.createdAt;
-    const eventWindowEnd = event.endsAt ?? new Date();
+    const eventWindowStart = temporalToDate(event.startsAt ?? event.createdAt);
+    const eventWindowEnd = temporalToDate(event.endsAt) ?? new Date();
     const heroIds = event.heroNpcs.map((hero) => hero.id);
     const heroByName = new Map<
       string,
@@ -275,7 +275,7 @@ export class EventWrappedService {
 
     const killsByHour = new Map<number, number>();
     for (const kill of kills) {
-      const hour = kill.killedAt.getHours();
+      const hour = temporalToDate(kill.killedAt).getHours();
       killsByHour.set(hour, (killsByHour.get(hour) ?? 0) + 1);
     }
 

@@ -130,14 +130,14 @@ export class EventTrackingService implements OnModuleInit {
 
     const now = new Date();
 
-    if (now >= new Date(timer.maxSpawnTime)) {
+    if (now >= temporalToDate(timer.maxSpawnTime)) {
       throw new BadRequestException(
         "Cannot assign members after the respawn window is overdue",
       );
     }
 
     const assignmentEnabledAt = new Date(
-      new Date(timer.minSpawnTime).getTime() -
+      temporalToDate(timer.minSpawnTime).getTime() -
         map.heroNpc.event.assignmentTimeoutMinutes * 60 * 1000,
     );
 
@@ -860,8 +860,10 @@ export class EventTrackingService implements OnModuleInit {
 
     const mapIds = hero.maps.map((m) => m.id);
 
-    const eventStart = hero.event.startsAt || hero.event.createdAt;
-    const eventEnd = hero.event.endsAt || new Date();
+    const eventStart = temporalToDate(
+      hero.event.startsAt || hero.event.createdAt,
+    );
+    const eventEnd = temporalToDate(hero.event.endsAt) ?? new Date();
     const totalEventSeconds = Math.max(
       0,
       Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),

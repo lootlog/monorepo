@@ -106,9 +106,11 @@ describe("Event pins E2E", () => {
     ).expect(200);
 
     expect(
-      await prisma.userPinnedEvent.count({
-        where: { userId: "e2e-user" },
-      }),
+      (
+        await prisma.db.orm.public.UserPinnedEvent.where((row) =>
+          row.userId.eq("e2e-user"),
+        ).aggregate((aggregate) => ({ count: aggregate.count() }))
+      ).count,
     ).toBe(2);
 
     await withAuth(
@@ -123,16 +125,22 @@ describe("Event pins E2E", () => {
     ).expect(204);
 
     expect(
-      await prisma.userPinnedEvent.count({
-        where: { userId: "e2e-user" },
-      }),
+      (
+        await prisma.db.orm.public.UserPinnedEvent.where((row) =>
+          row.userId.eq("e2e-user"),
+        ).aggregate((aggregate) => ({ count: aggregate.count() }))
+      ).count,
     ).toBe(1);
 
-    await prisma.event.delete({ where: { id: secondEvent.id } });
+    await prisma.db.orm.public.Event.where((row) =>
+      row.id.eq(secondEvent.id),
+    ).delete();
     expect(
-      await prisma.userPinnedEvent.count({
-        where: { userId: "e2e-user" },
-      }),
+      (
+        await prisma.db.orm.public.UserPinnedEvent.where((row) =>
+          row.userId.eq("e2e-user"),
+        ).aggregate((aggregate) => ({ count: aggregate.count() }))
+      ).count,
     ).toBe(0);
   });
 

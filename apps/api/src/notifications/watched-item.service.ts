@@ -289,6 +289,11 @@ export class WatchedItemService {
             notificationRuleId: notificationRule.id,
             updatedAt: dateToTemporal(new Date()),
           },
+          conflictOn: {
+            userId: discordId,
+            itemId: params.itemId,
+            world: params.world,
+          },
           update: {
             enabled: true,
             itemName: params.itemName,
@@ -330,10 +335,10 @@ export class WatchedItemService {
   }
 
   private async ensureWatchedItemLimitNotExceeded(discordId: string) {
-    const currentWatchedItemCount =
+    const { count: currentWatchedItemCount } =
       await this.prisma.db.orm.public.WatchedItem.where((row) =>
         row.userId.eq(discordId),
-      ).count();
+      ).aggregate((aggregate) => ({ count: aggregate.count() }));
 
     ensureLimitNotExceeded({
       currentCount: currentWatchedItemCount,

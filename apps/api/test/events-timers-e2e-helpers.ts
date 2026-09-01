@@ -8,6 +8,8 @@ import type { FieldOutputTypes } from "../src/prisma/contract.js";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 
+import { dateToTemporal } from "../src/db/temporal.js";
+import { insertDatabaseFixture } from "./database-fixtures.js";
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
 type Event = FieldOutputTypes["public"]["Event"];
@@ -70,9 +72,8 @@ export async function createE2EApp() {
 
 export async function closeE2EApp(
   app: INestApplication,
-  prisma: PrismaService,
+  _prisma: PrismaService,
 ) {
-  await prisma.$disconnect();
   await app.close();
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
@@ -81,7 +82,14 @@ export async function resetEventsTimersState(
   prisma: PrismaService,
   redis: RedisService,
 ) {
-  await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings", "Event", "EventHeroNpc", "EventMap", "EventMapLocation", "EventMapAssignmentHistory", "EventMapCoverageGap", "EventPresenceLog", "EventHeroKill", "EventKillPoint", "EventRanking", "EventPointsEditHistory", "EventRespawnWindowSummary" CASCADE`;
+  await prisma.db
+    .runtime()
+    .execute(
+      prisma.db.raw
+        .sql`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings", "Event", "EventHeroNpc", "EventMap", "EventMapLocation", "EventMapAssignmentHistory", "EventMapCoverageGap", "EventPresenceLog", "EventHeroKill", "EventKillPoint", "EventRanking", "EventPointsEditHistory", "EventRespawnWindowSummary" CASCADE`
+        .affectedCount()
+        .build(),
+    );
   await Promise.all([
     redis.deleteByPattern("timer:*"),
     redis.deleteByPattern("perms:*"),
@@ -95,8 +103,9 @@ export async function createGuildFixture(
   prisma: PrismaService,
   overrides: Partial<Guild> = {},
 ) {
-  return prisma.guild.create({
-    data: {
+  return insertDatabaseFixture(prisma, "Guild", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       id: overrides.id ?? "e2e-guild",
       name: overrides.name ?? "E2E Guild",
       icon: overrides.icon ?? null,
@@ -119,8 +128,9 @@ export async function createMemberFixture(
   },
 ): Promise<{ role: Role; member: Member }> {
   const auth = params.auth ?? TEST_AUTH;
-  const role = await prisma.role.create({
-    data: {
+  const role = await insertDatabaseFixture(prisma, "Role", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       id: params.roleId ?? `${auth.discordId}-role`,
       guildId: params.guildId,
       name: `${auth.discordId} role`,
@@ -130,8 +140,9 @@ export async function createMemberFixture(
       lvlRangeTo: params.lvlRangeTo,
     },
   });
-  const member = await prisma.member.create({
-    data: {
+  const member = await insertDatabaseFixture(prisma, "Member", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       userId: auth.discordId,
       guildId: params.guildId,
       name: `${auth.discordId} member`,
@@ -164,8 +175,9 @@ export async function createEventFixture(
   hero: EventHeroNpc;
   map: EventMap;
 }> {
-  const event = await prisma.event.create({
-    data: {
+  const event = await insertDatabaseFixture(prisma, "Event", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       guildId: params.guildId,
       name: params.name ?? "E2E Event",
       world: params.world ?? TEST_WORLD,
@@ -176,17 +188,16 @@ export async function createEventFixture(
       endsAt: params.endsAt,
     },
   });
-  const hero = await prisma.eventHeroNpc.create({
-    data: {
-      eventId: event.id,
-      npcId: params.npcId === undefined ? TEST_NPC.id : params.npcId,
-      npcName: params.heroName ?? TEST_NPC.name,
-      npcIcon: TEST_NPC.icon,
-      npcLvl: params.npcLvl === undefined ? TEST_NPC.lvl : params.npcLvl,
-    },
+  const hero = await insertDatabaseFixture(prisma, "EventHeroNpc", {
+    eventId: event.id,
+    npcId: params.npcId === undefined ? TEST_NPC.id : params.npcId,
+    npcName: params.heroName ?? TEST_NPC.name,
+    npcIcon: TEST_NPC.icon,
+    npcLvl: params.npcLvl === undefined ? TEST_NPC.lvl : params.npcLvl,
   });
-  const map = await prisma.eventMap.create({
-    data: {
+  const map = await insertDatabaseFixture(prisma, "EventMap", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       heroNpcId: hero.id,
       mapId: params.mapId ?? 5001,
       mapName: params.mapName ?? "E2E Map",
@@ -204,8 +215,9 @@ export async function createLocationFixture(
     order?: number;
   },
 ): Promise<EventMapLocation> {
-  return prisma.eventMapLocation.create({
-    data: {
+  return insertDatabaseFixture(prisma, "EventMapLocation", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       heroNpcId: params.heroNpcId,
       name: params.name ?? "E2E Location",
       order: params.order ?? 0,
@@ -225,8 +237,9 @@ export async function createTimerFixture(
   },
 ) {
   const npc = params.npc ?? TEST_NPC;
-  return prisma.timer.create({
-    data: {
+  return insertDatabaseFixture(prisma, "Timer", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       guildId: params.guildId,
       createdById: params.memberId,
       world: params.world ?? TEST_WORLD,
@@ -257,35 +270,32 @@ export async function createKillFixture(
   ranking: EventRanking;
   killPointId: string;
 }> {
-  const kill = await prisma.eventHeroKill.create({
-    data: {
-      heroNpcId: params.heroNpcId,
-      killedAt: new Date(Date.now() - 60_000),
-      minSpawnTimeAtKill: new Date(Date.now() - 900_000),
-      maxSpawnTimeAtKill: new Date(Date.now() - 120_000),
-      timerCreatedById: params.member.id,
-    },
+  const kill = await insertDatabaseFixture(prisma, "EventHeroKill", {
+    heroNpcId: params.heroNpcId,
+    killedAt: new Date(Date.now() - 60_000),
+    minSpawnTimeAtKill: new Date(Date.now() - 900_000),
+    maxSpawnTimeAtKill: new Date(Date.now() - 120_000),
+    timerCreatedById: params.member.id,
   });
-  const killPoint = await prisma.eventKillPoint.create({
-    data: {
-      killId: kill.id,
-      memberId: params.member.id,
-      basePoints: 1,
-      points: 1,
-      trackingDurationSeconds: 600,
-      trackingDurationPercentage: 100,
-      confirmationDeadlineAt: params.confirmationDeadlineAt ?? null,
-      confirmedAt:
-        params.confirmedAt === undefined ? new Date() : params.confirmedAt,
-      timeOnMapSeconds: 600,
-      afkPercentage: 0,
-      wasPresent: true,
-      bonusBreakdown: [],
-      mapPresenceData: [],
-    },
+  const killPoint = await insertDatabaseFixture(prisma, "EventKillPoint", {
+    killId: kill.id,
+    memberId: params.member.id,
+    basePoints: 1,
+    points: 1,
+    trackingDurationSeconds: 600,
+    trackingDurationPercentage: 100,
+    confirmationDeadlineAt: params.confirmationDeadlineAt ?? null,
+    confirmedAt:
+      params.confirmedAt === undefined ? new Date() : params.confirmedAt,
+    timeOnMapSeconds: 600,
+    afkPercentage: 0,
+    wasPresent: true,
+    bonusBreakdown: [],
+    mapPresenceData: [],
   });
-  const ranking = await prisma.eventRanking.create({
-    data: {
+  const ranking = await insertDatabaseFixture(prisma, "EventRanking", {
+    updatedAt: dateToTemporal(new Date()),
+    ...{
       eventId: params.eventId,
       memberId: params.member.id,
       heroNpcName: params.heroNpcName ?? TEST_NPC.name,

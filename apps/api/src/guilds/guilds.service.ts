@@ -1158,6 +1158,7 @@ export class GuildsService {
           active: true,
           updatedAt: dateToTemporal(updatedAt),
         },
+        conflictOn: { id: data.guildId },
         update: {
           name: data.name,
           icon: data.icon,
@@ -1397,6 +1398,7 @@ export class GuildsService {
         id: guildId,
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: { id: guildId },
       update: {},
     });
     const existingNpcs = await this.prisma.db.orm.public.LootlogConfigNpc.where(

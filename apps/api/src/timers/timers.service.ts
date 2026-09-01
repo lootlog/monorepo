@@ -52,7 +52,11 @@ import type {
   CreateAutoTimerResponse,
   CreateAutoTimerSubmittedGuild,
 } from "#src/timers/dto/create-auto-timer-response.dto";
-import { temporalToDate, dateToTemporal } from "#src/db/temporal";
+import {
+  temporalToDate,
+  dateToTemporal,
+  type DatabaseTemporal,
+} from "#src/db/temporal";
 
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
 type NpcType = (typeof NpcType)[keyof typeof NpcType];
@@ -319,12 +323,8 @@ export class TimersService implements OnModuleInit {
     };
   }
 
-  private toDate(value: Date | string | null | undefined) {
-    if (!value) {
-      return null;
-    }
-
-    return value instanceof Date ? value : new Date(value);
+  private toDate(value: DatabaseTemporal | null | undefined) {
+    return temporalToDate(value) ?? null;
   }
 
   private mapTimerMember(member: TimerMember | null | undefined) {
@@ -413,6 +413,12 @@ export class TimersService implements OnModuleInit {
         name: actorCharacter.name,
         prof,
         icon,
+      },
+      conflictOn: {
+        world,
+        accountId: ids.accountId,
+        characterId: ids.characterId,
+        snapshotHash,
       },
       update: {},
     });
@@ -604,8 +610,11 @@ export class TimersService implements OnModuleInit {
 
   private async getAlwaysVisibleExpiredTimerKeys(
     userId: string,
-    world: string,
+    world?: string,
   ): Promise<string[]> {
+    if (!world) {
+      return [];
+    }
     const settings = await this.prisma.db.orm.public.UserSettingDocument.where(
       (row) =>
         and(
@@ -633,7 +642,7 @@ export class TimersService implements OnModuleInit {
   private applyTimerVisibilityFilter(
     collection: any,
     guildId: string | string[],
-    world: string,
+    world: string | undefined,
     alwaysVisibleExpiredTimerKeys: string[],
     now: Date,
   ) {
@@ -642,7 +651,7 @@ export class TimersService implements OnModuleInit {
         typeof guildId === "string"
           ? row.guildId.eq(guildId)
           : row.guildId.in(guildId),
-        row.world.eq(world),
+        ...(world ? [row.world.eq(world)] : []),
         or(
           and(row.deletedAt.isNull(), row.maxSpawnTime.gt(dateToTemporal(now))),
           and(
@@ -792,6 +801,7 @@ export class TimersService implements OnModuleInit {
           deletedAt: null,
           updatedAt: dateToTemporal(new Date()),
         },
+        conflictOn: { guildId, world, timerKey },
         update: {},
       });
 
@@ -996,6 +1006,7 @@ export class TimersService implements OnModuleInit {
           deletedAt: null,
           updatedAt: dateToTemporal(windowOpenedAt),
         },
+        conflictOn: { guildId, world, timerKey },
         update: {
           minSpawnTime: dateToTemporal(minSpawnTime),
           maxSpawnTime: dateToTemporal(maxSpawnTime),
@@ -1475,6 +1486,11 @@ export class TimersService implements OnModuleInit {
         ),
       ).upsert({
         create: timerData,
+        conflictOn: {
+          guildId: context.guildId,
+          world: context.data.world,
+          timerKey: context.timerKey,
+        },
         update: timerData,
       });
 
@@ -1529,9 +1545,9 @@ export class TimersService implements OnModuleInit {
             minSpawnTime,
             maxSpawnTime,
             memberId: newTimer.createdById,
-            previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
-            previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
-            windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
+            previousMinSpawnTime: this.toDate(previousTimer?.minSpawnTime),
+            previousMaxSpawnTime: this.toDate(previousTimer?.maxSpawnTime),
+            windowOpenedAt: this.toDate(previousTimer?.windowOpenedAt),
           },
         })
         .catch((error) => {
@@ -2022,6 +2038,7 @@ export class TimersService implements OnModuleInit {
         deletedAt: null,
         updatedAt: dateToTemporal(new Date()),
       },
+      conflictOn: { guildId, world: entry.world, timerKey: entry.timerKey },
       update: {
         createdById: entry.timerCreatedById,
         npcId: entry.npcId,

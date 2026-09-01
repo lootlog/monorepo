@@ -146,6 +146,11 @@ describe("ReservationsService", () => {
     await service.pinSpot("user-1", guild.id, reservation.spotId);
 
     expect(prisma.userPinnedReservationSpot.upsert).toHaveBeenCalledWith({
+      conflictOn: {
+        userId: "user-1",
+        guildId: guild.id,
+        spotId: reservation.spotId,
+      },
       where: {
         userId: "user-1",
         guildId: guild.id,

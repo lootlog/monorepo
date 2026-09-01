@@ -1,4 +1,5 @@
 import type { FieldOutputTypes } from "../../prisma/contract.js";
+import { dateToTemporal } from "#src/db/temporal";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { PrismaService } from "#src/db/prisma.service";
@@ -188,14 +189,18 @@ describe("EventWrappedService", () => {
       {
         id: "kill-1",
         heroNpcId: "hero-1",
-        killedAt: new Date("2026-03-12T09:15:00.000Z"),
-        minSpawnTimeAtKill: new Date("2026-03-12T08:30:00.000Z"),
+        killedAt: dateToTemporal(new Date("2026-03-12T09:15:00.000Z")),
+        minSpawnTimeAtKill: dateToTemporal(
+          new Date("2026-03-12T08:30:00.000Z"),
+        ),
       },
       {
         id: "kill-2",
         heroNpcId: "hero-1",
-        killedAt: new Date("2026-03-12T10:45:00.000Z"),
-        minSpawnTimeAtKill: new Date("2026-03-12T10:00:00.000Z"),
+        killedAt: dateToTemporal(new Date("2026-03-12T10:45:00.000Z")),
+        minSpawnTimeAtKill: dateToTemporal(
+          new Date("2026-03-12T10:00:00.000Z"),
+        ),
       },
     ]);
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([

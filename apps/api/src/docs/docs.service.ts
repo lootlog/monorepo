@@ -72,16 +72,16 @@ export class DocsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listDocuments(guildId: string) {
-    const [guild, used, trashed, documents] = await Promise.all([
+    const [guild, usedResult, trashedResult, documents] = await Promise.all([
       this.prisma.db.orm.public.Guild.where((row) => row.id.eq(guildId))
         .select("documentLimit")
         .first(),
       this.prisma.db.orm.public.GuildDocument.where((row) =>
         row.guildId.eq(guildId),
-      ).count(),
+      ).aggregate((aggregate) => ({ count: aggregate.count() })),
       this.prisma.db.orm.public.GuildDocument.where((row) =>
         and(row.guildId.eq(guildId), row.deletedAt.isNotNull()),
-      ).count(),
+      ).aggregate((aggregate) => ({ count: aggregate.count() })),
       this.prisma.db.orm.public.GuildDocument.where((row) =>
         and(row.guildId.eq(guildId), row.deletedAt.isNull()),
       )
@@ -104,6 +104,8 @@ export class DocsService {
     }
 
     const max = this.resolveDocumentLimit(guild.documentLimit);
+    const used = usedResult.count;
+    const trashed = trashedResult.count;
 
     return {
       items: await this.mapDocumentRecords(guildId, documents),
@@ -133,9 +135,9 @@ export class DocsService {
       }
 
       const max = this.resolveDocumentLimit(guild.documentLimit);
-      const used = await tx.orm.public.GuildDocument.where((row) =>
+      const { count: used } = await tx.orm.public.GuildDocument.where((row) =>
         row.guildId.eq(guildId),
-      ).count();
+      ).aggregate((aggregate) => ({ count: aggregate.count() }));
 
       if (used >= max) {
         throw new ConflictException("Guild document limit reached");

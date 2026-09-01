@@ -292,17 +292,15 @@ describe("Notification Services", () => {
           provide: POSTGRES_POOL,
           useValue: {
             query: mockFn(async () => {
-              const memberships = await mockPrisma.orm.public.Member.where({
-                userId: { in: ["user-1"] },
-                guildId: { in: ["guild-1"] },
-                active: true,
-              })
-                .select("userId", "guildId")
-                .include("guild", (row) => row.select("ownerId"))
-                .include("roles", (row) =>
-                  row.select("id", "permissions", "lvlRangeFrom", "lvlRangeTo"),
-                )
-                .all();
+              const memberships = await mockPrisma.member.findMany({
+                where: {
+                  userId: { in: ["user-1"] },
+                  guildId: { in: ["guild-1"] },
+                  active: true,
+                },
+                select: { userId: true, guildId: true },
+                include: { guild: true, roles: true },
+              });
               return {
                 rows: memberships.map((membership) => ({
                   userId: membership.userId,

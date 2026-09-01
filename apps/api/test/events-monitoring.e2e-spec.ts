@@ -16,6 +16,7 @@ import {
   withAuth,
 } from "./events-timers-e2e-helpers.js";
 
+import { insertDatabaseFixture } from "./database-fixtures.js";
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
 
@@ -53,31 +54,25 @@ describe("Events Monitoring E2E", () => {
       heroNpcId: hero.id,
       member,
     });
-    await prisma.eventMapCoverageGap.create({
-      data: {
-        mapId: map.id,
-        heroNpcId: hero.id,
-        gapType: "UNASSIGNED",
-        startedAt: new Date(Date.now() - 600_000),
-        endedAt: null,
-        hadAssignedMembers: false,
-      },
+    await insertDatabaseFixture(prisma, "EventMapCoverageGap", {
+      mapId: map.id,
+      heroNpcId: hero.id,
+      gapType: "UNASSIGNED",
+      startedAt: new Date(Date.now() - 600_000),
+      endedAt: null,
+      hadAssignedMembers: false,
     });
-    await prisma.eventMapAssignmentHistory.create({
-      data: {
-        mapId: map.id,
-        heroNpcId: hero.id,
-        memberId: member.id,
-        assignedAt: new Date(Date.now() - 900_000),
-      },
+    await insertDatabaseFixture(prisma, "EventMapAssignmentHistory", {
+      mapId: map.id,
+      heroNpcId: hero.id,
+      memberId: member.id,
+      assignedAt: new Date(Date.now() - 900_000),
     });
-    await prisma.eventPresenceLog.create({
-      data: {
-        mapId: map.id,
-        memberId: member.id,
-        isAfk: false,
-        startedAt: new Date(Date.now() - 300_000),
-      },
+    await insertDatabaseFixture(prisma, "EventPresenceLog", {
+      mapId: map.id,
+      memberId: member.id,
+      isAfk: false,
+      startedAt: new Date(Date.now() - 300_000),
     });
 
     await withAuth(

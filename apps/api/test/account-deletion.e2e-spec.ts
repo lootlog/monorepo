@@ -11,6 +11,9 @@ import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/db/prisma.service.js";
 import { createMockAmqpConnection } from "./test-module-helpers.js";
 
+import { dateToTemporal } from "../src/db/temporal.js";
+import { insertDatabaseFixture } from "./database-fixtures.js";
+import { attachRolesToMembers } from "../src/members/member-roles.repository.js";
 const NpcType = prismaDb.nativeEnums.public.NpcType.members;
 type NpcType = (typeof NpcType)[keyof typeof NpcType];
 
@@ -54,7 +57,6 @@ describe("Account Deletion E2E", () => {
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.$disconnect();
     }
     if (app) {
       await app.close();
@@ -65,15 +67,23 @@ describe("Account Deletion E2E", () => {
   beforeEach(async () => {
     battlelogHttpMock.post.mockClear();
 
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "UserKillStats", "NpcKillStats", "GuildKillSummary", "UserCharactersLootlogSettings", "UserSettings" CASCADE`;
+    await prisma.db
+      .runtime()
+      .execute(
+        prisma.db.raw
+          .sql`TRUNCATE TABLE "Guild", "Role", "Member", "UserKillStats", "NpcKillStats", "GuildKillSummary", "UserCharactersLootlogSettings", "UserSettings" CASCADE`
+          .affectedCount()
+          .build(),
+      );
     await redis.deleteByPattern("auth:idp-token:*");
     await redis.deleteByPattern("user-lootlog-config:*");
     await redis.deleteByPattern("perms:*");
   });
 
   it("removes discord-keyed stats after account recreation while keeping guild unique kills intact", async () => {
-    const guild = await prisma.guild.create({
-      data: {
+    const guild = await insertDatabaseFixture(prisma, "Guild", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         id: "guild-delete-test",
         name: "Delete Test Guild",
         ownerId: viewerUser.discordId,
@@ -81,15 +91,18 @@ describe("Account Deletion E2E", () => {
       },
     });
 
-    await prisma.userSettings.create({
-      data: {
+    await insertDatabaseFixture(prisma, "UserSettings", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: deletedUser.oldAuthUserId,
         guildsOrder: [guild.id],
+        hiddenGuildIds: [],
       },
     });
 
-    const viewerMember = await prisma.member.create({
-      data: {
+    const viewerMember = await insertDatabaseFixture(prisma, "Member", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: viewerUser.discordId,
         guildId: guild.id,
         name: "Viewer",
@@ -100,8 +113,9 @@ describe("Account Deletion E2E", () => {
       },
     });
 
-    const deletedMember = await prisma.member.create({
-      data: {
+    const deletedMember = await insertDatabaseFixture(prisma, "Member", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: deletedUser.discordId,
         guildId: guild.id,
         name: "Deleted User",
@@ -112,8 +126,9 @@ describe("Account Deletion E2E", () => {
       },
     });
 
-    await prisma.userKillStats.create({
-      data: {
+    await insertDatabaseFixture(prisma, "UserKillStats", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: deletedUser.discordId,
         world: "gordion",
         npcId: 379560,
@@ -126,8 +141,9 @@ describe("Account Deletion E2E", () => {
       },
     });
 
-    await prisma.userCharactersLootlogSettings.create({
-      data: {
+    await insertDatabaseFixture(prisma, "UserCharactersLootlogSettings", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         userId: deletedUser.discordId,
         accountId: "12345",
         characterId: "67890",
@@ -135,8 +151,9 @@ describe("Account Deletion E2E", () => {
       },
     });
 
-    await prisma.npcKillStats.create({
-      data: {
+    await insertDatabaseFixture(prisma, "NpcKillStats", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         guildId: guild.id,
         memberId: deletedMember.id,
         userId: deletedUser.discordId,
@@ -151,8 +168,9 @@ describe("Account Deletion E2E", () => {
       },
     });
 
-    await prisma.guildKillSummary.create({
-      data: {
+    await insertDatabaseFixture(prisma, "GuildKillSummary", {
+      updatedAt: dateToTemporal(new Date()),
+      ...{
         guildId: guild.id,
         world: "gordion",
         npcId: 379560,
@@ -211,37 +229,43 @@ describe("Account Deletion E2E", () => {
 
     const [remainingUserStats, remainingLootlogConfig, remainingUserSettings] =
       await Promise.all([
-        prisma.userKillStats.findMany({
-          where: { userId: deletedUser.discordId },
-        }),
-        prisma.userCharactersLootlogSettings.findMany({
-          where: { userId: deletedUser.discordId },
-        }),
-        prisma.userSettings.findUnique({
-          where: { userId: deletedUser.oldAuthUserId },
-        }),
+        prisma.db.orm.public.UserKillStats.where((row) =>
+          row.userId.eq(deletedUser.discordId),
+        ).all(),
+        prisma.db.orm.public.UserCharactersLootlogSettings.where((row) =>
+          row.userId.eq(deletedUser.discordId),
+        ).all(),
+        prisma.db.orm.public.UserSettings.where((row) =>
+          row.userId.eq(deletedUser.oldAuthUserId),
+        ).first(),
       ]);
 
     expect(remainingUserStats).toEqual([]);
     expect(remainingLootlogConfig).toEqual([]);
     expect(remainingUserSettings).toBeNull();
 
-    const updatedDeletedMember = await prisma.member.findUniqueOrThrow({
-      where: { id: deletedMember.id },
-      include: { roles: true },
-    });
-    const updatedViewerMember = await prisma.member.findUniqueOrThrow({
-      where: { id: viewerMember.id },
-    });
+    const updatedDeletedMemberRow = await prisma.db.orm.public.Member.where(
+      (row) => row.id.eq(deletedMember.id),
+    ).first();
+    const updatedViewerMember = await prisma.db.orm.public.Member.where((row) =>
+      row.id.eq(viewerMember.id),
+    ).first();
+
+    expect(updatedDeletedMemberRow).not.toBeNull();
+    expect(updatedViewerMember).not.toBeNull();
+    const [updatedDeletedMember] = await attachRolesToMembers(prisma.db, [
+      updatedDeletedMemberRow!,
+    ]);
 
     expect(updatedDeletedMember.active).toBe(false);
     expect(updatedDeletedMember.lastDiscordStatus).toBe("ACCOUNT_DELETED");
     expect(updatedDeletedMember.roles).toEqual([]);
     expect(updatedViewerMember.active).toBe(true);
 
-    const remainingGuildParticipations = await prisma.npcKillStats.findMany({
-      where: { guildId: guild.id },
-    });
+    const remainingGuildParticipations =
+      await prisma.db.orm.public.NpcKillStats.where((row) =>
+        row.guildId.eq(guild.id),
+      ).all();
 
     expect(remainingGuildParticipations).toEqual([]);
   });

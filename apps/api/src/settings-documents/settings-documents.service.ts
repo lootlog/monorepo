@@ -200,6 +200,12 @@ export class SettingsDocumentsService {
                 ...data,
                 updatedAt: dateToTemporal(new Date()),
               },
+              conflictOn: {
+                userId,
+                domain: operation.domain,
+                scopeType: operation.scope.type as PrismaSettingsScopeType,
+                scopeId: operation.scope.id,
+              },
               update: data,
             });
           }
