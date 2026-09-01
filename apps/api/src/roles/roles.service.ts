@@ -6,10 +6,9 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Pool } from "pg";
 import type { Logger } from "winston";
-import { POSTGRES_POOL } from "#src/db/postgres.provider";
-import { withPostgresTransaction } from "#src/db/postgres-transaction";
+import { PrismaService } from "#src/db/prisma.service";
+import { dateToTemporal } from "#src/db/temporal";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
 import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
@@ -19,26 +18,12 @@ import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant
 import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
-type Permission = (typeof Permission)[keyof typeof Permission];
 type PermissionValue = (typeof Permission)[keyof typeof Permission];
-
-type RoleRow = {
-  id: string;
-  guildId: string;
-  name: string;
-  color: number | null;
-  position: number | null;
-  permissions: PermissionValue[] | null;
-  createdAt: Date;
-  updatedAt: Date;
-  lvlRangeFrom: number | null;
-  lvlRangeTo: number | null;
-};
 
 @Injectable()
 export class RolesService {
   constructor(
-    @Inject(POSTGRES_POOL) private readonly postgres: Pool,
+    private readonly prisma: PrismaService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
@@ -52,15 +37,16 @@ export class RolesService {
   }
 
   async getRolesByGuildId(guildId: string) {
-    const roles = await this.postgres.query<RoleRow>(
-      `SELECT "id", "guildId", "name", "color", "position", "permissions",
-              "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo"
-       FROM "Role"
-       WHERE "guildId" = $1
-       ORDER BY "position" DESC`,
-      [guildId],
-    );
-    return roles.rows;
+    const roles = await this.prisma.db.orm.public.Role.where((row) =>
+      row.guildId.eq(guildId),
+    )
+      .orderBy((row) => row.position.desc())
+      .all();
+
+    return roles.map((role) => ({
+      ...role,
+      permissions: [...(role.permissions ?? [])],
+    }));
   }
 
   async bulkCreateRoles(
@@ -68,31 +54,41 @@ export class RolesService {
     roles: GuildRoleDto[],
   ): Promise<{ count: number } | undefined> {
     try {
-      const count = await withPostgresTransaction(
-        this.postgres,
-        async (transaction) => {
-          let createdCount = 0;
-          for (const role of roles) {
-            const created = await transaction.query(
-              `INSERT INTO "Role"
-                 ("id", "guildId", "name", "color", "position", "permissions",
-                  "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo")
-               VALUES ($1, $2, $3, $4, $5, $6::"Permission"[], NOW(), NOW(), 0, 500)
-               ON CONFLICT ("id") DO NOTHING`,
-              [
-                role.id,
-                guildId,
-                role.name,
-                role.color,
-                role.position,
-                this.getAdminPermissions(role.admin),
-              ],
-            );
-            createdCount += created.rowCount ?? 0;
-          }
-          return createdCount;
-        },
-      );
+      const count = await this.prisma.db.transaction(async (transaction) => {
+        const roleIds = roles.map((role) => role.id);
+        const existingRoles =
+          roleIds.length === 0
+            ? []
+            : await transaction.orm.public.Role.where((row) =>
+                row.id.in(roleIds),
+              )
+                .select("id")
+                .all();
+        const existingRoleIds = new Set(existingRoles.map((role) => role.id));
+        const updatedAt = dateToTemporal(new Date());
+
+        for (const role of roles) {
+          await transaction.orm.public.Role.where((row) =>
+            row.id.eq(role.id),
+          ).upsert({
+            create: {
+              id: role.id,
+              guildId,
+              name: role.name,
+              color: role.color,
+              position: role.position,
+              permissions: this.getAdminPermissions(role.admin),
+              updatedAt,
+              lvlRangeFrom: 0,
+              lvlRangeTo: 500,
+            },
+            conflictOn: { id: role.id },
+            update: {},
+          });
+        }
+
+        return roles.filter((role) => !existingRoleIds.has(role.id)).length;
+      });
       return { count };
     } catch (error) {
       this.logger.log({
@@ -109,44 +105,37 @@ export class RolesService {
     const permissions = this.getAdminPermissions(data.admin);
 
     try {
-      const existingRole = await this.postgres.query<
-        Pick<RoleRow, "permissions">
-      >(`SELECT "permissions" FROM "Role" WHERE "id" = $1 AND "guildId" = $2`, [
-        data.id,
-        data.guildId,
+      const existingRole = await this.findRole(data.id, data.guildId);
+      const roleIsAdministrative = PermissionResolver.isAdministrative([
+        ...(existingRole?.permissions ?? []),
       ]);
-      const existingPermissions = existingRole.rows[0]?.permissions;
-      const roleIsAdministrative = existingPermissions
-        ? PermissionResolver.isAdministrative(existingPermissions)
-        : false;
       const shouldUpdatePermissions =
-        existingPermissions !== undefined &&
-        roleIsAdministrative !== data.admin;
+        existingRole !== null && roleIsAdministrative !== data.admin;
+      const updatedAt = dateToTemporal(new Date());
 
-      await this.postgres.query(
-        `INSERT INTO "Role"
-           ("id", "guildId", "name", "color", "position", "permissions",
-            "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo")
-         VALUES ($1, $2, $3, $4, $5, $6::"Permission"[], NOW(), NOW(), 0, 500)
-         ON CONFLICT ("id") DO UPDATE SET
-           "name" = EXCLUDED."name",
-           "color" = EXCLUDED."color",
-           "position" = EXCLUDED."position",
-           "permissions" = CASE
-             WHEN $7::boolean THEN EXCLUDED."permissions"
-             ELSE "Role"."permissions"
-           END,
-           "updatedAt" = NOW()`,
-        [
-          data.id,
-          data.guildId,
-          data.name,
-          data.color,
-          data.position,
+      await this.prisma.db.orm.public.Role.where((row) =>
+        row.id.eq(data.id),
+      ).upsert({
+        create: {
+          id: data.id,
+          guildId: data.guildId,
+          name: data.name,
+          color: data.color,
+          position: data.position,
           permissions,
-          shouldUpdatePermissions,
-        ],
-      );
+          updatedAt,
+          lvlRangeFrom: 0,
+          lvlRangeTo: 500,
+        },
+        conflictOn: { id: data.id },
+        update: {
+          name: data.name,
+          color: data.color,
+          position: data.position,
+          updatedAt,
+          ...(shouldUpdatePermissions ? { permissions } : {}),
+        },
+      });
 
       await this.redisService.deleteByPattern(
         getPermissionsCachePattern(data.guildId),
@@ -173,14 +162,15 @@ export class RolesService {
       throw new NotFoundException();
     }
 
-    const guild = await this.postgres.query<{ ownerId: string }>(
-      `SELECT "ownerId" FROM "Guild" WHERE "id" = $1`,
-      [guildId],
-    );
-    const isOwner = guild.rows[0]?.ownerId === discordId;
-    const roleIsAdministrative = PermissionResolver.isAdministrative(
-      role.permissions,
-    );
+    const guild = await this.prisma.db.orm.public.Guild.where((row) =>
+      row.id.eq(guildId),
+    )
+      .select("ownerId")
+      .first();
+    const isOwner = guild?.ownerId === discordId;
+    const roleIsAdministrative = PermissionResolver.isAdministrative([
+      ...(role.permissions ?? []),
+    ]);
     const newPermissionsAreAdministrative = PermissionResolver.isAdministrative(
       data.permissions,
     );
@@ -189,22 +179,21 @@ export class RolesService {
       throw new ForbiddenException();
     }
 
-    const updated = await this.postgres.query<RoleRow>(
-      `UPDATE "Role"
-       SET "permissions" = $2::"Permission"[],
-           "lvlRangeFrom" = $3,
-           "lvlRangeTo" = $4,
-           "updatedAt" = NOW()
-       WHERE "id" = $1
-       RETURNING "id", "guildId", "name", "color", "position", "permissions",
-                 "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo"`,
-      [roleId, data.permissions, data.lvlRangeFrom, data.lvlRangeTo],
-    );
+    const updated = await this.prisma.db.orm.public.Role.where((row) =>
+      row.id.eq(roleId),
+    )
+      .where((row) => row.guildId.eq(guildId))
+      .update({
+        permissions: data.permissions,
+        lvlRangeFrom: data.lvlRangeFrom,
+        lvlRangeTo: data.lvlRangeTo,
+        updatedAt: dateToTemporal(new Date()),
+      });
 
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(guildId),
     );
-    return updated.rows[0];
+    return updated;
   }
 
   async deleteRole(data: DeleteRoleDto) {
@@ -213,7 +202,9 @@ export class RolesService {
       return;
     }
 
-    await this.postgres.query(`DELETE FROM "Role" WHERE "id" = $1`, [data.id]);
+    await this.prisma.db.orm.public.Role.where((row) => row.id.eq(data.id))
+      .where((row) => row.guildId.eq(data.guildId))
+      .delete();
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(data.guildId),
     );
@@ -221,9 +212,9 @@ export class RolesService {
 
   async deleteRolesByGuildId(guildId: string) {
     try {
-      await this.postgres.query(`DELETE FROM "Role" WHERE "guildId" = $1`, [
-        guildId,
-      ]);
+      await this.prisma.db.orm.public.Role.where((row) =>
+        row.guildId.eq(guildId),
+      ).deleteAll();
       await this.redisService.deleteByPattern(
         getPermissionsCachePattern(guildId),
       );
@@ -238,13 +229,8 @@ export class RolesService {
   }
 
   private async findRole(roleId: string, guildId: string) {
-    const role = await this.postgres.query<RoleRow>(
-      `SELECT "id", "guildId", "name", "color", "position", "permissions",
-              "createdAt", "updatedAt", "lvlRangeFrom", "lvlRangeTo"
-       FROM "Role"
-       WHERE "id" = $1 AND "guildId" = $2`,
-      [roleId, guildId],
-    );
-    return role.rows[0] ?? null;
+    return this.prisma.db.orm.public.Role.where((row) => row.id.eq(roleId))
+      .where((row) => row.guildId.eq(guildId))
+      .first();
   }
 }

@@ -3,7 +3,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/db/prisma.service.js";
-import { db as prismaDb } from "../src/prisma/db.js";
+import { configureNativeEnumArrays, db as prismaDb } from "../src/prisma/db.js";
 import type { FieldOutputTypes } from "../src/prisma/contract.js";
 import { buildTimerKey } from "../src/timers/utils/timer-key.js";
 import { createTestingModuleWithMocks } from "./test-module-helpers.js";
@@ -55,6 +55,7 @@ export function withAuth(
 }
 
 export async function createE2EApp() {
+  await configureNativeEnumArrays();
   const moduleFixture = await createTestingModuleWithMocks({
     imports: [AppModule],
   });

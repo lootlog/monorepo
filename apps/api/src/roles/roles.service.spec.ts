@@ -7,15 +7,42 @@ const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
 
 describe("RolesService", () => {
-  const postgres = { query: mockFn(), connect: mockFn() };
+  const role = {
+    where: mockFn(),
+    select: mockFn(),
+    orderBy: mockFn(),
+    all: mockFn(),
+    first: mockFn(),
+    upsert: mockFn(),
+    update: mockFn(),
+    delete: mockFn(),
+    deleteAll: mockFn(),
+  };
+  const guild = {
+    where: mockFn(),
+    select: mockFn(),
+    first: mockFn(),
+  };
+  const db = {
+    orm: { public: { Role: role, Guild: guild } },
+    transaction: mockFn(),
+  };
   const logger = { log: mockFn() };
   const redis = { deleteByPattern: mockFn() };
   let service: RolesService;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    role.where.mockReturnValue(role);
+    role.select.mockReturnValue(role);
+    role.orderBy.mockReturnValue(role);
+    guild.where.mockReturnValue(guild);
+    guild.select.mockReturnValue(guild);
+    db.transaction.mockImplementation((operation) =>
+      operation({ orm: db.orm }),
+    );
     service = new RolesService(
-      postgres as never,
+      { db } as never,
       logger as never,
       redis as never,
     );
@@ -23,60 +50,52 @@ describe("RolesService", () => {
 
   it("returns roles ordered by position", async () => {
     const roles = [
-      { id: "role-1", position: 2 },
-      { id: "role-2", position: 1 },
+      { id: "role-1", position: 2, permissions: [] },
+      { id: "role-2", position: 1, permissions: [] },
     ];
-    postgres.query.mockResolvedValue({ rows: roles });
+    role.all.mockResolvedValue(roles);
 
     await expect(service.getRolesByGuildId("guild-1")).resolves.toEqual(roles);
-    expect(postgres.query.mock.calls[0]?.[1]).toEqual(["guild-1"]);
+    expect(role.orderBy).toHaveBeenCalledOnce();
   });
 
   it("preserves permissions when Discord admin state is unchanged", async () => {
-    postgres.query
-      .mockResolvedValueOnce({
-        rows: [{ permissions: [Permission.LOOTLOG_ACCESS] }],
-      })
-      .mockResolvedValueOnce({ rows: [] });
+    role.first.mockResolvedValue(roleRow());
+    role.upsert.mockResolvedValue(roleRow());
 
     await service.createOrUpdateRole(createRole());
 
-    expect(postgres.query.mock.calls[1]?.[1]?.[6]).toBe(false);
+    expect(role.upsert.mock.calls[0]?.[0]?.update).not.toHaveProperty(
+      "permissions",
+    );
     expect(redis.deleteByPattern).toHaveBeenCalledOnce();
   });
 
   it("synchronizes all non-owner permissions when a role becomes admin", async () => {
-    postgres.query
-      .mockResolvedValueOnce({
-        rows: [{ permissions: [Permission.LOOTLOG_ACCESS] }],
-      })
-      .mockResolvedValueOnce({ rows: [] });
+    role.first.mockResolvedValue(roleRow());
+    role.upsert.mockResolvedValue(roleRow());
 
     await service.createOrUpdateRole(createRole({ admin: true }));
 
-    const parameters = postgres.query.mock.calls[1]?.[1];
-    expect(parameters?.[5]).toEqual(
+    expect(role.upsert.mock.calls[0]?.[0]?.update.permissions).toEqual(
       Object.values(Permission).filter(
         (permission) => permission !== Permission.OWNER,
       ),
     );
-    expect(parameters?.[6]).toBe(true);
   });
 
   it("uses empty permissions when creating a non-admin role", async () => {
-    postgres.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] });
+    role.first.mockResolvedValue(null);
+    role.upsert.mockResolvedValue(roleRow({ permissions: [] }));
 
     await service.createOrUpdateRole(createRole());
 
-    expect(postgres.query.mock.calls[1]?.[1]?.[5]).toEqual([]);
+    expect(role.upsert.mock.calls[0]?.[0]?.create.permissions).toEqual([]);
   });
 
   it("logs an upsert failure without invalidating the cache", async () => {
-    postgres.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockRejectedValueOnce(new Error("DB error"));
+    role.first.mockResolvedValue(null);
+    role.upsert.mockRejectedValue(new Error("DB error"));
 
     await service.createOrUpdateRole(createRole());
 
@@ -87,7 +106,7 @@ describe("RolesService", () => {
   });
 
   it("rejects permission updates for a missing role", async () => {
-    postgres.query.mockResolvedValueOnce({ rows: [] });
+    role.first.mockResolvedValue(null);
 
     await expect(
       service.updateRolePermissions("user-1", "guild-1", "role-1", {
@@ -99,9 +118,8 @@ describe("RolesService", () => {
   });
 
   it("prevents a non-owner from changing administrative access", async () => {
-    postgres.query
-      .mockResolvedValueOnce({ rows: [roleRow()] })
-      .mockResolvedValueOnce({ rows: [{ ownerId: "owner-1" }] });
+    role.first.mockResolvedValue(roleRow());
+    guild.first.mockResolvedValue({ ownerId: "owner-1" });
 
     await expect(
       service.updateRolePermissions("user-1", "guild-1", "role-1", {
@@ -113,12 +131,9 @@ describe("RolesService", () => {
   });
 
   it("allows the owner to update administrative access", async () => {
-    postgres.query
-      .mockResolvedValueOnce({ rows: [roleRow()] })
-      .mockResolvedValueOnce({ rows: [{ ownerId: "owner-1" }] })
-      .mockResolvedValueOnce({
-        rows: [roleRow({ permissions: [Permission.ADMIN] })],
-      });
+    role.first.mockResolvedValue(roleRow());
+    guild.first.mockResolvedValue({ ownerId: "owner-1" });
+    role.update.mockResolvedValue(roleRow({ permissions: [Permission.ADMIN] }));
 
     await expect(
       service.updateRolePermissions("owner-1", "guild-1", "role-1", {
@@ -131,22 +146,21 @@ describe("RolesService", () => {
   });
 
   it("does not delete a role outside the guild", async () => {
-    postgres.query.mockResolvedValueOnce({ rows: [] });
+    role.first.mockResolvedValue(null);
 
     await service.deleteRole({ id: "role-1", guildId: "guild-1" });
 
-    expect(postgres.query).toHaveBeenCalledOnce();
+    expect(role.delete).not.toHaveBeenCalled();
     expect(redis.deleteByPattern).not.toHaveBeenCalled();
   });
 
   it("deletes an existing role and invalidates permissions", async () => {
-    postgres.query
-      .mockResolvedValueOnce({ rows: [roleRow()] })
-      .mockResolvedValueOnce({ rows: [], rowCount: 1 });
+    role.first.mockResolvedValue(roleRow());
+    role.delete.mockResolvedValue(roleRow());
 
     await service.deleteRole({ id: "role-1", guildId: "guild-1" });
 
-    expect(postgres.query).toHaveBeenCalledTimes(2);
+    expect(role.delete).toHaveBeenCalledOnce();
     expect(redis.deleteByPattern).toHaveBeenCalledOnce();
   });
 });

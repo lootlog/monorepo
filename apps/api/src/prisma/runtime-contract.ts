@@ -36,10 +36,11 @@ type MutableContract = typeof emittedContractJson & {
 };
 
 const contractJson = structuredClone(emittedContractJson) as MutableContract;
+const nativeEnumArrayTypeNames = new Set<string>();
 
-// Prisma RC currently cannot construct the runtime codec for native enum
-// arrays. Their wire representation is text-compatible, while the storage
-// contract still preserves the native enum type for DDL and verification.
+// Prisma RC currently cannot construct the domain codec for native enum
+// arrays. Their elements are text-compatible; storage keeps the native enum
+// codec so writes retain the correct PostgreSQL cast.
 for (const [modelName, fieldName] of [
   ["LootlogConfigNpc", "allowedRarities"],
   ["Role", "permissions"],
@@ -55,9 +56,10 @@ for (const [modelName, fieldName] of [
       fieldName
     ];
   if (column) {
-    column.codecId = "pg/text@1";
-    delete column.typeParams;
+    const typeName = column.typeParams?.typeName;
+    if (typeName) nativeEnumArrayTypeNames.add(typeName);
   }
 }
 
+export const runtimeNativeEnumArrayTypeNames = [...nativeEnumArrayTypeNames];
 export default contractJson;

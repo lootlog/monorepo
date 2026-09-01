@@ -1,10 +1,12 @@
 import {
   Injectable,
   Logger,
+  type OnModuleInit,
   Optional,
   type OnModuleDestroy,
 } from "@nestjs/common";
 import {
+  configureNativeEnumArrays,
   db,
   postgresPool,
   setDatabaseQueryObserver,
@@ -26,7 +28,7 @@ type PrismaDatabase = Omit<typeof db, "orm" | "transaction"> & {
 };
 
 @Injectable()
-export class PrismaService implements OnModuleDestroy {
+export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   // Prisma RC currently loses relation metadata on namespaced collections.
@@ -38,6 +40,10 @@ export class PrismaService implements OnModuleDestroy {
     private readonly perfDiagnosticsService?: PerfDiagnosticsService,
   ) {
     setDatabaseQueryObserver((event) => this.logQuery(event));
+  }
+
+  async onModuleInit(): Promise<void> {
+    await configureNativeEnumArrays();
   }
 
   async onModuleDestroy(): Promise<void> {
