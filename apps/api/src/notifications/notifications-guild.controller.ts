@@ -35,14 +35,13 @@ import { NotificationJobService } from "#src/notifications/notification-job.serv
 import { NotificationRuleService } from "#src/notifications/notification-rule.service";
 import { NotificationTargetService } from "#src/notifications/notification-target.service";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("notifications")
 @ApiBearerAuth()
 @UseGuards(AuthGuard, PermissionsGuard)
-@Permissions(Permission.OWNER, Permission.ADMIN)
+@RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
 @Controller("guilds/:guildId/notifications")
 export class NotificationsGuildController {
   constructor(

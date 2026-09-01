@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Permission } from "@lootlog/types";
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventCoordinationPage } from "./event-coordination-page";
 import type { EventCoordinationResponseDto } from "@lootlog/api-client/models/main/event-coordination-response-dto";
@@ -83,7 +84,9 @@ describe("EventCoordinationPage", () => {
       eventId: "event-1",
       guildId: "guild-1",
     });
-    mocks.useGuildPermissions.mockReturnValue({ data: [] });
+    mocks.useGuildPermissions.mockReturnValue({
+      data: createAccessPolicy({ capabilities: [] }),
+    });
     mocks.selfAssignMember.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
@@ -140,7 +143,12 @@ describe("EventCoordinationPage", () => {
 
   it("renders the normal state with coordinator actions", () => {
     mocks.useGuildPermissions.mockReturnValue({
-      data: [Permission.LOOTLOG_EVENTS_WRITE, Permission.LOOTLOG_EVENTS_MANAGE],
+      data: createAccessPolicy({
+        capabilities: [
+          Permission.LOOTLOG_EVENTS_WRITE,
+          Permission.LOOTLOG_EVENTS_MANAGE,
+        ],
+      }),
     });
     mocks.getCoordination.mockReturnValue({
       data: createCoordination([createHero()]),
@@ -160,7 +168,9 @@ describe("EventCoordinationPage", () => {
 
   it("disables self assignment and shows a countdown before the assignment window", () => {
     mocks.useGuildPermissions.mockReturnValue({
-      data: [Permission.LOOTLOG_EVENTS_WRITE],
+      data: createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_EVENTS_WRITE],
+      }),
     });
     mocks.getCoordination.mockReturnValue({
       data: createCoordination([

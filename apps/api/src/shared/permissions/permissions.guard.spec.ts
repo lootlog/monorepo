@@ -1,9 +1,16 @@
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { Permission } from "#src/generated/prisma/client";
+import { Capability, type AccessPolicy } from "@lootlog/access-policy";
 import { PermissionsGuard } from "./permissions.guard.js";
 
 describe("PermissionsGuard", () => {
+  it("keeps the policy vocabulary aligned with persisted permissions", () => {
+    expect(new Set(Object.values(Capability))).toEqual(
+      new Set(Object.values(Permission)),
+    );
+  });
+
   const mockReflector = {
     getAllAndOverride: vi.fn(),
   };
@@ -71,8 +78,8 @@ describe("PermissionsGuard", () => {
     mockMemberContextService.getMemberContext.mockResolvedValue(null);
 
     await expect(
-      guard.verifyPermissions({
-        requiredPermissions: [Permission.LOOTLOG_ACCESS],
+      guard.verifyCapabilities({
+        requiredCapabilities: [Permission.LOOTLOG_ACCESS],
         discordId: "discord-1",
         guildId: "guild-1",
         userId: "user-1",
@@ -90,8 +97,8 @@ describe("PermissionsGuard", () => {
     });
 
     await expect(
-      guard.verifyPermissions({
-        requiredPermissions: [Permission.LOOTLOG_ACCESS],
+      guard.verifyCapabilities({
+        requiredCapabilities: [Permission.LOOTLOG_ACCESS],
         discordId: "discord-1",
         guildId: "guild-1",
         userId: "user-1",
@@ -101,7 +108,10 @@ describe("PermissionsGuard", () => {
   });
 
   it("stores guild member context on the request when access is granted", async () => {
-    const request = { params: { guildId: "guild-1" } };
+    const request: {
+      accessPolicy?: AccessPolicy;
+      params: { guildId: string };
+    } = { params: { guildId: "guild-1" } };
     const context = {
       guild: { id: "guild-1" },
       member: { id: 1 },
@@ -112,8 +122,8 @@ describe("PermissionsGuard", () => {
     mockMemberContextService.getMemberContext.mockResolvedValue(context);
 
     await expect(
-      guard.verifyPermissions({
-        requiredPermissions: [Permission.LOOTLOG_ACCESS],
+      guard.verifyCapabilities({
+        requiredCapabilities: [Permission.LOOTLOG_ACCESS],
         discordId: "discord-1",
         guildId: "guild-1",
         userId: "user-1",
@@ -121,6 +131,11 @@ describe("PermissionsGuard", () => {
       }),
     ).resolves.toBe(true);
 
-    expect(request).toMatchObject(context);
+    expect(request).toMatchObject({
+      guild: context.guild,
+      member: context.member,
+      roles: context.roles,
+    });
+    expect(request.accessPolicy.allows(Permission.LOOTLOG_ACCESS)).toBe(true);
   });
 });

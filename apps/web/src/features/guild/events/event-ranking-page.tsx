@@ -59,7 +59,7 @@ export const EventRankingPage = () => {
   const queryGuildId = guildId ?? "";
   const queryEventId = eventId ?? "";
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const { data: currentMember } = useMembersControllerGetMe(
     { guildId: queryGuildId },
     {
@@ -73,8 +73,8 @@ export const EventRankingPage = () => {
     },
   );
   const canEditPoints =
-    permissions?.includes(Permission.OWNER) ||
-    permissions?.includes(Permission.ADMIN);
+    accessPolicy?.allows(Permission.OWNER) ||
+    accessPolicy?.allows(Permission.ADMIN);
 
   const {
     data: event,

@@ -1,5 +1,6 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { createAccessPolicy } from "@lootlog/access-policy";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { mockFn } from "#src/test/mock-fn";
 import { EventsMonitoringController } from "./events-monitoring.controller.js";
 
@@ -28,19 +29,19 @@ describe("EventsMonitoringController", () => {
   it("declares permissions metadata for read and manage monitoring endpoints", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsMonitoringController.prototype.getCoordination,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsMonitoringController.prototype.getKillTimelineData,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsMonitoringController.prototype.closeRespawnWindow,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_MANAGE]);
@@ -61,6 +62,9 @@ describe("EventsMonitoringController", () => {
   });
 
   it("checks hero visibility before returning timeline data", async () => {
+    const accessPolicy = createAccessPolicy({
+      capabilities: [Permission.LOOTLOG_EVENTS_READ],
+    });
     mockEventsService.getKillTimelineData.mockResolvedValue([
       { id: "timeline-1" },
     ]);
@@ -71,7 +75,7 @@ describe("EventsMonitoringController", () => {
       "hero-1",
       "kill-1",
       [] as never,
-      [Permission.LOOTLOG_EVENTS_READ],
+      accessPolicy,
     );
 
     expect(mockEventsService.getHeroWithAccessCheck).toHaveBeenCalledWith(
@@ -79,7 +83,7 @@ describe("EventsMonitoringController", () => {
       "event-1",
       "hero-1",
       [],
-      [Permission.LOOTLOG_EVENTS_READ],
+      accessPolicy,
     );
     expect(mockEventsService.getKillTimelineData).toHaveBeenCalledWith(
       "guild-1",

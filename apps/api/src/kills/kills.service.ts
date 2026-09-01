@@ -1,3 +1,4 @@
+import { Capability, type AccessPolicy } from "@lootlog/access-policy";
 import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -6,7 +7,6 @@ import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
 import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
-import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
 import { getStableNpcId } from "#src/shared/utils/get-stable-npc-id";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { CreateKillDto } from "./dto/create-kill.dto.js";
@@ -491,13 +491,13 @@ export class KillsService {
 
   getGuildKillStats(
     guildId: string,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     query: GetGuildKillStatsDto,
   ) {
     const npcTypes = query.npcTypes;
     const filteredRoles = this.filterReadableRoles(roles);
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = accessPolicy.allows(Capability.ADMIN);
 
     const visibilityCondition = this.buildVisibilityCondition(
       filteredRoles,
@@ -909,7 +909,7 @@ export class KillsService {
 
   getGuildTopNpcs(
     guildId: string,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     limit: number = 10,
     npcType?: NpcType,
@@ -920,7 +920,7 @@ export class KillsService {
     period?: KillStatsPeriod,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = accessPolicy.allows(Capability.ADMIN);
 
     const visibilityCondition = this.buildVisibilityCondition(
       filteredRoles,
@@ -1012,14 +1012,14 @@ export class KillsService {
 
   getGuildTopKillersByType(
     guildId: string,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     npcTypes: NpcType[],
     limit: number = 5,
     period?: KillStatsPeriod,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = accessPolicy.allows(Capability.ADMIN);
 
     const visibilityCondition = this.buildVisibilityCondition(
       filteredRoles,
@@ -1111,7 +1111,7 @@ export class KillsService {
 
   getNpcKillers(
     guildId: string,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     npcId: number,
     limit: number = 50,
@@ -1119,7 +1119,7 @@ export class KillsService {
     period?: KillStatsPeriod,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = accessPolicy.allows(Capability.ADMIN);
 
     const visibilityCondition = this.buildVisibilityCondition(
       filteredRoles,
@@ -1289,12 +1289,12 @@ export class KillsService {
   getMemberKills(
     guildId: string,
     memberId: number,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     query: GetMemberKillsDto,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = accessPolicy.allows(Capability.ADMIN);
 
     const visibilityCondition = this.buildVisibilityCondition(
       filteredRoles,

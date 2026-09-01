@@ -60,8 +60,8 @@ export const GuildDocEditorPage = () => {
   const { docId = "" } = useParams({ strict: false });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: permissions } = useGuildPermissions();
-  const canWrite = canWriteGuildDocs(permissions);
+  const { data: accessPolicy } = useGuildPermissions();
+  const canWrite = canWriteGuildDocs(accessPolicy);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState<GuildDocEditorContent>(
     normalizeGuildDocEditorContent(null),

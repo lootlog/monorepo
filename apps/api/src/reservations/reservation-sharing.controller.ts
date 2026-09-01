@@ -1,4 +1,4 @@
-import { AuthGuard } from "@lootlog/nest-shared";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import {
   Body,
@@ -19,7 +19,6 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import {
   AcceptReservationShareInvitationDto,
@@ -39,7 +38,7 @@ export class ReservationSharingController {
     private readonly reservationSharingService: ReservationSharingService,
   ) {}
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/reservation-shares")
   @ApiOperation({
@@ -51,7 +50,7 @@ export class ReservationSharingController {
     return this.reservationSharingService.list(guild.id);
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/reservation-share-invitations")
   @ApiOperation({
@@ -69,7 +68,7 @@ export class ReservationSharingController {
     return this.reservationSharingService.createInvitation(guild.id, userId);
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/reservation-share-invitations/:invitationId")
   @HttpCode(204)
@@ -88,7 +87,7 @@ export class ReservationSharingController {
     );
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/reservation-shares/:shareId")
   @HttpCode(204)

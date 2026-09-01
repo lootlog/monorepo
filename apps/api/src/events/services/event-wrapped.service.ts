@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type {
   Guild,
@@ -476,13 +477,17 @@ export class EventWrappedService {
       return Promise.resolve([]);
     }
 
+    const accessPolicy = createAccessPolicy({
+      capabilities: params.permissions,
+    });
+
     const fetchLootsBatch = async (
       cursor: number | undefined,
       collectedLoots: LootQueryResult[],
     ): Promise<LootQueryResult[]> => {
       const batch = await this.lootsService.fetchLootsByGuildId(
         params.guild,
-        params.permissions,
+        accessPolicy,
         params.roles,
         {
           limit: 100,

@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   BadRequestException,
   Body,
@@ -44,10 +45,9 @@ import {
 import { EventsService } from "./events.service.js";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "#src/shared/decorators/member.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
@@ -57,7 +57,7 @@ import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 export class EventsRankingController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/participation-confirmations/pending")
   @ApiOperation({
@@ -85,7 +85,7 @@ export class EventsRankingController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Post(
     "/guilds/:guildId/events/:eventId/participation-confirmations/expired/acknowledge",
@@ -115,7 +115,7 @@ export class EventsRankingController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/kills/:killId/confirm-participation")
   @HttpCode(200)
@@ -147,7 +147,7 @@ export class EventsRankingController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/ranking")
   @ApiOperation({
@@ -167,7 +167,7 @@ export class EventsRankingController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const [eventOverview, rankings] = await Promise.all([
       this.eventsService.getEventOverview(guildData.id, eventId),
@@ -177,7 +177,7 @@ export class EventsRankingController {
     const filteredOverview = this.eventsService.filterEventHeroesByLevel(
       eventOverview,
       roles,
-      permissions,
+      accessPolicy,
     );
     const visibleHeroNames = new Set(
       filteredOverview.heroNpcs.map((hero) => hero.npcName),
@@ -192,8 +192,8 @@ export class EventsRankingController {
     }
 
     const canViewEditHistory =
-      permissions.includes(Permission.OWNER) ||
-      permissions.includes(Permission.ADMIN);
+      accessPolicy.allows(Permission.OWNER) ||
+      accessPolicy.allows(Permission.ADMIN);
     if (!canViewEditHistory) {
       return visibleRankings.map((ranking) => ({
         ...ranking,
@@ -213,7 +213,7 @@ export class EventsRankingController {
     }));
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId/ranking/:rankingId")
   @ApiOperation({
@@ -247,7 +247,7 @@ export class EventsRankingController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_TIMERS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/timers")
   @ApiOperation({
@@ -269,7 +269,7 @@ export class EventsRankingController {
     @Param("eventId") eventId: string,
     @Query("world") world: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const timers = await this.eventsService.getEventHeroTimers(
       guildData.id,
@@ -283,12 +283,12 @@ export class EventsRankingController {
       return this.eventsService.isHeroVisibleToUser(
         { npcLvl },
         roles,
-        permissions,
+        accessPolicy,
       );
     });
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/hero-stats")
   @ApiOperation({
@@ -307,7 +307,7 @@ export class EventsRankingController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const stats = await this.eventsService.getEventHeroStats(
       guildData.id,
@@ -318,12 +318,12 @@ export class EventsRankingController {
       this.eventsService.isHeroVisibleToUser(
         { npcLvl: stat.npcLvl },
         roles,
-        permissions,
+        accessPolicy,
       ),
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/kills")
   @ApiOperation({
@@ -357,11 +357,11 @@ export class EventsRankingController {
   async getEventKillHistory(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @Query("limit") limit?: string,
     @Query("cursor") cursor?: string,
     @Query("heroId") heroId?: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
   ) {
     if (heroId) {
       await this.eventsService.getHeroWithAccessCheck(
@@ -369,7 +369,7 @@ export class EventsRankingController {
         eventId,
         heroId,
         roles,
-        permissions,
+        accessPolicy,
       );
     }
 
@@ -387,13 +387,13 @@ export class EventsRankingController {
         this.eventsService.isHeroVisibleToUser(
           { npcLvl: kill.heroNpc.npcLvl },
           roles,
-          permissions,
+          accessPolicy,
         ),
       ),
     };
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/members/:memberId/kills")
   @ApiOperation({
@@ -429,11 +429,11 @@ export class EventsRankingController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("memberId") memberId: string,
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @Query("limit") limit?: string,
     @Query("cursor") cursor?: string,
     @Query("heroId") heroId?: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
   ) {
     const parsedMemberId = Number.parseInt(memberId, 10);
 
@@ -447,7 +447,7 @@ export class EventsRankingController {
         eventId,
         heroId,
         roles,
-        permissions,
+        accessPolicy,
       );
     }
 
@@ -466,13 +466,13 @@ export class EventsRankingController {
         this.eventsService.isHeroVisibleToUser(
           { npcLvl: kill.heroNpc.npcLvl },
           roles,
-          permissions,
+          accessPolicy,
         ),
       ),
     };
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/kills")
   @ApiOperation({
@@ -503,17 +503,17 @@ export class EventsRankingController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @Query("limit") limit?: string,
     @Query("cursor") cursor?: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getHeroKillHistory(
@@ -525,7 +525,7 @@ export class EventsRankingController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId")
   @ApiOperation({
@@ -550,14 +550,14 @@ export class EventsRankingController {
     @Param("heroId") heroId: string,
     @Param("killId") killId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     return this.eventsService.getKillDetail(
@@ -568,7 +568,7 @@ export class EventsRankingController {
     );
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId/kills/:killId/points/:killPointId")
   @ApiOperation({

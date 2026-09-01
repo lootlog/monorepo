@@ -26,6 +26,7 @@
     "@lexical/rich-text": "0.48.0",
     "@lexical/selection": "0.48.0",
     "@lexical/table": "0.48.0",
+    "@lootlog/access-policy": "workspace:*",
     "@lootlog/api-client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/reservations": "workspace:*",

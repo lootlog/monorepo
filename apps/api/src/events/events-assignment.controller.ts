@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   Body,
   Controller,
@@ -33,10 +34,9 @@ import { UpdateLocationDto } from "./dto/update-location.dto.js";
 import { EventsService } from "./events.service.js";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "#src/shared/decorators/member.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
@@ -46,7 +46,7 @@ import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 export class EventsAssignmentController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/maps/:mapId/assign")
   @ApiOperation({
@@ -75,7 +75,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/maps/:mapId/self-assign")
   @ApiOperation({
@@ -96,14 +96,14 @@ export class EventsAssignmentController {
     @Param("mapId") mapId: string,
     @GuildMember() member: { id: number },
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const map = await this.eventsService.getMapWithHeroAccessCheck(
       guildData.id,
       eventId,
       mapId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     if (!map) {
@@ -120,7 +120,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId/maps/:mapId/self-assign")
   @ApiOperation({
@@ -141,14 +141,14 @@ export class EventsAssignmentController {
     @Param("mapId") mapId: string,
     @GuildMember() member: { id: number },
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const map = await this.eventsService.getMapWithHeroAccessCheck(
       guildData.id,
       eventId,
       mapId,
       roles,
-      permissions,
+      accessPolicy,
     );
 
     if (!map) {
@@ -165,7 +165,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes")
   @ApiOperation({
@@ -186,7 +186,7 @@ export class EventsAssignmentController {
     return this.eventsService.createHero(guildData.id, eventId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId/heroes/:heroId")
   @ApiOperation({
@@ -209,7 +209,7 @@ export class EventsAssignmentController {
     return this.eventsService.updateHero(guildData.id, eventId, heroId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId/heroes/:heroId")
   @ApiOperation({
@@ -231,7 +231,7 @@ export class EventsAssignmentController {
     return this.eventsService.deleteHero(guildData.id, eventId, heroId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/maps")
   @ApiOperation({
@@ -255,7 +255,7 @@ export class EventsAssignmentController {
     return this.eventsService.addMap(guildData.id, eventId, heroId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId")
   @ApiOperation({
@@ -279,7 +279,7 @@ export class EventsAssignmentController {
     return this.eventsService.deleteMap(guildData.id, eventId, heroId, mapId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/heroes/:heroId/locations")
   @ApiOperation({
@@ -298,19 +298,19 @@ export class EventsAssignmentController {
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     await this.eventsService.getHeroWithAccessCheck(
       guildData.id,
       eventId,
       heroId,
       roles,
-      permissions,
+      accessPolicy,
     );
     return this.eventsService.getLocations(guildData.id, eventId, heroId);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/locations")
   @ApiOperation({
@@ -342,7 +342,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch(
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId",
@@ -376,7 +376,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete(
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId",
@@ -409,7 +409,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/locations/reorder")
   @HttpCode(200)
@@ -438,7 +438,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId/location")
   @ApiOperation({
@@ -471,7 +471,7 @@ export class EventsAssignmentController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId/maps/:mapId/assign")
   @ApiOperation({

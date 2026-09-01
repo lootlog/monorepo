@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -210,7 +211,7 @@ describe("SingleTimer", () => {
       <SingleTimer
         guildIds={["guild-1", "guild-2"]}
         guildNamesById={{ "guild-1": "Alpha" }}
-        guildPermissions={guildPermissions}
+        accessPolicy={createAccessPolicy({ capabilities: guildPermissions })}
         timer={createTimer()}
         settingsKey="guild-1"
       />,
@@ -286,7 +287,7 @@ describe("SingleTimer", () => {
       <SingleTimer
         guildIds={["guild-1"]}
         guildNamesById={{}}
-        guildPermissions={guildPermissions}
+        accessPolicy={createAccessPolicy({ capabilities: guildPermissions })}
         timer={createTimer()}
         settingsKey="guild-1"
         isHidden

@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { ReservationsSettings } from "@/features/guild/settings/reservations/reservations-settings";
 import { ReservationsSettingsSkeleton } from "@/features/guild/settings/reservations/reservations-skeleton";
@@ -43,7 +44,7 @@ export const Route = createFileRoute(
         permissionsQueryOptions,
       );
 
-      if (!canManageGuild(permissions)) {
+      if (!canManageGuild(createAccessPolicy({ capabilities: permissions }))) {
         throwForbiddenRouteError();
       }
 

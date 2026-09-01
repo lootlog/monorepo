@@ -12,7 +12,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { AuthGuard, RequiredPermissions } from "@lootlog/nest-shared";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { Permission } from "@lootlog/types";
 import { ZodResponse } from "nestjs-zod";
 import { PermissionsGuard } from "#src/shared/guards/permissions.guard";
@@ -43,7 +43,7 @@ export class ActivitiesController {
   ) {}
 
   @Get(":guildId/activity-logs")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get activities for a specific guild" })
   @ZodResponse({ status: 200, type: PaginatedActivitiesResponseDto })
   findByGuild(
@@ -54,7 +54,7 @@ export class ActivitiesController {
   }
 
   @Get(":guildId/activity-logs/actor-name-suggestions")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get actor name suggestions for a guild" })
   @ZodResponse({ status: 200, type: ActorNameSuggestionsResponseDto })
   async suggestActorNames(
@@ -71,7 +71,7 @@ export class ActivitiesController {
   }
 
   @Get(":guildId/activity-logs/world-suggestions")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get world suggestions for a guild" })
   @ZodResponse({ status: 200, type: WorldSuggestionsResponseDto })
   async suggestWorlds(
@@ -88,7 +88,7 @@ export class ActivitiesController {
   }
 
   @Get(":guildId/activity-logs/clan-name-suggestions")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get clan name suggestions for a guild" })
   @ZodResponse({ status: 200, type: ClanNameSuggestionsResponseDto })
   async suggestClanNames(
@@ -105,7 +105,7 @@ export class ActivitiesController {
   }
 
   @Get(":guildId/users/:userId/activity-logs")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get activities for a specific user in a guild" })
   @ZodResponse({ status: 200, type: PaginatedActivitiesResponseDto })
   findByUser(
@@ -117,7 +117,7 @@ export class ActivitiesController {
   }
 
   @Get(":guildId/member-activity-stats")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get activity stats for guild members by source" })
   @ZodResponse({ status: 200, type: [MemberActivityStatsResponseDto] })
   getMemberActivityStats(@Param("guildId") guildId: string) {
@@ -125,7 +125,7 @@ export class ActivitiesController {
   }
 
   @Get(":guildId/activity-logs/:id")
-  @RequiredPermissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @ApiOperation({ summary: "Get a single activity by ID" })
   @ZodResponse({ status: 200, type: ActivityResponseDto })
   @ApiResponse({ status: 404, description: "Activity not found" })
@@ -134,7 +134,7 @@ export class ActivitiesController {
   }
 
   @Delete(":guildId/activity-logs/:id")
-  @RequiredPermissions(Permission.OWNER)
+  @RequiresCapabilities(Permission.OWNER)
   @ApiOperation({ summary: "Delete a specific activity by ID" })
   @ZodResponse({ status: 200, type: DeleteActivityResponseDto })
   @ApiResponse({ status: 404, description: "Activity not found" })

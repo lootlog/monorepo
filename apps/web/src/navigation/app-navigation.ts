@@ -1,3 +1,4 @@
+import { Capability, type AccessPolicy } from "@lootlog/access-policy";
 import i18n from "@/i18n/config";
 import { ROUTES } from "@/config/routes";
 import type { Battle } from "@/lib/api/battlelog-types";
@@ -53,7 +54,7 @@ type ResolveAppNavigationOptions = {
   currentBattle?: Battle;
   currentEntityLabel?: string;
   organizationName?: string;
-  permissions?: readonly string[];
+  accessPolicy?: AccessPolicy;
 };
 
 type OrganizationRouteLoaderData = {
@@ -76,7 +77,7 @@ type RegistryItem = {
   id: AppNavigationItemId;
   labelKey: string;
   path: string;
-  visible: (permissions: readonly string[] | undefined) => boolean;
+  visible: (accessPolicy: AccessPolicy | undefined) => boolean;
 };
 
 const alwaysVisible = () => true;
@@ -155,7 +156,7 @@ function isPathActive(pathname: string, href: string) {
 function resolveSidebarItems(
   pathname: string,
   registry: readonly RegistryItem[],
-  permissions?: readonly string[],
+  accessPolicy?: AccessPolicy,
 ): AppNavigationSidebarItem[] {
   const matchingItems = registry.filter((item) =>
     isPathActive(pathname, item.path),
@@ -169,7 +170,7 @@ function resolveSidebarItems(
     active: item.id === activeItem?.id,
     href: item.path,
     label: t(item.labelKey),
-    visible: item.visible(permissions),
+    visible: item.visible(accessPolicy),
   }));
 }
 
@@ -205,32 +206,35 @@ function buildUserSidebarRegistry(): RegistryItem[] {
 function buildOrganizationSidebarRegistry(
   organizationId: string,
 ): RegistryItem[] {
-  const has = (permissions: readonly string[] | undefined, value: string) =>
-    Boolean(permissions?.includes(value) || permissions?.includes("OWNER"));
-  const canViewEvents = (permissions: readonly string[] | undefined) =>
-    has(permissions, "LOOTLOG_EVENTS_READ") ||
-    has(permissions, "LOOTLOG_EVENTS_MANAGE");
-  const canManage = (permissions: readonly string[] | undefined) =>
-    Boolean(permissions?.includes("ADMIN") || permissions?.includes("OWNER"));
+  const canViewEvents = (accessPolicy: AccessPolicy | undefined) =>
+    accessPolicy?.allowsAny([
+      Capability.LOOTLOG_EVENTS_READ,
+      Capability.LOOTLOG_EVENTS_MANAGE,
+    ]) ?? false;
+  const canManage = (accessPolicy: AccessPolicy | undefined) =>
+    accessPolicy?.allows(Capability.ADMIN) ?? false;
 
   return [
     {
       id: "organization-loots",
       labelKey: "common.breadcrumbs.lootsList",
       path: ROUTES.guild.base(organizationId),
-      visible: (permissions) => has(permissions, "LOOTLOG_LOOTS_READ"),
+      visible: (accessPolicy) =>
+        accessPolicy?.allows(Capability.LOOTLOG_LOOTS_READ) ?? false,
     },
     {
       id: "organization-timers",
       labelKey: "layout.navigation.timers",
       path: ROUTES.guild.timers(organizationId),
-      visible: (permissions) => has(permissions, "LOOTLOG_TIMERS_READ"),
+      visible: (accessPolicy) =>
+        accessPolicy?.allows(Capability.LOOTLOG_TIMERS_READ) ?? false,
     },
     {
       id: "organization-reservations",
       labelKey: "layout.navigation.reservations",
       path: ROUTES.guild.reservations.base(organizationId),
-      visible: (permissions) => has(permissions, "LOOTLOG_RESERVATIONS_READ"),
+      visible: (accessPolicy) =>
+        accessPolicy?.allows(Capability.LOOTLOG_RESERVATIONS_READ) ?? false,
     },
     {
       id: "organization-docs",
@@ -248,7 +252,8 @@ function buildOrganizationSidebarRegistry(
       id: "organization-stats",
       labelKey: "layout.navigation.stats",
       path: ROUTES.guild.stats(organizationId),
-      visible: (permissions) => has(permissions, "LOOTLOG_LOOTS_READ"),
+      visible: (accessPolicy) =>
+        accessPolicy?.allows(Capability.LOOTLOG_LOOTS_READ) ?? false,
     },
     {
       id: "organization-activity",
@@ -602,7 +607,7 @@ function resolveOrganizationAppNavigation(
   options: ResolveAppNavigationOptions,
   lastMatch: AppNavigationMatch,
 ): AppNavigation {
-  const { matches, currentEntityLabel, organizationName, permissions } =
+  const { matches, currentEntityLabel, organizationName, accessPolicy } =
     options;
   const params = lastMatch.params ?? {};
   const organizationId = params.guildId;
@@ -650,7 +655,7 @@ function resolveOrganizationAppNavigation(
     sidebarItems: resolveSidebarItems(
       lastMatch.pathname,
       buildOrganizationSidebarRegistry(organizationId),
-      permissions,
+      accessPolicy,
     ),
   };
 }

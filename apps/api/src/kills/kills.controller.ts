@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   Body,
   Controller,
@@ -24,10 +25,9 @@ import {
   type Role,
 } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { CreateKillDto } from "./dto/create-kill.dto.js";
 import {
@@ -76,7 +76,7 @@ export class KillsController {
     return this.killsService.createKill(discordId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/stats/kills")
   @ApiOperation({
@@ -95,14 +95,14 @@ export class KillsController {
     description: "Forbidden - insufficient permissions",
   })
   getGuildKillStats(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @Query() query: GetGuildKillStatsDto,
     @GuildData() guildData: Guild,
   ) {
     return this.killsService.getGuildKillStats(
       guildData.id,
-      permissions,
+      accessPolicy,
       roles,
       query,
     );
@@ -144,7 +144,7 @@ export class KillsController {
     return this.killsService.getUserNpcKills(discordId, query);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/stats/kills/top-npcs")
   @ApiOperation({
@@ -177,7 +177,7 @@ export class KillsController {
     enumName: "NpcType",
   })
   getGuildTopNpcs(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Query("limit") limit?: number,
@@ -190,7 +190,7 @@ export class KillsController {
   ) {
     return this.killsService.getGuildTopNpcs(
       guildData.id,
-      permissions,
+      accessPolicy,
       roles,
       limit ?? 10,
       npcType,
@@ -202,7 +202,7 @@ export class KillsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/stats/kills/top-killers")
   @ApiOperation({
@@ -223,7 +223,7 @@ export class KillsController {
   @ApiQuery({ name: "limit", required: true, type: Number })
   @ApiQuery({ name: "period", required: true, type: String })
   getGuildTopKillersByType(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Query("limit") limit?: number,
@@ -231,7 +231,7 @@ export class KillsController {
   ) {
     return this.killsService.getGuildTopKillersByType(
       guildData.id,
-      permissions,
+      accessPolicy,
       roles,
       [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
       limit ?? 5,
@@ -239,7 +239,7 @@ export class KillsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/stats/kills/npcs/:npcId/killers")
   @ApiOperation({
@@ -263,7 +263,7 @@ export class KillsController {
     description: "NPC not found in guild kill stats",
   })
   async getNpcKillers(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Param("npcId") npcId: string,
@@ -271,7 +271,7 @@ export class KillsController {
   ) {
     const result = await this.killsService.getNpcKillers(
       guildData.id,
-      permissions,
+      accessPolicy,
       roles,
       Number.parseInt(npcId, 10),
       query.limit ?? 50,
@@ -286,7 +286,7 @@ export class KillsController {
     return result;
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/stats/kills/members/:memberId")
   @ApiOperation({
@@ -310,7 +310,7 @@ export class KillsController {
     description: "Member not found in guild",
   })
   async getMemberKills(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Param("memberId") memberId: string,
@@ -319,7 +319,7 @@ export class KillsController {
     const result = await this.killsService.getMemberKills(
       guildData.id,
       Number.parseInt(memberId, 10),
-      permissions,
+      accessPolicy,
       roles,
       query,
     );

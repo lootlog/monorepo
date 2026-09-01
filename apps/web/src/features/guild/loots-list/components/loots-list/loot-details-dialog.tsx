@@ -113,7 +113,7 @@ export const LootDetailsDialog: FC = () => {
   const { selectedLootId, closeLootDetails, isOpen } = useSelectedLoot();
   const cachedLoot = useLootFromCache(selectedLootId);
   const guildId = useGuildId();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const isOwner = useIsOwner();
 
   const {
@@ -137,7 +137,7 @@ export const LootDetailsDialog: FC = () => {
   const loot = cachedLoot ?? fetchedLoot;
 
   const canManageLoots =
-    permissions?.includes(ARCHIVE_LOOTS_PERMISSION) || isOwner;
+    accessPolicy?.allows(ARCHIVE_LOOTS_PERMISSION) || isOwner;
 
   const renderContent = () => {
     if (loot) {

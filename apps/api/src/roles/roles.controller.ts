@@ -12,8 +12,7 @@ import { type Guild, Permission } from "#src/generated/prisma/client";
 import { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
 import { RolesService } from "#src/roles/roles.service";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { RoleResponseDto } from "#src/shared/dto/role-response.dto";
 
@@ -24,7 +23,7 @@ import { RoleResponseDto } from "#src/shared/dto/role-response.dto";
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
@@ -45,7 +44,7 @@ export class RolesController {
     return this.rolesService.getRolesByGuildId(guild.id);
   }
 
-  @Permissions(Permission.ADMIN)
+  @RequiresCapabilities(Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch(":roleId/permissions")
   @ApiOperation({

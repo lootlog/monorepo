@@ -32,10 +32,10 @@ export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
   const { data: session } = useSession();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const canEditPoints =
-    Boolean(permissions?.includes(Permission.OWNER)) ||
-    Boolean(permissions?.includes(Permission.ADMIN));
+    Boolean(accessPolicy?.allows(Permission.OWNER)) ||
+    Boolean(accessPolicy?.allows(Permission.ADMIN));
   const queryGuildId = guildId ?? "";
   const queryEventId = eventId ?? "";
   const queryHeroId = heroId ?? "";

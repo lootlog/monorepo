@@ -1,5 +1,5 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { NotificationsGuildController } from "./notifications-guild.controller.js";
 
 describe("NotificationsGuildController", () => {
@@ -39,7 +39,10 @@ describe("NotificationsGuildController", () => {
 
   it("declares owner/admin permissions at controller level", () => {
     expect(
-      Reflect.getMetadata(PERMISSIONS_KEY, NotificationsGuildController),
+      Reflect.getMetadata(
+        REQUIRED_CAPABILITIES_KEY,
+        NotificationsGuildController,
+      ),
     ).toEqual([Permission.OWNER, Permission.ADMIN]);
   });
 

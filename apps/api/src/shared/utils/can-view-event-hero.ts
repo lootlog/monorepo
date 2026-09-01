@@ -1,5 +1,5 @@
+import { Capability, createAccessPolicy } from "@lootlog/access-policy";
 import type { Permission, Role } from "#src/generated/prisma/client";
-import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
 interface EventHeroWithLevel {
   npcLvl: number | null;
@@ -20,7 +20,9 @@ function canViewEventHero(
   roles: EventHeroVisibilityRole[],
   permissions: Permission[],
 ): boolean {
-  if (PermissionResolver.isAdministrative(permissions)) {
+  if (
+    createAccessPolicy({ capabilities: permissions }).allows(Capability.ADMIN)
+  ) {
     return true;
   }
 

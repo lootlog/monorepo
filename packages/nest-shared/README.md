@@ -15,8 +15,8 @@ Shared NestJS primitives used across backend services.
 - `DiscordId`
 - `UserId`
 - `GuildId`
-- `RequiredPermissions`
-- `REQUIRED_PERMISSIONS_KEY`
+- `RequiresCapabilities`
+- `REQUIRED_CAPABILITIES_KEY`
 
 ## Development
 

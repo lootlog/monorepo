@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   Body,
   Controller,
@@ -36,10 +37,9 @@ import { EventWrappedApiResponseDto } from "./dto/event-wrapped-response.dto.js"
 import { UpdateEventDto } from "./dto/update-event.dto.js";
 import { EventsService } from "./events.service.js";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
@@ -49,7 +49,7 @@ import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 export class EventsCatalogController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events")
   @ApiOperation({
@@ -74,7 +74,7 @@ export class EventsCatalogController {
     return this.eventsService.createEvent(guildData.id, data);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events")
   @ApiOperation({
@@ -100,10 +100,10 @@ export class EventsCatalogController {
   })
   async getEvents(
     @GuildData() guildData: { id: string },
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @Query("world") world?: string,
     @Query("activeOnly") activeOnly?: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
   ) {
     const events = await this.eventsService.getEvents(
       guildData.id,
@@ -114,11 +114,11 @@ export class EventsCatalogController {
     return this.eventsService.filterEventsHeroesByLevel(
       events,
       roles,
-      permissions,
+      accessPolicy,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId")
   @ApiOperation({
@@ -138,17 +138,17 @@ export class EventsCatalogController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const event = await this.eventsService.getEvent(guildData.id, eventId);
     return this.eventsService.filterEventHeroesByLevel(
       event,
       roles,
-      permissions,
+      accessPolicy,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/overview")
   @ApiOperation({
@@ -169,7 +169,7 @@ export class EventsCatalogController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const event = await this.eventsService.getEventOverview(
       guildData.id,
@@ -179,11 +179,11 @@ export class EventsCatalogController {
     return this.eventsService.filterEventHeroesByLevel(
       event,
       roles,
-      permissions,
+      accessPolicy,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/wrapped")
   @ApiOperation({
@@ -204,17 +204,17 @@ export class EventsCatalogController {
     @GuildData() guildData: Guild,
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     return this.eventsService.getWrapped(
       guildData,
       eventId,
-      permissions,
+      accessPolicy,
       roles,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/maps")
   @ApiOperation({
@@ -235,17 +235,17 @@ export class EventsCatalogController {
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
-    @MemberPermissions() permissions: Permission[] = [],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
   ) {
     const event = await this.eventsService.getEventMaps(guildData.id, eventId);
     return this.eventsService.filterEventHeroesByLevel(
       event,
       roles,
-      permissions,
+      accessPolicy,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId")
   @ApiOperation({
@@ -269,7 +269,7 @@ export class EventsCatalogController {
     return this.eventsService.updateEvent(guildData.id, eventId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @RequiresCapabilities(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/recalculate-points")
   @HttpCode(200)
@@ -297,7 +297,7 @@ export class EventsCatalogController {
     );
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId")
   @ApiOperation({

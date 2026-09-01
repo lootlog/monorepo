@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^9.0.2",
+    "@lootlog/access-policy": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/loot-visibility": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
