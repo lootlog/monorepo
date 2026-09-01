@@ -61,6 +61,7 @@ allowBuilds:
   unrs-resolver: true
   workerd: true
 injectWorkspacePackages: true
+dedupeInjectedDeps: false
 autoInstallPeers: true
 minimumReleaseAge: 0
 minimumReleaseAgeExclude:

@@ -197,8 +197,9 @@ jobs:
             apps/activity/src/prisma/contract.d.ts
           pnpm --filter @lootlog/api api:migration:check
           pnpm --filter @lootlog/activity activity:migration:check
-          pnpm exec turbo run build --filter=@lootlog/api --concurrency=1
-          pnpm exec turbo run build --filter=@lootlog/activity --concurrency=1
+          pnpm exec turbo run build \
+            --filter=@lootlog/api \
+            --filter=@lootlog/activity
           pnpm --filter @lootlog/api typecheck
           pnpm --filter @lootlog/activity typecheck
           pnpm --filter @lootlog/api lint
