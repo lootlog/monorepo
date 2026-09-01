@@ -139,7 +139,8 @@ export class ReservationMutationsService {
         guildId: context.guildId,
         spotId: spot.id,
         spotName: spot.name,
-        ...range,
+        startsAt: dateToTemporal(range.startsAt),
+        endsAt: dateToTemporal(range.endsAt),
         createdByUserId: context.userId,
         authorDisplayName: member.name,
         authorAvatarUrl: getDiscordAvatarUrl(context.discordId, member.avatar),
@@ -272,7 +273,8 @@ export class ReservationMutationsService {
       return transaction.orm.public.Reservation.where((row) =>
         row.id.eq(reservation.id),
       ).update({
-        ...range,
+        startsAt: dateToTemporal(range.startsAt),
+        endsAt: dateToTemporal(range.endsAt),
         comment,
         reminderMinutesBefore,
         updatedAt: dateToTemporal(new Date()),
