@@ -74,10 +74,6 @@ const buildLootData = (loot: Loot) => {
   };
 };
 
-const useLootData = (loot: Loot) => {
-  return buildLootData(loot);
-};
-
 const LootHeader = ({
   npcs,
   commentsCount,
@@ -293,7 +289,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const shouldReduceMotion = useReducedMotion();
 
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
-    useLootData(loot);
+    buildLootData(loot);
   const watchContext = {
     world: loot.world,
   };
