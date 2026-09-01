@@ -37,7 +37,7 @@ COPY --from=pruner-api /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/cle
 RUN pnpm exec turbo run build --filter=@lootlog/api
 RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     node /usr/local/lib/prune-production-deploy.mjs /prod/api
-RUN node -e 'require("/prod/api/dist/src/db/prisma.service.js")'
+RUN node -e 'require("/prod/api/dist/src/prisma/db.js")'
 
 FROM build-base AS pruner-auth
 COPY . .
@@ -117,21 +117,17 @@ COPY --from=pruner-activity /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/activity
 RUN pnpm deploy --filter=@lootlog/activity --prod /prod/activity && \
     node /usr/local/lib/prune-production-deploy.mjs /prod/activity
-RUN node -e 'require("/prod/activity/dist/src/shared/db/prisma.provider.js")'
+RUN node -e 'require("/prod/activity/dist/src/prisma/db.js")'
+
+FROM build-base AS pruner-developer
+COPY . .
+RUN turbo prune @lootlog/developer --docker --out-dir /pruned
 
 FROM build-base AS build-developer
-
-COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY patches/ ./patches/
-COPY apps/developer/package.json ./apps/developer/package.json
-COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-
-COPY apps/developer/ ./apps/developer/
-COPY packages/typescript-config/ ./packages/typescript-config/
-COPY packages/ui/ ./packages/ui/
-
+COPY --from=pruner-developer /pruned/json/ .
+COPY --from=pruner-developer /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
+COPY --from=pruner-developer /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/developer
 RUN pnpm deploy --filter=@lootlog/developer --prod /prod/developer && \
     node /usr/local/lib/prune-production-deploy.mjs /prod/developer

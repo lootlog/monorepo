@@ -209,8 +209,8 @@ jobs:
           pnpm --filter @lootlog/activity lint
           pnpm --filter @lootlog/api build
           pnpm --filter @lootlog/activity build
-          node -e 'require("./apps/api/dist/src/db/prisma.service.js")'
-          node -e 'require("./apps/activity/dist/src/shared/db/prisma.provider.js")'
+          node -e 'require("./apps/api/dist/src/prisma/db.js")'
+          node -e 'require("./apps/activity/dist/src/prisma/db.js")'
 
       - name: Test Prisma database cutover
         run: |
