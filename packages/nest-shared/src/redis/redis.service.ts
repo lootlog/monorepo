@@ -18,6 +18,16 @@ export interface RedisModuleOptions {
   prefix?: string;
 }
 
+export interface JsonCodec {
+  stringify: (value: unknown) => string;
+  parse: <T>(text: string) => T;
+}
+
+const DEFAULT_JSON_CODEC: JsonCodec = {
+  stringify: (value) => JSON.stringify(value),
+  parse: (text) => JSON.parse(text),
+};
+
 export interface RedisGetOrSetJsonOptions<T> {
   key: string;
   ttlSeconds: number;
@@ -25,6 +35,7 @@ export interface RedisGetOrSetJsonOptions<T> {
   lockTtlSeconds?: number;
   waitTimeoutMs?: number;
   waitIntervalMs?: number;
+  codec?: JsonCodec;
 }
 
 export interface RedisGetOrSetJsonBestEffortOptions<
@@ -115,7 +126,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client.get(this.prefixKey(key));
   }
 
-  async getJson<T>(key: string): Promise<T | null> {
+  async getJson<T>(
+    key: string,
+    codec: JsonCodec = DEFAULT_JSON_CODEC,
+  ): Promise<T | null> {
     const cached = await this.get(key);
 
     if (cached === null) {
@@ -123,15 +137,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      return JSON.parse(cached) as T;
+      return codec.parse<T>(cached);
     } catch {
       await this.del(key);
       return null;
     }
   }
 
-  async setJson<T>(key: string, value: T, ttlSeconds?: number): Promise<void> {
-    await this.set(key, JSON.stringify(value), ttlSeconds);
+  async setJson<T>(
+    key: string,
+    value: T,
+    ttlSeconds?: number,
+    codec: JsonCodec = DEFAULT_JSON_CODEC,
+  ): Promise<void> {
+    await this.set(key, codec.stringify(value), ttlSeconds);
   }
 
   async getOrSetJson<T>({
@@ -141,8 +160,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     lockTtlSeconds = DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS,
     waitTimeoutMs = DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS,
     waitIntervalMs = DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS,
+    codec = DEFAULT_JSON_CODEC,
   }: RedisGetOrSetJsonOptions<T>): Promise<T> {
-    const cached = await this.getJson<T>(key);
+    const cached = await this.getJson<T>(key, codec);
 
     if (cached !== null) {
       return cached;
@@ -157,6 +177,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         key,
         waitTimeoutMs,
         waitIntervalMs,
+        codec,
       );
 
       if (cachedAfterWait !== null) {
@@ -164,19 +185,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
 
       const value = await factory();
-      await this.setJson(key, value, ttlSeconds);
+      await this.setJson(key, value, ttlSeconds, codec);
       return value;
     }
 
     try {
-      const cachedAfterLock = await this.getJson<T>(key);
+      const cachedAfterLock = await this.getJson<T>(key, codec);
 
       if (cachedAfterLock !== null) {
         return cachedAfterLock;
       }
 
       const value = await factory();
-      await this.setJson(key, value, ttlSeconds);
+      await this.setJson(key, value, ttlSeconds, codec);
       return value;
     } finally {
       await this.releaseSingleFlightLock(lockKey, lockToken);
@@ -227,13 +248,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     key: string,
     waitTimeoutMs: number,
     waitIntervalMs: number,
+    codec: JsonCodec = DEFAULT_JSON_CODEC,
   ): Promise<T | null> {
     const deadline = Date.now() + waitTimeoutMs;
 
     while (Date.now() < deadline) {
       await sleep(waitIntervalMs);
 
-      const cached = await this.getJson<T>(key);
+      const cached = await this.getJson<T>(key, codec);
 
       if (cached !== null) {
         return cached;
