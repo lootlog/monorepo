@@ -11,8 +11,10 @@ import {
   Wait,
 } from "testcontainers";
 import { afterEach, describe, expect, it } from "vitest";
+import { ActivitiesQueryService } from "../src/activities/services/activities-query.service.js";
 import type { Contract } from "../src/prisma/contract.js";
 import contractJson from "../src/prisma/contract.json" with { type: "json" };
+import type { PrismaService } from "../src/prisma.service.js";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const activityRoot = path.resolve(dirname, "..");
@@ -81,7 +83,9 @@ describe("Prisma Activity database cutover", () => {
       await pool.query(`
         INSERT INTO "MemberActivityStats"
           ("guildId", "discordId", "source", "lastSeenAt", "visitCount", "activeSessionCount", "updatedAt")
-        VALUES ('cutover-guild', 'cutover-user', 'GAME', NOW(), 3, 1, NOW())
+        VALUES
+          ('cutover-guild', 'cutover-user', 'GAME', NOW(), 3, 1, NOW()),
+          ('cutover-guild', 'cutover-user', 'WEB_APP', NOW(), 2, 0, NOW())
       `);
       const stats = await database.orm.public.MemberActivityStats.where({
         guildId: "cutover-guild",
@@ -90,6 +94,13 @@ describe("Prisma Activity database cutover", () => {
       }).first();
 
       expect(stats?.visitCount).toBe(3);
+
+      const queryService = new ActivitiesQueryService({
+        db: database,
+      } as unknown as PrismaService);
+      await expect(
+        queryService.findMemberActivityStatsByGuild("cutover-guild"),
+      ).resolves.toHaveLength(2);
     } finally {
       await database.close();
       await pool.end();

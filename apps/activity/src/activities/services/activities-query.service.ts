@@ -192,7 +192,6 @@ export class ActivitiesQueryService {
       .orderBy([
         (stats) => stats.activeSessionCount.desc(),
         (stats) => stats.lastSeenAt.desc(),
-        (stats) => stats.source.asc(),
       ])
       .all();
 
