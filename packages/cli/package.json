@@ -7,16 +7,16 @@
   "scripts": {
     "lint": "oxlint src",
     "typecheck": "tsc --noEmit",
-    "test": "tsx src/utils/env-generator.test.ts",
-    "env:generate": "tsx src/commands/env/generate.ts",
-    "events": "tsx src/index.ts events",
-    "events:publish": "tsx src/index.ts events publish",
-    "seed": "tsx src/index.ts seed",
-    "seed:generate:players": "tsx src/index.ts seed generate:players",
-    "seed:scrape": "tsx src/index.ts seed scrape:all",
-    "seed:scrape:items": "tsx src/index.ts seed scrape:items",
-    "seed:scrape:npcs": "tsx src/index.ts seed scrape:npcs",
-    "seed:setup": "tsx src/index.ts seed setup"
+    "test": "bun test src/utils/env-generator.test.ts",
+    "env:generate": "bun src/commands/env/generate.ts",
+    "events": "bun src/index.ts events",
+    "events:publish": "bun src/index.ts events publish",
+    "seed": "bun src/index.ts seed",
+    "seed:generate:players": "bun src/index.ts seed generate:players",
+    "seed:scrape": "bun src/index.ts seed scrape:all",
+    "seed:scrape:items": "bun src/index.ts seed scrape:items",
+    "seed:scrape:npcs": "bun src/index.ts seed scrape:npcs",
+    "seed:setup": "bun src/index.ts seed setup"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",

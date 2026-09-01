@@ -27,8 +27,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src/*.ts scripts orval.config.ts --deny-warnings",
     "test": "vitest run",
-    "api-client:check": "tsx ./scripts/check-generated.ts",
-    "api-client:generate": "tsx ./scripts/generate.ts"
+    "api-client:check": "bun ./scripts/check-generated.ts",
+    "api-client:generate": "bun ./scripts/generate.ts"
   },
   "devDependencies": {
     "@lootlog/nest-shared": "workspace:*",

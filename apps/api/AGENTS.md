@@ -21,6 +21,6 @@ before changing this app.
 Treat the access and cross-Organization items in the root architecture's known
 gaps as defects to migrate, not as patterns to copy.
 
-Before handoff, run the relevant Vitest files, `pnpm --filter @lootlog/api lint`,
+Before handoff, run the relevant Vitest files, `bun run --filter @lootlog/api lint`,
 and the app build or typecheck path used by CI. Add contract coverage when an
 HTTP, event, or generated-client contract changes.

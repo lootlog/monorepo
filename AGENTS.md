@@ -157,7 +157,7 @@ Do not try to start the application; assume it is already running.
 - Published docs and landing content change build output and require a normal
   Changeset.
 - Never edit package versions or generated changelogs manually, and never run
-  `pnpm version` outside release automation.
+  `bun run version` outside release automation.
 - Production promotions and rollbacks reuse immutable artifacts. Never rebuild
   an existing release version.
 

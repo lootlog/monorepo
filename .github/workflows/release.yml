@@ -32,24 +32,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Create version PR or publish releases
         id: changesets
         uses: changesets/action@v2
         with:
-          publish-script: pnpm release
-          version-script: pnpm run version
+          publish-script: bun run release
+          version-script: bun run version
           commit-message: "chore: update versions"
           pr-title: "chore: release packages"
           create-github-releases: true
@@ -174,17 +170,13 @@ jobs:
       - name: Checkout release commit
         uses: actions/checkout@v7
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build immutable Cloudflare artifact
         env:
@@ -219,7 +211,7 @@ jobs:
               ;;
           esac
 
-          pnpm exec turbo run build --filter="$PACKAGE_NAME"
+          bunx turbo run build --filter="$PACKAGE_NAME"
           test -d "$ARTIFACT_PATH"
           archive="$RUNNER_TEMP/cloudflare-artifact.tar.gz"
           tar -C "$ARTIFACT_PATH" -czf "$archive" .
@@ -357,20 +349,15 @@ jobs:
       - name: Checkout release commit
         uses: actions/checkout@v7
 
-      - name: Setup pnpm
+      - name: Setup Bun
         if: needs.release.outputs.cloudflare-matrix != '[]'
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        if: needs.release.outputs.cloudflare-matrix != '[]'
-        uses: actions/setup-node@v6
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
+          bun-version: 1.4.0
 
       - name: Install deployment tooling
         if: needs.release.outputs.cloudflare-matrix != '[]'
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Download immutable Cloudflare artifacts
         if: needs.release.outputs.cloudflare-matrix != '[]'
@@ -412,7 +399,7 @@ jobs:
 
             if [[ "$kind" == "pages" ]]; then
               previous_id="$(
-                pnpm exec wrangler pages deployment list \
+                bunx wrangler pages deployment list \
                   --project-name "$project" \
                   --environment production \
                   --json |
@@ -425,7 +412,7 @@ jobs:
                 '{kind: $kind, previousId: $previousId, project: $project}' \
                 >> "$ROLLBACK_STATE"
 
-              pnpm exec wrangler pages deploy "$artifact_path" \
+              bunx wrangler pages deploy "$artifact_path" \
                 --project-name "$project" \
                 --branch main \
                 --commit-hash "$GITHUB_SHA" \
@@ -435,7 +422,7 @@ jobs:
             fi
 
             previous_id="$(
-              pnpm exec wrangler deployments list \
+              bunx wrangler deployments list \
                 --config "$config_path" \
                 --env="" \
                 --name "$project" \
@@ -453,21 +440,21 @@ jobs:
 
             case "$package_name" in
               @lootlog/traffic-splitter)
-                pnpm exec wrangler deploy "$artifact_path/index.js" \
+                bunx wrangler deploy "$artifact_path/index.js" \
                   --config "$config_path" \
                   --env="" \
                   --name "$project" \
                   --keep-vars
                 ;;
               @lootlog/wiki)
-                pnpm exec wrangler deploy "$artifact_path/server/index.js" \
+                bunx wrangler deploy "$artifact_path/server/index.js" \
                   --config "$config_path" \
                   --env="" \
                   --assets "$artifact_path/client" \
                   --keep-vars
                 ;;
               *)
-                pnpm exec wrangler deploy \
+                bunx wrangler deploy \
                   --config "$config_path" \
                   --env="" \
                   --keep-vars
@@ -632,7 +619,7 @@ jobs:
               continue
             fi
 
-            pnpm exec wrangler rollback "$previous_id" \
+            bunx wrangler rollback "$previous_id" \
               --config "$config_path" \
               --env="" \
               --name "$project" \

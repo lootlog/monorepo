@@ -17,10 +17,15 @@ const githubActionsWorkflowPattern = /^\.github\/workflows\/[^/]+\.ya?ml$/;
 const githubActionUsePattern =
   /^(?<prefix>\s*(?:-\s*)?uses:\s*["']?)(?<action>[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_./-]+)?)@(?<ref>[^"'#\s]+)(?<suffix>["']?\s*(?:#.*)?)$/;
 
-function withoutDependencyFields(manifest) {
-  return Object.fromEntries(
+function withoutClassifiedDependencyFields(manifest, isRootManifest) {
+  const result = Object.fromEntries(
     Object.entries(manifest).filter(([key]) => !dependencyFields.includes(key)),
   );
+  if (isRootManifest && result.workspaces) {
+    const { catalog: _catalog, ...workspaces } = result.workspaces;
+    result.workspaces = workspaces;
+  }
+  return result;
 }
 
 function changedAnyField(before, after, fields) {
@@ -29,6 +34,7 @@ function changedAnyField(before, after, fields) {
   );
 }
 
+// oxlint-disable-next-line eslint/complexity -- Fail-closed classification keeps every ambiguous manifest branch explicit.
 export function createDependabotChangeset({
   catalogChanges = {
     hasDevelopmentChanges: false,
@@ -77,8 +83,8 @@ export function createDependabotChangeset({
 
     if (
       !isDeepStrictEqual(
-        withoutDependencyFields(before),
-        withoutDependencyFields(after),
+        withoutClassifiedDependencyFields(before, isRootManifest),
+        withoutClassifiedDependencyFields(after, isRootManifest),
       )
     ) {
       throw new Error(`Cannot classify Dependabot changes in ${path}`);
@@ -141,50 +147,21 @@ export function createDependabotChangeset({
   return null;
 }
 
-function readCatalogEntries(contents, path) {
-  const entries = new Map();
-  const lines = contents.split(/\r?\n/);
-  let catalogFound = false;
-  let insideCatalog = false;
-
-  for (const [index, line] of lines.entries()) {
-    if (line === "catalog:") {
-      if (catalogFound) {
-        throw new Error(`Cannot classify Dependabot changes in ${path}`);
-      }
-      catalogFound = true;
-      insideCatalog = true;
-      continue;
+function readCatalog(contents, path) {
+  try {
+    const manifest = JSON.parse(contents);
+    const catalog = manifest.workspaces?.catalog;
+    if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) {
+      throw new Error("The Bun workspace catalog is missing or malformed");
     }
-
-    if (!insideCatalog) {
-      continue;
-    }
-    if (line.length > 0 && !line.startsWith(" ")) {
-      insideCatalog = false;
-      continue;
-    }
-    if (line.trim() === "" || line.trimStart().startsWith("#")) {
-      continue;
-    }
-
-    const entry = line.match(
-      /^ {2}(?:"([^"]+)"|'([^']+)'|([^"'#:][^:]*)):\s*(\S.*)$/,
-    );
-    if (!entry) {
-      throw new Error(`Cannot classify Dependabot changes in ${path}`);
-    }
-    entries.set(index, {
-      dependency: (entry[1] ?? entry[2] ?? entry[3]).trim(),
-      value: entry[4].trim(),
-    });
-  }
-
-  if (!catalogFound) {
+    const { catalog: _catalog, ...workspaces } = manifest.workspaces;
+    return {
+      catalog,
+      manifest: { ...manifest, workspaces },
+    };
+  } catch {
     throw new Error(`Cannot classify Dependabot changes in ${path}`);
   }
-
-  return { entries, lines };
 }
 
 function usesCatalogDependency(manifest, field, dependency) {
@@ -206,35 +183,36 @@ export function classifyCatalogDependencyUpdate({
     );
   }
 
-  const path = "pnpm-workspace.yaml";
-  const afterCatalog = readCatalogEntries(after, path);
-  const beforeCatalog = readCatalogEntries(before, path);
-  if (afterCatalog.lines.length !== beforeCatalog.lines.length) {
+  const path = "package.json";
+  const afterRoot = readCatalog(after, path);
+  const beforeRoot = readCatalog(before, path);
+  if (!isDeepStrictEqual(afterRoot.manifest, beforeRoot.manifest)) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
+  const afterCatalog = afterRoot.catalog;
+  const beforeCatalog = beforeRoot.catalog;
+  if (
+    !isDeepStrictEqual(Object.keys(afterCatalog), Object.keys(beforeCatalog))
+  ) {
     throw new Error(`Cannot classify Dependabot changes in ${path}`);
   }
 
   const changedDependencies = new Set();
-  for (const [index, beforeLine] of beforeCatalog.lines.entries()) {
-    const afterLine = afterCatalog.lines[index];
-    if (beforeLine === afterLine) {
+  for (const dependency of Object.keys(beforeCatalog)) {
+    if (beforeCatalog[dependency] === afterCatalog[dependency]) {
       continue;
     }
-
-    const beforeEntry = beforeCatalog.entries.get(index);
-    const afterEntry = afterCatalog.entries.get(index);
     if (
-      !beforeEntry ||
-      !afterEntry ||
-      beforeEntry.dependency !== afterEntry.dependency ||
-      beforeEntry.value === afterEntry.value
+      typeof beforeCatalog[dependency] !== "string" ||
+      typeof afterCatalog[dependency] !== "string"
     ) {
       throw new Error(`Cannot classify Dependabot changes in ${path}`);
     }
-    changedDependencies.add(afterEntry.dependency);
+    changedDependencies.add(dependency);
   }
 
   if (changedDependencies.size === 0) {
-    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+    return { hasDevelopmentChanges: false, runtimePackages: [] };
   }
 
   const runtimePackages = new Set();
@@ -335,12 +313,11 @@ export function classifyChangedDependencyPaths({
   let catalogPath;
 
   for (const filename of filenames) {
-    if (filename === "pnpm-lock.yaml" || filename === ownChangeset) {
+    if (filename === "bun.lock" || filename === ownChangeset) {
       continue;
     }
-    if (filename === "pnpm-workspace.yaml") {
+    if (filename === "package.json") {
       catalogPath = filename;
-      continue;
     }
     if (
       filename === "package.json" ||

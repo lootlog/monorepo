@@ -13,6 +13,6 @@ this app. Also use the repository Better Auth skill for Better Auth work.
 - Treat provider tokens, session data, and account-recovery paths as secrets.
 - Keep NestJS DI dependencies as value imports when runtime metadata needs them.
 
-Before handoff, run the relevant Vitest files, `pnpm --filter @lootlog/auth lint`,
+Before handoff, run the relevant Vitest files, `bun run --filter @lootlog/auth lint`,
 and the app build or typecheck path used by CI. Add contract coverage for
 session, token, or JWKS changes.

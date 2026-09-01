@@ -132,7 +132,7 @@ function validateWorkspaceChangesets(baseRef, cwd) {
 
   try {
     runCommand(
-      "pnpm",
+      "bunx",
       ["changeset", "status", `--since=${baseRef}`, `--output=${statusFile}`],
       cwd,
     );
@@ -151,7 +151,7 @@ function validateWorkspaceChangesets(baseRef, cwd) {
           "Changed workspaces missing from the Changesets release plan:",
           ...uncoveredWorkspaces.map((workspace) => `- ${workspace}`),
           "",
-          "Add every workspace to a changeset, or use `pnpm changeset --empty` when no release is required.",
+          "Add every workspace to a changeset, or use `bunx changeset --empty` when no release is required.",
           "",
         ].join("\n"),
       );

@@ -129,17 +129,16 @@ test("classifies package manifests, the workspace catalog, and workflows", () =>
   assert.deepEqual(
     classifyChangedDependencyPaths({
       filenames: [
-        "pnpm-lock.yaml",
+        "bun.lock",
         "apps/api/package.json",
         "package.json",
-        "pnpm-workspace.yaml",
         ".github/workflows/ci.yml",
         ".changeset/dependabot-pr-1225.md",
       ],
       pullRequestNumber: 1225,
     }),
     {
-      catalogPath: "pnpm-workspace.yaml",
+      catalogPath: "package.json",
       manifestPaths: ["apps/api/package.json", "package.json"],
       toolingPaths: [".github/workflows/ci.yml"],
     },
@@ -148,22 +147,24 @@ test("classifies package manifests, the workspace catalog, and workflows", () =>
 
 test("creates patch releases for runtime consumers of changed catalog entries", () => {
   const catalogChanges = classifyCatalogDependencyUpdate({
-    after: [
-      "packages:",
-      '  - "apps/*"',
-      "catalog:",
-      '  "@hookform/resolvers": ^5.5.7',
-      '  "@swc/core": ^1.15.47',
-      "",
-    ].join("\n"),
-    before: [
-      "packages:",
-      '  - "apps/*"',
-      "catalog:",
-      '  "@hookform/resolvers": ^5.4.2',
-      '  "@swc/core": ^1.15.46',
-      "",
-    ].join("\n"),
+    after: JSON.stringify({
+      workspaces: {
+        catalog: {
+          "@hookform/resolvers": "^5.5.7",
+          "@swc/core": "^1.15.47",
+        },
+        packages: ["apps/*"],
+      },
+    }),
+    before: JSON.stringify({
+      workspaces: {
+        catalog: {
+          "@hookform/resolvers": "^5.4.2",
+          "@swc/core": "^1.15.46",
+        },
+        packages: ["apps/*"],
+      },
+    }),
     workspaceManifests: [
       {
         dependencies: { "@hookform/resolvers": "catalog:" },
@@ -191,8 +192,12 @@ test("creates patch releases for runtime consumers of changed catalog entries", 
 
 test("creates an empty changeset for development-only catalog updates", () => {
   const catalogChanges = classifyCatalogDependencyUpdate({
-    after: ["catalog:", '  "@swc/core": ^1.15.47', ""].join("\n"),
-    before: ["catalog:", '  "@swc/core": ^1.15.46', ""].join("\n"),
+    after: JSON.stringify({
+      workspaces: { catalog: { "@swc/core": "^1.15.47" } },
+    }),
+    before: JSON.stringify({
+      workspaces: { catalog: { "@swc/core": "^1.15.46" } },
+    }),
     workspaceManifests: [
       {
         devDependencies: { "@swc/core": "catalog:" },
@@ -220,8 +225,12 @@ test("rejects workspace changes outside catalog version entries", () => {
   assert.throws(
     () =>
       classifyCatalogDependencyUpdate({
-        after: ["packages:", '  - "services/*"', "catalog:", ""].join("\n"),
-        before: ["packages:", '  - "apps/*"', "catalog:", ""].join("\n"),
+        after: JSON.stringify({
+          workspaces: { catalog: {}, packages: ["services/*"] },
+        }),
+        before: JSON.stringify({
+          workspaces: { catalog: {}, packages: ["apps/*"] },
+        }),
         workspaceManifests: [],
       }),
     /Cannot classify Dependabot changes/,

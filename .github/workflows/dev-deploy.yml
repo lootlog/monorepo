@@ -32,17 +32,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Create affected deployment plan
         id: plan
@@ -60,7 +56,7 @@ jobs:
               --jq '[.[].head.ref]'
           )"
           affected="$(
-            pnpm exec turbo query affected \
+            bunx turbo query affected \
               --base "$BASE_SHA" \
               --head "$HEAD_SHA" \
               --packages
@@ -103,17 +99,13 @@ jobs:
       - name: Checkout main commit
         uses: actions/checkout@v7
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 26.8.1
-          cache: "pnpm"
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Load Cloudflare preview variables
         if: matrix.kind == 'pages'
@@ -175,7 +167,7 @@ jobs:
           ARTIFACT_PATH: ${{ matrix.artifactPath }}
           PACKAGE_NAME: ${{ matrix.packageName }}
         run: |
-          pnpm exec turbo run build --filter="$PACKAGE_NAME"
+          bunx turbo run build --filter="$PACKAGE_NAME"
           test -d "$ARTIFACT_PATH"
 
       - name: Deploy development artifact
@@ -196,7 +188,7 @@ jobs:
 
           case "$KIND" in
             pages)
-              pnpm exec wrangler pages deploy "$ARTIFACT_PATH" \
+              bunx wrangler pages deploy "$ARTIFACT_PATH" \
                 --project-name "$PROJECT" \
                 --branch develop \
                 --commit-hash "$GITHUB_SHA" \
@@ -204,7 +196,7 @@ jobs:
                 --commit-dirty=false
               ;;
             worker)
-              pnpm exec wrangler deploy \
+              bunx wrangler deploy \
                 --config "$CONFIG_PATH" \
                 --env "$WRANGLER_ENV" \
                 --keep-vars \

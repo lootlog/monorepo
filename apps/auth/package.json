@@ -13,18 +13,18 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
+    "start": "bun --preload ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "test": "vitest run --config ./vitest.config.ts",
     "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
     "test:watch": "vitest --config ./vitest.config.ts",
-    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
+    "openapi:generate": "OPENAPI_GENERATION=true bun run build && OPENAPI_GENERATION=true bun --preload ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:dev": "node --import tsx scripts/migrate.ts",
-    "db:migrate:deploy": "node --import tsx scripts/migrate.ts",
-    "db:migrate:init": "node --import tsx scripts/migrate-init.ts",
+    "db:migrate:dev": "bun scripts/migrate.ts",
+    "db:migrate:deploy": "bun scripts/migrate.ts",
+    "db:migrate:init": "bun scripts/migrate-init.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

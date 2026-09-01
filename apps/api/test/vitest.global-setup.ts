@@ -23,7 +23,7 @@ export default async function setup() {
   process.env.REDIS_USERNAME = "";
   process.env.REDIS_PASSWORD = "";
 
-  execFileSync("pnpm", ["prisma", "migrate", "deploy"], {
+  execFileSync("bunx", ["prisma", "migrate", "deploy"], {
     cwd: apiRoot,
     env: process.env,
     stdio: "inherit",

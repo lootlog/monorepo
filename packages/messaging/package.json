@@ -1,0 +1,25 @@
+{
+  "name": "@lootlog/messaging",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/messaging.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@lootlog/protocol": "workspace:*",
+    "amqplib": "^2.0.1",
+    "effect": "4.0.0-rc.112"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

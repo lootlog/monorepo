@@ -43,7 +43,7 @@ test("deploys Docs through an isolated development Worker", () => {
   );
   assert.equal(docsWranglerConfig.env.develop.workers_dev, true);
   assert.match(developmentWorkflow, /if: matrix\.kind == 'pages'/u);
-  assert.match(developmentWorkflow, /pnpm exec wrangler deploy \\/u);
+  assert.match(developmentWorkflow, /bunx wrangler deploy \\/u);
   assert.match(developmentWorkflow, /--config "\$CONFIG_PATH" \\/u);
   assert.match(developmentWorkflow, /--env "\$WRANGLER_ENV" \\/u);
   assert.match(developmentWorkflow, /--keep-vars/u);
