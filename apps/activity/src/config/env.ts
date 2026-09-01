@@ -1,7 +1,10 @@
 import "dotenv/config";
 import { z } from "zod";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { createEnv } from "@lootlog/nest-shared/config";
+import {
+  createEnv,
+  resolveActivityEventSignatureSecret,
+} from "@lootlog/nest-shared/config";
 
 const parsedEnv = createEnv(
   z.object({
@@ -25,24 +28,10 @@ const parsedEnv = createEnv(
   }),
 );
 
-function requireActivitySignatureSecret(): string {
-  if (
-    parsedEnv.ACTIVITY_EVENT_SIGNATURE_SECRET ||
-    (parsedEnv.ENV !== RuntimeEnvironment.STAGING &&
-      parsedEnv.ENV !== RuntimeEnvironment.PROD)
-  ) {
-    return (
-      parsedEnv.ACTIVITY_EVENT_SIGNATURE_SECRET ??
-      "local-development-activity-event-signature-secret"
-    );
-  }
-
-  throw new Error(
-    `ACTIVITY_EVENT_SIGNATURE_SECRET is required when ENV=${parsedEnv.ENV}`,
-  );
-}
-
 export const env = {
   ...parsedEnv,
-  ACTIVITY_EVENT_SIGNATURE_SECRET: requireActivitySignatureSecret(),
+  ACTIVITY_EVENT_SIGNATURE_SECRET: resolveActivityEventSignatureSecret(
+    parsedEnv.ENV,
+    parsedEnv.ACTIVITY_EVENT_SIGNATURE_SECRET,
+  ),
 };

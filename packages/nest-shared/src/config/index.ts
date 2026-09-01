@@ -1,4 +1,7 @@
-export { createEnv } from "./create-env.js";
+export {
+  createEnv,
+  resolveActivityEventSignatureSecret,
+} from "./create-env.js";
 export {
   createWinstonConfig,
   type WinstonConfigOptions,

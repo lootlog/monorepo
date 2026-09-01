@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { z } from "zod";
-import { createEnv } from "@lootlog/nest-shared/config";
+import {
+  createEnv,
+  resolveActivityEventSignatureSecret,
+} from "@lootlog/nest-shared/config";
 import { RuntimeEnvironment } from "@lootlog/types";
 
 const booleanEnv = z
@@ -42,7 +45,7 @@ const parsedEnv = createEnv(
 
 function requireInSharedEnvironments(
   value: string | undefined,
-  key: "AUTH_URL" | "ACTIVITY_EVENT_SIGNATURE_SECRET",
+  key: "AUTH_URL",
   localFallback: string,
 ): string {
   if (
@@ -63,9 +66,8 @@ export const env = {
     "AUTH_URL",
     "http://localhost/api/auth",
   ),
-  ACTIVITY_EVENT_SIGNATURE_SECRET: requireInSharedEnvironments(
+  ACTIVITY_EVENT_SIGNATURE_SECRET: resolveActivityEventSignatureSecret(
+    parsedEnv.ENV,
     parsedEnv.ACTIVITY_EVENT_SIGNATURE_SECRET,
-    "ACTIVITY_EVENT_SIGNATURE_SECRET",
-    "local-development-activity-event-signature-secret",
   ),
 };
