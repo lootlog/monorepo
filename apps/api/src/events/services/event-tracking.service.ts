@@ -201,7 +201,11 @@ export class EventTrackingService implements OnModuleInit {
 
     await Promise.all([
       this.eventReadCache.invalidateEvent(guildId, eventId),
-      this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId),
+      this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+        guildId,
+        eventId,
+        mapId,
+      }),
     ]);
 
     return updated;
@@ -265,7 +269,11 @@ export class EventTrackingService implements OnModuleInit {
 
     await Promise.all([
       this.eventReadCache.invalidateEvent(guildId, eventId),
-      this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId),
+      this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+        guildId,
+        eventId,
+        mapId,
+      }),
     ]);
 
     return updated;
@@ -742,12 +750,12 @@ export class EventTrackingService implements OnModuleInit {
           }
         }
 
-        await this.eventEmitter.emitMapStatusUpdate(
+        await this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
           guildId,
-          map.heroNpc.eventId,
-          map.id,
-          "presence",
-        );
+          eventId: map.heroNpc.eventId,
+          mapId: map.id,
+          reason: "presence",
+        });
       }),
     );
   }

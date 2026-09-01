@@ -51,7 +51,7 @@ describe("EventTrackingService", () => {
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: mockFn(),
+    emit: mockFn(),
   };
 
   const mockAmqpConnection = {
@@ -164,7 +164,7 @@ describe("EventTrackingService", () => {
         assignedMembers: [{ id: memberId }],
       });
       mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
-      mockEventEmitter.emitMapStatusUpdate.mockResolvedValue(undefined);
+      mockEventEmitter.emit.mockResolvedValue(undefined);
 
       const result = await service.assignMemberToMap(
         guildId,
@@ -357,7 +357,7 @@ describe("EventTrackingService", () => {
           assignedMembers: [{ id: memberId }],
         });
         mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
-        mockEventEmitter.emitMapStatusUpdate.mockResolvedValue(undefined);
+        mockEventEmitter.emit.mockResolvedValue(undefined);
 
         await expect(
           service.assignMemberToMap(guildId, eventId, mapId, memberId),

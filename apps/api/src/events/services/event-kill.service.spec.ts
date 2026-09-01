@@ -5,6 +5,7 @@ import { NotFoundException } from "@nestjs/common";
 import { EventKillService } from "./event-kill.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventPointsService } from "./event-points.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
@@ -72,10 +73,7 @@ describe("EventKillService", () => {
   };
 
   const mockEventEmitter = {
-    emitHeroKilled: mockFn(),
-    emitMapStatusUpdate: mockFn(),
-    emitRespawnWindowClosed: mockFn(),
-    emitRespawnWindowOpened: mockFn(),
+    emit: mockFn(),
   };
 
   const mockPointsService = {
@@ -2029,10 +2027,9 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockEventEmitter.emitHeroKilled).toHaveBeenCalledWith(
-        guildId,
-        mockEvent.id,
-        "kill-1",
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        RoutingKey.EVENT_HERO_KILLED,
+        { guildId, eventId: mockEvent.id, killId: "kill-1" },
       );
     });
 

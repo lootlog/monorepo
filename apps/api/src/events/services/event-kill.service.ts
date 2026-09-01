@@ -10,6 +10,7 @@ import type {
 import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventEmitterService } from "./event-emitter.service.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventPointsService } from "./event-points.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
@@ -933,27 +934,35 @@ export class EventKillService {
     await this.cancelScheduledAutoClose(eventHero.id);
 
     await this.eventReadCache.invalidateEvent(guildId, event.id);
-    await this.eventEmitter.emitHeroKilled(guildId, event.id, kill.kill.id);
+    await this.eventEmitter.emit(RoutingKey.EVENT_HERO_KILLED, {
+      guildId,
+      eventId: event.id,
+      killId: kill.kill.id,
+    });
 
     if (!isManualClose) {
-      await this.eventEmitter.emitRespawnWindowClosed(
+      await this.eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
         guildId,
-        event.id,
-        eventHero.id,
-      );
+        eventId: event.id,
+        heroId: eventHero.id,
+      });
 
       if (timerData.minSpawnTime && timerData.maxSpawnTime) {
-        await this.eventEmitter.emitRespawnWindowOpened(
+        await this.eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
           guildId,
-          event.id,
-          eventHero.id,
-        );
+          eventId: event.id,
+          heroId: eventHero.id,
+        });
       }
     }
 
     await Promise.all(
       heroMaps.map((map) =>
-        this.eventEmitter.emitMapStatusUpdate(guildId, event.id, map.id),
+        this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+          guildId,
+          eventId: event.id,
+          mapId: map.id,
+        }),
       ),
     );
 
