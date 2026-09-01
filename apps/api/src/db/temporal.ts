@@ -1,6 +1,6 @@
 import type { CodecTypes } from "../prisma/contract.js";
 
-type DatabaseTemporal =
+export type DatabaseTemporal =
   | Date
   | string
   | {
@@ -11,6 +11,14 @@ type DatabaseTemporal =
 
 export type DatabaseTimestamp = CodecTypes["pg/timestamp-temporal@1"]["input"];
 
+export function dateToTemporal(
+  value: Date | string | DatabaseTimestamp,
+): DatabaseTimestamp;
+export function dateToTemporal(value: null): null;
+export function dateToTemporal(value: undefined): undefined;
+export function dateToTemporal(
+  value: Date | string | DatabaseTimestamp | null | undefined,
+): DatabaseTimestamp | null | undefined;
 export function dateToTemporal(
   value: Date | string | DatabaseTimestamp | null | undefined,
 ): DatabaseTimestamp | null | undefined {

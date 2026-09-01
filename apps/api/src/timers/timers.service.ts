@@ -1204,7 +1204,7 @@ export class TimersService implements OnModuleInit {
       row.guildId.eq(guildId),
     )
       .select("world")
-      .distinct(["world"])
+      .distinct("world")
       .all();
 
     return worlds.map((worldEntry) => worldEntry.world);

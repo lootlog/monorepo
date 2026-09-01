@@ -13,7 +13,11 @@ import { LootCommentService } from "#src/loots/services/loot-comment.service";
 import { LootQueryService } from "#src/loots/services/loot-query.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import type { Logger } from "winston";
-import { dateToTemporal } from "#src/db/temporal";
+import {
+  dateToTemporal,
+  temporalToDate,
+  type DatabaseTemporal,
+} from "#src/db/temporal";
 
 const Permission = prismaDb.nativeEnums.public.Permission.members;
 type Permission = (typeof Permission)[keyof typeof Permission];
@@ -24,8 +28,8 @@ type CachedLootQueryResult = Omit<
   LootQueryResult,
   "createdAt" | "updatedAt"
 > & {
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  createdAt: DatabaseTemporal;
+  updatedAt: DatabaseTemporal;
 };
 
 const LOOTS_LIST_CACHE_TTL_SECONDS = 10;
@@ -292,8 +296,8 @@ export class LootsService {
     return JSON.stringify(value) ?? "undefined";
   }
 
-  private normalizeCachedLootDate(value: Date | string): Date {
-    return value instanceof Date ? value : new Date(value);
+  private normalizeCachedLootDate(value: DatabaseTemporal): Date {
+    return temporalToDate(value);
   }
 
   private normalizeCachedLoots(

@@ -1120,7 +1120,7 @@ export class GuildsService {
       row.guildId.eq(guildId),
     )
       .select("world")
-      .distinct(["world"])
+      .distinct("world")
       .all();
 
     return worlds.map((world) => world.world);

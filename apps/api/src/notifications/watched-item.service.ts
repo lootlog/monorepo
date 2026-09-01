@@ -71,6 +71,10 @@ export class WatchedItemService {
       .orderBy((row) => row.updatedAt.desc())
       .all()) as any[];
 
+    if (watchedItems.length === 0) {
+      return [];
+    }
+
     const pairs = [
       ...new Map(
         watchedItems.map((item) => [
@@ -90,7 +94,7 @@ export class WatchedItemService {
     )
       .select("itemId", "name", "icon", "rarity", "lvl", "itemType", "statRaw")
       .orderBy((row) => row.createdAt.desc())
-      .distinct(["itemId", "name"])
+      .distinct("itemId", "name")
       .all()) as any[];
 
     const snapshotByKey = new Map(

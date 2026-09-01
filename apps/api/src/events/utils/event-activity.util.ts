@@ -1,30 +1,37 @@
 import { and, or } from "@prisma/orm-family-sql/orm-client";
+import {
+  dateToTemporal,
+  temporalToDate,
+  type DatabaseTemporal,
+} from "#src/db/temporal";
 
 type EventActivityWindow = {
-  startsAt: Date | null;
-  endsAt: Date | null;
-  createdAt: Date;
+  startsAt: DatabaseTemporal | null;
+  endsAt: DatabaseTemporal | null;
+  createdAt: DatabaseTemporal;
 };
 
 function getEventEffectiveStartDate(event: EventActivityWindow): Date {
-  return event.startsAt ?? event.createdAt;
+  return temporalToDate(event.startsAt ?? event.createdAt);
 }
 
 export function isEventActiveAt(
   event: EventActivityWindow,
   referenceTime: Date,
 ): boolean {
+  const endsAt = temporalToDate(event.endsAt);
   return (
     getEventEffectiveStartDate(event) <= referenceTime &&
-    (event.endsAt === null || referenceTime < event.endsAt)
+    (endsAt === null || referenceTime < endsAt)
   );
 }
 
 export function applyActiveEventFilter(collection: any, referenceTime: Date) {
+  const databaseReferenceTime = dateToTemporal(referenceTime);
   return collection.where((event) =>
     and(
-      or(event.startsAt.isNull(), event.startsAt.lte(referenceTime)),
-      or(event.endsAt.isNull(), event.endsAt.gt(referenceTime)),
+      or(event.startsAt.isNull(), event.startsAt.lte(databaseReferenceTime)),
+      or(event.endsAt.isNull(), event.endsAt.gt(databaseReferenceTime)),
     ),
   );
 }

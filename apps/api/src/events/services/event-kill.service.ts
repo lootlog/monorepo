@@ -380,7 +380,7 @@ export class EventKillService {
           )
             .select("npcId", "npcProf")
             .orderBy((row) => row.updatedAt.desc())
-            .distinct(["npcId"])
+            .distinct("npcId")
             .all()
         : [];
     const npcProfById = new Map(

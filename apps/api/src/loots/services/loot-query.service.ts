@@ -63,7 +63,7 @@ type LootNpcWithSnapshot = {
     lvl: number | null;
     prof: ProfessionValue | null;
     icon: string | null;
-    type: NpcTypeValue | null;
+    _type: NpcTypeValue | null;
     margonemType: number | null;
   };
 };
@@ -179,7 +179,9 @@ export class LootQueryService {
             "updatedAt",
           )
           .include("lootItems", (rowRow) =>
-            rowRow.orderBy((rowRowRow) => rowRowRow.id.asc()),
+            rowRow
+              .include("itemSnapshot")
+              .orderBy((rowRowRow) => rowRowRow.id.asc()),
           )
           .include("lootPlayers", (rowRow) =>
             rowRow
@@ -325,7 +327,9 @@ export class LootQueryService {
           )
           .limit(1),
       )
-      .include("lootItems", (row) => row.orderBy((rowRow) => rowRow.id.asc()))
+      .include("lootItems", (row) =>
+        row.include("itemSnapshot").orderBy((rowRow) => rowRow.id.asc()),
+      )
       .include("lootPlayers", (row) =>
         row.include("playerSnapshot").orderBy((rowRow) => rowRow.id.asc()),
       )
@@ -384,6 +388,7 @@ export class LootQueryService {
     )
       .include("lootItems", (row) =>
         row
+          .include("itemSnapshot")
           .where((row) => row.hid.eq(hid))
           .orderBy((rowRow) => rowRow.id.asc())
           .limit(1),
@@ -693,7 +698,7 @@ export class LootQueryService {
       lvl: snapshot.lvl ?? null,
       prof: snapshot.prof ?? null,
       icon: snapshot.icon,
-      type: snapshot.type,
+      type: snapshot._type,
       margonemType: snapshot.margonemType ?? null,
     };
   }

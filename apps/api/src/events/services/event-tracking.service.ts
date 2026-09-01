@@ -766,7 +766,7 @@ export class EventTrackingService implements OnModuleInit {
         and(row.mapId.in(mapIds), row.endedAt.isNull(), row.isAfk.eq(false)),
     )
       .select("mapId", "memberId")
-      .distinct(["mapId", "memberId"])
+      .distinct("mapId", "memberId")
       .all();
 
     const membersByMap = new Map<string, Set<number>>();
@@ -789,7 +789,7 @@ export class EventTrackingService implements OnModuleInit {
       (row) => and(row.mapId.eq(mapId), row.endedAt.isNull()),
     )
       .select("memberId")
-      .distinct(["memberId"])
+      .distinct("memberId")
       .all();
 
     return activeLogs.map((log) => log.memberId);

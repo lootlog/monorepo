@@ -100,9 +100,11 @@ export class NotificationRuleService {
         ),
       )
         .include("targets", (relation) => relation.include("target"))
-        .orderBy([(row) => row.enabled.desc(), (row) => row.updatedAt.desc()])
+        .orderBy((row) => row.updatedAt.desc())
         .all(),
     ])) as [any, any[]];
+
+    rules.sort((left, right) => Number(right.enabled) - Number(left.enabled));
 
     const allTargetIds = [
       ...new Set(
@@ -297,9 +299,13 @@ export class NotificationRuleService {
       ),
     )
       .include("targets", (relation) => relation.include("target"))
-      .orderBy([(row) => row.enabled.desc(), (row) => row.updatedAt.desc()])
+      .orderBy((row) => row.updatedAt.desc())
       .all()
-      .then((rules) => rules.map((rule) => this.mapRuleResponse(rule)));
+      .then((rules) =>
+        rules
+          .sort((left, right) => Number(right.enabled) - Number(left.enabled))
+          .map((rule) => this.mapRuleResponse(rule)),
+      );
   }
 
   async createUserRule(discordId: string, data: CreateNotificationRuleDto) {

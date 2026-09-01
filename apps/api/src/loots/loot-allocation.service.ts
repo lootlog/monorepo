@@ -39,7 +39,7 @@ type LootNpcWithSocketSnapshot = {
   npcSnapshot: {
     lvl: number | null;
     prof: string | null;
-    type: NpcType | null;
+    _type: NpcType | null;
     wt: number | null;
   };
 };
@@ -428,7 +428,7 @@ export class LootAllocationService {
       lvl: npcSnapshot.lvl,
       prof: npcSnapshot.prof,
       type:
-        npcSnapshot.type ??
+        npcSnapshot._type ??
         getNpcTypeByWt(
           NpcType,
           npcSnapshot.wt ?? 0,

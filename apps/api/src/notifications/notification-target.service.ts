@@ -71,15 +71,20 @@ export class NotificationTargetService {
     private readonly jobService: NotificationJobService,
   ) {}
 
-  listGuildTargets(guildId: string) {
-    return this.prisma.db.orm.public.NotificationTarget.where((row) =>
-      and(
-        row.ownerType.eq(DbNotificationOwnerType.GUILD),
-        row.ownerId.eq(guildId),
-      ),
+  async listGuildTargets(guildId: string) {
+    const targets = await this.prisma.db.orm.public.NotificationTarget.where(
+      (row) =>
+        and(
+          row.ownerType.eq(DbNotificationOwnerType.GUILD),
+          row.ownerId.eq(guildId),
+        ),
     )
-      .orderBy([(row) => row.active.desc(), (row) => row.updatedAt.desc()])
+      .orderBy((row) => row.updatedAt.desc())
       .all();
+
+    return targets.sort(
+      (left, right) => Number(right.active) - Number(left.active),
+    );
   }
 
   async createGuildTarget(guildId: string, data: CreateNotificationTargetDto) {
@@ -174,8 +179,10 @@ export class NotificationTargetService {
           row.ownerId.eq(discordId),
         ),
     )
-      .orderBy([(row) => row.active.desc(), (row) => row.updatedAt.desc()])
+      .orderBy((row) => row.updatedAt.desc())
       .all();
+
+    targets.sort((left, right) => Number(right.active) - Number(left.active));
 
     const targetIds = targets.map((t) => t.id);
     const testTriggerUsageMap =
