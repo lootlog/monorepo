@@ -203,12 +203,13 @@ jobs:
             apps/activity/src/prisma/contract.d.ts
           pnpm --filter @lootlog/api api:migration:check
           pnpm --filter @lootlog/activity activity:migration:check
+          pnpm exec turbo run build \
+            --filter=@lootlog/api \
+            --filter=@lootlog/activity
           pnpm --filter @lootlog/api typecheck
           pnpm --filter @lootlog/activity typecheck
           pnpm --filter @lootlog/api lint
           pnpm --filter @lootlog/activity lint
-          pnpm --filter @lootlog/api build
-          pnpm --filter @lootlog/activity build
           node -e 'require("./apps/api/dist/src/prisma/db.js")'
           node -e 'require("./apps/activity/dist/src/prisma/db.js")'
 
