@@ -6,26 +6,28 @@ NestJS service for battle logs, dashboards, and player analytics.
 
 - Stores battle data and exposes authenticated and public battle views under the `battles` domain.
 - Provides per-user dashboards, statistics, growth charts, search, and raw battle payload access.
-- Uses Prisma for persistence and integrates with Redis, R2, and shared auth guards.
+- Uses Drizzle for PostgreSQL persistence and integrates with Redis, R2, and shared auth guards.
 
 ## Development
 
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/battlelog-service battlelog:generate
-pnpm --filter @lootlog/battlelog-service battlelog:migrate:dev
+pnpm db:battlelog:generate
+pnpm db:battlelog:push
 pnpm --filter @lootlog/battlelog-service dev
 ```
 
 ## Key Scripts
 
-- `pnpm --filter @lootlog/battlelog-service battlelog:studio`
+- `pnpm db:battlelog:migrate:deploy`
+- `pnpm db:battlelog:migrate:init`
+- `pnpm db:battlelog:studio`
 - `pnpm --filter @lootlog/battlelog-service build`
 - `pnpm --filter @lootlog/battlelog-service test`
 - `pnpm --filter @lootlog/battlelog-service test:e2e`
 
 ## Notes
 
-- Prisma schema and migrations live in `prisma/`.
+- Drizzle schema and migrations live in `src/shared/modules/drizzle/` and `drizzle/`.
 - Production entrypoints import `dist/instrumentation.js` before bootstrapping the app.
