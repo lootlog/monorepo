@@ -61,7 +61,6 @@ allowBuilds:
   unrs-resolver: true
   workerd: true
 injectWorkspacePackages: true
-dedupeInjectedDeps: false
 autoInstallPeers: true
 minimumReleaseAge: 0
 minimumReleaseAgeExclude:
@@ -130,8 +129,6 @@ peerDependencyRules:
     "nest-winston@1.10.2>@nestjs/common": "12"
     "nestjs-zod@5.5.0>@nestjs/common": "12"
     "nestjs-zod@5.5.0>@nestjs/swagger": "12"
-syncInjectedDepsAfterScripts:
-  - build
 verifyDepsBeforeRun: false
 patchedDependencies:
   "@nestjs/cli@12.0.0": patches/@nestjs__cli@12.0.0.patch
