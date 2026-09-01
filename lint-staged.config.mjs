@@ -25,5 +25,5 @@ export default {
   "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": (files) =>
     buildCommand("oxlint --no-error-on-unmatched-pattern", files),
   "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,css,html,yml,yaml}": (files) =>
-    buildCommand("oxfmt", files),
+    buildCommand("oxfmt --no-error-on-unmatched-pattern", files),
 };
