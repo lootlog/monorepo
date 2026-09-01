@@ -1,3 +1,8 @@
+import {
+  Capability,
+  createAccessPolicy,
+  type AccessPolicy,
+} from "@lootlog/access-policy";
 import { createHash, randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
@@ -32,7 +37,6 @@ import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/constants/respawn";
 import type { CreateManualTimerDto } from "#src/timers/dto/create-manual-timer.dto";
 import { generateUniqueIntId } from "#src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
 import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
 import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "#src/timers/utils/validate-spawn-times";
@@ -1698,11 +1702,11 @@ export class TimersService implements OnModuleInit {
     userId: string,
     { world }: GetTimersDto,
     guild: Guild,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
   ) {
     const now = new Date();
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = accessPolicy.allows(Capability.ADMIN);
     const alwaysVisibleExpiredTimerKeys =
       await this.getAlwaysVisibleExpiredTimerKeys(userId, world);
     const cacheKey = this.getTimersCacheKey(guild.id, userId, world);
@@ -1799,7 +1803,9 @@ export class TimersService implements OnModuleInit {
 
       const permissions = guildPermissionsAndRoles?.permissions ?? [];
       const roles = guildPermissionsAndRoles?.roles ?? [];
-      const administrativeUser = isAdministrativeUser(permissions);
+      const administrativeUser = createAccessPolicy({
+        capabilities: permissions,
+      }).allows(Capability.ADMIN);
       const guildTimers = timersByGuild[guild.id] ?? [];
 
       return this.filterTimersByPermissions(
@@ -1816,7 +1822,7 @@ export class TimersService implements OnModuleInit {
     timerIdentifier: string,
     options: {
       limit?: number;
-      permissions: Permission[];
+      accessPolicy: AccessPolicy;
       roles: Role[];
     },
   ) {
@@ -1828,7 +1834,7 @@ export class TimersService implements OnModuleInit {
       timerIdentifier,
     );
     const timerKey = resolvedTimer?.timerKey ?? timerIdentifier;
-    const administrativeUser = isAdministrativeUser(options.permissions);
+    const administrativeUser = options.accessPolicy.allows(Capability.ADMIN);
 
     const entries = await this.prisma.timerHistoryEntry.findMany({
       where: {
@@ -1904,7 +1910,9 @@ export class TimersService implements OnModuleInit {
 
     const permissions = guildPermissionsAndRoles?.permissions ?? [];
     const roles = guildPermissionsAndRoles?.roles ?? [];
-    const administrativeUser = isAdministrativeUser(permissions);
+    const administrativeUser = createAccessPolicy({
+      capabilities: permissions,
+    }).allows(Capability.ADMIN);
 
     return entries
       .filter((entry) => {

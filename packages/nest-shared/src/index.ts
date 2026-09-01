@@ -5,9 +5,9 @@ export { createRequiredUnauthorizedRequestValueDecorator } from "./decorators/cr
 export { DiscordId } from "./decorators/discord-id.decorator.js";
 export { UserId } from "./decorators/user-id.decorator.js";
 export {
-  RequiredPermissions,
-  REQUIRED_PERMISSIONS_KEY,
-} from "./decorators/required-permissions.decorator.js";
+  RequiresCapabilities,
+  REQUIRED_CAPABILITIES_KEY,
+} from "./decorators/requires-capabilities.decorator.js";
 export { GuildId } from "./decorators/guild-id.decorator.js";
 export {
   createWinstonConfig,

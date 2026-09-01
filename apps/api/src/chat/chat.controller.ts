@@ -26,8 +26,7 @@ import { SendMessageDto } from "#src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "#src/chat/dto/update-message.dto";
 import { type Guild, Permission } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("chat")
@@ -37,7 +36,7 @@ import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @Permissions(Permission.LOOTLOG_CHAT_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_CHAT_READ)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
@@ -58,7 +57,7 @@ export class ChatController {
     return this.chatService.getMessages(discordId, guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
   @Post()
   @ApiOperation({
@@ -83,7 +82,7 @@ export class ChatController {
     return this.chatService.sendMessage(discordId, guild.id, data);
   }
 
-  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
   @Patch(":messageId")
   @ApiOperation({
@@ -119,7 +118,7 @@ export class ChatController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
   @Delete()
   @ApiOperation({
@@ -140,7 +139,7 @@ export class ChatController {
     return this.chatService.clearMessages(discordId, guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
   @Delete(":messageId")
   @ApiOperation({

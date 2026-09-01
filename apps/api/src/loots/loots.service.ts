@@ -1,3 +1,7 @@
+import {
+  getEffectiveCapabilities,
+  type AccessPolicy,
+} from "@lootlog/access-policy";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -40,12 +44,13 @@ export class LootsService {
   async getComments(options: {
     guild: Guild;
     lootId: number;
-    permissions: Permission[];
+    accessPolicy: AccessPolicy;
     roles: Role[];
   }) {
+    const permissions = getEffectiveCapabilities(options.accessPolicy);
     const visibleLoot = await this.lootQueryService.fetchLootById(
       options.guild,
-      options.permissions,
+      permissions,
       options.roles,
       options.lootId,
     );
@@ -63,12 +68,13 @@ export class LootsService {
     discordId: string;
     guild: Guild;
     lootId: number;
-    permissions: Permission[];
+    accessPolicy: AccessPolicy;
     roles: Role[];
   }) {
+    const permissions = getEffectiveCapabilities(options.accessPolicy);
     const visibleLoot = await this.lootQueryService.fetchLootById(
       options.guild,
-      options.permissions,
+      permissions,
       options.roles,
       options.lootId,
     );
@@ -115,12 +121,13 @@ export class LootsService {
     guild: Guild;
     lootId: number;
     body: CreateCommentDto;
-    permissions: Permission[];
+    accessPolicy: AccessPolicy;
     roles: Role[];
   }) {
+    const permissions = getEffectiveCapabilities(options.accessPolicy);
     const visibleLoot = await this.lootQueryService.fetchLootById(
       options.guild,
-      options.permissions,
+      permissions,
       options.roles,
       options.lootId,
     );
@@ -140,10 +147,11 @@ export class LootsService {
 
   async fetchLootsByGuildId(
     guild: Guild,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     if (this.isFirstLootsPage(params)) {
       const loots = await this.redisService.getOrSetJsonBestEffort<
         CachedLootQueryResult[]
@@ -173,10 +181,11 @@ export class LootsService {
 
   countLootsByGuildId(
     guild: Guild,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.lootQueryService.countLootsByGuildId(
       guild,
       permissions,
@@ -187,10 +196,11 @@ export class LootsService {
 
   fetchLootById(
     guild: Guild,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     lootId: number,
   ) {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.lootQueryService.fetchLootById(
       guild,
       permissions,
@@ -201,10 +211,11 @@ export class LootsService {
 
   resolveLootItemByHid(
     guild: Guild,
-    permissions: Permission[],
+    accessPolicy: AccessPolicy,
     roles: Role[],
     options: { hid: string; world?: string },
   ) {
+    const permissions = getEffectiveCapabilities(accessPolicy);
     return this.lootQueryService.resolveLootItemByHid(
       guild,
       permissions,

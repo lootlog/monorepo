@@ -1,5 +1,6 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { createAccessPolicy } from "@lootlog/access-policy";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { EventsCatalogController } from "./events-catalog.controller.js";
 
 describe("EventsCatalogController", () => {
@@ -27,19 +28,19 @@ describe("EventsCatalogController", () => {
   it("declares permissions metadata for read/manage/owner-admin endpoints", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsCatalogController.prototype.createEvent,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_MANAGE]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsCatalogController.prototype.getEvent,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         EventsCatalogController.prototype.deleteEvent,
       ),
     ).toEqual([Permission.OWNER, Permission.ADMIN]);
@@ -54,10 +55,12 @@ describe("EventsCatalogController", () => {
     await expect(
       controller.getEvents(
         { id: "guild-1" },
+        createAccessPolicy({
+          capabilities: [Permission.LOOTLOG_EVENTS_READ],
+        }),
         "berufs",
         undefined,
         [{ id: "role-1" }] as never,
-        [Permission.LOOTLOG_EVENTS_READ],
       ),
     ).resolves.toEqual(filtered);
 
@@ -69,26 +72,28 @@ describe("EventsCatalogController", () => {
     expect(mockEventsService.filterEventsHeroesByLevel).toHaveBeenCalledWith(
       events,
       [{ id: "role-1" }],
-      [Permission.LOOTLOG_EVENTS_READ],
+      expect.objectContaining({ allows: expect.any(Function) }),
     );
   });
 
   it("passes guild, event id, permissions and roles to wrapped view", () => {
     const guild = { id: "guild-1" };
-    const permissions = [Permission.LOOTLOG_EVENTS_READ];
+    const accessPolicy = createAccessPolicy({
+      capabilities: [Permission.LOOTLOG_EVENTS_READ],
+    });
     const roles = [{ id: "role-1" }];
 
     controller.getWrapped(
       guild as never,
       "event-1",
       roles as never,
-      permissions,
+      accessPolicy,
     );
 
     expect(mockEventsService.getWrapped).toHaveBeenCalledWith(
       guild,
       "event-1",
-      permissions,
+      accessPolicy,
       roles,
     );
   });

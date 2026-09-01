@@ -56,7 +56,7 @@ export const Events = () => {
   const [searchValue, setSearchValue] = useState("");
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const queryClient = useQueryClient();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const hasGuildId = Boolean(guildId);
   const listEventsParams = {
     activeOnly: "false",
@@ -132,8 +132,8 @@ export const Events = () => {
   );
 
   const canDeleteEvent =
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER);
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER);
   const normalizedSearch = searchValue.trim().toLocaleLowerCase();
   const filteredEvents =
     events?.filter((event) =>

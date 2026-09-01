@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@lootlog/access-policy";
 import {
   Body,
   Controller,
@@ -39,7 +40,7 @@ import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acce
 import { LootsService } from "#src/loots/loots.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { CountResponseDto } from "#src/shared/dto/common-response.dto";
 import { LootCommentResponseDto } from "#src/shared/dto/loot-comment-response.dto";
@@ -49,8 +50,7 @@ import {
   LootResponseDto,
   NullableLootResponseDto,
 } from "#src/shared/dto/loot-response.dto";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("loots")
@@ -65,7 +65,7 @@ export class LootsController {
     private readonly lootStatsService: LootStatsService,
   ) {}
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/loots")
   @ApiOperation({
@@ -83,20 +83,20 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   fetchLootsByGuildId(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: FetchLootsParamsDto,
   ) {
     return this.lootsService.fetchLootsByGuildId(
       guild,
-      permissions,
+      accessPolicy,
       roles,
       query,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/loots/stats")
   @ApiOperation({
@@ -116,14 +116,14 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   getLootStats(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: LootStatsQueryDto,
   ) {
     return this.lootStatsService.getLootStats(
       guild.id,
-      permissions,
+      accessPolicy,
       roles,
       query.period ?? "7d",
       query.world,
@@ -132,7 +132,7 @@ export class LootsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/loots/count")
   @ApiOperation({
@@ -151,14 +151,14 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   async countLootsByGuildId(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: FetchLootsParamsDto,
   ) {
     const count = await this.lootsService.countLootsByGuildId(
       guild,
-      permissions,
+      accessPolicy,
       roles,
       {
         ...query,
@@ -170,7 +170,7 @@ export class LootsController {
     return { count };
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/loots/items/resolve")
   @ApiOperation({
@@ -189,18 +189,18 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   resolveLootItemByHid(
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: ResolveLootItemParamsDto,
   ) {
-    return this.lootsService.resolveLootItemByHid(guild, permissions, roles, {
+    return this.lootsService.resolveLootItemByHid(guild, accessPolicy, roles, {
       hid: query.hid,
       world: query.world,
     });
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/loots/:lootId")
   @ApiOperation({
@@ -221,11 +221,11 @@ export class LootsController {
   @ApiResponse({ status: 404, description: "Loot not found" })
   fetchLootById(
     @Param("lootId", new ParseIntPipe()) lootId: number,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
-    return this.lootsService.fetchLootById(guild, permissions, roles, lootId);
+    return this.lootsService.fetchLootById(guild, accessPolicy, roles, lootId);
   }
 
   @Post("/loots")
@@ -245,7 +245,7 @@ export class LootsController {
     });
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/loots/:lootId/comments")
   @ApiOperation({
@@ -266,19 +266,19 @@ export class LootsController {
   @ApiResponse({ status: 404, description: "Loot not found" })
   getComments(
     @Param("lootId", new ParseIntPipe()) lootId: number,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.lootsService.getComments({
       lootId,
       guild,
-      permissions,
+      accessPolicy,
       roles,
     });
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/loots/:lootId/comments")
   @ApiOperation({
@@ -301,7 +301,7 @@ export class LootsController {
     @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @Body() body: CreateCommentDto,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
@@ -310,12 +310,12 @@ export class LootsController {
       lootId,
       body,
       guild,
-      permissions,
+      accessPolicy,
       roles,
     });
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_ARCHIVE)
+  @RequiresCapabilities(Permission.LOOTLOG_LOOTS_ARCHIVE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/loots/:lootId")
   @ApiOperation({
@@ -336,7 +336,7 @@ export class LootsController {
   deleteLoot(
     @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
-    @MemberPermissions() permissions: Permission[],
+    @MemberAccessPolicy() accessPolicy: AccessPolicy,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
@@ -344,7 +344,7 @@ export class LootsController {
       discordId,
       guild,
       lootId,
-      permissions,
+      accessPolicy,
       roles,
     });
   }

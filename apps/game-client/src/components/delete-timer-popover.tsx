@@ -1,3 +1,4 @@
+import { createAccessPolicy } from "@lootlog/access-policy";
 import { useState, type FC } from "react";
 import { useQueries } from "@tanstack/react-query";
 import {
@@ -57,15 +58,15 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 
   const guildsWithPermissions = uniqueGuildIds
     .map((guildId, index) => {
-      const permissions = permissionsQueries[index]?.data ?? [];
-      const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-        permissions.includes(perm),
-      );
+      const accessPolicy = createAccessPolicy({
+        capabilities: permissionsQueries[index]?.data ?? [],
+      });
+      const canDelete = accessPolicy.allowsAny(REQUIRED_DELETE_PERMISSIONS);
       const entry = guildEntries.find((e) => e.guildId === guildId);
       return {
         guildId,
         timerKey: entry?.timerKey ?? "",
-        permissions,
+        accessPolicy,
         canDelete,
       };
     })

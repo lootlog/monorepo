@@ -1,5 +1,5 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { CreateReservationDto } from "./dto/create-reservation.dto.js";
 import { ReservationsController } from "./reservations.controller.js";
 
@@ -28,13 +28,13 @@ describe("ReservationsController", () => {
   it("declares read and write permissions on the new resources", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         ReservationsController.prototype.listReservationSpots,
       ),
     ).toEqual([Permission.LOOTLOG_RESERVATIONS_READ]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         ReservationsController.prototype.createReservation,
       ),
     ).toEqual([Permission.LOOTLOG_RESERVATIONS_WRITE]);

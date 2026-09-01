@@ -59,7 +59,7 @@ export const GuildDocsListPage = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
   const queryClient = useQueryClient();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const [searchValue, setSearchValue] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [trashOpen, setTrashOpen] = useState(false);
@@ -81,9 +81,9 @@ export const GuildDocsListPage = () => {
     trashed: 0,
     used: documents.length,
   };
-  const canCreate = canWriteGuildDocs(permissions) && limit.canCreate;
-  const canWrite = canWriteGuildDocs(permissions);
-  const canManage = canManageGuildDocs(permissions);
+  const canCreate = canWriteGuildDocs(accessPolicy) && limit.canCreate;
+  const canWrite = canWriteGuildDocs(accessPolicy);
+  const canManage = canManageGuildDocs(accessPolicy);
   const hasDocuments = documents.length > 0;
   const hasFilteredDocuments = filteredDocuments.length > 0;
 

@@ -178,12 +178,12 @@ export const EventMapGrid = ({
   vertical = false,
 }: EventMapGridProps) => {
   const { t } = useTranslation();
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
 
   const canManage =
-    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER);
+    accessPolicy?.allows(Permission.LOOTLOG_MANAGE) ||
+    accessPolicy?.allows(Permission.ADMIN) ||
+    accessPolicy?.allows(Permission.OWNER);
 
   const totalMaps =
     locations.reduce((sum, loc) => sum + loc.maps.length, 0) + maps.length;

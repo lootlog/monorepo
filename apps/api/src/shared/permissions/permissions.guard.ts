@@ -1,22 +1,27 @@
 import {
+  createAccessPolicy,
+  getEffectiveCapabilities,
+  type AccessPolicy,
+  type Capability,
+} from "@lootlog/access-policy";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
+import {
   Injectable,
   Optional,
   type CanActivate,
   type ExecutionContext,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { PERMISSIONS_KEY } from "./permissions.decorator.js";
 import { MemberContextService } from "./member-context.service.js";
-import type { Permission } from "#src/generated/prisma/client";
 import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
 import { setRequestDiagnosticsRoute } from "#src/shared/diagnostics/request-diagnostics-context";
-import { PermissionResolver } from "./permission-resolver.js";
 
-interface RequestWithPermissions {
+interface RequestWithAccessPolicy {
   userId?: string;
   discordId?: string;
   params: { guildId?: string };
-  permissions?: Permission[];
+  accessPolicy?: AccessPolicy;
+  permissions?: Capability[];
   guild?: unknown;
   roles?: unknown[];
   member?: unknown;
@@ -32,11 +37,11 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): Promise<boolean> | boolean {
-    const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
-      PERMISSIONS_KEY,
+    const requiredCapabilities = this.reflector.getAllAndOverride<Capability[]>(
+      REQUIRED_CAPABILITIES_KEY,
       [context.getHandler(), context.getClass()],
     );
-    if (!requiredPermissions) {
+    if (!requiredCapabilities) {
       return true;
     }
 
@@ -61,8 +66,8 @@ export class PermissionsGuard implements CanActivate {
 
     const startedAt = this.perfDiagnosticsService?.now();
 
-    return this.verifyPermissions({
-      requiredPermissions,
+    return this.verifyCapabilities({
+      requiredCapabilities,
       discordId,
       userId,
       guildId,
@@ -76,7 +81,7 @@ export class PermissionsGuard implements CanActivate {
             {
               allowed,
               guildId,
-              requiredPermissionsCount: requiredPermissions.length,
+              requiredCapabilitiesCount: requiredCapabilities.length,
             },
           );
         }
@@ -92,7 +97,7 @@ export class PermissionsGuard implements CanActivate {
               errorName: (error as Error).name,
               guildId,
               outcome: "error",
-              requiredPermissionsCount: requiredPermissions.length,
+              requiredCapabilitiesCount: requiredCapabilities.length,
             },
           );
         }
@@ -101,15 +106,15 @@ export class PermissionsGuard implements CanActivate {
       });
   }
 
-  async verifyPermissions(options: {
-    requiredPermissions: Permission[];
+  async verifyCapabilities(options: {
+    requiredCapabilities: Capability[];
     discordId: string;
     guildId: string;
     userId: string;
-    request: RequestWithPermissions;
+    request: RequestWithAccessPolicy;
   }) {
     const {
-      requiredPermissions = [],
+      requiredCapabilities = [],
       discordId,
       guildId,
       userId,
@@ -127,18 +132,14 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const { guild, member, roles, permissions } = context;
-    const resolvedPermissions = PermissionResolver.resolve(permissions);
+    const accessPolicy = createAccessPolicy({ capabilities: permissions });
 
-    const permissionsSet = new Set(resolvedPermissions);
-    const hasPermission = requiredPermissions.some((permission) =>
-      permissionsSet.has(permission),
-    );
-
-    if (!hasPermission) {
+    if (!accessPolicy.allowsAny(requiredCapabilities)) {
       return false;
     }
 
-    request.permissions = resolvedPermissions;
+    request.accessPolicy = accessPolicy;
+    request.permissions = getEffectiveCapabilities(accessPolicy);
     request.guild = guild;
     request.roles = roles;
     request.member = member;

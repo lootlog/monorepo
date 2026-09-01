@@ -26,6 +26,7 @@
     "@hookform/resolvers": "catalog:",
     "@lexical/react": "0.48.0",
     "@lexical/utils": "0.48.0",
+    "@lootlog/access-policy": "workspace:*",
     "@lootlog/api-client": "workspace:*",
     "@lootlog/margonem": "workspace:*",
     "@lootlog/socket-parser": "workspace:*",

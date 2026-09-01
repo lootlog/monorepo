@@ -1,9 +1,5 @@
-import { NestFactory } from "@nestjs/core";
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
+import { createNestFastifyApp } from "@lootlog/nest-shared/app";
+import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { auth } from "#src/auth/better-auth";
 import {
   buildBetterAuthRequest,
@@ -12,18 +8,9 @@ import {
 import { AppModule } from "./app.module.js";
 
 export async function createApp(): Promise<NestFastifyApplication> {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter(),
-    {
-      bodyParser: false,
-      bufferLogs: true,
-    },
-  );
+  const app = await createNestFastifyApp(AppModule, { bodyParser: false });
 
   app.enableShutdownHooks();
-
-  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   const fastify = app.getHttpAdapter().getInstance();
 

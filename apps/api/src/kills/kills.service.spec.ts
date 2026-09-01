@@ -14,6 +14,10 @@ import {
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto.js";
 import { GetMemberKillsDto } from "./dto/get-member-kills.dto.js";
+import { createAccessPolicy, type Capability } from "@lootlog/access-policy";
+
+const policy = (...capabilities: Capability[]) =>
+  createAccessPolicy({ capabilities });
 
 describe("KillsService", () => {
   let service: KillsService;
@@ -592,7 +596,12 @@ describe("KillsService", () => {
       prismaService.member.findMany.mockResolvedValue(mockMembers);
       const query = new GetGuildKillStatsDto();
 
-      const result = await service.getGuildKillStats(guildId, [], [], query);
+      const result = await service.getGuildKillStats(
+        guildId,
+        policy(),
+        [],
+        query,
+      );
 
       expect(result.overview.guildUniqueKills).toBe(55);
       expect(result.overview.totalMemberParticipations).toBe(100);
@@ -622,7 +631,12 @@ describe("KillsService", () => {
       redisService.getJson.mockResolvedValueOnce(cachedStats);
       const query = new GetGuildKillStatsDto();
 
-      const result = await service.getGuildKillStats(guildId, [], [], query);
+      const result = await service.getGuildKillStats(
+        guildId,
+        policy(),
+        [],
+        query,
+      );
 
       expect(result).toEqual(cachedStats);
       expect(redisService.getOrSetJson).not.toHaveBeenCalled();
@@ -643,7 +657,12 @@ describe("KillsService", () => {
       const query = new GetGuildKillStatsDto();
       query.period = "24h";
 
-      const result = await service.getGuildKillStats(guildId, [], [], query);
+      const result = await service.getGuildKillStats(
+        guildId,
+        policy(),
+        [],
+        query,
+      );
 
       expect(prismaService.npcKillStats.findMany).not.toHaveBeenCalled();
       expect(prismaService.guildKillSummary.findMany).not.toHaveBeenCalled();
@@ -663,7 +682,7 @@ describe("KillsService", () => {
       const query = new GetGuildKillStatsDto();
       query.npcTypes = [NpcType.TITAN];
 
-      await service.getGuildKillStats(guildId, [], [], query);
+      await service.getGuildKillStats(guildId, policy(), [], query);
 
       expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -681,7 +700,7 @@ describe("KillsService", () => {
       query.minLvl = 100;
       query.maxLvl = 300;
 
-      await service.getGuildKillStats(guildId, [], [], query);
+      await service.getGuildKillStats(guildId, policy(), [], query);
 
       expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -699,7 +718,7 @@ describe("KillsService", () => {
       query.minLvl = 0;
       query.maxLvl = 0;
 
-      await service.getGuildKillStats(guildId, [], [], query);
+      await service.getGuildKillStats(guildId, policy(), [], query);
 
       expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -734,7 +753,13 @@ describe("KillsService", () => {
       query.minLvl = 0;
       query.maxLvl = 0;
 
-      const result = await service.getMemberKills(guildId, 1, [], [], query);
+      const result = await service.getMemberKills(
+        guildId,
+        1,
+        policy(),
+        [],
+        query,
+      );
 
       expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -751,9 +776,9 @@ describe("KillsService", () => {
         prismaService.npcKillStats.groupBy.mockResolvedValue([]);
         prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
-        const permissions = [Permission.OWNER];
+        const accessPolicy = policy(Permission.OWNER);
 
-        await service.getGuildKillStats(guildId, permissions, [], query);
+        await service.getGuildKillStats(guildId, accessPolicy, [], query);
 
         expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -769,7 +794,7 @@ describe("KillsService", () => {
         prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
 
-        await service.getGuildKillStats(guildId, [], [], query);
+        await service.getGuildKillStats(guildId, policy(), [], query);
 
         expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -788,7 +813,7 @@ describe("KillsService", () => {
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         });
 
-        await service.getGuildKillStats(guildId, [], [role], query);
+        await service.getGuildKillStats(guildId, policy(), [role], query);
 
         expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -816,7 +841,7 @@ describe("KillsService", () => {
           ],
         });
 
-        await service.getGuildKillStats(guildId, [], [role], query);
+        await service.getGuildKillStats(guildId, policy(), [role], query);
 
         const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
@@ -835,7 +860,7 @@ describe("KillsService", () => {
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         });
 
-        await service.getGuildKillStats(guildId, [], [role], query);
+        await service.getGuildKillStats(guildId, policy(), [role], query);
 
         expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -863,7 +888,7 @@ describe("KillsService", () => {
           ],
         });
 
-        await service.getGuildKillStats(guildId, [], [role], query);
+        await service.getGuildKillStats(guildId, policy(), [role], query);
 
         const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
@@ -884,7 +909,7 @@ describe("KillsService", () => {
           lvlRangeTo: 300,
         });
 
-        await service.getGuildKillStats(guildId, [], [role], query);
+        await service.getGuildKillStats(guildId, policy(), [role], query);
 
         expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -922,7 +947,12 @@ describe("KillsService", () => {
           lvlRangeTo: 500,
         });
 
-        await service.getGuildKillStats(guildId, [], [role1, role2], query);
+        await service.getGuildKillStats(
+          guildId,
+          policy(),
+          [role1, role2],
+          query,
+        );
 
         const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         expect(call.where.OR).toHaveLength(2);
@@ -941,7 +971,12 @@ describe("KillsService", () => {
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         });
 
-        await service.getGuildKillStats(guildId, [], [role1, role2], query);
+        await service.getGuildKillStats(
+          guildId,
+          policy(),
+          [role1, role2],
+          query,
+        );
 
         const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         expect(call.where.OR).toHaveLength(1);

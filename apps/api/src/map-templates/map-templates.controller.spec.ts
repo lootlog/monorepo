@@ -1,5 +1,5 @@
 import { Permission } from "#src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { MapTemplatesController } from "./map-templates.controller.js";
 
 describe("MapTemplatesController", () => {
@@ -20,13 +20,13 @@ describe("MapTemplatesController", () => {
   it("declares permissions metadata for access and manage endpoints", () => {
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         MapTemplatesController.prototype.getTemplates,
       ),
     ).toEqual([Permission.LOOTLOG_ACCESS]);
     expect(
       Reflect.getMetadata(
-        PERMISSIONS_KEY,
+        REQUIRED_CAPABILITIES_KEY,
         MapTemplatesController.prototype.createTemplate,
       ),
     ).toEqual([Permission.LOOTLOG_MANAGE]);

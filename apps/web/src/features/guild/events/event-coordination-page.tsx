@@ -1,3 +1,4 @@
+import type { AccessPolicy, Capability } from "@lootlog/access-policy";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
@@ -29,9 +30,9 @@ import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client
 const getRouteId = (value: string | undefined) => value ?? "";
 
 const hasAnyPermission = (
-  permissions: readonly string[] | undefined,
-  allowed: readonly string[],
-) => allowed.some((permission) => permissions?.includes(permission));
+  accessPolicy: AccessPolicy | undefined,
+  allowed: readonly Capability[],
+) => accessPolicy?.allowsAny(allowed) ?? false;
 
 export const EventCoordinationPage = () => {
   const { t } = useTranslation();
@@ -44,7 +45,7 @@ export const EventCoordinationPage = () => {
   const resolvedGuildId = getRouteId(guildId);
   const resolvedEventId = getRouteId(eventId);
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: accessPolicy } = useGuildPermissions();
   const {
     data: coordination,
     isPending,
@@ -121,13 +122,13 @@ export const EventCoordinationPage = () => {
     },
   });
 
-  const canWrite = hasAnyPermission(permissions, [
+  const canWrite = hasAnyPermission(accessPolicy, [
     Permission.LOOTLOG_EVENTS_WRITE,
     Permission.LOOTLOG_EVENTS_MANAGE,
     Permission.ADMIN,
     Permission.OWNER,
   ]);
-  const canManage = hasAnyPermission(permissions, [
+  const canManage = hasAnyPermission(accessPolicy, [
     Permission.LOOTLOG_MANAGE,
     Permission.LOOTLOG_EVENTS_MANAGE,
     Permission.ADMIN,

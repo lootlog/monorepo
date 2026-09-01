@@ -1,3 +1,4 @@
+import { Capability, createAccessPolicy } from "@lootlog/access-policy";
 import {
   ForbiddenException,
   Inject,
@@ -14,7 +15,6 @@ import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
 import type { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
-import { PermissionResolver } from "#src/shared/permissions/permission-resolver";
 
 @Injectable()
 export class RolesService {
@@ -81,7 +81,9 @@ export class RolesService {
       };
 
       const roleIsAdministrative = existingRole
-        ? PermissionResolver.isAdministrative(existingRole.permissions)
+        ? createAccessPolicy({
+            capabilities: existingRole.permissions,
+          }).allows(Capability.ADMIN)
         : false;
 
       if (existingRole && roleIsAdministrative !== data.admin) {
@@ -135,12 +137,12 @@ export class RolesService {
 
     const isOwner = guild.ownerId === discordId;
 
-    const roleIsAdministrative = PermissionResolver.isAdministrative(
-      role.permissions,
-    );
-    const newPermissionsAreAdministrative = PermissionResolver.isAdministrative(
-      data.permissions,
-    );
+    const roleIsAdministrative = createAccessPolicy({
+      capabilities: role.permissions,
+    }).allows(Capability.ADMIN);
+    const newPermissionsAreAdministrative = createAccessPolicy({
+      capabilities: data.permissions,
+    }).allows(Capability.ADMIN);
     const isAdministrativePermissionChanging =
       roleIsAdministrative !== newPermissionsAreAdministrative;
 

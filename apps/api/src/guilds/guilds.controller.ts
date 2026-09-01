@@ -26,8 +26,7 @@ import { GuildsService } from "#src/guilds/guilds.service";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
 import { DiscordGuildSyncStateResponseDto } from "#src/shared/dto/discord-guild-sync-response.dto";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
 import { GuildResponseDto } from "#src/shared/dto/guild-response.dto";
@@ -102,7 +101,7 @@ export class GuildsController {
     return this.guildsService.getManageableUserGuilds(discordId, userId);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId")
   @ApiOperation({
@@ -119,7 +118,7 @@ export class GuildsController {
     return this.guildsService.getGuildById(guild.id);
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch(":guildId/config")
   @ZodResponse({
@@ -138,7 +137,7 @@ export class GuildsController {
     return updatedGuild;
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/config")
   @ZodResponse({
@@ -150,7 +149,7 @@ export class GuildsController {
     return this.guildsService.getGuildById(guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/worlds")
   @ApiOperation({
@@ -171,7 +170,7 @@ export class GuildsController {
     return this.guildsService.getWorldsByGuildId(guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @RequiresCapabilities(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/permissions")
   @ApiOperation({
@@ -194,7 +193,7 @@ export class GuildsController {
     return permissions;
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/discord-sync")
   @ApiOperation({
@@ -211,7 +210,7 @@ export class GuildsController {
     return this.guildsService.getGuildDiscordSyncStatus(guild.id);
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":guildId/discord-sync/refresh")
   @ApiOperation({

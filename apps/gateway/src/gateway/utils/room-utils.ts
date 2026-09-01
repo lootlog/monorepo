@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/access-policy";
 import {
   getNpcRoutingTier,
   Permission,
@@ -5,7 +6,7 @@ import {
   type NpcRoutingTier,
 } from "@lootlog/types";
 import type { UserGuildData, GuildRole } from "#src/guilds/types/guild.types";
-import { isAdministrativeUserFromRoles } from "#src/guilds/utils/is-administrative-user";
+import { createGuildAccessPolicy } from "#src/guilds/utils/access-policy.adapter";
 import { Platform } from "#src/gateway/enums/platform.enum";
 
 const FEATURE_NAMES = ["chat", "timers", "notifications", "loots"] as const;
@@ -115,7 +116,8 @@ export function calculateUserRooms(
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
     const hasFullGuildAccess =
-      guild.ownerId === discordId || isAdministrativeUserFromRoles(roles);
+      guild.ownerId === discordId ||
+      createGuildAccessPolicy(roles).allows(Capability.ADMIN);
 
     // Everyone gets presence and events rooms
     guildRooms.push(buildUserGuildRoomName(discordId, guild.id));
@@ -194,7 +196,7 @@ export function canViewOnlinePlayers(
 ): boolean {
   return (
     guildData.guild.ownerId === discordId ||
-    isAdministrativeUserFromRoles(guildData.roles) ||
+    createGuildAccessPolicy(guildData.roles).allows(Capability.ADMIN) ||
     hasOnlinePlayersAccess(guildData.roles)
   );
 }

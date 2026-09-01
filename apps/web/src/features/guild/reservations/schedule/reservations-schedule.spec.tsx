@@ -81,7 +81,9 @@ vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
 }));
 
 vi.mock("@/hooks/api/use-guild-permissions", () => ({
-  useGuildPermissions: () => ({ data: [] }),
+  useGuildPermissions: () => ({
+    data: { allows: () => false, allowsAny: () => false },
+  }),
 }));
 vi.mock("@/hooks/context/use-guild-id", () => ({
   useGuildId: () => "guild-1",

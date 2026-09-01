@@ -24,8 +24,7 @@ import {
 } from "#src/generated/prisma/client";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "#src/shared/decorators/member.decorator";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { DocsService } from "./docs.service.js";
 import { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
@@ -51,7 +50,7 @@ const DOCS_READ_PERMISSIONS = [
 export class DocsController {
   constructor(private readonly docsService: DocsService) {}
 
-  @Permissions(...DOCS_READ_PERMISSIONS)
+  @RequiresCapabilities(...DOCS_READ_PERMISSIONS)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
@@ -72,7 +71,7 @@ export class DocsController {
     return this.docsService.listDocuments(guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_DOCS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_DOCS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post()
   @ApiOperation({
@@ -97,7 +96,7 @@ export class DocsController {
     return this.docsService.createDocument(guild.id, member.userId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_DOCS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_DOCS_WRITE)
   @UseGuards(PermissionsGuard)
   @Get("trash")
   @ApiOperation({
@@ -114,7 +113,7 @@ export class DocsController {
     return this.docsService.listTrash(guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_DOCS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_DOCS_WRITE)
   @UseGuards(PermissionsGuard)
   @Get(":docId/history")
   @ApiOperation({
@@ -132,7 +131,7 @@ export class DocsController {
     return this.docsService.listHistory(guild.id, documentId);
   }
 
-  @Permissions(Permission.LOOTLOG_DOCS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_DOCS_WRITE)
   @UseGuards(PermissionsGuard)
   @Get(":docId/history/:historyId")
   @ApiOperation({
@@ -155,7 +154,7 @@ export class DocsController {
     return this.docsService.getHistorySnapshot(guild.id, documentId, historyId);
   }
 
-  @Permissions(...DOCS_READ_PERMISSIONS)
+  @RequiresCapabilities(...DOCS_READ_PERMISSIONS)
   @UseGuards(PermissionsGuard)
   @Get(":docId")
   @ApiOperation({
@@ -173,7 +172,7 @@ export class DocsController {
     return this.docsService.getDocument(guild.id, documentId);
   }
 
-  @Permissions(Permission.LOOTLOG_DOCS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_DOCS_WRITE)
   @UseGuards(PermissionsGuard)
   @Put(":docId")
   @ApiOperation({
@@ -201,7 +200,7 @@ export class DocsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_DOCS_WRITE)
+  @RequiresCapabilities(Permission.LOOTLOG_DOCS_WRITE)
   @UseGuards(PermissionsGuard)
   @Delete(":docId")
   @ApiOperation({
@@ -227,7 +226,7 @@ export class DocsController {
     );
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":docId/restore")
   @HttpCode(200)
@@ -254,7 +253,7 @@ export class DocsController {
     );
   }
 
-  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @RequiresCapabilities(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Delete(":docId/purge")
   @ApiOperation({

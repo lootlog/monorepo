@@ -9,8 +9,8 @@ import { canManageGuild } from "@/lib/guild-permissions";
 export const SettingsLayout: React.FC = () => {
   const guildId = useGuildId();
   const { t } = useTranslation();
-  const { data: permissions } = useGuildPermissions();
-  const canManageReservationSettings = canManageGuild(permissions);
+  const { data: accessPolicy } = useGuildPermissions();
+  const canManageReservationSettings = canManageGuild(accessPolicy);
 
   const navElements = [
     {

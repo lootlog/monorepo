@@ -1,3 +1,8 @@
+import {
+  Capability,
+  createAccessPolicy,
+  type Capability as CapabilityName,
+} from "@lootlog/access-policy";
 import { describe, expect, it } from "vitest";
 import {
   resolveAppNavigation,
@@ -16,6 +21,9 @@ function createMatch(
   };
 }
 
+const policy = (...capabilities: CapabilityName[]) =>
+  createAccessPolicy({ capabilities });
+
 describe("resolveAppNavigation", () => {
   it("resolves one Organization hierarchy for breadcrumbs, title, parent, and sidebar", () => {
     const navigation = resolveAppNavigation({
@@ -33,7 +41,7 @@ describe("resolveAppNavigation", () => {
           routeId: "/_authenticated/$guildId/settings/members/$memberId",
         }),
       ],
-      permissions: ["ADMIN"],
+      accessPolicy: policy(Capability.ADMIN),
     });
 
     expect(navigation.breadcrumbs).toEqual([
@@ -65,7 +73,7 @@ describe("resolveAppNavigation", () => {
           status: "error",
         }),
       ],
-      permissions: ["ADMIN"],
+      accessPolicy: policy(Capability.ADMIN),
     });
 
     expect(navigation.scope).toBe("organization");
@@ -95,7 +103,7 @@ describe("resolveAppNavigation", () => {
           routeId: "/_authenticated/$guildId/settings/roles/$roleId",
         }),
       ],
-      permissions: ["ADMIN"],
+      accessPolicy: policy(Capability.ADMIN),
     });
 
     expect(navigation.breadcrumbs[navigation.breadcrumbs.length - 1]).toEqual({
@@ -120,7 +128,7 @@ describe("resolveAppNavigation", () => {
           routeId: "/_authenticated/$guildId/settings/$",
         }),
       ],
-      permissions: ["ADMIN"],
+      accessPolicy: policy(Capability.ADMIN),
     });
 
     expect(navigation.breadcrumbs).toEqual([
@@ -187,7 +195,7 @@ describe("resolveAppNavigation", () => {
             routeId,
           }),
         ],
-        permissions: ["ADMIN"],
+        accessPolicy: policy(Capability.ADMIN),
       });
 
       expect(navigation.breadcrumbs).toEqual([
@@ -238,7 +246,7 @@ describe("resolveAppNavigation", () => {
           routeId: "/_authenticated/$guildId/timers",
         }),
       ],
-      permissions: ["LOOTLOG_TIMERS_READ"],
+      accessPolicy: policy(Capability.LOOTLOG_TIMERS_READ),
     });
 
     expect(

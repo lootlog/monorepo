@@ -18,8 +18,8 @@ import {
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/constants/cache.constant";
+import { resolveCapabilities } from "@lootlog/access-policy";
 import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
-import { PermissionResolver } from "./permission-resolver.js";
 
 type GuildLookupResult = {
   guild: Guild;
@@ -174,7 +174,9 @@ export class MemberContextService {
           return acc.concat(role.permissions);
         }, []) || [];
 
-    const uniquePermissions = PermissionResolver.resolve(permissions);
+    const uniquePermissions = resolveCapabilities({
+      capabilities: permissions,
+    });
 
     const context = {
       permissions: uniquePermissions,
