@@ -44,11 +44,8 @@ describe("ActivitiesService", () => {
       },
     },
   };
-  const rawBuilder = {
-    affectedCount: vi.fn(() => ({ build: vi.fn(() => ({ kind: "raw" })) })),
-  };
   const db = {
-    raw: { sql: vi.fn(() => rawBuilder) },
+    raw: prismaDb.raw,
     runtime: vi.fn(() => ({ execute })),
     transaction: vi.fn(async (callback) => callback(transaction)),
     orm: {

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { createId } from "@paralleldrive/cuid2";
 import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { param } from "@prisma/orm-postgres/relational-core/expression";
 import type { JsonValue } from "@prisma/orm-postgres/target/codec-types";
 import { db as prismaDb } from "../prisma/db.js";
 import { PrismaService } from "#src/prisma.service";
@@ -126,7 +127,7 @@ export class ActivitiesService {
       INSERT INTO "MemberActivitySession"
         ("guildId", "discordId", "source", "sessionId", "userId", "userAgent", "world", "lastSeenAt")
       VALUES
-        (${dto.guildId}, ${dto.discordId}, ${dto.source}, ${sessionId}, ${dto.userId}, ${userAgent}, ${world}, ${lastSeenAtIso}::timestamptz)
+        (${dto.guildId}, ${dto.discordId}, ${dto.source}, ${sessionId}, ${dto.userId}, ${param(userAgent, { codecId: "pg/text@1" })}, ${param(world, { codecId: "pg/text@1" })}, ${lastSeenAtIso}::timestamptz)
       ON CONFLICT DO NOTHING
     `
       .affectedCount()
