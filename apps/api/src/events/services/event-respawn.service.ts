@@ -15,6 +15,7 @@ import type {
   OpenRespawnWindowOptions,
 } from "../interfaces/respawn-window.interface.js";
 import { EventEmitterService } from "./event-emitter.service.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventKillService } from "./event-kill.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
@@ -176,7 +177,11 @@ export class EventRespawnService {
     if (isAutoClose || !timer) {
       await Promise.all(
         hero.maps.map((map) =>
-          this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id),
+          this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+            guildId,
+            eventId,
+            mapId: map.id,
+          }),
         ),
       );
     }
@@ -193,7 +198,11 @@ export class EventRespawnService {
     await this.cancelScheduledAutoClose(heroId);
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
-    await this.eventEmitter.emitRespawnWindowClosed(guildId, eventId, heroId);
+    await this.eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
+      guildId,
+      eventId,
+      heroId,
+    });
 
     if (createNewWindow) {
       if (!newMinSpawnTime || !newMaxSpawnTime) {
@@ -306,11 +315,19 @@ export class EventRespawnService {
     });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
-    await this.eventEmitter.emitRespawnWindowOpened(guildId, eventId, heroId);
+    await this.eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
+      guildId,
+      eventId,
+      heroId,
+    });
 
     await Promise.all(
       heroMaps.map((map) =>
-        this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id),
+        this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+          guildId,
+          eventId,
+          mapId: map.id,
+        }),
       ),
     );
 

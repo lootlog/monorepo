@@ -6,6 +6,7 @@ import {
 import type { EventKillPoint, Prisma } from "#src/generated/prisma/client";
 import { PrismaService } from "#src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -1589,7 +1590,10 @@ export class EventPointsService {
 
       await Promise.all([
         this.eventReadCache.invalidateEvent(guildId, eventId),
-        this.eventEmitter.emitRankingUpdate(guildId, eventId),
+        this.eventEmitter.emit(RoutingKey.EVENT_RANKING_UPDATE, {
+          guildId,
+          eventId,
+        }),
       ]);
     }
 
@@ -1658,7 +1662,10 @@ export class EventPointsService {
 
     await Promise.all([
       this.eventReadCache.invalidateEvent(guildId, eventId),
-      this.eventEmitter.emitRankingUpdate(guildId, eventId),
+      this.eventEmitter.emit(RoutingKey.EVENT_RANKING_UPDATE, {
+        guildId,
+        eventId,
+      }),
     ]);
 
     return updated;
@@ -1748,7 +1755,10 @@ export class EventPointsService {
 
     await Promise.all([
       this.eventReadCache.invalidateEvent(event.guildId, event.id),
-      this.eventEmitter.emitRankingUpdate(event.guildId, event.id),
+      this.eventEmitter.emit(RoutingKey.EVENT_RANKING_UPDATE, {
+        guildId: event.guildId,
+        eventId: event.id,
+      }),
     ]);
   }
 }
