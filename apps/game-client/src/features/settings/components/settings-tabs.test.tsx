@@ -62,9 +62,6 @@ vi.mock("@/features/settings/components/sounds/sounds-settings-tab", () => ({
   SoundsSettingsTab: () => <div>Sounds tab</div>,
 }));
 
-vi.mock("@/features/settings/components/timers/timers-settings-tab", () => ({
-  TimersSettingsTab: () => <div>Timers tab</div>,
-}));
 vi.mock("@/features/settings/components/chat/chat-appearance-settings", () => ({
   ChatAppearanceSettingsForm: () => (
     <details data-testid="chat-advanced-settings">
