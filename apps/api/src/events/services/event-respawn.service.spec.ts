@@ -9,6 +9,7 @@ import {
 import { EventRespawnService } from "./event-respawn.service.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventKillService } from "./event-kill.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
@@ -47,10 +48,7 @@ describe("EventRespawnService", () => {
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: mockFn(),
-    emitRespawnWindowOpened: mockFn(),
-    emitRespawnWindowClosed: mockFn(),
-    emitTimerUpdate: mockFn(),
+    emit: mockFn(),
   };
 
   const mockKillService = {
@@ -234,7 +232,10 @@ describe("EventRespawnService", () => {
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {});
 
-      expect(mockEventEmitter.emitMapStatusUpdate).not.toHaveBeenCalled();
+      expect(mockEventEmitter.emit).not.toHaveBeenCalledWith(
+        RoutingKey.EVENT_MAP_STATUS_UPDATE,
+        expect.anything(),
+      );
     });
 
     it("should emit map status update when auto-closing a window", async () => {
@@ -256,10 +257,9 @@ describe("EventRespawnService", () => {
         isAutoClose: true,
       });
 
-      expect(mockEventEmitter.emitMapStatusUpdate).toHaveBeenCalledWith(
-        guildId,
-        eventId,
-        "map-1",
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        RoutingKey.EVENT_MAP_STATUS_UPDATE,
+        { guildId, eventId, mapId: "map-1" },
       );
     });
 
@@ -480,10 +480,9 @@ describe("EventRespawnService", () => {
         maxSpawnTime,
       });
 
-      expect(mockEventEmitter.emitRespawnWindowOpened).toHaveBeenCalledWith(
-        guildId,
-        eventId,
-        heroId,
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+        { guildId, eventId, heroId },
       );
     });
 
