@@ -9,7 +9,9 @@ type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
 
 describe("ActivitiesService", () => {
   const execute = vi.fn().mockResolvedValue({ affectedRows: 1 });
-  const sessionCount = vi.fn().mockResolvedValue(1);
+  const sessionAggregate = vi.fn().mockResolvedValue({
+    activeSessionCount: 1,
+  });
   const sessionDelete = vi.fn();
   const statsUpdate = vi.fn();
   const activityCreate = vi.fn().mockResolvedValue({
@@ -38,7 +40,10 @@ describe("ActivitiesService", () => {
         Activity: { create: activityCreate },
         ActivityActorSnapshot: { first: vi.fn() },
         MemberActivitySession: {
-          where: vi.fn(() => ({ count: sessionCount, delete: sessionDelete })),
+          where: vi.fn(() => ({
+            aggregate: sessionAggregate,
+            delete: sessionDelete,
+          })),
         },
         MemberActivityStats: { where: vi.fn(() => statsWhereResult) },
       },

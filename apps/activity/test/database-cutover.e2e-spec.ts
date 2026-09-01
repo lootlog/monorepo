@@ -11,6 +11,7 @@ import {
   Wait,
 } from "testcontainers";
 import { afterEach, describe, expect, it } from "vitest";
+import { ActivitiesService } from "../src/activities/activities.service.js";
 import { ActivitiesQueryService } from "../src/activities/services/activities-query.service.js";
 import type { Contract } from "../src/prisma/contract.js";
 import contractJson from "../src/prisma/contract.json" with { type: "json" };
@@ -101,6 +102,49 @@ describe("Prisma Activity database cutover", () => {
       await expect(
         queryService.findMemberActivityStatsByGuild("cutover-guild"),
       ).resolves.toHaveLength(2);
+
+      const activitiesService = new ActivitiesService({
+        db: database,
+      } as unknown as PrismaService);
+      await expect(
+        activitiesService.create({
+          userId: "cutover-user-id",
+          guildId: "connect-guild",
+          discordId: "connect-user",
+          type: "CONNECT_EVENT",
+          source: "WEB_APP",
+          details: { sessionId: "connect-session" },
+          idempotencyKey: "connect-event-cutover",
+        }),
+      ).resolves.toMatchObject({ type: "CONNECT_EVENT" });
+
+      await expect(
+        database.orm.public.MemberActivityStats.where({
+          guildId: "connect-guild",
+          discordId: "connect-user",
+          source: "WEB_APP",
+        }).first(),
+      ).resolves.toMatchObject({ activeSessionCount: 1, visitCount: 1 });
+
+      await expect(
+        activitiesService.create({
+          userId: "cutover-user-id",
+          guildId: "connect-guild",
+          discordId: "connect-user",
+          type: "DISCONNECT_EVENT",
+          source: "WEB_APP",
+          details: { sessionId: "connect-session" },
+          idempotencyKey: "disconnect-event-cutover",
+        }),
+      ).resolves.toMatchObject({ type: "DISCONNECT_EVENT" });
+
+      await expect(
+        database.orm.public.MemberActivityStats.where({
+          guildId: "connect-guild",
+          discordId: "connect-user",
+          source: "WEB_APP",
+        }).first(),
+      ).resolves.toMatchObject({ activeSessionCount: 0, visitCount: 1 });
     } finally {
       await database.close();
       await pool.end();

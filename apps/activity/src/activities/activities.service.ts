@@ -134,13 +134,14 @@ export class ActivitiesService {
       .build();
     const { affectedRows: visitCountIncrement } =
       await transaction.execute(insertSessionPlan);
-    const activeSessionCount = Number(
+    const { activeSessionCount } =
       await transaction.orm.public.MemberActivitySession.where({
         guildId: dto.guildId,
         discordId: dto.discordId,
         source: dto.source,
-      }).count(),
-    );
+      }).aggregate((aggregate) => ({
+        activeSessionCount: aggregate.count(),
+      }));
 
     const updateStatsPlan = this.prisma.db.raw.sql`
       INSERT INTO "MemberActivityStats"
@@ -170,13 +171,14 @@ export class ActivitiesService {
       source: dto.source,
       sessionId,
     }).delete();
-    const activeSessionCount = Number(
+    const { activeSessionCount } =
       await transaction.orm.public.MemberActivitySession.where({
         guildId: dto.guildId,
         discordId: dto.discordId,
         source: dto.source,
-      }).count(),
-    );
+      }).aggregate((aggregate) => ({
+        activeSessionCount: aggregate.count(),
+      }));
 
     await transaction.orm.public.MemberActivityStats.where({
       guildId: dto.guildId,
