@@ -67,6 +67,7 @@
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "sharp": "^0.35.4",
+    "superjson": "catalog:",
     "uuid": "^14.0.2",
     "winston": "^3.19.0",
     "zod": "catalog:"

@@ -1,32 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService, type JsonCodec } from "@lootlog/nest-shared/redis";
+import superjson from "superjson";
 
-const EVENT_READ_CACHE_PREFIX = "event-read";
+const EVENT_READ_CACHE_PREFIX = "event-read:v2";
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
-const EVENT_READ_CACHE_DATE_FIELDS = new Set([
-  "assignedAt",
-  "confirmedAt",
-  "confirmationDeadlineAt",
-  "createdAt",
-  "editedAt",
-  "endedAt",
-  "endsAt",
-  "generatedAt",
-  "killedAt",
-  "lastKilledAt",
-  "maxSpawnTime",
-  "maxSpawnTimeAtKill",
-  "minSpawnTime",
-  "minSpawnTimeAtKill",
-  "startedAt",
-  "startsAt",
-  "unassignedAt",
-  "updatedAt",
-  "windowClosedAt",
-  "windowOpenedAt",
-]);
-const ISO_DATETIME_PATTERN =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+const SUPERJSON_CODEC: JsonCodec = {
+  stringify: (value) => superjson.stringify(value),
+  parse: <T>(text: string): T => superjson.parse<T>(text),
+};
 
 @Injectable()
 export class EventReadCacheService {
@@ -52,15 +34,14 @@ export class EventReadCacheService {
   }
 
   async getOrSet<T>(key: string, factory: () => Promise<T>): Promise<T> {
-    const value = await this.redis.getOrSetJsonBestEffort({
+    return this.redis.getOrSetJsonBestEffort({
       key,
       ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
       factory,
+      codec: SUPERJSON_CODEC,
       onError: (error) =>
         this.logger.warn("Event read cache unavailable", error),
     });
-
-    return reviveEventReadCacheDates(value) as T;
   }
 
   async invalidateGuild(guildId: string) {
@@ -123,42 +104,4 @@ export class EventReadCacheService {
 
     return JSON.stringify(value);
   }
-}
-
-function reviveEventReadCacheDates(value: unknown, key?: string): unknown {
-  if (value instanceof Date) {
-    return value;
-  }
-
-  if (
-    key &&
-    EVENT_READ_CACHE_DATE_FIELDS.has(key) &&
-    typeof value === "string" &&
-    isIsoDatetime(value)
-  ) {
-    return new Date(value);
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((entry) => reviveEventReadCacheDates(entry));
-  }
-
-  if (!value || typeof value !== "object") {
-    return value;
-  }
-
-  return Object.fromEntries(
-    Object.entries(value).map(([entryKey, entryValue]) => [
-      entryKey,
-      reviveEventReadCacheDates(entryValue, entryKey),
-    ]),
-  );
-}
-
-function isIsoDatetime(value: string) {
-  if (!ISO_DATETIME_PATTERN.test(value)) {
-    return false;
-  }
-
-  return !Number.isNaN(new Date(value).getTime());
 }
