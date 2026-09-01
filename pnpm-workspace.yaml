@@ -36,6 +36,7 @@ catalog:
   react-hook-form: 7.86.0
   reflect-metadata: ^0.2.2
   rxjs: ^7.8.2
+  superjson: ^2.2.2
   tailwindcss: ^4.3.3
   tsdown: ^0.22.14
   tsx: ^4.23.12
