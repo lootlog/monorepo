@@ -49,7 +49,6 @@ import type {
   CreateBattleResult,
   DeleteBattleResult,
   GetAllBattlesResult,
-  IBattlesService,
   RawBattleData,
 } from "./interfaces/battle-service.interface.js";
 
@@ -72,7 +71,7 @@ return 0
 `;
 
 @Injectable()
-export class BattlesService implements IBattlesService {
+export class BattlesService {
   private readonly logger = new Logger(BattlesService.name);
 
   constructor(

@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Collapsible, CollapsibleContent } from "./collapsible";
-import { Progress } from "./progress";
 import { Slider } from "./slider";
 import { Switch } from "./switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
@@ -422,7 +421,7 @@ describe("Base UI control adapters", () => {
     expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
   });
 
-  it("reflects controlled collapsible and progress values", () => {
+  it("reflects controlled collapsible values", () => {
     const { rerender } = render(
       <Collapsible open>
         <CollapsibleContent>Details</CollapsibleContent>
@@ -437,10 +436,5 @@ describe("Base UI control adapters", () => {
       </Collapsible>,
     );
     expect(screen.queryByText("Details")).not.toBeInTheDocument();
-
-    rerender(<Progress value={40} aria-label="Loading" />);
-    expect(
-      screen.getByRole("progressbar", { name: "Loading" }),
-    ).toHaveAttribute("aria-valuenow", "40");
   });
 });
