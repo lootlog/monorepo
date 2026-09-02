@@ -7,6 +7,7 @@ test("composes every handler group and forward-auth before serving routes", asyn
 
   expect(source).toContain("HttpApiBuilder.layer(LootlogApi");
   expect(source).toContain("Layer.provide(LootlogApiHandlers)");
+  expect(source).toContain("Layer.provide(OrganizationAuthorizationLayers)");
   expect(source).toContain("Layer.provide(RequestIdentityLayers)");
   expect(source).toContain("Layer.provide(ForwardAuthMiddlewareLive)");
   expect(source).toContain("HttpRouter.serve(LootlogApiRoutes)");
