@@ -6,6 +6,7 @@ import { LootlogApiHandlers } from "../handlers/handlers-layer.js";
 import { LootlogApi } from "../lootlog-api.generated.js";
 import { ForwardAuthMiddlewareLive } from "./forward-auth-middleware.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
+import { OrganizationAuthorizationLayers } from "./organization-authorization-layers.js";
 import { RequestIdentityLayers } from "./request-identity-layers.js";
 
 /**
@@ -19,6 +20,7 @@ export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   openapiPath: "/openapi.json",
 }).pipe(
   Layer.provide(LootlogApiHandlers),
+  Layer.provide(OrganizationAuthorizationLayers),
   Layer.provide(RequestIdentityLayers),
   Layer.provide(ForwardAuthMiddlewareLive),
 );
