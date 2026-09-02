@@ -19,6 +19,8 @@ import { ReadyRoomRedisRepository } from "#src/messaging/ready-room/ready-room-r
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/public-guild-stats-card.repository";
 import { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
+import { RolesRepository } from "#src/roles/roles.repository";
+import { RolesService } from "#src/roles/roles.service";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
@@ -31,6 +33,7 @@ import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
+import { RolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
@@ -244,6 +247,16 @@ const NativeUserLootlogConfigData = Layer.unwrap(
   ),
 );
 
+const NativeRolesData = Layer.unwrap(
+  Effect.map(ApiRedis, (redis) =>
+    makeScopedCompatibilityLayer(RolesData, (runtime) =>
+      RolesData.makeService(
+        new RolesService(new RolesRepository(runtime), nativeLogger, redis),
+      ),
+    ),
+  ),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -255,4 +268,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeReadyRoomData,
   NativeChatData,
   NativeUserLootlogConfigData,
+  NativeRolesData,
 ).pipe(Layer.provide(ApiDatabaseLive));

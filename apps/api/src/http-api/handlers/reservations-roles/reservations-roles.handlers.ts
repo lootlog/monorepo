@@ -81,6 +81,9 @@ export class ReservationsRolesAuthorization extends Context.Service<
 
 type DataEffect = Effect.Effect<unknown, ReservationsRolesOperationError>;
 
+const mutableDto = <A>(value: unknown): A =>
+  JSON.parse(JSON.stringify(value)) as A;
+
 export class ReservationsRolesData extends Context.Service<
   ReservationsRolesData,
   {
@@ -123,13 +126,6 @@ export class ReservationsRolesData extends Context.Service<
       reservationId: number,
       payload: UpdateReservationDto,
     ) => DataEffect;
-    readonly getRoles: (guildId: string) => DataEffect;
-    readonly updateRole: (
-      discordId: string,
-      guildId: string,
-      roleId: string,
-      payload: UpdateRolePermissionsDto,
-    ) => DataEffect;
     readonly listShares: (guildId: string) => DataEffect;
     readonly createInvitation: (guildId: string, userId: string) => DataEffect;
     readonly revokeInvitation: (
@@ -151,7 +147,6 @@ export class ReservationsRolesData extends Context.Service<
   static layerServices(options: {
     readonly reservations: ReservationsService;
     readonly mutations: ReservationMutationsService;
-    readonly roles: RolesService;
     readonly sharing: ReservationSharingService;
   }) {
     const attempt = (operation: () => PromiseLike<unknown>) =>
@@ -159,9 +154,6 @@ export class ReservationsRolesData extends Context.Service<
         try: operation,
         catch: (cause) => new ReservationsRolesOperationError({ cause }),
       });
-    const mutableDto = <A>(value: unknown): A =>
-      JSON.parse(JSON.stringify(value)) as A;
-
     return Layer.succeed(
       ReservationsRolesData,
       ReservationsRolesData.of({
@@ -214,17 +206,6 @@ export class ReservationsRolesData extends Context.Service<
               data: mutableDto<LegacyUpdateReservationDto>(payload),
             }),
           ),
-        getRoles: (guildId) =>
-          attempt(() => options.roles.getRolesByGuildId(guildId)),
-        updateRole: (discordId, guildId, roleId, payload) =>
-          attempt(() =>
-            options.roles.updateRolePermissions(
-              discordId,
-              guildId,
-              roleId,
-              mutableDto<LegacyUpdateRolePermissionsDto>(payload),
-            ),
-          ),
         listShares: (guildId) => attempt(() => options.sharing.list(guildId)),
         createInvitation: (guildId, userId) =>
           attempt(() => options.sharing.createInvitation(guildId, userId)),
@@ -247,6 +228,40 @@ export class ReservationsRolesData extends Context.Service<
           ),
       }),
     );
+  }
+}
+
+export class RolesData extends Context.Service<
+  RolesData,
+  {
+    readonly getRoles: (guildId: string) => DataEffect;
+    readonly updateRole: (
+      discordId: string,
+      guildId: string,
+      roleId: string,
+      payload: UpdateRolePermissionsDto,
+    ) => DataEffect;
+  }
+>()("@lootlog/api/http-api/roles/data") {
+  static makeService(service: RolesService): RolesData["Service"] {
+    const attempt = (operation: () => PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new ReservationsRolesOperationError({ cause }),
+      });
+
+    return RolesData.of({
+      getRoles: (guildId) => attempt(() => service.getRolesByGuildId(guildId)),
+      updateRole: (discordId, guildId, roleId, payload) =>
+        attempt(() =>
+          service.updateRolePermissions(
+            discordId,
+            guildId,
+            roleId,
+            mutableDto<LegacyUpdateRolePermissionsDto>(payload),
+          ),
+        ),
+    });
   }
 }
 
@@ -276,6 +291,12 @@ const data = <A>(
     service: ReservationsRolesData["Service"],
   ) => Effect.Effect<A, ReservationsRolesOperationError>,
 ) => Effect.flatMap(ReservationsRolesData, operation);
+
+const rolesData = <A>(
+  operation: (
+    service: RolesData["Service"],
+  ) => Effect.Effect<A, ReservationsRolesOperationError>,
+) => Effect.flatMap(RolesData, operation);
 
 const toViewer = (
   access: ReservationsRolesGuildAccess,
@@ -387,7 +408,7 @@ export const updateGuildRole = Effect.fn("updateGuildRole")(function* (
     Permission.LOOTLOG_ACCESS,
     Permission.ADMIN,
   ]);
-  const value = yield* data((service) =>
+  const value = yield* rolesData((service) =>
     service.updateRole(access.discordId, access.guildId, roleId, payload),
   );
   return yield* decode(RolesControllerUpdateGuildRole200, value);
@@ -581,7 +602,7 @@ export const RolesHandlers = HttpApiBuilder.group(
             const access = yield* requireGuild(guildId, [
               Permission.LOOTLOG_ACCESS,
             ]);
-            const value = yield* data((service) =>
+            const value = yield* rolesData((service) =>
               service.getRoles(access.guildId),
             );
             return yield* decode(RolesControllerGetGuildRoles200, value);
