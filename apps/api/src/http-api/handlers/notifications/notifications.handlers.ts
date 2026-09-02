@@ -100,7 +100,10 @@ export class NotificationsAuthorization extends Context.Service<
       readonly guildId: string;
       readonly capabilities: ReadonlyArray<PermissionValue>;
       readonly mode: "any";
-    }) => Effect.Effect<NotificationGuildCaller, NotificationsAccessDenied>;
+    }) => Effect.Effect<
+      NotificationGuildCaller,
+      NotificationsAccessDenied | NotificationsNotFound
+    >;
   }
 >()("@lootlog/api/http-api/notifications/authorization") {}
 

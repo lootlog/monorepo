@@ -99,7 +99,7 @@ export class DocsAuthorization extends Context.Service<
   {
     readonly requireGuild: (
       requirement: DocsAuthorizationRequirement,
-    ) => Effect.Effect<AuthorizedDocsCaller, DocsAccessDenied>;
+    ) => Effect.Effect<AuthorizedDocsCaller, DocsAccessDenied | DocsNotFound>;
   }
 >()("@lootlog/api/http-api/docs/authorization") {}
 

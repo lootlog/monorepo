@@ -9,6 +9,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { Permission } from "@lootlog/schema/permissions";
 import { MembersService } from "#src/members/members.service";
+import type { MemberWithRoles, Role } from "#src/members/member.types";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
@@ -48,8 +49,8 @@ export class MemberContextService {
     guildId: string;
   }): Promise<{
     guild: Guild;
-    member: unknown;
-    roles: unknown[];
+    member: MemberWithRoles;
+    roles: Role[];
     permissions: Permission[];
   } | null> {
     const { discordId, userId, guildId } = options;
@@ -134,8 +135,8 @@ export class MemberContextService {
 
             return context as {
               guild: Guild;
-              member: unknown;
-              roles: unknown[];
+              member: MemberWithRoles;
+              roles: Role[];
               permissions: Permission[];
             };
           }

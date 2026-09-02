@@ -1,4 +1,5 @@
 import { Effect, Layer, Schema } from "effect";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import {
   ChatAccessDenied,
@@ -6,9 +7,29 @@ import {
   ChatNotFound,
 } from "../handlers/chat/chat.handlers.js";
 import {
+  DocsAccessDenied,
+  DocsAuthorization,
+  DocsNotFound,
+} from "../handlers/docs/docs.handlers.js";
+import {
+  EventsAccessDenied,
+  EventsAuthorization,
+  EventsNotFound,
+} from "../handlers/events/events.handlers.js";
+import {
+  KillsLootsAccessDenied,
+  KillsLootsAuthorization,
+  KillsLootsNotFound,
+} from "../handlers/kills-loots/kills-loots.handlers.js";
+import {
   LootlogConfigAccessDenied,
   LootlogConfigAuthorization,
 } from "../handlers/lootlog-config/lootlog-config.handlers.js";
+import {
+  NotificationsAccessDenied,
+  NotificationsAuthorization,
+  NotificationsNotFound,
+} from "../handlers/notifications/notifications.handlers.js";
 import {
   MembersAccessDenied,
   MembersAuthorization,
@@ -28,6 +49,7 @@ import { ForwardAuthIdentity } from "./forward-auth-identity.js";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,
+  type OrganizationContext,
 } from "./organization-context.js";
 
 // oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
@@ -77,8 +99,23 @@ const resolveAccess = (
       return yield* new OrganizationForbidden();
     }
 
-    return { ...identity, ...context };
+    return { identity, context };
   });
+
+type ResolvedAccess = {
+  readonly identity: { readonly discordId: string; readonly userId: string };
+  readonly context: OrganizationContext;
+};
+
+const toAuthorizedCaller = (access: ResolvedAccess) => ({
+  ...access.identity,
+  guild: access.context.guild,
+  member: access.context.member,
+  roles: access.context.roles,
+  accessPolicy: createAccessPolicy({
+    capabilities: access.context.permissions,
+  }),
+});
 
 const mapAccessError = <NotFound, Forbidden>(
   error: OrganizationNotFound | OrganizationForbidden,
@@ -95,6 +132,11 @@ const chatAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   ChatAuthorization.of({
     requireGuild: ({ guildId, allOf }) =>
       resolveAccess(lookup, guildId, { allOf }).pipe(
+        Effect.map(({ identity, context }) => ({
+          ...identity,
+          guildId: context.guildId,
+          permissions: context.permissions,
+        })),
         Effect.mapError((error) =>
           mapAccessError(error, {
             notFound: () =>
@@ -112,6 +154,11 @@ const membersAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
     identity: requestScopedIdentity,
     requireGuild: ({ guildId, anyOf }) =>
       resolveAccess(lookup, guildId, { anyOf }).pipe(
+        Effect.map(({ identity, context }) => ({
+          ...identity,
+          guildId: context.guildId,
+          permissions: context.permissions,
+        })),
         Effect.mapError((error) =>
           mapAccessError(error, {
             notFound: () =>
@@ -131,6 +178,12 @@ const reservationsRolesAuthorization = Effect.map(
       identity: requestScopedIdentity,
       requireGuild: ({ guildId, allOf, anyOf }) =>
         resolveAccess(lookup, guildId, { allOf, anyOf }).pipe(
+          Effect.map(({ identity, context }) => ({
+            ...identity,
+            guildId: context.guildId,
+            ownerId: context.ownerId,
+            permissions: context.permissions,
+          })),
           Effect.mapError((error) =>
             mapAccessError(error, {
               notFound: () =>
@@ -156,9 +209,9 @@ const usersGuildsAuthorization = Effect.map(
       identity: requestScopedIdentity,
       requireGuild: ({ guildId, anyOf }) =>
         resolveAccess(lookup, guildId, { anyOf }).pipe(
-          Effect.map(({ guildId: canonicalGuildId, permissions }) => ({
-            guildId: canonicalGuildId,
-            permissions,
+          Effect.map(({ context }) => ({
+            guildId: context.guildId,
+            permissions: context.permissions,
           })),
           Effect.mapError((error) =>
             mapAccessError(error, {
@@ -184,8 +237,8 @@ const lootlogConfigAuthorization = Effect.map(
     LootlogConfigAuthorization.of({
       requireCapability: ({ guildId, capability }) =>
         resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
-          Effect.map(({ guildId: canonicalGuildId }) => ({
-            guildId: canonicalGuildId,
+          Effect.map(({ context }) => ({
+            guildId: context.guildId,
           })),
           Effect.mapError((error) =>
             error instanceof OrganizationNotFound
@@ -202,6 +255,114 @@ const lootlogConfigAuthorization = Effect.map(
     }),
 );
 
+const docsAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
+  DocsAuthorization.of({
+    requireGuild: ({ guildId, capabilities, mode }) =>
+      resolveAccess(
+        lookup,
+        guildId,
+        mode === "all" ? { allOf: capabilities } : { anyOf: capabilities },
+      ).pipe(
+        Effect.map(toAuthorizedCaller),
+        Effect.mapError((error) =>
+          mapAccessError(error, {
+            notFound: () =>
+              new DocsNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
+            forbidden: () =>
+              new DocsAccessDenied({ status: 403, code: "FORBIDDEN" }),
+          }),
+        ),
+      ),
+  }),
+);
+
+const eventsAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
+  EventsAuthorization.of({
+    requireGuild: ({ guildId, capabilities, mode }) =>
+      resolveAccess(
+        lookup,
+        guildId,
+        mode === "all" ? { allOf: capabilities } : { anyOf: capabilities },
+      ).pipe(
+        Effect.map(toAuthorizedCaller),
+        Effect.mapError((error) =>
+          mapAccessError(error, {
+            notFound: () =>
+              new EventsNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
+            forbidden: () =>
+              new EventsAccessDenied({ status: 403, code: "FORBIDDEN" }),
+          }),
+        ),
+      ),
+  }),
+);
+
+const killsLootsAuthorization = Effect.map(
+  OrganizationContextLookup,
+  (lookup) =>
+    KillsLootsAuthorization.of({
+      requireCaller: requestScopedIdentity,
+      requireGuild: ({ guildId, capability }) =>
+        resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
+          Effect.map(({ identity, context }) => ({
+            ...identity,
+            guild: context.guild,
+            roles: context.roles,
+            accessPolicy: createAccessPolicy({
+              capabilities: context.permissions,
+            }),
+          })),
+          Effect.mapError((error) =>
+            mapAccessError(error, {
+              notFound: () =>
+                new KillsLootsNotFound({
+                  status: 404,
+                  code: "GUILD_NOT_FOUND",
+                }),
+              forbidden: () =>
+                new KillsLootsAccessDenied({
+                  status: 403,
+                  code: "FORBIDDEN",
+                }),
+            }),
+          ),
+        ),
+    }),
+);
+
+const notificationsAuthorization = Effect.map(
+  OrganizationContextLookup,
+  (lookup) =>
+    NotificationsAuthorization.of({
+      requireCaller: requestScopedIdentity,
+      requireGuild: ({ guildId, capabilities }) =>
+        resolveAccess(lookup, guildId, { anyOf: capabilities }).pipe(
+          Effect.map(({ identity, context }) => ({
+            ...identity,
+            guild: context.guild,
+            roles: context.roles,
+            accessPolicy: createAccessPolicy({
+              capabilities: context.permissions,
+            }),
+          })),
+          Effect.mapError((error) =>
+            mapAccessError(error, {
+              notFound: () =>
+                new NotificationsNotFound({
+                  status: 404,
+                  code: "GUILD_NOT_FOUND",
+                }),
+              forbidden: () =>
+                new NotificationsAccessDenied({
+                  status: 403,
+                  code: "FORBIDDEN",
+                }),
+            }),
+          ),
+        ),
+    }),
+);
+
 /** Organization-aware handler ports backed by the legacy context boundary. */
 export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(ChatAuthorization, chatAuthorization),
@@ -209,4 +370,8 @@ export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(ReservationsRolesAuthorization, reservationsRolesAuthorization),
   Layer.effect(UsersGuildsAuthorization, usersGuildsAuthorization),
   Layer.effect(LootlogConfigAuthorization, lootlogConfigAuthorization),
+  Layer.effect(DocsAuthorization, docsAuthorization),
+  Layer.effect(EventsAuthorization, eventsAuthorization),
+  Layer.effect(KillsLootsAuthorization, killsLootsAuthorization),
+  Layer.effect(NotificationsAuthorization, notificationsAuthorization),
 );
