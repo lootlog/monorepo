@@ -1,10 +1,14 @@
+import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { and, asc, eq } from "drizzle-orm";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { MapTemplatesRepository } from "#src/map-templates/map-templates.repository";
+import { ApiDatabase } from "#src/database/drizzle/database";
+import { mapTemplateTable } from "#src/database/drizzle/schema";
 import {
   LootlogApi,
   MapTemplateResponseDto,
@@ -102,6 +106,72 @@ export class MapTemplatesData extends Context.Service<
       }),
     );
   }
+
+  static readonly layerDatabase = Layer.effect(
+    MapTemplatesData,
+    Effect.map(ApiDatabase, (database) => {
+      const persistenceError = (cause: unknown) =>
+        new MapTemplatesPersistenceError({ cause });
+      return MapTemplatesData.of({
+        findMany: (guildId) =>
+          database
+            .select()
+            .from(mapTemplateTable)
+            .where(eq(mapTemplateTable.guildId, guildId))
+            .orderBy(asc(mapTemplateTable.name))
+            .pipe(Effect.mapError(persistenceError)),
+        create: (guildId, payload) =>
+          database
+            .insert(mapTemplateTable)
+            .values({
+              id: randomUUID(),
+              guildId,
+              name: payload.name,
+              maps: [...payload.maps],
+            })
+            .returning()
+            .pipe(
+              Effect.flatMap((rows) =>
+                rows[0]
+                  ? Effect.succeed(rows[0])
+                  : Effect.fail(
+                      persistenceError("Map template insert returned no row"),
+                    ),
+              ),
+              Effect.mapError(persistenceError),
+            ),
+        update: (guildId, templateId, payload) =>
+          database
+            .update(mapTemplateTable)
+            .set({ name: payload.name, maps: [...payload.maps] })
+            .where(
+              and(
+                eq(mapTemplateTable.id, templateId),
+                eq(mapTemplateTable.guildId, guildId),
+              ),
+            )
+            .returning()
+            .pipe(
+              Effect.map((rows) => rows[0] ?? null),
+              Effect.mapError(persistenceError),
+            ),
+        delete: (guildId, templateId) =>
+          database
+            .delete(mapTemplateTable)
+            .where(
+              and(
+                eq(mapTemplateTable.id, templateId),
+                eq(mapTemplateTable.guildId, guildId),
+              ),
+            )
+            .returning({ id: mapTemplateTable.id })
+            .pipe(
+              Effect.map((rows) => rows.length > 0),
+              Effect.mapError(persistenceError),
+            ),
+      });
+    }),
+  );
 }
 
 const decodeResponse = (template: StoredMapTemplate) =>

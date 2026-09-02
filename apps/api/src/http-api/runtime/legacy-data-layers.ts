@@ -11,7 +11,6 @@ import { LootAllocationService } from "#src/loots/loot-allocation.service";
 import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { LootsService } from "#src/loots/loots.service";
-import { MapTemplatesRepository } from "#src/map-templates/map-templates.repository";
 import { MapsService } from "#src/maps/maps.service";
 import { MembersService } from "#src/members/members.service";
 import { MessagingService } from "#src/messaging/messaging.service";
@@ -34,7 +33,6 @@ import { EventsData } from "../handlers/events/events.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.handlers.js";
-import { MapTemplatesData } from "../handlers/map-templates/map-templates.handlers.js";
 import { MembersData } from "../handlers/members/members.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
@@ -95,7 +93,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
       LootlogConfigData.layerService(service(LootlogConfigService)),
       ChatData.layerService(service(ChatService)),
       DocsData.layerLegacy(service(DocsService)),
-      MapTemplatesData.layerRepository(service(MapTemplatesRepository)),
       legacyKillsLootsDataLayer({
         kills: service(KillsService),
         loots,
