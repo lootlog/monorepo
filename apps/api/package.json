@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "nest start --watch",
-    "prebuild": "bun ../../tools/clean-swagger-metadata.mjs",
+    "prebuild": "bun ./tools/clean-swagger-metadata.mjs",
     "build": "nest build",
     "start": "bun --preload ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
