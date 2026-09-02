@@ -20,5 +20,10 @@ const ObservabilityLive = Layer.merge(
   Layer.provide(FetchHttpClient.layer),
 );
 BunRuntime.runMain(
-  Layer.launch(ActivityApplication.pipe(Layer.provide(ObservabilityLive))),
+  Layer.launch(
+    ActivityApplication.pipe(
+      Layer.provide(FetchHttpClient.layer),
+      Layer.provide(ObservabilityLive),
+    ),
+  ),
 );

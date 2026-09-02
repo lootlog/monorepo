@@ -6,6 +6,7 @@ import {
   type ServerEvent,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
+import { Effect } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
@@ -135,11 +136,10 @@ export class CommandHandler {
   }
 
   async rebalanceUser(discordId: string, userId: string): Promise<void> {
-    await this.guilds.invalidate({ discordId, userId });
-    const updatedGuilds = await this.guilds.getUserGuilds({
-      discordId,
-      userId,
-    });
+    await Effect.runPromise(this.guilds.invalidate({ discordId, userId }));
+    const updatedGuilds = await Effect.runPromise(
+      this.guilds.getUserGuilds({ discordId, userId }),
+    );
     for (const socket of this.hub.getLocalSocketsForUser(userId)) {
       if (socket.data.discordId !== discordId) continue;
       const updatedIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
@@ -251,19 +251,23 @@ export class CommandHandler {
     socket.data.character = data.character;
     socket.data.confidence = "reported";
     if (data.character) {
-      const verification = await this.proofVerifier.verify({
-        proof: data.margonemAccountProof,
-        socketId: socket.data.connectionId,
-        accountId: data.character.accountId,
-        characterId: data.character.characterId,
-        clanId: data.character.clan?.id,
-      });
+      const verification = await Effect.runPromise(
+        this.proofVerifier.verify({
+          proof: data.margonemAccountProof,
+          socketId: socket.data.connectionId,
+          accountId: data.character.accountId,
+          characterId: data.character.characterId,
+          clanId: data.character.clan?.id,
+        }),
+      );
       if (verification.valid) socket.data.confidence = "verified";
       if (!verification.valid && this.config.margonemAccountProofRequired) {
         throw new Error("Margonem account proof is required");
       }
     }
-    const guilds = await this.guilds.getUserGuilds(socket.data);
+    const guilds = await Effect.runPromise(
+      this.guilds.getUserGuilds(socket.data),
+    );
     if (guilds.length === 0) throw new Error("no authorized organizations");
     socket.data.guilds = guilds;
     socket.data.joined = true;

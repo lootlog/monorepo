@@ -1,4 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { Effect } from "effect";
 import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
 import type {
   QueryAbyssSeasonsDto,
@@ -18,21 +19,21 @@ import type {
   RatingGrowthDataPointDto,
   StreakDto,
 } from "#src/battles/dto/battle-statistics-response.dto";
-import { BattleAnalyticsCacheService } from "#src/battles/services/battle-analytics-cache.service";
-import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
-import { BattleAnalyticsPagingService } from "#src/battles/services/battle-analytics-paging.service";
-import { BattleAnalyticsQueryService } from "#src/battles/services/battle-analytics-query.service";
+import type { BattleAnalyticsCache } from "#src/battles/services/battle-analytics-cache.service";
+import type { BattleAnalyticsDomain } from "#src/battles/services/battle-analytics-domain.service";
+import type { BattleAnalyticsPaging } from "#src/battles/services/battle-analytics-paging.service";
+import type { BattleAnalyticsQuery } from "#src/battles/services/battle-analytics-query.service";
 import type {
   AnalyticsBattleOrderBy,
   DateRangeQuery,
   InflatedBattleWithWarriors,
 } from "#src/battles/services/battle-analytics.types";
-import { BattleSummaryCalculatorService } from "#src/battles/services/battle-summary-calculator.service";
-import { CombatProfileCalculatorService } from "#src/battles/services/combat-profile-calculator.service";
-import { HeadToHeadCalculatorService } from "#src/battles/services/head-to-head-calculator.service";
-import { PlayerVsPlayerCalculatorService } from "#src/battles/services/player-vs-player-calculator.service";
-import { AbyssSeasonCalculatorService } from "#src/battles/services/abyss-season-calculator.service";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import type { BattleSummaryCalculator } from "#src/battles/services/battle-summary-calculator.service";
+import type { CombatProfileCalculator } from "#src/battles/services/combat-profile-calculator.service";
+import type { HeadToHeadCalculator } from "#src/battles/services/head-to-head-calculator.service";
+import type { PlayerVsPlayerCalculator } from "#src/battles/services/player-vs-player-calculator.service";
+import type { AbyssSeasonCalculator } from "#src/battles/services/abyss-season-calculator.service";
+import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
 import { battleWarriors, battles } from "#src/shared/modules/drizzle/schema";
 
 type AnalyticsBattleFilters = DateRangeQuery & {
@@ -57,536 +58,499 @@ type AnalyticsFetchOptions = {
   whereMode?: "analytics" | "combat-profile";
 };
 
-export class BattleAnalyticsService {
-  constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly cacheService: BattleAnalyticsCacheService,
-    private readonly queryService: BattleAnalyticsQueryService,
-    private readonly domainService: BattleAnalyticsDomainService,
-    private readonly pagingService: BattleAnalyticsPagingService,
-    private readonly summaryCalculator: BattleSummaryCalculatorService,
-    private readonly combatProfileCalculator: CombatProfileCalculatorService,
-    private readonly headToHeadCalculator: HeadToHeadCalculatorService,
-    private readonly playerVsPlayerCalculator: PlayerVsPlayerCalculatorService,
-    private readonly abyssSeasonCalculator: AbyssSeasonCalculatorService,
-  ) {}
+export const makeBattleAnalytics = (
+  drizzle: DrizzleDatabase,
+  cache: BattleAnalyticsCache,
+  queryModule: BattleAnalyticsQuery,
+  domain: BattleAnalyticsDomain,
+  paging: BattleAnalyticsPaging,
+  summaryCalculator: BattleSummaryCalculator,
+  combatProfileCalculator: CombatProfileCalculator,
+  headToHeadCalculator: HeadToHeadCalculator,
+  playerVsPlayerCalculator: PlayerVsPlayerCalculator,
+  abyssSeasonCalculator: AbyssSeasonCalculator,
+) => {
+  const getBattleAnalytics = (query: QueryBattleAnalyticsDto, userId: string) =>
+    Effect.gen(function* () {
+      const cacheKey = cache.buildAnalyticsCacheKey(userId, query);
+      const cachedResult = yield* cache.getJson<BattleAnalyticsDto>(cacheKey);
+      if (cachedResult) return cachedResult;
 
-  async getBattleAnalytics(
-    query: QueryBattleAnalyticsDto,
-    userId: string,
-  ): Promise<BattleAnalyticsDto> {
-    const cacheKey = this.cacheService.buildAnalyticsCacheKey(userId, query);
-    const cachedResult =
-      await this.cacheService.getJson<BattleAnalyticsDto>(cacheKey);
-    if (cachedResult) {
-      return cachedResult;
-    }
+      const characterIds = yield* queryModule.getCharacterIds(userId, query);
+      if (characterIds.length === 0) {
+        return {
+          totalBattles: 0,
+          wins: 0,
+          losses: 0,
+          winRatio: 0,
+          totalPH: 0,
+        };
+      }
 
-    const characterIds = await this.queryService.getCharacterIds(userId, query);
-    if (characterIds.length === 0) {
-      return {
-        totalBattles: 0,
-        wins: 0,
-        losses: 0,
-        winRatio: 0,
-        totalPH: 0,
-      };
-    }
-
-    const characterIdSet = this.domainService.toCharacterIdSet(characterIds);
-    const filteredBattles = await this.getFilteredAnalyticsBattles({
-      userId,
-      query,
-      characterIds,
-      characterIdSet,
+      const characterIdSet = domain.toCharacterIdSet(characterIds);
+      const filteredBattles = yield* getFilteredAnalyticsBattles({
+        userId,
+        query,
+        characterIds,
+        characterIdSet,
+      });
+      const result = summaryCalculator.calculateBattleAnalytics(
+        filteredBattles,
+        characterIdSet,
+      );
+      yield* cache.setJson(cacheKey, result);
+      return result;
     });
 
-    const result = this.summaryCalculator.calculateBattleAnalytics(
-      filteredBattles,
-      characterIdSet,
+  const getAbyssSeasons = (query: QueryAbyssSeasonsDto, userId: string) =>
+    cache.getOrSetJson(
+      cache.buildQueryCacheKey("statistics", "abyss-seasons:v1", userId, query),
+      () => getAbyssSeasonsUncached(query, userId),
     );
 
-    await this.cacheService.setJson(cacheKey, result);
-    return result;
-  }
-
-  async getAbyssSeasons(
-    query: QueryAbyssSeasonsDto,
-    userId: string,
-  ): Promise<AbyssSeasonDto[]> {
-    return this.cacheService.getOrSetJson(
-      this.cacheService.buildQueryCacheKey(
-        "statistics",
-        "abyss-seasons:v1",
-        userId,
-        query,
-      ),
-      () => this.getAbyssSeasonsUncached(query, userId),
-    );
-  }
-
-  async calculateProfessionWinRate(
+  const calculateProfessionWinRate = (
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<ProfessionWinRateDto[]> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey(
-        "profession-win-rate",
-        userId,
-        query,
-      ),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return [];
-        }
+  ) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("profession-win-rate", userId, query),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return [];
+          }
 
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query,
-          ...characterContext,
-          hasFlee: false,
-        });
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query,
+            ...characterContext,
+            hasFlee: false,
+          });
 
-        return this.summaryCalculator.calculateProfessionWinRate(
-          filteredBattles,
-          characterContext.characterIdSet,
-        );
-      },
+          return summaryCalculator.calculateProfessionWinRate(
+            filteredBattles,
+            characterContext.characterIdSet,
+          );
+        }),
     );
-  }
 
-  async getCombatProfile(
+  const getCombatProfile = (query: QueryBattleStatisticsDto, userId: string) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("combat-profile", userId, query),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return combatProfileCalculator.getEmptyProfile();
+          }
+
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query,
+            ...characterContext,
+            levelFilter: "any",
+            orderBy: { createdAt: "asc" },
+            whereMode: "combat-profile",
+          });
+
+          return combatProfileCalculator.calculate(
+            filteredBattles,
+            characterContext.characterIdSet,
+          );
+        }),
+    );
+
+  const getHeadToHead = (query: QueryBattleStatisticsDto, userId: string) =>
+    cache.getOrSetJson(
+      cache.buildQueryCacheKey("statistics", "head-to-head:v2", userId, query),
+      () => getHeadToHeadUncached(query, userId),
+    );
+
+  const getCurrentStreak = (query: QueryBattleStatisticsDto, userId: string) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("streak", userId, query),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return summaryCalculator.getEmptyStreak();
+          }
+
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query,
+            ...characterContext,
+            hasFlee: false,
+            orderBy: { createdAt: "desc" },
+          });
+
+          return summaryCalculator.calculateCurrentStreak(
+            filteredBattles,
+            characterContext.characterIdSet,
+          );
+        }),
+    );
+
+  const getBattleDurationStats = (
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<CombatProfileDto> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey(
-        "combat-profile",
-        userId,
-        query,
-      ),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return this.combatProfileCalculator.getEmptyProfile();
-        }
+  ) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("duration", userId, query),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return summaryCalculator.getEmptyDurationStats();
+          }
 
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query,
-          ...characterContext,
-          levelFilter: "any",
-          orderBy: { createdAt: "asc" },
-          whereMode: "combat-profile",
-        });
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query,
+            ...characterContext,
+            hasFlee: false,
+            orderBy: { duration: "asc" },
+          });
 
-        return this.combatProfileCalculator.calculate(
-          filteredBattles,
-          characterContext.characterIdSet,
-        );
-      },
+          return summaryCalculator.calculateBattleDurationStats(
+            filteredBattles,
+            characterContext.characterIdSet,
+          );
+        }),
     );
-  }
 
-  async getHeadToHead(
+  const getPhGrowthTimeSeries = (
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<HeadToHeadPaginatedResponse> {
-    return this.cacheService.getOrSetJson(
-      this.cacheService.buildQueryCacheKey(
-        "statistics",
-        "head-to-head:v2",
-        userId,
-        query,
-      ),
-      () => this.getHeadToHeadUncached(query, userId),
-    );
-  }
+  ) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("ph-growth", userId, query),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return [];
+          }
 
-  async getCurrentStreak(
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query,
+            ...characterContext,
+            orderBy: { createdAt: "asc" },
+            phFilter: true,
+          });
+
+          return summaryCalculator.calculatePhGrowthTimeSeries(
+            filteredBattles,
+            characterContext.characterIdSet,
+          );
+        }),
+    );
+
+  const invalidateAnalyticsCache = (userId: string) =>
+    cache.invalidateUserAnalytics(userId);
+
+  const getRatingGrowthTimeSeries = (
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<StreakDto> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey("streak", userId, query),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return this.summaryCalculator.getEmptyStreak();
-        }
+  ) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("rating-growth", userId, query, {
+        includeBattleFilters: false,
+      }),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return [];
+          }
 
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query,
-          ...characterContext,
-          hasFlee: false,
-          orderBy: { createdAt: "desc" },
-        });
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query: {
+              ...query,
+              matchmaking: true,
+            },
+            ...characterContext,
+            orderBy: { createdAt: "asc" },
+            ratingDeltaNotNull: true,
+            ratingNotNull: true,
+          });
 
-        return this.summaryCalculator.calculateCurrentStreak(
-          filteredBattles,
-          characterContext.characterIdSet,
-        );
-      },
+          return summaryCalculator.calculateRatingGrowthTimeSeries(
+            filteredBattles,
+          );
+        }),
     );
-  }
 
-  async getBattleDurationStats(
+  const getRatingDeltaByOpponent = (
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<BattleDurationStatsDto> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey("duration", userId, query),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return this.summaryCalculator.getEmptyDurationStats();
-        }
+  ) =>
+    getCachedStatisticsResult(
+      cache.buildStatisticsCacheKey("rating-delta-by-opponent", userId, query, {
+        includeBattleFilters: false,
+      }),
+      () =>
+        Effect.gen(function* () {
+          const characterContext = yield* getCharacterContext(userId, query);
+          if (!characterContext) {
+            return [];
+          }
 
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query,
-          ...characterContext,
-          hasFlee: false,
-          orderBy: { duration: "asc" },
-        });
+          const filteredBattles = yield* getFilteredAnalyticsBattles({
+            userId,
+            query: {
+              ...query,
+              matchmaking: true,
+            },
+            ...characterContext,
+            hasFlee: false,
+            orderBy: { createdAt: "desc" },
+            ratingDeltaNotNull: true,
+          });
 
-        return this.summaryCalculator.calculateBattleDurationStats(
-          filteredBattles,
-          characterContext.characterIdSet,
-        );
-      },
+          return summaryCalculator.calculateRatingDeltaByOpponent(
+            filteredBattles,
+            characterContext.characterIdSet,
+          );
+        }),
     );
-  }
 
-  async getPhGrowthTimeSeries(
-    query: QueryBattleStatisticsDto,
-    userId: string,
-  ): Promise<PhGrowthDataPointDto[]> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey("ph-growth", userId, query),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return [];
-        }
-
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query,
-          ...characterContext,
-          orderBy: { createdAt: "asc" },
-          phFilter: true,
-        });
-
-        return this.summaryCalculator.calculatePhGrowthTimeSeries(
-          filteredBattles,
-          characterContext.characterIdSet,
-        );
-      },
-    );
-  }
-
-  async invalidateAnalyticsCache(userId: string): Promise<void> {
-    await this.cacheService.invalidateUserAnalytics(userId);
-  }
-
-  async getRatingGrowthTimeSeries(
-    query: QueryBattleStatisticsDto,
-    userId: string,
-  ): Promise<RatingGrowthDataPointDto[]> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey(
-        "rating-growth",
-        userId,
-        query,
-        { includeBattleFilters: false },
-      ),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return [];
-        }
-
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query: {
-            ...query,
-            matchmaking: true,
-          },
-          ...characterContext,
-          orderBy: { createdAt: "asc" },
-          ratingDeltaNotNull: true,
-          ratingNotNull: true,
-        });
-
-        return this.summaryCalculator.calculateRatingGrowthTimeSeries(
-          filteredBattles,
-        );
-      },
-    );
-  }
-
-  async getRatingDeltaByOpponent(
-    query: QueryBattleStatisticsDto,
-    userId: string,
-  ): Promise<RatingDeltaByOpponentDto[]> {
-    return this.getCachedStatisticsResult(
-      this.cacheService.buildStatisticsCacheKey(
-        "rating-delta-by-opponent",
-        userId,
-        query,
-        { includeBattleFilters: false },
-      ),
-      async () => {
-        const characterContext = await this.getCharacterContext(userId, query);
-        if (!characterContext) {
-          return [];
-        }
-
-        const filteredBattles = await this.getFilteredAnalyticsBattles({
-          userId,
-          query: {
-            ...query,
-            matchmaking: true,
-          },
-          ...characterContext,
-          hasFlee: false,
-          orderBy: { createdAt: "desc" },
-          ratingDeltaNotNull: true,
-        });
-
-        return this.summaryCalculator.calculateRatingDeltaByOpponent(
-          filteredBattles,
-          characterContext.characterIdSet,
-        );
-      },
-    );
-  }
-
-  async getPlayerVsPlayerBattles(
+  const getPlayerVsPlayerBattles = (
     query: QueryPlayerVsPlayerDto,
     userId: string,
-  ): Promise<PlayerVsPlayerPaginatedResponse> {
-    return this.cacheService.getOrSetJson(
-      this.cacheService.buildQueryCacheKey(
+  ) =>
+    cache.getOrSetJson(
+      cache.buildQueryCacheKey(
         "statistics",
         "player-vs-player:v2",
         userId,
         query,
       ),
-      () => this.getPlayerVsPlayerBattlesUncached(query, userId),
+      () => getPlayerVsPlayerBattlesUncached(query, userId),
     );
-  }
 
-  private async getAbyssSeasonsUncached(
+  const getAbyssSeasonsUncached = (
     query: QueryAbyssSeasonsDto,
     userId: string,
-  ): Promise<AbyssSeasonDto[]> {
-    const characterIds = await this.queryService.getCharacterIds(userId, query);
-    if (characterIds.length === 0) {
-      return [];
-    }
+  ) =>
+    Effect.gen(function* () {
+      const characterIds = yield* queryModule.getCharacterIds(userId, query);
+      if (characterIds.length === 0) return [];
 
-    const fetchedBattles = await this.drizzle.run(
-      this.drizzle.db.query.battles.findMany({
-        where: {
-          RAW: (table: typeof battles) =>
-            and(
-              eq(table.userId, userId),
-              eq(table.matchmaking, true),
-              this.queryService.warriorExists(
-                table,
-                inArray(battleWarriors.originalId, characterIds),
-              ),
-            ),
-        },
-        with: { warriors: true },
-        orderBy: { createdAt: "asc" },
-      }),
-    );
+      const fetchedBattles = yield* Effect.tryPromise({
+        try: () =>
+          drizzle.run(
+            drizzle.db.query.battles.findMany({
+              where: {
+                RAW: (table: typeof battles) =>
+                  and(
+                    eq(table.userId, userId),
+                    eq(table.matchmaking, true),
+                    queryModule.warriorExists(
+                      table,
+                      inArray(battleWarriors.originalId, characterIds),
+                    ),
+                  ),
+              },
+              with: { warriors: true },
+              orderBy: { createdAt: "asc" },
+            }),
+          ),
+        catch: (cause) => cause,
+      });
 
-    return this.abyssSeasonCalculator.calculateSeasons(
-      this.domainService.inflateBattleRows(fetchedBattles),
-      this.domainService.toCharacterIdSet(characterIds),
-    );
-  }
+      return abyssSeasonCalculator.calculateSeasons(
+        domain.inflateBattleRows(fetchedBattles),
+        domain.toCharacterIdSet(characterIds),
+      );
+    });
 
-  private async getHeadToHeadUncached(
+  const getHeadToHeadUncached = (
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<HeadToHeadPaginatedResponse> {
-    const startTime = Date.now();
-    const characterContext = await this.getCharacterContext(userId, {
-      characterId: query.characterId,
-      world: query.world,
-    });
+  ) =>
+    Effect.gen(function* () {
+      const startTime = Date.now();
+      const characterContext = yield* getCharacterContext(userId, {
+        characterId: query.characterId,
+        world: query.world,
+      });
 
-    if (!characterContext) {
-      return this.getEmptyHeadToHeadResponse(query, startTime);
-    }
+      if (!characterContext) {
+        return getEmptyHeadToHeadResponse(query, startTime);
+      }
 
-    const filteredBattles = await this.getFilteredAnalyticsBattles({
-      userId,
-      query,
-      ...characterContext,
-      hasFlee: false,
-      orderBy: { createdAt: "desc" },
-    });
-    const records = this.headToHeadCalculator.calculateRecords(
-      filteredBattles,
-      characterContext.characterIdSet,
-      query,
-    );
-    const paginated = this.pagingService.paginate(records, query);
+      const filteredBattles = yield* getFilteredAnalyticsBattles({
+        userId,
+        query,
+        ...characterContext,
+        hasFlee: false,
+        orderBy: { createdAt: "desc" },
+      });
+      const records = headToHeadCalculator.calculateRecords(
+        filteredBattles,
+        characterContext.characterIdSet,
+        query,
+      );
+      const paginated = paging.paginate(records, query);
 
-    return {
-      records: paginated.records,
-      pagination: paginated.pagination,
-      meta: {
-        performance: {
-          queryTime: Date.now() - startTime,
-          ...(query.includeTotal && { totalItems: paginated.totalRecords }),
+      return {
+        records: paginated.records,
+        pagination: paginated.pagination,
+        meta: {
+          performance: {
+            queryTime: Date.now() - startTime,
+            ...(query.includeTotal && { totalItems: paginated.totalRecords }),
+          },
         },
-      },
-    };
-  }
+      };
+    });
 
-  private async getPlayerVsPlayerBattlesUncached(
+  const getPlayerVsPlayerBattlesUncached = (
     query: QueryPlayerVsPlayerDto,
     userId: string,
-  ): Promise<PlayerVsPlayerPaginatedResponse> {
-    const startTime = Date.now();
-    const characterContext = await this.getCharacterContext(userId, {
-      characterId: query.characterId,
-      world: query.world,
-    });
+  ) =>
+    Effect.gen(function* () {
+      const startTime = Date.now();
+      const characterContext = yield* getCharacterContext(userId, {
+        characterId: query.characterId,
+        world: query.world,
+      });
 
-    if (!characterContext) {
-      return this.getEmptyPlayerVsPlayerResponse(query, startTime);
-    }
+      if (!characterContext) {
+        return getEmptyPlayerVsPlayerResponse(query, startTime);
+      }
 
-    const fetchedBattles = await this.getFilteredAnalyticsBattles({
-      userId,
-      query,
-      ...characterContext,
-      levelFilter: "none",
-      orderBy: { createdAt: "desc" },
-    });
-    const battlesList = this.playerVsPlayerCalculator.calculateBattles(
-      fetchedBattles,
-      characterContext.characterIdSet,
-      query,
-    );
-    const paginated = this.pagingService.paginate(battlesList, query);
+      const fetchedBattles = yield* getFilteredAnalyticsBattles({
+        userId,
+        query,
+        ...characterContext,
+        levelFilter: "none",
+        orderBy: { createdAt: "desc" },
+      });
+      const battlesList = playerVsPlayerCalculator.calculateBattles(
+        fetchedBattles,
+        characterContext.characterIdSet,
+        query,
+      );
+      const paginated = paging.paginate(battlesList, query);
 
-    return {
-      battles: paginated.records,
-      pagination: paginated.pagination,
-      meta: {
-        performance: {
-          queryTime: Date.now() - startTime,
-          ...(query.includeTotal && { totalItems: paginated.totalRecords }),
+      return {
+        battles: paginated.records,
+        pagination: paginated.pagination,
+        meta: {
+          performance: {
+            queryTime: Date.now() - startTime,
+            ...(query.includeTotal && { totalItems: paginated.totalRecords }),
+          },
         },
-      },
-    };
-  }
+      };
+    });
 
-  private async getCachedStatisticsResult<T>(
+  const getCachedStatisticsResult = <T>(
     cacheKey: string,
-    factory: () => Promise<T>,
-  ): Promise<T> {
-    const cachedResult = await this.cacheService.getJson<T>(cacheKey);
-    if (cachedResult) {
-      return cachedResult;
-    }
+    factory: () => Effect.Effect<T, unknown>,
+  ) =>
+    Effect.gen(function* () {
+      const cachedResult = yield* cache.getJson<T>(cacheKey);
+      if (cachedResult) {
+        return cachedResult;
+      }
 
-    const result = await factory();
-    await this.cacheService.setJson(cacheKey, result);
-    return result;
-  }
+      const result = yield* factory();
+      yield* cache.setJson(cacheKey, result);
+      return result;
+    });
 
-  private async getCharacterContext(
+  const getCharacterContext = (
     userId: string,
     query: { characterId?: string; world?: string },
-  ): Promise<{
-    characterIds: string[];
-    characterIdSet: Set<string>;
-  } | null> {
-    const characterIds = await this.queryService.getCharacterIds(userId, query);
-    if (characterIds.length === 0) {
-      return null;
-    }
+  ): Effect.Effect<
+    {
+      characterIds: string[];
+      characterIdSet: Set<string>;
+    } | null,
+    unknown
+  > =>
+    Effect.gen(function* () {
+      const characterIds = yield* queryModule.getCharacterIds(userId, query);
+      if (characterIds.length === 0) {
+        return null;
+      }
 
-    return {
-      characterIds,
-      characterIdSet: this.domainService.toCharacterIdSet(characterIds),
-    };
-  }
+      return {
+        characterIds,
+        characterIdSet: domain.toCharacterIdSet(characterIds),
+      };
+    });
 
-  private async getFilteredAnalyticsBattles(
-    options: AnalyticsFetchOptions,
-  ): Promise<InflatedBattleWithWarriors[]> {
-    const dateRange = this.queryService.getDateRangeFilter(options.query);
-    const fetchedBattles = await this.drizzle.run(
-      this.drizzle.db.query.battles.findMany({
-        where: {
-          RAW: (table: typeof battles) =>
-            options.whereMode === "combat-profile"
-              ? this.queryService.buildCombatProfileWhere(table, {
-                  userId: options.userId,
-                  world: options.query.world,
-                  ...dateRange,
-                  matchmaking: options.query.matchmaking,
-                  characterIds: options.characterIds,
-                  phFilter: options.phFilter ?? options.query.ph,
-                })
-              : this.queryService.buildAnalyticsWhere(table, {
-                  userId: options.userId,
-                  world: options.query.world,
-                  ...dateRange,
-                  matchmaking: options.query.matchmaking,
-                  characterIds: options.characterIds,
-                  phFilter: options.phFilter ?? options.query.ph,
-                  hasFlee: options.hasFlee,
-                  ratingDeltaNotNull: options.ratingDeltaNotNull,
-                  ratingNotNull: options.ratingNotNull,
-                }),
-        },
-        with: { warriors: true },
-        ...(options.orderBy ? { orderBy: options.orderBy } : {}),
-      }),
-    );
+  const getFilteredAnalyticsBattles = (options: AnalyticsFetchOptions) =>
+    Effect.gen(function* () {
+      const dateRange = queryModule.getDateRangeFilter(options.query);
+      const fetchedBattles = yield* Effect.tryPromise({
+        try: () =>
+          drizzle.run(
+            drizzle.db.query.battles.findMany({
+              where: {
+                RAW: (table: typeof battles) =>
+                  options.whereMode === "combat-profile"
+                    ? queryModule.buildCombatProfileWhere(table, {
+                        userId: options.userId,
+                        world: options.query.world,
+                        ...dateRange,
+                        matchmaking: options.query.matchmaking,
+                        characterIds: options.characterIds,
+                        phFilter: options.phFilter ?? options.query.ph,
+                      })
+                    : queryModule.buildAnalyticsWhere(table, {
+                        userId: options.userId,
+                        world: options.query.world,
+                        ...dateRange,
+                        matchmaking: options.query.matchmaking,
+                        characterIds: options.characterIds,
+                        phFilter: options.phFilter ?? options.query.ph,
+                        hasFlee: options.hasFlee,
+                        ratingDeltaNotNull: options.ratingDeltaNotNull,
+                        ratingNotNull: options.ratingNotNull,
+                      }),
+              },
+              with: { warriors: true },
+              ...(options.orderBy ? { orderBy: options.orderBy } : {}),
+            }),
+          ),
+        catch: (cause) => cause,
+      });
 
-    const inflatedBattles =
-      this.domainService.inflateBattleRows(fetchedBattles);
+      const inflatedBattles = domain.inflateBattleRows(fetchedBattles);
 
-    if (options.levelFilter === "none") {
-      return inflatedBattles;
-    }
+      if (options.levelFilter === "none") {
+        return inflatedBattles;
+      }
 
-    if (options.levelFilter === "any") {
-      return this.domainService.filterByAnyOpponentLevel(
+      if (options.levelFilter === "any") {
+        return domain.filterByAnyOpponentLevel(
+          inflatedBattles,
+          options.characterIdSet,
+          options.query.minLevel,
+          options.query.maxLevel,
+        );
+      }
+
+      return domain.filterByOpponentLevel(
         inflatedBattles,
         options.characterIdSet,
         options.query.minLevel,
         options.query.maxLevel,
       );
-    }
+    });
 
-    return this.domainService.filterByOpponentLevel(
-      inflatedBattles,
-      options.characterIdSet,
-      options.query.minLevel,
-      options.query.maxLevel,
-    );
-  }
-
-  private getEmptyHeadToHeadResponse(
+  const getEmptyHeadToHeadResponse = (
     query: QueryBattleStatisticsDto,
     startTime: number,
-  ): HeadToHeadPaginatedResponse {
+  ): HeadToHeadPaginatedResponse => {
     return {
       records: [],
       pagination: {
@@ -600,12 +564,12 @@ export class BattleAnalyticsService {
         },
       },
     };
-  }
+  };
 
-  private getEmptyPlayerVsPlayerResponse(
+  const getEmptyPlayerVsPlayerResponse = (
     query: QueryPlayerVsPlayerDto,
     startTime: number,
-  ): PlayerVsPlayerPaginatedResponse {
+  ): PlayerVsPlayerPaginatedResponse => {
     return {
       battles: [],
       pagination: {
@@ -619,5 +583,22 @@ export class BattleAnalyticsService {
         },
       },
     };
-  }
-}
+  };
+
+  return {
+    calculateProfessionWinRate,
+    getAbyssSeasons,
+    getBattleAnalytics,
+    getBattleDurationStats,
+    getCombatProfile,
+    getCurrentStreak,
+    getHeadToHead,
+    getPhGrowthTimeSeries,
+    getPlayerVsPlayerBattles,
+    getRatingDeltaByOpponent,
+    getRatingGrowthTimeSeries,
+    invalidateAnalyticsCache,
+  };
+};
+
+export type BattleAnalytics = ReturnType<typeof makeBattleAnalytics>;

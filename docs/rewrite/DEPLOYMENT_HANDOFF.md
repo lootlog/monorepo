@@ -28,6 +28,23 @@ Each database-owning service must pass its fail-closed schema fingerprint before
 adopting an existing database. A failed fingerprint is a release stop, not an
 instruction to mark the baseline as applied.
 
+## Better Auth 1.7 rollout
+
+Do not run 1.6 and 1.7 writers against the same Auth database.
+
+1. Stop every Auth 1.6 writer.
+2. Create a restorable database backup and record its identifier.
+3. Restore that backup to an isolated copy and run `bun run db:auth:migrate:plan`.
+4. Resolve every reported identity collision; do not bypass the preflight.
+5. Run `bun run db:auth:migrate:apply` against the isolated copy and verify
+   Discord OAuth, existing sessions, JWT/JWKS, bearer tokens, admin access,
+   Redis secondary storage, and one-time realtime tickets.
+6. Run the same plan and apply commands against the stopped production
+   database.
+7. Deploy Better Auth 1.7.2 to every Auth instance from one immutable image
+   digest.
+8. Pass the smoke checks before resuming writes.
+
 ## Infrastructure inputs
 
 - Use Bun `1.4.0` for frozen installs and builds.

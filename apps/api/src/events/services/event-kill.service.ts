@@ -1,4 +1,5 @@
 import { Logger, NotFoundException } from "#src/shared/http/http-errors";
+import { Effect } from "effect";
 
 import type { Queue } from "bullmq";
 import type {
@@ -7,13 +8,12 @@ import type {
   eventTable,
 } from "#src/database/drizzle/schema";
 import { RedisService } from "#src/redis/redis.service";
-import { EventEmitterService } from "./event-emitter.service.js";
+import type { EventEmitter } from "./event-emitter.service.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import { EventPointsService } from "./event-points.service.js";
-import { EventReadCacheService } from "./event-read-cache.service.js";
-import { EventTrackingService } from "./event-tracking.service.js";
-import { EventSummaryService } from "./event-summary.service.js";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import type { EventPoints } from "./event-points.service.js";
+import type { EventReadCache } from "./event-read-cache.service.js";
+import type { EventPresenceTracking } from "../event-presence-tracking.js";
+import type { EventSummary } from "./event-summary.service.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 import type { KillTimerData } from "../interfaces/kill-timer-data.interface.js";
 import {
@@ -33,13 +33,10 @@ import {
   getTrackingWindowDurationSeconds,
   getTrackingWindowStartTime,
 } from "../utils/tracking-window.util.js";
-import { TimersService } from "#src/timers/timers.service";
-import {
-  findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc,
-  type ActiveEventHeroMatch,
-} from "../utils/find-active-event-heroes-by-npc.js";
-import { ActiveEventHeroRepository } from "./active-event-hero.repository.js";
-import { EventKillRepository } from "./event-kill.repository.js";
+import type { EventTimersPort } from "./event-timers.port.js";
+import { findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc } from "../utils/find-active-event-heroes-by-npc.js";
+import type { ActiveEventHeroStore } from "./active-event-hero.repository.js";
+import type { EventKillStore } from "./event-kill.repository.js";
 
 type Event = typeof eventTable.$inferSelect;
 type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
@@ -102,50 +99,53 @@ type MemberMapPresenceStatsEntry = {
   afkTimeSeconds: number;
 };
 
-export class EventKillService {
-  private readonly logger = new Logger(EventKillService.name);
-
-  constructor(
-    private readonly repository: EventKillRepository,
-    private readonly activeEventHeroRepository: ActiveEventHeroRepository,
-    private readonly redis: RedisService,
-    private readonly eventEmitter: EventEmitterService,
-    private readonly eventReadCache: EventReadCacheService,
-    private readonly pointsService: EventPointsService,
-    private readonly trackingService: EventTrackingService,
-    private readonly summaryService: EventSummaryService,
-    private readonly timersService: TimersService,
-
-    private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
-  ) {}
-
-  async getEventHeroTimers(guildId: string, eventId: string, world: string) {
-    const event = await this.repository.findEventWithHeroes(guildId, eventId);
-
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
-
-    if (event.heroNpcs.length === 0) {
-      return [];
-    }
-
-    const combined = await this.timersService.getTimersForEventHeroFilters(
-      guildId,
-      world,
-      event.heroNpcs,
+export const makeEventKills = (
+  repository: EventKillStore,
+  activeEventHeroRepository: ActiveEventHeroStore,
+  redis: RedisService,
+  eventEmitter: EventEmitter,
+  eventReadCache: EventReadCache,
+  pointsService: EventPoints,
+  trackingService: EventPresenceTracking,
+  summaryService: EventSummary,
+  timersService: EventTimersPort,
+  respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
+) => {
+  const logger = new Logger("EventKills");
+  const runPromiseAdapter = <A>(adapter: string, operation: () => Promise<A>) =>
+    Effect.tryPromise({ try: operation, catch: (cause) => cause }).pipe(
+      Effect.withSpan(`events.adapter.${adapter}`),
     );
 
-    return combined.map((timer) => ({
-      npcId: timer.npcId,
-      world: timer.world,
-      minSpawnTime: timer.minSpawnTime,
-      maxSpawnTime: timer.maxSpawnTime,
-      npc: this.extractEventTimerNpc(timer.npc),
-    }));
+  function getEventHeroTimers(guildId: string, eventId: string, world: string) {
+    return Effect.gen(function* () {
+      const event = yield* repository.findEventWithHeroes(guildId, eventId);
+
+      if (!event) {
+        return yield* Effect.fail(new NotFoundException("Event not found"));
+      }
+
+      if (event.heroNpcs.length === 0) {
+        return [];
+      }
+
+      const combined = yield* timersService.getTimersForEventHeroFilters(
+        guildId,
+        world,
+        event.heroNpcs,
+      );
+
+      return combined.map((timer) => ({
+        npcId: timer.npcId,
+        world: timer.world,
+        minSpawnTime: timer.minSpawnTime,
+        maxSpawnTime: timer.maxSpawnTime,
+        npc: extractEventTimerNpc(timer.npc),
+      }));
+    }).pipe(Effect.withSpan("events.kills.heroTimers"));
   }
 
-  private extractEventTimerNpc(npcData: unknown): EventTimerNpc {
+  function extractEventTimerNpc(npcData: unknown): EventTimerNpc {
     if (!npcData || typeof npcData !== "object") {
       return { name: "", icon: null };
     }
@@ -156,13 +156,13 @@ export class EventKillService {
     };
   }
 
-  private createMapNameLookup(
+  function createMapNameLookup(
     maps: Array<{ id: string; mapName: string }>,
   ): Map<string, string> {
     return new Map(maps.map((map) => [map.id, map.mapName]));
   }
 
-  private buildMemberAssignmentContext(params: {
+  function buildMemberAssignmentContext(params: {
     assignmentHistory: Array<{
       mapId: string;
       memberId: number;
@@ -222,7 +222,7 @@ export class EventKillService {
     };
   }
 
-  private async buildPresenceLookups(params: {
+  function buildPresenceLookups(params: {
     eventHeroId: string;
     mapIds: string[];
     memberIds: number[];
@@ -230,56 +230,63 @@ export class EventKillService {
     scoringWindowEndTime: Date;
   }) {
     if (params.memberIds.length === 0) {
-      return {
+      return Effect.succeed({
         presenceByMemberId: new Map<number, MemberPresenceStatsEntry>(),
         presenceByMemberMapKey: new Map<string, MemberMapPresenceStatsEntry>(),
-      };
+      });
     }
 
-    const [presenceStatsByMember, presenceStatsByMemberMap] = await Promise.all(
-      [
-        this.pointsService.getMembersPresenceStats(
-          params.eventHeroId,
-          params.memberIds,
-          params.scoringWindowStartTime,
-          params.scoringWindowEndTime,
-        ),
-        this.pointsService.getMembersPresenceStatsPerMap(
-          params.mapIds,
-          params.memberIds,
-          params.scoringWindowStartTime,
-          params.scoringWindowEndTime,
-        ),
-      ],
-    );
+    return Effect.map(
+      Effect.all(
+        [
+          pointsService.getMembersPresenceStats(
+            params.eventHeroId,
+            params.memberIds,
+            params.scoringWindowStartTime,
+            params.scoringWindowEndTime,
+          ),
+          pointsService.getMembersPresenceStatsPerMap(
+            params.mapIds,
+            params.memberIds,
+            params.scoringWindowStartTime,
+            params.scoringWindowEndTime,
+          ),
+        ],
+        { concurrency: "unbounded" },
+      ),
+      ([presenceStatsByMember, presenceStatsByMemberMap]) => {
+        const presenceByMemberId = new Map<number, MemberPresenceStatsEntry>(
+          presenceStatsByMember.map((entry) => [
+            entry.memberId,
+            {
+              timeOnMapSeconds: entry.timeOnMapSeconds,
+              afkPercentage: entry.afkPercentage,
+              wasPresent: entry.wasPresent,
+            },
+          ]),
+        );
+        const presenceByMemberMapKey = new Map<
+          string,
+          MemberMapPresenceStatsEntry
+        >(
+          presenceStatsByMemberMap.map((entry) => [
+            `${entry.memberId}:${entry.mapId}`,
+            {
+              presenceTimeSeconds: entry.presenceTimeSeconds,
+              afkTimeSeconds: entry.afkTimeSeconds,
+            },
+          ]),
+        );
 
-    const presenceByMemberId = new Map<number, MemberPresenceStatsEntry>(
-      presenceStatsByMember.map((entry) => [
-        entry.memberId,
-        {
-          timeOnMapSeconds: entry.timeOnMapSeconds,
-          afkPercentage: entry.afkPercentage,
-          wasPresent: entry.wasPresent,
-        },
-      ]),
+        return {
+          presenceByMemberId,
+          presenceByMemberMapKey,
+        };
+      },
     );
-    const presenceByMemberMapKey = new Map<string, MemberMapPresenceStatsEntry>(
-      presenceStatsByMemberMap.map((entry) => [
-        `${entry.memberId}:${entry.mapId}`,
-        {
-          presenceTimeSeconds: entry.presenceTimeSeconds,
-          afkTimeSeconds: entry.afkTimeSeconds,
-        },
-      ]),
-    );
-
-    return {
-      presenceByMemberId,
-      presenceByMemberMapKey,
-    };
   }
 
-  private buildMapPresenceData(params: {
+  function buildMapPresenceData(params: {
     mapIds: string[];
     mapNameById: Map<string, string>;
     memberId: number;
@@ -299,46 +306,49 @@ export class EventKillService {
     });
   }
 
-  getEventHeroStats(guildId: string, eventId: string) {
-    return this.eventReadCache.getOrSet(
-      this.eventReadCache.getEventKey(guildId, eventId, "hero-stats-v2"),
-      () => this.getEventHeroStatsUncached(guildId, eventId),
-    );
+  function getEventHeroStats(guildId: string, eventId: string) {
+    return Effect.tryPromise({
+      try: () =>
+        eventReadCache.getOrSet(
+          eventReadCache.getEventKey(guildId, eventId, "hero-stats-v2"),
+          () => Effect.runPromise(getEventHeroStatsUncached(guildId, eventId)),
+        ),
+      catch: (cause) => cause,
+    }).pipe(Effect.withSpan("events.kills.heroStats"));
   }
 
-  private async getEventHeroStatsUncached(guildId: string, eventId: string) {
-    const event = await this.repository.findEventWithHeroStats(
-      guildId,
-      eventId,
-    );
+  function getEventHeroStatsUncached(guildId: string, eventId: string) {
+    return Effect.gen(function* () {
+      const event = yield* repository.findEventWithHeroStats(guildId, eventId);
 
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
+      if (!event) {
+        return yield* Effect.fail(new NotFoundException("Event not found"));
+      }
 
-    const npcIds = event.heroNpcs.flatMap((hero) =>
-      hero.npcId === null ? [] : [hero.npcId],
-    );
-    const npcStats =
-      npcIds.length > 0
-        ? await this.repository.findNpcStats(guildId, event.world, npcIds)
-        : [];
-    const npcProfById = new Map(
-      npcStats.map((npcStat) => [npcStat.npcId, npcStat.npcProf]),
-    );
+      const npcIds = event.heroNpcs.flatMap((hero) =>
+        hero.npcId === null ? [] : [hero.npcId],
+      );
+      const npcStats =
+        npcIds.length > 0
+          ? yield* repository.findNpcStats(guildId, event.world, npcIds)
+          : [];
+      const npcProfById = new Map(
+        npcStats.map((npcStat) => [npcStat.npcId, npcStat.npcProf]),
+      );
 
-    return event.heroNpcs.map((hero) => ({
-      heroId: hero.id,
-      npcId: hero.npcId,
-      npcName: hero.npcName,
-      npcLvl: hero.npcLvl,
-      npcProf:
-        hero.npcId === null ? null : (npcProfById.get(hero.npcId) ?? null),
-      killCount: hero._count.kills,
-    }));
+      return event.heroNpcs.map((hero) => ({
+        heroId: hero.id,
+        npcId: hero.npcId,
+        npcName: hero.npcName,
+        npcLvl: hero.npcLvl,
+        npcProf:
+          hero.npcId === null ? null : (npcProfById.get(hero.npcId) ?? null),
+        killCount: hero._count.kills,
+      }));
+    });
   }
 
-  async checkAndRecordEventHeroKill(
+  function checkAndRecordEventHeroKill(
     guildId: string,
     world: string,
     npcId: number,
@@ -347,70 +357,27 @@ export class EventKillService {
     timerData: KillTimerData,
     isManualClose = false,
     npcLvl?: number,
-  ): Promise<void> {
-    const lockKey = this.getEventKillLockKey(guildId, world, npcId);
-    const windowKey = getEventHeroKillWindowKey(timerData);
-    const dedupKey = this.getEventKillDedupKey(
-      guildId,
-      world,
-      npcId,
-      windowKey,
-      isManualClose,
-    );
-    const recentDedupKey = isManualClose
-      ? null
-      : this.getEventKillRecentDedupKey(guildId, world, npcId);
-
-    const dedupHit = await this.redis.get(dedupKey);
-    if (dedupHit) {
-      this.logger.debug({
-        message: "Skipping duplicate event hero kill - dedup window active",
+  ) {
+    return Effect.gen(function* () {
+      const lockKey = getEventKillLockKey(guildId, world, npcId);
+      const windowKey = getEventHeroKillWindowKey(timerData);
+      const dedupKey = getEventKillDedupKey(
         guildId,
         world,
         npcId,
-        npcName,
-      });
-      return;
-    }
+        windowKey,
+        isManualClose,
+      );
+      const recentDedupKey = isManualClose
+        ? null
+        : getEventKillRecentDedupKey(guildId, world, npcId);
 
-    if (recentDedupKey) {
-      const recentDedupHit = await this.redis.get(recentDedupKey);
-      if (recentDedupHit) {
-        this.logger.debug({
-          message: "Skipping duplicate event hero kill - recent kill active",
-          guildId,
-          world,
-          npcId,
-          npcName,
-        });
-        return;
-      }
-    }
-
-    // Try to acquire lock - if another request already has it, silently return
-    const lockAcquired = await this.redis.setNX(
-      lockKey,
-      Date.now().toString(),
-      EVENT_KILL_LOCK_TTL_SECONDS,
-    );
-
-    if (!lockAcquired) {
-      this.logger.debug({
-        message: "Skipping duplicate event hero kill - lock already held",
-        guildId,
-        world,
-        npcId,
-        npcName,
-      });
-      return;
-    }
-
-    try {
-      const dedupHitAfterLock = await this.redis.get(dedupKey);
-      if (dedupHitAfterLock) {
-        this.logger.debug({
-          message:
-            "Skipping duplicate event hero kill - dedup window active after lock",
+      const dedupHit = yield* runPromiseAdapter("redis.get", () =>
+        redis.get(dedupKey),
+      );
+      if (dedupHit) {
+        logger.debug({
+          message: "Skipping duplicate event hero kill - dedup window active",
           guildId,
           world,
           npcId,
@@ -420,11 +387,12 @@ export class EventKillService {
       }
 
       if (recentDedupKey) {
-        const recentDedupHitAfterLock = await this.redis.get(recentDedupKey);
-        if (recentDedupHitAfterLock) {
-          this.logger.debug({
-            message:
-              "Skipping duplicate event hero kill - recent kill active after lock",
+        const recentDedupHit = yield* runPromiseAdapter("redis.get", () =>
+          redis.get(recentDedupKey),
+        );
+        if (recentDedupHit) {
+          logger.debug({
+            message: "Skipping duplicate event hero kill - recent kill active",
             guildId,
             world,
             npcId,
@@ -434,134 +402,208 @@ export class EventKillService {
         }
       }
 
-      const matches = await this.findActiveEventHeroesByNpc(
-        guildId,
-        world,
-        npcId,
-        npcName,
+      // Try to acquire lock - if another request already has it, silently return
+      const lockAcquired = yield* runPromiseAdapter("redis.setNX", () =>
+        redis.setNX(
+          lockKey,
+          Date.now().toString(),
+          EVENT_KILL_LOCK_TTL_SECONDS,
+        ),
       );
 
-      if (matches.length === 0) {
+      if (!lockAcquired) {
+        logger.debug({
+          message: "Skipping duplicate event hero kill - lock already held",
+          guildId,
+          world,
+          npcId,
+          npcName,
+        });
         return;
       }
 
-      await Promise.all(
-        matches.map(async (match) => {
-          let { eventHero } = match;
-          const { event } = match;
-          const heroDedupKey = this.getEventKillHeroDedupKey(
+      const recordWhileLocked = Effect.gen(function* () {
+        const dedupHitAfterLock = yield* runPromiseAdapter("redis.get", () =>
+          redis.get(dedupKey),
+        );
+        if (dedupHitAfterLock) {
+          logger.debug({
+            message:
+              "Skipping duplicate event hero kill - dedup window active after lock",
             guildId,
             world,
             npcId,
-            eventHero.id,
-            windowKey,
-            isManualClose,
-          );
+            npcName,
+          });
+          return;
+        }
 
-          const heroDedupHit = await this.redis.get(heroDedupKey);
-          if (heroDedupHit) {
-            this.logger.debug({
-              message: "Skipping duplicate event hero kill for hero",
+        if (recentDedupKey) {
+          const recentDedupHitAfterLock = yield* runPromiseAdapter(
+            "redis.get",
+            () => redis.get(recentDedupKey),
+          );
+          if (recentDedupHitAfterLock) {
+            logger.debug({
+              message:
+                "Skipping duplicate event hero kill - recent kill active after lock",
               guildId,
               world,
               npcId,
-              heroId: eventHero.id,
-              eventId: event.id,
+              npcName,
             });
             return;
           }
+        }
 
-          this.logger.warn({
-            message: "Updating hero NPC ID based on timer data",
-            guildId,
-            world,
-            newNpcId: npcId,
-            oldHeroNpcId: eventHero.npcId,
-          });
+        const matches = yield* findActiveEventHeroesByNpc(
+          guildId,
+          world,
+          npcId,
+          npcName,
+        );
 
-          const updateData = {
-            ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
-              npcId,
+        if (matches.length === 0) {
+          return;
+        }
+
+        yield* Effect.forEach(
+          matches,
+          (match) =>
+            Effect.gen(function* () {
+              let { eventHero } = match;
+              const { event } = match;
+              const heroDedupKey = getEventKillHeroDedupKey(
+                guildId,
+                world,
+                npcId,
+                eventHero.id,
+                windowKey,
+                isManualClose,
+              );
+
+              const heroDedupHit = yield* runPromiseAdapter("redis.get", () =>
+                redis.get(heroDedupKey),
+              );
+              if (heroDedupHit) {
+                logger.debug({
+                  message: "Skipping duplicate event hero kill for hero",
+                  guildId,
+                  world,
+                  npcId,
+                  heroId: eventHero.id,
+                  eventId: event.id,
+                });
+                return;
+              }
+
+              logger.warn({
+                message: "Updating hero NPC ID based on timer data",
+                guildId,
+                world,
+                newNpcId: npcId,
+                oldHeroNpcId: eventHero.npcId,
+              });
+
+              const updateData = {
+                ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
+                  npcId,
+                }),
+                ...(eventHero.npcIcon === null && { npcIcon }),
+                ...(eventHero.npcLvl === null &&
+                  npcLvl !== undefined && { npcLvl }),
+              };
+
+              if (Object.keys(updateData).length > 0) {
+                eventHero = yield* repository.updateHero(
+                  eventHero.id,
+                  updateData,
+                );
+                logger.log({
+                  message: "Hero NPC data updated",
+                  heroId: eventHero.id,
+                  npcId: eventHero.npcId,
+                  npcIcon: eventHero.npcIcon,
+                  npcLvl: eventHero.npcLvl,
+                });
+              }
+
+              yield* recordHeroKill(
+                guildId,
+                eventHero,
+                event as Event,
+                timerData,
+                isManualClose,
+              );
+
+              yield* runPromiseAdapter("redis.set", () =>
+                redis.set(
+                  heroDedupKey,
+                  Date.now().toString(),
+                  EVENT_KILL_DEDUP_TTL_SECONDS,
+                ),
+              );
+
+              logger.log({
+                message: isManualClose
+                  ? "Manual close recorded"
+                  : "Hero kill recorded",
+                guildId,
+                eventId: event.id,
+                heroId: eventHero.id,
+                npcName: eventHero.npcName,
+                isManualClose,
+              });
             }),
-            ...(eventHero.npcIcon === null && { npcIcon }),
-            ...(eventHero.npcLvl === null &&
-              npcLvl !== undefined && { npcLvl }),
-          };
+          { concurrency: "unbounded", discard: true },
+        );
 
-          if (Object.keys(updateData).length > 0) {
-            eventHero = await this.repository.updateHero(
-              eventHero.id,
-              updateData,
-            );
-            this.logger.log({
-              message: "Hero NPC data updated",
-              heroId: eventHero.id,
-              npcId: eventHero.npcId,
-              npcIcon: eventHero.npcIcon,
-              npcLvl: eventHero.npcLvl,
-            });
-          }
-
-          await this.recordHeroKill(
-            guildId,
-            eventHero,
-            event as Event,
-            timerData,
-            isManualClose,
-          );
-
-          await this.redis.set(
-            heroDedupKey,
+        yield* runPromiseAdapter("redis.set", () =>
+          redis.set(
+            dedupKey,
             Date.now().toString(),
             EVENT_KILL_DEDUP_TTL_SECONDS,
-          );
-
-          this.logger.log({
-            message: isManualClose
-              ? "Manual close recorded"
-              : "Hero kill recorded",
-            guildId,
-            eventId: event.id,
-            heroId: eventHero.id,
-            npcName: eventHero.npcName,
-            isManualClose,
-          });
-        }),
-      );
-
-      await this.redis.set(
-        dedupKey,
-        Date.now().toString(),
-        EVENT_KILL_DEDUP_TTL_SECONDS,
-      );
-
-      if (recentDedupKey) {
-        await this.redis.set(
-          recentDedupKey,
-          Date.now().toString(),
-          EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
+          ),
         );
-      }
-    } finally {
-      // Always release lock
-      await this.redis.del(lockKey).catch((error) => {
-        this.logger.error({
-          message: "Failed to release event kill lock",
-          lockKey,
-          error: error instanceof Error ? error.message : error,
-        });
+
+        if (recentDedupKey) {
+          yield* runPromiseAdapter("redis.set", () =>
+            redis.set(
+              recentDedupKey,
+              Date.now().toString(),
+              EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
+            ),
+          );
+        }
       });
-    }
+
+      yield* recordWhileLocked.pipe(
+        Effect.ensuring(
+          runPromiseAdapter("redis.del", () => redis.del(lockKey)).pipe(
+            Effect.tapError((error) =>
+              Effect.sync(() =>
+                logger.error({
+                  message: "Failed to release event kill lock",
+                  lockKey,
+                  error: error instanceof Error ? error.message : error,
+                }),
+              ),
+            ),
+            Effect.ignore,
+          ),
+        ),
+      );
+    }).pipe(Effect.withSpan("events.kills.checkAndRecord"));
   }
 
-  async findActiveEventHeroesByNpc(
+  function findActiveEventHeroesByNpc(
     guildId: string,
     world: string,
     npcId: number,
     npcName: string,
-  ): Promise<ActiveEventHeroMatch[]> {
+  ) {
     return findActiveEventHeroMatchesByNpc(
-      this.activeEventHeroRepository,
+      activeEventHeroRepository,
       guildId,
       world,
       npcId,
@@ -569,291 +611,289 @@ export class EventKillService {
     );
   }
 
-  async findActiveEventHeroByNpc(
-    guildId: string,
-    world: string,
-    npcId: number,
-    npcName: string,
-  ): Promise<{ eventHero: EventHeroNpc; event: Event } | null> {
-    const matches = await this.findActiveEventHeroesByNpc(
-      guildId,
-      world,
-      npcId,
-      npcName,
-    );
-    return matches[0] ?? null;
-  }
-
-  async recordHeroKill(
+  function recordHeroKill(
     guildId: string,
     eventHero: EventHeroNpc,
     event: Event,
     timerData: KillTimerData,
     isManualClose = false,
   ) {
-    const killedAt = new Date();
-    const minSpawnTimeAtKill = timerData.previousMinSpawnTime ?? killedAt;
-    const maxSpawnTimeAtKill = timerData.previousMaxSpawnTime ?? killedAt;
-    const effectiveKilledAt = this.getEffectiveWindowEndAt(
-      killedAt,
-      maxSpawnTimeAtKill,
-    );
-    const windowOpenedAt =
-      timerData.windowOpenedAt ?? timerData.previousMinSpawnTime ?? killedAt;
-    const scoringWindowStartTime =
-      windowOpenedAt > effectiveKilledAt ? effectiveKilledAt : windowOpenedAt;
-    const trackingWindowStartTime =
-      minSpawnTimeAtKill > effectiveKilledAt
-        ? effectiveKilledAt
-        : minSpawnTimeAtKill;
-    const trackingWindowDurationSeconds = Math.max(
-      0,
-      Math.floor(
-        (effectiveKilledAt.getTime() - trackingWindowStartTime.getTime()) /
-          1000,
-      ),
-    );
-
-    const heroMaps = await this.repository.findMaps(eventHero.id);
-    const heroMapIds = heroMaps.map((map) => map.id);
-    const mapIdToName = this.createMapNameLookup(heroMaps);
-
-    const {
-      scoringMode,
-      scoringRules,
-      confirmationDeadlineAt,
-      autoConfirmedAt,
-    } = this.resolveKillScoringConfig(event, killedAt);
-
-    const kill = await this.repository.recordKill(
-      {
-        heroNpcId: eventHero.id,
+    return Effect.gen(function* () {
+      const killedAt = new Date();
+      const minSpawnTimeAtKill = timerData.previousMinSpawnTime ?? killedAt;
+      const maxSpawnTimeAtKill = timerData.previousMaxSpawnTime ?? killedAt;
+      const effectiveKilledAt = getEffectiveWindowEndAt(
         killedAt,
-        minSpawnTimeAtKill,
         maxSpawnTimeAtKill,
-        timerCreatedById: timerData.memberId,
-        isManualClose,
-        mapIds: heroMapIds,
-        assignmentOverlapStart: scoringWindowStartTime,
-      },
-      async (assignmentHistory, killId) => {
-        const killPointsData: Array<{
-          killId: string;
-          memberId: number;
-          basePoints: number;
-          points: number;
-          trackingDurationSeconds: number | null;
-          trackingDurationPercentage: number | null;
-          timeOnMapSeconds: number;
-          afkPercentage: number;
-          wasPresent: boolean;
-          bonusBreakdown: unknown;
-          mapPresenceData: Array<{
-            mapId: string;
-            mapName: string;
-            presenceTimeSeconds: number;
-            afkTimeSeconds: number;
-          }>;
-          confirmationDeadlineAt: Date | null;
-          confirmedAt: Date | null;
-        }> = [];
+      );
+      const windowOpenedAt =
+        timerData.windowOpenedAt ?? timerData.previousMinSpawnTime ?? killedAt;
+      const scoringWindowStartTime =
+        windowOpenedAt > effectiveKilledAt ? effectiveKilledAt : windowOpenedAt;
+      const trackingWindowStartTime =
+        minSpawnTimeAtKill > effectiveKilledAt
+          ? effectiveKilledAt
+          : minSpawnTimeAtKill;
+      const trackingWindowDurationSeconds = Math.max(
+        0,
+        Math.floor(
+          (effectiveKilledAt.getTime() - trackingWindowStartTime.getTime()) /
+            1000,
+        ),
+      );
 
-        const {
-          memberAssignmentsHistory,
-          memberMapIds,
-          memberTrackingIntervals,
-        } = this.buildMemberAssignmentContext({
-          assignmentHistory,
-          killedAt: effectiveKilledAt,
-          trackingWindowStartTime,
-        });
+      const heroMaps = yield* repository.findMaps(eventHero.id);
+      const heroMapIds = heroMaps.map((map) => map.id);
+      const mapIdToName = createMapNameLookup(heroMaps);
 
-        const assignedMemberIds = Array.from(memberMapIds.keys());
-        if (assignedMemberIds.length === 0) {
-          this.logger.log({
-            message: "No assignments for hero kill in current window",
-            heroId: eventHero.id,
-            eventId: event.id,
-          });
-        }
+      const {
+        scoringMode,
+        scoringRules,
+        confirmationDeadlineAt,
+        autoConfirmedAt,
+      } = resolveKillScoringConfig(event, killedAt);
 
-        const { presenceByMemberId, presenceByMemberMapKey } =
-          await this.buildPresenceLookups({
-            eventHeroId: eventHero.id,
-            mapIds: heroMapIds,
-            memberIds: assignedMemberIds,
-            scoringWindowStartTime,
-            scoringWindowEndTime: effectiveKilledAt,
-          });
+      const kill = yield* repository.recordKill(
+        {
+          heroNpcId: eventHero.id,
+          killedAt,
+          minSpawnTimeAtKill,
+          maxSpawnTimeAtKill,
+          timerCreatedById: timerData.memberId,
+          isManualClose,
+          mapIds: heroMapIds,
+          assignmentOverlapStart: scoringWindowStartTime,
+        },
+        (assignmentHistory, killId) =>
+          Effect.gen(function* () {
+            const killPointsData: Array<{
+              killId: string;
+              memberId: number;
+              basePoints: number;
+              points: number;
+              trackingDurationSeconds: number | null;
+              trackingDurationPercentage: number | null;
+              timeOnMapSeconds: number;
+              afkPercentage: number;
+              wasPresent: boolean;
+              bonusBreakdown: unknown;
+              mapPresenceData: Array<{
+                mapId: string;
+                mapName: string;
+                presenceTimeSeconds: number;
+                afkTimeSeconds: number;
+              }>;
+              confirmationDeadlineAt: Date | null;
+              confirmedAt: Date | null;
+            }> = [];
 
-        for (const memberId of assignedMemberIds) {
-          const memberAssignedMapIds = Array.from(
-            memberMapIds.get(memberId) ?? [],
-          );
-          const presenceStats = presenceByMemberId.get(memberId) ?? {
-            timeOnMapSeconds: 0,
-            afkPercentage: 0,
-            wasPresent: false,
-          };
-          const mapPresenceData = this.buildMapPresenceData({
-            mapIds: memberAssignedMapIds,
-            mapNameById: mapIdToName,
-            memberId,
-            presenceByMemberMapKey,
-          });
-
-          const trackingIntervals = memberTrackingIntervals.get(memberId) ?? [];
-          const trackingDurationSeconds =
-            calculateTrackingDurationSeconds(trackingIntervals);
-
-          const trackingDurationPercentage =
-            trackingDurationSeconds !== null &&
-            trackingWindowDurationSeconds > 0
-              ? Math.min(
-                  100,
-                  Math.round(
-                    (trackingDurationSeconds / trackingWindowDurationSeconds) *
-                      100,
-                  ),
-                )
-              : undefined;
-
-          const memberAssignments =
-            memberAssignmentsHistory.get(memberId) ?? [];
-          const { memberPresentAtKill, memberLeaveTime } =
-            this.getMemberKillState({
-              assignments: memberAssignments,
+            const {
+              memberAssignmentsHistory,
+              memberMapIds,
+              memberTrackingIntervals,
+            } = buildMemberAssignmentContext({
+              assignmentHistory,
               killedAt: effectiveKilledAt,
               trackingWindowStartTime,
             });
 
-          const { totalPoints, basePoints, appliedBonuses } =
-            this.pointsService.calculateMemberPoints({
-              scoringMode,
-              scoringRules,
-              eligible: true,
-              trackingDurationPercentage,
-              trackingDurationSeconds: trackingDurationSeconds ?? undefined,
-              assignedMembersCount: assignedMemberIds.length,
-              killTime: effectiveKilledAt,
-              respawnStartTime: trackingWindowStartTime,
-              maxRespawnTime: maxSpawnTimeAtKill,
-              memberLeaveTime: memberPresentAtKill ? null : memberLeaveTime,
-              memberPresentAtKill,
-              timeOnMapSeconds: presenceStats.timeOnMapSeconds,
-              afkPercentage: presenceStats.afkPercentage,
-              wasPresent: presenceStats.wasPresent,
-            });
+            const assignedMemberIds = Array.from(memberMapIds.keys());
+            if (assignedMemberIds.length === 0) {
+              logger.log({
+                message: "No assignments for hero kill in current window",
+                heroId: eventHero.id,
+                eventId: event.id,
+              });
+            }
 
-          const memberLeftBeforeKill =
-            !memberPresentAtKill && memberLeaveTime !== null;
+            const { presenceByMemberId, presenceByMemberMapKey } =
+              yield* buildPresenceLookups({
+                eventHeroId: eventHero.id,
+                mapIds: heroMapIds,
+                memberIds: assignedMemberIds,
+                scoringWindowStartTime,
+                scoringWindowEndTime: effectiveKilledAt,
+              });
 
-          killPointsData.push({
-            killId,
-            memberId,
-            basePoints,
-            points: totalPoints,
-            trackingDurationSeconds,
-            trackingDurationPercentage: trackingDurationPercentage ?? null,
-            timeOnMapSeconds: presenceStats.timeOnMapSeconds,
-            afkPercentage: presenceStats.afkPercentage,
-            wasPresent: presenceStats.wasPresent,
-            bonusBreakdown: appliedBonuses,
-            mapPresenceData,
-            confirmationDeadlineAt: memberLeftBeforeKill
-              ? null
-              : confirmationDeadlineAt,
-            confirmedAt: memberLeftBeforeKill
-              ? effectiveKilledAt
-              : autoConfirmedAt,
-          });
-        }
+            for (const memberId of assignedMemberIds) {
+              const memberAssignedMapIds = Array.from(
+                memberMapIds.get(memberId) ?? [],
+              );
+              const presenceStats = presenceByMemberId.get(memberId) ?? {
+                timeOnMapSeconds: 0,
+                afkPercentage: 0,
+                wasPresent: false,
+              };
+              const mapPresenceData = buildMapPresenceData({
+                mapIds: memberAssignedMapIds,
+                mapNameById: mapIdToName,
+                memberId,
+                presenceByMemberMapKey,
+              });
 
-        return killPointsData;
-      },
-    );
+              const trackingIntervals =
+                memberTrackingIntervals.get(memberId) ?? [];
+              const trackingDurationSeconds =
+                calculateTrackingDurationSeconds(trackingIntervals);
 
-    if (kill.points.length > 0) {
-      await this.pointsService.updateRankingAfterKill(
-        event.id,
-        eventHero.npcName,
-        kill.points,
+              const trackingDurationPercentage =
+                trackingDurationSeconds !== null &&
+                trackingWindowDurationSeconds > 0
+                  ? Math.min(
+                      100,
+                      Math.round(
+                        (trackingDurationSeconds /
+                          trackingWindowDurationSeconds) *
+                          100,
+                      ),
+                    )
+                  : undefined;
+
+              const memberAssignments =
+                memberAssignmentsHistory.get(memberId) ?? [];
+              const { memberPresentAtKill, memberLeaveTime } =
+                getMemberKillState({
+                  assignments: memberAssignments,
+                  killedAt: effectiveKilledAt,
+                  trackingWindowStartTime,
+                });
+
+              const { totalPoints, basePoints, appliedBonuses } =
+                pointsService.calculateMemberPoints({
+                  scoringMode,
+                  scoringRules,
+                  eligible: true,
+                  trackingDurationPercentage,
+                  trackingDurationSeconds: trackingDurationSeconds ?? undefined,
+                  assignedMembersCount: assignedMemberIds.length,
+                  killTime: effectiveKilledAt,
+                  respawnStartTime: trackingWindowStartTime,
+                  maxRespawnTime: maxSpawnTimeAtKill,
+                  memberLeaveTime: memberPresentAtKill ? null : memberLeaveTime,
+                  memberPresentAtKill,
+                  timeOnMapSeconds: presenceStats.timeOnMapSeconds,
+                  afkPercentage: presenceStats.afkPercentage,
+                  wasPresent: presenceStats.wasPresent,
+                });
+
+              const memberLeftBeforeKill =
+                !memberPresentAtKill && memberLeaveTime !== null;
+
+              killPointsData.push({
+                killId,
+                memberId,
+                basePoints,
+                points: totalPoints,
+                trackingDurationSeconds,
+                trackingDurationPercentage: trackingDurationPercentage ?? null,
+                timeOnMapSeconds: presenceStats.timeOnMapSeconds,
+                afkPercentage: presenceStats.afkPercentage,
+                wasPresent: presenceStats.wasPresent,
+                bonusBreakdown: appliedBonuses,
+                mapPresenceData,
+                confirmationDeadlineAt: memberLeftBeforeKill
+                  ? null
+                  : confirmationDeadlineAt,
+                confirmedAt: memberLeftBeforeKill
+                  ? effectiveKilledAt
+                  : autoConfirmedAt,
+              });
+            }
+
+            return killPointsData;
+          }),
       );
-    }
 
-    await this.trackingService.closeAllGapsForHero(eventHero.id);
+      if (kill.points.length > 0) {
+        yield* pointsService.updateRankingAfterKill(
+          event.id,
+          eventHero.npcName,
+          kill.points,
+        );
+      }
 
-    if (
-      !isManualClose &&
-      timerData.minSpawnTime &&
-      timerData.maxSpawnTime &&
-      timerData.minSpawnTime > killedAt
-    ) {
-      await Promise.all(
-        heroMaps.map((map) =>
-          this.trackingService.openUnassignedGap(
-            map.id,
-            eventHero.id,
-            killedAt,
-          ),
-        ),
-      );
-      this.logger.debug({
-        message: "Opened UNASSIGNED gaps for new respawn window",
-        heroId: eventHero.id,
-        mapsCount: heroMaps.length,
-      });
-    }
+      yield* trackingService.closeAllGapsForHero(eventHero.id);
 
-    await this.summaryService.createWindowSummary(
-      eventHero.id,
-      kill.kill.id,
-      windowOpenedAt,
-      effectiveKilledAt,
-      timerData.previousMinSpawnTime ?? killedAt,
-      timerData.previousMaxSpawnTime ?? killedAt,
-      isManualClose,
-    );
-
-    await this.cancelScheduledAutoClose(eventHero.id);
-
-    await this.eventReadCache.invalidateEvent(guildId, event.id);
-    await this.eventEmitter.emit(RoutingKey.EVENT_HERO_KILLED, {
-      guildId,
-      eventId: event.id,
-      killId: kill.kill.id,
-    });
-
-    if (!isManualClose) {
-      await this.eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
-        guildId,
-        eventId: event.id,
-        heroId: eventHero.id,
-      });
-
-      if (timerData.minSpawnTime && timerData.maxSpawnTime) {
-        await this.eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
-          guildId,
-          eventId: event.id,
+      if (
+        !isManualClose &&
+        timerData.minSpawnTime &&
+        timerData.maxSpawnTime &&
+        timerData.minSpawnTime > killedAt
+      ) {
+        yield* Effect.forEach(
+          heroMaps,
+          (map) =>
+            trackingService.openUnassignedGap(map.id, eventHero.id, killedAt),
+          { concurrency: "unbounded", discard: true },
+        );
+        logger.debug({
+          message: "Opened UNASSIGNED gaps for new respawn window",
           heroId: eventHero.id,
+          mapsCount: heroMaps.length,
         });
       }
-    }
 
-    await Promise.all(
-      heroMaps.map((map) =>
-        this.eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+      yield* summaryService.createWindowSummary(
+        eventHero.id,
+        kill.kill.id,
+        windowOpenedAt,
+        effectiveKilledAt,
+        timerData.previousMinSpawnTime ?? killedAt,
+        timerData.previousMaxSpawnTime ?? killedAt,
+        isManualClose,
+      );
+
+      yield* cancelScheduledAutoClose(eventHero.id);
+
+      yield* runPromiseAdapter("redis.eventReadCache.invalidate", () =>
+        eventReadCache.invalidateEvent(guildId, event.id),
+      );
+      yield* runPromiseAdapter("rabbit.eventEmitter.emit", () =>
+        eventEmitter.emit(RoutingKey.EVENT_HERO_KILLED, {
           guildId,
           eventId: event.id,
-          mapId: map.id,
+          killId: kill.kill.id,
         }),
-      ),
-    );
+      );
 
-    return kill.kill;
+      if (!isManualClose) {
+        yield* runPromiseAdapter("rabbit.eventEmitter.emit", () =>
+          eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
+            guildId,
+            eventId: event.id,
+            heroId: eventHero.id,
+          }),
+        );
+
+        if (timerData.minSpawnTime && timerData.maxSpawnTime) {
+          yield* runPromiseAdapter("rabbit.eventEmitter.emit", () =>
+            eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
+              guildId,
+              eventId: event.id,
+              heroId: eventHero.id,
+            }),
+          );
+        }
+      }
+
+      yield* Effect.forEach(
+        heroMaps,
+        (map) =>
+          runPromiseAdapter("rabbit.eventEmitter.emit", () =>
+            eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+              guildId,
+              eventId: event.id,
+              mapId: map.id,
+            }),
+          ),
+        { concurrency: "unbounded", discard: true },
+      );
+
+      return kill.kill;
+    }).pipe(Effect.withSpan("events.kills.record"));
   }
 
-  private resolveKillScoringConfig(event: Event, killedAt: Date) {
+  function resolveKillScoringConfig(event: Event, killedAt: Date) {
     const scoringMode = normalizeEventScoringMode(
       (event as { scoringMode?: unknown }).scoringMode,
     );
@@ -877,7 +917,7 @@ export class EventKillService {
     };
   }
 
-  private getMemberKillState(params: {
+  function getMemberKillState(params: {
     assignments: MemberAssignmentHistoryEntry[];
     killedAt: Date;
     trackingWindowStartTime: Date;
@@ -906,449 +946,480 @@ export class EventKillService {
     return { memberPresentAtKill, memberLeaveTime };
   }
 
-  getHeroKillHistory(
+  function getHeroKillHistory(
     guildId: string,
     eventId: string,
     heroId: string,
     limit = 20,
     cursor?: string,
   ) {
-    return this.eventReadCache.getOrSet(
-      this.eventReadCache.getEventKey(guildId, eventId, "hero-kill-history", {
-        cursor,
-        heroId,
-        limit,
-      }),
-      () =>
-        this.getHeroKillHistoryUncached(
-          guildId,
-          eventId,
-          heroId,
-          limit,
-          cursor,
+    return Effect.tryPromise({
+      try: () =>
+        eventReadCache.getOrSet(
+          eventReadCache.getEventKey(guildId, eventId, "hero-kill-history", {
+            cursor,
+            heroId,
+            limit,
+          }),
+          () =>
+            Effect.runPromise(
+              getHeroKillHistoryUncached(
+                guildId,
+                eventId,
+                heroId,
+                limit,
+                cursor,
+              ),
+            ),
         ),
-    );
+      catch: (cause) => cause,
+    }).pipe(Effect.withSpan("events.kills.heroHistory"));
   }
 
-  private async getHeroKillHistoryUncached(
+  function getHeroKillHistoryUncached(
     guildId: string,
     eventId: string,
     heroId: string,
     limit = 20,
     cursor?: string,
   ) {
-    const hero = await this.repository.findHero(guildId, eventId, heroId);
+    return Effect.gen(function* () {
+      const hero = yield* repository.findHero(guildId, eventId, heroId);
 
-    if (!hero) {
-      throw new NotFoundException("Hero not found");
-    }
+      if (!hero) {
+        return yield* Effect.fail(new NotFoundException("Hero not found"));
+      }
 
-    const kills = await this.repository.findKills({
-      eventId,
-      heroId,
-      cursor,
-      limit: limit + 1,
-    });
-
-    const hasMore = kills.length > limit;
-    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const windowStartByKillId =
-      await this.getEffectiveWindowStartByKillId(paginatedKills);
-    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
-      paginatedKills,
-      windowStartByKillId,
-    );
-    const data = paginatedKills.map((kill) => ({
-      ...kill,
-      points: kill.points.map((point) => ({
-        ...point,
-        mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
-      })),
-    }));
-    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
-
-    return {
-      data,
-      nextCursor,
-    };
-  }
-
-  getEventKillHistory(
-    guildId: string,
-    eventId: string,
-    limit = 20,
-    cursor?: string,
-    heroId?: string,
-  ) {
-    return this.eventReadCache.getOrSet(
-      this.eventReadCache.getEventKey(guildId, eventId, "event-kill-history", {
-        cursor,
+      const kills = yield* repository.findKills({
+        eventId,
         heroId,
-        limit,
-      }),
-      () =>
-        this.getEventKillHistoryUncached(
-          guildId,
-          eventId,
-          limit,
-          cursor,
-          heroId,
-        ),
-    );
-  }
-
-  private async getEventKillHistoryUncached(
-    guildId: string,
-    eventId: string,
-    limit = 20,
-    cursor?: string,
-    heroId?: string,
-  ) {
-    const event = await this.repository.findEvent(guildId, eventId);
-
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
-
-    const kills = await this.repository.findKills({
-      eventId,
-      heroId,
-      cursor,
-      limit: limit + 1,
-    });
-
-    const hasMore = kills.length > limit;
-    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const windowStartByKillId =
-      await this.getEffectiveWindowStartByKillId(paginatedKills);
-    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
-      paginatedKills,
-      windowStartByKillId,
-    );
-    const data = paginatedKills.map((kill) => ({
-      ...kill,
-      points: kill.points.map((point) => ({
-        ...point,
-        mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
-      })),
-    }));
-    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
-
-    return {
-      data,
-      nextCursor,
-    };
-  }
-
-  getMemberKillHistory(
-    guildId: string,
-    eventId: string,
-    memberId: number,
-    limit = 20,
-    cursor?: string,
-    heroId?: string,
-  ) {
-    return this.eventReadCache.getOrSet(
-      this.eventReadCache.getEventKey(guildId, eventId, "member-kill-history", {
         cursor,
-        heroId,
-        limit,
-        memberId,
-      }),
-      () =>
-        this.getMemberKillHistoryUncached(
-          guildId,
-          eventId,
-          memberId,
-          limit,
-          cursor,
-          heroId,
-        ),
-    );
-  }
+        limit: limit + 1,
+      });
 
-  private async getMemberKillHistoryUncached(
-    guildId: string,
-    eventId: string,
-    memberId: number,
-    limit = 20,
-    cursor?: string,
-    heroId?: string,
-  ) {
-    const event = await this.repository.findEvent(guildId, eventId);
-
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
-
-    const member = await this.repository.findMember(guildId, memberId);
-
-    if (!member) {
-      throw new NotFoundException("Member not found");
-    }
-
-    const kills = await this.repository.findKills({
-      eventId,
-      heroId,
-      memberId,
-      cursor,
-      limit: limit + 1,
-    });
-
-    const hasMore = kills.length > limit;
-    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const windowStartByKillId =
-      await this.getEffectiveWindowStartByKillId(paginatedKills);
-    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
-      paginatedKills,
-      windowStartByKillId,
-    );
-    const data = paginatedKills.map(({ points, ...kill }) => {
-      const latestPoint = points[0] ?? null;
-      const normalizedMemberPoint = latestPoint
-        ? this.normalizeKillPointTracking(
-            latestPoint,
-            kill.killedAt,
-            kill.minSpawnTimeAtKill,
-          )
-        : null;
-      const memberPoint = normalizedMemberPoint
-        ? {
-            ...normalizedMemberPoint,
-            mapData:
-              mapDataByKillMember.get(
-                `${kill.id}:${normalizedMemberPoint.memberId}`,
-              ) ?? [],
-          }
-        : null;
-
-      return {
+      const hasMore = kills.length > limit;
+      const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+      const windowStartByKillId =
+        yield* getEffectiveWindowStartByKillId(paginatedKills);
+      const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
+        paginatedKills,
+        windowStartByKillId,
+      );
+      const data = paginatedKills.map((kill) => ({
         ...kill,
-        memberPoint,
-      };
-    });
-    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+        points: kill.points.map((point) => ({
+          ...point,
+          mapData:
+            mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
+        })),
+      }));
+      const nextCursor = hasMore ? data[data.length - 1]?.id : null;
 
-    return {
-      member,
-      data,
-      nextCursor,
-    };
+      return { data, nextCursor };
+    });
   }
 
-  async getKillDetail(
+  function getEventKillHistory(
+    guildId: string,
+    eventId: string,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return Effect.tryPromise({
+      try: () =>
+        eventReadCache.getOrSet(
+          eventReadCache.getEventKey(guildId, eventId, "event-kill-history", {
+            cursor,
+            heroId,
+            limit,
+          }),
+          () =>
+            Effect.runPromise(
+              getEventKillHistoryUncached(
+                guildId,
+                eventId,
+                limit,
+                cursor,
+                heroId,
+              ),
+            ),
+        ),
+      catch: (cause) => cause,
+    }).pipe(Effect.withSpan("events.kills.eventHistory"));
+  }
+
+  function getEventKillHistoryUncached(
+    guildId: string,
+    eventId: string,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return Effect.gen(function* () {
+      const event = yield* repository.findEvent(guildId, eventId);
+
+      if (!event) {
+        return yield* Effect.fail(new NotFoundException("Event not found"));
+      }
+
+      const kills = yield* repository.findKills({
+        eventId,
+        heroId,
+        cursor,
+        limit: limit + 1,
+      });
+
+      const hasMore = kills.length > limit;
+      const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+      const windowStartByKillId =
+        yield* getEffectiveWindowStartByKillId(paginatedKills);
+      const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
+        paginatedKills,
+        windowStartByKillId,
+      );
+      const data = paginatedKills.map((kill) => ({
+        ...kill,
+        points: kill.points.map((point) => ({
+          ...point,
+          mapData:
+            mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
+        })),
+      }));
+      const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+
+      return { data, nextCursor };
+    });
+  }
+
+  function getMemberKillHistory(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return Effect.tryPromise({
+      try: () =>
+        eventReadCache.getOrSet(
+          eventReadCache.getEventKey(guildId, eventId, "member-kill-history", {
+            cursor,
+            heroId,
+            limit,
+            memberId,
+          }),
+          () =>
+            Effect.runPromise(
+              getMemberKillHistoryUncached(
+                guildId,
+                eventId,
+                memberId,
+                limit,
+                cursor,
+                heroId,
+              ),
+            ),
+        ),
+      catch: (cause) => cause,
+    }).pipe(Effect.withSpan("events.kills.memberHistory"));
+  }
+
+  function getMemberKillHistoryUncached(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return Effect.gen(function* () {
+      const event = yield* repository.findEvent(guildId, eventId);
+
+      if (!event) {
+        return yield* Effect.fail(new NotFoundException("Event not found"));
+      }
+
+      const member = yield* repository.findMember(guildId, memberId);
+
+      if (!member) {
+        return yield* Effect.fail(new NotFoundException("Member not found"));
+      }
+
+      const kills = yield* repository.findKills({
+        eventId,
+        heroId,
+        memberId,
+        cursor,
+        limit: limit + 1,
+      });
+
+      const hasMore = kills.length > limit;
+      const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+      const windowStartByKillId =
+        yield* getEffectiveWindowStartByKillId(paginatedKills);
+      const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
+        paginatedKills,
+        windowStartByKillId,
+      );
+      const data = paginatedKills.map(({ points, ...kill }) => {
+        const latestPoint = points[0] ?? null;
+        const normalizedMemberPoint = latestPoint
+          ? normalizeKillPointTracking(
+              latestPoint,
+              kill.killedAt,
+              kill.minSpawnTimeAtKill,
+            )
+          : null;
+        const memberPoint = normalizedMemberPoint
+          ? {
+              ...normalizedMemberPoint,
+              mapData:
+                mapDataByKillMember.get(
+                  `${kill.id}:${normalizedMemberPoint.memberId}`,
+                ) ?? [],
+            }
+          : null;
+
+        return {
+          ...kill,
+          memberPoint,
+        };
+      });
+      const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+
+      return { member, data, nextCursor };
+    });
+  }
+
+  function getKillDetail(
     guildId: string,
     eventId: string,
     heroId: string,
     killId: string,
   ) {
-    const kill = await this.repository.findKillDetail(
-      guildId,
-      eventId,
-      heroId,
-      killId,
+    return getKillDetailEffect(guildId, eventId, heroId, killId).pipe(
+      Effect.withSpan("events.kills.detail"),
     );
+  }
 
-    if (!kill) {
-      throw new NotFoundException("Kill not found");
-    }
+  function getKillDetailEffect(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    killId: string,
+  ) {
+    return Effect.gen(function* () {
+      const kill = yield* repository.findKillDetail(
+        guildId,
+        eventId,
+        heroId,
+        killId,
+      );
 
-    const heroMaps = await this.repository.findMaps(heroId);
-    const effectiveKilledAt = this.getEffectiveWindowEndAt(
-      kill.killedAt,
-      kill.maxSpawnTimeAtKill,
-    );
-    const windowStartByKillId = await this.getEffectiveWindowStartByKillId([
-      kill,
-    ]);
-    const overlapWindowStartTime =
-      windowStartByKillId.get(kill.id) ??
-      getTrackingWindowStartTime({
+      if (!kill) {
+        return yield* Effect.fail(new NotFoundException("Kill not found"));
+      }
+
+      const heroMaps = yield* repository.findMaps(heroId);
+      const effectiveKilledAt = getEffectiveWindowEndAt(
+        kill.killedAt,
+        kill.maxSpawnTimeAtKill,
+      );
+      const windowStartByKillId = yield* getEffectiveWindowStartByKillId([
+        kill,
+      ]);
+      const overlapWindowStartTime =
+        windowStartByKillId.get(kill.id) ??
+        getTrackingWindowStartTime({
+          killedAt: effectiveKilledAt,
+          minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+        });
+
+      const mapIdToName = createMapNameLookup(heroMaps);
+      const mapIds = heroMaps.map((m) => m.id);
+      const memberIds = [
+        ...new Set(kill.points.map((point) => point.memberId)),
+      ];
+      const trackingWindowStartTime = getTrackingWindowStartTime({
         killedAt: effectiveKilledAt,
         minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
       });
-
-    const mapIdToName = this.createMapNameLookup(heroMaps);
-    const mapIds = heroMaps.map((m) => m.id);
-    const memberIds = [...new Set(kill.points.map((point) => point.memberId))];
-    const trackingWindowStartTime = getTrackingWindowStartTime({
-      killedAt: effectiveKilledAt,
-      minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-    });
-    const normalizedPoints = kill.points.map((point) =>
-      this.normalizeKillPointTracking(
-        point,
-        effectiveKilledAt,
-        kill.minSpawnTimeAtKill,
-      ),
-    );
-
-    const assignments = await this.repository.findAssignments({
-      mapIds,
-      memberIds,
-      killedAt: effectiveKilledAt,
-      overlapStart: overlapWindowStartTime,
-    });
-
-    const assignmentsByMember = new Map<
-      number,
-      Array<{
-        mapId: string;
-        assignedAt: Date;
-        unassignedAt: Date | null;
-      }>
-    >();
-    for (const assignment of assignments) {
-      if (!assignmentsByMember.has(assignment.memberId)) {
-        assignmentsByMember.set(assignment.memberId, []);
-      }
-      assignmentsByMember.get(assignment.memberId)?.push({
-        mapId: assignment.mapId,
-        assignedAt: assignment.assignedAt,
-        unassignedAt: assignment.unassignedAt,
-      });
-    }
-
-    const fallbackMemberIds = [
-      ...new Set(
-        normalizedPoints
-          .filter((point) => {
-            const storedMapPresence = point.mapPresenceData as
-              | MapPresenceEntry[]
-              | null;
-            return !(storedMapPresence && storedMapPresence.length > 0);
-          })
-          .map((point) => point.memberId),
-      ),
-    ];
-
-    const fallbackPresenceStats =
-      await this.pointsService.getMembersPresenceStatsPerMap(
-        mapIds,
-        fallbackMemberIds,
-        overlapWindowStartTime,
-        effectiveKilledAt,
+      const normalizedPoints = kill.points.map((point) =>
+        normalizeKillPointTracking(
+          point,
+          effectiveKilledAt,
+          kill.minSpawnTimeAtKill,
+        ),
       );
-    const fallbackPresenceByMemberMap = new Map<
-      string,
-      { presenceTimeSeconds: number; afkTimeSeconds: number }
-    >();
-    for (const stat of fallbackPresenceStats) {
-      fallbackPresenceByMemberMap.set(`${stat.memberId}:${stat.mapId}`, {
-        presenceTimeSeconds: stat.presenceTimeSeconds,
-        afkTimeSeconds: stat.afkTimeSeconds,
+
+      const assignments = yield* repository.findAssignments({
+        mapIds,
+        memberIds,
+        killedAt: effectiveKilledAt,
+        overlapStart: overlapWindowStartTime,
       });
-    }
 
-    const pointsWithMapData = normalizedPoints.map((point) => {
-      const pointAssignments = assignmentsByMember.get(point.memberId) ?? [];
-      const storedMapPresence = point.mapPresenceData as
-        | MapPresenceEntry[]
-        | null;
+      const assignmentsByMember = new Map<
+        number,
+        Array<{
+          mapId: string;
+          assignedAt: Date;
+          unassignedAt: Date | null;
+        }>
+      >();
+      for (const assignment of assignments) {
+        if (!assignmentsByMember.has(assignment.memberId)) {
+          assignmentsByMember.set(assignment.memberId, []);
+        }
+        assignmentsByMember.get(assignment.memberId)?.push({
+          mapId: assignment.mapId,
+          assignedAt: assignment.assignedAt,
+          unassignedAt: assignment.unassignedAt,
+        });
+      }
 
-      let presenceByMapId: Map<
+      const fallbackMemberIds = [
+        ...new Set(
+          normalizedPoints
+            .filter((point) => {
+              const storedMapPresence = point.mapPresenceData as
+                | MapPresenceEntry[]
+                | null;
+              return !(storedMapPresence && storedMapPresence.length > 0);
+            })
+            .map((point) => point.memberId),
+        ),
+      ];
+
+      const fallbackPresenceStats =
+        yield* pointsService.getMembersPresenceStatsPerMap(
+          mapIds,
+          fallbackMemberIds,
+          overlapWindowStartTime,
+          effectiveKilledAt,
+        );
+      const fallbackPresenceByMemberMap = new Map<
         string,
         { presenceTimeSeconds: number; afkTimeSeconds: number }
-      >;
-
-      if (storedMapPresence && storedMapPresence.length > 0) {
-        presenceByMapId = new Map(
-          storedMapPresence.map((s) => [
-            s.mapId,
-            {
-              presenceTimeSeconds: s.presenceTimeSeconds,
-              afkTimeSeconds: s.afkTimeSeconds,
-            },
-          ]),
-        );
-      } else {
-        presenceByMapId = new Map(
-          [...new Set(pointAssignments.map((a) => a.mapId))].map((mapId) => [
-            mapId,
-            fallbackPresenceByMemberMap.get(`${point.memberId}:${mapId}`) ?? {
-              presenceTimeSeconds: 0,
-              afkTimeSeconds: 0,
-            },
-          ]),
-        );
+      >();
+      for (const stat of fallbackPresenceStats) {
+        fallbackPresenceByMemberMap.set(`${stat.memberId}:${stat.mapId}`, {
+          presenceTimeSeconds: stat.presenceTimeSeconds,
+          afkTimeSeconds: stat.afkTimeSeconds,
+        });
       }
 
-      const mapData = pointAssignments.map((assignment) => {
-        const clippedAssignmentInterval = clipIntervalToWindow({
-          start: assignment.assignedAt,
-          end: assignment.unassignedAt ?? effectiveKilledAt,
-          windowStart: trackingWindowStartTime,
-          windowEnd: effectiveKilledAt,
-        });
-        const assignmentDurationSeconds = clippedAssignmentInterval
-          ? Math.round(
-              (clippedAssignmentInterval.end.getTime() -
-                clippedAssignmentInterval.start.getTime()) /
-                1000,
-            )
-          : 0;
+      const pointsWithMapData = normalizedPoints.map((point) => {
+        const pointAssignments = assignmentsByMember.get(point.memberId) ?? [];
+        const storedMapPresence = point.mapPresenceData as
+          | MapPresenceEntry[]
+          | null;
 
-        const presence = presenceByMapId.get(assignment.mapId);
+        let presenceByMapId: Map<
+          string,
+          { presenceTimeSeconds: number; afkTimeSeconds: number }
+        >;
+
+        if (storedMapPresence && storedMapPresence.length > 0) {
+          presenceByMapId = new Map(
+            storedMapPresence.map((s) => [
+              s.mapId,
+              {
+                presenceTimeSeconds: s.presenceTimeSeconds,
+                afkTimeSeconds: s.afkTimeSeconds,
+              },
+            ]),
+          );
+        } else {
+          presenceByMapId = new Map(
+            [...new Set(pointAssignments.map((a) => a.mapId))].map((mapId) => [
+              mapId,
+              fallbackPresenceByMemberMap.get(`${point.memberId}:${mapId}`) ?? {
+                presenceTimeSeconds: 0,
+                afkTimeSeconds: 0,
+              },
+            ]),
+          );
+        }
+
+        const mapData = pointAssignments.map((assignment) => {
+          const clippedAssignmentInterval = clipIntervalToWindow({
+            start: assignment.assignedAt,
+            end: assignment.unassignedAt ?? effectiveKilledAt,
+            windowStart: trackingWindowStartTime,
+            windowEnd: effectiveKilledAt,
+          });
+          const assignmentDurationSeconds = clippedAssignmentInterval
+            ? Math.round(
+                (clippedAssignmentInterval.end.getTime() -
+                  clippedAssignmentInterval.start.getTime()) /
+                  1000,
+              )
+            : 0;
+
+          const presence = presenceByMapId.get(assignment.mapId);
+
+          return {
+            mapId: assignment.mapId,
+            mapName: mapIdToName.get(assignment.mapId) ?? "",
+            assignedAt: assignment.assignedAt.toISOString(),
+            unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
+            assignmentDurationSeconds,
+            presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+            afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
+          };
+        });
 
         return {
-          mapId: assignment.mapId,
-          mapName: mapIdToName.get(assignment.mapId) ?? "",
-          assignedAt: assignment.assignedAt.toISOString(),
-          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
-          assignmentDurationSeconds,
-          presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
-          afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
+          ...point,
+          mapData,
         };
       });
 
+      const respawnDurationSeconds = Math.max(
+        0,
+        getTrackingWindowDurationSeconds({
+          killedAt: effectiveKilledAt,
+          minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+        }),
+      );
+      const resolvedAfterMaxSpawnTimeMs = Math.max(
+        0,
+        kill.killedAt.getTime() - kill.maxSpawnTimeAtKill.getTime(),
+      );
+      const windowDurationSeconds = Math.max(
+        0,
+        getSpawnWindowDurationSeconds(
+          kill.minSpawnTimeAtKill,
+          kill.maxSpawnTimeAtKill,
+        ),
+      );
+      const scoringMode = normalizeEventScoringMode(
+        (kill.heroNpc.event as { scoringMode?: unknown }).scoringMode,
+      );
+      const scoringRules =
+        scoringMode === "ADVANCED"
+          ? normalizeEventScoringRules(kill.heroNpc.event.scoringRules)
+          : null;
+
       return {
-        ...point,
-        mapData,
+        kill: {
+          ...kill,
+          points: pointsWithMapData,
+          respawnDurationSeconds,
+          windowDurationSeconds,
+          resolvedAfterMaxSpawnTimeMs,
+        },
+        eventConfig: {
+          scoringMode,
+          scoringRules,
+        },
       };
     });
-
-    const respawnDurationSeconds = Math.max(
-      0,
-      getTrackingWindowDurationSeconds({
-        killedAt: effectiveKilledAt,
-        minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-      }),
-    );
-    const resolvedAfterMaxSpawnTimeMs = Math.max(
-      0,
-      kill.killedAt.getTime() - kill.maxSpawnTimeAtKill.getTime(),
-    );
-    const windowDurationSeconds = Math.max(
-      0,
-      this.getSpawnWindowDurationSeconds(
-        kill.minSpawnTimeAtKill,
-        kill.maxSpawnTimeAtKill,
-      ),
-    );
-    const scoringMode = normalizeEventScoringMode(
-      (kill.heroNpc.event as { scoringMode?: unknown }).scoringMode,
-    );
-    const scoringRules =
-      scoringMode === "ADVANCED"
-        ? normalizeEventScoringRules(kill.heroNpc.event.scoringRules)
-        : null;
-
-    return {
-      kill: {
-        ...kill,
-        points: pointsWithMapData,
-        respawnDurationSeconds,
-        windowDurationSeconds,
-        resolvedAfterMaxSpawnTimeMs,
-      },
-      eventConfig: {
-        scoringMode,
-        scoringRules,
-      },
-    };
   }
 
-  private async buildKillPointMapDataByKillMember(
+  function buildKillPointMapDataByKillMember(
     kills: Array<{
       id: string;
       heroNpcId: string;
@@ -1360,167 +1431,172 @@ export class EventKillService {
       }>;
     }>,
     windowStartByKillId: Map<string, Date>,
-  ): Promise<Map<string, KillPointMapDataEntry[]>> {
-    const mapDataByKillMember = new Map<string, KillPointMapDataEntry[]>();
+  ) {
+    return Effect.gen(function* () {
+      const mapDataByKillMember = new Map<string, KillPointMapDataEntry[]>();
 
-    if (kills.length === 0) {
-      return mapDataByKillMember;
-    }
-
-    const heroIds = [...new Set(kills.map((kill) => kill.heroNpcId))];
-    const memberIds = [
-      ...new Set(
-        kills.flatMap((kill) => kill.points.map((point) => point.memberId)),
-      ),
-    ];
-
-    if (heroIds.length === 0 || memberIds.length === 0) {
-      return mapDataByKillMember;
-    }
-
-    const maxKillTime = new Date(
-      Math.max(...kills.map((kill) => kill.killedAt.getTime())),
-    );
-    const minTrackingWindowStart = new Date(
-      Math.min(
-        ...kills.map((kill) =>
-          (
-            windowStartByKillId.get(kill.id) ??
-            getTrackingWindowStartTime({
-              killedAt: kill.killedAt,
-              minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-            })
-          ).getTime(),
-        ),
-      ),
-    );
-
-    const heroMaps = (await this.repository.findMapsForHeroes(heroIds)) ?? [];
-    if (heroMaps.length === 0) {
-      return mapDataByKillMember;
-    }
-
-    const mapIdToName = this.createMapNameLookup(heroMaps);
-    const assignments =
-      (await this.repository.findAssignments({
-        heroNpcIds: heroIds,
-        memberIds,
-        killedAt: maxKillTime,
-        overlapStart: minTrackingWindowStart,
-      })) ?? [];
-
-    const assignmentsByHeroMember = new Map<
-      string,
-      Array<{
-        mapId: string;
-        memberId: number;
-        assignedAt: Date;
-        unassignedAt: Date | null;
-      }>
-    >();
-    for (const assignment of assignments) {
-      const key = `${assignment.heroNpcId}:${assignment.memberId}`;
-      const current = assignmentsByHeroMember.get(key) ?? [];
-      current.push({
-        mapId: assignment.mapId,
-        memberId: assignment.memberId,
-        assignedAt: assignment.assignedAt,
-        unassignedAt: assignment.unassignedAt,
-      });
-      assignmentsByHeroMember.set(key, current);
-    }
-
-    for (const kill of kills) {
-      const overlapWindowStartTime =
-        windowStartByKillId.get(kill.id) ??
-        getTrackingWindowStartTime({
-          killedAt: kill.killedAt,
-          minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-        });
-
-      for (const point of kill.points) {
-        const pointAssignments =
-          assignmentsByHeroMember.get(`${kill.heroNpcId}:${point.memberId}`) ??
-          [];
-        const presenceByMapId = this.getPresenceByMapId(point.mapPresenceData);
-
-        const mapData = pointAssignments
-          .map((assignment) => {
-            const clippedAssignmentInterval = clipIntervalToWindow({
-              start: assignment.assignedAt,
-              end: assignment.unassignedAt ?? kill.killedAt,
-              windowStart: overlapWindowStartTime,
-              windowEnd: kill.killedAt,
-            });
-            if (!clippedAssignmentInterval) {
-              return null;
-            }
-
-            const assignmentDurationSeconds = Math.round(
-              (clippedAssignmentInterval.end.getTime() -
-                clippedAssignmentInterval.start.getTime()) /
-                1000,
-            );
-            const presence = presenceByMapId.get(assignment.mapId);
-
-            return {
-              mapId: assignment.mapId,
-              mapName: mapIdToName.get(assignment.mapId) ?? "",
-              assignedAt: assignment.assignedAt.toISOString(),
-              unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
-              assignmentDurationSeconds,
-              presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
-              afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
-            };
-          })
-          .filter((entry): entry is KillPointMapDataEntry => entry !== null);
-
-        mapDataByKillMember.set(`${kill.id}:${point.memberId}`, mapData);
+      if (kills.length === 0) {
+        return mapDataByKillMember;
       }
-    }
 
-    return mapDataByKillMember;
+      const heroIds = [...new Set(kills.map((kill) => kill.heroNpcId))];
+      const memberIds = [
+        ...new Set(
+          kills.flatMap((kill) => kill.points.map((point) => point.memberId)),
+        ),
+      ];
+
+      if (heroIds.length === 0 || memberIds.length === 0) {
+        return mapDataByKillMember;
+      }
+
+      const maxKillTime = new Date(
+        Math.max(...kills.map((kill) => kill.killedAt.getTime())),
+      );
+      const minTrackingWindowStart = new Date(
+        Math.min(
+          ...kills.map((kill) =>
+            (
+              windowStartByKillId.get(kill.id) ??
+              getTrackingWindowStartTime({
+                killedAt: kill.killedAt,
+                minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+              })
+            ).getTime(),
+          ),
+        ),
+      );
+
+      const heroMaps = (yield* repository.findMapsForHeroes(heroIds)) ?? [];
+      if (heroMaps.length === 0) {
+        return mapDataByKillMember;
+      }
+
+      const mapIdToName = createMapNameLookup(heroMaps);
+      const assignments =
+        (yield* repository.findAssignments({
+          heroNpcIds: heroIds,
+          memberIds,
+          killedAt: maxKillTime,
+          overlapStart: minTrackingWindowStart,
+        })) ?? [];
+
+      const assignmentsByHeroMember = new Map<
+        string,
+        Array<{
+          mapId: string;
+          memberId: number;
+          assignedAt: Date;
+          unassignedAt: Date | null;
+        }>
+      >();
+      for (const assignment of assignments) {
+        const key = `${assignment.heroNpcId}:${assignment.memberId}`;
+        const current = assignmentsByHeroMember.get(key) ?? [];
+        current.push({
+          mapId: assignment.mapId,
+          memberId: assignment.memberId,
+          assignedAt: assignment.assignedAt,
+          unassignedAt: assignment.unassignedAt,
+        });
+        assignmentsByHeroMember.set(key, current);
+      }
+
+      for (const kill of kills) {
+        const overlapWindowStartTime =
+          windowStartByKillId.get(kill.id) ??
+          getTrackingWindowStartTime({
+            killedAt: kill.killedAt,
+            minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+          });
+
+        for (const point of kill.points) {
+          const pointAssignments =
+            assignmentsByHeroMember.get(
+              `${kill.heroNpcId}:${point.memberId}`,
+            ) ?? [];
+          const presenceByMapId = getPresenceByMapId(point.mapPresenceData);
+
+          const mapData = pointAssignments
+            .map((assignment) => {
+              const clippedAssignmentInterval = clipIntervalToWindow({
+                start: assignment.assignedAt,
+                end: assignment.unassignedAt ?? kill.killedAt,
+                windowStart: overlapWindowStartTime,
+                windowEnd: kill.killedAt,
+              });
+              if (!clippedAssignmentInterval) {
+                return null;
+              }
+
+              const assignmentDurationSeconds = Math.round(
+                (clippedAssignmentInterval.end.getTime() -
+                  clippedAssignmentInterval.start.getTime()) /
+                  1000,
+              );
+              const presence = presenceByMapId.get(assignment.mapId);
+
+              return {
+                mapId: assignment.mapId,
+                mapName: mapIdToName.get(assignment.mapId) ?? "",
+                assignedAt: assignment.assignedAt.toISOString(),
+                unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
+                assignmentDurationSeconds,
+                presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+                afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
+              };
+            })
+            .filter((entry): entry is KillPointMapDataEntry => entry !== null);
+
+          mapDataByKillMember.set(`${kill.id}:${point.memberId}`, mapData);
+        }
+      }
+
+      return mapDataByKillMember;
+    });
   }
 
-  private async getEffectiveWindowStartByKillId(
+  function getEffectiveWindowStartByKillId(
     kills: Array<{
       id: string;
       killedAt: Date;
       minSpawnTimeAtKill: Date;
     }>,
-  ): Promise<Map<string, Date>> {
-    const windowStartByKillId = new Map<string, Date>();
+  ) {
+    return Effect.gen(function* () {
+      const windowStartByKillId = new Map<string, Date>();
 
-    if (kills.length === 0) {
-      return windowStartByKillId;
-    }
+      if (kills.length === 0) {
+        return windowStartByKillId;
+      }
 
-    const windowSummaries = await this.repository.findWindowSummaries(
-      kills.map((kill) => kill.id),
-    );
-    const windowOpenedAtByKillId = new Map(
-      windowSummaries.flatMap((summary) =>
-        summary.killId
-          ? [[summary.killId, summary.windowOpenedAt] as const]
-          : [],
-      ),
-    );
-
-    for (const kill of kills) {
-      windowStartByKillId.set(
-        kill.id,
-        resolveEventWindowStart({
-          killedAt: kill.killedAt,
-          minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-          windowOpenedAt: windowOpenedAtByKillId.get(kill.id),
-        }),
+      const windowSummaries = yield* repository.findWindowSummaries(
+        kills.map((kill) => kill.id),
       );
-    }
+      const windowOpenedAtByKillId = new Map(
+        windowSummaries.flatMap((summary) =>
+          summary.killId
+            ? [[summary.killId, summary.windowOpenedAt] as const]
+            : [],
+        ),
+      );
 
-    return windowStartByKillId;
+      for (const kill of kills) {
+        windowStartByKillId.set(
+          kill.id,
+          resolveEventWindowStart({
+            killedAt: kill.killedAt,
+            minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+            windowOpenedAt: windowOpenedAtByKillId.get(kill.id),
+          }),
+        );
+      }
+
+      return windowStartByKillId;
+    });
   }
 
-  private getPresenceByMapId(
+  function getPresenceByMapId(
     mapPresenceData: unknown,
   ): Map<string, { presenceTimeSeconds: number; afkTimeSeconds: number }> {
     const presenceByMapId = new Map<
@@ -1568,92 +1644,106 @@ export class EventKillService {
     return presenceByMapId;
   }
 
-  async getKillTimelineData(
+  function getKillTimelineData(
     guildId: string,
     eventId: string,
     heroId: string,
     killId: string,
   ) {
-    const kill = await this.repository.findKillDetail(
-      guildId,
-      eventId,
-      heroId,
-      killId,
+    return getKillTimelineDataEffect(guildId, eventId, heroId, killId).pipe(
+      Effect.withSpan("events.kills.timeline"),
     );
-
-    if (!kill) {
-      throw new NotFoundException("Kill not found");
-    }
-
-    const summary = await this.repository.findWindowSummary(killId);
-
-    const summaryGaps =
-      (summary?.gapsTimeline as unknown as GapTimelineEntry[] | null) ?? [];
-    const scoringWindowStartTime =
-      summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
-
-    const maps = await this.repository.findMaps(heroId);
-
-    const assignmentsByMapId = new Map<
-      string,
-      Array<{
-        memberId: number;
-        assignedAt: Date;
-        unassignedAt: Date | null;
-        member: {
-          name: string;
-          avatar: string | null;
-          userId: string | null;
-        };
-      }>
-    >();
-    const timelineAssignments = await this.repository.findTimelineAssignments({
-      mapIds: maps.map((map) => map.id),
-      killedAt: kill.killedAt,
-      overlapStart: scoringWindowStartTime,
-    });
-
-    for (const assignment of timelineAssignments) {
-      const currentAssignments = assignmentsByMapId.get(assignment.mapId) ?? [];
-      currentAssignments.push({
-        memberId: assignment.memberId,
-        assignedAt: assignment.assignedAt,
-        unassignedAt: assignment.unassignedAt,
-        member: assignment.member,
-      });
-      assignmentsByMapId.set(assignment.mapId, currentAssignments);
-    }
-
-    const results = maps.map((map) => {
-      const gapsForMap = summaryGaps.filter((g) => g.mapId === map.id);
-      const mapAssignments = assignmentsByMapId.get(map.id) ?? [];
-
-      return {
-        mapId: map.id,
-        mapName: map.mapName,
-        numericMapId: map.mapId,
-        assignments: mapAssignments.map((assignment) => ({
-          memberId: assignment.memberId,
-          memberName: assignment.member.name,
-          memberAvatar: assignment.member.avatar,
-          memberUserId: assignment.member.userId,
-          assignedAt: assignment.assignedAt.toISOString(),
-          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
-        })),
-        gaps: gapsForMap.map((g) => ({
-          id: `${g.mapId}-${new Date(g.startedAt).getTime()}`,
-          gapType: g.gapType,
-          startedAt: new Date(g.startedAt).toISOString(),
-          endedAt: g.endedAt ? new Date(g.endedAt).toISOString() : null,
-          durationSeconds: g.durationSeconds,
-        })),
-      };
-    });
-
-    return results;
   }
 
-  private getSpawnWindowDurationSeconds(
+  function getKillTimelineDataEffect(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    killId: string,
+  ) {
+    return Effect.gen(function* () {
+      const kill = yield* repository.findKillDetail(
+        guildId,
+        eventId,
+        heroId,
+        killId,
+      );
+
+      if (!kill) {
+        return yield* Effect.fail(new NotFoundException("Kill not found"));
+      }
+
+      const summary = yield* repository.findWindowSummary(killId);
+
+      const summaryGaps =
+        (summary?.gapsTimeline as unknown as GapTimelineEntry[] | null) ?? [];
+      const scoringWindowStartTime =
+        summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
+
+      const maps = yield* repository.findMaps(heroId);
+
+      const assignmentsByMapId = new Map<
+        string,
+        Array<{
+          memberId: number;
+          assignedAt: Date;
+          unassignedAt: Date | null;
+          member: {
+            name: string;
+            avatar: string | null;
+            userId: string | null;
+          };
+        }>
+      >();
+      const timelineAssignments = yield* repository.findTimelineAssignments({
+        mapIds: maps.map((map) => map.id),
+        killedAt: kill.killedAt,
+        overlapStart: scoringWindowStartTime,
+      });
+
+      for (const assignment of timelineAssignments) {
+        const currentAssignments =
+          assignmentsByMapId.get(assignment.mapId) ?? [];
+        currentAssignments.push({
+          memberId: assignment.memberId,
+          assignedAt: assignment.assignedAt,
+          unassignedAt: assignment.unassignedAt,
+          member: assignment.member,
+        });
+        assignmentsByMapId.set(assignment.mapId, currentAssignments);
+      }
+
+      const results = maps.map((map) => {
+        const gapsForMap = summaryGaps.filter((g) => g.mapId === map.id);
+        const mapAssignments = assignmentsByMapId.get(map.id) ?? [];
+
+        return {
+          mapId: map.id,
+          mapName: map.mapName,
+          numericMapId: map.mapId,
+          assignments: mapAssignments.map((assignment) => ({
+            memberId: assignment.memberId,
+            memberName: assignment.member.name,
+            memberAvatar: assignment.member.avatar,
+            memberUserId: assignment.member.userId,
+            assignedAt: assignment.assignedAt.toISOString(),
+            unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
+          })),
+          gaps: gapsForMap.map((g) => ({
+            id: `${g.mapId}-${new Date(g.startedAt).getTime()}`,
+            gapType: g.gapType,
+            startedAt: new Date(g.startedAt).toISOString(),
+            endedAt: g.endedAt ? new Date(g.endedAt).toISOString() : null,
+            durationSeconds: g.durationSeconds,
+          })),
+        };
+      });
+
+      return results;
+    });
+  }
+
+  function getSpawnWindowDurationSeconds(
     minSpawnTimeAtKill: Date,
     maxSpawnTimeAtKill: Date,
   ): number {
@@ -1665,13 +1755,13 @@ export class EventKillService {
     );
   }
 
-  private getEffectiveWindowEndAt(killedAt: Date, maxSpawnTimeAtKill: Date) {
+  function getEffectiveWindowEndAt(killedAt: Date, maxSpawnTimeAtKill: Date) {
     return killedAt.getTime() <= maxSpawnTimeAtKill.getTime()
       ? killedAt
       : maxSpawnTimeAtKill;
   }
 
-  private normalizeKillPointTracking<
+  function normalizeKillPointTracking<
     T extends {
       trackingDurationSeconds: number | null;
       trackingDurationPercentage: number | null;
@@ -1720,24 +1810,31 @@ export class EventKillService {
     };
   }
 
-  private async cancelScheduledAutoClose(heroId: string): Promise<void> {
-    const delayedJobs = await this.respawnWindowQueue.getJobs(["delayed"]);
-
-    await Promise.all(
-      delayedJobs
-        .filter((job) => job.data.heroId === heroId)
-        .map(async (job) => {
-          await job.remove();
-          this.logger.log({
-            message: "Cancelled scheduled auto-close job (kill recorded)",
-            heroId,
-            jobId: job.id,
-          });
-        }),
-    );
+  function cancelScheduledAutoClose(heroId: string) {
+    return Effect.gen(function* () {
+      const delayedJobs = yield* runPromiseAdapter("bull.respawn.getJobs", () =>
+        respawnWindowQueue.getJobs(["delayed"]),
+      );
+      yield* Effect.forEach(
+        delayedJobs.filter((job) => job.data.heroId === heroId),
+        (job) =>
+          runPromiseAdapter("bull.respawn.remove", () => job.remove()).pipe(
+            Effect.tap(() =>
+              Effect.sync(() =>
+                logger.log({
+                  message: "Cancelled scheduled auto-close job (kill recorded)",
+                  heroId,
+                  jobId: job.id,
+                }),
+              ),
+            ),
+          ),
+        { concurrency: "unbounded", discard: true },
+      );
+    });
   }
 
-  private getEventKillLockKey(
+  function getEventKillLockKey(
     guildId: string,
     world: string,
     npcId: number,
@@ -1745,7 +1842,7 @@ export class EventKillService {
     return `event:hero:kill:lock:${guildId}:${world}:${npcId}`;
   }
 
-  private getEventKillDedupKey(
+  function getEventKillDedupKey(
     guildId: string,
     world: string,
     npcId: number,
@@ -1761,7 +1858,7 @@ export class EventKillService {
     });
   }
 
-  private getEventKillHeroDedupKey(
+  function getEventKillHeroDedupKey(
     guildId: string,
     world: string,
     npcId: number,
@@ -1779,11 +1876,25 @@ export class EventKillService {
     });
   }
 
-  private getEventKillRecentDedupKey(
+  function getEventKillRecentDedupKey(
     guildId: string,
     world: string,
     npcId: number,
   ): string {
     return buildEventHeroKillRecentDedupKey({ guildId, world, npcId });
   }
-}
+
+  return {
+    checkAndRecordEventHeroKill,
+    getEventHeroStats,
+    getEventHeroTimers,
+    getEventKillHistory,
+    getHeroKillHistory,
+    getKillDetail,
+    getKillTimelineData,
+    getMemberKillHistory,
+    recordHeroKill,
+  };
+};
+
+export type EventKills = ReturnType<typeof makeEventKills>;

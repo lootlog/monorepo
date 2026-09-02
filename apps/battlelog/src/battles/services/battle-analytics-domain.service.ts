@@ -21,16 +21,16 @@ const EMPTY_PLAYER_VS_PLAYER_WARRIOR = {
   critWoundDamageTaken: 0,
 };
 
-export class BattleAnalyticsDomainService {
+export const battleAnalyticsDomain = {
   inflateBattleRows(
     fetchedBattles: StoredBattleWithWarriors[],
   ): InflatedBattleWithWarriors[] {
     return inflateBattleWarriorsInBattles(fetchedBattles);
-  }
+  },
 
   toCharacterIdSet(characterIds: string[]): Set<string> {
     return new Set(characterIds);
-  }
+  },
 
   findUserWarrior(
     battle: InflatedBattleWithWarriors,
@@ -39,7 +39,7 @@ export class BattleAnalyticsDomainService {
     return battle.warriors.find((warrior) =>
       characterIds.has(warrior.originalId),
     );
-  }
+  },
 
   findOpponentWarrior(
     battle: InflatedBattleWithWarriors,
@@ -48,14 +48,14 @@ export class BattleAnalyticsDomainService {
     return battle.warriors.find(
       (warrior) => !characterIds.has(warrior.originalId),
     );
-  }
+  },
 
   findWarrior(
     battle: InflatedBattleWithWarriors,
     originalId: string,
   ): InflatedBattleWarrior | undefined {
     return battle.warriors.find((warrior) => warrior.originalId === originalId);
-  }
+  },
 
   getBattleResultForUserWarrior(
     battle: InflatedBattleWithWarriors,
@@ -66,7 +66,7 @@ export class BattleAnalyticsDomainService {
     }
 
     return userWarrior.team === battle.winningTeam ? "won" : "lost";
-  }
+  },
 
   mapPlayerVsPlayerWarrior(warrior: InflatedBattleWarrior | undefined) {
     const resolvedWarrior = warrior ?? EMPTY_PLAYER_VS_PLAYER_WARRIOR;
@@ -83,7 +83,7 @@ export class BattleAnalyticsDomainService {
       woundDamageTaken: resolvedWarrior.woundDamageTaken,
       critWoundDamageTaken: resolvedWarrior.critWoundDamageTaken,
     };
-  }
+  },
 
   filterByOpponentLevel(
     battles: InflatedBattleWithWarriors[],
@@ -96,9 +96,14 @@ export class BattleAnalyticsDomainService {
     }
 
     return battles.filter((battle) =>
-      this.isOpponentLevelInRange(battle, characterIds, minLevel, maxLevel),
+      battleAnalyticsDomain.isOpponentLevelInRange(
+        battle,
+        characterIds,
+        minLevel,
+        maxLevel,
+      ),
     );
-  }
+  },
 
   filterByAnyOpponentLevel(
     battles: InflatedBattleWithWarriors[],
@@ -111,9 +116,14 @@ export class BattleAnalyticsDomainService {
     }
 
     return battles.filter((battle) =>
-      this.isAnyOpponentLevelInRange(battle, characterIds, minLevel, maxLevel),
+      battleAnalyticsDomain.isAnyOpponentLevelInRange(
+        battle,
+        characterIds,
+        minLevel,
+        maxLevel,
+      ),
     );
-  }
+  },
 
   isOpponentLevelInRange(
     battle: InflatedBattleWithWarriors,
@@ -125,13 +135,16 @@ export class BattleAnalyticsDomainService {
       return false;
     }
 
-    const opponentWarrior = this.findOpponentWarrior(battle, characterIds);
+    const opponentWarrior = battleAnalyticsDomain.findOpponentWarrior(
+      battle,
+      characterIds,
+    );
     if (!opponentWarrior) {
       return false;
     }
 
-    return this.isLevelInRange(opponentWarrior.lvl, minLevel, maxLevel);
-  }
+    return isLevelInRange(opponentWarrior.lvl, minLevel, maxLevel);
+  },
 
   isAnyOpponentLevelInRange(
     battle: InflatedBattleWithWarriors,
@@ -142,23 +155,25 @@ export class BattleAnalyticsDomainService {
     return battle.warriors.some(
       (warrior) =>
         !characterIds.has(warrior.originalId) &&
-        this.isLevelInRange(warrior.lvl, minLevel, maxLevel),
+        isLevelInRange(warrior.lvl, minLevel, maxLevel),
     );
-  }
+  },
 
   roundMetric(value: number): number {
     return Math.round(value * 100) / 100;
+  },
+};
+
+const isLevelInRange = (
+  level: number,
+  minLevel?: number,
+  maxLevel?: number,
+): boolean => {
+  if (minLevel !== undefined && level < minLevel) {
+    return false;
   }
 
-  private isLevelInRange(
-    level: number,
-    minLevel?: number,
-    maxLevel?: number,
-  ): boolean {
-    if (minLevel !== undefined && level < minLevel) {
-      return false;
-    }
+  return maxLevel === undefined || level <= maxLevel;
+};
 
-    return maxLevel === undefined || level <= maxLevel;
-  }
-}
+export type BattleAnalyticsDomain = typeof battleAnalyticsDomain;

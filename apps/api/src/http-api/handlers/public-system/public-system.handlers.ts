@@ -5,8 +5,7 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { MapsService } from "#src/maps/maps.service";
-import type { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
+import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import {
   AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
   LootlogApi,
@@ -56,8 +55,8 @@ export class PublicSystemData extends Context.Service<
   }
 >()("@lootlog/api/http-api/public-system/data") {
   static layerServices(options: {
-    readonly maps: MapsService;
-    readonly statsCard: PublicGuildStatsCardService;
+    readonly getMaps: Effect.Effect<unknown, PublicSystemOperationError>;
+    readonly statsCard: PublicGuildStatsCard;
     readonly local: boolean;
   }) {
     return Layer.succeed(
@@ -67,23 +66,22 @@ export class PublicSystemData extends Context.Service<
   }
 
   static makeServices(options: {
-    readonly maps: MapsService;
-    readonly statsCard: PublicGuildStatsCardService;
+    readonly getMaps: Effect.Effect<unknown, PublicSystemOperationError>;
+    readonly statsCard: PublicGuildStatsCard;
     readonly local: boolean;
   }): PublicSystemData["Service"] {
-    const attempt = <A>(operation: () => A | PromiseLike<A>) =>
-      Effect.tryPromise({
-        try: () => Promise.resolve(operation()),
-        catch: (cause) => new PublicSystemOperationError({ cause }),
-      });
+    const operation = <A, E>(effect: Effect.Effect<A, E>) =>
+      effect.pipe(
+        Effect.mapError((cause) => new PublicSystemOperationError({ cause })),
+      );
 
     return PublicSystemData.of({
       healthCheck: Effect.void,
-      getMaps: attempt(() => options.maps.getMaps()),
+      getMaps: options.getMaps,
       refreshStatsCard: (guildId) =>
-        attempt(() => options.statsCard.refreshStatsCard(guildId)),
+        operation(options.statsCard.refreshStatsCard(guildId)),
       getStatsCard: (guildId) =>
-        attempt(() => options.statsCard.getStatsCard(guildId)),
+        operation(options.statsCard.getStatsCard(guildId)),
       statsCardCacheControl: options.local
         ? LOCAL_CACHE_CONTROL
         : PUBLIC_CACHE_CONTROL,
@@ -96,19 +94,21 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new PublicSystemOperationError({ cause })),
   );
 
-export const healthCheck = Effect.fn("healthCheck")(function* () {
-  const data = yield* PublicSystemData;
-  yield* data.healthCheck;
-});
+export const healthCheck = Effect.fn("HealthzControllerHealthCheck")(
+  function* () {
+    const data = yield* PublicSystemData;
+    yield* data.healthCheck;
+  },
+);
 
-export const getMaps = Effect.fn("getMaps")(function* () {
+export const getMaps = Effect.fn("MapsControllerGetMaps")(function* () {
   const data = yield* PublicSystemData;
   return yield* decode(MapsControllerGetMaps200, yield* data.getMaps);
 });
 
-export const refreshStatsCard = Effect.fn("refreshStatsCard")(function* (
-  guildId: string,
-) {
+export const refreshStatsCard = Effect.fn(
+  "AuthenticatedGuildStatsCardControllerRefreshStatsCard",
+)(function* (guildId: string) {
   const authorization = yield* PublicSystemAuthorization;
   const access = yield* authorization.requireCapability({
     guildId,
@@ -122,9 +122,9 @@ export const refreshStatsCard = Effect.fn("refreshStatsCard")(function* (
   );
 });
 
-export const getPublicStatsCard = Effect.fn("getPublicStatsCard")(function* (
-  guildId: string,
-) {
+export const getPublicStatsCard = Effect.fn(
+  "PublicGuildStatsCardControllerGetStatsCard",
+)(function* (guildId: string) {
   const data = yield* PublicSystemData;
   const image = yield* data.getStatsCard(guildId);
 

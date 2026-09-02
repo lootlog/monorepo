@@ -72,7 +72,7 @@ describe("native API HTTP boundary", () => {
 
   afterAll(() => boundary.dispose());
 
-  it("serves health without initializing legacy Nest", async () => {
+  it("serves health without initializing legacy controllers", async () => {
     const response = await boundary.handler(
       new Request("http://api.test/healthz"),
     );

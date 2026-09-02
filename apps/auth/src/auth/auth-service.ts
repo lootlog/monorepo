@@ -1,4 +1,5 @@
 import { APIError } from "better-auth/api";
+import { and, eq } from "drizzle-orm";
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
 import {
   Context,
@@ -10,6 +11,8 @@ import {
   Schema,
 } from "effect";
 import { AppConfig } from "#src/config/env";
+import { AuthDatabase } from "#src/database/drizzle";
+import { authAccounts } from "#src/database/drizzle.schema";
 import { AuthRedisStorage } from "./auth-redis-storage.js";
 import {
   BetterAuthRuntime,
@@ -96,10 +99,14 @@ export const normalizeScopes = (scopes: unknown): ReadonlyArray<string> => {
 export const createAuthService = ({
   auth,
   appUrl,
+  findDiscordAccountId,
   realtimeTicketRedis,
 }: {
   readonly auth: LootlogAuth;
   readonly appUrl: string;
+  readonly findDiscordAccountId: (
+    request: AccessTokenRequest,
+  ) => Effect.Effect<string | null, unknown>;
   readonly realtimeTicketRedis: RealtimeTicketRedis;
 }) => {
   const getSession = Effect.fn("AuthService.getSession")((headers: Headers) =>
@@ -215,18 +222,25 @@ export const createAuthService = ({
   );
 
   const getDiscordAccessToken = Effect.fn("AuthService.getDiscordAccessToken")(
-    ({ userId, discordId }: AccessTokenRequest) =>
-      Effect.tryPromise({
+    function* (request: AccessTokenRequest) {
+      const accountId = yield* findDiscordAccountId(request);
+      if (accountId === null) {
+        return yield* Effect.fail(
+          new APIError("BAD_REQUEST", { code: "ACCOUNT_NOT_FOUND" }),
+        );
+      }
+
+      return yield* Effect.tryPromise({
         try: () =>
           auth.api.getAccessToken({
             body: {
-              providerId: "discord",
-              userId,
-              accountId: discordId,
+              userId: request.userId,
+              accountId,
             },
           }),
         catch: (cause) => cause,
-      }),
+      });
+    },
   );
 
   const getRequiredSession = Effect.fn("AuthService.getRequiredSession")(
@@ -399,12 +413,31 @@ export class AuthService extends Context.Service<
     Effect.gen(function* () {
       const auth = yield* BetterAuthRuntime;
       const config = yield* AppConfig;
+      const database = yield* AuthDatabase;
       const redis = yield* AuthRedisStorage;
 
       return AuthService.of(
         createAuthService({
           auth,
           appUrl: config.appUrl,
+          findDiscordAccountId: (request) =>
+            Effect.tryPromise({
+              try: async () => {
+                const rows = await database.db
+                  .select({ id: authAccounts.id })
+                  .from(authAccounts)
+                  .where(
+                    and(
+                      eq(authAccounts.userId, request.userId),
+                      eq(authAccounts.providerId, "discord"),
+                      eq(authAccounts.accountId, request.discordId),
+                    ),
+                  )
+                  .limit(1);
+                return rows[0]?.id ?? null;
+              },
+              catch: (cause) => cause,
+            }),
           realtimeTicketRedis: redis.client,
         }),
       );

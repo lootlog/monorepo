@@ -28,6 +28,9 @@
         "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
       ]
     },
+    "apps/api": {
+      "ignoreDependencies": ["@effect/openapi-generator"]
+    },
     "apps/game-client": {
       "entry": ["src/main.tsx", "scripts/**/*.{ts,mjs}"],
       "project": [
@@ -57,12 +60,14 @@
     }
   },
   "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
+  "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
     "@lootlog/ui",
     "@tailwindcss/postcss",
     "@types/mdx",
+    "husky",
     "tailwindcss",
     "tw-animate-css"
   ],

@@ -27,7 +27,7 @@ export const createLootlogAuth = ({
 }: {
   readonly config: AuthConfig;
   readonly database: AuthDatabaseConnection["db"];
-  readonly secondaryStorage: AuthRedisStorage["Service"]["secondaryStorage"];
+  readonly secondaryStorage?: AuthRedisStorage["Service"]["secondaryStorage"];
 }) => {
   const discordAuthOptions = createDiscordAuthOptions({
     clientId: config.discordClientId,
@@ -42,11 +42,13 @@ export const createLootlogAuth = ({
     database: drizzleAdapter(database, {
       provider: "pg",
       schema: betterAuthSchema,
+      transaction: true,
     }),
-    secondaryStorage,
     account: {
       encryptOAuthTokens: true,
+      identityStrategy: "provider-id",
     },
+    ...(secondaryStorage === undefined ? {} : { secondaryStorage }),
     ...discordAuthOptions,
     secret: reveal(config.authSecret),
     session: {

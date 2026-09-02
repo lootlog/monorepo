@@ -1,26 +1,43 @@
 import type { Job } from "bullmq";
+import { Effect, Schema } from "effect";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
-import { NotificationJobService } from "#src/notifications/notification-job.service";
 
 export interface NotificationDispatchJobData {
   notificationJobId: string;
 }
 
-export class NotificationsDispatchProcessor {
-  constructor(
-    private readonly jobService: NotificationJobService,
-    private readonly logger: Logger,
-  ) {}
+export interface NotificationDispatch {
+  readonly dispatch: (
+    notificationJobId: string,
+  ) => Effect.Effect<void, unknown, never>;
+}
 
-  async process(job: Job<NotificationDispatchJobData>) {
-    await this.jobService.dispatchNotificationJob(job.data.notificationJobId);
+// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
+export class NotificationDispatchFailure extends Schema.TaggedError<NotificationDispatchFailure>()(
+  "NotificationDispatchFailure",
+  { jobId: Schema.String, cause: Schema.Defect() },
+) {}
 
-    this.logger.log({
+export const makeNotificationDispatchProcessor = (
+  notifications: NotificationDispatch,
+  logger: Logger,
+) =>
+  Effect.fn("notifications.worker.dispatch")(function* (
+    job: Job<NotificationDispatchJobData>,
+  ) {
+    yield* notifications.dispatch(job.data.notificationJobId).pipe(
+      Effect.mapError(
+        (cause) =>
+          new NotificationDispatchFailure({
+            jobId: job.data.notificationJobId,
+            cause,
+          }),
+      ),
+    );
+    logger.log({
       level: "info",
       message: "Notification dispatch job processed",
       notificationJobId: job.data.notificationJobId,
       queueJobId: job.id,
     });
-  }
-}
+  });

@@ -1,14 +1,10 @@
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { CreateManualTimerDto as LegacyCreateManualTimerDto } from "#src/timers/dto/create-manual-timer.dto";
-import type { CreateTimerFromGameClientDto as LegacyCreateAutoTimerDto } from "#src/timers/dto/create-timer-from-game-client.dto";
-import type { ResetTimerDto as LegacyResetTimerDto } from "#src/timers/dto/reset-timer.dto";
-import type { TimersService } from "#src/timers/timers.service";
 import type { Guild, Role } from "#src/timers/timers.types";
 import {
   LootlogApi,
@@ -86,8 +82,7 @@ export class TimersData extends Context.Service<
   {
     readonly getAll: (identity: TimersIdentity, world?: string) => DataEffect;
     readonly getRecentHistory: (
-      identity: TimersIdentity,
-      guildId: string,
+      access: TimersGuildAccess,
       world: string,
       limit?: number,
     ) => DataEffect;
@@ -106,14 +101,12 @@ export class TimersData extends Context.Service<
       payload: CreateTimerFromGameClientDto,
     ) => DataEffect;
     readonly reset: (
-      identity: TimersIdentity,
-      guildId: string,
+      access: TimersGuildAccess,
       timerIdentifier: string,
       payload: ResetTimerDto,
     ) => DataEffect;
     readonly delete: (
-      identity: TimersIdentity,
-      guildId: string,
+      access: TimersGuildAccess,
       timerIdentifier: string,
       world?: string,
     ) => DataEffect;
@@ -124,90 +117,42 @@ export class TimersData extends Context.Service<
       limit?: number,
     ) => DataEffect;
     readonly restore: (
-      identity: TimersIdentity,
-      guildId: string,
+      access: TimersGuildAccess,
       historyEntryId: number,
     ) => DataEffect;
     readonly createManual: (
-      identity: TimersIdentity,
-      guildId: string,
+      access: TimersGuildAccess,
       payload: CreateManualTimerDto,
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/timers/data") {
-  static makeService(service: TimersService): TimersData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new TimersOperationError({ cause }),
-      });
-
+  static makeService(
+    native: Pick<
+      TimersData["Service"],
+      | "createAuto"
+      | "getAll"
+      | "delete"
+      | "getGuildTimers"
+      | "getHistory"
+      | "getRecentHistory"
+      | "createManual"
+      | "restore"
+      | "reset"
+      | "searchNpcs"
+    >,
+  ): TimersData["Service"] {
     return TimersData.of({
-      getAll: ({ discordId, userId }, world) =>
-        attempt(() => service.getAllTimers(discordId, userId, { world })),
-      getRecentHistory: ({ discordId }, guildId, world, limit) =>
-        attempt(() =>
-          service.getRecentTimerHistory(discordId, guildId, world, { limit }),
-        ),
-      getGuildTimers: ({ userId, guild, accessPolicy, roles }, world) =>
-        attempt(() =>
-          service.getTimers(userId, { world }, guild, accessPolicy, roles),
-        ),
-      searchNpcs: (guildId, world, search, limit) =>
-        attempt(() =>
-          service.searchNpcsWithTimerData(guildId, world, search, limit),
-        ),
-      createAuto: ({ discordId, userId }, payload) =>
-        attempt(() =>
-          service.createAutoTimer(
-            discordId,
-            userId,
-            structuredClone(payload) as LegacyCreateAutoTimerDto,
-          ),
-        ),
-      reset: ({ discordId }, guildId, timerIdentifier, payload) =>
-        attempt(() =>
-          service.resetTimer(
-            discordId,
-            guildId,
-            timerIdentifier,
-            structuredClone(payload) as LegacyResetTimerDto,
-          ),
-        ),
-      delete: ({ discordId }, guildId, timerIdentifier, world) =>
-        attempt(() =>
-          service.deleteTimer(discordId, guildId, timerIdentifier, world),
-        ),
-      getHistory: (
-        { guild, accessPolicy, roles },
-        world,
-        timerIdentifier,
-        limit,
-      ) =>
-        attempt(() =>
-          service.getTimerHistory(guild.id, world, timerIdentifier, {
-            limit,
-            accessPolicy,
-            roles,
-          }),
-        ),
-      restore: ({ discordId }, guildId, historyEntryId) =>
-        attempt(() =>
-          service.restoreTimerFromHistory(discordId, guildId, historyEntryId),
-        ),
-      createManual: ({ discordId }, guildId, payload) =>
-        attempt(() =>
-          service.createManualTimer(
-            discordId,
-            guildId,
-            structuredClone(payload) as LegacyCreateManualTimerDto,
-          ),
-        ),
+      getAll: native.getAll,
+      getRecentHistory: native.getRecentHistory,
+      getGuildTimers: native.getGuildTimers,
+      searchNpcs: native.searchNpcs,
+      createAuto: native.createAuto,
+      reset: native.reset,
+      delete: native.delete,
+      getHistory: native.getHistory,
+      restore: native.restore,
+      createManual: native.createManual,
     });
-  }
-
-  static layerService(service: TimersService) {
-    return Layer.succeed(TimersData, TimersData.makeService(service));
   }
 }
 
@@ -291,9 +236,9 @@ export const getAllTimers = Effect.fn("getAllTimers")(function* (
 
 export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
   function* (guildId: string, world: string, limit?: number) {
-    const current = yield* identity;
+    const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
     const value = yield* data((service) =>
-      service.getRecentHistory(current, guildId, world, limit),
+      service.getRecentHistory(access, world, limit),
     );
     return yield* decode(TimersControllerGetRecentTimerHistory200, value);
   },
@@ -336,7 +281,7 @@ export const resetGuildTimer = Effect.fn("resetGuildTimer")(function* (
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_RESET);
   const value = yield* data((service) =>
-    service.reset(access, access.guild.id, timerIdentifier, payload),
+    service.reset(access, timerIdentifier, payload),
   );
   return yield* decode(TimersControllerResetTimer200, value);
 });
@@ -347,9 +292,7 @@ export const deleteGuildTimer = Effect.fn("deleteGuildTimer")(function* (
   world?: string,
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_MANAGE);
-  yield* data((service) =>
-    service.delete(access, access.guild.id, timerIdentifier, world),
-  );
+  yield* data((service) => service.delete(access, timerIdentifier, world));
 });
 
 export const getGuildTimerHistory = Effect.fn("getGuildTimerHistory")(
@@ -373,7 +316,7 @@ export const restoreGuildTimer = Effect.fn("restoreGuildTimer")(function* (
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_WRITE);
   const value = yield* data((service) =>
-    service.restore(access, access.guild.id, historyEntryId),
+    service.restore(access, historyEntryId),
   );
   return yield* decode(TimersControllerRestoreTimerFromHistory201, value);
 });
@@ -385,7 +328,7 @@ export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
       Permission.LOOTLOG_TIMERS_WRITE,
     );
     const value = yield* data((service) =>
-      service.createManual(access, access.guild.id, payload),
+      service.createManual(access, payload),
     );
     return yield* decode(TimersControllerCreateManualTimer201, value);
   },

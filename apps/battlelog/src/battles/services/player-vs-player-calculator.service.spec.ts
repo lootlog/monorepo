@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
-import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service.js";
-import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service.js";
+import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
+import { makePlayerVsPlayerCalculator } from "./player-vs-player-calculator.service.js";
 
 type TestBattleInput = {
   id: string;
@@ -65,10 +65,8 @@ function createBattle({
   } as InflatedBattleWithWarriors;
 }
 
-describe("PlayerVsPlayerCalculatorService", () => {
-  const service = new PlayerVsPlayerCalculatorService(
-    new BattleAnalyticsDomainService(),
-  );
+describe("player-vs-player calculator", () => {
+  const service = makePlayerVsPlayerCalculator(battleAnalyticsDomain);
   const characterIds = new Set(["character-1"]);
 
   it("keeps only matching 1v1 opponent battles inside level filters", () => {

@@ -17,10 +17,10 @@ export class ApiRedis extends Context.Service<ApiRedis, RedisService>()(
             username: redis.username,
             password: Redacted.value(redis.password),
           });
-          service.onModuleInit();
+          service.initialize();
           return service;
         }),
-        (service) => Effect.sync(() => service.onModuleDestroy()),
+        (service) => Effect.sync(() => service.shutdown()),
       );
     }),
   );

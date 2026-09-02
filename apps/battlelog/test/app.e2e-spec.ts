@@ -1,11 +1,13 @@
-import { describe, expect, it } from "bun:test";
-import { createRequestHandler } from "../src/http/router.js";
+import { afterAll, describe, expect, it } from "bun:test";
+import { makeBattlelogTestBoundary } from "../src/http/battlelog-http.js";
 
-const handler = createRequestHandler({
+const boundary = makeBattlelogTestBoundary({
   battles: {} as never,
   publicBattles: {} as never,
   internal: {} as never,
 });
+const handler = boundary.handler;
+afterAll(() => boundary.dispose());
 
 describe("Battlelog HTTP boundary", () => {
   it("returns the readiness response without initializing external resources", async () => {
@@ -14,7 +16,7 @@ describe("Battlelog HTTP boundary", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe("OK");
+    expect(await response.text()).toBe("");
   });
 
   it("rejects authenticated routes without first-party forward-auth headers", async () => {

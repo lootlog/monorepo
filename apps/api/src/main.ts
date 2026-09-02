@@ -23,5 +23,10 @@ const ObservabilityLive = Layer.merge(
 );
 
 BunRuntime.runMain(
-  Layer.launch(ApiApplicationLive.pipe(Layer.provide(ObservabilityLive))),
+  Layer.launch(
+    ApiApplicationLive.pipe(
+      Layer.provide(FetchHttpClient.layer),
+      Layer.provide(ObservabilityLive),
+    ),
+  ),
 );

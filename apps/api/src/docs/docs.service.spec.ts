@@ -4,7 +4,8 @@ import {
   ConflictException,
   NotFoundException,
 } from "#src/shared/http/http-errors";
-import { DocsService } from "./docs.service.js";
+import { Effect } from "effect";
+import { makeDocsService, type DocsService } from "./docs.service.js";
 
 const baseContent = {
   root: {
@@ -45,8 +46,8 @@ const createHistoryRecord = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const createPrismaMock = () => {
-  const prisma = {
+const createDatabaseMock = () => {
+  const database = {
     $transaction: vi.fn<<T>(callback: (tx: unknown) => T) => T>(),
     guild: {
       findUnique: vi.fn<(...args: unknown[]) => unknown>(),
@@ -69,13 +70,13 @@ const createPrismaMock = () => {
     },
   };
 
-  prisma.$transaction.mockImplementation((callback) => callback(prisma));
+  database.$transaction.mockImplementation((callback) => callback(database));
 
-  return prisma;
+  return database;
 };
 
 const createRepositoryAdapter = (
-  database: ReturnType<typeof createPrismaMock>,
+  database: ReturnType<typeof createDatabaseMock>,
 ) => ({
   async listDocuments(guildId: string) {
     const [guild, used, trashed, documents] = await Promise.all([
@@ -270,37 +271,72 @@ const createRepositoryAdapter = (
   },
 });
 
-describe("DocsService", () => {
-  let prisma: ReturnType<typeof createPrismaMock>;
-  let service: DocsService;
+type PromiseDocsService = {
+  [Key in keyof DocsService]: DocsService[Key] extends (
+    ...arguments_: infer Arguments
+  ) => Effect.Effect<infer Success, infer _Failure>
+    ? (...arguments_: Arguments) => Promise<Success>
+    : never;
+};
+
+const createPromiseDocsService = (
+  repository: ReturnType<typeof createRepositoryAdapter>,
+): PromiseDocsService => {
+  const effectRepository = new Proxy(repository, {
+    get(target, property) {
+      const operation = Reflect.get(target, property) as (
+        ...arguments_: unknown[]
+      ) => Promise<unknown>;
+      return (...arguments_: unknown[]) =>
+        Effect.tryPromise({
+          try: () => Reflect.apply(operation, target, arguments_),
+          catch: (error) => error,
+        });
+    },
+  });
+  const effectService = makeDocsService(effectRepository as never);
+  return new Proxy(effectService, {
+    get(target, property) {
+      const operation = Reflect.get(target, property) as (
+        ...arguments_: unknown[]
+      ) => Effect.Effect<unknown, unknown>;
+      return (...arguments_: unknown[]) =>
+        Effect.runPromise(Reflect.apply(operation, target, arguments_));
+    },
+  }) as PromiseDocsService;
+};
+
+describe("docs Effect module", () => {
+  let database: ReturnType<typeof createDatabaseMock>;
+  let service: PromiseDocsService;
 
   beforeEach(() => {
-    prisma = createPrismaMock();
-    service = new DocsService(createRepositoryAdapter(prisma) as never);
-    prisma.member.findMany.mockResolvedValue([]);
+    database = createDatabaseMock();
+    service = createPromiseDocsService(createRepositoryAdapter(database));
+    database.member.findMany.mockResolvedValue([]);
     vi.clearAllMocks();
   });
 
   it("returns document summaries with the guild document limit", async () => {
     const document = createDocumentRecord();
 
-    prisma.guild.findUnique.mockResolvedValue({ documentLimit: 50 });
-    prisma.guildDocument.count
+    database.guild.findUnique.mockResolvedValue({ documentLimit: 50 });
+    database.guildDocument.count
       .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(0);
-    prisma.guildDocument.findMany.mockResolvedValue([document]);
-    prisma.member.findMany.mockResolvedValue([
+    database.guildDocument.findMany.mockResolvedValue([document]);
+    database.member.findMany.mockResolvedValue([
       { userId: "discord-1", name: "Kamil" },
     ]);
 
     const result = await service.listDocuments("guild-1");
 
-    expect(prisma.guildDocument.findMany).toHaveBeenCalledWith(
+    expect(database.guildDocument.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { guildId: "guild-1", deletedAt: null },
       }),
     );
-    expect(prisma.member.findMany).toHaveBeenCalledWith({
+    expect(database.member.findMany).toHaveBeenCalledWith({
       where: {
         guildId: "guild-1",
         userId: { in: ["discord-1"] },
@@ -324,15 +360,15 @@ describe("DocsService", () => {
   });
 
   it("throws conflict when the guild document limit is reached", async () => {
-    prisma.guild.findUnique.mockResolvedValue({ documentLimit: 1 });
-    prisma.guildDocument.count.mockResolvedValue(1);
+    database.guild.findUnique.mockResolvedValue({ documentLimit: 1 });
+    database.guildDocument.count.mockResolvedValue(1);
 
     await expect(
       service.createDocument("guild-1", "discord-1", { title: "Plan" }),
     ).rejects.toBeInstanceOf(ConflictException);
 
-    expect(prisma.guildDocument.create).not.toHaveBeenCalled();
-    expect(prisma.guildDocumentHistory.create).not.toHaveBeenCalled();
+    expect(database.guildDocument.create).not.toHaveBeenCalled();
+    expect(database.guildDocumentHistory.create).not.toHaveBeenCalled();
   });
 
   it("rejects too long titles before writing", async () => {
@@ -342,7 +378,7 @@ describe("DocsService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(database.$transaction).not.toHaveBeenCalled();
   });
 
   it("rejects too long content before writing", async () => {
@@ -359,21 +395,21 @@ describe("DocsService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(database.$transaction).not.toHaveBeenCalled();
   });
 
   it("creates an empty document and initial history snapshot", async () => {
     const document = createDocumentRecord();
 
-    prisma.guild.findUnique.mockResolvedValue({ documentLimit: 50 });
-    prisma.guildDocument.count.mockResolvedValue(0);
-    prisma.guildDocument.create.mockResolvedValue(document);
+    database.guild.findUnique.mockResolvedValue({ documentLimit: 50 });
+    database.guildDocument.count.mockResolvedValue(0);
+    database.guildDocument.create.mockResolvedValue(document);
 
     const result = await service.createDocument("guild-1", "discord-1", {
       title: " Plan ",
     });
 
-    expect(prisma.guildDocument.create).toHaveBeenCalledWith({
+    expect(database.guildDocument.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         guildId: "guild-1",
         title: "Plan",
@@ -381,7 +417,7 @@ describe("DocsService", () => {
         updatedByMemberId: "discord-1",
       }),
     });
-    expect(prisma.guildDocumentHistory.create).toHaveBeenCalledWith({
+    expect(database.guildDocumentHistory.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         documentId: "doc-1",
         guildId: "guild-1",
@@ -404,7 +440,7 @@ describe("DocsService", () => {
   it("does not create a new history snapshot for no-op saves", async () => {
     const document = createDocumentRecord();
 
-    prisma.guildDocument.findFirst.mockResolvedValue(document);
+    database.guildDocument.findFirst.mockResolvedValue(document);
 
     const result = await service.updateDocument(
       "guild-1",
@@ -416,8 +452,8 @@ describe("DocsService", () => {
       },
     );
 
-    expect(prisma.guildDocument.update).not.toHaveBeenCalled();
-    expect(prisma.guildDocumentHistory.create).not.toHaveBeenCalled();
+    expect(database.guildDocument.update).not.toHaveBeenCalled();
+    expect(database.guildDocumentHistory.create).not.toHaveBeenCalled();
     expect(result.version).toBe(1);
   });
 
@@ -435,8 +471,8 @@ describe("DocsService", () => {
       updatedByMemberId: "discord-2",
     });
 
-    prisma.guildDocument.findFirst.mockResolvedValue(currentDocument);
-    prisma.guildDocument.update.mockResolvedValue(updatedDocument);
+    database.guildDocument.findFirst.mockResolvedValue(currentDocument);
+    database.guildDocument.update.mockResolvedValue(updatedDocument);
 
     const result = await service.updateDocument(
       "guild-1",
@@ -448,7 +484,7 @@ describe("DocsService", () => {
       },
     );
 
-    expect(prisma.guildDocument.update).toHaveBeenCalledWith({
+    expect(database.guildDocument.update).toHaveBeenCalledWith({
       where: { id: "doc-1" },
       data: expect.objectContaining({
         title: "Plan v2",
@@ -456,7 +492,7 @@ describe("DocsService", () => {
         version: { increment: 1 },
       }),
     });
-    expect(prisma.guildDocumentHistory.create).toHaveBeenCalledWith({
+    expect(database.guildDocumentHistory.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         documentId: "doc-1",
         guildId: "guild-1",
@@ -477,8 +513,8 @@ describe("DocsService", () => {
   });
 
   it("throws not found for missing history snapshots", async () => {
-    prisma.guildDocument.findFirst.mockResolvedValue(createDocumentRecord());
-    prisma.guildDocumentHistory.findFirst.mockResolvedValue(null);
+    database.guildDocument.findFirst.mockResolvedValue(createDocumentRecord());
+    database.guildDocumentHistory.findFirst.mockResolvedValue(null);
 
     await expect(
       service.getHistorySnapshot("guild-1", "doc-1", "history-1"),
@@ -488,8 +524,8 @@ describe("DocsService", () => {
   it("returns history metadata without content in list results", async () => {
     const history = createHistoryRecord();
 
-    prisma.guildDocument.findFirst.mockResolvedValue(createDocumentRecord());
-    prisma.guildDocumentHistory.findMany.mockResolvedValue([history]);
+    database.guildDocument.findFirst.mockResolvedValue(createDocumentRecord());
+    database.guildDocumentHistory.findMany.mockResolvedValue([history]);
 
     const result = await service.listHistory("guild-1", "doc-1");
 
@@ -507,15 +543,15 @@ describe("DocsService", () => {
       deletedByMemberId: "discord-2",
     });
 
-    prisma.guildDocument.findMany.mockResolvedValue([document]);
-    prisma.member.findMany.mockResolvedValue([
+    database.guildDocument.findMany.mockResolvedValue([document]);
+    database.member.findMany.mockResolvedValue([
       { userId: "discord-1", name: "Kamil" },
       { userId: "discord-2", name: "Wild" },
     ]);
 
     const result = await service.listTrash("guild-1");
 
-    expect(prisma.guildDocument.findMany).toHaveBeenCalledWith(
+    expect(database.guildDocument.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { guildId: "guild-1", deletedAt: { not: null } },
       }),
@@ -538,8 +574,8 @@ describe("DocsService", () => {
       updatedByMemberId: "discord-2",
     });
 
-    prisma.guildDocument.findFirst.mockResolvedValue(document);
-    prisma.guildDocument.update.mockResolvedValue(deletedDocument);
+    database.guildDocument.findFirst.mockResolvedValue(document);
+    database.guildDocument.update.mockResolvedValue(deletedDocument);
 
     const result = await service.moveDocumentToTrash(
       "guild-1",
@@ -547,16 +583,17 @@ describe("DocsService", () => {
       "discord-2",
     );
 
-    expect(prisma.guildDocument.findFirst).toHaveBeenCalledWith({
+    expect(database.guildDocument.findFirst).toHaveBeenCalledWith({
       where: { id: "doc-1", guildId: "guild-1", deletedAt: null },
     });
-    const updateInput = prisma.guildDocument.update.mock.calls[0]?.[0];
+    const updateInput = database.guildDocument.update.mock.calls[0]?.[0];
     expect(updateInput?.where).toEqual({ id: "doc-1" });
     expect(updateInput?.data.deletedAt).toBeInstanceOf(Date);
     expect(updateInput?.data.deletedByMemberId).toBe("discord-2");
     expect(updateInput?.data.updatedByMemberId).toBe("discord-2");
 
-    const historyInput = prisma.guildDocumentHistory.create.mock.calls[0]?.[0];
+    const historyInput =
+      database.guildDocumentHistory.create.mock.calls[0]?.[0];
     expect(historyInput?.data.documentId).toBe("doc-1");
     expect(historyInput?.data.guildId).toBe("guild-1");
     expect(historyInput?.data.version).toBe(1);
@@ -574,8 +611,8 @@ describe("DocsService", () => {
       updatedByMemberId: "discord-admin",
     });
 
-    prisma.guildDocument.findFirst.mockResolvedValue(deletedDocument);
-    prisma.guildDocument.update.mockResolvedValue(restoredDocument);
+    database.guildDocument.findFirst.mockResolvedValue(deletedDocument);
+    database.guildDocument.update.mockResolvedValue(restoredDocument);
 
     const result = await service.restoreDocument(
       "guild-1",
@@ -583,7 +620,7 @@ describe("DocsService", () => {
       "discord-admin",
     );
 
-    expect(prisma.guildDocument.update).toHaveBeenCalledWith({
+    expect(database.guildDocument.update).toHaveBeenCalledWith({
       where: { id: "doc-1" },
       data: {
         deletedAt: null,
@@ -591,7 +628,8 @@ describe("DocsService", () => {
         updatedByMemberId: "discord-admin",
       },
     });
-    const historyInput = prisma.guildDocumentHistory.create.mock.calls[0]?.[0];
+    const historyInput =
+      database.guildDocumentHistory.create.mock.calls[0]?.[0];
     expect(historyInput?.data.documentId).toBe("doc-1");
     expect(historyInput?.data.guildId).toBe("guild-1");
     expect(historyInput?.data.version).toBe(1);
@@ -601,31 +639,31 @@ describe("DocsService", () => {
   });
 
   it("rejects restore for active documents", async () => {
-    prisma.guildDocument.findFirst.mockResolvedValue(createDocumentRecord());
+    database.guildDocument.findFirst.mockResolvedValue(createDocumentRecord());
 
     await expect(
       service.restoreDocument("guild-1", "doc-1", "discord-admin"),
     ).rejects.toBeInstanceOf(ConflictException);
 
-    expect(prisma.guildDocument.update).not.toHaveBeenCalled();
+    expect(database.guildDocument.update).not.toHaveBeenCalled();
   });
 
   it("permanently deletes only trashed documents", async () => {
-    prisma.guildDocument.findFirst.mockResolvedValue({
+    database.guildDocument.findFirst.mockResolvedValue({
       id: "doc-1",
       deletedAt: new Date("2026-06-22T11:00:00.000Z"),
     });
 
     const result = await service.purgeDocument("guild-1", "doc-1");
 
-    expect(prisma.guildDocument.delete).toHaveBeenCalledWith({
+    expect(database.guildDocument.delete).toHaveBeenCalledWith({
       where: { id: "doc-1" },
     });
     expect(result).toEqual({ success: true });
   });
 
   it("rejects purge for active documents", async () => {
-    prisma.guildDocument.findFirst.mockResolvedValue({
+    database.guildDocument.findFirst.mockResolvedValue({
       id: "doc-1",
       deletedAt: null,
     });
@@ -634,6 +672,6 @@ describe("DocsService", () => {
       service.purgeDocument("guild-1", "doc-1"),
     ).rejects.toBeInstanceOf(ConflictException);
 
-    expect(prisma.guildDocument.delete).not.toHaveBeenCalled();
+    expect(database.guildDocument.delete).not.toHaveBeenCalled();
   });
 });

@@ -164,6 +164,25 @@ jobs:
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      rabbitmq:
+        image: rabbitmq:4.1-alpine
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - name: Checkout validation commit
         uses: actions/checkout@v7
@@ -215,6 +234,17 @@ jobs:
             exit 0
           fi
           bunx turbo run test "${filters[@]}"
+
+      - name: Test real messaging and realtime integrations
+        env:
+          LOOTLOG_AUTH_TEST_POSTGRES: "1"
+          LOOTLOG_MESSAGING_TEST_RABBIT_URI: amqp://guest:guest@127.0.0.1:5672
+          LOOTLOG_REALTIME_TEST_REDIS_PORT: "6379"
+        run: |
+          bun test packages/messaging/test/rabbit.integration.test.ts
+          bun test apps/gateway/test/realtime-redis.integration.test.ts
+          bun test apps/auth/src/auth/realtime-ticket.integration.spec.ts
+          bun test apps/auth/src/database/migrations.integration.spec.ts
 
       - name: Test Game Client coverage
         if: contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')

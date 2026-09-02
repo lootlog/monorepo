@@ -1,35 +1,53 @@
-import { afterEach, describe, expect, it, vi } from "#test/bun-test";
-import { DiscordBotClientService } from "./discord-bot-client.service.js";
+import { describe, expect, it, vi } from "#test/bun-test";
+import { Effect } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { makeDiscordBotClient } from "./discord-bot-client.js";
 
 vi.mock("#src/config/discord-bot.config", () => ({
   discordBotConfig: { serviceUrl: "http://discord-bot" },
 }));
 
 describe("DiscordBotClientService", () => {
-  afterEach(() => vi.unstubAllGlobals());
-
   it("preserves the internal channel refresh request", async () => {
     const payload = { channels: [], syncState: { status: "READY" } };
-    const fetchMock = vi.fn(async () => Response.json(payload));
-    vi.stubGlobal("fetch", fetchMock);
+    const post = vi.fn(() =>
+      Effect.succeed({
+        status: 200,
+        headers: {},
+        arrayBuffer: Effect.succeed(
+          new TextEncoder().encode(JSON.stringify(payload)).buffer,
+        ),
+      }),
+    );
 
     await expect(
-      new DiscordBotClientService().refreshGuildChannels("guild-a"),
+      Effect.runPromise(
+        makeDiscordBotClient({
+          post,
+        } as unknown as HttpClientValue).refreshGuildChannels("guild-a"),
+      ),
     ).resolves.toEqual(payload);
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(post).toHaveBeenCalledWith(
       "http://discord-bot/internal/guilds/guild-a/channels/refresh",
-      expect.objectContaining({ method: "POST", body: "{}" }),
+      expect.objectContaining({ body: expect.anything() }),
     );
   });
 
   it("fails closed on a non-success response", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(null, { status: 503 })),
+    const get = vi.fn(() =>
+      Effect.succeed({
+        status: 503,
+        headers: {},
+        arrayBuffer: Effect.succeed(new ArrayBuffer(0)),
+      }),
     );
 
     await expect(
-      new DiscordBotClientService().getGuildSyncStatus("guild-a"),
+      Effect.runPromise(
+        makeDiscordBotClient({
+          get,
+        } as unknown as HttpClientValue).getGuildSyncStatus("guild-a"),
+      ),
     ).rejects.toThrow("Discord Bot request failed: 503");
   });
 });

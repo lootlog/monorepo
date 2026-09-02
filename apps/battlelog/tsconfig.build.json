@@ -10,7 +10,6 @@
     "**/*spec.ts",
     "drizzle",
     "generated",
-    "prisma",
     "scripts",
     "drizzle.config.ts",
     "vitest.config.ts",

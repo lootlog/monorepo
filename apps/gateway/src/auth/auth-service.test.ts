@@ -1,5 +1,7 @@
-import { describe, expect, test } from "bun:test";
-import { AuthService } from "./auth-service.js";
+import { describe, expect, mock, test } from "bun:test";
+import { Effect, Fiber } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { makeGatewayAuth } from "./auth-service.js";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 
 const config = {
@@ -8,7 +10,10 @@ const config = {
 } as unknown as GatewayConfiguration;
 
 describe("AuthService websocket upgrade boundary", () => {
-  const service = new AuthService(config);
+  const unavailableClient = {
+    get: () => Effect.die("HTTP must not run"),
+  } as unknown as HttpClientValue;
+  const service = makeGatewayAuth(config, unavailableClient);
 
   test("accepts configured first-party and Margonem origins", () => {
     expect(service.isAllowedOrigin("https://lootlog.example/")).toBe(true);
@@ -70,5 +75,66 @@ describe("AuthService websocket upgrade boundary", () => {
         }),
       ),
     ).toBeNull();
+  });
+
+  test("verifies a session through Effect HttpClient and preserves identity headers", async () => {
+    const get = mock((_url: string, _options: unknown) =>
+      Effect.succeed({
+        status: 200,
+        headers: {
+          "x-auth-discord-id": "discord-1",
+          "x-auth-user-id": "user-1",
+        },
+      }),
+    );
+    const auth = makeGatewayAuth(config, { get } as unknown as HttpClientValue);
+
+    await expect(
+      Effect.runPromise(
+        auth.verify({ kind: "session-cookie", value: "session=abc" }),
+      ),
+    ).resolves.toEqual({ discordId: "discord-1", userId: "user-1" });
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(get.mock.calls[0]?.[1]).toMatchObject({
+      headers: { cookie: "session=abc" },
+    });
+  });
+
+  test("does not retry a failed one-time-ticket verification", async () => {
+    const get = mock(() => Effect.fail(new Error("transport")));
+    const auth = makeGatewayAuth(config, { get } as unknown as HttpClientValue);
+
+    await expect(
+      Effect.runPromise(
+        auth.verify({
+          kind: "one-time-ticket",
+          value: "ticket",
+          origin: "https://classic.margonem.pl",
+        }),
+      ),
+    ).resolves.toBeNull();
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  test("propagates interruption through the verification request", async () => {
+    let interrupted = false;
+    const get = mock(() =>
+      Effect.never.pipe(
+        Effect.onInterrupt(() =>
+          Effect.sync(() => {
+            interrupted = true;
+          }),
+        ),
+      ),
+    );
+    const auth = makeGatewayAuth(config, { get } as unknown as HttpClientValue);
+    const fiber = Effect.runFork(
+      auth.verify({ kind: "session-cookie", value: "session=abc" }),
+    );
+    while (get.mock.calls.length === 0) await Promise.resolve();
+
+    await Effect.runPromise(Fiber.interrupt(fiber));
+
+    expect(interrupted).toBe(true);
   });
 });

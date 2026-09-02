@@ -1,50 +1,60 @@
 import { vi } from "#test/bun-test";
 import { NotFoundException } from "#src/shared/http/http-errors";
-import { TimersService } from "#src/timers/timers.service";
+import { Effect } from "effect";
+import type { EventTimersPort } from "./event-timers.port.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { mockFn } from "#src/test/mock-fn";
-import { EventCoordinationService } from "./event-coordination.service.js";
-import { EventCoordinationRepository } from "./event-coordination.repository.js";
+import {
+  makeEventCoordination,
+  type EventCoordination,
+} from "./event-coordination.service.js";
+import type { EventCoordinationStore } from "./event-coordination.repository.js";
 
 const CoverageGapType = {
   UNASSIGNED: "UNASSIGNED",
   UNCOVERED: "UNCOVERED",
 } as const;
 
-describe("EventCoordinationService", () => {
+describe("EventCoordination", () => {
   const now = new Date("2026-06-19T12:00:00.000Z");
   const guildId = "guild-1";
   const eventId = "event-1";
 
+  const findEvent = mockFn();
+  const findActiveGaps = mockFn();
   const repository = {
-    findEvent: mockFn(),
-    findActiveGaps: mockFn(),
+    findEvent: (...arguments_: unknown[]) =>
+      Effect.promise(() => findEvent(...arguments_)),
+    findActiveGaps: (...arguments_: unknown[]) =>
+      Effect.promise(() => findActiveGaps(...arguments_)),
   };
 
+  const getTimersForEventHeroFilters = mockFn();
   const mockTimersService = {
-    getTimersForEventHeroFilters: mockFn(),
+    getTimersForEventHeroFilters: (...arguments_: unknown[]) =>
+      Effect.promise(() => getTimersForEventHeroFilters(...arguments_)),
   };
 
-  let service: EventCoordinationService;
+  let service: EventCoordination;
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
     vi.clearAllMocks();
 
-    service = new EventCoordinationService(
-      repository as unknown as EventCoordinationRepository,
-      mockTimersService as unknown as TimersService,
+    service = makeEventCoordination(
+      repository as unknown as EventCoordinationStore,
+      mockTimersService as unknown as EventTimersPort,
     );
 
-    repository.findEvent.mockResolvedValue({
+    findEvent.mockResolvedValue({
       assignmentTimeoutMinutes: 7,
       id: eventId,
       world: "tempest",
       heroNpcs: [createHero()],
     });
-    repository.findActiveGaps.mockResolvedValue([]);
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([]);
+    findActiveGaps.mockResolvedValue([]);
+    getTimersForEventHeroFilters.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -52,15 +62,17 @@ describe("EventCoordinationService", () => {
   });
 
   it("throws when event does not exist", async () => {
-    repository.findEvent.mockResolvedValue(null);
+    findEvent.mockResolvedValue(null);
 
-    await expect(service.getCoordination(guildId, eventId)).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(
+      Effect.runPromise(service.getCoordination(guildId, eventId)),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it("marks heroes without timers as idle and uses assigned maps as coverage", async () => {
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.assignmentTimeoutMinutes).toBe(7);
     expect(result.summary).toMatchObject({
@@ -87,13 +99,13 @@ describe("EventCoordinationService", () => {
   });
 
   it("marks open windows with active gaps as critical and recommends map action", async () => {
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+    getTimersForEventHeroFilters.mockResolvedValue([
       createTimer({
         minSpawnTime: "2026-06-19T11:30:00.000Z",
         maxSpawnTime: "2026-06-19T12:30:00.000Z",
       }),
     ]);
-    repository.findActiveGaps.mockResolvedValue([
+    findActiveGaps.mockResolvedValue([
       {
         id: "gap-1",
         mapId: "map-2",
@@ -108,7 +120,9 @@ describe("EventCoordinationService", () => {
       },
     ]);
 
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.summary.criticalCount).toBe(1);
     expect(result.summary.nextSpawnAt).toEqual(
@@ -139,14 +153,16 @@ describe("EventCoordinationService", () => {
   });
 
   it("marks overdue windows as critical and recommends closing the window", async () => {
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+    getTimersForEventHeroFilters.mockResolvedValue([
       createTimer({
         minSpawnTime: "2026-06-19T10:00:00.000Z",
         maxSpawnTime: "2026-06-19T11:55:00.000Z",
       }),
     ]);
 
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.heroes[0]).toMatchObject({
       priority: "CRITICAL",
@@ -159,14 +175,16 @@ describe("EventCoordinationService", () => {
   });
 
   it("marks waiting windows with missing assignments as warnings", async () => {
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+    getTimersForEventHeroFilters.mockResolvedValue([
       createTimer({
         minSpawnTime: "2026-06-19T12:30:00.000Z",
         maxSpawnTime: "2026-06-19T13:30:00.000Z",
       }),
     ]);
 
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.summary.warningCount).toBe(1);
     expect(result.heroes[0]).toMatchObject({
@@ -179,14 +197,16 @@ describe("EventCoordinationService", () => {
   });
 
   it("does not count unassigned maps as covered during an active window without gap records", async () => {
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+    getTimersForEventHeroFilters.mockResolvedValue([
       createTimer({
         minSpawnTime: "2026-06-19T11:30:00.000Z",
         maxSpawnTime: "2026-06-19T12:30:00.000Z",
       }),
     ]);
 
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.heroes[0]).toMatchObject({
       priority: "CRITICAL",
@@ -202,7 +222,7 @@ describe("EventCoordinationService", () => {
   });
 
   it("recommends joining a map for uncovered active gaps", async () => {
-    repository.findEvent.mockResolvedValue({
+    findEvent.mockResolvedValue({
       id: eventId,
       world: "tempest",
       heroNpcs: [
@@ -214,13 +234,13 @@ describe("EventCoordinationService", () => {
         }),
       ],
     });
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+    getTimersForEventHeroFilters.mockResolvedValue([
       createTimer({
         minSpawnTime: "2026-06-19T11:30:00.000Z",
         maxSpawnTime: "2026-06-19T12:30:00.000Z",
       }),
     ]);
-    repository.findActiveGaps.mockResolvedValue([
+    findActiveGaps.mockResolvedValue([
       {
         id: "gap-1",
         mapId: "map-2",
@@ -235,7 +255,9 @@ describe("EventCoordinationService", () => {
       },
     ]);
 
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.heroes[0]).toMatchObject({
       priority: "CRITICAL",
@@ -250,7 +272,7 @@ describe("EventCoordinationService", () => {
   });
 
   it("sorts critical, active, waiting, then idle heroes", async () => {
-    repository.findEvent.mockResolvedValue({
+    findEvent.mockResolvedValue({
       id: eventId,
       world: "tempest",
       heroNpcs: [
@@ -265,7 +287,7 @@ describe("EventCoordinationService", () => {
         createHero({ id: "overdue", npcId: 4, npcName: "Overdue" }),
       ],
     });
-    mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+    getTimersForEventHeroFilters.mockResolvedValue([
       createTimer({
         npcId: 2,
         npcName: "Waiting",
@@ -286,7 +308,9 @@ describe("EventCoordinationService", () => {
       }),
     ]);
 
-    const result = await service.getCoordination(guildId, eventId);
+    const result = await Effect.runPromise(
+      service.getCoordination(guildId, eventId),
+    );
 
     expect(result.heroes.map((hero) => hero.heroId)).toEqual([
       "overdue",

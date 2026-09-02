@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "approved": true,
+  "betterAuthVersion": "1.7.2",
+  "identityStrategy": "provider-id",
+  "sourceSchemas": ["fresh", "better-auth-1.6", "better-auth-1.7"],
+  "accountMigration": {
+    "providerId": "discord",
+    "issuer": "local:oauth:discord",
+    "uniqueIdentity": ["issuer", "accountId"],
+    "rejectUnknownProviders": true,
+    "rejectUnexpectedIssuers": true,
+    "rejectIdentityCollisions": true
+  },
+  "rollout": {
+    "mixedWritersAllowed": false,
+    "sequence": [
+      "stop-1.6-writers",
+      "create-restorable-backup",
+      "plan-on-restored-copy",
+      "apply-migration",
+      "deploy-1.7.2-all-instances",
+      "smoke-test",
+      "resume-writes"
+    ]
+  }
+}

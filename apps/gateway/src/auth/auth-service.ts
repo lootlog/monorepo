@@ -1,17 +1,18 @@
+import { Effect, Schema } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { GAME_URL_REGEX } from "#src/gateway/constants/game-url-regex.constant";
 import type { AuthenticatedIdentity } from "#src/realtime/session";
 
-const REQUEST_TIMEOUT_MS = 10_000;
-const TICKET_PROTOCOL_PREFIX = "lootlog.ticket.v1.";
+const ticketProtocolPrefix = "lootlog.ticket.v1.";
 
 const readTicketProtocol = (header: string | null): string | null => {
   const protocol = header
     ?.split(",")
     .map((value) => value.trim())
-    .find((value) => value.startsWith(TICKET_PROTOCOL_PREFIX));
+    .find((value) => value.startsWith(ticketProtocolPrefix));
   if (!protocol) return null;
-  const encoded = protocol.slice(TICKET_PROTOCOL_PREFIX.length);
+  const encoded = protocol.slice(ticketProtocolPrefix.length);
   if (!/^[A-Za-z0-9_-]+$/.test(encoded)) return null;
   try {
     const value = Buffer.from(encoded, "base64url").toString("utf8").trim();
@@ -29,36 +30,38 @@ export type UpgradeCredential =
       readonly origin: string;
     };
 
-export interface UpgradeTicketVerifier {
+// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
+export class GatewayAuthFailure extends Schema.TaggedError<GatewayAuthFailure>()(
+  "GatewayAuthFailure",
+  { reason: Schema.Literals(["timeout", "transport"]) },
+) {}
+
+export interface GatewayAuth {
+  readonly getPlatform: (origin: string) => "game" | "web-app";
+  readonly isAllowedOrigin: (origin: string | null) => boolean;
+  readonly readCredential: (request: Request) => UpgradeCredential | null;
   readonly verify: (
     credential: UpgradeCredential,
-  ) => Promise<AuthenticatedIdentity | null>;
+  ) => Effect.Effect<AuthenticatedIdentity | null>;
 }
 
-const readIdentity = (response: Response): AuthenticatedIdentity | null => {
-  const discordId = response.headers.get("x-auth-discord-id")?.trim();
-  const userId = response.headers.get("x-auth-user-id")?.trim();
-  if (!response.ok || !discordId || !userId) return null;
-  return { discordId, userId };
-};
-
-export class AuthService implements UpgradeTicketVerifier {
-  constructor(private readonly config: GatewayConfiguration) {}
-
-  isAllowedOrigin(origin: string | null): boolean {
+export const makeGatewayAuth = (
+  config: GatewayConfiguration,
+  httpClient: HttpClientValue,
+): GatewayAuth => {
+  const isAllowedOrigin = (origin: string | null) => {
     if (!origin) return false;
     const normalized = origin.replace(/\/$/, "");
     return (
       GAME_URL_REGEX.test(normalized) ||
-      this.config.allowedWebOrigins.has(normalized)
+      config.allowedWebOrigins.has(normalized)
     );
-  }
+  };
 
-  getPlatform(origin: string): "game" | "web-app" {
-    return GAME_URL_REGEX.test(origin) ? "game" : "web-app";
-  }
+  const getPlatform = (origin: string): "game" | "web-app" =>
+    GAME_URL_REGEX.test(origin) ? "game" : "web-app";
 
-  readCredential(request: Request): UpgradeCredential | null {
+  const readCredential = (request: Request): UpgradeCredential | null => {
     const protocolTicket = readTicketProtocol(
       request.headers.get("sec-websocket-protocol"),
     );
@@ -68,7 +71,6 @@ export class AuthService implements UpgradeTicketVerifier {
         ? { kind: "one-time-ticket", value: protocolTicket, origin }
         : null;
     }
-
     const cookie = request.headers.get("cookie")?.trim();
     if (cookie) return { kind: "session-cookie", value: cookie };
 
@@ -79,28 +81,50 @@ export class AuthService implements UpgradeTicketVerifier {
     return ticket.length > 0 && origin
       ? { kind: "one-time-ticket", value: ticket, origin }
       : null;
-  }
+  };
 
-  async verify(
+  const verify = Effect.fn("GatewayAuth_verify")(function* (
     credential: UpgradeCredential,
-  ): Promise<AuthenticatedIdentity | null> {
-    const headers = new Headers();
-    if (credential.kind === "session-cookie") {
-      headers.set("cookie", credential.value);
-    } else {
-      headers.set("authorization", `Bearer ${credential.value}`);
-      headers.set("x-lootlog-credential-purpose", "websocket-ticket");
-      headers.set("x-lootlog-websocket-origin", credential.origin);
-    }
+  ) {
+    const headers =
+      credential.kind === "session-cookie"
+        ? { cookie: credential.value }
+        : {
+            authorization: `Bearer ${credential.value}`,
+            "x-lootlog-credential-purpose": "websocket-ticket",
+            "x-lootlog-websocket-origin": credential.origin,
+          };
+    const response = yield* httpClient
+      .get(`${config.authUrl}/auth/verify`, { headers })
+      .pipe(
+        Effect.timeout("10 seconds"),
+        Effect.mapError(
+          (error) =>
+            new GatewayAuthFailure({
+              reason: error._tag === "TimeoutError" ? "timeout" : "transport",
+            }),
+        ),
+      );
+    const discordId = response.headers["x-auth-discord-id"]?.trim();
+    const userId = response.headers["x-auth-user-id"]?.trim();
+    return response.status >= 200 &&
+      response.status < 300 &&
+      discordId &&
+      userId
+      ? { discordId, userId }
+      : null;
+  });
 
-    try {
-      const response = await fetch(`${this.config.authUrl}/auth/verify`, {
-        headers,
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
-      return readIdentity(response);
-    } catch {
-      return null;
-    }
-  }
-}
+  return {
+    getPlatform,
+    isAllowedOrigin,
+    readCredential,
+    verify: (credential) =>
+      verify(credential).pipe(
+        Effect.catch(() => Effect.succeed(null)),
+        Effect.withSpan("GatewayAuth_verify", {
+          attributes: { adapter: "auth", retryCount: 0 },
+        }),
+      ),
+  };
+};

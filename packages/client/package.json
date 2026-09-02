@@ -35,7 +35,6 @@
     "@types/node": "catalog:",
     "orval": "^8.26.0",
     "react": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:",
     "yaml": "catalog:"
   },

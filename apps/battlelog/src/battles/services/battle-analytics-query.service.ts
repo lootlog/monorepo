@@ -10,12 +10,13 @@ import {
   lte,
   type SQL,
 } from "drizzle-orm";
-import { BattleAnalyticsCacheService } from "#src/battles/services/battle-analytics-cache.service";
+import { Effect } from "effect";
+import type { BattleAnalyticsCache } from "#src/battles/services/battle-analytics-cache.service";
 import type {
   AnalyticsDateRange,
   DateRangeQuery,
 } from "#src/battles/services/battle-analytics.types";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
 import {
   battleWarriors,
   type battles,
@@ -23,40 +24,106 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export class BattleAnalyticsQueryService {
-  constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly cacheService: BattleAnalyticsCacheService,
-  ) {}
-
-  warriorExists(
+export const makeBattleAnalyticsQuery = (
+  drizzle: DrizzleDatabase,
+  cache: BattleAnalyticsCache,
+) => {
+  const warriorExists = (
     battlesRef: typeof battles,
     ...conditions: (SQL | undefined)[]
-  ) {
-    return exists(
-      this.drizzle.db
+  ) =>
+    exists(
+      drizzle.db
         .select({ one: eq(battleWarriors.id, battleWarriors.id) })
         .from(battleWarriors)
         .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
     );
-  }
 
-  getCharacterIds(
+  const getCharacterIdsUncached = (
     userId: string,
     query: { characterId?: string; world?: string },
-  ): Promise<string[]> {
-    return this.cacheService.getOrSetJson(
-      this.cacheService.buildQueryCacheKey(
-        "battle-characters",
-        "ids",
-        userId,
-        query,
-      ),
-      () => this.getCharacterIdsUncached(userId, query),
-    );
-  }
+  ) =>
+    Effect.gen(function* () {
+      if (query.characterId) {
+        const userCharacter = yield* Effect.tryPromise({
+          try: () =>
+            Promise.resolve(
+              drizzle.run(
+                drizzle.db.query.userCharacters.findFirst({
+                  where: {
+                    userId,
+                    characterId: query.characterId,
+                    ...(query.world && { world: query.world }),
+                  },
+                }),
+              ),
+            ),
+          catch: (cause) => cause,
+        });
 
-  getDateRangeFilter(query: DateRangeQuery): AnalyticsDateRange {
+        if (!userCharacter) {
+          throw new NotFoundException(
+            `Character ${query.characterId} not found for user`,
+          );
+        }
+
+        return [query.characterId];
+      }
+
+      const userChars = yield* Effect.tryPromise({
+        try: () =>
+          Promise.resolve(
+            drizzle.run(
+              drizzle.db.query.userCharacters.findMany({
+                where: {
+                  userId,
+                  ...(query.world && { world: query.world }),
+                },
+                columns: { characterId: true },
+              }),
+            ),
+          ),
+        catch: (cause) => cause,
+      });
+
+      return userChars.map((character) => character.characterId);
+    }).pipe(
+      Effect.withSpan("BattleAnalyticsQuery_getCharacterIds", {
+        attributes: { adapter: "drizzle", retryCount: 0 },
+      }),
+    );
+
+  const getDateFilter = (period?: string): Date | undefined => {
+    if (!period || period === "all") {
+      return undefined;
+    }
+
+    const periodDays: Record<string, number> = {
+      "24h": 1,
+      "3d": 3,
+      "7d": 7,
+      "14d": 14,
+      "30d": 30,
+      "90d": 90,
+      "180d": 180,
+    };
+
+    const days = periodDays[period];
+    return days === undefined
+      ? undefined
+      : new Date(Date.now() - days * DAY_MS);
+  };
+
+  const getCharacterIds = (
+    userId: string,
+    query: { characterId?: string; world?: string },
+  ) =>
+    cache.getOrSetJson(
+      cache.buildQueryCacheKey("battle-characters", "ids", userId, query),
+      () => getCharacterIdsUncached(userId, query),
+    );
+
+  const getDateRangeFilter = (query: DateRangeQuery): AnalyticsDateRange => {
     if (query.startDate || query.endDate) {
       return {
         ...(query.startDate ? { startDate: new Date(query.startDate) } : {}),
@@ -65,11 +132,11 @@ export class BattleAnalyticsQueryService {
     }
 
     return {
-      startDate: this.getDateFilter(query.period),
+      startDate: getDateFilter(query.period),
     };
-  }
+  };
 
-  buildAnalyticsWhere(
+  const buildAnalyticsWhere = (
     battlesRef: typeof battles,
     params: {
       userId: string;
@@ -83,7 +150,7 @@ export class BattleAnalyticsQueryService {
       ratingNotNull?: boolean;
       ratingDeltaNotNull?: boolean;
     },
-  ): SQL | undefined {
+  ): SQL | undefined => {
     const conditions: (SQL | undefined)[] = [
       eq(battlesRef.userId, params.userId),
       eq(battlesRef.type, "1v1"),
@@ -107,12 +174,12 @@ export class BattleAnalyticsQueryService {
       ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
     ];
 
-    conditions.push(this.warriorExists(battlesRef, ...warriorConditions));
+    conditions.push(warriorExists(battlesRef, ...warriorConditions));
 
     return and(...conditions);
-  }
+  };
 
-  buildCombatProfileWhere(
+  const buildCombatProfileWhere = (
     battlesRef: typeof battles,
     params: {
       userId: string;
@@ -123,7 +190,7 @@ export class BattleAnalyticsQueryService {
       characterIds: string[];
       phFilter?: boolean;
     },
-  ): SQL | undefined {
+  ): SQL | undefined => {
     const conditions: (SQL | undefined)[] = [
       eq(battlesRef.userId, params.userId),
       ...(params.world ? [eq(battlesRef.world, params.world)] : []),
@@ -141,66 +208,18 @@ export class BattleAnalyticsQueryService {
       ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
     ];
 
-    conditions.push(this.warriorExists(battlesRef, ...warriorConditions));
+    conditions.push(warriorExists(battlesRef, ...warriorConditions));
 
     return and(...conditions);
-  }
+  };
 
-  private async getCharacterIdsUncached(
-    userId: string,
-    query: { characterId?: string; world?: string },
-  ): Promise<string[]> {
-    if (query.characterId) {
-      const userCharacter = await this.drizzle.run(
-        this.drizzle.db.query.userCharacters.findFirst({
-          where: {
-            userId,
-            characterId: query.characterId,
-            ...(query.world && { world: query.world }),
-          },
-        }),
-      );
+  return {
+    buildAnalyticsWhere,
+    buildCombatProfileWhere,
+    getCharacterIds,
+    getDateRangeFilter,
+    warriorExists,
+  };
+};
 
-      if (!userCharacter) {
-        throw new NotFoundException(
-          `Character ${query.characterId} not found for user`,
-        );
-      }
-
-      return [query.characterId];
-    }
-
-    const userChars = await this.drizzle.run(
-      this.drizzle.db.query.userCharacters.findMany({
-        where: {
-          userId,
-          ...(query.world && { world: query.world }),
-        },
-        columns: { characterId: true },
-      }),
-    );
-
-    return userChars.map((character) => character.characterId);
-  }
-
-  private getDateFilter(period?: string): Date | undefined {
-    if (!period || period === "all") {
-      return undefined;
-    }
-
-    const periodDays: Record<string, number> = {
-      "24h": 1,
-      "3d": 3,
-      "7d": 7,
-      "14d": 14,
-      "30d": 30,
-      "90d": 90,
-      "180d": 180,
-    };
-
-    const days = periodDays[period];
-    return days === undefined
-      ? undefined
-      : new Date(Date.now() - days * DAY_MS);
-  }
-}
+export type BattleAnalyticsQuery = ReturnType<typeof makeBattleAnalyticsQuery>;

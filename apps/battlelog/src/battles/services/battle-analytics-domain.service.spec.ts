@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
-import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service.js";
+import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
 
 type TestWarriorInput = {
   originalId: string;
@@ -43,8 +43,8 @@ function createBattle({
   } as InflatedBattleWithWarriors;
 }
 
-describe("BattleAnalyticsDomainService", () => {
-  const service = new BattleAnalyticsDomainService();
+describe("battleAnalyticsDomain", () => {
+  const service = battleAnalyticsDomain;
   const characterIds = new Set(["character-1"]);
 
   it("filters 1v1 battles by the direct opponent level", () => {

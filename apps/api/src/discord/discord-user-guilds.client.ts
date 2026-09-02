@@ -9,7 +9,6 @@ import {
   HttpException,
   ServiceUnavailableException,
   UnauthorizedException,
-  type OnModuleInit,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
@@ -42,7 +41,7 @@ export interface FreshCompleteUserGuildsResult {
   complete: true;
 }
 
-export class DiscordUserGuildsClient implements OnModuleInit {
+export class DiscordUserGuildsClient {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
@@ -70,7 +69,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
   }
 
-  onModuleInit() {
+  initialize() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 3000,
     });

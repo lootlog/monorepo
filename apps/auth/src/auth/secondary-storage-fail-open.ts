@@ -29,13 +29,7 @@ export function createFailOpenSecondaryStorage(
     },
     async getAndDelete(key) {
       try {
-        if (storage.getAndDelete) {
-          return await storage.getAndDelete(key);
-        }
-
-        const value = await storage.get(key);
-        await storage.delete(key);
-        return value;
+        return await storage.getAndDelete(key);
       } catch (error) {
         onError("getAndDelete", error);
         return null;
@@ -43,7 +37,7 @@ export function createFailOpenSecondaryStorage(
     },
     async increment(key, ttl) {
       try {
-        return storage.increment ? await storage.increment(key, ttl) : 1;
+        return await storage.increment(key, ttl);
       } catch (error) {
         onError("increment", error);
         return 1;

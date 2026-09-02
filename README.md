@@ -60,7 +60,6 @@ packages/
 ├── datetime/            Shared date and time utilities
 ├── instrumentation/     Observability setup
 ├── margonem/            Margonem domain types and helpers
-├── nest-shared/         Shared NestJS modules and guards
 ├── scoring/             Event and ranking scoring
 ├── socket-parser/       Shared socket parsing
 ├── types/               Shared contracts
@@ -75,9 +74,9 @@ boundaries, deployment, and known gaps.
 
 - Bun workspaces and Turborepo
 - TypeScript, React 19, Vite, TanStack Start, and TanStack Router/Query
-- NestJS with Fastify and Better Auth
-- PostgreSQL, TimescaleDB, Prisma, Drizzle, and R2
-- RabbitMQ, Redis, Socket.IO, and Meilisearch
+- Effect HttpApi, Better Auth, and native Bun HTTP/WebSocket servers
+- PostgreSQL, TimescaleDB, Drizzle, and R2
+- RabbitMQ, Redis, native WebSockets, and Meilisearch
 - Oxlint, Oxfmt, Vitest, and GitHub Actions
 
 ## Local setup

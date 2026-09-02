@@ -88,27 +88,3 @@ export class Logger {
     console.warn(this.context, message, ...details);
   }
 }
-
-export interface ExecutionContext {
-  getClass(): Function;
-  getHandler(): Function;
-  switchToHttp(): { getRequest<T>(): T };
-}
-
-export interface OnModuleInit {
-  onModuleInit(): unknown;
-}
-
-export interface CanActivate {
-  canActivate(context: ExecutionContext): boolean | Promise<boolean>;
-}
-
-export interface NestMiddleware {
-  use(...arguments_: ReadonlyArray<unknown>): unknown;
-}
-
-export const forwardRef = <A>(
-  factory: () => A,
-): { readonly forwardRef: () => A } => ({
-  forwardRef: factory,
-});

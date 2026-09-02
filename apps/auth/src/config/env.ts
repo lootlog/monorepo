@@ -39,7 +39,7 @@ export interface AuthConfig {
   readonly commitSha: string | undefined;
 }
 
-const authConfig = Config.all({
+export const authConfig = Config.all({
   environment: Config.literals(["local", "dev", "staging", "prod"], "ENV").pipe(
     Config.withDefault("local"),
   ),

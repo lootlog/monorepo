@@ -15,10 +15,11 @@ The five additions are `@types/bun@1.4.0`, `bun-types@1.4.0`,
 `effect@4.0.0-rc.112`, `fast-check@4.9.0`, and `pure-rand@8.4.2`.
 The latter two are transitive dependencies of Effect and its schema tests.
 
-Workspace links were excluded from the external-package comparison. Bun linked all
-34 current `apps/*` and `packages/*` workspaces: the 30 baseline workspaces plus
-the four newly introduced `schema`, `domain`, `protocol`, and `messaging` packages.
-The package-manager listing additionally includes the repository root package.
+Workspace links were excluded from the external-package comparison. The rewrite
+introduced `schema`, `domain`, `protocol`, and `messaging`, removed obsolete
+workspaces, and the current Turbo graph contains 25 `apps/*` and `packages/*`
+workspaces. The 34-workspace figure recorded during migration was an intermediate
+state, not the final graph.
 
 ## Install verification
 

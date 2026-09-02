@@ -36,7 +36,7 @@ Loot visibility requires an active Organization record and complete coverage of
 every associated NPC. Each NPC must match the level range and tier permissions
 of at least one complete role grant. `OWNER` bypasses this check; `ADMIN` does
 not. Missing NPC facts fail closed. The same policy module drives in-memory
-websocket decisions, while equivalent adapters express it for Prisma and SQL
+websocket decisions, while equivalent adapters express it for Drizzle and SQL
 aggregates.
 
 Allocation messages may be submitted only by an internal user with recent

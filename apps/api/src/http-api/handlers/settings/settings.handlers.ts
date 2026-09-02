@@ -1,9 +1,10 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
-import type { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
-import type { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
-import type { TimerSettingsService } from "#src/timer-settings/timer-settings.service";
+import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
+import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
+import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
+import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
   LootlogApi,
   SettingsDocumentsControllerGetPreferences200,
@@ -80,61 +81,51 @@ export class SettingsData extends Context.Service<
     ) => Operation;
   }
 >()("@lootlog/api/http-api/settings/data") {
-  static makeServices(options: {
-    readonly timer: TimerSettingsService;
-    readonly documents: SettingsDocumentsService;
-    readonly sound: SoundSettingsService;
-  }): SettingsData["Service"] {
-    const attempt = (operation: () => unknown | PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: () => Promise.resolve(operation()),
-        catch: (cause) => new SettingsOperationError({ cause }),
+  static readonly layerDatabase = Layer.effect(
+    SettingsData,
+    Effect.map(SettingsDocumentsRepository, (repository) => {
+      const documents = makeSettingsDocuments(repository);
+      const timer = makeTimerSettings(documents);
+      const sound = makeSoundSettings(documents);
+      const operation = <A, E>(effect: Effect.Effect<A, E>) =>
+        effect.pipe(
+          Effect.mapError((cause) => new SettingsOperationError({ cause })),
+        );
+      const mutable = <A>(value: unknown): A =>
+        JSON.parse(JSON.stringify(value)) as A;
+
+      return SettingsData.of({
+        getGlobalTimerSettings: (userId) =>
+          operation(timer.getGlobalSettings(userId)),
+        updateGlobalTimerSettings: (userId, payload) =>
+          operation(timer.updateGlobalSettings(userId, mutable(payload))),
+        getGuildTimerSettings: (userId, guildId) =>
+          operation(timer.getGuildSettings(userId, guildId)),
+        updateGuildTimerSettings: (userId, guildId, payload) =>
+          operation(
+            timer.updateGuildSettings(userId, guildId, mutable(payload)),
+          ),
+        migrateTimerSettings: (userId, payload) =>
+          operation(timer.migrateSettings(userId, mutable(payload))),
+        getPreferences: (userId, query) =>
+          operation(
+            Effect.flatMap(documents.parseDomains(query.domains), (domains) =>
+              documents.getPreferences(userId, {
+                domains,
+                gameAccountId: query.gameAccountId,
+                characterId: query.characterId,
+                guildId: query.guildId,
+              }),
+            ),
+          ),
+        patchPreferences: (userId, payload) =>
+          operation(documents.patchPreferences(userId, mutable(payload))),
+        getSoundSettings: (userId) => operation(sound.getSettings(userId)),
+        updateSoundSettings: (userId, payload) =>
+          operation(sound.updateSettings(userId, mutable(payload))),
       });
-    const mutable = <A>(value: unknown): A =>
-      JSON.parse(JSON.stringify(value)) as A;
-
-    return SettingsData.of({
-      getGlobalTimerSettings: (userId) =>
-        attempt(() => options.timer.getGlobalSettings(userId)),
-      updateGlobalTimerSettings: (userId, payload) =>
-        attempt(() =>
-          options.timer.updateGlobalSettings(userId, mutable(payload)),
-        ),
-      getGuildTimerSettings: (userId, guildId) =>
-        attempt(() => options.timer.getGuildSettings(userId, guildId)),
-      updateGuildTimerSettings: (userId, guildId, payload) =>
-        attempt(() =>
-          options.timer.updateGuildSettings(userId, guildId, mutable(payload)),
-        ),
-      migrateTimerSettings: (userId, payload) =>
-        attempt(() => options.timer.migrateSettings(userId, mutable(payload))),
-      getPreferences: (userId, query) =>
-        attempt(() =>
-          options.documents.getPreferences(userId, {
-            domains: options.documents.parseDomains(query.domains),
-            gameAccountId: query.gameAccountId,
-            characterId: query.characterId,
-            guildId: query.guildId,
-          }),
-        ),
-      patchPreferences: (userId, payload) =>
-        attempt(() =>
-          options.documents.patchPreferences(userId, mutable(payload)),
-        ),
-      getSoundSettings: (userId) =>
-        attempt(() => options.sound.getSettings(userId)),
-      updateSoundSettings: (userId, payload) =>
-        attempt(() => options.sound.updateSettings(userId, mutable(payload))),
-    });
-  }
-
-  static layerServices(options: {
-    readonly timer: TimerSettingsService;
-    readonly documents: SettingsDocumentsService;
-    readonly sound: SoundSettingsService;
-  }) {
-    return Layer.succeed(SettingsData, SettingsData.makeServices(options));
-  }
+    }),
+  ).pipe(Layer.provide(SettingsDocumentsRepository.layerDatabase));
 }
 
 const normalize = (value: unknown) => JSON.parse(JSON.stringify(value));
@@ -145,6 +136,7 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
   );
 
 const withIdentity = <A>(
+  operationId: string,
   operation: (
     userId: string,
     data: SettingsData["Service"],
@@ -155,24 +147,28 @@ const withIdentity = <A>(
     const userId = yield* identity.userId;
     const data = yield* SettingsData;
     return yield* operation(userId, data);
-  });
+  }).pipe(
+    Effect.withSpan(operationId, {
+      attributes: { operationId },
+    }),
+  );
 
 export const getGlobalTimerSettings = () =>
-  withIdentity((userId, data) =>
+  withIdentity("TimerSettingsControllerGetGlobalSettings", (userId, data) =>
     Effect.flatMap(data.getGlobalTimerSettings(userId), (value) =>
       decode(TimerSettingsControllerGetGlobalSettings200, value),
     ),
   );
 
 export const updateGlobalTimerSettings = (payload: UpdateTimerSettingsDto) =>
-  withIdentity((userId, data) =>
+  withIdentity("TimerSettingsControllerUpdateGlobalSettings", (userId, data) =>
     Effect.flatMap(data.updateGlobalTimerSettings(userId, payload), (value) =>
       decode(TimerSettingsControllerUpdateGlobalSettings200, value),
     ),
   );
 
 export const getGuildTimerSettings = (guildId: string) =>
-  withIdentity((userId, data) =>
+  withIdentity("TimerSettingsControllerGetGuildSettings", (userId, data) =>
     Effect.flatMap(data.getGuildTimerSettings(userId, guildId), (value) =>
       decode(TimerSettingsControllerGetGuildSettings200, value),
     ),
@@ -182,7 +178,7 @@ export const updateGuildTimerSettings = (
   guildId: string,
   payload: UpdateGuildTimerSettingsDto,
 ) =>
-  withIdentity((userId, data) =>
+  withIdentity("TimerSettingsControllerUpdateGuildSettings", (userId, data) =>
     Effect.flatMap(
       data.updateGuildTimerSettings(userId, guildId, payload),
       (value) => decode(TimerSettingsControllerUpdateGuildSettings200, value),
@@ -190,33 +186,35 @@ export const updateGuildTimerSettings = (
   );
 
 export const migrateTimerSettings = (payload: MigrateTimerSettingsDto) =>
-  withIdentity((userId, data) => data.migrateTimerSettings(userId, payload));
+  withIdentity("TimerSettingsControllerMigrateSettings", (userId, data) =>
+    data.migrateTimerSettings(userId, payload),
+  );
 
 export const getPreferences = (
   query: SettingsDocumentsControllerGetPreferencesQuery,
 ) =>
-  withIdentity((userId, data) =>
+  withIdentity("SettingsDocumentsControllerGetPreferences", (userId, data) =>
     Effect.flatMap(data.getPreferences(userId, query), (value) =>
       decode(SettingsDocumentsControllerGetPreferences200, value),
     ),
   );
 
 export const patchPreferences = (payload: PatchSettingsDocumentsDto) =>
-  withIdentity((userId, data) =>
+  withIdentity("SettingsDocumentsControllerPatchPreferences", (userId, data) =>
     Effect.flatMap(data.patchPreferences(userId, payload), (value) =>
       decode(SettingsDocumentsControllerPatchPreferences200, value),
     ),
   );
 
 export const getSoundSettings = () =>
-  withIdentity((userId, data) =>
+  withIdentity("SoundSettingsControllerGetSettings", (userId, data) =>
     Effect.flatMap(data.getSoundSettings(userId), (value) =>
       decode(SoundSettingsControllerGetSettings200, value),
     ),
   );
 
 export const updateSoundSettings = (payload: UpdateSoundSettingsDto) =>
-  withIdentity((userId, data) =>
+  withIdentity("SoundSettingsControllerUpdateSettings", (userId, data) =>
     Effect.flatMap(data.updateSoundSettings(userId, payload), (value) =>
       decode(SoundSettingsControllerUpdateSettings200, value),
     ),

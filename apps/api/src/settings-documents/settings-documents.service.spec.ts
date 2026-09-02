@@ -1,31 +1,32 @@
 import { describe, expect, it, vi } from "#test/bun-test";
-import type { SettingsDocumentsRepository } from "./settings-documents.repository.js";
-import { SettingsDocumentsService } from "./settings-documents.service.js";
+import { Effect } from "effect";
+import type { SettingsDocumentsRepositoryService } from "./settings-documents.repository.js";
+import { makeSettingsDocuments } from "./settings-documents.service.js";
 
 const createRepository = () => ({
   findDocuments: vi
-    .fn<SettingsDocumentsRepository["findDocuments"]>()
-    .mockResolvedValue([]),
+    .fn<SettingsDocumentsRepositoryService["findDocuments"]>()
+    .mockReturnValue(Effect.succeed([])),
   hasActiveGuildMembership: vi
-    .fn<SettingsDocumentsRepository["hasActiveGuildMembership"]>()
-    .mockResolvedValue(true),
+    .fn<SettingsDocumentsRepositoryService["hasActiveGuildMembership"]>()
+    .mockReturnValue(Effect.succeed(true)),
   applyOperations: vi
-    .fn<SettingsDocumentsRepository["applyOperations"]>()
-    .mockResolvedValue(undefined),
+    .fn<SettingsDocumentsRepositoryService["applyOperations"]>()
+    .mockReturnValue(Effect.void),
 });
 
-describe("SettingsDocumentsService", () => {
+describe("settings documents Effect module", () => {
   it("allows guild settings for an active member linked to the user", async () => {
     const repository = createRepository();
-    const service = new SettingsDocumentsService(
-      repository as unknown as SettingsDocumentsRepository,
-    );
+    const service = makeSettingsDocuments(repository);
 
     await expect(
-      service.getPreferences("user-1", {
-        domains: ["timers"],
-        guildId: "guild-1",
-      }),
+      Effect.runPromise(
+        service.getPreferences("user-1", {
+          domains: ["timers"],
+          guildId: "guild-1",
+        }),
+      ),
     ).resolves.toEqual({ domains: { timers: expect.any(Object) } });
     expect(repository.hasActiveGuildMembership).toHaveBeenCalledWith(
       "user-1",
@@ -35,47 +36,49 @@ describe("SettingsDocumentsService", () => {
 
   it("rejects guild settings without an active member linked to the user", async () => {
     const repository = createRepository();
-    repository.hasActiveGuildMembership.mockResolvedValue(false);
-    const service = new SettingsDocumentsService(
-      repository as unknown as SettingsDocumentsRepository,
-    );
+    repository.hasActiveGuildMembership.mockReturnValue(Effect.succeed(false));
+    const service = makeSettingsDocuments(repository);
 
     await expect(
-      service.getPreferences("user-1", {
-        domains: ["timers"],
-        guildId: "guild-1",
-      }),
+      Effect.runPromise(
+        service.getPreferences("user-1", {
+          domains: ["timers"],
+          guildId: "guild-1",
+        }),
+      ),
     ).rejects.toThrow("Guild settings are not accessible");
   });
 
   it("returns effective values, layers and field sources for a context", async () => {
     const repository = createRepository();
-    repository.findDocuments.mockResolvedValue([
-      {
-        domain: "appearance",
-        scopeType: "USER",
-        scopeId: "user-1",
-        overrides: { chat: { fontScalePercent: 110 } },
-        schemaVersion: 1,
-        updatedAt: new Date("2026-07-24T01:00:00.000Z"),
-      },
-      {
-        domain: "appearance",
-        scopeType: "GAME_ACCOUNT",
-        scopeId: "account-1",
-        overrides: { chat: { fontScalePercent: 90 } },
-        schemaVersion: 1,
-        updatedAt: new Date("2026-07-24T02:00:00.000Z"),
-      },
-    ] as never);
-    const service = new SettingsDocumentsService(
-      repository as unknown as SettingsDocumentsRepository,
+    repository.findDocuments.mockReturnValue(
+      Effect.succeed([
+        {
+          domain: "appearance",
+          scopeType: "USER",
+          scopeId: "user-1",
+          overrides: { chat: { fontScalePercent: 110 } },
+          schemaVersion: 1,
+          updatedAt: new Date("2026-07-24T01:00:00.000Z"),
+        },
+        {
+          domain: "appearance",
+          scopeType: "GAME_ACCOUNT",
+          scopeId: "account-1",
+          overrides: { chat: { fontScalePercent: 90 } },
+          schemaVersion: 1,
+          updatedAt: new Date("2026-07-24T02:00:00.000Z"),
+        },
+      ] as never),
     );
+    const service = makeSettingsDocuments(repository);
 
-    const response = await service.getPreferences("user-1", {
-      domains: ["appearance"],
-      gameAccountId: "account-1",
-    });
+    const response = await Effect.runPromise(
+      service.getPreferences("user-1", {
+        domains: ["appearance"],
+        gameAccountId: "account-1",
+      }),
+    );
 
     expect(response.domains.appearance?.effective).toMatchObject({
       chat: { fontScalePercent: 110 },
@@ -90,20 +93,20 @@ describe("SettingsDocumentsService", () => {
     const firstRepository = createRepository();
     const secondRepository = createRepository();
 
-    await new SettingsDocumentsService(
-      firstRepository as unknown as SettingsDocumentsRepository,
-    ).getPreferences("user-1", {
-      domains: ["gameData"],
-      gameAccountId: "account-1",
-      characterId: "character-1",
-    });
-    await new SettingsDocumentsService(
-      secondRepository as unknown as SettingsDocumentsRepository,
-    ).getPreferences("user-1", {
-      domains: ["gameData"],
-      gameAccountId: "account-2",
-      characterId: "character-1",
-    });
+    await Effect.runPromise(
+      makeSettingsDocuments(firstRepository).getPreferences("user-1", {
+        domains: ["gameData"],
+        gameAccountId: "account-1",
+        characterId: "character-1",
+      }),
+    );
+    await Effect.runPromise(
+      makeSettingsDocuments(secondRepository).getPreferences("user-1", {
+        domains: ["gameData"],
+        gameAccountId: "account-2",
+        characterId: "character-1",
+      }),
+    );
 
     expect(firstRepository.findDocuments).toHaveBeenCalledWith(
       "user-1",
@@ -123,9 +126,7 @@ describe("SettingsDocumentsService", () => {
 
   it("sorts a patch batch before delegating the serializable transaction", async () => {
     const repository = createRepository();
-    const service = new SettingsDocumentsService(
-      repository as unknown as SettingsDocumentsRepository,
-    );
+    const service = makeSettingsDocuments(repository);
     const operations = [
       {
         domain: "gameData" as const,
@@ -141,7 +142,7 @@ describe("SettingsDocumentsService", () => {
       },
     ];
 
-    await service.patchPreferences("user-1", { operations });
+    await Effect.runPromise(service.patchPreferences("user-1", { operations }));
 
     expect(repository.applyOperations).toHaveBeenCalledWith("user-1", [
       operations[1],

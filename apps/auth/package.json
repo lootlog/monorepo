@@ -18,6 +18,10 @@
     "test:coverage": "bun test --coverage",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
+    "http-api:generate": "bun ../../tools/openapi/generate-http-api.ts --spec openapi.yaml --output src/http-api/auth-api.generated.ts --name AuthApi --count 5",
+    "auth:generate": "auth generate --config src/auth/better-auth-cli.ts --output src/database/drizzle.schema.ts --yes",
+    "auth:migrate:plan": "bun scripts/migration-plan.ts",
+    "auth:migrate:apply": "bun scripts/migration-apply.ts",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate:dev": "bun scripts/migrate.ts",
     "db:migrate:deploy": "bun scripts/migrate.ts",
@@ -25,9 +29,9 @@
     "db:studio": "bunx drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/redis-storage": "1.6.30",
+    "@better-auth/redis-storage": "1.7.2",
     "@effect/platform-bun": "catalog:",
-    "better-auth": "1.6.30",
+    "better-auth": "1.7.2",
     "dotenv": "^17.4.2",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
@@ -38,9 +42,11 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@testcontainers/postgresql": "^12.1.0",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
+    "auth": "1.7.2",
     "drizzle-kit": "catalog:",
     "typescript": "catalog:"
   }

@@ -188,8 +188,8 @@ describe("Timers HttpApi handlers", () => {
             accessPolicy: receivedAccess.accessPolicy,
             roles: receivedAccess.roles,
           });
-          // The unchanged TimersService applies per-NPC visibility and returns
-          // no entries for this level-restricted role.
+          // The timer module applies per-NPC visibility and returns no entries
+          // for this level-restricted role.
           return Effect.succeed([]);
         },
       }),
@@ -274,37 +274,42 @@ describe("Timers HttpApi handlers", () => {
     const mutationCalls: Array<unknown> = [];
     const layer = provideServices(
       makeData({
-        reset: (identity, guildId, timerIdentifier, payload) => {
+        reset: (current, timerIdentifier, payload) => {
           mutationCalls.push([
             "reset",
-            identity.discordId,
-            guildId,
+            current.discordId,
+            current.guild.id,
             timerIdentifier,
             payload,
           ]);
           return Effect.succeed(storedTimer);
         },
-        delete: (identity, guildId, timerIdentifier, world) => {
+        delete: (current, timerIdentifier, world) => {
           mutationCalls.push([
             "delete",
-            identity.discordId,
-            guildId,
+            current.discordId,
+            current.guild.id,
             timerIdentifier,
             world,
           ]);
           return Effect.succeed(undefined);
         },
-        restore: (identity, guildId, historyEntryId) => {
+        restore: (current, historyEntryId) => {
           mutationCalls.push([
             "restore",
-            identity.discordId,
-            guildId,
+            current.discordId,
+            current.guild.id,
             historyEntryId,
           ]);
           return Effect.succeed(storedTimer);
         },
-        createManual: (identity, guildId, payload) => {
-          mutationCalls.push(["manual", identity.discordId, guildId, payload]);
+        createManual: (current, payload) => {
+          mutationCalls.push([
+            "manual",
+            current.discordId,
+            current.guild.id,
+            payload,
+          ]);
           return Effect.succeed(storedTimer);
         },
       }),

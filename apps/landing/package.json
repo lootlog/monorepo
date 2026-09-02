@@ -17,7 +17,7 @@
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.168.49",
-    "better-auth": "1.6.30",
+    "better-auth": "1.7.2",
     "framer-motion": "^12.43.0",
     "i18next": "^26.4.0",
     "lucide-react": "^1.35.0",

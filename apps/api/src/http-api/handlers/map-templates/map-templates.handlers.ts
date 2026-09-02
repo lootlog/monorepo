@@ -6,7 +6,6 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { MapTemplatesRepository } from "#src/map-templates/map-templates.repository";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { mapTemplateTable } from "#src/database/drizzle/schema";
 import {
@@ -84,29 +83,6 @@ export class MapTemplatesData extends Context.Service<
     ) => Effect.Effect<boolean, MapTemplatesPersistenceError>;
   }
 >()("@lootlog/api/http-api/map-templates/data") {
-  static layerRepository(repository: MapTemplatesRepository) {
-    const attempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new MapTemplatesPersistenceError({ cause }),
-      });
-
-    return Layer.succeed(
-      MapTemplatesData,
-      MapTemplatesData.of({
-        findMany: (guildId) => attempt(() => repository.findMany(guildId)),
-        create: (guildId, payload) =>
-          attempt(() => repository.create(guildId, payload.name, payload.maps)),
-        update: (guildId, templateId, payload) =>
-          attempt(() =>
-            repository.update(guildId, templateId, payload.name, payload.maps),
-          ),
-        delete: (guildId, templateId) =>
-          attempt(() => repository.delete(guildId, templateId)),
-      }),
-    );
-  }
-
   static readonly layerDatabase = Layer.effect(
     MapTemplatesData,
     Effect.map(ApiDatabase, (database) => {

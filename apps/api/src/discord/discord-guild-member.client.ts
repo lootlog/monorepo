@@ -4,7 +4,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
-  type OnModuleInit,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
@@ -29,7 +28,7 @@ import {
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 
-export class DiscordGuildMemberClient implements OnModuleInit {
+export class DiscordGuildMemberClient {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
@@ -52,7 +51,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
     this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
   }
 
-  onModuleInit() {
+  initialize() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 3000,
     });

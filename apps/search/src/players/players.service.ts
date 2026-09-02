@@ -1,19 +1,26 @@
+import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import {
+  attemptMeilisearch,
+  type SearchOperationFailure,
+} from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
 import type { GetPlayersDto } from "./dto/get-players.dto.js";
 import { PLAYERS_INDEX } from "./constants/meilisearch.js";
 import type { IndexPlayersDto } from "./dto/index-players.dto.js";
 import type { PlayerHit } from "./dto/player-hit.schema.js";
 
-export class PlayersService {
-  constructor(
-    private readonly meilisearch: Meilisearch,
-    private readonly logger: AppLogger,
-  ) {}
-
-  async getPlayers({ limit, search, world }: GetPlayersDto) {
-    const index = this.meilisearch.index<PlayerHit>(PLAYERS_INDEX);
+export const makePlayersModule = (
+  meilisearch: Meilisearch,
+  logger: AppLogger,
+) => {
+  const getPlayers = Effect.fn("SearchPlayers.get")(function* ({
+    limit,
+    search,
+    world,
+  }: GetPlayersDto) {
+    const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
 
@@ -33,25 +40,28 @@ export class PlayersService {
       ...(filters.length > 0 && { filter: filters.join(" AND ") }),
     };
 
-    try {
-      const data = await index.search(searchTerm, query);
+    return yield* attemptMeilisearch("search.players", () =>
+      index.search(searchTerm, query),
+    ).pipe(
+      Effect.map((response) => response.hits),
+      Effect.catch((error) => {
+        logger.error("Players search error", { error });
+        return Effect.succeed([] as PlayerHit[]);
+      }),
+    );
+  });
 
-      return data.hits;
-    } catch (error) {
-      this.logger.error("Players search error", { error });
-      return [];
-    }
-  }
-
-  async indexPlayers(data: IndexPlayersDto) {
-    const index = this.meilisearch.index(PLAYERS_INDEX);
+  const indexPlayers = Effect.fn("SearchPlayers.index")(function* (
+    data: IndexPlayersDto,
+  ) {
+    const index = meilisearch.index(PLAYERS_INDEX);
 
     const validPlayers = data.players.filter(
       (player) => player.world && player.id && player.name,
     );
 
     if (validPlayers.length === 0) {
-      this.logger.warn("No valid players to index (missing required fields)", {
+      logger.warn("No valid players to index (missing required fields)", {
         players: data.players,
       });
       return;
@@ -61,7 +71,7 @@ export class PlayersService {
       const invalidPlayers = data.players.filter(
         (player) => !player.world || !player.id || !player.name,
       );
-      this.logger.warn(
+      logger.warn(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },
       );
@@ -72,10 +82,17 @@ export class PlayersService {
       uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
-    try {
-      return await index.addDocuments(playersWithUid, { primaryKey: "uid" });
-    } catch (error) {
-      this.logger.error("Error indexing players", { error });
-    }
-  }
-}
+    yield* attemptMeilisearch("search.players.index", () =>
+      index.addDocuments(playersWithUid, { primaryKey: "uid" }),
+    );
+  });
+
+  return { getPlayers, indexPlayers } satisfies {
+    readonly getPlayers: (
+      input: GetPlayersDto,
+    ) => Effect.Effect<ReadonlyArray<PlayerHit>>;
+    readonly indexPlayers: (
+      data: IndexPlayersDto,
+    ) => Effect.Effect<void, SearchOperationFailure>;
+  };
+};

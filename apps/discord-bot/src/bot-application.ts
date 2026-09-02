@@ -1,4 +1,5 @@
 import { RabbitMessaging } from "@lootlog/messaging";
+import { BunHttpServer } from "@effect/platform-bun";
 import {
   RabbitExchange,
   RabbitRoutingKey,
@@ -11,11 +12,28 @@ import {
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { Client, IntentsBitField } from "discord.js";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
+import {
+  HttpRouter,
+  HttpServer,
+  HttpServerResponse,
+} from "effect/unstable/http";
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiGroup,
+  HttpApiSchema,
+} from "effect/unstable/httpapi";
 import { registerDiscordEventHandlers } from "#src/bot/bot-discord-events.handler";
-import { BotNotificationsConsumer } from "#src/bot/bot-notifications.consumer";
-import { DiscordDeliveryService } from "#src/bot/discord-delivery.service";
-import { DiscordSyncService } from "#src/bot/discord-sync.service";
+import {
+  makeDiscordDelivery,
+  type DiscordDelivery,
+} from "#src/bot/discord-delivery.service";
+import {
+  makeDiscordSync,
+  type DiscordSync,
+} from "#src/bot/discord-sync.service";
 import type { RabbitPublisher } from "#src/bot/rabbit-publisher";
 import { BotConfig } from "#src/config/bot-config";
 
@@ -49,8 +67,8 @@ const isNotificationCommand = (
 
 export interface BotServicesValue {
   readonly client: Client;
-  readonly delivery: DiscordDeliveryService;
-  readonly sync: DiscordSyncService;
+  readonly delivery: DiscordDelivery;
+  readonly sync: DiscordSync;
 }
 export class BotServices extends Context.Service<
   BotServices,
@@ -63,12 +81,10 @@ export class BotServices extends Context.Service<
       const rabbit = yield* RabbitMessaging;
       const publisher: RabbitPublisher = {
         publish: (_exchange, routingKey, payload) =>
-          Effect.runPromise(
-            rabbit.publish({
-              routingKey,
-              content: new TextEncoder().encode(JSON.stringify(payload)),
-            }),
-          ),
+          rabbit.publish({
+            routingKey,
+            content: new TextEncoder().encode(JSON.stringify(payload)),
+          }),
       };
       const client = yield* Effect.acquireRelease(
         Effect.tryPromise({
@@ -83,47 +99,132 @@ export class BotServices extends Context.Service<
         }),
         (active) => Effect.sync(() => active.destroy()),
       );
-      const delivery = new DiscordDeliveryService(publisher, client);
-      const sync = new DiscordSyncService(publisher, client);
+      const delivery = makeDiscordDelivery(publisher, client);
+      const sync = makeDiscordSync(publisher, client);
       registerDiscordEventHandlers(client, sync);
       return BotServices.of({ client, delivery, sync });
     }),
   );
 }
 
-export const makeBotHandler =
-  (services: BotServicesValue) =>
-  async (request: Request): Promise<Response> => {
-    const url = new URL(request.url);
-    if (request.method === "GET" && url.pathname === "/healthz")
-      return new Response("OK");
-    const match =
-      /^\/internal\/guilds\/([^/]+)\/(channels|channels\/refresh|sync-status)$/.exec(
-        url.pathname,
-      );
-    if (!match) return Response.json({ message: "Not Found" }, { status: 404 });
-    const guildId = decodeURIComponent(match[1] ?? "");
-    try {
-      if (request.method === "GET" && match[2] === "channels")
-        return Response.json(await services.sync.getGuildChannels(guildId));
-      if (request.method === "POST" && match[2] === "channels/refresh")
-        return Response.json(await services.sync.refreshGuildChannels(guildId));
-      if (request.method === "GET" && match[2] === "sync-status")
-        return Response.json(await services.sync.getGuildSyncStatus(guildId));
-      return Response.json({ message: "Not Found" }, { status: 404 });
-    } catch {
-      return Response.json(
-        { message: "Discord synchronization failed" },
-        { status: 500 },
-      );
-    }
+const GuildParams = Schema.Struct({ guildId: Schema.String });
+
+class HealthGroup extends HttpApiGroup.make("health").add(
+  HttpApiEndpoint.get("DiscordBotHealth", "/healthz", {
+    success: HttpApiSchema.Empty(200),
+  }),
+) {}
+
+class InternalGroup extends HttpApiGroup.make("internal")
+  .add(
+    HttpApiEndpoint.get(
+      "DiscordBotGetGuildChannels",
+      "/internal/guilds/:guildId/channels",
+      { params: GuildParams, success: Schema.Unknown },
+    ),
+  )
+  .add(
+    HttpApiEndpoint.post(
+      "DiscordBotRefreshGuildChannels",
+      "/internal/guilds/:guildId/channels/refresh",
+      { params: GuildParams, success: Schema.Unknown },
+    ),
+  )
+  .add(
+    HttpApiEndpoint.get(
+      "DiscordBotGetGuildSyncStatus",
+      "/internal/guilds/:guildId/sync-status",
+      { params: GuildParams, success: Schema.Unknown },
+    ),
+  ) {}
+
+export class DiscordBotApi extends HttpApi.make("DiscordBotApi")
+  .add(HealthGroup)
+  .add(InternalGroup) {}
+
+const operation = <A>(operationId: string, run: Effect.Effect<A, unknown>) =>
+  run.pipe(
+    Effect.map((value) => HttpServerResponse.jsonUnsafe(value)),
+    Effect.catch(() =>
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { message: "Discord synchronization failed" },
+          { status: 500 },
+        ),
+      ),
+    ),
+    Effect.withSpan(operationId, {
+      attributes: { adapter: "discord", retryCount: 0 },
+    }),
+  );
+
+const BotHttpHandlers = HttpApiBuilder.group(
+  DiscordBotApi,
+  "health",
+  (handlers) =>
+    handlers.handleRaw("DiscordBotHealth", () =>
+      Effect.succeed(HttpServerResponse.text("OK")),
+    ),
+).pipe(
+  Layer.merge(
+    HttpApiBuilder.group(DiscordBotApi, "internal", (handlers) =>
+      handlers
+        .handleRaw(
+          "DiscordBotGetGuildChannels",
+          Effect.fn("DiscordBotGetGuildChannels")(function* ({ params }) {
+            const services = yield* BotServices;
+            return yield* operation(
+              "DiscordBotGetGuildChannels",
+              services.sync.getGuildChannels(params.guildId),
+            );
+          }),
+        )
+        .handleRaw(
+          "DiscordBotRefreshGuildChannels",
+          Effect.fn("DiscordBotRefreshGuildChannels")(function* ({ params }) {
+            const services = yield* BotServices;
+            return yield* operation(
+              "DiscordBotRefreshGuildChannels",
+              services.sync.refreshGuildChannels(params.guildId),
+            );
+          }),
+        )
+        .handleRaw(
+          "DiscordBotGetGuildSyncStatus",
+          Effect.fn("DiscordBotGetGuildSyncStatus")(function* ({ params }) {
+            const services = yield* BotServices;
+            return yield* operation(
+              "DiscordBotGetGuildSyncStatus",
+              services.sync.getGuildSyncStatus(params.guildId),
+            );
+          }),
+        ),
+    ),
+  ),
+);
+
+const BotHttpRoutes = HttpApiBuilder.layer(DiscordBotApi).pipe(
+  Layer.provide(BotHttpHandlers),
+);
+
+export const makeBotHttpBoundary = (services: BotServicesValue) => {
+  const boundary = HttpRouter.toWebHandler(
+    BotHttpRoutes.pipe(
+      HttpRouter.provideRequest(Layer.succeed(BotServices, services)),
+      Layer.provide(HttpServer.layerServices),
+    ),
+    { disableLogger: true },
+  );
+  return {
+    dispose: boundary.dispose,
+    handler: boundary.handler as (request: Request) => Promise<Response>,
   };
+};
 
 export const BotConsumer = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const services = yield* BotServices;
-    const consumer = new BotNotificationsConsumer(services.delivery);
     yield* rabbit.consume(
       {
         queue: notificationQueue.name,
@@ -131,36 +232,31 @@ export const BotConsumer = Layer.effectDiscard(
         failurePolicy: { strategy: "requeue" },
       },
       (delivery) =>
-        Effect.tryPromise({
-          try: async () => {
-            const input: unknown = JSON.parse(
-              new TextDecoder().decode(delivery.content),
-            );
-            if (!isNotificationCommand(input)) return;
-            await consumer.handleNotificationSend(input);
-          },
-          catch: (cause) => cause,
+        Effect.gen(function* () {
+          const input: unknown = JSON.parse(
+            new TextDecoder().decode(delivery.content),
+          );
+          if (!isNotificationCommand(input)) return;
+          yield* services.delivery.sendNotification(input);
         }),
     );
   }),
 );
 
-export const BotHttpServer = Layer.effectDiscard(
-  Effect.gen(function* () {
-    const config = yield* BotConfig;
-    const services = yield* BotServices;
-    yield* Effect.acquireRelease(
-      Effect.sync(() =>
-        Bun.serve({
-          port: config.port,
-          hostname: "0.0.0.0",
-          fetch: makeBotHandler(services),
-        }),
-      ),
-      (server) => Effect.sync(() => server.stop(true)),
-    );
-    yield* Effect.logInfo(`Discord bot HTTP listening on ${config.port}`);
-  }),
+export const BotHttpServer = Layer.unwrap(
+  Effect.map(BotConfig, ({ port }) =>
+    HttpRouter.serve(BotHttpRoutes, {
+      middleware: (effect) =>
+        Effect.catchCause(effect, () =>
+          Effect.succeed(
+            HttpServerResponse.jsonUnsafe(
+              { message: "Internal server error" },
+              { status: 500 },
+            ),
+          ),
+        ),
+    }).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+  ),
 );
 
 const RabbitLive = Layer.unwrap(

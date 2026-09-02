@@ -11,7 +11,7 @@ export interface SchemaClass<TSchema extends RuntimeSchema> {
 
 /**
  * Keeps the legacy class-shaped type surface while validation is owned by the
- * schema itself. This has no Nest metadata or runtime dependency.
+ * schema itself. This has no decorator metadata or framework dependency.
  */
 export const createSchemaClass = <TSchema extends RuntimeSchema>(
   schema: TSchema,

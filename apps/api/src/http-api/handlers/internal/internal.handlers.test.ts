@@ -1,8 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import type { RedisService } from "#src/redis/redis.service";
-import type { GuildsRepository } from "#src/guilds/guilds.repository";
-import type { MembersRepository } from "#src/members/members.repository";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
@@ -12,6 +9,9 @@ import {
   getInternalGuild,
   getInternalUserPermissions,
   InternalGuildsData,
+  makeInternalGuildsData,
+  type InternalGuildsCache,
+  type InternalGuildsPersistence,
 } from "./internal.handlers.js";
 
 const guild = {
@@ -92,15 +92,15 @@ describe("internal guild HttpApi handlers", () => {
 
   it("builds the established owner and member permission projection from repositories", async () => {
     const cached: unknown[] = [];
-    const data = InternalGuildsData.makeRepositories({
-      guilds: {
-        findForPermissions: async () => [
+    const persistence = {
+      findActiveGuild: () => Effect.succeed(null),
+      findGuildsForPermissions: () =>
+        Effect.succeed([
           { id: "guild-owner", ownerId: "discord-a" },
           { id: "guild-member", ownerId: "discord-owner" },
-        ],
-      } as unknown as GuildsRepository,
-      members: {
-        findMembersByUserGuildIds: async () => [
+        ]),
+      findMembersWithRoles: () =>
+        Effect.succeed([
           {
             guildId: "guild-member",
             active: true,
@@ -113,15 +113,19 @@ describe("internal guild HttpApi handlers", () => {
               },
             ],
           },
-        ],
-      } as unknown as MembersRepository,
-      redis: {
-        getJson: async () => null,
-        setJson: async (_key: string, value: unknown) => {
+        ]),
+    } as unknown as InternalGuildsPersistence;
+    const cache = {
+      get: () => Effect.succeed(null),
+      getJson: () => Effect.succeed(null),
+      set: () => Effect.void,
+      setJson: (_key: string, value: unknown) =>
+        Effect.sync(() => {
           cached.push(value);
-        },
-      } as unknown as RedisService,
-    });
+        }),
+      del: () => Effect.void,
+    } satisfies InternalGuildsCache;
+    const data = makeInternalGuildsData(persistence, cache);
 
     const response = await Effect.runPromise(
       data.getUserPermissions("discord-a", "user-a"),
@@ -135,24 +139,31 @@ describe("internal guild HttpApi handlers", () => {
 
   it("preserves cached guild defaults without touching the database", async () => {
     let databaseRead = false;
-    const data = InternalGuildsData.makeRepositories({
-      guilds: {
-        findActive: async () => {
+    const persistence = {
+      findActiveGuild: () =>
+        Effect.sync(() => {
           databaseRead = true;
           return null;
-        },
-      } as unknown as GuildsRepository,
-      members: {} as MembersRepository,
-      redis: {
-        get: async () =>
+        }),
+      findGuildsForPermissions: () => Effect.succeed([]),
+      findMembersWithRoles: () => Effect.succeed([]),
+    } as unknown as InternalGuildsPersistence;
+    const cache = {
+      get: () =>
+        Effect.succeed(
           JSON.stringify({
             id: "guild-a",
             name: "Guild A",
             ownerId: "discord-owner",
             publicStatsCardEnabled: false,
           }),
-      } as unknown as RedisService,
-    });
+        ),
+      getJson: () => Effect.succeed(null),
+      set: () => Effect.void,
+      setJson: () => Effect.void,
+      del: () => Effect.void,
+    } satisfies InternalGuildsCache;
+    const data = makeInternalGuildsData(persistence, cache);
 
     const response = await Effect.runPromise(data.getGuild("guild-a"));
     expect(

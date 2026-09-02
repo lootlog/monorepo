@@ -1,4 +1,6 @@
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import { Effect } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
@@ -6,6 +8,7 @@ import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unava
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
 import { authConfig } from "#src/config/auth.config";
 import { RedisService } from "#src/redis/redis.service";
+import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
   getAuthTokenCacheKey,
   getAuthTokenCachePattern,
@@ -29,6 +32,7 @@ export class AuthService {
   constructor(
     private readonly logger: Logger,
     private readonly redisService: RedisService,
+    private readonly httpClient: HttpClientValue,
   ) {
     this.authServiceUrl = authConfig.serviceUrl;
   }
@@ -39,13 +43,19 @@ export class AuthService {
   ): Promise<GetIdpTokenResponse> {
     try {
       const url = `${this.authServiceUrl}/auth/idp-token`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ userId, discordId }),
-        signal: AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT),
-      });
-      const responseBody = await response.text();
+      const response = await Effect.runPromise(
+        outboundHttpRequest(this.httpClient, {
+          adapter: "auth-idp-token",
+          body: JSON.stringify({ userId, discordId }),
+          headers: { "content-type": "application/json" },
+          method: "POST",
+          responseLimitBytes: 1024 * 1024,
+          retryTimes: 0,
+          timeout: `${DEFAULT_REQUEST_TIMEOUT} millis`,
+          url,
+        }),
+      );
+      const responseBody = new TextDecoder().decode(response.body);
       let data: GetIdpTokenResponse | undefined;
       if (responseBody) {
         try {
@@ -54,7 +64,7 @@ export class AuthService {
           data = responseBody as unknown as GetIdpTokenResponse;
         }
       }
-      if (!response.ok) {
+      if (response.status < 200 || response.status >= 300) {
         throw new AuthHttpResponseError({ status: response.status, data });
       }
 

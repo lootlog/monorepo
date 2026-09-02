@@ -31,7 +31,7 @@
     "@lootlog/margonem": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@tanstack/react-query": "catalog:",
-    "better-auth": "1.6.30",
+    "better-auth": "1.7.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",

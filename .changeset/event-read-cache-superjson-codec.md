@@ -1,5 +1,4 @@
 ---
-"@lootlog/nest-shared": patch
 "@lootlog/api": patch
 ---
 

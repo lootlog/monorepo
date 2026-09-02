@@ -61,7 +61,7 @@ export class RedisService {
     this.isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
   }
 
-  onModuleInit() {
+  initialize() {
     const { prefix: _, ...redisOptions } = this.options;
     this.client = new Redis({
       ...redisOptions,
@@ -69,7 +69,7 @@ export class RedisService {
     });
   }
 
-  onModuleDestroy() {
+  shutdown() {
     if (!this.client) {
       return;
     }

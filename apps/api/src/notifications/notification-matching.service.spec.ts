@@ -1,19 +1,8 @@
-import { vi } from "#test/bun-test";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
-import { NotificationMatchingService } from "./notification-matching.service.js";
+import { notificationMatchingPolicy as service } from "./notification-matching.service.js";
 
 describe("NotificationMatchingService", () => {
-  let service: NotificationMatchingService;
-
-  beforeEach(() => {
-    service = new NotificationMatchingService({
-      member: {
-        findMany: vi.fn<() => Promise<unknown[]>>(),
-      },
-    } as never);
-  });
-
   it("returns empty filters for invalid filter payloads", () => {
     expect(service.parseFilters(null as never)).toEqual({});
     expect(service.parseFilters([] as never)).toEqual({});

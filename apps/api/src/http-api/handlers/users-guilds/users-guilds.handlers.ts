@@ -1,14 +1,25 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { and, eq, or } from "drizzle-orm";
+import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { GuildsService } from "#src/guilds/guilds.service";
-import type { UpdateGuildConfigDto as LegacyUpdateGuildConfigDto } from "#src/guilds/dto/update-guild-config.dto";
-import type { UpdateUserGameAccountPreferencesDto as LegacyUpdateUserGameAccountPreferencesDto } from "#src/users/dto/update-user-account-preferences.dto";
-import type { UpdateUserPreferencesDto as LegacyUpdateUserPreferencesDto } from "#src/users/dto/update-user-preferences.dto";
-import type { UsersService } from "#src/users/users.service";
+import { ApiDatabase } from "#src/database/drizzle/database";
+import { guildTable, timerTable } from "#src/database/drizzle/schema";
+import {
+  BadRequestException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
+import {
+  getGuildCacheKey,
+  GUILD_CACHE_TTL_SECONDS,
+} from "#src/shared/constants/cache.constant";
+import { generateSlug } from "#src/shared/utils/generate-slug";
+import { hasOwnField } from "#src/shared/utils/has-own-field";
+import { RESTRICTED_VANITY_URLS } from "#src/guilds/constants/restricted-vanity-urls";
+import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import {
   DiscordGuildSyncStateResponseDto,
   GuildResponseDto_Output,
@@ -80,9 +91,6 @@ export class UsersGuildsAuthorization extends Context.Service<
 
 type DataEffect = Effect.Effect<unknown, UsersGuildsOperationError>;
 
-const mutableDto = <A>(value: unknown): A =>
-  JSON.parse(JSON.stringify(value)) as A;
-
 export class UsersGuildsData extends Context.Service<
   UsersGuildsData,
   {
@@ -120,63 +128,81 @@ export class UsersGuildsData extends Context.Service<
     readonly getGuildDiscordSyncStatus: (guildId: string) => DataEffect;
     readonly refreshGuildDiscordSync: (guildId: string) => DataEffect;
   }
->()("@lootlog/api/http-api/users-guilds/data") {
-  static makeService(
-    users: UsersService,
-    guilds: GuildsService,
-  ): UsersGuildsData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new UsersGuildsOperationError({ cause }),
-      });
+>()("@lootlog/api/http-api/users-guilds/data") {}
 
-    return UsersGuildsData.of({
-      deleteAccount: ({ userId, discordId }) =>
-        attempt(() => users.deleteAccount({ authUserId: userId, discordId })),
-      getUserPreferences: (userId) =>
-        attempt(() => users.getUserPreferences(userId)),
-      updateUserPreferences: (userId, payload) =>
-        attempt(() =>
-          users.updateUserPreferences(
-            userId,
-            mutableDto<LegacyUpdateUserPreferencesDto>(payload),
-          ),
-        ),
-      getCurrentUserGuilds: ({ userId, discordId }) =>
-        attempt(() => users.getCurrentUserGuilds(discordId, userId)),
-      getCurrentUserAccessibleGuilds: ({ userId, discordId }) =>
-        attempt(() => users.getCurrentUserAccessibleGuilds(discordId, userId)),
-      getUserGameAccountPreferences: (userId, accountId) =>
-        attempt(() => users.getUserGameAccountPreferences(userId, accountId)),
-      updateUserGameAccountPreferences: (userId, accountId, payload) =>
-        attempt(() =>
-          users.updateUserGameAccountPreferences(
-            userId,
-            accountId,
-            mutableDto<LegacyUpdateUserGameAccountPreferencesDto>(payload),
-          ),
-        ),
-      getUserGuilds: ({ userId, discordId }, source) =>
-        attempt(() => guilds.getUserGuilds(discordId, userId, source)),
-      getUserGuildsWithPermissions: ({ userId, discordId }) =>
-        attempt(() => guilds.getUserGuildsWithPermissions(discordId, userId)),
-      getManageableUserGuilds: ({ userId, discordId }) =>
-        attempt(() => guilds.getManageableUserGuilds(discordId, userId)),
-      getGuildDiscordSyncStatus: (guildId) =>
-        attempt(() => guilds.getGuildDiscordSyncStatus(guildId)),
-      refreshGuildDiscordSync: (guildId) =>
-        attempt(() => guilds.refreshGuildDiscordSync(guildId)),
+const invalidReservationRange = () =>
+  new BadRequestException({
+    message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
+  });
+
+const validateGuildConfiguration = (payload: UpdateGuildConfigDto) => {
+  if (
+    payload.reservationMinDurationMinutes !== undefined &&
+    payload.reservationMaxDurationMinutes !== undefined &&
+    payload.reservationMinDurationMinutes >
+      payload.reservationMaxDurationMinutes
+  ) {
+    return invalidReservationRange();
+  }
+  if (payload.vanityUrl && RESTRICTED_VANITY_URLS.includes(payload.vanityUrl)) {
+    return new BadRequestException({
+      message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
     });
   }
+};
 
-  static layerServices(users: UsersService, guilds: GuildsService) {
-    return Layer.succeed(
-      UsersGuildsData,
-      UsersGuildsData.makeService(users, guilds),
-    );
+const validateGuildConfigurationAgainstStored = (
+  payload: UpdateGuildConfigDto,
+  stored: typeof guildTable.$inferSelect | undefined,
+) => {
+  if (!stored) return;
+  if (
+    (payload.reservationMinDurationMinutes !== undefined &&
+      payload.reservationMaxDurationMinutes === undefined &&
+      payload.reservationMinDurationMinutes >
+        stored.reservationMaxDurationMinutes) ||
+    (payload.reservationMaxDurationMinutes !== undefined &&
+      payload.reservationMinDurationMinutes === undefined &&
+      stored.reservationMinDurationMinutes >
+        payload.reservationMaxDurationMinutes)
+  ) {
+    return invalidReservationRange();
   }
-}
+};
+
+const buildGuildConfigurationUpdate = (payload: UpdateGuildConfigDto) => ({
+  ...(hasOwnField(payload, "vanityUrl")
+    ? { vanityUrl: generateSlug(payload.vanityUrl ?? undefined) }
+    : {}),
+  ...(payload.publicStatsCardEnabled === undefined
+    ? {}
+    : { publicStatsCardEnabled: payload.publicStatsCardEnabled }),
+  ...(payload.reservationMaxDurationMinutes === undefined
+    ? {}
+    : {
+        reservationMaxDurationMinutes: payload.reservationMaxDurationMinutes,
+      }),
+  ...(payload.reservationMinDurationMinutes === undefined
+    ? {}
+    : {
+        reservationMinDurationMinutes: payload.reservationMinDurationMinutes,
+      }),
+  ...(payload.reservationTimeGranularityMinutes === undefined
+    ? {}
+    : {
+        reservationTimeGranularityMinutes:
+          payload.reservationTimeGranularityMinutes,
+      }),
+  ...(payload.reservationMaxAdvanceDays === undefined
+    ? {}
+    : { reservationMaxAdvanceDays: payload.reservationMaxAdvanceDays }),
+  ...(payload.reservationActiveLimitPerSpot === undefined
+    ? {}
+    : {
+        reservationActiveLimitPerSpot: payload.reservationActiveLimitPerSpot,
+      }),
+  updatedAt: new Date(),
+});
 
 export class GuildConfigurationData extends Context.Service<
   GuildConfigurationData,
@@ -189,31 +215,140 @@ export class GuildConfigurationData extends Context.Service<
     readonly getWorldsByGuildId: (guildId: string) => DataEffect;
   }
 >()("@lootlog/api/http-api/guild-configuration/data") {
-  static makeService(
-    service: Pick<
-      GuildsService,
-      "getGuildById" | "updateGuildConfig" | "getWorldsByGuildId"
-    >,
-  ): GuildConfigurationData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new UsersGuildsOperationError({ cause }),
-      });
+  static layerDatabase(cache: GuildConfigurationCache) {
+    return Layer.effect(
+      GuildConfigurationData,
+      Effect.map(ApiDatabase, (database) => {
+        const operation = <A, E>(effect: Effect.Effect<A, E>) =>
+          effect.pipe(
+            Effect.mapError(
+              (cause) => new UsersGuildsOperationError({ cause }),
+            ),
+          );
+        return GuildConfigurationData.of({
+          getGuildById: (idOrVanityUrl) =>
+            operation(
+              Effect.gen(function* () {
+                const cacheKey = getGuildCacheKey(idOrVanityUrl);
+                const cached = yield* cache.get(cacheKey);
+                if (cached) {
+                  try {
+                    const guild = JSON.parse(cached) as Record<string, unknown>;
+                    return { ...guild, ...resolveReservationSettings(guild) };
+                  } catch {
+                    yield* cache.del(cacheKey);
+                  }
+                }
 
-    return GuildConfigurationData.of({
-      getGuildById: (guildId) => attempt(() => service.getGuildById(guildId)),
-      updateGuildConfig: (guildId, payload) =>
-        attempt(() =>
-          service.updateGuildConfig(
-            guildId,
-            mutableDto<LegacyUpdateGuildConfigDto>(payload),
-          ),
-        ),
-      getWorldsByGuildId: (guildId) =>
-        attempt(() => service.getWorldsByGuildId(guildId)),
-    });
+                const rows = yield* database
+                  .select()
+                  .from(guildTable)
+                  .where(
+                    and(
+                      eq(guildTable.active, true),
+                      or(
+                        eq(guildTable.id, idOrVanityUrl),
+                        eq(guildTable.vanityUrl, idOrVanityUrl),
+                      ),
+                    ),
+                  )
+                  .limit(1);
+                const guild = rows[0];
+                if (!guild) {
+                  return yield* Effect.fail(
+                    new NotFoundException({
+                      message: ErrorKey.GUILD_NOT_FOUND,
+                    }),
+                  );
+                }
+
+                const serialized = JSON.stringify(guild);
+                yield* Effect.all([
+                  cache.set(
+                    getGuildCacheKey(guild.id),
+                    serialized,
+                    GUILD_CACHE_TTL_SECONDS,
+                  ),
+                  ...(guild.vanityUrl
+                    ? [
+                        cache.set(
+                          getGuildCacheKey(guild.vanityUrl),
+                          serialized,
+                          GUILD_CACHE_TTL_SECONDS,
+                        ),
+                      ]
+                    : []),
+                ]);
+                return guild;
+              }),
+            ),
+          updateGuildConfig: (guildId, payload) =>
+            operation(
+              Effect.gen(function* () {
+                const validationError = validateGuildConfiguration(payload);
+                if (validationError) return yield* Effect.fail(validationError);
+
+                const oldRows = yield* database
+                  .select()
+                  .from(guildTable)
+                  .where(eq(guildTable.id, guildId))
+                  .limit(1);
+                const oldGuild = oldRows[0];
+                const storedValidationError =
+                  validateGuildConfigurationAgainstStored(payload, oldGuild);
+                if (storedValidationError) {
+                  return yield* Effect.fail(storedValidationError);
+                }
+
+                const updatedRows = yield* database
+                  .update(guildTable)
+                  .set(buildGuildConfigurationUpdate(payload))
+                  .where(eq(guildTable.id, guildId))
+                  .returning();
+                const guild = updatedRows[0];
+                if (!guild) {
+                  return yield* Effect.fail(
+                    new NotFoundException({
+                      message: ErrorKey.GUILD_NOT_FOUND,
+                    }),
+                  );
+                }
+                yield* Effect.all([
+                  cache.del(getGuildCacheKey(guildId)),
+                  ...(oldGuild?.vanityUrl &&
+                  oldGuild.vanityUrl !== guild.vanityUrl
+                    ? [cache.del(getGuildCacheKey(oldGuild.vanityUrl))]
+                    : []),
+                ]);
+                return guild;
+              }).pipe(
+                Effect.withSpan("guild-configuration.update.persistence", {
+                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
+                }),
+              ),
+            ),
+          getWorldsByGuildId: (guildId) =>
+            operation(
+              database
+                .selectDistinct({ world: timerTable.world })
+                .from(timerTable)
+                .where(eq(timerTable.guildId, guildId))
+                .pipe(Effect.map((rows) => rows.map(({ world }) => world))),
+            ),
+        });
+      }),
+    );
   }
+}
+
+export interface GuildConfigurationCache {
+  readonly get: (key: string) => Effect.Effect<string | null, unknown>;
+  readonly set: (
+    key: string,
+    value: string,
+    ttl: number,
+  ) => Effect.Effect<void, unknown>;
+  readonly del: (key: string) => Effect.Effect<void, unknown>;
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
@@ -375,20 +510,22 @@ const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
   return yield* decode(GuildResponseDto_Output, value);
 });
 
-export const updateGuildConfiguration = Effect.fn("updateGuildConfiguration")(
-  function* (guildId: string, payload: UpdateGuildConfigDto) {
-    const authorized = yield* authorizeGuild(guildId, [
-      Permission.OWNER,
-      Permission.ADMIN,
-    ]);
-    const value = yield* guildConfigurationData((service) =>
-      service.updateGuildConfig(authorized.guildId, payload),
-    );
-    return yield* decode(GuildResponseDto_Output, value);
-  },
-);
+export const updateGuildConfiguration = Effect.fn(
+  "GuildsControllerUpdateGuildConfig",
+)(function* (guildId: string, payload: UpdateGuildConfigDto) {
+  const authorized = yield* authorizeGuild(guildId, [
+    Permission.OWNER,
+    Permission.ADMIN,
+  ]);
+  const value = yield* guildConfigurationData((service) =>
+    service.updateGuildConfig(authorized.guildId, payload),
+  );
+  return yield* decode(GuildResponseDto_Output, value);
+});
 
-const guildWorlds = Effect.fn("guildWorlds")(function* (guildId: string) {
+const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(function* (
+  guildId: string,
+) {
   const authorized = yield* authorizeGuild(guildId, [
     Permission.LOOTLOG_ACCESS,
   ]);
@@ -477,10 +614,22 @@ export const GuildsHandlers = HttpApiBuilder.group(
         orDieHttpFailure(manageableCurrentGuildList()),
       )
       .handle("GuildsControllerGetGuildById", ({ params }) =>
-        orDieHttpFailure(guildRead(params.guildId)),
+        orDieHttpFailure(
+          guildRead(params.guildId).pipe(
+            Effect.withSpan("GuildsControllerGetGuildById", {
+              attributes: { operationId: "GuildsControllerGetGuildById" },
+            }),
+          ),
+        ),
       )
       .handle("GuildsControllerGetGuildConfig", ({ params }) =>
-        orDieHttpFailure(guildRead(params.guildId)),
+        orDieHttpFailure(
+          guildRead(params.guildId).pipe(
+            Effect.withSpan("GuildsControllerGetGuildConfig", {
+              attributes: { operationId: "GuildsControllerGetGuildConfig" },
+            }),
+          ),
+        ),
       )
       .handle("GuildsControllerUpdateGuildConfig", ({ params, payload }) =>
         orDieHttpFailure(updateGuildConfiguration(params.guildId, payload)),

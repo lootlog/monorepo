@@ -84,22 +84,4 @@ describe("createFailOpenSecondaryStorage", () => {
     expect(onError).toHaveBeenCalledWith("set", error);
     expect(onError).toHaveBeenCalledWith("delete", error);
   });
-
-  it("uses get and delete when storage has no native getAndDelete", async () => {
-    const storage = {
-      get: mock((_key: string) => Promise.resolve("cached-value")),
-      set: mock((_key: string, _value: string, _ttl?: number) =>
-        Promise.resolve(undefined),
-      ),
-      delete: mock((_key: string) => Promise.resolve(undefined)),
-    } satisfies SecondaryStorage;
-    const failOpenStorage = createFailOpenSecondaryStorage(storage);
-
-    await expect(failOpenStorage.getAndDelete?.("key")).resolves.toBe(
-      "cached-value",
-    );
-
-    expect(storage.get).toHaveBeenCalledWith("key");
-    expect(storage.delete).toHaveBeenCalledWith("key");
-  });
 });

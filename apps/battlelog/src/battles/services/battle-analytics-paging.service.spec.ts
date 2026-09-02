@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service.js";
+import { battleAnalyticsPaging } from "./battle-analytics-paging.service.js";
 
-describe("BattleAnalyticsPagingService", () => {
-  const service = new BattleAnalyticsPagingService();
+describe("battleAnalyticsPaging", () => {
+  const service = battleAnalyticsPaging;
 
   it("paginates records with cursor navigation metadata", () => {
     const firstPage = service.paginate(["a", "b", "c"], {

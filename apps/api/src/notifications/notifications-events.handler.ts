@@ -1,235 +1,239 @@
-import { Logger } from "#src/shared/http/http-errors";
+import { Effect } from "effect";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
   LootCreatedNotificationEventV2,
 } from "@lootlog/schema/notifications";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { RoutingKey } from "#src/enum/routing-key.enum";
-import { NotificationJobService } from "#src/notifications/notification-job.service";
-import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
-import { NotificationTargetService } from "#src/notifications/notification-target.service";
-import { GuildsService } from "#src/guilds/guilds.service";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { NotificationGuildTargets } from "./notification-guild-targets.js";
+import type { NotificationJobScheduler } from "./notification-job-scheduler.js";
+import {
+  timerSourceEntityId,
+  type NotificationJobRebuild,
+  type TimerUpdatedEvent,
+} from "./notification-job-rebuild.js";
+import type { NotificationMatching } from "./notification-matching.service.js";
+import type { NotificationEventStore } from "./notification-event-store.js";
 import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
-} from "#src/notifications/constants/notification-messages.constant";
-import { NotificationsRepository } from "./notifications.repository.js";
+} from "./constants/notification-messages.constant.js";
+import { NotificationJobKind } from "./notification-enums.js";
 import type { JsonValue } from "./notification-database.types.js";
 
-const DbNotificationJobKind = { INSTANT: "INSTANT" } as const;
+export interface TimerDeletedEvent {
+  readonly guildId: string;
+  readonly world: string;
+  readonly timerKey: string;
+  readonly npcId?: number;
+}
 
-export class NotificationsEventsHandler {
-  private readonly logger = new Logger(NotificationsEventsHandler.name);
+const causeMessage = (cause: unknown) =>
+  cause instanceof Error ? cause.message : String(cause);
 
-  constructor(
-    private readonly repository: NotificationsRepository,
-    private readonly jobService: NotificationJobService,
-    private readonly matchingService: NotificationMatchingService,
-    private readonly targetService: NotificationTargetService,
-    private readonly guildsService: GuildsService,
-  ) {}
-
-  async handleTimerUpdated(event: {
-    guildId: string;
-    world: string;
-    npcId: number;
-    timerKey: string;
-    minSpawnTime: string;
-    maxSpawnTime: string;
-    npc?: { name?: string } | null;
-  }) {
-    const notificationRules = await this.repository.findTimerRules(
-      event.guildId,
-      event.world,
-    );
-
-    await Promise.all(
-      notificationRules.map(async (notificationRule) => {
-        try {
+export const makeNotificationsEvents = (options: {
+  readonly store: NotificationEventStore;
+  readonly scheduler: NotificationJobScheduler;
+  readonly matching: NotificationMatching;
+  readonly guildTargets: NotificationGuildTargets;
+  readonly findGuilds: (
+    guildIds: readonly string[],
+  ) => Effect.Effect<
+    ReadonlyArray<{ readonly id: string; readonly name: string }>,
+    unknown
+  >;
+  readonly delivery: (
+    event: DiscordNotificationDeliveryResultEvent,
+  ) => Effect.Effect<void, unknown, never>;
+  readonly rebuild: NotificationJobRebuild;
+  readonly logger: Logger;
+}) => {
+  const handleTimerUpdated = Effect.fn("notifications.events.timerUpdated")(
+    function* (event: TimerUpdatedEvent) {
+      const rules = yield* options.store.timerRules(event.guildId, event.world);
+      yield* Effect.forEach(
+        rules,
+        (rule) => {
           if (
-            !this.matchingService.matchesTimerRule(
-              notificationRule.filters as JsonValue,
+            !options.matching.matchesTimerRule(
+              rule.filters as JsonValue,
               event.npcId,
             )
           ) {
-            return;
+            return Effect.void;
           }
-
-          await this.jobService.rebuildTimerJobsForRule(
-            notificationRule.id,
-            event,
+          return options.rebuild.rebuildTimer(rule.id, event).pipe(
+            Effect.result,
+            Effect.tap((result) =>
+              result._tag === "Failure"
+                ? Effect.sync(() =>
+                    options.logger.error(
+                      `Failed to rebuild timer jobs for rule ${rule.id}: ${causeMessage(result.failure)}`,
+                    ),
+                  )
+                : Effect.void,
+            ),
+            Effect.asVoid,
           );
-        } catch (error) {
-          this.logger.error(
-            `Failed to rebuild timer jobs for rule ${notificationRule.id}: ${error instanceof Error ? error.message : error}`,
-          );
-        }
-      }),
-    );
-  }
-
-  async handleTimerDeleted(event: {
-    guildId: string;
-    world: string;
-    timerKey: string;
-    npcId?: number;
-  }) {
-    try {
-      await this.jobService.cancelPendingJobs({
-        sourceEntityType: "timer",
-        sourceEntityId: this.jobService.getTimerSourceEntityId(event),
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${error instanceof Error ? error.message : error}`,
+        },
+        { concurrency: "unbounded", discard: true },
       );
-    }
-  }
+    },
+  );
 
-  async handleLootCreated(event: LootCreatedNotificationEventV2) {
-    const watchedItems = await this.repository.findWatchedItemsForLoot(
-      event.itemIds,
-      event.world,
-    );
+  const handleTimerDeleted = Effect.fn("notifications.events.timerDeleted")(
+    (event: TimerDeletedEvent) =>
+      options.scheduler
+        .cancel({
+          sourceEntityType: "timer",
+          sourceEntityId: timerSourceEntityId(event),
+        })
+        .pipe(
+          Effect.result,
+          Effect.tap((result) =>
+            result._tag === "Failure"
+              ? Effect.sync(() =>
+                  options.logger.error(
+                    `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(result.failure)}`,
+                  ),
+                )
+              : Effect.void,
+          ),
+          Effect.asVoid,
+        ),
+  );
 
-    const guilds = await this.guildsService.getMultipleGuildsByIds(
-      event.guildIds,
-    );
-    const guildNamesMap = new Map(guilds.map((g) => [g.id, g.name]));
-
-    const lootVisibilityNpcs = event.npcs.map((npc) => ({
-      type: npc.type,
-      level: npc.lvl,
-    }));
-    const membershipsByOwner =
-      await this.matchingService.getActiveMembershipsWithRoles(
+  const handleLootCreated = Effect.fn("notifications.events.lootCreated")(
+    function* (event: LootCreatedNotificationEventV2) {
+      const watchedItems = yield* options.store.watchedItemsForLoot(
+        event.itemIds,
+        event.world,
+      );
+      const guilds = yield* options.findGuilds(event.guildIds).pipe(
+        Effect.withSpan("notifications.guilds.findMany", {
+          attributes: { adapter: "notifications.guilds", retryCount: 0 },
+        }),
+      );
+      const guildNames = new Map(guilds.map((guild) => [guild.id, guild.name]));
+      const visibilityNpcs = event.npcs.map((npc) => ({
+        type: npc.type,
+        level: npc.lvl,
+      }));
+      const memberships = yield* options.matching.activeMemberships(
         watchedItems
-          .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+          .map((item) => item.notificationRule?.ownerId)
           .filter((ownerId): ownerId is string => typeof ownerId === "string"),
         event.guildIds,
       );
-
-    await Promise.all(
-      watchedItems.map(async (watchedItem) => {
-        try {
-          const notificationRule = watchedItem.notificationRule;
-          if (!notificationRule) {
-            return;
-          }
-
-          if (
-            !this.matchingService.matchesLootRule(
-              notificationRule.filters as JsonValue,
-              event,
-            )
-          ) {
-            return;
-          }
-          const matchedGuildIds = this.matchingService.getMatchingLootGuildIds(
-            notificationRule.filters as JsonValue,
-            event.guildIds,
-          );
-          if (matchedGuildIds.length === 0) {
-            return;
-          }
-
-          const ownerMemberships =
-            membershipsByOwner.get(notificationRule.ownerId) ?? [];
-          const visibleGuildIds = matchedGuildIds.filter((guildId) => {
-            const membership = ownerMemberships.find(
-              (candidate) => candidate.guildId === guildId,
-            );
-            if (!membership) {
-              return false;
+      yield* Effect.forEach(
+        watchedItems,
+        (watchedItem) => {
+          const process = Effect.gen(function* () {
+            const rule = watchedItem.notificationRule;
+            if (
+              !rule ||
+              !options.matching.matchesLootRule(
+                rule.filters as JsonValue,
+                event,
+              )
+            ) {
+              return;
             }
-
-            return this.matchingService.canRolesViewLoot(
-              membership.roles,
-              lootVisibilityNpcs,
-              membership.isGuildOwner,
+            const matchingGuildIds = options.matching.matchingLootGuildIds(
+              rule.filters as JsonValue,
+              event.guildIds,
+            );
+            const ownerMemberships = memberships.get(rule.ownerId) ?? [];
+            const visibleGuildIds = matchingGuildIds.filter((guildId) => {
+              const membership = ownerMemberships.find(
+                (candidate) => candidate.guildId === guildId,
+              );
+              return Boolean(
+                membership &&
+                options.matching.canRolesViewLoot(
+                  membership.roles,
+                  visibilityNpcs,
+                  membership.isGuildOwner,
+                ),
+              );
+            });
+            if (visibleGuildIds.length === 0) return;
+            yield* Effect.forEach(
+              rule.targets,
+              ({ target }) => {
+                if (!target.active || !target.canSend) return Effect.void;
+                const title = WATCHED_ITEM_DROPPED_TITLE;
+                const message = watchedItemDroppedMessage(
+                  event.world,
+                  visibleGuildIds
+                    .map((guildId) => guildNames.get(guildId))
+                    .filter(Boolean)
+                    .join(", "),
+                  watchedItem.itemName,
+                );
+                return options.scheduler
+                  .create({
+                    notificationRule: rule,
+                    target,
+                    jobKind: NotificationJobKind.INSTANT,
+                    scheduledFor: new Date(),
+                    sourceEntityType: "loot",
+                    sourceEntityId: String(event.lootId),
+                    sourceEventId: `loot:${event.lootId}`,
+                    payloadSnapshot: {
+                      title,
+                      message,
+                      world: event.world,
+                      itemId: watchedItem.itemId,
+                      itemName: watchedItem.itemName,
+                      guildIds: visibleGuildIds,
+                    },
+                  })
+                  .pipe(
+                    Effect.flatMap((job) =>
+                      job ? options.scheduler.enqueue(job.id, 0) : Effect.void,
+                    ),
+                  );
+              },
+              { concurrency: "unbounded", discard: true },
             );
           });
-
-          if (visibleGuildIds.length === 0) {
-            return;
-          }
-
-          await Promise.all(
-            notificationRule.targets.map(async (relation) => {
-              if (!relation.target.active || !relation.target.canSend) {
-                return;
-              }
-
-              const watchedItemName = watchedItem.itemName;
-              const guildNames = visibleGuildIds
-                .map((id) => guildNamesMap.get(id))
-                .filter(Boolean)
-                .join(", ");
-
-              const title = WATCHED_ITEM_DROPPED_TITLE;
-              const message = watchedItemDroppedMessage(
-                event.world,
-                guildNames,
-                watchedItemName,
-              );
-
-              const notificationJob =
-                await this.jobService.createNotificationJob({
-                  notificationRule,
-                  target: relation.target,
-                  jobKind: DbNotificationJobKind.INSTANT,
-                  scheduledFor: new Date(),
-                  sourceEntityType: "loot",
-                  sourceEntityId: String(event.lootId),
-                  sourceEventId: `loot:${event.lootId}`,
-                  payloadSnapshot: {
-                    title,
-                    message,
-                    world: event.world,
-                    itemId: watchedItem.itemId,
-                    itemName: watchedItemName,
-                    guildIds: visibleGuildIds,
-                  },
-                });
-
-              if (notificationJob) {
-                await this.jobService.enqueueNotificationJob(
-                  notificationJob.id,
-                  0,
-                );
-              }
-            }),
+          return process.pipe(
+            Effect.result,
+            Effect.tap((result) =>
+              result._tag === "Failure"
+                ? Effect.sync(() =>
+                    options.logger.error(
+                      `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${causeMessage(result.failure)}`,
+                    ),
+                  )
+                : Effect.void,
+            ),
+            Effect.asVoid,
           );
-        } catch (error) {
-          this.logger.error(
-            `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${error instanceof Error ? error.message : error}`,
-          );
-        }
-      }),
-    );
-  }
-
-  async handleDeliveryResult(event: DiscordNotificationDeliveryResultEvent) {
-    try {
-      await this.jobService.handleDeliveryResult(event);
-    } catch (error) {
-      this.logger.error(
-        `Failed to process notification delivery result for ${event.notificationJobId}: ${error instanceof Error ? error.message : error}`,
+        },
+        { concurrency: "unbounded", discard: true },
       );
-      throw error;
-    }
-  }
+    },
+  );
 
-  async handleDiscordGuildChannelDeleted(
-    event: DiscordGuildChannelDeletedEvent,
-  ) {
-    try {
-      await this.targetService.handleGuildChannelDeleted(event);
-    } catch (error) {
-      this.logger.error(
-        `Failed to handle deleted guild channel ${event.channelId}: ${error instanceof Error ? error.message : error}`,
-      );
-    }
-  }
-}
+  const handleDeliveryResult = Effect.fn("notifications.events.deliveryResult")(
+    (event: DiscordNotificationDeliveryResultEvent) => options.delivery(event),
+  );
+
+  const handleDiscordGuildChannelDeleted = Effect.fn(
+    "notifications.events.discordGuildChannelDeleted",
+  )((event: DiscordGuildChannelDeletedEvent) =>
+    options.guildTargets.removeChannel(event.guildId, event.channelId),
+  );
+
+  return {
+    handleTimerUpdated,
+    handleTimerDeleted,
+    handleLootCreated,
+    handleDeliveryResult,
+    handleDiscordGuildChannelDeleted,
+  };
+};
+
+export type NotificationsEvents = ReturnType<typeof makeNotificationsEvents>;
