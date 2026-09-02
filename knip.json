@@ -60,7 +60,6 @@
     }
   },
   "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
-  "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
