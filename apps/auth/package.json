@@ -32,7 +32,6 @@
     "@better-auth/redis-storage": "1.7.2",
     "@effect/platform-bun": "catalog:",
     "better-auth": "1.7.2",
-    "dotenv": "^17.4.2",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "ioredis": "5.11.1",

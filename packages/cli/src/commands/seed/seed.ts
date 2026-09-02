@@ -32,7 +32,6 @@ import { BattleProcessor, type Warrior } from "@lootlog/battle-processor";
 import { SEED_CONFIG } from "./config.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { config } from "dotenv";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
@@ -40,10 +39,6 @@ import { createHash } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load .env from monorepo root
-const rootPath = path.join(__dirname, "../../../../../");
-config({ path: path.join(rootPath, ".env") });
 
 const mainPool = new pg.Pool({
   connectionString:

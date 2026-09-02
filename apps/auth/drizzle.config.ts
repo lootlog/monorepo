@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { defineConfig } from "drizzle-kit";
 
 const ssl = process.env.POSTGRESQL_SSL_CA

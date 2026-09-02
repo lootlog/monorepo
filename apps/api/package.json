@@ -48,7 +48,6 @@
     "@lootlog/schema": "workspace:*",
     "bullmq": "^5.81.4",
     "discord-api-types": "0.38.54",
-    "dotenv": "^17.4.2",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "ioredis": "^5.11.1",

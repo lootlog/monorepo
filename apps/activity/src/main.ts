@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { BunRuntime } from "@effect/platform-bun";
 import { Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";

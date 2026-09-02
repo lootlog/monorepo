@@ -25,7 +25,6 @@
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "dotenv": "^17.4.2",
     "effect": "catalog:",
     "meilisearch": "^0.60.0",
     "yaml": "catalog:"

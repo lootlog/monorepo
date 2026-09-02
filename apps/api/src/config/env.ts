@@ -1,4 +1,3 @@
-import "dotenv/config";
 import * as z from "zod";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 
