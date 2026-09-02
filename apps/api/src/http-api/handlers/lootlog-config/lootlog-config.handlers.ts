@@ -1,10 +1,17 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { NotFoundException } from "@nestjs/common";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
+import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  lootlogConfigNpcTable,
+  lootlogConfigTable,
+} from "#src/database/drizzle/schema";
 import {
   LootlogApi,
   LootlogConfigControllerGetLootlogConfig200,
@@ -68,6 +75,66 @@ export class LootlogConfigData extends Context.Service<
       }),
     );
   }
+
+  static readonly layerDatabase = Layer.effect(
+    LootlogConfigData,
+    Effect.map(ApiDatabase, (database) => {
+      const operationError = (cause: unknown) =>
+        new LootlogConfigOperationError({ cause });
+      return LootlogConfigData.of({
+        get: (guildId) =>
+          Effect.gen(function* () {
+            const configs = yield* database
+              .select()
+              .from(lootlogConfigTable)
+              .where(inArray(lootlogConfigTable.id, [guildId]));
+            const config = configs[0];
+            if (!config) return null;
+            const npcs = yield* database
+              .select()
+              .from(lootlogConfigNpcTable)
+              .where(eq(lootlogConfigNpcTable.lootlogConfigId, guildId))
+              .orderBy(desc(lootlogConfigNpcTable.id));
+            return { ...config, npcs };
+          }).pipe(Effect.mapError(operationError)),
+        updateNpc: (guildId, npcId, payload) => {
+          const parsedNpcId = Number(npcId);
+          if (!Number.isInteger(parsedNpcId)) {
+            return Effect.fail(
+              operationError(
+                new NotFoundException("NPC configuration not found"),
+              ),
+            );
+          }
+          return database
+            .update(lootlogConfigNpcTable)
+            .set({
+              allowedRarities: [...payload.allowedRarities],
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(lootlogConfigNpcTable.lootlogConfigId, guildId),
+                eq(lootlogConfigNpcTable.id, parsedNpcId),
+              ),
+            )
+            .returning()
+            .pipe(
+              Effect.mapError(operationError),
+              Effect.flatMap((rows) =>
+                rows[0]
+                  ? Effect.succeed(rows[0])
+                  : Effect.fail(
+                      operationError(
+                        new NotFoundException("NPC configuration not found"),
+                      ),
+                    ),
+              ),
+            );
+        },
+      });
+    }),
+  );
 }
 
 const authorize = (guildId: unknown) => {
