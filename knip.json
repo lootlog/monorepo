@@ -4,14 +4,7 @@
     ".": {
       "entry": ["tools/**/*.{js,mjs}"],
       "project": ["tools/**/*.{js,mjs}"],
-      "ignoreDependencies": [
-        "@nestjs/common",
-        "@nestjs/core",
-        "@nestjs/microservices",
-        "@nestjs/swagger",
-        "k6",
-        "zod"
-      ]
+      "ignoreDependencies": ["k6", "zod"]
     },
     "apps/*": {
       "entry": [
