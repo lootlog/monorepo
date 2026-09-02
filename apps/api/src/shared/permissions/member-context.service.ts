@@ -8,6 +8,7 @@ import {
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { Permission } from "@lootlog/schema/permissions";
+import type { MemberDiscordAccessService } from "#src/members/member-discord-access.service";
 import { MembersService } from "#src/members/members.service";
 import type { MemberWithRoles, Role } from "#src/members/member.types";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
@@ -38,7 +39,10 @@ export class MemberContextService {
     private readonly repository: MemberContextRepository,
     private readonly redisService: RedisService,
     @Inject(forwardRef(() => MembersService))
-    private readonly membersService: MembersService,
+    private readonly membersService: Pick<
+      MemberDiscordAccessService,
+      "getGuildMemberById" | "isMemberSoftStale"
+    >,
     @Optional()
     private readonly perfDiagnosticsService?: PerfDiagnosticsService,
   ) {}

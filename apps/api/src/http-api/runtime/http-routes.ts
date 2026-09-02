@@ -14,7 +14,7 @@ import { RequestIdentityLayers } from "./request-identity-layers.js";
 const HandlerInfrastructure = Layer.mergeAll(
   LegacyApiDataLayers,
   NativeApiDataLayers,
-  OrganizationAuthorizationLayers.pipe(Layer.provide(LegacyApiDataLayers)),
+  OrganizationAuthorizationLayers.pipe(Layer.provide(NativeApiDataLayers)),
   RequestIdentityLayers,
 );
 

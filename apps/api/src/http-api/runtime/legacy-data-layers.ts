@@ -8,7 +8,6 @@ import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { LootsService } from "#src/loots/loots.service";
 import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import { ReservationsService } from "#src/reservations/reservations.service";
-import { MemberContextService } from "#src/shared/permissions/member-context.service";
 import { TimersService } from "#src/timers/timers.service";
 import { UsersService } from "#src/users/users.service";
 import { EventsData } from "../handlers/events/events.handlers.js";
@@ -19,7 +18,6 @@ import { TimersData } from "../handlers/timers/timers.handlers.js";
 import { UsersGuildsData } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { LegacyNestApplication } from "./legacy-nest-application.js";
 import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
-import { OrganizationContextLookup } from "./organization-context.js";
 
 /**
  * Resolves established application services from the non-listening Nest
@@ -52,7 +50,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
         lootAllocation: service(LootAllocationService),
       }),
       NotificationsData.layerLegacy(dispatch),
-      OrganizationContextLookup.layerLegacy(service(MemberContextService)),
     );
   }),
 );
