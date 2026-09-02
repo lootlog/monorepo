@@ -20,7 +20,6 @@ import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-
 import { UsersService } from "#src/users/users.service";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
 import { EventsData } from "../handlers/events/events.handlers.js";
-import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { MembersData } from "../handlers/members/members.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
@@ -50,7 +49,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
     const dispatch = createControllerDispatcher(app);
 
     return Layer.mergeAll(
-      InternalGuildsData.layerService(guilds),
       UserLootlogConfigData.layerService(service(UserLootlogConfigService)),
       MessagingData.layerService(service(MessagingService)),
       EventsData.layerLegacy(dispatch),
