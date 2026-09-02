@@ -19,6 +19,7 @@ import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
 import { GuildConfigurationService } from "#src/guilds/guild-configuration.service";
+import { GuildAccessSummaryService } from "#src/guilds/guild-access-summary.service";
 import { MembersRepository } from "#src/members/members.repository";
 import { MemberBulkRefreshService } from "#src/members/member-bulk-refresh.service";
 import { MemberDiscordAccessService } from "#src/members/member-discord-access.service";
@@ -49,6 +50,7 @@ import { ReservationSharingRepository } from "#src/reservations/reservation-shar
 import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import { ReservationCatalogService } from "#src/reservations/reservation-catalog.service";
 import { ReservationReadService } from "#src/reservations/reservation-read.service";
+import { MyReservationsService } from "#src/reservations/my-reservations.service";
 import { ReservationsRepository } from "#src/reservations/reservations.repository";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
@@ -73,6 +75,7 @@ import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.han
 import {
   ReservationSharingData,
   ReservationReadData,
+  MyReservationsData,
   RolesData,
 } from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
@@ -371,6 +374,7 @@ interface NativeMemberServicesValue {
   readonly bulkRefresh: MemberBulkRefreshService;
   readonly read: MemberReadService;
   readonly refreshJobRead: MemberRefreshJobReadService;
+  readonly refresh: MemberDiscordRefreshService;
 }
 
 class NativeMemberServices extends Context.Service<
@@ -490,6 +494,7 @@ const NativeMemberServicesLive = Layer.effect(
           bulkRefresh,
           read: memberRead,
           refreshJobRead: new MemberRefreshJobReadService(refreshJobs),
+          refresh: memberDiscordRefresh,
         };
       }),
       ({ runtime, queues }) =>
@@ -542,6 +547,41 @@ const NativeOrganizationContextLookup = Layer.unwrap(
   }),
 );
 
+class NativeGuildAccessSummary extends Context.Service<
+  NativeGuildAccessSummary,
+  GuildAccessSummaryService
+>()("@lootlog/api/http-api/NativeGuildAccessSummary") {}
+
+const NativeGuildAccessSummaryLive = Layer.effect(
+  NativeGuildAccessSummary,
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const { runtime, access, refresh } = yield* NativeMemberServices;
+    return new GuildAccessSummaryService(
+      nativeLogger,
+      new GuildsRepository(runtime),
+      new MembersRepository(runtime),
+      access,
+      refresh,
+      redis,
+    );
+  }),
+);
+
+const NativeMyReservationsData = Layer.effect(
+  MyReservationsData,
+  Effect.gen(function* () {
+    const { runtime } = yield* NativeMemberServices;
+    const guildAccess = yield* NativeGuildAccessSummary;
+    return MyReservationsData.makeService(
+      new MyReservationsService(
+        new ReservationsRepository(runtime),
+        guildAccess,
+      ),
+    );
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -561,4 +601,9 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeMemberRefreshJobData,
   NativeMembersData,
   NativeOrganizationContextLookup,
-).pipe(Layer.provide(NativeMemberServicesLive), Layer.provide(ApiDatabaseLive));
+  NativeMyReservationsData,
+).pipe(
+  Layer.provide(NativeGuildAccessSummaryLive),
+  Layer.provide(NativeMemberServicesLive),
+  Layer.provide(ApiDatabaseLive),
+);
