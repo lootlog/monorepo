@@ -75,7 +75,6 @@
         "effect": "catalog:",
         "fastify": "5.12.1",
         "ioredis": "^5.11.1",
-        "nest-winston": "catalog:",
         "nestjs-zod": "catalog:",
         "redlock": "5.0.0-beta.2",
         "reflect-metadata": "catalog:",

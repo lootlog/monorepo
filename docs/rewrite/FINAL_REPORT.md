@@ -73,11 +73,17 @@ on the rewrite branch.
   Organization and existing member/role snapshot to data operations, and keeps
   missing Organizations (404) distinct from missing membership or capabilities
   (403). Eight focused runtime tests and the full 1,060-test API suite pass.
+- Bun/Effect now owns the API's sole public HTTP listener. The transitional
+  Nest container is initialized without calling `listen`, supplies the
+  remaining application services and queue consumers, and is acquired and
+  released inside the Effect scope. Focused lifecycle tests cover normal
+  shutdown and partial-start cleanup. A built-artifact import under Bun 1.4
+  exposed and then eliminated the incompatible `nest-winston` CommonJS bridge.
 - Activity's legacy migration chain and Drizzle baseline match mechanically on
   a real TimescaleDB, including column order, types, defaults, constraints,
   indexes, one-day chunks, and seven-day retention. Positive and negative
   adoption checks behave fail-closed.
-- Auth, Activity, Battlelog, Gateway, Search, Discord Bot, and Developer
+- API, Auth, Activity, Battlelog, Gateway, Search, Discord Bot, and Developer
   container targets build as non-root Bun images with `dumb-init`, source maps,
   and healthchecks.
   Runtime entrypoints were inspected, and current Trivy scans reported zero
@@ -102,8 +108,7 @@ on the rewrite branch.
 
 ## Evidence still required before completion
 
-The rewrite is not complete until the API query layer and host no longer depend
-on Nest/Prisma, remaining legacy helper packages are removed, all image targets
-and Cloudflare dry-runs pass, and the remaining integration, shutdown,
-vulnerability, and performance matrices described in [`status.md`](status.md)
-are recorded.
+The rewrite is not complete until the API application layer no longer depends
+on its non-listening Nest compatibility container, remaining legacy helper
+packages are removed, and the remaining integration, shutdown, and performance
+matrices described in [`status.md`](status.md) are recorded.
