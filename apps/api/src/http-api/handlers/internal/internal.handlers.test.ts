@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
+import type { RedisService } from "@lootlog/nest-shared/redis";
+import type { GuildsRepository } from "#src/guilds/guilds.repository";
+import type { MembersRepository } from "#src/members/members.repository";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,
@@ -84,5 +88,76 @@ describe("internal guild HttpApi handlers", () => {
     expect(
       Schema.is(GuildsInternalControllerGetGuildByIdOrVanityUrl200)(response),
     ).toBe(true);
+  });
+
+  it("builds the established owner and member permission projection from repositories", async () => {
+    const cached: unknown[] = [];
+    const data = InternalGuildsData.makeRepositories({
+      guilds: {
+        findForPermissions: async () => [
+          { id: "guild-owner", ownerId: "discord-a" },
+          { id: "guild-member", ownerId: "discord-owner" },
+        ],
+      } as unknown as GuildsRepository,
+      members: {
+        findMembersByUserGuildIds: async () => [
+          {
+            guildId: "guild-member",
+            active: true,
+            roles: [
+              {
+                id: "role-a",
+                lvlRangeFrom: 1,
+                lvlRangeTo: 300,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ],
+      } as unknown as MembersRepository,
+      redis: {
+        getJson: async () => null,
+        setJson: async (_key: string, value: unknown) => {
+          cached.push(value);
+        },
+      } as unknown as RedisService,
+    });
+
+    const response = await Effect.runPromise(
+      data.getUserPermissions("discord-a", "user-a"),
+    );
+    expect(
+      Schema.is(GuildsInternalControllerGetUserPermissions200)(response),
+    ).toBe(true);
+    expect(response).toHaveLength(2);
+    expect(cached).toEqual([response]);
+  });
+
+  it("preserves cached guild defaults without touching the database", async () => {
+    let databaseRead = false;
+    const data = InternalGuildsData.makeRepositories({
+      guilds: {
+        findActive: async () => {
+          databaseRead = true;
+          return null;
+        },
+      } as unknown as GuildsRepository,
+      members: {} as MembersRepository,
+      redis: {
+        get: async () =>
+          JSON.stringify({
+            id: "guild-a",
+            name: "Guild A",
+            ownerId: "discord-owner",
+            publicStatsCardEnabled: false,
+          }),
+      } as unknown as RedisService,
+    });
+
+    const response = await Effect.runPromise(data.getGuild("guild-a"));
+    expect(
+      Schema.is(GuildsInternalControllerGetGuildByIdOrVanityUrl200)(response),
+    ).toBe(true);
+    expect(databaseRead).toBe(false);
   });
 });

@@ -4,6 +4,8 @@ import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
+import { GuildsRepository } from "#src/guilds/guilds.repository";
+import { MembersRepository } from "#src/members/members.repository";
 import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/public-guild-stats-card.repository";
 import { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
@@ -13,6 +15,7 @@ import { TimerSettingsService } from "#src/timer-settings/timer-settings.service
 import { MapTemplatesData } from "../handlers/map-templates/map-templates.handlers.js";
 import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import { DocsData } from "../handlers/docs/docs.handlers.js";
+import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { ApiRedis } from "./api-redis.js";
@@ -69,10 +72,23 @@ const NativePublicSystemData = Layer.unwrap(
   }),
 );
 
+const NativeInternalGuildsData = Layer.unwrap(
+  Effect.map(ApiRedis, (redis) =>
+    makeScopedCompatibilityLayer(InternalGuildsData, (runtime) =>
+      InternalGuildsData.makeRepositories({
+        guilds: new GuildsRepository(runtime),
+        members: new MembersRepository(runtime),
+        redis,
+      }),
+    ),
+  ),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
   NativeSettingsData,
   NativeDocsData,
   NativePublicSystemData,
+  NativeInternalGuildsData,
 ).pipe(Layer.provide(ApiDatabaseLive));

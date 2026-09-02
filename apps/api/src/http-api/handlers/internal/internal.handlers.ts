@@ -1,6 +1,15 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { resolveReservationSettings } from "@lootlog/domain/reservations";
+import { Permission } from "@lootlog/schema/permissions";
 import type { GuildsService } from "#src/guilds/guilds.service";
+import type { GuildsRepository } from "#src/guilds/guilds.repository";
+import type { MembersRepository } from "#src/members/members.repository";
+import type { RedisService } from "@lootlog/nest-shared/redis";
+import {
+  getGuildCacheKey,
+  GUILD_CACHE_TTL_SECONDS,
+} from "#src/shared/constants/cache.constant";
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,
@@ -42,6 +51,118 @@ export class InternalGuildsData extends Context.Service<
           attempt(() => service.getGuildById(idOrVanityUrl)),
       }),
     );
+  }
+
+  static makeRepositories(options: {
+    readonly guilds: GuildsRepository;
+    readonly members: MembersRepository;
+    readonly redis: RedisService;
+  }): InternalGuildsData["Service"] {
+    const attempt = <A>(operation: () => Promise<A>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new InternalGuildsOperationError({ cause }),
+      });
+
+    const getGuild = async (idOrVanityUrl: string) => {
+      const cacheKey = getGuildCacheKey(idOrVanityUrl);
+      const cached = await options.redis.get(cacheKey);
+      if (cached) {
+        try {
+          const guild = JSON.parse(cached) as Record<string, unknown>;
+          return { ...guild, ...resolveReservationSettings(guild) };
+        } catch {
+          await options.redis.del(cacheKey);
+        }
+      }
+
+      const guild = await options.guilds.findActive(idOrVanityUrl);
+      if (!guild) throw new Error("Guild not found");
+      const encoded = JSON.stringify(guild);
+      await Promise.all([
+        options.redis.set(
+          getGuildCacheKey(guild.id),
+          encoded,
+          GUILD_CACHE_TTL_SECONDS,
+        ),
+        ...(guild.vanityUrl
+          ? [
+              options.redis.set(
+                getGuildCacheKey(guild.vanityUrl),
+                encoded,
+                GUILD_CACHE_TTL_SECONDS,
+              ),
+            ]
+          : []),
+      ]);
+      return { ...guild, ...resolveReservationSettings(guild) };
+    };
+
+    const getUserPermissions = async (discordId: string, userId: string) => {
+      const cacheKey = `user:${userId}:discord:${discordId}:guild-permissions`;
+      const cached = await options.redis.getJson<unknown[]>(cacheKey);
+      if (cached !== null) return cached;
+
+      const guilds = await options.guilds.findForPermissions(discordId, [
+        Permission.LOOTLOG_ACCESS,
+      ]);
+      if (guilds.length === 0) return [];
+      const members = await options.members.findMembersByUserGuildIds(
+        discordId,
+        guilds.map(({ id }) => id),
+      );
+      const memberByGuild = new Map(
+        members.map((member) => [member.guildId, member]),
+      );
+      const allPermissions = Object.values(Permission);
+      const result = guilds.flatMap((guild) => {
+        if (guild.ownerId === discordId) {
+          return [
+            {
+              guild: { id: guild.id, ownerId: guild.ownerId },
+              roles: [
+                {
+                  id: "owner",
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: 999,
+                  permissions: allPermissions,
+                },
+              ],
+            },
+          ];
+        }
+        const member = memberByGuild.get(guild.id);
+        if (
+          !member?.active ||
+          !member.roles.some((role) =>
+            role.permissions.includes(Permission.LOOTLOG_ACCESS),
+          )
+        ) {
+          return [];
+        }
+        return [
+          {
+            guild: { id: guild.id, ownerId: guild.ownerId },
+            roles: member.roles
+              .filter(({ permissions }) => permissions.length > 0)
+              .map(({ id, lvlRangeFrom, lvlRangeTo, permissions }) => ({
+                id,
+                lvlRangeFrom,
+                lvlRangeTo,
+                permissions,
+              })),
+          },
+        ];
+      });
+      await options.redis.setJson(cacheKey, result, 60);
+      return result;
+    };
+
+    return InternalGuildsData.of({
+      getUserPermissions: (discordId, userId) =>
+        attempt(() => getUserPermissions(discordId, userId)),
+      getGuild: (idOrVanityUrl) => attempt(() => getGuild(idOrVanityUrl)),
+    });
   }
 }
 
