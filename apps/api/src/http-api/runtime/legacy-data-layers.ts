@@ -4,7 +4,6 @@ import { Effect, Layer } from "effect";
 import { ChatService } from "#src/chat/chat.service";
 import { DocsService } from "#src/docs/docs.service";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { HealthzService } from "#src/healthz/healthz.service";
 import { KillsService } from "#src/kills/kills.service";
 import { LootAllocationService } from "#src/loots/loot-allocation.service";
 import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
@@ -71,7 +70,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
       MembersData.layerService(service(MembersService)),
       UsersGuildsData.layerServices(service(UsersService), guilds),
       PublicSystemData.layerServices({
-        health: service(HealthzService),
         maps: service(MapsService),
         statsCard: service(PublicGuildStatsCardService),
         local: config.environment === RuntimeEnvironment.LOCAL,

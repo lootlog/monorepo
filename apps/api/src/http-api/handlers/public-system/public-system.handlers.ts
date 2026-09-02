@@ -5,7 +5,6 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { HealthzService } from "#src/healthz/healthz.service";
 import type { MapsService } from "#src/maps/maps.service";
 import type { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import {
@@ -57,7 +56,6 @@ export class PublicSystemData extends Context.Service<
   }
 >()("@lootlog/api/http-api/public-system/data") {
   static layerServices(options: {
-    readonly health: HealthzService;
     readonly maps: MapsService;
     readonly statsCard: PublicGuildStatsCardService;
     readonly local: boolean;
@@ -71,9 +69,7 @@ export class PublicSystemData extends Context.Service<
     return Layer.succeed(
       PublicSystemData,
       PublicSystemData.of({
-        healthCheck: Effect.sync(() => {
-          options.health.healthCheck();
-        }),
+        healthCheck: Effect.void,
         getMaps: attempt(() => options.maps.getMaps()),
         refreshStatsCard: (guildId) =>
           attempt(() => options.statsCard.refreshStatsCard(guildId)),
