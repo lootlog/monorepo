@@ -1,8 +1,6 @@
-import { HttpService } from "@nestjs/axios";
 import { Inject, Injectable } from "@nestjs/common";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
-import { firstValueFrom } from "rxjs";
 import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
@@ -19,13 +17,20 @@ import {
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
 
+class AuthHttpResponseError extends Error {
+  constructor(
+    readonly response: { readonly status: number; readonly data: unknown },
+  ) {
+    super(`Request failed with status code ${response.status}`);
+  }
+}
+
 @Injectable()
 export class AuthService {
   private authServiceUrl: string;
 
   constructor(
     @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
-    private readonly httpService: HttpService,
     private readonly redisService: RedisService,
   ) {
     this.authServiceUrl = authConfig.serviceUrl;
@@ -37,15 +42,26 @@ export class AuthService {
   ): Promise<GetIdpTokenResponse> {
     try {
       const url = `${this.authServiceUrl}/auth/idp-token`;
-      const response$ = this.httpService.post<GetIdpTokenResponse>(
-        url,
-        { userId, discordId },
-        { timeout: DEFAULT_REQUEST_TIMEOUT },
-      );
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId, discordId }),
+        signal: AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT),
+      });
+      const responseBody = await response.text();
+      let data: GetIdpTokenResponse | undefined;
+      if (responseBody) {
+        try {
+          data = JSON.parse(responseBody) as GetIdpTokenResponse;
+        } catch {
+          data = responseBody as unknown as GetIdpTokenResponse;
+        }
+      }
+      if (!response.ok) {
+        throw new AuthHttpResponseError({ status: response.status, data });
+      }
 
-      const response = await firstValueFrom(response$);
-
-      if (!response.data) {
+      if (!data) {
         this.logger.log({
           level: "error",
           message: `Empty response from auth service for user ${userId}`,
@@ -55,7 +71,7 @@ export class AuthService {
         );
       }
 
-      return response.data;
+      return data;
     } catch (error) {
       if (this.isKnownAuthError(error)) {
         throw error;
