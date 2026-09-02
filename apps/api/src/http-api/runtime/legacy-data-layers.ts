@@ -6,13 +6,11 @@ import { LootAllocationService } from "#src/loots/loot-allocation.service";
 import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { LootsService } from "#src/loots/loots.service";
-import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import { TimersService } from "#src/timers/timers.service";
 import { UsersService } from "#src/users/users.service";
 import { EventsData } from "../handlers/events/events.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
-import { ReservationsRolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { TimersData } from "../handlers/timers/timers.handlers.js";
 import { UsersGuildsData } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { LegacyNestApplication } from "./legacy-nest-application.js";
@@ -36,9 +34,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
     return Layer.mergeAll(
       EventsData.layerLegacy(dispatch),
       UsersGuildsData.layerServices(service(UsersService), guilds),
-      ReservationsRolesData.layerServices({
-        mutations: service(ReservationMutationsService),
-      }),
       TimersData.layerService(service(TimersService)),
       legacyKillsLootsDataLayer({
         kills: service(KillsService),
