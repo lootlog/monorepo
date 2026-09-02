@@ -35,36 +35,6 @@ vi.mock("#src/config/env", () => ({
   },
 }));
 
-vi.mock("@golevelup/nestjs-rabbitmq", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@golevelup/nestjs-rabbitmq")>();
-
-  class AmqpConnection {
-    publish = vi.fn().mockResolvedValue(undefined);
-    request = vi.fn().mockResolvedValue(undefined);
-  }
-
-  class MockRabbitMQModule {}
-
-  return {
-    ...actual,
-    AmqpConnection,
-    RabbitMQModule: {
-      forRoot: () => ({
-        module: MockRabbitMQModule,
-        providers: [
-          {
-            provide: AmqpConnection,
-            useFactory: () => new AmqpConnection(),
-          },
-        ],
-        exports: [AmqpConnection],
-      }),
-    },
-    RabbitSubscribe: () => () => undefined,
-  };
-});
-
 vi.mock("uuid", () => ({
   v6: () => randomUUID(),
   v4: () => randomUUID(),

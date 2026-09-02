@@ -1,9 +1,19 @@
 {
-  "extends": "@lootlog/typescript-config/nestjs.json",
+  "extends": "@lootlog/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": false,
+    "declarationMap": false,
     "rootDir": ".",
-    "strict": true
+    "strict": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false,
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "rewriteRelativeImportExtensions": true,
+    "sourceMap": true,
+    "types": ["node", "vitest/globals"]
   }
 }
