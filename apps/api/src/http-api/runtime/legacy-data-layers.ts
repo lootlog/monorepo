@@ -13,7 +13,6 @@ import { ReservationsService } from "#src/reservations/reservations.service";
 import { RolesService } from "#src/roles/roles.service";
 import { MemberContextService } from "#src/shared/permissions/member-context.service";
 import { TimersService } from "#src/timers/timers.service";
-import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { UsersService } from "#src/users/users.service";
 import { EventsData } from "../handlers/events/events.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
@@ -21,7 +20,6 @@ import { MembersData } from "../handlers/members/members.handlers.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
 import { ReservationsRolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { TimersData } from "../handlers/timers/timers.handlers.js";
-import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { UsersGuildsData } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { LegacyNestApplication } from "./legacy-nest-application.js";
 import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
@@ -43,7 +41,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
     const dispatch = createControllerDispatcher(app);
 
     return Layer.mergeAll(
-      UserLootlogConfigData.layerService(service(UserLootlogConfigService)),
       EventsData.layerLegacy(dispatch),
       MembersData.layerService(service(MembersService)),
       UsersGuildsData.layerServices(service(UsersService), guilds),

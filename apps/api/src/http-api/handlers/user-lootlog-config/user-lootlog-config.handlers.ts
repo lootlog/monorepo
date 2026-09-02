@@ -45,6 +45,15 @@ export class UserLootlogConfigData extends Context.Service<
   }
 >()("@lootlog/api/http-api/user-lootlog-config/data") {
   static layerService(service: UserLootlogConfigService) {
+    return Layer.succeed(
+      UserLootlogConfigData,
+      UserLootlogConfigData.makeService(service),
+    );
+  }
+
+  static makeService(
+    service: UserLootlogConfigService,
+  ): UserLootlogConfigData["Service"] {
     const attempt = (operation: () => unknown | PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: () => Promise.resolve(operation()),
@@ -53,25 +62,22 @@ export class UserLootlogConfigData extends Context.Service<
     const mutable = <A>(value: unknown): A =>
       JSON.parse(JSON.stringify(value)) as A;
 
-    return Layer.succeed(
-      UserLootlogConfigData,
-      UserLootlogConfigData.of({
-        getAccount: (discordId, accountId) =>
-          attempt(() => service.getLootlogAccountConfig(discordId, accountId)),
-        upsertCharacter: (discordId, accountId, payload) =>
-          attempt(() =>
-            service.createOrUpdateLootlogCharacterConfig(
-              discordId,
-              accountId,
-              mutable(payload),
-            ),
+    return UserLootlogConfigData.of({
+      getAccount: (discordId, accountId) =>
+        attempt(() => service.getLootlogAccountConfig(discordId, accountId)),
+      upsertCharacter: (discordId, accountId, payload) =>
+        attempt(() =>
+          service.createOrUpdateLootlogCharacterConfig(
+            discordId,
+            accountId,
+            mutable(payload),
           ),
-        getPlayersCatchingGuilds: (discordId, payload) =>
-          attempt(() =>
-            service.getPlayersCatchingGuilds(discordId, mutable(payload)),
-          ),
-      }),
-    );
+        ),
+      getPlayersCatchingGuilds: (discordId, payload) =>
+        attempt(() =>
+          service.getPlayersCatchingGuilds(discordId, mutable(payload)),
+        ),
+    });
   }
 }
 
