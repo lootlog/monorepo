@@ -135,80 +135,79 @@ export class TimersData extends Context.Service<
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/timers/data") {
-  static layerService(service: TimersService) {
+  static makeService(service: TimersService): TimersData["Service"] {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new TimersOperationError({ cause }),
       });
 
-    return Layer.succeed(
-      TimersData,
-      TimersData.of({
-        getAll: ({ discordId, userId }, world) =>
-          attempt(() => service.getAllTimers(discordId, userId, { world })),
-        getRecentHistory: ({ discordId }, guildId, world, limit) =>
-          attempt(() =>
-            service.getRecentTimerHistory(discordId, guildId, world, {
-              limit,
-            }),
+    return TimersData.of({
+      getAll: ({ discordId, userId }, world) =>
+        attempt(() => service.getAllTimers(discordId, userId, { world })),
+      getRecentHistory: ({ discordId }, guildId, world, limit) =>
+        attempt(() =>
+          service.getRecentTimerHistory(discordId, guildId, world, { limit }),
+        ),
+      getGuildTimers: ({ userId, guild, accessPolicy, roles }, world) =>
+        attempt(() =>
+          service.getTimers(userId, { world }, guild, accessPolicy, roles),
+        ),
+      searchNpcs: (guildId, world, search, limit) =>
+        attempt(() =>
+          service.searchNpcsWithTimerData(guildId, world, search, limit),
+        ),
+      createAuto: ({ discordId, userId }, payload) =>
+        attempt(() =>
+          service.createAutoTimer(
+            discordId,
+            userId,
+            structuredClone(payload) as LegacyCreateAutoTimerDto,
           ),
-        getGuildTimers: ({ userId, guild, accessPolicy, roles }, world) =>
-          attempt(() =>
-            service.getTimers(userId, { world }, guild, accessPolicy, roles),
+        ),
+      reset: ({ discordId }, guildId, timerIdentifier, payload) =>
+        attempt(() =>
+          service.resetTimer(
+            discordId,
+            guildId,
+            timerIdentifier,
+            structuredClone(payload) as LegacyResetTimerDto,
           ),
-        searchNpcs: (guildId, world, search, limit) =>
-          attempt(() =>
-            service.searchNpcsWithTimerData(guildId, world, search, limit),
+        ),
+      delete: ({ discordId }, guildId, timerIdentifier, world) =>
+        attempt(() =>
+          service.deleteTimer(discordId, guildId, timerIdentifier, world),
+        ),
+      getHistory: (
+        { guild, accessPolicy, roles },
+        world,
+        timerIdentifier,
+        limit,
+      ) =>
+        attempt(() =>
+          service.getTimerHistory(guild.id, world, timerIdentifier, {
+            limit,
+            accessPolicy,
+            roles,
+          }),
+        ),
+      restore: ({ discordId }, guildId, historyEntryId) =>
+        attempt(() =>
+          service.restoreTimerFromHistory(discordId, guildId, historyEntryId),
+        ),
+      createManual: ({ discordId }, guildId, payload) =>
+        attempt(() =>
+          service.createManualTimer(
+            discordId,
+            guildId,
+            structuredClone(payload) as LegacyCreateManualTimerDto,
           ),
-        createAuto: ({ discordId, userId }, payload) =>
-          attempt(() =>
-            service.createAutoTimer(
-              discordId,
-              userId,
-              structuredClone(payload) as LegacyCreateAutoTimerDto,
-            ),
-          ),
-        reset: ({ discordId }, guildId, timerIdentifier, payload) =>
-          attempt(() =>
-            service.resetTimer(
-              discordId,
-              guildId,
-              timerIdentifier,
-              structuredClone(payload) as LegacyResetTimerDto,
-            ),
-          ),
-        delete: ({ discordId }, guildId, timerIdentifier, world) =>
-          attempt(() =>
-            service.deleteTimer(discordId, guildId, timerIdentifier, world),
-          ),
-        getHistory: (
-          { guild, accessPolicy, roles },
-          world,
-          timerIdentifier,
-          limit,
-        ) =>
-          attempt(() =>
-            service.getTimerHistory(guild.id, world, timerIdentifier, {
-              limit,
-              accessPolicy,
-              roles,
-            }),
-          ),
-        restore: ({ discordId }, guildId, historyEntryId) =>
-          attempt(() =>
-            service.restoreTimerFromHistory(discordId, guildId, historyEntryId),
-          ),
-        createManual: ({ discordId }, guildId, payload) =>
-          attempt(() =>
-            service.createManualTimer(
-              discordId,
-              guildId,
-              structuredClone(payload) as LegacyCreateManualTimerDto,
-            ),
-          ),
-      }),
-    );
+        ),
+    });
+  }
+
+  static layerService(service: TimersService) {
+    return Layer.succeed(TimersData, TimersData.makeService(service));
   }
 }
 

@@ -17,6 +17,9 @@ import { DiscordService } from "#src/discord/discord.service";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { DiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
+import { EVENT_HERO_KILL_QUEUE } from "#src/events/constants/event-hero-kill-queue.constant";
+import { ActiveEventHeroRepository } from "#src/events/services/active-event-hero.repository";
+import { EventTimerHooksService } from "#src/events/services/event-timer-hooks.service";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
@@ -69,6 +72,8 @@ import { SettingsDocumentsRepository } from "#src/settings-documents/settings-do
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
 import { TimerSettingsService } from "#src/timer-settings/timer-settings.service";
+import { TimersRepository } from "#src/timers/timers.repository";
+import { TimersService } from "#src/timers/timers.service";
 import { UserLootlogConfigRepository } from "#src/user-lootlog-config/user-lootlog-config.repository";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { UsersRepository } from "#src/users/users.repository";
@@ -98,6 +103,7 @@ import { PublicSystemData } from "../handlers/public-system/public-system.handle
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
+import { TimersData } from "../handlers/timers/timers.handlers.js";
 import {
   GuildConfigurationData,
   UsersGuildsData,
@@ -723,6 +729,62 @@ const NativeReservationMutationsData = Layer.effect(
   }),
 );
 
+const NativeTimersData = Layer.effect(
+  TimersData,
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const config = yield* ApiRuntimeConfig;
+    const { runtime } = yield* NativeMemberServices;
+    const eventHeroKillQueue = yield* Effect.acquireRelease(
+      Effect.sync(
+        () =>
+          new Queue(EVENT_HERO_KILL_QUEUE, {
+            connection: {
+              host: config.redis.host,
+              port: config.redis.port,
+              username: config.redis.username,
+              password: Redacted.value(config.redis.password),
+              maxRetriesPerRequest: null,
+              enableReadyCheck: false,
+            },
+            prefix: "{bull}",
+          }),
+      ),
+      (queue) => Effect.promise(() => queue.close()),
+    );
+    const guildsRepository = new GuildsRepository(runtime);
+    const guilds = {
+      getGuildsForRequiredPermissions: (
+        discordId: string,
+        permissions: Permission[],
+      ) => guildsRepository.findForPermissions(discordId, permissions),
+      getMultipleGuildsPermissions:
+        makeGuildPermissionsFacade(runtime).getMultipleGuildsPermissions,
+    } as unknown as GuildsService;
+    const userLootlogConfig = new UserLootlogConfigService(
+      new UserLootlogConfigRepository(runtime),
+      guilds,
+      redis,
+    );
+    const service = new TimersService(
+      nativeLogger,
+      new TimersRepository(runtime),
+      makeAmqpAdapter(rabbit),
+      guilds,
+      userLootlogConfig,
+      redis,
+      new EventTimerHooksService(
+        new ActiveEventHeroRepository(runtime),
+        eventHeroKillQueue,
+      ),
+      new RedlockService(redis),
+    );
+    service.onModuleInit();
+    return TimersData.makeService(service);
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -745,6 +807,7 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeMyReservationsData,
   NativeReservationMutationsData,
   NativeUsersGuildsData,
+  NativeTimersData,
 ).pipe(
   Layer.provide(NativeGuildAccessSummaryLive),
   Layer.provide(NativeMemberServicesLive),
