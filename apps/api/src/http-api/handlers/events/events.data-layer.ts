@@ -6,31 +6,31 @@ import type { EventsMonitoring } from "#src/events/events-monitoring.operations"
 import type { EventsPins } from "#src/events/events-pins.operations";
 import type { EventsRanking } from "#src/events/events-ranking.operations";
 import {
-  EventMutationResponseDto,
-  EventOverviewResponseDto,
-  EventsListResponseDto,
-  EventRankingResponseDto,
-  EventTimersResponseDto,
-  PendingParticipationConfirmationsResponseDto,
-} from "#src/events/dto/event-response.dto";
-import { PinnedEventResponseDto } from "#src/events/dto/pinned-event-response.dto";
+  EventMutationResponse,
+  EventOverviewResponse,
+  EventsListResponse,
+  EventRankingResponse,
+  EventTimersResponse,
+  PendingParticipationConfirmationsResponse,
+} from "#src/events/event-response.schema";
+import { PinnedEventResponse } from "#src/events/pinned-event-response.schema";
 import {
-  EventHeroStatsResponseDto,
-  EventKillHistoryResponseDto,
-  EventMemberKillHistoryResponseDto,
-  KillDetailResponseDto,
-} from "#src/events/dto/event-kill-response.dto";
-import { EventCoordinationResponseDto } from "#src/events/dto/event-coordination-response.dto";
+  EventHeroStatsResponse,
+  EventKillHistoryResponse,
+  EventMemberKillHistoryResponse,
+  KillDetailResponse,
+} from "#src/events/event-kill-response.schema";
+import { EventCoordinationResponse } from "#src/events/event-coordination-response.schema";
 import {
-  CoverageGapResponseDto,
-  HeroCoverageGapResponseDto,
-  HeroPresenceStatsResponseDto,
-  HeroRespawnConfigResponseDto,
-  KillTimelineMapResponseDto,
-  NullableCoverageGapResponseDto,
-} from "#src/events/dto/event-monitoring-response.dto";
-import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
-import { LootlogApi } from "../../lootlog-api.generated.js";
+  CoverageGapResponse,
+  HeroCoverageGapResponse,
+  HeroPresenceStatsResponse,
+  HeroRespawnConfigResponse,
+  KillTimelineMapResponse,
+  NullableCoverageGapResponse,
+} from "#src/events/event-monitoring-response.schema";
+import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
   EventsAccessDenied,
   EventsBadRequest,
@@ -149,7 +149,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((events) =>
-                encodeUnknownResponse(EventsListResponseDto.schema, events),
+                encodeUnknownResponse(EventsListResponse, events),
               ),
             );
           case "createEvent":
@@ -158,7 +158,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               operations.catalog.createEvent(payload(request), caller.guild),
             ).pipe(
               Effect.map((event) =>
-                encodeUnknownResponse(EventMutationResponseDto.schema, event),
+                encodeUnknownResponse(EventMutationResponse, event),
               ),
             );
           case "showEvent":
@@ -172,7 +172,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((event) =>
-                encodeUnknownResponse(EventOverviewResponseDto.schema, event),
+                encodeUnknownResponse(EventOverviewResponse, event),
               ),
             );
           case "deleteEvent":
@@ -190,7 +190,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((event) =>
-                encodeUnknownResponse(EventMutationResponseDto.schema, event),
+                encodeUnknownResponse(EventMutationResponse, event),
               ),
             );
           case "showEventOverview":
@@ -204,7 +204,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((event) =>
-                encodeUnknownResponse(EventOverviewResponseDto.schema, event),
+                encodeUnknownResponse(EventOverviewResponse, event),
               ),
             );
           case "showEventWrapped":
@@ -432,7 +432,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((value) =>
                 encodeUnknownResponse(
-                  PendingParticipationConfirmationsResponseDto.schema,
+                  PendingParticipationConfirmationsResponse,
                   value,
                 ),
               ),
@@ -470,7 +470,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((ranking) =>
-                encodeUnknownResponse(EventRankingResponseDto.schema, ranking),
+                encodeUnknownResponse(EventRankingResponse, ranking),
               ),
             );
           case "updateRankingPoints": {
@@ -501,7 +501,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((timers) =>
-                encodeUnknownResponse(EventTimersResponseDto.schema, timers),
+                encodeUnknownResponse(EventTimersResponse, timers),
               ),
             );
           case "EventsRankingControllerGetEventHeroStats":
@@ -516,7 +516,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((stats) =>
                 stats.map((stat) =>
-                  encodeUnknownResponse(EventHeroStatsResponseDto.schema, stat),
+                  encodeUnknownResponse(EventHeroStatsResponse, stat),
                 ),
               ),
             );
@@ -534,10 +534,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((history) =>
-                encodeUnknownResponse(
-                  EventKillHistoryResponseDto.schema,
-                  history,
-                ),
+                encodeUnknownResponse(EventKillHistoryResponse, history),
               ),
             );
           case "EventsRankingControllerGetMemberKillHistory": {
@@ -556,10 +553,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((history) =>
-                encodeUnknownResponse(
-                  EventMemberKillHistoryResponseDto.schema,
-                  history,
-                ),
+                encodeUnknownResponse(EventMemberKillHistoryResponse, history),
               ),
             );
           }
@@ -578,10 +572,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((history) =>
-                encodeUnknownResponse(
-                  EventKillHistoryResponseDto.schema,
-                  history,
-                ),
+                encodeUnknownResponse(EventKillHistoryResponse, history),
               ),
             );
           }
@@ -600,7 +591,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((detail) =>
-                encodeUnknownResponse(KillDetailResponseDto.schema, detail),
+                encodeUnknownResponse(KillDetailResponse, detail),
               ),
             );
           }
@@ -628,10 +619,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               operations.monitoring.getCoordination(caller.guild, eventId),
             ).pipe(
               Effect.map((coordination) =>
-                encodeUnknownResponse(
-                  EventCoordinationResponseDto.schema,
-                  coordination,
-                ),
+                encodeUnknownResponse(EventCoordinationResponse, coordination),
               ),
             );
           case "EventsMonitoringControllerGetKillTimelineData": {
@@ -650,7 +638,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((maps) =>
                 maps.map((map) =>
-                  encodeUnknownResponse(KillTimelineMapResponseDto.schema, map),
+                  encodeUnknownResponse(KillTimelineMapResponse, map),
                 ),
               ),
             );
@@ -669,7 +657,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((gaps) =>
                 gaps.map((gap) =>
-                  encodeUnknownResponse(HeroCoverageGapResponseDto.schema, gap),
+                  encodeUnknownResponse(HeroCoverageGapResponse, gap),
                 ),
               ),
             );
@@ -686,7 +674,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((gaps) =>
                 gaps.map((gap) =>
-                  encodeUnknownResponse(CoverageGapResponseDto.schema, gap),
+                  encodeUnknownResponse(CoverageGapResponse, gap),
                 ),
               ),
             );
@@ -702,10 +690,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((gap) =>
-                encodeUnknownResponse(
-                  NullableCoverageGapResponseDto.schema,
-                  gap,
-                ),
+                encodeUnknownResponse(NullableCoverageGapResponse, gap),
               ),
             );
           }
@@ -723,7 +708,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((gaps) =>
                 gaps.map((gap) =>
-                  encodeUnknownResponse(CoverageGapResponseDto.schema, gap),
+                  encodeUnknownResponse(CoverageGapResponse, gap),
                 ),
               ),
             );
@@ -741,10 +726,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((stats) =>
-                encodeUnknownResponse(
-                  HeroPresenceStatsResponseDto.schema,
-                  stats,
-                ),
+                encodeUnknownResponse(HeroPresenceStatsResponse, stats),
               ),
             );
           }
@@ -761,10 +743,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               ),
             ).pipe(
               Effect.map((config) =>
-                encodeUnknownResponse(
-                  HeroRespawnConfigResponseDto.schema,
-                  config,
-                ),
+                encodeUnknownResponse(HeroRespawnConfigResponse, config),
               ),
             );
           }
@@ -799,7 +778,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             ).pipe(
               Effect.map((events) =>
                 events.map((event) =>
-                  encodeUnknownResponse(PinnedEventResponseDto.schema, event),
+                  encodeUnknownResponse(PinnedEventResponse, event),
                 ),
               ),
             );
@@ -809,7 +788,7 @@ export const eventDataLayer = (operations: EventDataOperations) =>
               operations.pins.pinEvent(caller.userId, caller.guild, eventId),
             ).pipe(
               Effect.map((event) =>
-                encodeUnknownResponse(PinnedEventResponseDto.schema, event),
+                encodeUnknownResponse(PinnedEventResponse, event),
               ),
             );
           case "unpinEvent":

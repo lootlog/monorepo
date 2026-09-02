@@ -19,7 +19,8 @@
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "test:e2e": "bun test test",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "openapi:generate": "bun src/openapi/generate-openapi.ts"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
@@ -27,7 +28,8 @@
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "discord.js": "^14.27.0",
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "yaml": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

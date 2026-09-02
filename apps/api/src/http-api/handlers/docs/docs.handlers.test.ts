@@ -107,7 +107,7 @@ describe("Docs HttpApi handlers", () => {
 
   it("covers every generated DocsGroup endpoint identifier exactly once", async () => {
     const generated = await Bun.file(
-      new URL("../../lootlog-api.generated.ts", import.meta.url),
+      new URL("../../lootlog-api.ts", import.meta.url),
     ).text();
     const group = generated.slice(
       generated.indexOf("class DocsGroup"),

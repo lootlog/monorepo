@@ -2,7 +2,7 @@ import type { lootTable } from "#src/database/drizzle/schema";
 import type { LootItemDto } from "./loot-item.dto.js";
 import type { LootNpcDto } from "./loot-npc.dto.js";
 import type { LootPlayerDto } from "./loot-player.dto.js";
-import type { LootShare } from "#src/shared/dto/loot-response.dto";
+import type { LootShare } from "#src/loots/loot-response.schema";
 
 export type SubmissionWithMember = {
   guildId: string;

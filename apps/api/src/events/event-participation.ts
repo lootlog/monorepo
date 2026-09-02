@@ -17,7 +17,7 @@ import {
   NotFoundException,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import type { AcknowledgeExpiredParticipationConfirmationsDto } from "./dto/acknowledge-participation-confirmations.dto.js";
+import type { AcknowledgeExpiredParticipationConfirmationsDto } from "#src/http-api/lootlog-api";
 import type { EventRankingPublisher } from "./event-point-edits.js";
 
 export class EventParticipationError extends TaggedErrorClass<EventParticipationError>()(

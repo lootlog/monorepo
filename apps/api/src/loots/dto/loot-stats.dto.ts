@@ -1,8 +1,8 @@
-import * as z from "zod";
-import { createSchemaClass } from "#src/shared/validation/schema-class";
-import { booleanFromString } from "#src/shared/validation/query-helpers";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import type { LootsControllerGetLootStatsQuery as LootStatsQueryDto } from "#src/http-api/lootlog-api";
+
+export type { LootStatsQueryDto };
 
 export type Period =
   | "24h"
@@ -13,20 +13,6 @@ export type Period =
   | "90d"
   | "180d"
   | "all";
-
-const LootStatsQuerySchema = z.object({
-  period: z
-    .enum(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
-    .default("7d")
-    .optional(),
-  world: z.string().optional(),
-  npcTypes: z.string().optional(),
-  excludeColossus: booleanFromString.optional(),
-});
-
-export class LootStatsQueryDto extends createSchemaClass(
-  LootStatsQuerySchema,
-) {}
 
 export interface LootStatsOverview {
   totalLoots: number;

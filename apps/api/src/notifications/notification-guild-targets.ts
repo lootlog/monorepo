@@ -7,8 +7,10 @@ import {
   notificationRuleTargetTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
-import type { CreateNotificationTargetDto } from "./dto/create-notification-target.dto.js";
-import type { UpdateNotificationTargetDto } from "./dto/update-notification-target.dto.js";
+import type {
+  CreateNotificationTargetDto,
+  UpdateNotificationTargetDto,
+} from "#src/http-api/lootlog-api";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import {
   NotificationOwnerType,

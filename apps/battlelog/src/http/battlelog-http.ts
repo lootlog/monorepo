@@ -36,7 +36,7 @@ import {
   type BattlesControllerGetCombatProfileQuery,
   type BattlesControllerGetDashboardBattlesQuery,
   type BattlesControllerGetPlayerVsPlayerBattlesQuery,
-} from "../http-api/battlelog-api.generated.js";
+} from "../http-api/battlelog-api.js";
 import { HttpError, UnauthorizedException } from "#src/platform/http-error";
 import { Logger } from "#src/platform/logger";
 

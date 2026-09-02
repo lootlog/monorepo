@@ -7,12 +7,12 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { Config, Effect, Redacted } from "effect";
 import pg from "pg";
 
-const databaseUrl = process.env.POSTGRESQL_CONNECTION_URI;
-if (!databaseUrl) {
-  throw new Error("POSTGRESQL_CONNECTION_URI is required");
-}
+const databaseUrl = Redacted.value(
+  await Effect.runPromise(Config.redacted("POSTGRESQL_CONNECTION_URI")),
+);
 
 const migrationsFolder = path.resolve(import.meta.dirname, "../drizzle");
 const migrationsSchema = "drizzle";

@@ -1,9 +1,10 @@
-import { EventKillHistoryResponseDto } from "./event-kill-response.dto.js";
+import { Schema } from "effect";
+import { EventKillHistoryResponse } from "../event-kill-response.schema.js";
 
 describe("EventKillHistoryResponseDto", () => {
   it("encodes cached map data dates as ISO strings", () => {
     const assignedAt = new Date("2026-06-19T10:00:00.000Z");
-    const encoded = EventKillHistoryResponseDto.schema.encode({
+    const encoded = Schema.encodeSync(EventKillHistoryResponse)({
       data: [
         {
           id: "kill-1",

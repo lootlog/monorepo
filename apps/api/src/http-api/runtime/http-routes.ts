@@ -3,7 +3,7 @@ import { Effect, Layer } from "effect";
 import { HttpRouter } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApiHandlers } from "../handlers/handlers-layer.js";
-import { LootlogApi } from "../lootlog-api.generated.js";
+import { LootlogApi } from "../lootlog-api.js";
 import { ForwardAuthMiddlewareLive } from "./forward-auth-middleware.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 import { NativeApiDataLayers } from "./native-api-data-layers.js";

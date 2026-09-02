@@ -5,7 +5,7 @@ import type {
 } from "@lootlog/schema/notifications";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
-import { discordBotConfig } from "#src/config/discord-bot.config";
+import { apiConfig } from "#src/config/api.config";
 import {
   outboundHttpRequest,
   type OutboundHttpFailure,
@@ -74,7 +74,9 @@ export const makeDiscordBotClient = (
       ),
     );
 
-  const serviceUrl = discordBotConfig.serviceUrl;
+  const serviceUrl = apiConfig.discordBotServiceUrl
+    .toString()
+    .replace(/\/$/, "");
   return {
     getGuildChannels: (guildId) =>
       request<GuildChannels>(

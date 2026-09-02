@@ -4,7 +4,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   MapTemplateResponseDto,
   type CreateMapTemplateDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   createMapTemplate,
   MapTemplateNotFound,
@@ -80,11 +80,16 @@ describe("Map Templates HttpApi handlers", () => {
       { guildId: "guild-a", capability: Permission.LOOTLOG_MANAGE },
     ]);
     expect(createCalls).toEqual([{ guildId: "guild-a", payload }]);
-    expect(response).toEqual({
+    expect(response).toEqual(storedTemplate);
+    expect(Schema.is(MapTemplateResponseDto)(response)).toBe(true);
+    expect(
+      await Effect.runPromise(
+        Schema.encodeEffect(MapTemplateResponseDto)(response),
+      ),
+    ).toEqual({
       ...storedTemplate,
       createdAt: "2026-09-02T00:00:00.000Z",
     });
-    expect(Schema.is(MapTemplateResponseDto)(response)).toBe(true);
   });
 
   it("fails closed before data access when the caller is forbidden", async () => {

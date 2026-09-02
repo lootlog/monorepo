@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { GetUserKillStatsDto } from "./dto/get-kill-stats.dto.js";
+import type { KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto } from "#src/http-api/lootlog-api";
 import {
   makeUserKillQueries,
   type UserKillQueriesCache,

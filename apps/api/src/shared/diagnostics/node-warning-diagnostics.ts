@@ -1,9 +1,9 @@
-import { env } from "#src/config/env";
+import { apiConfig } from "#src/config/api.config";
 
 let registered = false;
 
 export function registerNodeWarningDiagnostics() {
-  if (registered || !env.NODE_WARNING_DIAGNOSTICS_ENABLED) {
+  if (registered || !apiConfig.nodeWarningDiagnosticsEnabled) {
     return;
   }
 
@@ -21,7 +21,7 @@ export function registerNodeWarningDiagnostics() {
         name: warning.name,
         message: warning.message,
         stack: warning.stack,
-        podName: process.env.HOSTNAME,
+        podName: apiConfig.hostName,
       }),
     );
   });

@@ -28,8 +28,10 @@ import {
   USER_DM_TEST_MESSAGE,
   USER_DM_TEST_RULE_NAME,
 } from "./constants/user-dm.constant.js";
-import type { CreateNotificationTargetDto } from "./dto/create-notification-target.dto.js";
-import type { UpdateNotificationTargetDto } from "./dto/update-notification-target.dto.js";
+import type {
+  CreateNotificationTargetDto,
+  UpdateNotificationTargetDto,
+} from "#src/http-api/lootlog-api";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import type { JsonObject, JsonValue } from "./notification-database.types.js";
 import {

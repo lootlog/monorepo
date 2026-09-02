@@ -9,7 +9,7 @@ import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { BetterAuthRuntime, type LootlogAuth } from "#src/auth/better-auth";
 import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/better-auth-url";
 import { AppConfig } from "#src/config/env";
-import { AuthApi } from "#src/http-api/auth-api.generated";
+import { AuthApi } from "#src/http-api/auth-api";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthHandlers } from "./auth-handlers.js";
 

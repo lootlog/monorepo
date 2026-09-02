@@ -39,8 +39,10 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from "#src/shared/http/http-errors";
-import type { CreateReservationDto } from "#src/reservations/dto/create-reservation.dto";
-import type { UpdateReservationDto } from "#src/reservations/dto/update-reservation.dto";
+import type {
+  CreateReservationDto,
+  UpdateReservationDto,
+} from "#src/http-api/lootlog-api";
 import {
   getDiscordAvatarUrl,
   presentReservation,

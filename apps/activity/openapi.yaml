@@ -1,8 +1,14 @@
 openapi: 3.0.0
+info:
+  title: Activity Logger API
+  version: "1.0"
+  description: The Activity Logger API documentation
+  contact: {}
 paths:
   /healthz:
     get:
-      description: Check the health status of the Activity service (database, API service, memory, disk)
+      tags:
+        - health
       operationId: HealthzController_check
       parameters: []
       responses:
@@ -20,41 +26,41 @@ paths:
                     type: string
                     example: ok
                   info:
-                    type: object
                     example:
                       database:
                         status: up
-                    additionalProperties:
-                      type: object
-                      required:
-                        - status
-                      properties:
-                        status:
-                          type: string
                     nullable: true
-                  error:
                     type: object
-                    example: {}
                     additionalProperties:
                       type: object
-                      required:
-                        - status
                       properties:
                         status:
                           type: string
+                      required:
+                        - status
+                  error:
+                    example: {}
                     nullable: true
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      required:
+                        - status
                   details:
                     type: object
-                    example:
-                      database:
-                        status: up
                     additionalProperties:
                       type: object
-                      required:
-                        - status
                       properties:
                         status:
                           type: string
+                      required:
+                        - status
+                    example:
+                      database:
+                        status: up
         "503":
           description: |-
             Service is unhealthy
@@ -69,61 +75,61 @@ paths:
                     type: string
                     example: error
                   info:
-                    type: object
                     example:
                       database:
                         status: up
+                    nullable: true
+                    type: object
                     additionalProperties:
                       type: object
-                      required:
-                        - status
                       properties:
                         status:
                           type: string
-                    nullable: true
+                      required:
+                        - status
                   error:
-                    type: object
                     example:
                       redis:
                         status: down
                         message: Could not connect
+                    nullable: true
+                    type: object
                     additionalProperties:
                       type: object
-                      required:
-                        - status
                       properties:
                         status:
                           type: string
-                    nullable: true
+                      required:
+                        - status
                   details:
                     type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      required:
+                        - status
                     example:
                       database:
                         status: up
                       redis:
                         status: down
                         message: Could not connect
-                    additionalProperties:
-                      type: object
-                      required:
-                        - status
-                      properties:
-                        status:
-                          type: string
+      description: Check the health status of the Activity service (database, API service, memory, disk)
       summary: Health check
-      tags:
-        - health
   /guilds/{guildId}/activity-logs:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_findByGuild
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: type
-          required: false
           in: query
           schema:
             type: array
@@ -132,8 +138,8 @@ paths:
               enum:
                 - CONNECT_EVENT
                 - DISCONNECT_EVENT
-        - name: source
           required: false
+        - name: source
           in: query
           schema:
             type: array
@@ -142,48 +148,51 @@ paths:
               enum:
                 - GAME
                 - WEB_APP
+          required: false
         - name: playerName
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: clanName
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: limit
           required: false
+        - name: limit
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 100
             default: 50
-            type: integer
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -191,34 +200,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
-      security:
-        - bearer: []
       summary: Get activities for a specific guild
-      tags:
-        - guilds
   /guilds/{guildId}/activity-logs/actor-name-suggestions:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_suggestActorNames
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: search
-          required: false
           in: query
           schema:
-            maxLength: 50
             type: string
-        - name: limit
+            maxLength: 50
           required: false
+        - name: limit
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 50
             default: 10
-            type: integer
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -226,34 +235,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActorNameSuggestionsResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get actor name suggestions for a guild
-      tags:
-        - guilds
   /guilds/{guildId}/activity-logs/world-suggestions:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_suggestWorlds
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: search
-          required: false
           in: query
           schema:
-            maxLength: 50
             type: string
-        - name: limit
+            maxLength: 50
           required: false
+        - name: limit
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 50
             default: 20
-            type: integer
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -261,34 +270,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorldSuggestionsResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get world suggestions for a guild
-      tags:
-        - guilds
   /guilds/{guildId}/activity-logs/clan-name-suggestions:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_suggestClanNames
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: search
-          required: false
           in: query
           schema:
-            maxLength: 50
             type: string
-        - name: limit
+            maxLength: 50
           required: false
+        - name: limit
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 50
             default: 10
-            type: integer
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -296,27 +305,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ClanNameSuggestionsResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get clan name suggestions for a guild
-      tags:
-        - guilds
   /guilds/{guildId}/users/{userId}/activity-logs:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_findByUser
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: userId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: type
-          required: false
           in: query
           schema:
             type: array
@@ -325,8 +331,8 @@ paths:
               enum:
                 - CONNECT_EVENT
                 - DISCONNECT_EVENT
-        - name: source
           required: false
+        - name: source
           in: query
           schema:
             type: array
@@ -335,48 +341,51 @@ paths:
               enum:
                 - GAME
                 - WEB_APP
+          required: false
         - name: playerName
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: clanName
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: limit
           required: false
+        - name: limit
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 100
             default: 50
-            type: integer
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -384,20 +393,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
-      security:
-        - bearer: []
       summary: Get activities for a specific user in a guild
-      tags:
-        - guilds
   /guilds/{guildId}/member-activity-stats:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_getMemberActivityStats
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -407,25 +416,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberActivityStatsResponseDto"
-      security:
-        - bearer: []
       summary: Get activity stats for guild members by source
-      tags:
-        - guilds
   /guilds/{guildId}/activity-logs/{id}:
     get:
+      tags:
+        - guilds
       operationId: ActivitiesController_findOne
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: id
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -435,24 +444,24 @@ paths:
                 $ref: "#/components/schemas/ActivityResponseDto"
         "404":
           description: Activity not found
-      security:
-        - bearer: []
       summary: Get a single activity by ID
+    delete:
       tags:
         - guilds
-    delete:
       operationId: ActivitiesController_deleteActivity
       parameters:
         - name: guildId
-          required: true
           in: path
           schema:
             type: string
+          required: true
         - name: id
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -462,24 +471,8 @@ paths:
                 $ref: "#/components/schemas/DeleteActivityResponseDto_Output"
         "404":
           description: Activity not found
-      security:
-        - bearer: []
       summary: Delete a specific activity by ID
-      tags:
-        - guilds
-info:
-  title: Activity Logger API
-  description: The Activity Logger API documentation
-  version: "1.0"
-  contact: {}
-tags: []
-servers: []
 components:
-  securitySchemes:
-    bearer:
-      scheme: bearer
-      bearerFormat: JWT
-      type: http
   schemas:
     PaginatedActivitiesResponseDto:
       type: object
@@ -512,8 +505,8 @@ components:
                 format: date-time
                 pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               world:
-                type: string
                 nullable: true
+                type: string
               details:
                 type: object
                 additionalProperties: {}
@@ -529,11 +522,11 @@ components:
                   name:
                     type: string
                   clanName:
+                    nullable: true
                     type: string
-                    nullable: true
                   clanId:
-                    type: number
                     nullable: true
+                    type: number
                   icon:
                     type: string
                   lvl:
@@ -614,10 +607,10 @@ components:
             - GAME
             - WEB_APP
         lastSeenAt:
-          type: string
           format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
+          type: string
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         visitCount:
           type: number
         activeSessionCount:
@@ -664,8 +657,8 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         world:
-          type: string
           nullable: true
+          type: string
         details:
           type: object
           additionalProperties: {}
@@ -681,11 +674,11 @@ components:
             name:
               type: string
             clanName:
+              nullable: true
               type: string
-              nullable: true
             clanId:
-              type: number
               nullable: true
+              type: number
             icon:
               type: string
             lvl:
@@ -726,3 +719,10 @@ components:
           type: number
       required:
         - count
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags: []
+servers: []

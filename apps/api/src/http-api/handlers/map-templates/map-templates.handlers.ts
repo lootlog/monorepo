@@ -10,11 +10,10 @@ import {
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { mapTemplateTable } from "#src/database/drizzle/schema";
 import {
-  LootlogApi,
-  MapTemplateResponseDto,
-  type CreateMapTemplateDto,
-  type MapTemplateResponseDto as MapTemplateResponse,
-} from "../../lootlog-api.generated.js";
+  MapTemplateResponseSchema,
+  type MapTemplateResponse,
+} from "#src/map-templates/map-template.schema";
+import { LootlogApi, type CreateMapTemplateDto } from "../../lootlog-api.js";
 
 type StoredMapTemplate = {
   readonly id: string;
@@ -148,11 +147,10 @@ export class MapTemplatesData extends Context.Service<
   );
 }
 
-const decodeResponse = (template: StoredMapTemplate) =>
-  Schema.decodeUnknownEffect(MapTemplateResponseDto)({
-    ...template,
-    createdAt: template.createdAt.toISOString(),
-  }).pipe(
+const decodeStoredTemplate = (template: StoredMapTemplate) =>
+  Schema.decodeUnknownEffect(Schema.toType(MapTemplateResponseSchema))(
+    template,
+  ).pipe(
     Effect.mapError((cause) => new MapTemplatesPersistenceError({ cause })),
   );
 
@@ -168,7 +166,7 @@ export const getMapTemplates = Effect.fn("getMapTemplates")(function* (
   const templates = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.findMany(access.guildId),
   );
-  return yield* Effect.forEach(templates, decodeResponse);
+  return yield* Effect.forEach(templates, decodeStoredTemplate);
 });
 
 export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
@@ -179,7 +177,7 @@ export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.create(access.guildId, payload),
   );
-  return yield* decodeResponse(template);
+  return yield* decodeStoredTemplate(template);
 });
 
 export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
@@ -197,7 +195,7 @@ export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
       code: "MAP_TEMPLATE_NOT_FOUND",
     });
   }
-  return yield* decodeResponse(template);
+  return yield* decodeStoredTemplate(template);
 });
 
 export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (

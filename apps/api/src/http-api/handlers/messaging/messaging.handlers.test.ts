@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { MessagingControllerSendNotification201 } from "../../lootlog-api.generated.js";
+import { MessagingControllerSendNotification201 } from "../../lootlog-api.js";
 import {
   MessagingAccessDenied,
   MessagingData,

@@ -23,19 +23,20 @@ import type {
   guildTable,
   lootlogConfigNpcTable,
 } from "#src/database/drizzle/schema";
-import type { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import type {
-  CreateLootRejectedGuild,
-  CreateLootRejectedGuildReason,
-  CreateLootResponse,
-  CreateLootSubmittedGuild,
-} from "#src/loots/dto/loot-response.dto";
+  CreateLootDto,
+  LootsControllerCreateLoot201 as CreateLootResponse,
+} from "#src/http-api/lootlog-api";
 import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import type { LootShare } from "#src/shared/dto/loot-response.dto";
+import type { LootShare } from "#src/loots/loot-response.schema";
 import type { LootSubmissionAcceptancePersistence } from "./loot-submission-acceptance.repository.js";
+
+type CreateLootSubmittedGuild = CreateLootResponse["submittedGuilds"][number];
+type CreateLootRejectedGuild = CreateLootResponse["rejectedGuilds"][number];
+type CreateLootRejectedGuildReason = CreateLootRejectedGuild["reason"];
 
 type Guild = typeof guildTable.$inferSelect;
 type LootlogConfigNpc = typeof lootlogConfigNpcTable.$inferSelect;

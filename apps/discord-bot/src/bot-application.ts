@@ -12,19 +12,13 @@ import {
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { Client, IntentsBitField } from "discord.js";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer } from "effect";
 import {
   HttpRouter,
   HttpServer,
   HttpServerResponse,
 } from "effect/unstable/http";
-import {
-  HttpApi,
-  HttpApiBuilder,
-  HttpApiEndpoint,
-  HttpApiGroup,
-  HttpApiSchema,
-} from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { registerDiscordEventHandlers } from "#src/bot/bot-discord-events.handler";
 import {
   makeDiscordDelivery,
@@ -36,6 +30,7 @@ import {
 } from "#src/bot/discord-sync.service";
 import type { RabbitPublisher } from "#src/bot/rabbit-publisher";
 import { BotConfig } from "#src/config/bot-config";
+import { DiscordBotApi } from "#src/http-api/discord-bot-api";
 
 const notificationQueue: RabbitQueueDefinition = {
   name: "discord-bot-notifications-send",
@@ -107,52 +102,11 @@ export class BotServices extends Context.Service<
   );
 }
 
-const GuildParams = Schema.Struct({ guildId: Schema.String });
-
-class HealthGroup extends HttpApiGroup.make("health").add(
-  HttpApiEndpoint.get("DiscordBotHealth", "/healthz", {
-    success: HttpApiSchema.Empty(200),
-  }),
-) {}
-
-class InternalGroup extends HttpApiGroup.make("internal")
-  .add(
-    HttpApiEndpoint.get(
-      "DiscordBotGetGuildChannels",
-      "/internal/guilds/:guildId/channels",
-      { params: GuildParams, success: Schema.Unknown },
-    ),
-  )
-  .add(
-    HttpApiEndpoint.post(
-      "DiscordBotRefreshGuildChannels",
-      "/internal/guilds/:guildId/channels/refresh",
-      { params: GuildParams, success: Schema.Unknown },
-    ),
-  )
-  .add(
-    HttpApiEndpoint.get(
-      "DiscordBotGetGuildSyncStatus",
-      "/internal/guilds/:guildId/sync-status",
-      { params: GuildParams, success: Schema.Unknown },
-    ),
-  ) {}
-
-export class DiscordBotApi extends HttpApi.make("DiscordBotApi")
-  .add(HealthGroup)
-  .add(InternalGroup) {}
-
 const operation = <A>(operationId: string, run: Effect.Effect<A, unknown>) =>
   run.pipe(
-    Effect.map((value) => HttpServerResponse.jsonUnsafe(value)),
-    Effect.catch(() =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { message: "Discord synchronization failed" },
-          { status: 500 },
-        ),
-      ),
-    ),
+    Effect.mapError(() => ({
+      message: "Discord synchronization failed" as const,
+    })),
     Effect.withSpan(operationId, {
       attributes: { adapter: "discord", retryCount: 0 },
     }),
@@ -162,14 +116,12 @@ const BotHttpHandlers = HttpApiBuilder.group(
   DiscordBotApi,
   "health",
   (handlers) =>
-    handlers.handleRaw("DiscordBotHealth", () =>
-      Effect.succeed(HttpServerResponse.text("OK")),
-    ),
+    handlers.handle("DiscordBotHealth", () => Effect.succeed("OK" as const)),
 ).pipe(
   Layer.merge(
     HttpApiBuilder.group(DiscordBotApi, "internal", (handlers) =>
       handlers
-        .handleRaw(
+        .handle(
           "DiscordBotGetGuildChannels",
           Effect.fn("DiscordBotGetGuildChannels")(function* ({ params }) {
             const services = yield* BotServices;
@@ -179,7 +131,7 @@ const BotHttpHandlers = HttpApiBuilder.group(
             );
           }),
         )
-        .handleRaw(
+        .handle(
           "DiscordBotRefreshGuildChannels",
           Effect.fn("DiscordBotRefreshGuildChannels")(function* ({ params }) {
             const services = yield* BotServices;
@@ -189,7 +141,7 @@ const BotHttpHandlers = HttpApiBuilder.group(
             );
           }),
         )
-        .handleRaw(
+        .handle(
           "DiscordBotGetGuildSyncStatus",
           Effect.fn("DiscordBotGetGuildSyncStatus")(function* ({ params }) {
             const services = yield* BotServices;

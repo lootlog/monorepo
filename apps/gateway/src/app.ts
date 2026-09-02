@@ -8,6 +8,7 @@ import {
   type GatewayConfiguration,
 } from "#src/config/gateway-config";
 import { makeGuildStore } from "#src/guilds/guild-store";
+import { makeGatewayHttpBoundary } from "#src/http-api/gateway-http";
 import {
   makeBackgroundTaskRunner,
   type BackgroundTaskRunner,
@@ -164,15 +165,27 @@ const websocketResponseHeaders = (
     : undefined;
 };
 
+let defaultGatewayHttpBoundary:
+  | ReturnType<typeof makeGatewayHttpBoundary>
+  | undefined;
+
+const handleGatewayHttpRequest = (request: Request): Promise<Response> => {
+  defaultGatewayHttpBoundary ??= makeGatewayHttpBoundary();
+  return defaultGatewayHttpBoundary.handler(request);
+};
+
 export const createGatewayFetch =
-  (application: GatewayApplicationService) =>
+  (
+    application: GatewayApplicationService,
+    httpHandler = handleGatewayHttpRequest,
+  ) =>
   async (
     request: Request,
     activeServer: UpgradeServer,
   ): Promise<Response | undefined> => {
     const url = new URL(request.url);
     if (url.pathname === "/healthz") {
-      return Response.json({ status: "ok" });
+      return httpHandler(request);
     }
     if (url.pathname !== application.config.websocketPath) {
       return new Response("Not found", { status: 404 });
@@ -217,7 +230,11 @@ export const createGatewayFetch =
 export const GatewayServer = Layer.effectDiscard(
   Effect.gen(function* () {
     const application = yield* GatewayApplication;
-    const fetch = createGatewayFetch(application);
+    const httpBoundary = yield* Effect.acquireRelease(
+      Effect.sync(makeGatewayHttpBoundary),
+      (boundary) => Effect.promise(boundary.dispose),
+    );
+    const fetch = createGatewayFetch(application, httpBoundary.handler);
     const server = yield* Effect.acquireRelease(
       Effect.sync(() =>
         Bun.serve<SessionData>({

@@ -23,7 +23,7 @@ import {
   getUserGuildsLockKey,
   isApiGuildArray,
 } from "./discord-cache.util.js";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
@@ -66,7 +66,7 @@ export class DiscordUserGuildsClient {
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
   ) {
-    this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
+    this.isLocal = apiConfig.environment === RuntimeEnvironment.LOCAL;
   }
 
   initialize() {

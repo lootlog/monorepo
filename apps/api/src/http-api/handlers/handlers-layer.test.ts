@@ -7,7 +7,7 @@ const handlerExportPattern =
 describe("Lootlog API handlers layer", () => {
   it("registers every generated API group exactly once for all 199 operations", async () => {
     const generatedSource = await Bun.file(
-      new URL("../lootlog-api.generated.ts", import.meta.url),
+      new URL("../lootlog-api.ts", import.meta.url),
     ).text();
     const generatedGroups = [
       ...generatedSource.matchAll(

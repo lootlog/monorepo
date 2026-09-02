@@ -21,7 +21,6 @@
     "test:e2e": "bun test src/http/activity-http.test.ts",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
-    "http-api:generate": "bun ../../tools/openapi/generate-http-api.ts --spec openapi.yaml --output src/http-api/activity-api.generated.ts --name ActivityApi --count 9 --sanitize-health-examples true",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate:dev": "bun src/database/migrate.ts",
     "db:migrate:deploy": "bun src/database/migrate.ts",

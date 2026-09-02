@@ -2,7 +2,7 @@ import { hasRolePermissionInLevelRange } from "@lootlog/domain/npc-permissions";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import type { NpcRoutingTier } from "@lootlog/schema/npc-routing";
 import { Permission } from "@lootlog/schema/permissions";
-import { MessageType } from "#src/chat/dto/send-message.dto";
+import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 
 type NpcData = NonNullable<ChatStoredMessage["npc"]>;

@@ -23,7 +23,7 @@ import {
   guildTable,
   memberTable,
 } from "#src/database/drizzle/schema";
-import type { GuildDocumentContent } from "./dto/guild-document-content.schema.js";
+import type { GuildDocumentContent } from "./guild-document-content.schema.js";
 
 type DocsDatabase = typeof ApiDatabase.Service;
 type WriteDatabase = Pick<

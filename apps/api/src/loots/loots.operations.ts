@@ -12,8 +12,10 @@ import {
   NotFoundException,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { CreateCommentDto } from "./dto/create-comment-dto.js";
-import type { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto.js";
+import type {
+  CreateCommentDto,
+  LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
+} from "#src/http-api/lootlog-api";
 import type { LootQueryResult } from "./dto/loot-query-result.dto.js";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import type {

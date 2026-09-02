@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { encodeDomainJson } from "../../domain-json.schema.js";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { Permission } from "@lootlog/schema/permissions";
 import {
@@ -27,7 +28,7 @@ import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,
   LootlogApi,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
   "InternalGuildsOperationError",
@@ -282,7 +283,8 @@ export class InternalGuildsData extends Context.Service<
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  Schema.decodeUnknownEffect(schema)(JSON.parse(JSON.stringify(value))).pipe(
+  encodeDomainJson(value).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
     Effect.mapError((cause) => new InternalGuildsOperationError({ cause })),
   );
 

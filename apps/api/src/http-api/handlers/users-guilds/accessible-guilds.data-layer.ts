@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -161,7 +161,7 @@ export const makeAccessibleGuilds = (
       ]),
     );
     const staleThreshold =
-      Date.now() - getMemberCacheSoftTtl(serviceConfig.env);
+      Date.now() - getMemberCacheSoftTtl(apiConfig.environment);
     const summaries = guilds
       .map((guild): GuildSummary => {
         const member = memberByGuild.get(guild.id);

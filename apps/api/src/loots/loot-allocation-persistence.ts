@@ -15,7 +15,7 @@ import {
   organizationLootRecordTable,
   playerSnapshotTable,
 } from "#src/database/drizzle/schema";
-import type { LootShare } from "#src/shared/dto/loot-response.dto";
+import type { LootShare } from "#src/loots/loot-response.schema";
 
 type AuthorizedLootOptions = {
   readonly actorUserId: string;

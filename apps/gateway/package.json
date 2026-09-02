@@ -25,7 +25,8 @@
     "test:coverage": "bun --conditions=development test --coverage --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
     "test:debug": "bun --conditions=development test --inspect-brk --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
     "test:e2e": "bun --conditions=development test --path-ignore-patterns=dist test",
-    "test:watch": "bun --conditions=development test --watch --path-ignore-patterns=dist src/auth src/realtime src/rabbit test"
+    "test:watch": "bun --conditions=development test --watch --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
+    "openapi:generate": "bun src/openapi/generate-openapi.ts"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
@@ -34,7 +35,8 @@
     "@lootlog/schema": "workspace:*",
     "@msgpack/msgpack": "^3.1.3",
     "effect": "catalog:",
-    "ioredis": "^5.11.1"
+    "ioredis": "^5.11.1",
+    "yaml": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

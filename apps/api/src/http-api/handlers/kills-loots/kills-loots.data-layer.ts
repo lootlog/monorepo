@@ -8,11 +8,11 @@ import type { LootSubmissionAcceptance } from "#src/loots/loot-submission-accept
 import type { LootStatsService } from "#src/loots/services/loot-stats.service";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import {
-  LootResponseDto,
-  NullableLootResponseDto,
-} from "#src/shared/dto/loot-response.dto";
-import { LootCommentResponseDto } from "#src/shared/dto/loot-comment-response.dto";
-import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
+  LootResponse,
+  NullableLootResponse,
+} from "#src/loots/loot-response.schema";
+import { LootCommentResponse } from "#src/shared/schema/loot-comment";
+import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { normalizeKillStatsPeriod } from "#src/kills/utils/kill-stats-period";
 import {
   type KillsControllerCreateKill201,
@@ -20,7 +20,7 @@ import {
   LootsControllerFetchLootById200,
   LootsControllerFetchLootsByGuildId200,
   LootsControllerGetComments200,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import { KillsLootsData, KillsLootsDataError } from "./kills-loots.handlers.js";
 
 export interface KillsLootsServices {
@@ -185,9 +185,7 @@ export const killsLootsDataLayer = (services: KillsLootsServices) =>
         ),
       ).pipe(
         Effect.map((result) =>
-          result.map((loot) =>
-            encodeUnknownResponse(LootResponseDto.schema, loot),
-          ),
+          result.map((loot) => encodeUnknownResponse(LootResponse, loot)),
         ),
         Effect.flatMap((result) =>
           decode(
@@ -240,7 +238,7 @@ export const killsLootsDataLayer = (services: KillsLootsServices) =>
         ),
       ).pipe(
         Effect.map((result) =>
-          encodeUnknownResponse(NullableLootResponseDto.schema, result),
+          encodeUnknownResponse(NullableLootResponse, result),
         ),
         Effect.flatMap((result) =>
           decode(
@@ -287,7 +285,7 @@ export const killsLootsDataLayer = (services: KillsLootsServices) =>
       ).pipe(
         Effect.map((result) =>
           result.map((comment) =>
-            encodeUnknownResponse(LootCommentResponseDto.schema, comment),
+            encodeUnknownResponse(LootCommentResponse, comment),
           ),
         ),
         Effect.flatMap((result) =>
@@ -310,7 +308,7 @@ export const killsLootsDataLayer = (services: KillsLootsServices) =>
         }),
       ).pipe(
         Effect.map((result) =>
-          encodeUnknownResponse(LootCommentResponseDto.schema, result),
+          encodeUnknownResponse(LootCommentResponse, result),
         ),
         Effect.flatMap((result) =>
           decode(

@@ -28,9 +28,6 @@
         "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
       ]
     },
-    "apps/api": {
-      "ignoreDependencies": ["@effect/openapi-generator"]
-    },
     "apps/game-client": {
       "entry": ["src/main.tsx", "scripts/**/*.{ts,mjs}"],
       "project": [

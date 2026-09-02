@@ -1,9 +1,7 @@
-import * as z from "zod";
-import { createSchemaClass } from "#src/shared/validation/schema-class";
+import { Schema } from "effect";
 
-const DeleteRoleSchema = z.object({
-  guildId: z.string(),
-  id: z.string(),
+export const DeleteRoleSchema = Schema.Struct({
+  guildId: Schema.String,
+  id: Schema.String,
 });
-
-export class DeleteRoleDto extends createSchemaClass(DeleteRoleSchema) {}
+export type DeleteRoleDto = typeof DeleteRoleSchema.Type;

@@ -1,5 +1,5 @@
 import { Permission } from "@lootlog/schema/permissions";
-import { MessageType } from "#src/chat/dto/send-message.dto";
+import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import { canViewChatMessage } from "./can-view-chat-message.js";
 

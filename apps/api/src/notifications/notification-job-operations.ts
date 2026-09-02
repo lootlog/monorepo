@@ -12,9 +12,9 @@ import {
   NotFoundException,
 } from "#src/shared/http/http-errors";
 import {
-  NotificationFiltersResponseDto,
-  NotificationJobPayloadSnapshotResponseDto,
-} from "./dto/notification-response.dto.js";
+  NotificationFiltersResponse,
+  NotificationJobPayloadSnapshotResponse,
+} from "./notification-response.schema.js";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import type { JsonValue } from "./notification-database.types.js";
 import { NOTIFICATIONS_HISTORY_RESPONSE_LIMIT } from "./constants/notifications-history.constant.js";
@@ -94,16 +94,17 @@ export const makeNotificationJobOperations = (
       Effect.map((rows) =>
         rows.map(({ job, rule, target }) => ({
           ...job,
-          payloadSnapshot:
-            NotificationJobPayloadSnapshotResponseDto.schema.parse(
-              job.payloadSnapshot as JsonValue | null,
-            ),
+          payloadSnapshot: Schema.decodeUnknownSync(
+            NotificationJobPayloadSnapshotResponse,
+          )(job.payloadSnapshot as JsonValue | null),
           rule: {
             ...rule,
             filters:
               rule.filters === null
                 ? null
-                : NotificationFiltersResponseDto.schema.parse(rule.filters),
+                : Schema.decodeUnknownSync(NotificationFiltersResponse)(
+                    rule.filters,
+                  ),
           },
           target: {
             ...target,

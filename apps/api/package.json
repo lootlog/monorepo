@@ -31,7 +31,6 @@
     "test:e2e": "bun --conditions=development test --preload ./test/bun.e2e.setup.ts --max-concurrency 1 ./test/*.e2e-spec.ts",
     "test:watch": "bun --conditions=development test --watch --preload ./test/bun.setup.ts src",
     "openapi:generate": "bun src/openapi/generate-effect-openapi.ts",
-    "http-api:generate": "$npm_execpath src/http-api/generate-http-api.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate:dev": "bun src/database/drizzle/migrate.ts",
     "db:migrate:deploy": "bun src/database/drizzle/migrate.ts",
@@ -54,11 +53,9 @@
     "redlock": "5.0.0-beta.2",
     "sharp": "^0.35.4",
     "superjson": "catalog:",
-    "uuid": "^14.0.2",
-    "zod": "catalog:"
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
-    "@effect/openapi-generator": "catalog:",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.1.0",
     "@types/bun": "catalog:",

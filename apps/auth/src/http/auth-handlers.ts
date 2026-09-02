@@ -2,7 +2,7 @@ import { Effect, Layer, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { AuthService, HttpResponseError } from "#src/auth/auth-service";
-import { AuthApi } from "#src/http-api/auth-api.generated";
+import { AuthApi } from "#src/http-api/auth-api";
 
 const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
 export const IdpTokenRequest = Schema.Struct({

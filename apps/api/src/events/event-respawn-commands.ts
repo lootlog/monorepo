@@ -18,8 +18,10 @@ import {
   NotFoundException,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import type { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto.js";
-import type { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto.js";
+import type {
+  CloseRespawnWindowDto,
+  OpenRespawnWindowDto,
+} from "#src/http-api/lootlog-api";
 import type { EventTimersPort } from "./services/event-timers.port.js";
 import { getSyntheticNpcId } from "./utils/get-synthetic-npc-id.js";
 

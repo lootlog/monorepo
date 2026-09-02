@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { APIGuild } from "discord-api-types/v10";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -72,7 +72,7 @@ export const makeUserGuildList = (
       const throttleKey = `member:sync:throttle:${identity.discordId}`;
       if (yield* ports.getCache(throttleKey)) return;
       const staleThreshold = new Date(
-        Date.now() - getMemberCacheSoftTtl(serviceConfig.env),
+        Date.now() - getMemberCacheSoftTtl(apiConfig.environment),
       );
       const stale = yield* database
         .select({

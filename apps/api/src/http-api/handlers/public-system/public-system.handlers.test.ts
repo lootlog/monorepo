@@ -4,7 +4,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
   MapsControllerGetMaps200,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   getMaps,
   getPublicStatsCard,

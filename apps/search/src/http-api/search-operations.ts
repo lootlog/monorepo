@@ -22,7 +22,7 @@ import type {
   SearchItemsResponseDto_Output,
   NpcHitDto_Output,
   PlayerHitDto_Output,
-} from "./search-api.generated.js";
+} from "./search-api.js";
 
 export { SearchOperationFailure };
 

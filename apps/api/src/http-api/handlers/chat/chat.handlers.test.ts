@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { ChatMessageResponseDto_Output } from "../../lootlog-api.generated.js";
+import { ChatMessageResponseDto_Output } from "../../lootlog-api.js";
 import {
   ChatAccessDenied,
   ChatAuthorization,

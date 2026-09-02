@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { SearchApi } from "./search-api.generated.js";
+import { SearchApi } from "./search-api.js";
 import { SearchOperations } from "./search-operations.js";
 
 const operation = <A, E, R>(effect: Effect.Effect<A, E, R>) =>

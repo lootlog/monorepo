@@ -1,11 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import {
+  SettingsDocumentsControllerGetPreferences200,
   SoundSettingsControllerGetSettings200,
   TimerSettingsControllerGetGlobalSettings200,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   getGlobalTimerSettings,
+  getPreferences,
   getSoundSettings,
   patchPreferences,
   SettingsAccessDenied,
@@ -161,5 +163,45 @@ describe("settings HttpApi handlers", () => {
     );
 
     expect(calls).toBe(1);
+  });
+
+  it("keeps Date values in the handler and encodes the existing HTTP JSON", async () => {
+    const updatedAt = new Date(timestamp);
+    const layer = provideServices(
+      makeData({
+        getPreferences: () =>
+          Effect.succeed({
+            domains: {
+              appearance: {
+                effective: { compact: null },
+                layers: [
+                  {
+                    scope: { type: "USER", id: "user-a" },
+                    overrides: { compact: null },
+                    schemaVersion: 1,
+                    updatedAt,
+                  },
+                ],
+                sources: { compact: "DEFAULT" },
+                schemaVersion: 1,
+                updatedAt,
+              },
+            },
+          }),
+      }),
+    );
+
+    const response = await Effect.runPromise(
+      getPreferences({ domains: "appearance" }).pipe(Effect.provide(layer)),
+    );
+    const encoded = await Effect.runPromise(
+      Schema.encodeEffect(SettingsDocumentsControllerGetPreferences200)(
+        response,
+      ),
+    );
+
+    expect(response.domains.appearance?.updatedAt).toBe(updatedAt);
+    expect(encoded.domains.appearance?.updatedAt).toBe(timestamp);
+    expect(encoded.domains.appearance?.layers[0]?.updatedAt).toBe(timestamp);
   });
 });

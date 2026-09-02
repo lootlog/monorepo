@@ -4,6 +4,7 @@ import {
   isSettingsDomain,
 } from "@lootlog/domain/settings-documents";
 import type {
+  PatchSettingsDocuments,
   SettingsDocumentLayer,
   SettingsDomain,
   SettingsDomainResolution,
@@ -11,7 +12,6 @@ import type {
   SettingsScopeType,
 } from "@lootlog/schema/settings-documents";
 import { Effect, Schema } from "effect";
-import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto.js";
 import {
   InvalidSettingsPatchError,
   type SettingsDocumentsRepositoryService,
@@ -44,7 +44,7 @@ export interface SettingsDocuments {
   ) => Effect.Effect<SettingsDocumentsResponse, SettingsDocumentsFailure>;
   readonly patchPreferences: (
     userId: string,
-    payload: PatchSettingsDocumentsDto,
+    payload: PatchSettingsDocuments,
   ) => Effect.Effect<SettingsDocumentsResponse, SettingsDocumentsFailure>;
   readonly parseDomains: (
     domainsValue: string,
@@ -94,7 +94,7 @@ const getContextScopes = (
 };
 
 const getContextFromOperations = (
-  operations: PatchSettingsDocumentsDto["operations"],
+  operations: PatchSettingsDocuments["operations"],
 ): SettingsContext => {
   const scopes = new Map<SettingsScopeType, string>();
   for (const operation of operations) {
@@ -110,11 +110,11 @@ const getContextFromOperations = (
 };
 
 const getOperationKey = (
-  operation: PatchSettingsDocumentsDto["operations"][number],
+  operation: PatchSettingsDocuments["operations"][number],
 ) => `${operation.domain}:${operation.scope.type}:${operation.scope.id}`;
 
 const validateOperationUniqueness = (
-  operations: PatchSettingsDocumentsDto["operations"],
+  operations: PatchSettingsDocuments["operations"],
 ): Effect.Effect<void, SettingsRequestError> =>
   Effect.gen(function* () {
     const operationKeys = new Set<string>();
@@ -199,7 +199,7 @@ export const makeSettingsDocuments = (
                     ? document.overrides
                     : {},
                   schemaVersion: document.schemaVersion,
-                  updatedAt: document.updatedAt.toISOString(),
+                  updatedAt: document.updatedAt,
                 },
               ]
             : [];
