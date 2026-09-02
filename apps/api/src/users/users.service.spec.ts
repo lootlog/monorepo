@@ -1,8 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import { HttpService } from "@nestjs/axios";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { of } from "rxjs";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { AuthService } from "#src/auth/auth.service";
 import { GuildsService } from "#src/guilds/guilds.service";
@@ -105,7 +103,7 @@ describe("UsersService", () => {
   const mockAuthService = { invalidateIdpTokenCache: mockFn() };
   const mockMembersService = { notifyMembersRemoved: mockFn() };
   const mockRedisService = { deleteByPattern: mockFn() };
-  const mockHttpService = { post: mockFn() };
+  const fetchMock = mockFn();
   const mockGuildsService = {
     getCurrentUserGuildAccessSummaries: mockFn(),
     getCurrentUserAccessibleGuilds: mockFn(),
@@ -113,6 +111,7 @@ describe("UsersService", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
 
     mockPersistence.$transaction.mockImplementation(
       (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
@@ -136,7 +135,7 @@ describe("UsersService", () => {
     mockAuthService.invalidateIdpTokenCache.mockResolvedValue(undefined);
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockRedisService.deleteByPattern.mockResolvedValue(1);
-    mockHttpService.post.mockReturnValue(of({ data: { status: "ACCEPTED" } }));
+    fetchMock.mockResolvedValue(Response.json({ status: "ACCEPTED" }));
     mockPersistence.userSettingDocument.findUnique.mockResolvedValue(null);
     mockPersistence.userSettingDocument.upsert.mockResolvedValue(null);
     mockRepository.findUserSettings.mockImplementation((userId: string) =>
@@ -281,10 +280,6 @@ describe("UsersService", () => {
         {
           provide: RedisService,
           useValue: mockRedisService,
-        },
-        {
-          provide: HttpService,
-          useValue: mockHttpService,
         },
         {
           provide: GuildsService,
@@ -1156,10 +1151,12 @@ describe("UsersService", () => {
       discordId: "discord-123",
     });
 
-    expect(mockHttpService.post).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       "http://battlelog-service:4000/internal/delete-user-data",
-      { userId: "auth-user-current" },
-      { timeout: 5000 },
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ userId: "auth-user-current" }),
+      }),
     );
 
     expect(mockPersistence.$transaction).toHaveBeenCalledTimes(1);

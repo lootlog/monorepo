@@ -3,10 +3,8 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { HttpService } from "@nestjs/axios";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger as WinstonLogger } from "winston";
-import { firstValueFrom } from "rxjs";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
 import { MembersService } from "#src/members/members.service";
@@ -88,7 +86,6 @@ export class UsersService {
     private readonly authService: AuthService,
     private readonly membersService: MembersService,
     private readonly redisService: RedisService,
-    private readonly httpService: HttpService,
     private readonly guildsService: GuildsService,
   ) {
     this.battlelogServiceUrl = battlelogConfig.serviceUrl;
@@ -150,27 +147,33 @@ export class UsersService {
 
   private async triggerBattlelogCleanup(userId: string): Promise<void> {
     const battlelogUrl = `${this.battlelogServiceUrl}/internal/delete-user-data`;
-    const cleanupResponse = await firstValueFrom(
-      this.httpService.post<{ status?: string }>(
-        battlelogUrl,
-        { userId },
-        { timeout: 5000 },
-      ),
-    ).catch((error: unknown) => {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.warn(
-        `Failed to trigger battlelog cleanup for user ${userId}: ${errorMessage}`,
-      );
-      throw new ServiceUnavailableException({
-        message: "BATTLELOG_SERVICE_UNAVAILABLE",
-        retryAfter: 60,
+    const cleanupResponse = await fetch(battlelogUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId }),
+      signal: AbortSignal.timeout(5000),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Request failed with status code ${response.status}`);
+        }
+        return (await response.json()) as { status?: string };
+      })
+      .catch((error: unknown) => {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `Failed to trigger battlelog cleanup for user ${userId}: ${errorMessage}`,
+        );
+        throw new ServiceUnavailableException({
+          message: "BATTLELOG_SERVICE_UNAVAILABLE",
+          retryAfter: 60,
+        });
       });
-    });
 
-    if (cleanupResponse.data?.status !== "ACCEPTED") {
+    if (cleanupResponse.status !== "ACCEPTED") {
       this.logger.warn(
-        `Unexpected battlelog cleanup response for user ${userId}: ${JSON.stringify(cleanupResponse.data)}`,
+        `Unexpected battlelog cleanup response for user ${userId}: ${JSON.stringify(cleanupResponse)}`,
       );
       throw new ServiceUnavailableException({
         message: "BATTLELOG_SERVICE_UNAVAILABLE",
