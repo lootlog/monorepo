@@ -8,7 +8,6 @@ import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acce
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { LootsService } from "#src/loots/loots.service";
 import { MembersService } from "#src/members/members.service";
-import { MessagingService } from "#src/messaging/messaging.service";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
@@ -22,7 +21,6 @@ import { ChatData } from "../handlers/chat/chat.handlers.js";
 import { EventsData } from "../handlers/events/events.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { MembersData } from "../handlers/members/members.handlers.js";
-import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import { ReservationsRolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
@@ -50,7 +48,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
 
     return Layer.mergeAll(
       UserLootlogConfigData.layerService(service(UserLootlogConfigService)),
-      MessagingData.layerService(service(MessagingService)),
       EventsData.layerLegacy(dispatch),
       ReadyRoomData.layerServices(service(ReadyRoomService), guilds),
       MembersData.layerService(service(MembersService)),

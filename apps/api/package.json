@@ -44,6 +44,7 @@
     "@golevelup/nestjs-rabbitmq": "^9.0.2",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
+    "@lootlog/messaging": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@nestjs/axios": "catalog:",

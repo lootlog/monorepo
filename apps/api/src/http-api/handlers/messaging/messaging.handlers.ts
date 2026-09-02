@@ -45,6 +45,10 @@ export class MessagingData extends Context.Service<
   }
 >()("@lootlog/api/http-api/messaging/data") {
   static layerService(service: MessagingService) {
+    return Layer.succeed(MessagingData, MessagingData.makeService(service));
+  }
+
+  static makeService(service: MessagingService): MessagingData["Service"] {
     const attempt = <A>(operation: () => A | PromiseLike<A>) =>
       Effect.tryPromise({
         try: () => Promise.resolve(operation()),
@@ -53,19 +57,16 @@ export class MessagingData extends Context.Service<
     const mutable = <A>(value: unknown): A =>
       JSON.parse(JSON.stringify(value)) as A;
 
-    return Layer.succeed(
-      MessagingData,
-      MessagingData.of({
-        sendNotification: ({ userId, discordId }, payload) =>
-          attempt(() =>
-            service.sendNotification(userId, discordId, mutable(payload)),
-          ),
-        volunteer: (discordId, notificationId, payload) =>
-          attempt(() =>
-            service.volunteer(discordId, notificationId, mutable(payload)),
-          ),
-      }),
-    );
+    return MessagingData.of({
+      sendNotification: ({ userId, discordId }, payload) =>
+        attempt(() =>
+          service.sendNotification(userId, discordId, mutable(payload)),
+        ),
+      volunteer: (discordId, notificationId, payload) =>
+        attempt(() =>
+          service.volunteer(discordId, notificationId, mutable(payload)),
+        ),
+    });
   }
 }
 
