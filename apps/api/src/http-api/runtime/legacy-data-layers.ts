@@ -18,10 +18,7 @@ import { ReservationMutationsService } from "#src/reservations/reservation-mutat
 import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import { ReservationsService } from "#src/reservations/reservations.service";
 import { RolesService } from "#src/roles/roles.service";
-import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { MemberContextService } from "#src/shared/permissions/member-context.service";
-import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
-import { TimerSettingsService } from "#src/timer-settings/timer-settings.service";
 import { TimersService } from "#src/timers/timers.service";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { UsersService } from "#src/users/users.service";
@@ -36,7 +33,6 @@ import { NotificationsData } from "../handlers/notifications/notifications.handl
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { ReservationsRolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
-import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { TimersData } from "../handlers/timers/timers.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { UsersGuildsData } from "../handlers/users-guilds/users-guilds.handlers.js";
@@ -79,11 +75,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
         mutations: service(ReservationMutationsService),
         roles: service(RolesService),
         sharing: service(ReservationSharingService),
-      }),
-      SettingsData.layerServices({
-        timer: service(TimerSettingsService),
-        documents: service(SettingsDocumentsService),
-        sound: service(SoundSettingsService),
       }),
       TimersData.layerService(service(TimersService)),
       ChatData.layerService(service(ChatService)),
