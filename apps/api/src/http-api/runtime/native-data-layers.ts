@@ -3,7 +3,7 @@ import { Context, Effect, Layer, Redacted } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Permission } from "@lootlog/schema/permissions";
-import { Queue } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import type { Logger } from "winston";
 import { AuthService } from "#src/auth/auth.service";
 import { ChannelsRepository } from "#src/channels/channels.repository";
@@ -25,6 +25,7 @@ import { EventsMonitoringController } from "#src/events/events-monitoring.contro
 import { EventsPinsController } from "#src/events/events-pins.controller";
 import { EventsRankingController } from "#src/events/events-ranking.controller";
 import { EventsService } from "#src/events/events.service";
+import { EventHeroKillProcessor } from "#src/events/event-hero-kill.processor";
 import { ActiveEventHeroRepository } from "#src/events/services/active-event-hero.repository";
 import { EventAccessRepository } from "#src/events/services/event-access.repository";
 import { EventAccessService } from "#src/events/services/event-access.service";
@@ -76,6 +77,7 @@ import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { MembersRepository } from "#src/members/members.repository";
 import type { MembersService } from "#src/members/members.service";
 import { MemberBulkRefreshService } from "#src/members/member-bulk-refresh.service";
+import { MemberBulkRefreshProcessor } from "#src/members/member-bulk-refresh.processor";
 import { MemberDiscordAccessService } from "#src/members/member-discord-access.service";
 import { MemberDiscordRefreshService } from "#src/members/member-discord-refresh.service";
 import { MemberDiscordSyncService } from "#src/members/member-discord-sync.service";
@@ -83,6 +85,7 @@ import { MemberReadService } from "#src/members/member-read.service";
 import { MemberRefreshJobEventsService } from "#src/members/member-refresh-job-events.service";
 import { MemberRefreshJobRepository } from "#src/members/member-refresh-job.repository";
 import { MemberRefreshJobReadService } from "#src/members/member-refresh-job-read.service";
+import { MemberRefreshProcessor } from "#src/members/member-refresh.processor";
 import { MemberRefreshSchedulerService } from "#src/members/member-refresh-scheduler.service";
 import { MemberRemovalService } from "#src/members/member-removal.service";
 import {
@@ -120,6 +123,7 @@ import { NotificationJobsRepository } from "#src/notifications/notification-jobs
 import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
 import { NotificationRuleService } from "#src/notifications/notification-rule.service";
 import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { NotificationsDispatchProcessor } from "#src/notifications/notifications-dispatch.processor";
 import { NotificationsGuildController } from "#src/notifications/notifications-guild.controller";
 import { NotificationsRepository } from "#src/notifications/notifications.repository";
 import { NotificationsUserController } from "#src/notifications/notifications-user.controller";
@@ -461,6 +465,9 @@ interface NativeMemberServicesValue {
   readonly refreshJobRead: MemberRefreshJobReadService;
   readonly refresh: MemberDiscordRefreshService;
   readonly discord: DiscordService;
+  readonly scheduler: MemberRefreshSchedulerService;
+  readonly diagnostics: DiscordSyncDiagnosticsService;
+  readonly sync: MemberDiscordSyncService;
 }
 
 class NativeMemberServices extends Context.Service<
@@ -582,6 +589,9 @@ const NativeMemberServicesLive = Layer.effect(
           refreshJobRead: new MemberRefreshJobReadService(refreshJobs),
           refresh: memberDiscordRefresh,
           discord,
+          scheduler,
+          diagnostics,
+          sync: memberDiscordSync,
         };
       }),
       ({ runtime, queues }) =>
@@ -959,7 +969,18 @@ const NativeKillsLootsData = Layer.unwrap(
   Effect.map(NativeKillsLootsServices, ({ layer }) => layer),
 );
 
-const NativeEventsData = Layer.unwrap(
+interface NativeEventsServicesValue {
+  readonly layer: ReturnType<typeof EventsData.layerLegacy>;
+  readonly events: EventsService;
+}
+
+class NativeEventsServices extends Context.Service<
+  NativeEventsServices,
+  NativeEventsServicesValue
+>()("@lootlog/api/http-api/NativeEventsServices") {}
+
+const NativeEventsServicesLive = Layer.effect(
+  NativeEventsServices,
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
@@ -1072,11 +1093,29 @@ const NativeEventsData = Layer.unwrap(
     const dispatch = createControllerDispatcher({
       get: (token: unknown) => controllers.get(token),
     } as never);
-    return EventsData.layerLegacy(dispatch);
+    return { events, layer: EventsData.layerLegacy(dispatch) };
   }),
 );
 
-const NativeNotificationsData = Layer.unwrap(
+const NativeEventsData = Layer.unwrap(
+  Effect.map(NativeEventsServices, ({ layer }) => layer),
+);
+
+interface NativeNotificationsServicesValue {
+  readonly layer: ReturnType<typeof NotificationsData.layerLegacy>;
+  readonly jobs: NotificationJobService;
+  readonly matching: NotificationMatchingService;
+  readonly repository: NotificationsRepository;
+  readonly targets: NotificationTargetService;
+}
+
+class NativeNotificationsServices extends Context.Service<
+  NativeNotificationsServices,
+  NativeNotificationsServicesValue
+>()("@lootlog/api/http-api/NativeNotificationsServices") {}
+
+const NativeNotificationsServicesLive = Layer.effect(
+  NativeNotificationsServices,
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
@@ -1160,7 +1199,101 @@ const NativeNotificationsData = Layer.unwrap(
     const dispatch = createControllerDispatcher({
       get: (token: unknown) => controllers.get(token),
     } as never);
-    return NotificationsData.layerLegacy(dispatch);
+    return {
+      jobs,
+      matching,
+      repository,
+      targets,
+      layer: NotificationsData.layerLegacy(dispatch),
+    };
+  }),
+);
+
+const NativeNotificationsData = Layer.unwrap(
+  Effect.map(NativeNotificationsServices, ({ layer }) => layer),
+);
+
+const NativeBullWorkers = Layer.effectDiscard(
+  Effect.gen(function* () {
+    const config = yield* ApiRuntimeConfig;
+    const rabbit = yield* RabbitMessaging;
+    const { runtime, access, scheduler, diagnostics, sync } =
+      yield* NativeMemberServices;
+    const { events } = yield* NativeEventsServices;
+    const { jobs } = yield* NativeNotificationsServices;
+    const members = {
+      syncMemberFromDiscord: sync.syncMemberFromDiscord.bind(sync),
+      refreshMember: access.refreshMember.bind(access),
+    } as unknown as MembersService;
+    const refreshJobs = new MemberRefreshJobRepository(runtime);
+    const memberRefresh = new MemberRefreshProcessor(
+      nativeLogger,
+      members,
+      scheduler,
+      diagnostics,
+    );
+    const memberBulkRefresh = new MemberBulkRefreshProcessor(
+      nativeLogger,
+      members,
+      refreshJobs,
+      new MemberRefreshJobEventsService(
+        nativeLogger,
+        refreshJobs,
+        makeAmqpAdapter(rabbit),
+      ),
+    );
+    const eventHeroKill = new EventHeroKillProcessor(nativeLogger, events);
+    const notifications = new NotificationsDispatchProcessor(
+      jobs,
+      nativeLogger,
+    );
+    const connection = {
+      host: config.redis.host,
+      port: config.redis.port,
+      username: config.redis.username,
+      password: Redacted.value(config.redis.password),
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    };
+    yield* Effect.acquireRelease(
+      Effect.sync(() => {
+        const workers = [
+          new Worker(
+            MEMBER_REFRESH_QUEUE,
+            (job) => memberRefresh.process(job),
+            { connection, prefix: "{bull}", concurrency: 10 },
+          ),
+          new Worker(
+            MEMBER_BULK_REFRESH_QUEUE,
+            (job) => memberBulkRefresh.process(job),
+            {
+              connection,
+              prefix: "{bull}",
+              concurrency: 5,
+              limiter: { max: 5, duration: 1000 },
+            },
+          ),
+          new Worker(
+            EVENT_HERO_KILL_QUEUE,
+            (job) => eventHeroKill.process(job),
+            { connection, prefix: "{bull}" },
+          ),
+          new Worker(
+            NOTIFICATIONS_DISPATCH_QUEUE,
+            (job) => notifications.process(job),
+            { connection, prefix: "{bull}" },
+          ),
+        ];
+        workers[2]?.on("failed", (job, error) => {
+          if (job) eventHeroKill.onFailed(job, error);
+        });
+        return workers;
+      }),
+      (workers) =>
+        Effect.promise(() =>
+          Promise.all(workers.map((worker) => worker.close())),
+        ),
+    );
   }),
 );
 
@@ -1190,7 +1323,10 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeKillsLootsData,
   NativeEventsData,
   NativeNotificationsData,
+  NativeBullWorkers,
 ).pipe(
+  Layer.provide(NativeNotificationsServicesLive),
+  Layer.provide(NativeEventsServicesLive),
   Layer.provide(NativeUsersGuildsServicesLive),
   Layer.provide(NativeKillsLootsServicesLive),
   Layer.provide(NativeTimerServiceLive),
