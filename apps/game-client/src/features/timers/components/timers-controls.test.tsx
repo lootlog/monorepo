@@ -6,6 +6,7 @@ import { NpcType } from "@/api/npcs.api";
 
 const mockSetTimerFiltersSearchText = vi.fn();
 const mockSetTimersFilters = vi.fn();
+const initialSelectedNpcTypes: NpcType[] = [NpcType.HERO];
 
 let timersStoreState = {
   timerFiltersSearchText: "",
@@ -14,7 +15,7 @@ let timersStoreState = {
     "guild-1": {
       minLvl: 10,
       maxLvl: 200,
-      selectedNpcTypes: [NpcType.HERO],
+      selectedNpcTypes: initialSelectedNpcTypes,
       selectedColors: ["red"],
     },
   },

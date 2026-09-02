@@ -16,7 +16,7 @@ import { createKill, createBattle } from "@/api";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
-const TRACKABLE_NPC_TYPES = new Set([
+const TRACKABLE_NPC_TYPES: ReadonlySet<NpcType> = new Set([
   NpcType.ELITE2,
   NpcType.ELITE3,
   NpcType.HERO,
