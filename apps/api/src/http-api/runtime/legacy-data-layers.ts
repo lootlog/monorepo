@@ -6,7 +6,6 @@ import { DocsService } from "#src/docs/docs.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { HealthzService } from "#src/healthz/healthz.service";
 import { KillsService } from "#src/kills/kills.service";
-import { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
 import { LootAllocationService } from "#src/loots/loot-allocation.service";
 import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
@@ -32,7 +31,6 @@ import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { EventsData } from "../handlers/events/events.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
-import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import { MembersData } from "../handlers/members/members.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
@@ -90,7 +88,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
         sound: service(SoundSettingsService),
       }),
       TimersData.layerService(service(TimersService)),
-      LootlogConfigData.layerService(service(LootlogConfigService)),
       ChatData.layerService(service(ChatService)),
       DocsData.layerLegacy(service(DocsService)),
       legacyKillsLootsDataLayer({
