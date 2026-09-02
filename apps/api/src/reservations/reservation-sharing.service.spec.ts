@@ -2,7 +2,7 @@ import {
   ConflictException,
   GoneException,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReservationSharingService } from "./reservation-sharing.service.js";
 

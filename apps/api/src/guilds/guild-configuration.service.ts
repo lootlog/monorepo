@@ -1,10 +1,13 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
 import {
   resolveReservationSettings,
   type ReservationSettings,
 } from "@lootlog/domain/reservations";
 import { RedisService } from "#src/redis/redis.service";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import {
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,

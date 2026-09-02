@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const NotificationResponseSchema = z.object({
@@ -16,14 +16,14 @@ const CancelPartyGatheringResponseSchema = z.object({
   guildIds: z.array(z.string().min(1)),
 });
 
-export class NotificationResponseDto extends createZodDto(
+export class NotificationResponseDto extends createSchemaClass(
   NotificationResponseSchema,
 ) {}
 
-export class NotificationRateLimitResponseDto extends createZodDto(
+export class NotificationRateLimitResponseDto extends createSchemaClass(
   NotificationRateLimitResponseSchema,
 ) {}
 
-export class CancelPartyGatheringResponseDto extends createZodDto(
+export class CancelPartyGatheringResponseDto extends createSchemaClass(
   CancelPartyGatheringResponseSchema,
 ) {}

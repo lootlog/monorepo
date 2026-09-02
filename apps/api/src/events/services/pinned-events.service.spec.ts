@@ -1,4 +1,7 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
 import { mockFn } from "#src/test/mock-fn";
 import { PinnedEventsService } from "./pinned-events.service.js";
 import { PinnedEventsRepository } from "./pinned-events.repository.js";

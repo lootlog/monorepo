@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   flexibleIsoDatetimeCodec,
@@ -77,42 +77,42 @@ const HeroRespawnConfigResponseSchema = z.object({
   overdueMs: z.number().nullable(),
 });
 
-export class CoverageGapResponseDto extends createZodDto(
+export class CoverageGapResponseDto extends createSchemaClass(
   CoverageGapResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class NullableCoverageGapResponseDto extends createZodDto(
+export class NullableCoverageGapResponseDto extends createSchemaClass(
   CoverageGapResponseSchema.nullable(),
   {
     codec: true,
   },
 ) {}
 
-export class HeroCoverageGapResponseDto extends createZodDto(
+export class HeroCoverageGapResponseDto extends createSchemaClass(
   HeroCoverageGapResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class KillTimelineMapResponseDto extends createZodDto(
+export class KillTimelineMapResponseDto extends createSchemaClass(
   KillTimelineMapResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class HeroPresenceStatsResponseDto extends createZodDto(
+export class HeroPresenceStatsResponseDto extends createSchemaClass(
   HeroPresenceStatsResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class HeroRespawnConfigResponseDto extends createZodDto(
+export class HeroRespawnConfigResponseDto extends createSchemaClass(
   HeroRespawnConfigResponseSchema,
   {
     codec: true,

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const TimersGeneralConfigSchema = z.object({
   removeTimerAfterMs: z.number().min(0).optional(),
@@ -52,6 +52,6 @@ const UpdateTimerSettingsSchema = z.object({
   syncEnabled: z.boolean().optional(),
 });
 
-export class UpdateTimerSettingsDto extends createZodDto(
+export class UpdateTimerSettingsDto extends createSchemaClass(
   UpdateTimerSettingsSchema,
 ) {}

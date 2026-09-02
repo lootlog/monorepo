@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 
@@ -25,6 +25,6 @@ const UpdateGuildConfigSchema = z.object({
   reservationActiveLimitPerSpot: z.number().int().min(1).max(10).optional(),
 });
 
-export class UpdateGuildConfigDto extends createZodDto(
+export class UpdateGuildConfigDto extends createSchemaClass(
   UpdateGuildConfigSchema,
 ) {}

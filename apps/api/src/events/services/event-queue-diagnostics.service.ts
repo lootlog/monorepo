@@ -1,15 +1,13 @@
-import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import type { Queue } from "bullmq";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 import { EventQueueDiagnosticsRepository } from "./event-queue-diagnostics.repository.js";
 
-@Injectable()
 export class EventQueueDiagnosticsService {
   constructor(
     private readonly repository: EventQueueDiagnosticsRepository,
-    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 

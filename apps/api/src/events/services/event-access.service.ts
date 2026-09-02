@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import type { Permission } from "@lootlog/schema/permissions";
 import type {
   eventHeroNpcTable,
@@ -9,7 +9,6 @@ import { EventAccessRepository } from "./event-access.repository.js";
 type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
 type Role = typeof roleTable.$inferSelect;
 
-@Injectable()
 export class EventAccessService {
   constructor(private readonly repository: EventAccessRepository) {}
 

@@ -1,4 +1,4 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { RedisService } from "#src/redis/redis.service";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
@@ -9,12 +9,9 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  Inject,
-  Injectable,
   ServiceUnavailableException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
@@ -26,7 +23,7 @@ import {
 import type { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import type { LootShare } from "#src/shared/dto/loot-response.dto";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { LootAllocationRepository } from "./loot-allocation.repository.js";
 
 type LootNpcWithSocketSnapshot = {
@@ -50,13 +47,12 @@ type InitialLootAllocation =
 
 const LOOT_SHARE_SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 
-@Injectable()
 export class LootAllocationService {
   constructor(
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly repository: LootAllocationRepository,
     private readonly redisService: RedisService,
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
   ) {}
 
   async inferInitial(

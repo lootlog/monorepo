@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { LootSourceEnum as LootSource } from "@lootlog/schema/loot";
 
 const LootSchema = z.object({
@@ -14,7 +14,7 @@ const LootSchema = z.object({
   own: z.number().optional(),
 });
 
-export class LootDto extends createZodDto(LootSchema) {}
+export class LootDto extends createSchemaClass(LootSchema) {}
 
 const PlayerSchema = z.object({
   id: z.number(),
@@ -26,7 +26,7 @@ const PlayerSchema = z.object({
   hpp: z.number().optional(),
 });
 
-export class PlayerDto extends createZodDto(PlayerSchema) {}
+export class PlayerDto extends createSchemaClass(PlayerSchema) {}
 
 const NpcSchema = z.object({
   id: z.number(),
@@ -42,7 +42,7 @@ const NpcSchema = z.object({
   y: z.number().optional(),
 });
 
-export class NpcDto extends createZodDto(NpcSchema) {}
+export class NpcDto extends createSchemaClass(NpcSchema) {}
 
 const CreateLootSchema = z.object({
   loots: z.array(LootSchema).min(1).max(10),
@@ -55,4 +55,4 @@ const CreateLootSchema = z.object({
   characterId: z.string().min(1),
 });
 
-export class CreateLootDto extends createZodDto(CreateLootSchema) {}
+export class CreateLootDto extends createSchemaClass(CreateLootSchema) {}

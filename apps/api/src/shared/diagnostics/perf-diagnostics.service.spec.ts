@@ -1,4 +1,4 @@
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { env } from "#src/config/env";
 import { mockFn } from "#src/test/mock-fn";
 import { PerfDiagnosticsService } from "./perf-diagnostics.service.js";

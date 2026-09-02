@@ -4,16 +4,14 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { createHash, randomUUID } from "node:crypto";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  Inject,
-  Injectable,
   NotFoundException,
   type OnModuleInit,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
@@ -33,8 +31,7 @@ import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-
 import { validateAndCalculateSpawnTimes } from "#src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { RedisService } from "#src/redis/redis.service";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { ExecutionError } from "redlock";
 import { getSyntheticNpcId } from "#src/events/utils/get-synthetic-npc-id";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
@@ -204,15 +201,14 @@ type CreateTimerForGuildContext = {
   lockKey: string;
 };
 
-@Injectable()
 export class TimersService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
   private readonly lockTtl = 30000;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly timersRepository: TimersRepository,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly guildsService: GuildsService,
     private readonly userLootlogConfigService: UserLootlogConfigService,
     private readonly redis: RedisService,

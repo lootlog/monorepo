@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
-import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import type { Logger } from "winston";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { RETRY_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RetryService } from "./retry.service.js";
 
@@ -23,7 +23,7 @@ describe("RetryService", () => {
     };
     service = new RetryService(
       logger as unknown as Logger,
-      amqp as unknown as AmqpConnection,
+      amqp as unknown as AmqpPublisher,
     );
   });
 

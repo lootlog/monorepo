@@ -1,5 +1,5 @@
 import type { PartyReadyRoomCharacter } from "@lootlog/schema/party-ready-room";
-import { ConflictException } from "@nestjs/common";
+import { ConflictException } from "#src/shared/http/http-errors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   CommitReadyRoomResult,

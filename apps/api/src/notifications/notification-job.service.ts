@@ -1,12 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { InjectQueue } from "@nestjs/bullmq";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+
 import {
   BadRequestException,
-  Injectable,
   Logger,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
 import type { Queue } from "bullmq";
 import {
@@ -65,7 +64,6 @@ const FINAL_JOB_STATUSES: readonly DbNotificationJobStatus[] = [
   DbNotificationJobStatus.CANCELED,
 ];
 
-@Injectable()
 export class NotificationJobService {
   private readonly logger = new Logger(NotificationJobService.name);
   private readonly scheduler: NotificationJobSchedulerService;
@@ -75,8 +73,8 @@ export class NotificationJobService {
     private readonly guildsService: GuildsService,
     private readonly contentService: NotificationContentService,
     private readonly matchingService: NotificationMatchingService,
-    private readonly amqpConnection: AmqpConnection,
-    @InjectQueue(NOTIFICATIONS_DISPATCH_QUEUE)
+    private readonly amqpConnection: AmqpPublisher,
+
     private readonly notificationsQueue: Queue<NotificationDispatchJobData>,
   ) {
     this.scheduler = new NotificationJobSchedulerService(

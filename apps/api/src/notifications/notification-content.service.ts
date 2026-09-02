@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
@@ -73,7 +73,6 @@ const hasAllowedMentionValues = (params: {
   (params.users?.length ?? 0) > 0 ||
   params.repliedUser !== undefined;
 
-@Injectable()
 export class NotificationContentService {
   constructor(
     private readonly repository: NotificationsRepository,

@@ -1,4 +1,7 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,

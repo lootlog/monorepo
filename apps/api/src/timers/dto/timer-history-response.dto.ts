@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { Profession, TimerHistoryAction } from "../timers.types.js";
 import { MemberResponseDto } from "#src/shared/dto/member-response.dto";
@@ -33,7 +33,7 @@ const TimerHistoryResponseSchema = z.object({
   createdAt: isoDatetimeCodec,
 });
 
-export class TimerHistoryResponseDto extends createZodDto(
+export class TimerHistoryResponseDto extends createSchemaClass(
   TimerHistoryResponseSchema,
   { codec: true },
 ) {}

@@ -1,12 +1,10 @@
 import {
   ConflictException,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { attachComputedEventActive } from "../utils/event-activity.util.js";
 import { PinnedEventsRepository } from "./pinned-events.repository.js";
 
-@Injectable()
 export class PinnedEventsService {
   constructor(private readonly repository: PinnedEventsRepository) {}
 

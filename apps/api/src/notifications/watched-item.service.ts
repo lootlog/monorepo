@@ -1,9 +1,8 @@
 import {
   BadRequestException,
   ConflictException,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
 import {
@@ -37,7 +36,6 @@ type WatchedItemWithUnknownSnapshot = Omit<
   notificationRule: NotificationRuleWithUnknownFilters | null;
 };
 
-@Injectable()
 export class WatchedItemService {
   constructor(
     private readonly repository: NotificationsRepository,

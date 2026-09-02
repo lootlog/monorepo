@@ -1,5 +1,5 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Injectable } from "@nestjs/common";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 
@@ -14,9 +14,8 @@ type IndexItemDto = {
   world: string;
 };
 
-@Injectable()
 export class ItemsService {
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(private readonly amqpConnection: AmqpPublisher) {}
 
   bulkIndexItems(items: IndexItemDto[]) {
     if (items.length === 0) return;

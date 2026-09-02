@@ -2,7 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { DocsService } from "./docs.service.js";
 
 const baseContent = {

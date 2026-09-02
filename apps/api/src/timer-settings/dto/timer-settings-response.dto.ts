@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   isoDatetimeCodec,
@@ -23,7 +23,7 @@ const TimerSettingsResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class TimerSettingsResponseDto extends createZodDto(
+export class TimerSettingsResponseDto extends createSchemaClass(
   TimerSettingsResponseSchema,
   {
     codec: true,
@@ -39,7 +39,7 @@ const GuildTimerSettingsResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class GuildTimerSettingsResponseDto extends createZodDto(
+export class GuildTimerSettingsResponseDto extends createSchemaClass(
   GuildTimerSettingsResponseSchema,
   {
     codec: true,

@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const PartialNotificationSettingsSchema = z.object({
@@ -59,6 +59,6 @@ const UpdateUserGameAccountPreferencesSchema = z.object({
     .optional(),
 });
 
-export class UpdateUserGameAccountPreferencesDto extends createZodDto(
+export class UpdateUserGameAccountPreferencesDto extends createSchemaClass(
   UpdateUserGameAccountPreferencesSchema,
 ) {}

@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import type { APIGuildMember } from "discord-api-types/v10";
 import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
 import { MemberDiscordAccessService } from "./member-discord-access.service.js";
@@ -21,7 +20,6 @@ import type {
   RefreshJobWithCooldown,
 } from "./member.types.js";
 
-@Injectable()
 export class MembersService {
   constructor(
     private readonly memberBulkRefreshService: MemberBulkRefreshService,

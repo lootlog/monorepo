@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { LootlogConfigNpcResponseDto } from "./lootlog-config-npc-response.dto.js";
 
@@ -7,10 +7,10 @@ const LootlogConfigResponseSchema = z.object({
   npcs: z.array(LootlogConfigNpcResponseDto.schema),
 });
 
-export class LootlogConfigResponseDto extends createZodDto(
+export class LootlogConfigResponseDto extends createSchemaClass(
   LootlogConfigResponseSchema,
 ) {}
 
-export class NullableLootlogConfigResponseDto extends createZodDto(
+export class NullableLootlogConfigResponseDto extends createSchemaClass(
   LootlogConfigResponseSchema.nullable(),
 ) {}

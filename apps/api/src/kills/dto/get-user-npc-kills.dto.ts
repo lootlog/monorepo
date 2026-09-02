@@ -1,9 +1,9 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import {
   commaSeparatedArray,
   intFromString,
-} from "@lootlog/nest-shared/validators/query-helpers";
+} from "#src/shared/validation/query-helpers";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
 
@@ -28,4 +28,6 @@ const GetUserNpcKillsSchema = z
     { message: "minLvl must be <= maxLvl", path: ["minLvl"] },
   );
 
-export class GetUserNpcKillsDto extends createZodDto(GetUserNpcKillsSchema) {}
+export class GetUserNpcKillsDto extends createSchemaClass(
+  GetUserNpcKillsSchema,
+) {}

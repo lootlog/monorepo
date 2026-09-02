@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const GuildResponseSchema = z.object({
@@ -15,4 +15,4 @@ const GuildResponseSchema = z.object({
   reservationActiveLimitPerSpot: z.number(),
 });
 
-export class GuildResponseDto extends createZodDto(GuildResponseSchema) {}
+export class GuildResponseDto extends createSchemaClass(GuildResponseSchema) {}

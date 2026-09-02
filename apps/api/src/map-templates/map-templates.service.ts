@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import { MapTemplateMapsResponseSchema } from "#src/shared/dto/map-template-response.dto";
 import type { CreateMapTemplateDto } from "./dto/create-map-template.dto.js";
 import { MapTemplatesRepository } from "./map-templates.repository.js";
 
-@Injectable()
 export class MapTemplatesService {
   constructor(private readonly repository: MapTemplatesRepository) {}
 

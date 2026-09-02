@@ -1,4 +1,4 @@
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { RedisService } from "#src/redis/redis.service";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import type { MembersRepository } from "#src/members/members.repository";

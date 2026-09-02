@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import {
   LootSourceEnum as LootSource,
@@ -73,11 +73,11 @@ export const LootShareResponseSchema = z
   .meta({ id: "LootShareResponseDto" });
 export type LootShare = z.infer<typeof LootShareResponseSchema>;
 
-export class LootShareResponseDto extends createZodDto(
+export class LootShareResponseDto extends createSchemaClass(
   LootShareResponseSchema,
 ) {}
 
-export class NullableLootItemResponseDto extends createZodDto(
+export class NullableLootItemResponseDto extends createSchemaClass(
   LootItemResponseSchema.nullable(),
 ) {}
 
@@ -97,11 +97,11 @@ const LootResponseSchema = z.object({
   commentsCount: z.number(),
 });
 
-export class LootResponseDto extends createZodDto(LootResponseSchema, {
+export class LootResponseDto extends createSchemaClass(LootResponseSchema, {
   codec: true,
 }) {}
 
-export class NullableLootResponseDto extends createZodDto(
+export class NullableLootResponseDto extends createSchemaClass(
   LootResponseSchema.nullable(),
   {
     codec: true,

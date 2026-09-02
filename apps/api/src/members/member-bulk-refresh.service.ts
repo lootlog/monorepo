@@ -1,8 +1,6 @@
-import { InjectQueue } from "@nestjs/bullmq";
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException } from "#src/shared/http/http-errors";
 import type { Queue as BullQueue } from "bullmq";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant.js";
@@ -17,14 +15,13 @@ import type {
 import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
 import { MemberRefreshJobReadService } from "./member-refresh-job-read.service.js";
 
-@Injectable()
 export class MemberBulkRefreshService {
   private readonly env: RuntimeEnvironment;
   private readonly reads: MemberRefreshJobReadService;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
-    @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
+    private readonly logger: Logger,
+
     private readonly bulkRefreshQueue: BullQueue<MemberBulkRefreshJobData>,
     private readonly refreshJobs: MemberRefreshJobRepository,
     private readonly memberReadService: MemberReadService,

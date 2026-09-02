@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
 
 const ResetTimerSchema = z.object({
@@ -7,4 +7,4 @@ const ResetTimerSchema = z.object({
   actorCharacter: TimerActorCharacterSchema.optional(),
 });
 
-export class ResetTimerDto extends createZodDto(ResetTimerSchema) {}
+export class ResetTimerDto extends createSchemaClass(ResetTimerSchema) {}

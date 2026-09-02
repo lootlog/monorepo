@@ -2,7 +2,7 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { Injectable, Logger } from "@nestjs/common";
+import { Logger } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
@@ -30,7 +30,6 @@ type Role = typeof roleTable.$inferSelect;
 
 const CACHE_TTL_SECONDS = 60;
 
-@Injectable()
 export class LootStatsService {
   private readonly logger = new Logger(LootStatsService.name);
 

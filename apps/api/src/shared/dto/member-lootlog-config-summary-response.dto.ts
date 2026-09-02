@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const CharacterLootlogGuildStatusSchema = z.object({
@@ -24,10 +24,10 @@ const MemberLootlogConfigSummaryResponseSchema = z.object({
   characters: z.array(CharacterLootlogGuildStatusSchema),
 });
 
-export class CharacterLootlogGuildStatusDto extends createZodDto(
+export class CharacterLootlogGuildStatusDto extends createSchemaClass(
   CharacterLootlogGuildStatusSchema,
 ) {}
 
-export class MemberLootlogConfigSummaryResponseDto extends createZodDto(
+export class MemberLootlogConfigSummaryResponseDto extends createSchemaClass(
   MemberLootlogConfigSummaryResponseSchema,
 ) {}

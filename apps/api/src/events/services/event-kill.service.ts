@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { InjectQueue } from "@nestjs/bullmq";
+import { Logger, NotFoundException } from "#src/shared/http/http-errors";
+
 import type { Queue } from "bullmq";
 import type {
   eventHeroNpcTable,
@@ -102,7 +102,6 @@ type MemberMapPresenceStatsEntry = {
   afkTimeSeconds: number;
 };
 
-@Injectable()
 export class EventKillService {
   private readonly logger = new Logger(EventKillService.name);
 
@@ -116,7 +115,7 @@ export class EventKillService {
     private readonly trackingService: EventTrackingService,
     private readonly summaryService: EventSummaryService,
     private readonly timersService: TimersService,
-    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { EventScoringRulesSchema } from "./event-scoring-rules.dto.js";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 
@@ -8,7 +8,7 @@ export const HeroMapSchema = z.object({
   mapName: z.string(),
 });
 
-export class HeroMapDto extends createZodDto(HeroMapSchema) {}
+export class HeroMapDto extends createSchemaClass(HeroMapSchema) {}
 
 export const HeroNpcSchema = z.object({
   npcId: z.number().int().optional(),
@@ -16,7 +16,7 @@ export const HeroNpcSchema = z.object({
   maps: z.array(HeroMapSchema),
 });
 
-export class HeroNpcDto extends createZodDto(HeroNpcSchema) {}
+export class HeroNpcDto extends createSchemaClass(HeroNpcSchema) {}
 
 const CreateEventSchema = z
   .object({
@@ -41,4 +41,4 @@ const CreateEventSchema = z
     { message: "endsAt must not be before startsAt", path: ["endsAt"] },
   );
 
-export class CreateEventDto extends createZodDto(CreateEventSchema) {}
+export class CreateEventDto extends createSchemaClass(CreateEventSchema) {}

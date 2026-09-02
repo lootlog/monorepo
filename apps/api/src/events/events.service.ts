@@ -2,8 +2,7 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable } from "@nestjs/common";
+
 import type { Queue } from "bullmq";
 import type {
   eventKillPointTable,
@@ -53,7 +52,6 @@ import { EventTrackingService } from "./services/event-tracking.service.js";
 import { EventWrappedService } from "./services/event-wrapped.service.js";
 import { EventCoordinationService } from "./services/event-coordination.service.js";
 
-@Injectable()
 export class EventsService {
   constructor(
     private readonly catalogService: EventCatalogService,
@@ -65,7 +63,7 @@ export class EventsService {
     private readonly respawnService: EventRespawnService,
     private readonly wrappedService: EventWrappedService,
     private readonly coordinationService: EventCoordinationService,
-    @InjectQueue(EVENT_HERO_KILL_QUEUE)
+
     private readonly eventHeroKillQueue: Queue<EventHeroKillJobData>,
   ) {}
 

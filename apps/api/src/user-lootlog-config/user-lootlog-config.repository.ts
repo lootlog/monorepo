@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, arrayOverlaps, desc, eq, or } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
@@ -11,7 +10,6 @@ type PlayerIdentity = {
   readonly characterId: string;
 };
 
-@Injectable()
 export class UserLootlogConfigRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

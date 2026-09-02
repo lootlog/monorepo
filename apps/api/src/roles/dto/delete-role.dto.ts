@@ -1,9 +1,9 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const DeleteRoleSchema = z.object({
   guildId: z.string(),
   id: z.string(),
 });
 
-export class DeleteRoleDto extends createZodDto(DeleteRoleSchema) {}
+export class DeleteRoleDto extends createSchemaClass(DeleteRoleSchema) {}

@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
 import {
   and,
   count,

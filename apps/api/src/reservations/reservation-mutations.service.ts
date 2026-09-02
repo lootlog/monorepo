@@ -1,11 +1,9 @@
 import {
   ConflictException,
   ForbiddenException,
-  Inject,
-  Injectable,
   NotFoundException,
   UnprocessableEntityException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import {
   resolveReservationSettings,
   type ReservationSettings,
@@ -42,11 +40,10 @@ type DeletePersistedReservationOptions = {
   actorDiscordId: string;
 };
 
-@Injectable()
 export class ReservationMutationsService {
   constructor(
     private readonly repository: ReservationMutationsRepository,
-    @Inject(GuildsService)
+
     private readonly guildsService: Pick<
       GuildsService,
       "getCurrentUserAccessibleGuilds"

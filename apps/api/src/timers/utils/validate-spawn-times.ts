@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException } from "#src/shared/http/http-errors";
 import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";

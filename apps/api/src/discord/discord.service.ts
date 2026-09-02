@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 import { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
 import {
@@ -8,7 +7,6 @@ import {
 
 export type { FreshCompleteUserGuildsResult };
 
-@Injectable()
 export class DiscordService {
   constructor(
     private readonly userGuildsClient: DiscordUserGuildsClient,

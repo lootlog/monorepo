@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -27,7 +27,7 @@ const CreateLootResponseSchema = z.object({
   rejectedGuilds: z.array(CreateLootRejectedGuildSchema),
 });
 
-export class CreateLootResponseDto extends createZodDto(
+export class CreateLootResponseDto extends createSchemaClass(
   CreateLootResponseSchema,
 ) {}
 
@@ -99,6 +99,6 @@ const LootStatsResponseSchema = z.object({
   topItems: z.array(TopItemResponseSchema),
 });
 
-export class LootStatsResponseDto extends createZodDto(
+export class LootStatsResponseDto extends createSchemaClass(
   LootStatsResponseSchema,
 ) {}

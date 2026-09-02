@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 import {
@@ -143,35 +143,35 @@ const EventHeroStatsResponseSchema = z.object({
   killCount: z.number(),
 });
 
-export class EventKillParticipantResponseDto extends createZodDto(
+export class EventKillParticipantResponseDto extends createSchemaClass(
   EventKillParticipantResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventKillHistoryResponseDto extends createZodDto(
+export class EventKillHistoryResponseDto extends createSchemaClass(
   EventKillHistoryResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventMemberKillHistoryResponseDto extends createZodDto(
+export class EventMemberKillHistoryResponseDto extends createSchemaClass(
   EventMemberKillHistoryResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class KillDetailResponseDto extends createZodDto(
+export class KillDetailResponseDto extends createSchemaClass(
   KillDetailResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventHeroStatsResponseDto extends createZodDto(
+export class EventHeroStatsResponseDto extends createSchemaClass(
   EventHeroStatsResponseSchema,
   {
     codec: true,

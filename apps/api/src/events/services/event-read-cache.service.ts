@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Logger } from "#src/shared/http/http-errors";
 import { RedisService, type JsonCodec } from "#src/redis/redis.service";
 import superjson from "superjson";
 
@@ -10,7 +10,6 @@ const SUPERJSON_CODEC: JsonCodec = {
   parse: <T>(text: string): T => superjson.parse<T>(text),
 };
 
-@Injectable()
 export class EventReadCacheService {
   private readonly logger = new Logger(EventReadCacheService.name);
 

@@ -1,7 +1,6 @@
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
-import { Injectable, Inject } from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
@@ -50,10 +49,9 @@ const buildNpcLvlCondition = (minLvl?: number, maxLvl?: number) => {
   };
 };
 
-@Injectable()
 export class KillsService {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly repository: KillsRepository,
     private readonly redis: RedisService,
     private readonly userLootlogConfigService: UserLootlogConfigService,

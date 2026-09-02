@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const MapItemSchema = z.object({
   id: z.number().int(),
@@ -11,6 +11,6 @@ const CreateMapTemplateSchema = z.object({
   maps: z.array(MapItemSchema).nonempty(),
 });
 
-export class CreateMapTemplateDto extends createZodDto(
+export class CreateMapTemplateDto extends createSchemaClass(
   CreateMapTemplateSchema,
 ) {}

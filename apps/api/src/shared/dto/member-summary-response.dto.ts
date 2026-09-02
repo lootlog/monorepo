@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const MemberSummaryResponseSchema = z.object({
@@ -9,6 +9,6 @@ const MemberSummaryResponseSchema = z.object({
   color: z.number().nullable().optional(),
 });
 
-export class MemberSummaryResponseDto extends createZodDto(
+export class MemberSummaryResponseDto extends createSchemaClass(
   MemberSummaryResponseSchema,
 ) {}

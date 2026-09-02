@@ -1,4 +1,8 @@
-import { HttpException, HttpStatus, NotFoundException } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import sharp from "sharp";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";

@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
@@ -14,7 +14,7 @@ const KillsByTypeResponseSchema = z.object({
   EVENT_HERO: z.number().optional(),
 });
 
-export class KillsByTypeResponseDto extends createZodDto(
+export class KillsByTypeResponseDto extends createSchemaClass(
   KillsByTypeResponseSchema,
 ) {}
 
@@ -29,7 +29,7 @@ const GuildKillStatsOverviewResponseSchema = z.object({
   ) as z.ZodType<Record<NpcType, number>>,
 });
 
-export class GuildKillStatsOverviewResponseDto extends createZodDto(
+export class GuildKillStatsOverviewResponseDto extends createSchemaClass(
   GuildKillStatsOverviewResponseSchema,
 ) {}
 
@@ -41,7 +41,7 @@ const UserKillStatsOverviewResponseSchema = z.object({
   killsByWorld: z.record(z.string(), z.number()),
 });
 
-export class UserKillStatsOverviewResponseDto extends createZodDto(
+export class UserKillStatsOverviewResponseDto extends createSchemaClass(
   UserKillStatsOverviewResponseSchema,
 ) {}
 
@@ -56,7 +56,7 @@ const MemberKillRankingResponseSchema = z.object({
   ) as z.ZodType<Record<NpcType, number>>,
 });
 
-export class MemberKillRankingResponseDto extends createZodDto(
+export class MemberKillRankingResponseDto extends createSchemaClass(
   MemberKillRankingResponseSchema,
 ) {}
 
@@ -65,7 +65,7 @@ const GuildKillStatsResponseSchema = z.object({
   memberRanking: z.array(MemberKillRankingResponseSchema),
 });
 
-export class GuildKillStatsResponseDto extends createZodDto(
+export class GuildKillStatsResponseDto extends createSchemaClass(
   GuildKillStatsResponseSchema,
 ) {}
 
@@ -74,7 +74,7 @@ const CreateKillResponseSchema = z.object({
   deduplicated: z.boolean().optional(),
 });
 
-export class CreateKillResponseDto extends createZodDto(
+export class CreateKillResponseDto extends createSchemaClass(
   CreateKillResponseSchema,
 ) {}
 
@@ -87,7 +87,9 @@ const TopNpcResponseSchema = z.object({
   uniqueKills: z.number(),
 });
 
-export class TopNpcResponseDto extends createZodDto(TopNpcResponseSchema) {}
+export class TopNpcResponseDto extends createSchemaClass(
+  TopNpcResponseSchema,
+) {}
 
 const UserTopNpcResponseSchema = z.object({
   npcId: z.number(),
@@ -99,7 +101,7 @@ const UserTopNpcResponseSchema = z.object({
   totalKills: z.number(),
 });
 
-export class UserTopNpcResponseDto extends createZodDto(
+export class UserTopNpcResponseDto extends createSchemaClass(
   UserTopNpcResponseSchema,
 ) {}
 
@@ -108,7 +110,7 @@ const UserKillStatsResponseSchema = z.object({
   topNpcs: z.array(UserTopNpcResponseSchema),
 });
 
-export class UserKillStatsResponseDto extends createZodDto(
+export class UserKillStatsResponseDto extends createSchemaClass(
   UserKillStatsResponseSchema,
 ) {}
 
@@ -122,7 +124,9 @@ const NpcKillResponseSchema = z.object({
   totalKills: z.number(),
 });
 
-export class NpcKillResponseDto extends createZodDto(NpcKillResponseSchema) {}
+export class NpcKillResponseDto extends createSchemaClass(
+  NpcKillResponseSchema,
+) {}
 
 const PaginationResponseSchema = z.object({
   total: z.number(),
@@ -131,7 +135,7 @@ const PaginationResponseSchema = z.object({
   hasNext: z.boolean(),
 });
 
-export class PaginationResponseDto extends createZodDto(
+export class PaginationResponseDto extends createSchemaClass(
   PaginationResponseSchema,
 ) {}
 
@@ -140,7 +144,7 @@ const UserNpcKillsResponseSchema = z.object({
   pagination: PaginationResponseSchema,
 });
 
-export class UserNpcKillsResponseDto extends createZodDto(
+export class UserNpcKillsResponseDto extends createSchemaClass(
   UserNpcKillsResponseSchema,
 ) {}
 
@@ -148,7 +152,7 @@ const GuildTopNpcsResponseSchema = z.object({
   topNpcs: z.array(TopNpcResponseSchema),
 });
 
-export class GuildTopNpcsResponseDto extends createZodDto(
+export class GuildTopNpcsResponseDto extends createSchemaClass(
   GuildTopNpcsResponseSchema,
 ) {}
 
@@ -160,7 +164,7 @@ const TopKillerResponseSchema = z.object({
   totalParticipations: z.number(),
 });
 
-export class TopKillerResponseDto extends createZodDto(
+export class TopKillerResponseDto extends createSchemaClass(
   TopKillerResponseSchema,
 ) {}
 
@@ -170,7 +174,7 @@ const GuildTopKillersByTypeResponseSchema = z.object({
   EVENT_HERO: z.array(TopKillerResponseSchema).optional(),
 });
 
-export class GuildTopKillersByTypeResponseDto extends createZodDto(
+export class GuildTopKillersByTypeResponseDto extends createSchemaClass(
   GuildTopKillersByTypeResponseSchema,
 ) {}
 
@@ -185,7 +189,9 @@ const NpcInfoResponseSchema = z.object({
   totalMemberParticipations: z.number(),
 });
 
-export class NpcInfoResponseDto extends createZodDto(NpcInfoResponseSchema) {}
+export class NpcInfoResponseDto extends createSchemaClass(
+  NpcInfoResponseSchema,
+) {}
 
 const NpcKillerResponseSchema = z.object({
   memberId: z.number(),
@@ -195,7 +201,7 @@ const NpcKillerResponseSchema = z.object({
   participationCount: z.number(),
 });
 
-export class NpcKillerResponseDto extends createZodDto(
+export class NpcKillerResponseDto extends createSchemaClass(
   NpcKillerResponseSchema,
 ) {}
 
@@ -204,7 +210,7 @@ const NpcKillersResponseSchema = z.object({
   killers: z.array(NpcKillerResponseSchema),
 });
 
-export class NpcKillersResponseDto extends createZodDto(
+export class NpcKillersResponseDto extends createSchemaClass(
   NpcKillersResponseSchema,
 ) {}
 
@@ -215,7 +221,7 @@ const MemberInfoResponseSchema = z.object({
   memberUserId: z.string(),
 });
 
-export class MemberInfoResponseDto extends createZodDto(
+export class MemberInfoResponseDto extends createSchemaClass(
   MemberInfoResponseSchema,
 ) {}
 
@@ -224,7 +230,7 @@ const MemberKillsOverviewResponseSchema = z.object({
   participationsByType: z.record(z.string(), z.number()),
 });
 
-export class MemberKillsOverviewResponseDto extends createZodDto(
+export class MemberKillsOverviewResponseDto extends createSchemaClass(
   MemberKillsOverviewResponseSchema,
 ) {}
 
@@ -235,6 +241,6 @@ const MemberKillsResponseSchema = z.object({
   pagination: PaginationResponseSchema.nullable(),
 });
 
-export class MemberKillsResponseDto extends createZodDto(
+export class MemberKillsResponseDto extends createSchemaClass(
   MemberKillsResponseSchema,
 ) {}

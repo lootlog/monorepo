@@ -1,4 +1,4 @@
-import { UnprocessableEntityException } from "@nestjs/common";
+import { UnprocessableEntityException } from "#src/shared/http/http-errors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationTargetType } from "#src/notifications/notification-enums";
 import { ReservationReminderService } from "./reservation-reminder.service.js";

@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   and,
   asc,
@@ -240,7 +239,6 @@ const buildConditions = (
   visibilityCondition(permissions, roles),
 ];
 
-@Injectable()
 export class LootQueryRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

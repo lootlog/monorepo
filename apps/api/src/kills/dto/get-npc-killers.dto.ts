@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
 
 const GetNpcKillersSchema = z.object({
@@ -8,4 +8,4 @@ const GetNpcKillersSchema = z.object({
   period: KillStatsPeriodSchema.optional(),
 });
 
-export class GetNpcKillersDto extends createZodDto(GetNpcKillersSchema) {}
+export class GetNpcKillersDto extends createSchemaClass(GetNpcKillersSchema) {}

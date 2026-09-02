@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -29,7 +29,6 @@ type MappedRule = Omit<typeof notificationRuleTable.$inferSelect, "filters"> & {
   filters: JsonValue | null;
 };
 
-@Injectable()
 export class NotificationJobsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

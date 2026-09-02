@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   and,
   asc,
@@ -47,7 +46,6 @@ type WriteDatabase = Pick<
   "delete" | "insert" | "select" | "update"
 >;
 
-@Injectable()
 export class NotificationsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

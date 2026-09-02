@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const NpcTypeSoundConfigSchema = z.object({
   volume: z.number().min(0).max(1).optional(),
@@ -25,6 +25,6 @@ const UpdateSoundSettingsSchema = z.object({
   timersConfig: SoundConfigMapSchema.optional(),
 });
 
-export class UpdateSoundSettingsDto extends createZodDto(
+export class UpdateSoundSettingsDto extends createSchemaClass(
   UpdateSoundSettingsSchema,
 ) {}

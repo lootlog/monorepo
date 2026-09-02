@@ -1,9 +1,7 @@
-import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type { Queue } from "bullmq";
 import type { eventTable } from "#src/database/drizzle/schema";
 import { RedisService } from "#src/redis/redis.service";
@@ -78,7 +76,6 @@ function resolveUpdatedScoringRules(
   return { targetMode, nextRules };
 }
 
-@Injectable()
 export class EventCatalogService {
   constructor(
     private readonly repository: EventCatalogRepository,
@@ -86,7 +83,7 @@ export class EventCatalogService {
     private readonly eventReadCache: EventReadCacheService,
     private readonly pointsService: EventPointsService,
     private readonly trackingService: EventTrackingService,
-    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 

@@ -1,5 +1,3 @@
-import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import type {
   eventHeroNpcTable,
@@ -16,11 +14,10 @@ import {
 import { findActiveEventHeroesByNpc } from "../utils/find-active-event-heroes-by-npc.js";
 import { ActiveEventHeroRepository } from "./active-event-hero.repository.js";
 
-@Injectable()
 export class EventTimerHooksService {
   constructor(
     private readonly repository: ActiveEventHeroRepository,
-    @InjectQueue(EVENT_HERO_KILL_QUEUE)
+
     private readonly eventHeroKillQueue: Queue,
   ) {}
 

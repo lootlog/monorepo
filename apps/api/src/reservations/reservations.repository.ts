@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, asc, desc, eq, gt, gte, inArray, lt, or } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -9,7 +8,6 @@ import {
   userPinnedReservationSpotTable,
 } from "#src/database/drizzle/schema";
 
-@Injectable()
 export class ReservationsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

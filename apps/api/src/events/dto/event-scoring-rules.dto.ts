@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import {
   CLOCK_PATTERN,
   EVENT_SCORING_ACTION_TYPES,
@@ -71,6 +71,6 @@ export const EventScoringRulesSchema = z.object({
   rules: z.array(RuleSchema),
 });
 
-export class EventScoringRulesDto extends createZodDto(
+export class EventScoringRulesDto extends createSchemaClass(
   EventScoringRulesSchema,
 ) {}

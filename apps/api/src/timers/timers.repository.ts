@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   and,
   desc,
@@ -73,7 +72,6 @@ const timerIdentity = (guildId: string, world: string, timerKey: string) =>
     eq(timerTable.timerKey, timerKey),
   );
 
-@Injectable()
 export class TimersRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

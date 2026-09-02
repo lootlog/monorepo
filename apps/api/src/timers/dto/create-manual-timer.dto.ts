@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
 
@@ -18,6 +18,6 @@ const CreateManualTimerSchema = z.object({
   actorCharacter: TimerActorCharacterSchema.optional(),
 });
 
-export class CreateManualTimerDto extends createZodDto(
+export class CreateManualTimerDto extends createSchemaClass(
   CreateManualTimerSchema,
 ) {}

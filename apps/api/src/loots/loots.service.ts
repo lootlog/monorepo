@@ -3,8 +3,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { RedisService } from "#src/redis/redis.service";
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import { Permission } from "@lootlog/schema/permissions";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
@@ -14,7 +13,7 @@ import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import { LootCommentService } from "#src/loots/services/loot-comment.service";
 import { LootQueryService } from "#src/loots/services/loot-query.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { LootsRepository } from "./loots.repository.js";
 
 type Guild = typeof guildTable.$inferSelect;
@@ -30,7 +29,6 @@ type CachedLootQueryResult = Omit<
 
 const LOOTS_LIST_CACHE_TTL_SECONDS = 10;
 
-@Injectable()
 export class LootsService {
   constructor(
     private readonly repository: LootsRepository,
@@ -38,7 +36,7 @@ export class LootsService {
     private readonly lootCommentService: LootCommentService,
     private readonly lootStatsService: LootStatsService,
     private readonly redisService: RedisService,
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
   ) {}
 
   async getComments(options: {

@@ -1,4 +1,7 @@
-import { HttpException, ServiceUnavailableException } from "@nestjs/common";
+import {
+  HttpException,
+  ServiceUnavailableException,
+} from "#src/shared/http/http-errors";
 
 export const MEMBER_DISCORD_SYNC_STATUS = {
   SUCCESS: "SUCCESS",

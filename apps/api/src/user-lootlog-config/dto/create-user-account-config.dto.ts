@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const CreateOrUpdateLootlogCharacterConfigSchema = z.object({
   characterId: z.string().min(1),
@@ -8,6 +8,6 @@ const CreateOrUpdateLootlogCharacterConfigSchema = z.object({
     .describe("Guild IDs used for catching-related actions"),
 });
 
-export class CreateOrUpdateLootlogCharacterConfigDto extends createZodDto(
+export class CreateOrUpdateLootlogCharacterConfigDto extends createSchemaClass(
   CreateOrUpdateLootlogCharacterConfigSchema,
 ) {}

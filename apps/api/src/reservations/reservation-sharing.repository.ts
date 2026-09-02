@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -10,7 +10,6 @@ import {
   reservationShareTable,
 } from "#src/database/drizzle/schema";
 
-@Injectable()
 export class ReservationSharingRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

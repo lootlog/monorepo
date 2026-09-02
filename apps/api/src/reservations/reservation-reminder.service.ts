@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from "@nestjs/common";
+import { UnprocessableEntityException } from "#src/shared/http/http-errors";
 import {
   NotificationJobKind,
   type NotificationTargetType,
@@ -20,7 +20,6 @@ type ReminderContext = {
   scheduledFor: Date;
 };
 
-@Injectable()
 export class ReservationReminderService {
   constructor(
     private readonly repository: ReservationReminderRepository,

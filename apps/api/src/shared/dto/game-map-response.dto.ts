@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const GameMapResponseSchema = z
@@ -8,4 +8,6 @@ const GameMapResponseSchema = z
   })
   .meta({ id: "GameMapResponseDto" });
 
-export class GameMapResponseDto extends createZodDto(GameMapResponseSchema) {}
+export class GameMapResponseDto extends createSchemaClass(
+  GameMapResponseSchema,
+) {}

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
@@ -68,7 +68,6 @@ const WINDOW_STATUS_RANK: Record<EventRespawnWindowStatus, number> = {
   NONE: 3,
 };
 
-@Injectable()
 export class EventCoordinationService {
   constructor(
     private readonly repository: EventCoordinationRepository,

@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
-import { booleanFromString } from "@lootlog/nest-shared/validators/query-helpers";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
+import { booleanFromString } from "#src/shared/validation/query-helpers";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
@@ -24,7 +24,9 @@ const LootStatsQuerySchema = z.object({
   excludeColossus: booleanFromString.optional(),
 });
 
-export class LootStatsQueryDto extends createZodDto(LootStatsQuerySchema) {}
+export class LootStatsQueryDto extends createSchemaClass(
+  LootStatsQuerySchema,
+) {}
 
 export interface LootStatsOverview {
   totalLoots: number;

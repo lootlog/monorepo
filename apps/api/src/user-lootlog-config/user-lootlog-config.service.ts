@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Logger } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
 import { GuildsService } from "#src/guilds/guilds.service";
@@ -13,7 +13,6 @@ import { UserLootlogConfigRepository } from "./user-lootlog-config.repository.js
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
 
-@Injectable()
 export class UserLootlogConfigService {
   private readonly logger = new Logger(UserLootlogConfigService.name);
 

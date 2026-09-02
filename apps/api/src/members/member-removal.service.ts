@@ -1,13 +1,10 @@
 import {
   BadRequestException,
-  Inject,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+} from "#src/shared/http/http-errors";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { RedisService } from "#src/redis/redis.service";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { DiscordService } from "#src/discord/discord.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -26,13 +23,12 @@ import type {
 } from "./member.types.js";
 import { MembersRepository } from "./members.repository.js";
 
-@Injectable()
 export class MemberRemovalService {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly repository: MembersRepository,
     private readonly discordService: DiscordService,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly redisService: RedisService,
   ) {}
 

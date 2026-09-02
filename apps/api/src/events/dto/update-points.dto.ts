@@ -1,18 +1,20 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const UpdateKillPointSchema = z.object({
   pointsDelta: z.number().finite(),
   comment: z.string().max(500).optional(),
 });
 
-export class UpdateKillPointDto extends createZodDto(UpdateKillPointSchema) {}
+export class UpdateKillPointDto extends createSchemaClass(
+  UpdateKillPointSchema,
+) {}
 
 const UpdateRankingPointsSchema = z.object({
   pointsDelta: z.number().finite(),
   comment: z.string().max(500).optional(),
 });
 
-export class UpdateRankingPointsDto extends createZodDto(
+export class UpdateRankingPointsDto extends createSchemaClass(
   UpdateRankingPointsSchema,
 ) {}

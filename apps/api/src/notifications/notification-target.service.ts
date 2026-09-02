@@ -2,10 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   forwardRef,
-  Inject,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type { DiscordGuildChannelSnapshot } from "@lootlog/schema/notifications";
 import {
   NotificationJobKind as DbNotificationJobKind,
@@ -33,14 +31,13 @@ import { NotificationsRepository } from "./notifications.repository.js";
 const USER_DM_TEST_TRIGGER_LIMIT = 5;
 const USER_DM_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
 
-@Injectable()
 export class NotificationTargetService {
   constructor(
     private readonly repository: NotificationsRepository,
     private readonly channelsService: ChannelsService,
     // Shallow circular dependency: this service needs jobService for
     // canceling/creating jobs, while jobService's module imports this service.
-    @Inject(forwardRef(() => NotificationJobService))
+
     private readonly jobService: NotificationJobService,
   ) {}
 

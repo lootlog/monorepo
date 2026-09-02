@@ -1,11 +1,9 @@
-import { Injectable } from "@nestjs/common";
 import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
 import { eventHeroNpcTable, eventTable } from "#src/database/drizzle/schema";
 
-@Injectable()
 export class ActiveEventHeroRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

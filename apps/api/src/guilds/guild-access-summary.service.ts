@@ -1,6 +1,6 @@
 import type { RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import type { MemberDiscordAccessService } from "#src/members/member-discord-access.service";
 import type { MemberDiscordRefreshService } from "#src/members/member-discord-refresh.service";

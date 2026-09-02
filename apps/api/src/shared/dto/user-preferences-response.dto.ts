@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const UserPreferencesResponseSchema = z.object({
@@ -37,6 +37,6 @@ const UserPreferencesResponseSchema = z.object({
   }),
 });
 
-export class UserPreferencesResponseDto extends createZodDto(
+export class UserPreferencesResponseDto extends createSchemaClass(
   UserPreferencesResponseSchema,
 ) {}

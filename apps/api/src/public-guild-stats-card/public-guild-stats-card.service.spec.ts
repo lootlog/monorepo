@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";

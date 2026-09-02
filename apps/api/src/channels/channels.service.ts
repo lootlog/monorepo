@@ -1,5 +1,5 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Inject, Injectable } from "@nestjs/common";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+
 import {
   DiscordGuildSyncStatus,
   type DiscordGuildChannelDeletedEvent,
@@ -8,8 +8,7 @@ import {
   type DiscordGuildChannelsSyncedEvent,
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/schema/notifications";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger as WinstonLogger } from "winston";
+import type { ApplicationLogger as WinstonLogger } from "#src/shared/logging/application-logger";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
@@ -21,15 +20,14 @@ type GetGuildDiscordChannelsOptions = {
   refreshIfStale?: boolean;
 };
 
-@Injectable()
 export class ChannelsService {
   private readonly staleAfterMs: number;
 
   constructor(
     private readonly repository: ChannelsRepository,
     private readonly discordBotClient: DiscordBotClientService,
-    private readonly amqpConnection: AmqpConnection,
-    @Inject(APPLICATION_LOGGER)
+    private readonly amqpConnection: AmqpPublisher,
+
     private readonly winstonLogger: WinstonLogger,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;

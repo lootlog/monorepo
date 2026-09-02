@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { HeroNpcSchema } from "./create-event.dto.js";
 import { EventScoringRulesSchema } from "./event-scoring-rules.dto.js";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
@@ -18,4 +18,4 @@ const UpdateEventSchema = z.object({
   scoringMode: z.enum(EVENT_SCORING_MODES).optional(),
 });
 
-export class UpdateEventDto extends createZodDto(UpdateEventSchema) {}
+export class UpdateEventDto extends createSchemaClass(UpdateEventSchema) {}

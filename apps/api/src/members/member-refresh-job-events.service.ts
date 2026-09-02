@@ -1,7 +1,6 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Inject, Injectable } from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
@@ -12,12 +11,11 @@ export type MemberRefreshJobUpdateDetails = {
   failedIds?: string[];
 };
 
-@Injectable()
 export class MemberRefreshJobEventsService {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly refreshJobs: MemberRefreshJobRepository,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
   ) {}
 
   async emitJobUpdate(

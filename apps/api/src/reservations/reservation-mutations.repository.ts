@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   and,
   count,
@@ -24,7 +23,6 @@ export type PersistedReservation = typeof reservationTable.$inferSelect;
 
 type ReservationRange = { startsAt: Date; endsAt: Date };
 
-@Injectable()
 export class ReservationMutationsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

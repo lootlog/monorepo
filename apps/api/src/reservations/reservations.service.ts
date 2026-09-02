@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { MyReservationsQueryDto } from "./dto/reservation-query.dto.js";
 import { MyReservationsService } from "./my-reservations.service.js";
@@ -7,7 +6,6 @@ import { ReservationReadService } from "./reservation-read.service.js";
 import { ReservationSharingService } from "./reservation-sharing.service.js";
 import { ReservationsRepository } from "./reservations.repository.js";
 
-@Injectable()
 export class ReservationsService extends ReservationReadService {
   private readonly mine: MyReservationsService;
 

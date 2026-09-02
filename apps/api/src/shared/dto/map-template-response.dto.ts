@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { isoDatetimeCodec } from "./zod-response-codecs.js";
 
@@ -19,7 +19,7 @@ const MapTemplateResponseSchema = z.object({
   createdAt: isoDatetimeCodec,
 });
 
-export class MapTemplateResponseDto extends createZodDto(
+export class MapTemplateResponseDto extends createSchemaClass(
   MapTemplateResponseSchema,
   {
     codec: true,

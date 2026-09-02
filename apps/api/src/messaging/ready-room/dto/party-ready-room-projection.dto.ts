@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { CharacterSchema } from "#src/messaging/dto/shared-character.dto";
 
@@ -49,11 +49,11 @@ const PartyReadyRoomProjectionResponseSchema = ProjectionBaseSchema.extend({
   ownedParticipantIds: z.array(z.string()).optional(),
 });
 
-export class PartyReadyRoomProjectionDto extends createZodDto(
+export class PartyReadyRoomProjectionDto extends createSchemaClass(
   PartyReadyRoomProjectionResponseSchema,
 ) {}
 
-export class PartyReadyRoomInvitationTargetsDto extends createZodDto(
+export class PartyReadyRoomInvitationTargetsDto extends createSchemaClass(
   z.object({
     targets: z.array(
       z.object({
@@ -91,6 +91,6 @@ const PartyReadyRoomClientUpdateResponseSchema = z
     }
   });
 
-export class PartyReadyRoomClientUpdateDto extends createZodDto(
+export class PartyReadyRoomClientUpdateDto extends createSchemaClass(
   PartyReadyRoomClientUpdateResponseSchema,
 ) {}

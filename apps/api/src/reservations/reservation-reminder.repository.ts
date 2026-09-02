@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, desc, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -11,7 +10,6 @@ import {
 
 const RULE_NAME = "__system:reservation-reminder__";
 
-@Injectable()
 export class ReservationReminderRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

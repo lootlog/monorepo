@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, asc, eq, gte, isNull, ne, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -42,7 +41,6 @@ const authorizedSubmissionExists = (
     AND allocation_submission."createdAt" >= ${databaseSubmissionCutoff(options.submissionCutoff)}
 )`;
 
-@Injectable()
 export class LootAllocationRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 
