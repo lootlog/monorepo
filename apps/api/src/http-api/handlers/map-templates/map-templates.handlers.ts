@@ -24,7 +24,7 @@ type StoredMapTemplate = {
 export class MapTemplatesAccessDenied extends Schema.TaggedError<MapTemplatesAccessDenied>()(
   "MapTemplatesAccessDenied",
   {
-    status: Schema.Literals([401, 403]),
+    status: Schema.Literals([401, 403, 404]),
     code: Schema.String,
   },
 ) {}
@@ -52,7 +52,7 @@ export class MapTemplatesAuthorization extends Context.Service<
     readonly requireCapability: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
-    }) => Effect.Effect<void, MapTemplatesAccessDenied>;
+    }) => Effect.Effect<{ readonly guildId: string }, MapTemplatesAccessDenied>;
   }
 >()("@lootlog/api/http-api/map-templates/authorization") {}
 
@@ -120,9 +120,9 @@ const authorize = (guildId: string, capability: PermissionValue) =>
 export const getMapTemplates = Effect.fn("getMapTemplates")(function* (
   guildId: string,
 ) {
-  yield* authorize(guildId, Permission.LOOTLOG_ACCESS);
+  const access = yield* authorize(guildId, Permission.LOOTLOG_ACCESS);
   const templates = yield* Effect.flatMap(MapTemplatesData, (data) =>
-    data.findMany(guildId),
+    data.findMany(access.guildId),
   );
   return yield* Effect.forEach(templates, decodeResponse);
 });
@@ -131,9 +131,9 @@ export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
   guildId: string,
   payload: CreateMapTemplateDto,
 ) {
-  yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
-    data.create(guildId, payload),
+    data.create(access.guildId, payload),
   );
   return yield* decodeResponse(template);
 });
@@ -143,9 +143,9 @@ export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
   templateId: string,
   payload: CreateMapTemplateDto,
 ) {
-  yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
-    data.update(guildId, templateId, payload),
+    data.update(access.guildId, templateId, payload),
   );
   if (template === null) {
     return yield* new MapTemplateNotFound({
@@ -160,9 +160,9 @@ export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
   guildId: string,
   templateId: string,
 ) {
-  yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
   const deleted = yield* Effect.flatMap(MapTemplatesData, (data) =>
-    data.delete(guildId, templateId),
+    data.delete(access.guildId, templateId),
   );
   if (!deleted) {
     return yield* new MapTemplateNotFound({

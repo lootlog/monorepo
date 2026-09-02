@@ -62,7 +62,7 @@ describe("Map Templates HttpApi handlers", () => {
     const layer = provideTestServices(
       makeAuthorization((options) => {
         authorizationCalls.push(options);
-        return Effect.succeed(undefined);
+        return Effect.succeed({ guildId: options.guildId });
       }),
       makeData({
         create: (guildId, receivedPayload) => {
@@ -120,7 +120,7 @@ describe("Map Templates HttpApi handlers", () => {
   it("returns not-found without crossing the requested Organization boundary", async () => {
     const updateCalls: Array<{ guildId: string; templateId: string }> = [];
     const layer = provideTestServices(
-      makeAuthorization(() => Effect.succeed(undefined)),
+      makeAuthorization(({ guildId }) => Effect.succeed({ guildId })),
       makeData({
         update: (guildId, templateId) => {
           updateCalls.push({ guildId, templateId });

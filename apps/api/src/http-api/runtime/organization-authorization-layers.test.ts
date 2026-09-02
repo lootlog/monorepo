@@ -23,6 +23,10 @@ import {
   LootlogConfigAuthorization,
 } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import {
+  MapTemplatesAccessDenied,
+  MapTemplatesAuthorization,
+} from "../handlers/map-templates/map-templates.handlers.js";
+import {
   MembersAuthorization,
   MembersNotFound,
 } from "../handlers/members/members.handlers.js";
@@ -31,9 +35,17 @@ import {
   NotificationsNotFound,
 } from "../handlers/notifications/notifications.handlers.js";
 import {
+  PublicSystemAccessDenied,
+  PublicSystemAuthorization,
+} from "../handlers/public-system/public-system.handlers.js";
+import {
   ReservationsRolesAuthorization,
   ReservationsRolesNotFound,
 } from "../handlers/reservations-roles/reservations-roles.handlers.js";
+import {
+  TimersAuthorization,
+  TimersNotFound,
+} from "../handlers/timers/timers.handlers.js";
 import {
   UsersGuildsAuthorization,
   UsersGuildsNotFound,
@@ -73,6 +85,9 @@ const run = <A, E>(
     | EventsAuthorization
     | KillsLootsAuthorization
     | NotificationsAuthorization
+    | MapTemplatesAuthorization
+    | PublicSystemAuthorization
+    | TimersAuthorization
   >,
   lookup: OrganizationContextLookup["Service"]["lookup"],
 ) =>
@@ -142,6 +157,9 @@ test("maps one canonical Organization context into every wired authorization por
       const events = yield* EventsAuthorization;
       const killsLoots = yield* KillsLootsAuthorization;
       const notifications = yield* NotificationsAuthorization;
+      const mapTemplates = yield* MapTemplatesAuthorization;
+      const publicSystem = yield* PublicSystemAuthorization;
+      const timers = yield* TimersAuthorization;
 
       return {
         chat: yield* chat.requireGuild({
@@ -185,6 +203,19 @@ test("maps one canonical Organization context into every wired authorization por
         }),
         killsCaller: yield* killsLoots.requireCaller,
         notificationsCaller: yield* notifications.requireCaller,
+        mapTemplates: yield* mapTemplates.requireCapability({
+          guildId: "guild-alias",
+          capability: Permission.ADMIN,
+        }),
+        publicSystem: yield* publicSystem.requireCapability({
+          guildId: "guild-alias",
+          anyOf: [Permission.OWNER, Permission.ADMIN],
+        }),
+        timers: yield* timers.requireGuild({
+          guildId: "guild-alias",
+          capability: Permission.ADMIN,
+        }),
+        timersIdentity: yield* timers.identity,
       };
     }),
     lookup,
@@ -228,8 +259,20 @@ test("maps one canonical Organization context into every wired authorization por
   expect(values.events.member).toBe(context.member);
   expect(values.killsCaller).toEqual(identity);
   expect(values.notificationsCaller).toEqual(identity);
+  expect(values.mapTemplates).toEqual({ guildId: "guild-canonical" });
+  expect(values.publicSystem).toEqual({ guildId: "guild-canonical" });
+  expect(values.timers).toMatchObject({
+    ...identity,
+    guild: context.guild,
+    roles: context.roles,
+  });
+  expect(values.timers.accessPolicy.allows(Permission.ADMIN)).toBe(true);
+  expect(values.timersIdentity).toEqual(identity);
   expect(lookupCalls).toEqual(
-    Array.from({ length: 9 }, () => ({ ...identity, guildId: "guild-alias" })),
+    Array.from({ length: 12 }, () => ({
+      ...identity,
+      guildId: "guild-alias",
+    })),
   );
 });
 
@@ -279,6 +322,9 @@ test("maps a missing Organization to each handler's declared 404", async () => {
       const events = yield* EventsAuthorization;
       const killsLoots = yield* KillsLootsAuthorization;
       const notifications = yield* NotificationsAuthorization;
+      const mapTemplates = yield* MapTemplatesAuthorization;
+      const publicSystem = yield* PublicSystemAuthorization;
+      const timers = yield* TimersAuthorization;
       return yield* Effect.all([
         Effect.flip(chat.requireGuild({ guildId: "missing", allOf: [] })),
         Effect.flip(members.requireGuild({ guildId: "missing", anyOf: [] })),
@@ -321,6 +367,24 @@ test("maps a missing Organization to each handler's declared 404", async () => {
             mode: "any",
           }),
         ),
+        Effect.flip(
+          mapTemplates.requireCapability({
+            guildId: "missing",
+            capability: Permission.ADMIN,
+          }),
+        ),
+        Effect.flip(
+          publicSystem.requireCapability({
+            guildId: "missing",
+            anyOf: [Permission.ADMIN],
+          }),
+        ),
+        Effect.flip(
+          timers.requireGuild({
+            guildId: "missing",
+            capability: Permission.ADMIN,
+          }),
+        ),
       ]);
     }),
     lookup,
@@ -335,6 +399,9 @@ test("maps a missing Organization to each handler's declared 404", async () => {
   expect(errors[6]).toBeInstanceOf(EventsNotFound);
   expect(errors[7]).toBeInstanceOf(KillsLootsNotFound);
   expect(errors[8]).toBeInstanceOf(NotificationsNotFound);
+  expect(errors[9]).toBeInstanceOf(MapTemplatesAccessDenied);
+  expect(errors[10]).toBeInstanceOf(PublicSystemAccessDenied);
+  expect(errors[11]).toBeInstanceOf(TimersNotFound);
   for (const error of errors) {
     expect(error).toMatchObject({ status: 404, code: "GUILD_NOT_FOUND" });
   }
