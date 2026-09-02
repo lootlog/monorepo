@@ -84,32 +84,51 @@ export class MembersData extends Context.Service<
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/members/data") {
-  static layerService(service: MembersService) {
+  static makeServices(services: {
+    readonly access: Pick<
+      MembersService,
+      "getGuildMemberById" | "refreshMember"
+    >;
+    readonly removal: Pick<MembersService, "deactivateMember">;
+    readonly bulkRefresh: Pick<MembersService, "createBulkRefreshJob">;
+  }): MembersData["Service"] {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new MembersOperationError({ cause }),
       });
 
+    return MembersData.of({
+      getMe: ({ userId, discordId }, guildId, refresh) =>
+        attempt(() =>
+          services.access.getGuildMemberById({
+            userId,
+            discordId,
+            guildId,
+            standalone: true,
+            ...(refresh ? { refresh: true } : {}),
+          }),
+        ),
+      refreshMember: (guildId, discordId) =>
+        attempt(() => services.access.refreshMember({ guildId, discordId })),
+      deactivateMember: (guildId, discordId) =>
+        attempt(() =>
+          services.removal.deactivateMember({ guildId, discordId }),
+        ),
+      refreshAllMembers: (guildId, discordId) =>
+        attempt(() =>
+          services.bulkRefresh.createBulkRefreshJob(guildId, discordId),
+        ),
+    });
+  }
+
+  static layerService(service: MembersService) {
     return Layer.succeed(
       MembersData,
-      MembersData.of({
-        getMe: ({ userId, discordId }, guildId, refresh) =>
-          attempt(() =>
-            service.getGuildMemberById({
-              userId,
-              discordId,
-              guildId,
-              standalone: true,
-              ...(refresh ? { refresh: true } : {}),
-            }),
-          ),
-        refreshMember: (guildId, discordId) =>
-          attempt(() => service.refreshMember({ guildId, discordId })),
-        deactivateMember: (guildId, discordId) =>
-          attempt(() => service.deactivateMember({ guildId, discordId })),
-        refreshAllMembers: (guildId, discordId) =>
-          attempt(() => service.createBulkRefreshJob(guildId, discordId)),
+      MembersData.makeServices({
+        access: service,
+        removal: service,
+        bulkRefresh: service,
       }),
     );
   }
