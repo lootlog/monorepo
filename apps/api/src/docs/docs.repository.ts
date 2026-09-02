@@ -1,9 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import {
   and,
   count,
@@ -30,7 +26,6 @@ type WriteDatabase = Pick<
   "delete" | "insert" | "select" | "update"
 >;
 
-@Injectable()
 export class DocsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

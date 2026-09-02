@@ -2,7 +2,6 @@ import type { Type } from "@nestjs/common";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect, Layer } from "effect";
 import { ChatService } from "#src/chat/chat.service";
-import { DocsService } from "#src/docs/docs.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { KillsService } from "#src/kills/kills.service";
 import { LootAllocationService } from "#src/loots/loot-allocation.service";
@@ -78,7 +77,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
       }),
       TimersData.layerService(service(TimersService)),
       ChatData.layerService(service(ChatService)),
-      DocsData.layerLegacy(service(DocsService)),
       legacyKillsLootsDataLayer({
         kills: service(KillsService),
         loots,
