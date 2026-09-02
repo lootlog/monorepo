@@ -1,4 +1,4 @@
-import type { NestFastifyApplication } from "@nestjs/platform-fastify";
+import type { INestApplicationContext } from "@nestjs/common";
 import { Context, Effect, Layer, Schema } from "effect";
 
 // oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
@@ -8,7 +8,7 @@ export class LegacyNestApplicationError extends Schema.TaggedError<LegacyNestApp
 ) {}
 
 export interface LegacyNestApplicationValue {
-  readonly app: NestFastifyApplication;
+  readonly app: INestApplicationContext;
 }
 
 export class LegacyNestApplication extends Context.Service<
@@ -17,7 +17,7 @@ export class LegacyNestApplication extends Context.Service<
 >()("@lootlog/api/http-api/LegacyNestApplication") {}
 
 export type LegacyNestApplicationFactory =
-  () => Promise<NestFastifyApplication>;
+  () => Promise<INestApplicationContext>;
 
 const createDefaultApplication: LegacyNestApplicationFactory = async () => {
   const { createApp } = await import("#src/app.factory");
@@ -30,7 +30,6 @@ const startApplication = (factory: LegacyNestApplicationFactory) =>
       const app = await factory();
       try {
         await app.init();
-        await app.startAllMicroservices();
         return LegacyNestApplication.of({ app });
       } catch (error) {
         await app.close().catch(() => undefined);
