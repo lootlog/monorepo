@@ -126,28 +126,11 @@ export class ReservationsRolesData extends Context.Service<
       reservationId: number,
       payload: UpdateReservationDto,
     ) => DataEffect;
-    readonly listShares: (guildId: string) => DataEffect;
-    readonly createInvitation: (guildId: string, userId: string) => DataEffect;
-    readonly revokeInvitation: (
-      guildId: string,
-      invitationId: string,
-    ) => DataEffect;
-    readonly revokeShare: (guildId: string, shareId: string) => DataEffect;
-    readonly previewInvitation: (
-      token: string,
-      discordId: string,
-    ) => DataEffect;
-    readonly acceptInvitation: (
-      token: string,
-      payload: AcceptReservationShareInvitationDto,
-      identity: ReservationsRolesIdentity,
-    ) => DataEffect;
   }
 >()("@lootlog/api/http-api/reservations-roles/data") {
   static layerServices(options: {
     readonly reservations: ReservationsService;
     readonly mutations: ReservationMutationsService;
-    readonly sharing: ReservationSharingService;
   }) {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
@@ -206,28 +189,60 @@ export class ReservationsRolesData extends Context.Service<
               data: mutableDto<LegacyUpdateReservationDto>(payload),
             }),
           ),
-        listShares: (guildId) => attempt(() => options.sharing.list(guildId)),
-        createInvitation: (guildId, userId) =>
-          attempt(() => options.sharing.createInvitation(guildId, userId)),
-        revokeInvitation: (guildId, invitationId) =>
-          attempt(() =>
-            options.sharing.revokeInvitation(guildId, invitationId),
-          ),
-        revokeShare: (guildId, shareId) =>
-          attempt(() => options.sharing.revokeShare(guildId, shareId)),
-        previewInvitation: (token, discordId) =>
-          attempt(() => options.sharing.previewInvitation(token, discordId)),
-        acceptInvitation: (token, payload, { userId, discordId }) =>
-          attempt(() =>
-            options.sharing.acceptInvitation({
-              token,
-              targetGuildId: payload.targetGuildId,
-              userId,
-              discordId,
-            }),
-          ),
       }),
     );
+  }
+}
+
+export class ReservationSharingData extends Context.Service<
+  ReservationSharingData,
+  {
+    readonly listShares: (guildId: string) => DataEffect;
+    readonly createInvitation: (guildId: string, userId: string) => DataEffect;
+    readonly revokeInvitation: (
+      guildId: string,
+      invitationId: string,
+    ) => DataEffect;
+    readonly revokeShare: (guildId: string, shareId: string) => DataEffect;
+    readonly previewInvitation: (
+      token: string,
+      discordId: string,
+    ) => DataEffect;
+    readonly acceptInvitation: (
+      token: string,
+      payload: AcceptReservationShareInvitationDto,
+      identity: ReservationsRolesIdentity,
+    ) => DataEffect;
+  }
+>()("@lootlog/api/http-api/reservation-sharing/data") {
+  static makeService(
+    service: ReservationSharingService,
+  ): ReservationSharingData["Service"] {
+    const attempt = (operation: () => PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new ReservationsRolesOperationError({ cause }),
+      });
+    return ReservationSharingData.of({
+      listShares: (guildId) => attempt(() => service.list(guildId)),
+      createInvitation: (guildId, userId) =>
+        attempt(() => service.createInvitation(guildId, userId)),
+      revokeInvitation: (guildId, invitationId) =>
+        attempt(() => service.revokeInvitation(guildId, invitationId)),
+      revokeShare: (guildId, shareId) =>
+        attempt(() => service.revokeShare(guildId, shareId)),
+      previewInvitation: (token, discordId) =>
+        attempt(() => service.previewInvitation(token, discordId)),
+      acceptInvitation: (token, payload, { userId, discordId }) =>
+        attempt(() =>
+          service.acceptInvitation({
+            token,
+            targetGuildId: payload.targetGuildId,
+            userId,
+            discordId,
+          }),
+        ),
+    });
   }
 }
 
@@ -297,6 +312,12 @@ const rolesData = <A>(
     service: RolesData["Service"],
   ) => Effect.Effect<A, ReservationsRolesOperationError>,
 ) => Effect.flatMap(RolesData, operation);
+
+const sharingData = <A>(
+  operation: (
+    service: ReservationSharingData["Service"],
+  ) => Effect.Effect<A, ReservationsRolesOperationError>,
+) => Effect.flatMap(ReservationSharingData, operation);
 
 const toViewer = (
   access: ReservationsRolesGuildAccess,
@@ -516,7 +537,9 @@ const requireSharingAdmin = (guildId: string) =>
 export const listReservationShares = Effect.fn("listReservationShares")(
   function* (guildId: string) {
     const access = yield* requireSharingAdmin(guildId);
-    const value = yield* data((service) => service.listShares(access.guildId));
+    const value = yield* sharingData((service) =>
+      service.listShares(access.guildId),
+    );
     return yield* decode(ListReservationShares200, value);
   },
 );
@@ -525,7 +548,7 @@ export const previewReservationShareInvitation = Effect.fn(
   "previewReservationShareInvitation",
 )(function* (token: string) {
   const current = yield* identity;
-  const value = yield* data((service) =>
+  const value = yield* sharingData((service) =>
     service.previewInvitation(token, current.discordId),
   );
   return yield* decode(PreviewReservationShareInvitation200, value);
@@ -535,7 +558,7 @@ export const acceptReservationShareInvitation = Effect.fn(
   "acceptReservationShareInvitation",
 )(function* (token: string, payload: AcceptReservationShareInvitationDto) {
   const current = yield* identity;
-  const value = yield* data((service) =>
+  const value = yield* sharingData((service) =>
     service.acceptInvitation(token, payload, current),
   );
   return yield* decode(AcceptReservationShareInvitation201, value);
@@ -553,7 +576,7 @@ export const ReservationSharingHandlers = HttpApiBuilder.group(
         orDieHttpFailure(
           Effect.gen(function* () {
             const access = yield* requireSharingAdmin(params.guildId);
-            const value = yield* data((service) =>
+            const value = yield* sharingData((service) =>
               service.createInvitation(access.guildId, access.userId),
             );
             return yield* decode(CreateReservationShareInvitation201, value);
@@ -564,7 +587,7 @@ export const ReservationSharingHandlers = HttpApiBuilder.group(
         orDieHttpFailure(
           Effect.gen(function* () {
             const access = yield* requireSharingAdmin(params.guildId);
-            yield* data((service) =>
+            yield* sharingData((service) =>
               service.revokeInvitation(access.guildId, params.invitationId),
             );
           }),
@@ -574,7 +597,7 @@ export const ReservationSharingHandlers = HttpApiBuilder.group(
         orDieHttpFailure(
           Effect.gen(function* () {
             const access = yield* requireSharingAdmin(params.guildId);
-            yield* data((service) =>
+            yield* sharingData((service) =>
               service.revokeShare(access.guildId, params.shareId),
             );
           }),
