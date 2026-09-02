@@ -43,6 +43,7 @@ describe("realtime MessagePack codec", () => {
               confidence: "verified",
               isAfk: false,
               lastSeen: 1_000,
+              character: undefined,
             },
           },
         ],

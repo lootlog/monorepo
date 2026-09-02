@@ -44,6 +44,8 @@ type ResolvedLootItem = Effect.Success<
 type FetchedLoot = Effect.Success<
   ReturnType<LootQueryOperations["fetchLootById"]>
 >;
+type LootComments = Effect.Success<ReturnType<LootPersistence["listComments"]>>;
+type LootComment = Effect.Success<ReturnType<LootPersistence["createComment"]>>;
 
 export class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
   "LootsOperationError",
@@ -64,7 +66,7 @@ export interface LootsOperations {
     readonly lootId: number;
     readonly accessPolicy: AccessPolicy;
     readonly roles: Role[];
-  }) => LootsEffect<unknown>;
+  }) => LootsEffect<LootComments>;
   readonly archiveLoot: (options: {
     readonly discordId: string;
     readonly guild: Guild;
@@ -79,7 +81,7 @@ export interface LootsOperations {
     readonly body: CreateCommentDto;
     readonly accessPolicy: AccessPolicy;
     readonly roles: Role[];
-  }) => LootsEffect<unknown>;
+  }) => LootsEffect<LootComment>;
   readonly fetchLootsByGuildId: (
     guild: Guild,
     accessPolicy: AccessPolicy,

@@ -27,6 +27,7 @@ import {
   GoneException,
   NotFoundException,
 } from "#src/shared/http/http-errors";
+import { getGuildIconUrl } from "#src/reservations/reservation-presentation";
 import {
   ReservationSharingData,
   ReservationsRolesOperationError,
@@ -34,20 +35,12 @@ import {
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-type Guild = typeof guildTable.$inferSelect;
-
 export interface ReservationSharingEvents {
   readonly sharingChanged: (
     sourceGuildId: string,
     audienceGuildIds: ReadonlyArray<string>,
   ) => Effect.Effect<void, unknown>;
 }
-
-const iconUrl = (guild: Pick<Guild, "id" | "icon">): string | null => {
-  if (!guild.icon) return null;
-  const extension = guild.icon.startsWith("a_") ? "gif" : "webp";
-  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${extension}?size=128`;
-};
 
 const hashToken = (token: string) =>
   createHash("sha256").update(token).digest("hex");
@@ -227,7 +220,7 @@ export const makeReservationSharingDataLayer = (
                           id: share.id,
                           partner: {
                             name: partner.name,
-                            iconUrl: iconUrl(partner),
+                            iconUrl: getGuildIconUrl(partner),
                           },
                           createdAt: share.createdAt,
                         },
@@ -356,7 +349,7 @@ export const makeReservationSharingDataLayer = (
               return {
                 sourceOrganization: {
                   name: invitation.sourceGuild.name,
-                  iconUrl: iconUrl(invitation.sourceGuild),
+                  iconUrl: getGuildIconUrl(invitation.sourceGuild),
                 },
                 expiresAt: invitation.expiresAt,
                 eligibleTargetOrganizations: guilds
@@ -364,7 +357,7 @@ export const makeReservationSharingDataLayer = (
                   .map((guild) => ({
                     id: guild.id,
                     name: guild.name,
-                    iconUrl: iconUrl(guild),
+                    iconUrl: getGuildIconUrl(guild),
                   })),
               };
             }),
@@ -484,7 +477,7 @@ export const makeReservationSharingDataLayer = (
                 id: result.share.id,
                 partner: {
                   name: invitation.sourceGuild.name,
-                  iconUrl: iconUrl(invitation.sourceGuild),
+                  iconUrl: getGuildIconUrl(invitation.sourceGuild),
                 },
                 createdAt: result.share.createdAt,
               };

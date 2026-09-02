@@ -2,6 +2,16 @@ interface RuntimeSchema {
   parse(input: unknown): unknown;
 }
 
+interface RuntimeCodec extends RuntimeSchema {
+  encode(input: unknown): unknown;
+}
+
+/** Encodes and validates a value at an HTTP response boundary. */
+export const encodeUnknownResponse = (
+  codec: RuntimeCodec,
+  value: unknown,
+): unknown => codec.encode(value);
+
 export interface SchemaClass<TSchema extends RuntimeSchema> {
   new (): ReturnType<TSchema["parse"]>;
   readonly schema: TSchema;

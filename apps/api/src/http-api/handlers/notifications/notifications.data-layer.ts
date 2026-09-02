@@ -11,6 +11,16 @@ import type { CreateWatchedItemDto } from "#src/notifications/dto/create-watched
 import type { CreateWatchedItemQuickAddDto } from "#src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateNotificationRuleDto } from "#src/notifications/dto/create-notification-rule.dto";
 import type { UpdateNotificationRuleDto } from "#src/notifications/dto/update-notification-rule.dto";
+import {
+  GuildAvailableNotificationTargetsResponseDto,
+  GuildNotificationRulesResponseDto,
+  NotificationJobsResponseDto,
+  NotificationRuleResponseDto,
+  NotificationTargetResponseDto,
+  NotificationTargetWithTestTriggerResponseDto,
+  WatchedItemResponseDto,
+} from "#src/notifications/dto/notification-response.dto";
+import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
 import { LootlogApi } from "../../lootlog-api.generated.js";
 import {
   NotificationsAccessDenied,
@@ -137,11 +147,27 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
               return yield* operation(
                 endpoint,
                 services.guildTargets.list(guildId),
+              ).pipe(
+                Effect.map((targets) =>
+                  targets.map((target) =>
+                    encodeUnknownResponse(
+                      NotificationTargetResponseDto.schema,
+                      target,
+                    ),
+                  ),
+                ),
               );
             case "NotificationsGuildControllerGetAvailableGuildTargets":
               return yield* operation(
                 endpoint,
                 services.guildTargets.available(guildId),
+              ).pipe(
+                Effect.map((value) =>
+                  encodeUnknownResponse(
+                    GuildAvailableNotificationTargetsResponseDto.schema,
+                    value,
+                  ),
+                ),
               );
             case "NotificationsGuildControllerCreateGuildTarget":
               return yield* operation(
@@ -149,6 +175,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                 services.guildTargets.create(
                   guildId,
                   request.payload as CreateNotificationTargetDto,
+                ),
+              ).pipe(
+                Effect.map((target) =>
+                  encodeUnknownResponse(
+                    NotificationTargetResponseDto.schema,
+                    target,
+                  ),
                 ),
               );
             case "NotificationsGuildControllerUpdateGuildTarget": {
@@ -162,6 +195,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                   guildId,
                   targetId,
                   request.payload as UpdateNotificationTargetDto,
+                ),
+              ).pipe(
+                Effect.map((target) =>
+                  encodeUnknownResponse(
+                    NotificationTargetResponseDto.schema,
+                    target,
+                  ),
                 ),
               );
             }
@@ -179,6 +219,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
               return yield* operation(
                 endpoint,
                 services.rules.listGuild(guildId),
+              ).pipe(
+                Effect.map((value) =>
+                  encodeUnknownResponse(
+                    GuildNotificationRulesResponseDto.schema,
+                    value,
+                  ),
+                ),
               );
             case "NotificationsGuildControllerCreateGuildRule":
               return yield* operation(
@@ -186,6 +233,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                 services.rules.createGuild(
                   guildId,
                   request.payload as CreateNotificationRuleDto,
+                ),
+              ).pipe(
+                Effect.map((rule) =>
+                  encodeUnknownResponse(
+                    NotificationRuleResponseDto.schema,
+                    rule,
+                  ),
                 ),
               );
             case "NotificationsGuildControllerUpdateGuildRule": {
@@ -196,6 +250,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                   guildId,
                   ruleId,
                   request.payload as UpdateNotificationRuleDto,
+                ),
+              ).pipe(
+                Effect.map((rule) =>
+                  encodeUnknownResponse(
+                    NotificationRuleResponseDto.schema,
+                    rule,
+                  ),
                 ),
               );
             }
@@ -224,6 +285,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
               return yield* operation(
                 endpoint,
                 services.jobOperations.listGuild(guildId),
+              ).pipe(
+                Effect.map((jobs) =>
+                  encodeUnknownResponse(
+                    NotificationJobsResponseDto.schema,
+                    jobs,
+                  ),
+                ),
               );
             case "NotificationsGuildControllerCancelGuildJob": {
               const jobId = yield* requireStringParameter(request, "jobId");
@@ -241,6 +309,15 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
             return yield* operation(
               endpoint,
               services.userTargets.list(discordId),
+            ).pipe(
+              Effect.map((targets) =>
+                targets.map((target) =>
+                  encodeUnknownResponse(
+                    NotificationTargetWithTestTriggerResponseDto.schema,
+                    target,
+                  ),
+                ),
+              ),
             );
           case "NotificationsUserControllerCreateUserTarget":
             return yield* operation(
@@ -248,6 +325,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
               services.userTargets.create(
                 discordId,
                 request.payload as CreateNotificationTargetDto,
+              ),
+            ).pipe(
+              Effect.map((target) =>
+                encodeUnknownResponse(
+                  NotificationTargetResponseDto.schema,
+                  target,
+                ),
               ),
             );
           case "NotificationsUserControllerUpdateUserTarget": {
@@ -261,6 +345,13 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                 discordId,
                 targetId,
                 request.payload as UpdateNotificationTargetDto,
+              ),
+            ).pipe(
+              Effect.map((target) =>
+                encodeUnknownResponse(
+                  NotificationTargetResponseDto.schema,
+                  target,
+                ),
               ),
             );
           }
@@ -288,6 +379,15 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
             return yield* operation(
               endpoint,
               services.rules.listUser(discordId),
+            ).pipe(
+              Effect.map((rules) =>
+                rules.map((rule) =>
+                  encodeUnknownResponse(
+                    NotificationRuleResponseDto.schema,
+                    rule,
+                  ),
+                ),
+              ),
             );
           case "NotificationsUserControllerCreateUserRule":
             return yield* operation(
@@ -295,6 +395,10 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
               services.rules.createUser(
                 discordId,
                 request.payload as CreateNotificationRuleDto,
+              ),
+            ).pipe(
+              Effect.map((rule) =>
+                encodeUnknownResponse(NotificationRuleResponseDto.schema, rule),
               ),
             );
           case "NotificationsUserControllerUpdateUserRule": {
@@ -305,6 +409,10 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                 discordId,
                 ruleId,
                 request.payload as UpdateNotificationRuleDto,
+              ),
+            ).pipe(
+              Effect.map((rule) =>
+                encodeUnknownResponse(NotificationRuleResponseDto.schema, rule),
               ),
             );
           }
@@ -319,11 +427,21 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
             return yield* operation(
               endpoint,
               services.jobOperations.listUser(discordId),
+            ).pipe(
+              Effect.map((jobs) =>
+                encodeUnknownResponse(NotificationJobsResponseDto.schema, jobs),
+              ),
             );
           case "NotificationsUserControllerGetWatchedItems":
             return yield* operation(
               endpoint,
               services.watchedItems.list(discordId),
+            ).pipe(
+              Effect.map((items) =>
+                items.map((item) =>
+                  encodeUnknownResponse(WatchedItemResponseDto.schema, item),
+                ),
+              ),
             );
           case "NotificationsUserControllerCreateWatchedItem":
             return yield* operation(
@@ -333,6 +451,10 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                 caller.userId,
                 request.payload as CreateWatchedItemDto,
               ),
+            ).pipe(
+              Effect.map((item) =>
+                encodeUnknownResponse(WatchedItemResponseDto.schema, item),
+              ),
             );
           case "NotificationsUserControllerQuickAddWatchedItem":
             return yield* operation(
@@ -341,6 +463,10 @@ export const notificationDataLayer = (services: NotificationDataServices) =>
                 discordId,
                 caller.userId,
                 request.payload as CreateWatchedItemQuickAddDto,
+              ),
+            ).pipe(
+              Effect.map((item) =>
+                encodeUnknownResponse(WatchedItemResponseDto.schema, item),
               ),
             );
           case "NotificationsUserControllerDeleteWatchedItem": {

@@ -1,6 +1,12 @@
 export const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL as string;
-export const GATEWAY_SOCKET_PATH = import.meta.env
-  .VITE_GATEWAY_SOCKET_PATH as string;
+export const resolveGatewaySocketPath = (environment: {
+  readonly VITE_GATEWAY_SOCKET_PATH?: string;
+}) => environment.VITE_GATEWAY_SOCKET_PATH ?? "/gateway/ws";
+export const GATEWAY_SOCKET_PATH = resolveGatewaySocketPath({
+  VITE_GATEWAY_SOCKET_PATH: import.meta.env.VITE_GATEWAY_SOCKET_PATH as
+    | string
+    | undefined,
+});
 
 export enum GatewayEvent {
   INIT = "init",

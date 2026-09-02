@@ -21,7 +21,7 @@ const getErrorMessage = (cause: unknown): string =>
 export const encodeRealtimeFrame = (frame: RealtimeFrameType): Uint8Array => {
   try {
     const validated = Schema.encodeUnknownSync(RealtimeFrame)(frame);
-    return encode(validated);
+    return encode(validated, { ignoreUndefined: true });
   } catch (error) {
     throw new RealtimeCodecError({
       operation: "encode",

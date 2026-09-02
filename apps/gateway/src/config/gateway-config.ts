@@ -32,7 +32,7 @@ const splitOrigins = (value: string): ReadonlySet<string> =>
       .filter((origin) => origin.length > 0),
   );
 
-const loadConfiguration = Effect.gen(function* () {
+export const loadGatewayConfiguration = Effect.gen(function* () {
   const environment = yield* Config.string("ENV").pipe(
     Config.withDefault("local"),
   );
@@ -76,7 +76,7 @@ const loadConfiguration = Effect.gen(function* () {
     ),
     allowedWebOrigins: splitOrigins(
       yield* Config.string("ALLOWED_WEB_ORIGINS").pipe(
-        Config.withDefault("http://localhost:3000"),
+        Config.withDefault("http://localhost,http://localhost:3000"),
       ),
     ),
     maxBackpressureBytes: yield* Config.number(
@@ -92,5 +92,5 @@ export class GatewayConfig extends Context.Service<
   GatewayConfig,
   GatewayConfiguration
 >()("@lootlog/gateway/Config") {
-  static readonly layer = Layer.effect(GatewayConfig, loadConfiguration);
+  static readonly layer = Layer.effect(GatewayConfig, loadGatewayConfiguration);
 }
