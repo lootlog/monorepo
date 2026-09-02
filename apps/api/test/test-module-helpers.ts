@@ -1,12 +1,10 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { HttpService } from "@nestjs/axios";
 import type { ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import {
   APPLICATION_LOGGER,
   APPLICATION_NEST_LOGGER,
 } from "#src/shared/logging/logger-token";
-import { of } from "rxjs";
 import { vi } from "vitest";
 
 export function createMockAmqpConnection() {
@@ -17,16 +15,6 @@ export function createMockAmqpConnection() {
     managedConnection: {
       createChannel: vi.fn(),
     },
-  };
-}
-
-export function createMockHttpService() {
-  return {
-    get: vi.fn(() => of({ data: {} })),
-    post: vi.fn(() => of({ data: {} })),
-    put: vi.fn(() => of({ data: {} })),
-    patch: vi.fn(() => of({ data: {} })),
-    delete: vi.fn(() => of({ data: {} })),
   };
 }
 
@@ -44,8 +32,6 @@ export function createTestingModuleWithMocks(metadata: ModuleMetadata) {
   return Test.createTestingModule(metadata)
     .overrideProvider(AmqpConnection)
     .useValue(createMockAmqpConnection())
-    .overrideProvider(HttpService)
-    .useValue(createMockHttpService())
     .overrideProvider(APPLICATION_LOGGER)
     .useValue(createMockLogger())
     .overrideProvider(APPLICATION_NEST_LOGGER)
