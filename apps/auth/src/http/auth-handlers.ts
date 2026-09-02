@@ -37,17 +37,16 @@ const toHttpResponse = <A, R>(
     ),
   );
 
-const verify = Effect.fn("AuthController_verify")(function* (
-  headers: Readonly<Record<string, string | undefined>>,
-) {
+const verify = Effect.fn("AuthController_verify")(function* () {
   const auth = yield* AuthService;
+  const headers = yield* requestHeaders;
   const identity = yield* auth.verifyRequestIdentity({
-    headers: responseHeaders(headers),
-    authorizationHeader: headers.authorization,
-    authDiscordId: headers["x-auth-discord-id"],
-    authUserId: headers["x-auth-user-id"],
-    credentialPurpose: headers["x-lootlog-credential-purpose"],
-    websocketOrigin: headers["x-lootlog-websocket-origin"],
+    headers,
+    authorizationHeader: headers.get("authorization") ?? undefined,
+    authDiscordId: headers.get("x-auth-discord-id") ?? undefined,
+    authUserId: headers.get("x-auth-user-id") ?? undefined,
+    credentialPurpose: headers.get("x-lootlog-credential-purpose") ?? undefined,
+    websocketOrigin: headers.get("x-lootlog-websocket-origin") ?? undefined,
   });
   return { identity, body: { status: "OK" as const } };
 });
@@ -94,8 +93,8 @@ export const AuthHandlers = Layer.merge(
   ),
   HttpApiBuilder.group(AuthApi, "auth", (handlers) =>
     handlers
-      .handleRaw("AuthControllerVerify", ({ headers }) =>
-        toHttpResponse(verify(headers), ({ body, identity }) =>
+      .handleRaw("AuthControllerVerify", () =>
+        toHttpResponse(verify(), ({ body, identity }) =>
           HttpServerResponse.jsonUnsafe(body, {
             headers: {
               "X-Auth-Discord-Id": identity.discordId,

@@ -14,12 +14,16 @@
 ---
 
 Declare the Bun type definitions required by the API's isolated Docker build.
-Upgrade Better Auth and Redis storage to 1.7.2, add the issuer identity
-migration with collision preflight, and make fresh, 1.6, and 1.7 database
-adoption explicit. Move Activity, Auth, Battlelog, Search, and Discord Bot HTTP
-operations to Effect HttpApi without changing their deployed paths or operation
-IDs. Replace Search's Promise service graph with typed Effect modules while
-preserving fail-soft public reads and Rabbit requeue behavior. Replace
+Upgrade Better Auth and Redis storage to 1.7.2, migrate imported 1.6 auth data
+without deleting identities or sessions, and support switching between linked
+Discord accounts while preserving the internal user ID. Add fail-closed schema
+and integrity preflight, UTC timestamp normalization, required indexes, and
+explicit user-driven OAuth recovery. Canonicalize proxy-stripped Better Auth
+paths against the public auth-service URL so local and proxied OAuth endpoints
+retain the deployed `/idp` contract. Move Activity, Auth, Battlelog, Search, and
+Discord Bot HTTP operations to Effect HttpApi without changing their deployed
+paths or operation IDs. Replace Search's Promise service graph with typed Effect
+modules while preserving fail-soft public reads and Rabbit requeue behavior. Replace
 Battlelog's controller and Promise service classes with functional modules and
 direct Drizzle, Redis, and R2 adapters while preserving all 26 operations.
 Replace API's Events and Notifications controller dispatcher with exhaustive

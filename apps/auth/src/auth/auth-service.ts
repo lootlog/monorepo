@@ -69,6 +69,12 @@ const unauthorized = (
   },
 ) => new HttpResponseError({ status: 401, body });
 
+const reauthenticationRequired = () =>
+  unauthorized({
+    error: "IDP_REAUTH_REQUIRED",
+    requiresReauth: true,
+  });
+
 const internalServerError = (body: unknown) =>
   new HttpResponseError({ status: 500, body });
 
@@ -314,13 +320,8 @@ export const createAuthService = ({
             discordId: session.user.discordId,
           },
           {
-            missing: new HttpResponseError({
-              status: 400,
-              body: { error: "Failed to retrieve IDP token" },
-            }),
-            expired: unauthorized({
-              error: "IDP token has expired. Please reconnect your account.",
-            }),
+            missing: reauthenticationRequired(),
+            expired: reauthenticationRequired(),
           },
         ),
       );
@@ -333,10 +334,7 @@ export const createAuthService = ({
         }
 
         if (error instanceof APIError) {
-          return yield* new HttpResponseError({
-            status: typeof error.status === "number" ? error.status : 500,
-            body: { error: error.message },
-          });
+          return yield* reauthenticationRequired();
         }
 
         return yield* internalServerError({

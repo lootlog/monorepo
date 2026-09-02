@@ -1,8 +1,10 @@
 import { afterAll, describe, expect, it, mock } from "bun:test";
+import { betterAuth } from "better-auth";
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import { AuthService, createAuthService } from "#src/auth/auth-service";
 import { BetterAuthRuntime, type LootlogAuth } from "#src/auth/better-auth";
+import { resolveBetterAuthBaseURL } from "#src/auth/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
 
@@ -27,14 +29,15 @@ const makeRuntime = () => {
       }),
     ),
   );
+  const getSession = mock((_context: { headers: Headers }) =>
+    Promise.resolve({
+      session: {},
+      user: { id: "user-1", discordId: "discord-1" },
+    }),
+  );
   const auth = {
     api: {
-      getSession: mock(() =>
-        Promise.resolve({
-          session: {},
-          user: { id: "user-1", discordId: "discord-1" },
-        }),
-      ),
+      getSession,
       getJwks: mock(() => Promise.resolve({ keys: [] })),
       getAccessToken: mock(() =>
         Promise.resolve({
@@ -45,6 +48,7 @@ const makeRuntime = () => {
       ),
     },
     handler: betterAuthHandler,
+    options: { baseURL: "http://localhost/api/auth/idp" },
   } as unknown as LootlogAuth;
   const service = createAuthService({
     auth,
@@ -65,6 +69,7 @@ const makeRuntime = () => {
   return {
     betterAuthHandler,
     dispose: boundary.dispose,
+    getSession,
     run,
     ticketValues,
   };
@@ -74,6 +79,15 @@ const runtime = makeRuntime();
 afterAll(() => runtime.dispose());
 
 describe("Auth HttpApi contract", () => {
+  it("builds the public Better Auth base URL from the service root", () => {
+    expect(resolveBetterAuthBaseURL("https://auth.lootlog.pl")).toBe(
+      "https://auth.lootlog.pl/idp",
+    );
+    expect(resolveBetterAuthBaseURL("http://localhost/api/auth/")).toBe(
+      "http://localhost/api/auth/idp",
+    );
+  });
+
   it("serves the existing health status", async () => {
     const response = await runtime.run(new Request("http://localhost/healthz"));
     expect(response.status).toBe(200);
@@ -81,12 +95,19 @@ describe("Auth HttpApi contract", () => {
 
   it("sets both forward-auth identity response headers", async () => {
     const response = await runtime.run(
-      new Request("http://localhost/auth/verify"),
+      new Request("http://localhost/auth/verify", {
+        headers: { cookie: "local.session_token=test-session" },
+      }),
     );
     expect(response.status).toBe(200);
     expect(response.headers.get("x-auth-user-id")).toBe("user-1");
     expect(response.headers.get("x-auth-discord-id")).toBe("discord-1");
     expect(await response.json()).toEqual({ status: "OK" });
+    const getSessionHeaders = runtime.getSession.mock.calls.at(-1)?.[0]
+      ?.headers as Headers | undefined;
+    expect(getSessionHeaders?.get("cookie")).toBe(
+      "local.session_token=test-session",
+    );
   });
 
   it("issues an origin-bound no-store realtime ticket", async () => {
@@ -109,7 +130,7 @@ describe("Auth HttpApi contract", () => {
 
   it("delegates /idp and /idp/* as raw Web requests", async () => {
     const request = new Request(
-      "https://auth.example.test/idp/callback/discord?code=test&state=state",
+      "http://auth:4001/idp/callback/discord?code=test&state=state",
       { headers: { cookie: "oauth_state=test" } },
     );
     const response = await runtime.run(request);
@@ -117,17 +138,19 @@ describe("Auth HttpApi contract", () => {
     expect(response.status).toBe(201);
     expect(response.headers.get("set-cookie")).toBe("session=test; Secure");
     expect(runtime.betterAuthHandler).toHaveBeenCalledTimes(1);
-    expect(runtime.betterAuthHandler.mock.calls[0]?.[0].url).toBe(request.url);
+    expect(runtime.betterAuthHandler.mock.calls[0]?.[0].url).toBe(
+      "http://localhost/api/auth/idp/callback/discord?code=test&state=state",
+    );
   });
 
-  it("preserves the forwarded protocol for Better Auth redirects", () => {
+  it("uses the canonical Better Auth origin behind a reverse proxy", () => {
     const request = new Request(
       "http://auth:4001/idp/callback/discord?code=test",
       { headers: { "x-forwarded-proto": "https, http" } },
     );
-    expect(normalizeBetterAuthRequest(request).url).toBe(
-      "https://auth:4001/idp/callback/discord?code=test",
-    );
+    expect(
+      normalizeBetterAuthRequest(request, "https://auth.example.test/idp").url,
+    ).toBe("https://auth.example.test/idp/callback/discord?code=test");
   });
 
   it("preserves Better Auth request bodies while normalizing the origin", async () => {
@@ -139,13 +162,36 @@ describe("Auth HttpApi contract", () => {
       },
       body: JSON.stringify({ provider: "discord", disableRedirect: true }),
     });
-    const normalized = normalizeBetterAuthRequest(request);
+    const normalized = normalizeBetterAuthRequest(
+      request,
+      "https://auth.example.test/idp",
+    );
 
-    expect(normalized.url).toBe("https://auth:4001/idp/sign-in/social");
+    expect(normalized.url).toBe("https://auth.example.test/idp/sign-in/social");
     expect(await normalized.json()).toEqual({
       provider: "discord",
       disableRedirect: true,
     });
+  });
+
+  it("restores the public Better Auth path removed by the reverse proxy", async () => {
+    const betterAuthBaseURL = resolveBetterAuthBaseURL(
+      "http://localhost/api/auth",
+    );
+    const auth = betterAuth({
+      baseURL: betterAuthBaseURL,
+      secret: "auth-route-test-secret-with-at-least-32-characters",
+    });
+    const request = normalizeBetterAuthRequest(
+      new Request("http://auth:4001/idp/get-session"),
+      betterAuthBaseURL,
+    );
+
+    const response = await auth.handler(request);
+
+    expect(request.url).toBe("http://localhost/api/auth/idp/get-session");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toBeNull();
   });
 
   it("strictly validates and trims idp-token payloads", async () => {

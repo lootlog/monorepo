@@ -36,7 +36,10 @@ export const authUsers = pgTable(
     }),
     discordId: text("discordId").notNull(),
   },
-  (table) => [uniqueIndex("user_email_key").on(table.email)],
+  (table) => [
+    uniqueIndex("user_email_key").on(table.email),
+    uniqueIndex("user_discordId_key").on(table.discordId),
+  ],
 );
 
 export const authSessions = pgTable(
