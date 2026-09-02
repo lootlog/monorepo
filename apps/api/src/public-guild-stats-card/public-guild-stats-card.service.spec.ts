@@ -1,6 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { serviceConfig } from "#src/config/service.config";
 import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";
@@ -20,7 +19,6 @@ describe("PublicGuildStatsCardService", () => {
   };
 
   beforeEach(() => {
-    serviceConfig.env = RuntimeEnvironment.PROD;
     repository = {
       findActiveGuild: mockFn(),
       getLootStats: mockFn(),
@@ -34,6 +32,7 @@ describe("PublicGuildStatsCardService", () => {
     service = new PublicGuildStatsCardService(
       repository as unknown as PublicGuildStatsCardRepository,
       redis as unknown as RedisService,
+      RuntimeEnvironment.PROD,
     );
 
     vi.stubGlobal("fetch", mockFn());
@@ -42,7 +41,6 @@ describe("PublicGuildStatsCardService", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    serviceConfig.env = RuntimeEnvironment.LOCAL;
   });
 
   it("returns cached png for enabled guild without querying stats", async () => {
@@ -116,7 +114,11 @@ describe("PublicGuildStatsCardService", () => {
   });
 
   it("bypasses cache in local environment", async () => {
-    serviceConfig.env = RuntimeEnvironment.LOCAL;
+    service = new PublicGuildStatsCardService(
+      repository as unknown as PublicGuildStatsCardRepository,
+      redis as unknown as RedisService,
+      RuntimeEnvironment.LOCAL,
+    );
     redis.get.mockResolvedValue(Buffer.from("cached-png").toString("base64"));
     repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",

@@ -1,11 +1,12 @@
 import { Layer } from "effect";
 import { ApiHttpServerLive } from "./http-routes.js";
+import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 import { LegacyNestApplicationLive } from "./legacy-nest-application.js";
 import { ApiLifecycleLive } from "./lifecycle.js";
 
 const ApiRuntimeDependencies = Layer.merge(
-  ApiRuntimeConfig.layer,
+  ApiRedis.layer.pipe(Layer.provideMerge(ApiRuntimeConfig.layer)),
   LegacyNestApplicationLive,
 );
 

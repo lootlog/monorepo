@@ -1,6 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { env } from "#src/config/env";
+import { Effect } from "effect";
 
 interface GameMap {
   id: number;
@@ -10,25 +9,25 @@ interface GameMap {
 const CACHE_KEY = "maps:all";
 const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 
-@Injectable()
 export class MapsService {
-  private readonly logger = new Logger(MapsService.name);
-
-  constructor(private readonly redisService: RedisService) {}
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly mapsApiUrl: URL,
+  ) {}
 
   async getMaps(): Promise<GameMap[]> {
     // Try to get from cache first
     const cached = await this.redisService.get(CACHE_KEY);
     if (cached) {
-      this.logger.debug("Returning maps from cache");
+      Effect.runSync(Effect.logDebug("Returning maps from cache"));
       return JSON.parse(cached);
     }
 
     // Fetch from external API
-    const apiUrl = env.MAPS_API_URL;
+    const apiUrl = this.mapsApiUrl;
 
     try {
-      this.logger.debug(`Fetching maps from ${apiUrl}`);
+      Effect.runSync(Effect.logDebug(`Fetching maps from ${apiUrl}`));
       const response = await fetch(apiUrl);
 
       if (!response.ok) {
@@ -43,12 +42,14 @@ export class MapsService {
         JSON.stringify(maps),
         CACHE_TTL_SECONDS,
       );
-      this.logger.debug(`Cached ${maps.length} maps for ${CACHE_TTL_SECONDS}s`);
+      Effect.runSync(
+        Effect.logDebug(`Cached ${maps.length} maps for ${CACHE_TTL_SECONDS}s`),
+      );
 
       return maps;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      this.logger.error(`Failed to fetch maps: ${message}`);
+      Effect.runSync(Effect.logError(`Failed to fetch maps: ${message}`));
       return [];
     }
   }
