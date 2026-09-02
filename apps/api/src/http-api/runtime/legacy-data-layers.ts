@@ -6,7 +6,6 @@ import { LootAllocationService } from "#src/loots/loot-allocation.service";
 import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { LootsService } from "#src/loots/loots.service";
-import { MembersService } from "#src/members/members.service";
 import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import { ReservationsService } from "#src/reservations/reservations.service";
 import { MemberContextService } from "#src/shared/permissions/member-context.service";
@@ -14,7 +13,6 @@ import { TimersService } from "#src/timers/timers.service";
 import { UsersService } from "#src/users/users.service";
 import { EventsData } from "../handlers/events/events.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
-import { MembersData } from "../handlers/members/members.handlers.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
 import { ReservationsRolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { TimersData } from "../handlers/timers/timers.handlers.js";
@@ -40,7 +38,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
 
     return Layer.mergeAll(
       EventsData.layerLegacy(dispatch),
-      MembersData.layerService(service(MembersService)),
       UsersGuildsData.layerServices(service(UsersService), guilds),
       ReservationsRolesData.layerServices({
         reservations: service(ReservationsService),
