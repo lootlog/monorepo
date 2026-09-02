@@ -51,7 +51,14 @@ import { ReservationSharingService } from "#src/reservations/reservation-sharing
 import { ReservationCatalogService } from "#src/reservations/reservation-catalog.service";
 import { ReservationReadService } from "#src/reservations/reservation-read.service";
 import { MyReservationsService } from "#src/reservations/my-reservations.service";
+import { ReservationMutationsRepository } from "#src/reservations/reservation-mutations.repository";
+import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
+import { ReservationReminderRepository } from "#src/reservations/reservation-reminder.repository";
+import { ReservationReminderService } from "#src/reservations/reservation-reminder.service";
 import { ReservationsRepository } from "#src/reservations/reservations.repository";
+import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
+import { NotificationJobSchedulerService } from "#src/notifications/notification-job-scheduler.service";
+import { NotificationJobsRepository } from "#src/notifications/notification-jobs.repository";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
@@ -75,6 +82,7 @@ import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.han
 import {
   ReservationSharingData,
   ReservationReadData,
+  ReservationsRolesData,
   MyReservationsData,
   RolesData,
 } from "../handlers/reservations-roles/reservations-roles.handlers.js";
@@ -582,6 +590,61 @@ const NativeMyReservationsData = Layer.effect(
   }),
 );
 
+const NativeReservationMutationsData = Layer.effect(
+  ReservationsRolesData,
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const config = yield* ApiRuntimeConfig;
+    const { runtime } = yield* NativeMemberServices;
+    const guildAccess = yield* NativeGuildAccessSummary;
+    const notificationsQueue = yield* Effect.acquireRelease(
+      Effect.sync(
+        () =>
+          new Queue(NOTIFICATIONS_DISPATCH_QUEUE, {
+            connection: {
+              host: config.redis.host,
+              port: config.redis.port,
+              username: config.redis.username,
+              password: Redacted.value(config.redis.password),
+              maxRetriesPerRequest: null,
+              enableReadyCheck: false,
+            },
+            prefix: "{bull}",
+          }),
+      ),
+      (queue) => Effect.promise(() => queue.close()),
+    );
+    const events = new ReservationEventsPublisher(makeAmqpAdapter(rabbit));
+    const guilds = new GuildsRepository(runtime);
+    const sharing = new ReservationSharingService(
+      new ReservationSharingRepository(runtime),
+      {
+        getGuildsForRequiredPermissions: (discordId, permissions) =>
+          guilds.findForPermissions(discordId, permissions),
+      },
+      events,
+    );
+    const notificationScheduler = new NotificationJobSchedulerService(
+      new NotificationJobsRepository(runtime),
+      notificationsQueue,
+    );
+    return ReservationsRolesData.makeService(
+      new ReservationMutationsService(
+        new ReservationMutationsRepository(runtime),
+        guildAccess,
+        new ReservationCatalogService(redis),
+        sharing,
+        new ReservationReminderService(
+          new ReservationReminderRepository(runtime),
+          notificationScheduler,
+        ),
+        events,
+      ),
+    );
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -602,6 +665,7 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeMembersData,
   NativeOrganizationContextLookup,
   NativeMyReservationsData,
+  NativeReservationMutationsData,
 ).pipe(
   Layer.provide(NativeGuildAccessSummaryLive),
   Layer.provide(NativeMemberServicesLive),

@@ -1,6 +1,7 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -45,7 +46,11 @@ type DeletePersistedReservationOptions = {
 export class ReservationMutationsService {
   constructor(
     private readonly repository: ReservationMutationsRepository,
-    private readonly guildsService: GuildsService,
+    @Inject(GuildsService)
+    private readonly guildsService: Pick<
+      GuildsService,
+      "getCurrentUserAccessibleGuilds"
+    >,
     private readonly catalogService: ReservationCatalogService,
     private readonly sharingService: ReservationSharingService,
     private readonly reminderService: ReservationReminderService,

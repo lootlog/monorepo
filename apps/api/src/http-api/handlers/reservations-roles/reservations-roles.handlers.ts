@@ -108,47 +108,47 @@ export class ReservationsRolesData extends Context.Service<
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/reservations-roles/data") {
-  static layerServices(options: {
-    readonly mutations: ReservationMutationsService;
-  }) {
+  static makeService(
+    mutations: ReservationMutationsService,
+  ): ReservationsRolesData["Service"] {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new ReservationsRolesOperationError({ cause }),
       });
+    return ReservationsRolesData.of({
+      create: (context, spotId, payload) =>
+        attempt(() =>
+          mutations.create({
+            context,
+            spotId,
+            data: mutableDto<LegacyCreateReservationDto>(payload),
+          }),
+        ),
+      deleteVisible: (context, reservationId) =>
+        attempt(() => mutations.deleteVisible({ context, reservationId })),
+      deleteOwned: ({ userId, discordId }, reservationId) =>
+        attempt(() =>
+          mutations.deleteOwned({ userId, discordId, reservationId }),
+        ),
+      updateOwned: ({ userId, discordId }, reservationId, payload) =>
+        attempt(() =>
+          mutations.updateOwned({
+            userId,
+            discordId,
+            reservationId,
+            data: mutableDto<LegacyUpdateReservationDto>(payload),
+          }),
+        ),
+    });
+  }
+
+  static layerServices(options: {
+    readonly mutations: ReservationMutationsService;
+  }) {
     return Layer.succeed(
       ReservationsRolesData,
-      ReservationsRolesData.of({
-        create: (context, spotId, payload) =>
-          attempt(() =>
-            options.mutations.create({
-              context,
-              spotId,
-              data: mutableDto<LegacyCreateReservationDto>(payload),
-            }),
-          ),
-        deleteVisible: (context, reservationId) =>
-          attempt(() =>
-            options.mutations.deleteVisible({ context, reservationId }),
-          ),
-        deleteOwned: ({ userId, discordId }, reservationId) =>
-          attempt(() =>
-            options.mutations.deleteOwned({
-              userId,
-              discordId,
-              reservationId,
-            }),
-          ),
-        updateOwned: ({ userId, discordId }, reservationId, payload) =>
-          attempt(() =>
-            options.mutations.updateOwned({
-              userId,
-              discordId,
-              reservationId,
-              data: mutableDto<LegacyUpdateReservationDto>(payload),
-            }),
-          ),
-      }),
+      ReservationsRolesData.makeService(options.mutations),
     );
   }
 }
