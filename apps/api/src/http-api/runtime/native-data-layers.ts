@@ -22,6 +22,9 @@ import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/pub
 import { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { RolesRepository } from "#src/roles/roles.repository";
 import { RolesService } from "#src/roles/roles.service";
+import { ReservationEventsPublisher } from "#src/reservations/reservation-events.publisher";
+import { ReservationSharingRepository } from "#src/reservations/reservation-sharing.repository";
+import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
@@ -34,7 +37,10 @@ import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
-import { RolesData } from "../handlers/reservations-roles/reservations-roles.handlers.js";
+import {
+  ReservationSharingData,
+  RolesData,
+} from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
@@ -279,6 +285,25 @@ const NativeGuildConfigurationData = Layer.unwrap(
   ),
 );
 
+const NativeReservationSharingData = Layer.unwrap(
+  Effect.map(RabbitMessaging, (rabbit) =>
+    makeScopedCompatibilityLayer(ReservationSharingData, (runtime) => {
+      const guilds = new GuildsRepository(runtime);
+      const amqp = makeAmqpAdapter(rabbit);
+      return ReservationSharingData.makeService(
+        new ReservationSharingService(
+          new ReservationSharingRepository(runtime),
+          {
+            getGuildsForRequiredPermissions: (discordId, permissions) =>
+              guilds.findForPermissions(discordId, permissions),
+          },
+          new ReservationEventsPublisher(amqp),
+        ),
+      );
+    }),
+  ),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -292,4 +317,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeUserLootlogConfigData,
   NativeRolesData,
   NativeGuildConfigurationData,
+  NativeReservationSharingData,
 ).pipe(Layer.provide(ApiDatabaseLive));

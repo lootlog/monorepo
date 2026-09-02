@@ -17,6 +17,7 @@ import {
   ReservationsRolesData,
   ReservationsRolesNotFound,
   ReservationsRolesOperationError,
+  ReservationSharingData,
   RolesData,
   updateGuildRole,
 } from "./reservations-roles.handlers.js";
@@ -94,6 +95,13 @@ const makeData = (overrides: Partial<ReservationsRolesData["Service"]> = {}) =>
     listMine: () => Effect.succeed({ items: [] }),
     deleteOwned: () => Effect.succeed(undefined),
     updateOwned: () => Effect.succeed(reservation),
+    ...overrides,
+  });
+
+const makeSharingData = (
+  overrides: Partial<ReservationSharingData["Service"]> = {},
+) =>
+  ReservationSharingData.of({
     listShares: () => Effect.succeed({ shares: [], pendingInvitations: [] }),
     createInvitation: () => Effect.succeed({}),
     revokeInvitation: () => Effect.succeed(undefined),
@@ -123,11 +131,13 @@ const provideServices = (
   authorization: ReservationsRolesAuthorization["Service"],
   data: ReservationsRolesData["Service"],
   roles: RolesData["Service"] = makeRolesData(),
+  sharing: ReservationSharingData["Service"] = makeSharingData(),
 ) =>
   Layer.mergeAll(
     Layer.succeed(ReservationsRolesAuthorization, authorization),
     Layer.succeed(ReservationsRolesData, data),
     Layer.succeed(RolesData, roles),
+    Layer.succeed(ReservationSharingData, sharing),
   );
 
 describe("Reservations and Roles HttpApi handlers", () => {
@@ -323,7 +333,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
           return Effect.succeed(guildAccess);
         },
       }),
-      makeData({
+      makeData(),
+      makeRolesData(),
+      makeSharingData({
         listShares: (guildId) => {
           guildIds.push(guildId);
           return Effect.succeed(sharingList);
@@ -353,7 +365,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
     let dataCalled = false;
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
-      makeData({
+      makeData(),
+      makeRolesData(),
+      makeSharingData({
         listShares: () => {
           dataCalled = true;
           return Effect.succeed(sharingList);
@@ -381,7 +395,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
     });
     const layer = provideServices(
       makeAuthorization(),
-      makeData({ previewInvitation: () => Effect.fail(failure) }),
+      makeData(),
+      makeRolesData(),
+      makeSharingData({ previewInvitation: () => Effect.fail(failure) }),
     );
 
     const error = await Effect.runPromise(
@@ -409,7 +425,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
     const acceptCalls: unknown[] = [];
     const layer = provideServices(
       makeAuthorization(),
-      makeData({
+      makeData(),
+      makeRolesData(),
+      makeSharingData({
         acceptInvitation: (token, payload, current) => {
           acceptCalls.push({ token, payload, current });
           return Effect.fail(failure);

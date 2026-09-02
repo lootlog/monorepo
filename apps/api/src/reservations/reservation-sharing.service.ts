@@ -34,7 +34,10 @@ function orderGuildPair(firstGuildId: string, secondGuildId: string) {
 export class ReservationSharingService {
   constructor(
     private readonly repository: ReservationSharingRepository,
-    private readonly guildsService: GuildsService,
+    private readonly guildsService: Pick<
+      GuildsService,
+      "getGuildsForRequiredPermissions"
+    >,
     private readonly eventsPublisher: ReservationEventsPublisher,
   ) {}
 
