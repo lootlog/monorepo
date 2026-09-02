@@ -156,6 +156,10 @@ export class DocsData extends Context.Service<
   }
 
   static layerLegacy(service: DocsService) {
+    return DocsData.layer(DocsData.makeLegacy(service));
+  }
+
+  static makeLegacy(service: DocsService): DocsData["Service"] {
     const legacyFailure = (cause: unknown): DocsFailure => {
       const status =
         typeof cause === "object" &&
@@ -188,7 +192,7 @@ export class DocsData extends Context.Service<
       payload: DocsControllerUpdateDocumentRequestJson,
     ): LegacyUpdateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
 
-    return DocsData.layer({
+    return DocsData.of({
       list: (caller) => attempt(() => service.listDocuments(caller.guild.id)),
       create: (caller, payload) =>
         attempt(() =>

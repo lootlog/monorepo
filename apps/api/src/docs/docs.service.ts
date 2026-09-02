@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,
@@ -62,7 +58,6 @@ type HistoryRecord = {
   editedAt: Date;
 };
 
-@Injectable()
 export class DocsService {
   constructor(private readonly repository: DocsRepository) {}
 
