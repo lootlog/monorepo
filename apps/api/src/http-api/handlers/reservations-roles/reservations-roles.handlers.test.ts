@@ -18,6 +18,7 @@ import {
   ReservationsRolesNotFound,
   ReservationsRolesOperationError,
   ReservationSharingData,
+  ReservationReadData,
   RolesData,
   updateGuildRole,
 } from "./reservations-roles.handlers.js";
@@ -86,15 +87,22 @@ const sharingList = {
 
 const makeData = (overrides: Partial<ReservationsRolesData["Service"]> = {}) =>
   ReservationsRolesData.of({
-    listSpots: () => Effect.succeed([]),
-    listWindow: () => Effect.succeed({ items: [], window: {} }),
     create: () => Effect.succeed(reservation),
     deleteVisible: () => Effect.succeed(undefined),
-    pinSpot: () => Effect.succeed(undefined),
-    unpinSpot: () => Effect.succeed(undefined),
     listMine: () => Effect.succeed({ items: [] }),
     deleteOwned: () => Effect.succeed(undefined),
     updateOwned: () => Effect.succeed(reservation),
+    ...overrides,
+  });
+
+const makeReadData = (
+  overrides: Partial<ReservationReadData["Service"]> = {},
+) =>
+  ReservationReadData.of({
+    listSpots: () => Effect.succeed([]),
+    listWindow: () => Effect.succeed({ items: [], window: {} }),
+    pinSpot: () => Effect.succeed(undefined),
+    unpinSpot: () => Effect.succeed(undefined),
     ...overrides,
   });
 
@@ -132,12 +140,14 @@ const provideServices = (
   data: ReservationsRolesData["Service"],
   roles: RolesData["Service"] = makeRolesData(),
   sharing: ReservationSharingData["Service"] = makeSharingData(),
+  reads: ReservationReadData["Service"] = makeReadData(),
 ) =>
   Layer.mergeAll(
     Layer.succeed(ReservationsRolesAuthorization, authorization),
     Layer.succeed(ReservationsRolesData, data),
     Layer.succeed(RolesData, roles),
     Layer.succeed(ReservationSharingData, sharing),
+    Layer.succeed(ReservationReadData, reads),
   );
 
 describe("Reservations and Roles HttpApi handlers", () => {
@@ -201,7 +211,10 @@ describe("Reservations and Roles HttpApi handlers", () => {
     let dataCalled = false;
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
-      makeData({
+      makeData(),
+      makeRolesData(),
+      makeSharingData(),
+      makeReadData({
         listSpots: () => {
           dataCalled = true;
           return Effect.succeed([]);
@@ -225,7 +238,10 @@ describe("Reservations and Roles HttpApi handlers", () => {
     let dataCalled = false;
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
-      makeData({
+      makeData(),
+      makeRolesData(),
+      makeSharingData(),
+      makeReadData({
         listSpots: () => {
           dataCalled = true;
           return Effect.succeed([]);
