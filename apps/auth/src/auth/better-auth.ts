@@ -11,6 +11,7 @@ import {
   type AuthDatabaseConnection,
 } from "#src/database/drizzle";
 import { AuthRedisStorage } from "./auth-redis-storage.js";
+import { resolveBetterAuthBaseURL } from "./better-auth-url.js";
 import { createDiscordAuthOptions } from "./discord-auth-options.js";
 
 export const DISCORD_AUTH_SCOPES = [
@@ -29,16 +30,17 @@ export const createLootlogAuth = ({
   readonly database: AuthDatabaseConnection["db"];
   readonly secondaryStorage?: AuthRedisStorage["Service"]["secondaryStorage"];
 }) => {
+  const betterAuthBaseURL = resolveBetterAuthBaseURL(config.appUrl);
   const discordAuthOptions = createDiscordAuthOptions({
     clientId: config.discordClientId,
     clientSecret: reveal(config.discordClientSecret),
-    redirectURI: `${config.appUrl}/idp/callback/discord`,
+    redirectURI: `${betterAuthBaseURL}/callback/discord`,
     scopes: [...DISCORD_AUTH_SCOPES],
   });
 
   return betterAuth({
     appName: "@lootlog/auth",
-    basePath: "/idp",
+    baseURL: betterAuthBaseURL,
     database: drizzleAdapter(database, {
       provider: "pg",
       schema: betterAuthSchema,
@@ -47,6 +49,12 @@ export const createLootlogAuth = ({
     account: {
       encryptOAuthTokens: true,
       identityStrategy: "provider-id",
+      accountLinking: {
+        enabled: true,
+        disableImplicitLinking: false,
+        allowDifferentEmails: false,
+        updateUserInfoOnLink: true,
+      },
     },
     ...(secondaryStorage === undefined ? {} : { secondaryStorage }),
     ...discordAuthOptions,

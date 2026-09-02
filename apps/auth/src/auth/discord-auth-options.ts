@@ -8,6 +8,18 @@ interface DiscordAuthOptionsInput {
   scopes: string[];
 }
 
+const isDiscordOAuthCallback = (
+  context: Parameters<
+    NonNullable<
+      NonNullable<
+        NonNullable<
+          NonNullable<BetterAuthOptions["databaseHooks"]>["user"]
+        >["update"]
+      >["before"]
+    >
+  >[1],
+) => context?.path === "/callback/:id" && context.params?.id === "discord";
+
 export const createDiscordAuthOptions = ({
   clientId,
   clientSecret,
@@ -26,12 +38,30 @@ export const createDiscordAuthOptions = ({
       deleteUser: {
         enabled: true,
       },
+      validateUserInfo: ({ source, user }) => {
+        const providerProfileId = source.oauth?.profile?.id;
+
+        if (
+          source.method !== "oauth" ||
+          source.oauth?.providerId !== "discord" ||
+          typeof providerProfileId !== "string" ||
+          user.discordId !== providerProfileId
+        ) {
+          return {
+            error: "INVALID_DISCORD_IDENTITY",
+            errorDescription: "Discord identity could not be verified",
+          };
+        }
+      },
     },
     databaseHooks: {
       user: {
         update: {
-          before: (user) => {
-            if (user.discordId !== undefined) {
+          before: (user, context) => {
+            if (
+              user.discordId !== undefined &&
+              !isDiscordOAuthCallback(context)
+            ) {
               throw new APIError("BAD_REQUEST", {
                 code: "DISCORD_ID_IMMUTABLE",
                 message: "Discord ID cannot be changed",
@@ -50,6 +80,7 @@ export const createDiscordAuthOptions = ({
         redirectURI,
         prompt: "consent",
         scope: scopes,
+        overrideUserInfoOnSignIn: true,
         mapProfileToUser: (profile) => ({
           firstName: profile.given_name,
           lastName: profile.family_name,

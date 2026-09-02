@@ -1,4 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
+import { APIError } from "better-auth/api";
 import { Effect } from "effect";
 import { exportJWK, generateKeyPair, SignJWT, type JSONWebKeySet } from "jose";
 import {
@@ -224,6 +225,33 @@ describe("AuthService", () => {
     ).rejects.toMatchObject({
       status: 400,
       body: { error: "TOKEN_NOT_FOUND" },
+    });
+  });
+
+  it("requires reauthentication when Better Auth cannot refresh the Discord token", async () => {
+    const { auth, getAccessToken, getSession } = createFakeAuth();
+    getSession.mockResolvedValue({
+      session: {},
+      user: { id: "user-1", discordId: "discord-1" },
+    } as never);
+    getAccessToken.mockRejectedValue(
+      new APIError("BAD_REQUEST", {
+        code: "FAILED_TO_GET_ACCESS_TOKEN",
+        message: "Failed to get a valid access token",
+      }),
+    );
+    const service = createAuthService({
+      auth,
+      appUrl: "http://localhost:3000",
+      findDiscordAccountId,
+      realtimeTicketRedis,
+    });
+
+    await expect(
+      Effect.runPromise(service.getCurrentUserScopes(new Headers())),
+    ).rejects.toMatchObject({
+      status: 401,
+      body: { error: "IDP_REAUTH_REQUIRED", requiresReauth: true },
     });
   });
 });

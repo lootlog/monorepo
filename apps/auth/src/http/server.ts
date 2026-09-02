@@ -7,6 +7,7 @@ import {
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { BetterAuthRuntime, type LootlogAuth } from "#src/auth/better-auth";
+import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/better-auth-url";
 import { AppConfig } from "#src/config/env";
 import { AuthApi } from "#src/http-api/auth-api.generated";
 import { normalizeBetterAuthRequest } from "./application.js";
@@ -17,7 +18,10 @@ const makeBetterAuthHandler = (auth: LootlogAuth) =>
     function* (request: HttpServerRequest.HttpServerRequest) {
       const webRequest = yield* HttpServerRequest.toWeb(request);
       const response = yield* Effect.tryPromise({
-        try: () => auth.handler(normalizeBetterAuthRequest(webRequest)),
+        try: () =>
+          auth.handler(
+            normalizeBetterAuthRequest(webRequest, auth.options.baseURL),
+          ),
         catch: (cause) => cause,
       });
       return HttpServerResponse.fromWeb(response);
@@ -49,7 +53,7 @@ const BetterAuthRawRoutes = HttpRouter.use((router) =>
     const handler = makeBetterAuthHandler(auth);
     yield* router.addAll(
       betterAuthMethods.map((method) =>
-        HttpRouter.route(method, "/idp/*", handler),
+        HttpRouter.route(method, `${BETTER_AUTH_INTERNAL_PATH}/*`, handler),
       ),
     );
   }),

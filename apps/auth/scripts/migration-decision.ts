@@ -1,37 +1,74 @@
 import fs from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 
 const decisionPath = new URL("../better-auth-migration.json", import.meta.url);
 
-type MigrationDecision = {
-  readonly version?: unknown;
-  readonly approved?: unknown;
-  readonly betterAuthVersion?: unknown;
-  readonly identityStrategy?: unknown;
-  readonly accountMigration?: {
-    readonly providerId?: unknown;
-    readonly issuer?: unknown;
-  };
-  readonly rollout?: { readonly mixedWritersAllowed?: unknown };
-};
+const approvedMigrationDecision = {
+  version: 1,
+  approved: true,
+  betterAuthVersion: "1.7.2",
+  identityStrategy: "provider-id",
+  sourceSchemas: [
+    "fresh",
+    "better-auth-1.6",
+    "better-auth-1.6-imported",
+    "better-auth-1.7",
+  ],
+  accountMigration: {
+    providerId: "discord",
+    issuer: "local:oauth:discord",
+    uniqueIdentity: ["issuer", "accountId"],
+    rejectUnknownProviders: true,
+    rejectUnexpectedIssuers: true,
+    rejectIdentityCollisions: true,
+  },
+  accountLinking: {
+    enabled: true,
+    implicitLinking: true,
+    requireMatchingVerifiedEmail: true,
+    allowDifferentEmails: false,
+    acceptedMutableEmailRisk: true,
+  },
+  discordIdentity: {
+    sourceOfTruth: "account.accountId",
+    activeProjection: "user.discordId",
+    projectionUpdate: "verified-discord-oauth-callback-only",
+    existingProjectionRepair: "next-successful-sign-in",
+    bulkRewrite: false,
+  },
+  dataMigration: {
+    legacyTimestampTimezone: "UTC",
+    deleteUsers: false,
+    deleteAccounts: false,
+    deleteSessions: false,
+    mergeUsers: false,
+  },
+  rollout: {
+    mixedWritersAllowed: false,
+    sequence: [
+      "restore-production-copy",
+      "plan-on-restored-copy",
+      "apply-on-restored-copy",
+      "verify-restored-copy",
+      "stop-1.6-writers",
+      "create-restorable-backup",
+      "confirm-production-statistics",
+      "apply-production-migration",
+      "deploy-1.7.2-all-instances",
+      "smoke-test",
+      "resume-writes",
+    ],
+  },
+} as const;
 
 export function readApprovedMigrationDecision() {
-  const decision = JSON.parse(
-    fs.readFileSync(decisionPath, "utf8"),
-  ) as MigrationDecision;
+  const decision: unknown = JSON.parse(fs.readFileSync(decisionPath, "utf8"));
 
-  if (
-    decision.version !== 1 ||
-    decision.approved !== true ||
-    decision.betterAuthVersion !== "1.7.2" ||
-    decision.identityStrategy !== "provider-id" ||
-    decision.accountMigration?.providerId !== "discord" ||
-    decision.accountMigration.issuer !== "local:oauth:discord" ||
-    decision.rollout?.mixedWritersAllowed !== false
-  ) {
+  if (!isDeepStrictEqual(decision, approvedMigrationDecision)) {
     throw new Error(
       "The committed Better Auth 1.7 migration decision is missing or invalid.",
     );
   }
 
-  return decision;
+  return approvedMigrationDecision;
 }

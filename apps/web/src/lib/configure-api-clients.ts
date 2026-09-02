@@ -3,7 +3,6 @@ import {
   type ApiRequestContext,
   configureApiClients,
 } from "@lootlog/client/transport";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import {
   ACTIVITY_API_URL,
   API_URL,
@@ -11,13 +10,11 @@ import {
   BATTLELOG_API_URL,
   SEARCH_API_URL,
 } from "@/config/api";
-import { authClient } from "@/lib/auth-client";
+import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 
 type ApiErrorData = {
   requiresReauth?: boolean;
 };
-
-let reauthenticationPromise: Promise<void> | null = null;
 
 const requiresReauthentication = (error: ApiError<unknown>): boolean => {
   if (typeof error.data !== "object" || error.data === null) {
@@ -27,39 +24,22 @@ const requiresReauthentication = (error: ApiError<unknown>): boolean => {
   return (error.data as ApiErrorData).requiresReauth === true;
 };
 
-const reauthenticate = (): Promise<void> => {
-  if (reauthenticationPromise) {
-    return reauthenticationPromise;
-  }
-
-  reauthenticationPromise = authClient.signIn
-    .social({
-      provider: "discord",
-      callbackURL: window.location.href,
-      scopes: DISCORD_AUTH_SCOPES,
-    })
-    .then(() => undefined)
-    .catch((error) => {
-      console.warn("Reauthentication failed:", error);
-      throw error;
-    })
-    .finally(() => {
-      reauthenticationPromise = null;
-    });
-
-  return reauthenticationPromise;
-};
-
-const handleError = (
+export const handleWebApiError = (
   error: ApiError<unknown>,
   context: ApiRequestContext,
 ): void => {
-  const isPublicEndpoint = new URL(context.url).pathname.includes("/public/");
+  const isPublicEndpoint = new URL(
+    context.url,
+    window.location.origin,
+  ).pathname.includes("/public/");
   if (
     !isPublicEndpoint &&
     (error.status === 401 || requiresReauthentication(error))
   ) {
-    void reauthenticate();
+    useAuthRecoveryStore.getState().requireRecovery({
+      requiresReauth: requiresReauthentication(error),
+      status: error.status,
+    });
   }
 };
 
@@ -67,7 +47,7 @@ export const configureWebApiClients = (): (() => void) => {
   const mainBaseUrl = API_URL ?? window.location.origin;
   const sharedConfiguration = {
     credentials: "include" as const,
-    onError: handleError,
+    onError: handleWebApiError,
   };
 
   return configureApiClients({

@@ -1,12 +1,16 @@
-export const normalizeBetterAuthRequest = (request: Request): Request => {
-  const forwardedProtocol = request.headers
-    .get("x-forwarded-proto")
-    ?.split(",")[0]
-    ?.trim();
+import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/better-auth-url";
 
-  if (!forwardedProtocol) return request;
+export const normalizeBetterAuthRequest = (
+  request: Request,
+  betterAuthBaseURL: string,
+): Request => {
+  const requestURL = new URL(request.url);
+  const endpointPath = requestURL.pathname.slice(
+    BETTER_AUTH_INTERNAL_PATH.length,
+  );
+  const canonicalURL = new URL(betterAuthBaseURL);
+  canonicalURL.pathname = `${canonicalURL.pathname.replace(/\/+$/u, "")}${endpointPath}`;
+  canonicalURL.search = requestURL.search;
 
-  const url = new URL(request.url);
-  url.protocol = `${forwardedProtocol}:`;
-  return new Request(url, request);
+  return new Request(canonicalURL, request);
 };
