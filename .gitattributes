@@ -5,6 +5,3 @@ yarn.lock linguist-generated=true
 
 # Prisma generated files
 **/generated/** linguist-generated=true -whitespace
-
-# External repositories are read-only reference material
-repos/** linguist-vendored=true
