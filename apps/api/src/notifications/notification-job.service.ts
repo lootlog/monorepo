@@ -40,6 +40,7 @@ import type { NotificationDispatchJobData } from "#src/notifications/notificatio
 import { calculateNextOccurrenceInTimeZone } from "#src/notifications/utils/notification-schedule-time.util";
 import type { JsonObject, JsonValue } from "./notification-database.types.js";
 import { NotificationJobsRepository } from "./notification-jobs.repository.js";
+import { NotificationJobSchedulerService } from "./notification-job-scheduler.service.js";
 
 type OwnerContext = {
   ownerType: DbNotificationOwnerType;
@@ -67,6 +68,7 @@ const FINAL_JOB_STATUSES: readonly DbNotificationJobStatus[] = [
 @Injectable()
 export class NotificationJobService {
   private readonly logger = new Logger(NotificationJobService.name);
+  private readonly scheduler: NotificationJobSchedulerService;
 
   constructor(
     private readonly repository: NotificationJobsRepository,
@@ -76,7 +78,12 @@ export class NotificationJobService {
     private readonly amqpConnection: AmqpConnection,
     @InjectQueue(NOTIFICATIONS_DISPATCH_QUEUE)
     private readonly notificationsQueue: Queue<NotificationDispatchJobData>,
-  ) {}
+  ) {
+    this.scheduler = new NotificationJobSchedulerService(
+      this.repository,
+      this.notificationsQueue,
+    );
+  }
 
   listGuildJobs(guildId: string) {
     return this.getJobsForOwner({
@@ -111,20 +118,7 @@ export class NotificationJobService {
     sourceEntityType?: string;
     sourceEntityId?: string;
   }) {
-    const jobs = await this.repository.findCancelableJobIds(filters);
-
-    await Promise.all(
-      jobs.map(async (job) => {
-        const queueJob = await this.notificationsQueue.getJob(job.id);
-        await queueJob?.remove();
-      }),
-    );
-
-    if (jobs.length === 0) {
-      return;
-    }
-
-    await this.repository.cancelJobs(jobs.map((job) => job.id));
+    return this.scheduler.cancelPendingJobs(filters);
   }
 
   createNotificationJob(options: {
@@ -150,56 +144,11 @@ export class NotificationJobService {
     payloadSnapshot: JsonValue;
     forceBlocked?: boolean;
   }) {
-    const idempotencyKey =
-      options.jobKind === DbNotificationJobKind.SCHEDULED
-        ? [
-            "scheduled",
-            options.notificationRule.id,
-            options.target.id,
-            options.sourceEntityType ?? "unknown",
-            options.sourceEntityId ?? "unknown",
-            options.scheduledFor.toISOString(),
-          ].join(":")
-        : [
-            options.jobKind === DbNotificationJobKind.TEST ? "test" : "instant",
-            options.notificationRule.id,
-            options.target.id,
-            options.sourceEventId ?? randomUUID(),
-          ].join(":");
-
-    return this.repository.createJob({
-      id: randomUUID(),
-      ruleId: options.notificationRule.id,
-      targetId: options.target.id,
-      ownerType: options.notificationRule.ownerType,
-      ownerId: options.notificationRule.ownerId,
-      jobKind: options.jobKind,
-      scheduledFor: options.scheduledFor,
-      status: options.forceBlocked
-        ? DbNotificationJobStatus.BLOCKED
-        : DbNotificationJobStatus.PENDING,
-      idempotencyKey,
-      sourceEntityType: options.sourceEntityType ?? null,
-      sourceEntityId: options.sourceEntityId ?? null,
-      sourceEventId: options.sourceEventId ?? null,
-      payloadSnapshot: options.payloadSnapshot,
-      blockedReason: options.forceBlocked
-        ? "Missing Discord bot permissions or target access"
-        : null,
-    });
+    return this.scheduler.createNotificationJob(options);
   }
 
   async enqueueNotificationJob(notificationJobId: string, delayMs: number) {
-    await this.notificationsQueue.add(
-      notificationJobId,
-      { notificationJobId },
-      {
-        jobId: notificationJobId,
-        delay: delayMs,
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    );
+    await this.scheduler.enqueueNotificationJob(notificationJobId, delayMs);
   }
 
   async dispatchNotificationJob(notificationJobId: string) {
