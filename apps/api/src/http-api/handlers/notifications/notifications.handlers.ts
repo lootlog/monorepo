@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -56,8 +57,7 @@ export interface NotificationGuildCaller extends NotificationCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationsAccessDenied extends Schema.TaggedError<NotificationsAccessDenied>()(
+export class NotificationsAccessDenied extends TaggedErrorClass<NotificationsAccessDenied>()(
   "NotificationsAccessDenied",
   {
     status: Schema.Literals([401, 403]),
@@ -65,26 +65,22 @@ export class NotificationsAccessDenied extends Schema.TaggedError<NotificationsA
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationsBadRequest extends Schema.TaggedError<NotificationsBadRequest>()(
+export class NotificationsBadRequest extends TaggedErrorClass<NotificationsBadRequest>()(
   "NotificationsBadRequest",
   { status: Schema.Literal(400), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationsNotFound extends Schema.TaggedError<NotificationsNotFound>()(
+export class NotificationsNotFound extends TaggedErrorClass<NotificationsNotFound>()(
   "NotificationsNotFound",
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationsConflict extends Schema.TaggedError<NotificationsConflict>()(
+export class NotificationsConflict extends TaggedErrorClass<NotificationsConflict>()(
   "NotificationsConflict",
   { status: Schema.Literal(409), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationsDataError extends Schema.TaggedError<NotificationsDataError>()(
+export class NotificationsDataError extends TaggedErrorClass<NotificationsDataError>()(
   "NotificationsDataError",
   { cause: Schema.Defect() },
 ) {}

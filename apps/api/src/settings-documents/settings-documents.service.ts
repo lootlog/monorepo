@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getCharacterSettingsScopeId,
   isSettingsDomain,
@@ -250,8 +251,7 @@ export const makeSettingsDocuments = (
   };
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class SettingsRequestError extends Schema.TaggedError<SettingsRequestError>()(
+export class SettingsRequestError extends TaggedErrorClass<SettingsRequestError>()(
   "SettingsRequestError",
   {
     status: Schema.Literals([400, 403]),

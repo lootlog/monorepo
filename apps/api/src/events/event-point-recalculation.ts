@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -14,8 +15,7 @@ export interface EventPointRecalculator {
   ) => Effect.Effect<void, unknown>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventPointRecalculationError extends Schema.TaggedError<EventPointRecalculationError>()(
+export class EventPointRecalculationError extends TaggedErrorClass<EventPointRecalculationError>()(
   "EventPointRecalculationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

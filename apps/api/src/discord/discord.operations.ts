@@ -1,9 +1,9 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
 import type { DiscordUserGuildsClient } from "./discord-user-guilds.client.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DiscordOperationFailure extends Schema.TaggedError<DiscordOperationFailure>()(
+export class DiscordOperationFailure extends TaggedErrorClass<DiscordOperationFailure>()(
   "DiscordOperationFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   normalizeEventScoringMode,
@@ -28,8 +29,7 @@ import {
   isEventActiveAt,
 } from "./utils/event-activity.util.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventUpdateError extends Schema.TaggedError<EventUpdateError>()(
+export class EventUpdateError extends TaggedErrorClass<EventUpdateError>()(
   "EventUpdateError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

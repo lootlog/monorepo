@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { decode, encode } from "@msgpack/msgpack";
 import { Schema } from "effect";
 import {
@@ -5,8 +6,7 @@ import {
   type RealtimeFrame as RealtimeFrameType,
 } from "./protocol.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect TaggedError is a class factory.
-export class RealtimeCodecError extends Schema.TaggedError<RealtimeCodecError>()(
+export class RealtimeCodecError extends TaggedErrorClass<RealtimeCodecError>()(
   "RealtimeCodecError",
   {
     operation: Schema.Literals(["decode", "encode"]),

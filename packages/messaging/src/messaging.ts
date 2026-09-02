@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   RabbitExchange,
   type RabbitExchangeName,
@@ -11,8 +12,7 @@ import amqp, {
 } from "amqplib";
 import { Context, Effect, FiberSet, Layer, Schema, type Scope } from "effect";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Effect TaggedError is a class factory.
-export class MessagingError extends Schema.TaggedError<MessagingError>()(
+export class MessagingError extends TaggedErrorClass<MessagingError>()(
   "MessagingError",
   {
     operation: Schema.Literals([

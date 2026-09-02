@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -18,14 +19,12 @@ import {
   type UpdateLootlogConfigNpcDto,
 } from "../../lootlog-api.generated.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootlogConfigAccessDenied extends Schema.TaggedError<LootlogConfigAccessDenied>()(
+export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",
   { status: Schema.Literals([401, 403, 404]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootlogConfigOperationError extends Schema.TaggedError<LootlogConfigOperationError>()(
+export class LootlogConfigOperationError extends TaggedErrorClass<LootlogConfigOperationError>()(
   "LootlogConfigOperationError",
   { cause: Schema.Defect() },
 ) {}

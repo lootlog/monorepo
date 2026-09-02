@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -16,8 +17,7 @@ import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
 
 type Role = typeof roleTable.$inferSelect;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventAccessError extends Schema.TaggedError<EventAccessError>()(
+export class EventAccessError extends TaggedErrorClass<EventAccessError>()(
   "EventAccessError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

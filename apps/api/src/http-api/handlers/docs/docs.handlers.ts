@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -59,32 +60,27 @@ export interface AuthorizedDocsCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DocsAccessDenied extends Schema.TaggedError<DocsAccessDenied>()(
+export class DocsAccessDenied extends TaggedErrorClass<DocsAccessDenied>()(
   "DocsAccessDenied",
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DocsNotFound extends Schema.TaggedError<DocsNotFound>()(
+export class DocsNotFound extends TaggedErrorClass<DocsNotFound>()(
   "DocsNotFound",
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DocsConflict extends Schema.TaggedError<DocsConflict>()(
+export class DocsConflict extends TaggedErrorClass<DocsConflict>()(
   "DocsConflict",
   { status: Schema.Literal(409), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DocsInvalidInput extends Schema.TaggedError<DocsInvalidInput>()(
+export class DocsInvalidInput extends TaggedErrorClass<DocsInvalidInput>()(
   "DocsInvalidInput",
   { status: Schema.Literal(400), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DocsDataError extends Schema.TaggedError<DocsDataError>()(
+export class DocsDataError extends TaggedErrorClass<DocsDataError>()(
   "DocsDataError",
   { cause: Schema.Defect() },
 ) {}

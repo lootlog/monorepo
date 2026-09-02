@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
   asc,
@@ -70,8 +71,7 @@ export interface NotificationUserTargetJobs {
   ) => Effect.Effect<void, unknown>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationUserTargetFailure extends Schema.TaggedError<NotificationUserTargetFailure>()(
+export class NotificationUserTargetFailure extends TaggedErrorClass<NotificationUserTargetFailure>()(
   "NotificationUserTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

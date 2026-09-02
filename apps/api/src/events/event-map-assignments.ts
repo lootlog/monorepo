@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -23,8 +24,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/logging/applicatio
 import type { EventTimersPort } from "./services/event-timers.port.js";
 import { getSyntheticNpcId } from "./utils/get-synthetic-npc-id.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventMapAssignmentError extends Schema.TaggedError<EventMapAssignmentError>()(
+export class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignmentError>()(
   "EventMapAssignmentError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

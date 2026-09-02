@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, eq, gte, isNull, ne, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
@@ -37,8 +38,7 @@ const authorizedSubmissionExists = (options: AuthorizedLootOptions) =>
       AND allocation_submission."createdAt" >= ${databaseSubmissionCutoff(options.submissionCutoff)}
   )`;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootAllocationPersistenceError extends Schema.TaggedError<LootAllocationPersistenceError>()(
+export class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocationPersistenceError>()(
   "LootAllocationPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

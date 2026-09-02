@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import {
@@ -24,20 +25,17 @@ export type ChatGuildAccess = ChatIdentity & {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ChatAccessDenied extends Schema.TaggedError<ChatAccessDenied>()(
+export class ChatAccessDenied extends TaggedErrorClass<ChatAccessDenied>()(
   "ChatAccessDenied",
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ChatNotFound extends Schema.TaggedError<ChatNotFound>()(
+export class ChatNotFound extends TaggedErrorClass<ChatNotFound>()(
   "ChatNotFound",
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ChatOperationError extends Schema.TaggedError<ChatOperationError>()(
+export class ChatOperationError extends TaggedErrorClass<ChatOperationError>()(
   "ChatOperationError",
   { cause: Schema.Defect() },
 ) {}

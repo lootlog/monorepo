@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -13,8 +14,7 @@ const activeEventCondition = (referenceTime: Date) =>
     or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
   );
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class PinnedEventsPersistenceError extends Schema.TaggedError<PinnedEventsPersistenceError>()(
+export class PinnedEventsPersistenceError extends TaggedErrorClass<PinnedEventsPersistenceError>()(
   "PinnedEventsPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

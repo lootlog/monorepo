@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import {
@@ -12,14 +13,12 @@ export type MessagingCaller = {
   readonly discordId: string;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MessagingAccessDenied extends Schema.TaggedError<MessagingAccessDenied>()(
+export class MessagingAccessDenied extends TaggedErrorClass<MessagingAccessDenied>()(
   "MessagingAccessDenied",
   { status: Schema.Literal(401), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MessagingOperationError extends Schema.TaggedError<MessagingOperationError>()(
+export class MessagingOperationError extends TaggedErrorClass<MessagingOperationError>()(
   "MessagingOperationError",
   { cause: Schema.Defect() },
 ) {}

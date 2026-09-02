@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
 import { Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -39,8 +40,7 @@ export interface LootAllocationPublisher {
   ) => Effect.Effect<void, unknown>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootAllocationOperationError extends Schema.TaggedError<LootAllocationOperationError>()(
+export class LootAllocationOperationError extends TaggedErrorClass<LootAllocationOperationError>()(
   "LootAllocationOperationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
@@ -30,8 +31,7 @@ export type UpgradeCredential =
       readonly origin: string;
     };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class GatewayAuthFailure extends Schema.TaggedError<GatewayAuthFailure>()(
+export class GatewayAuthFailure extends TaggedErrorClass<GatewayAuthFailure>()(
   "GatewayAuthFailure",
   { reason: Schema.Literals(["timeout", "transport"]) },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
   ConflictException,
@@ -30,8 +31,7 @@ type WriteDatabase = Pick<
   "delete" | "insert" | "select" | "update"
 >;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DocsPersistenceError extends Schema.TaggedError<DocsPersistenceError>()(
+export class DocsPersistenceError extends TaggedErrorClass<DocsPersistenceError>()(
   "DocsPersistenceError",
   { cause: Schema.Defect() },
 ) {}

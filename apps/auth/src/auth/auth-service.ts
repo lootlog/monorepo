@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
@@ -41,8 +42,7 @@ export interface IdpTokenResponse {
   readonly scopes: ReadonlyArray<string>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class HttpResponseError extends Schema.TaggedError<HttpResponseError>()(
+export class HttpResponseError extends TaggedErrorClass<HttpResponseError>()(
   "HttpResponseError",
   {
     status: Schema.Int,

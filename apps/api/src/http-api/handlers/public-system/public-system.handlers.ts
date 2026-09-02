@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
@@ -15,8 +16,7 @@ import {
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 const LOCAL_CACHE_CONTROL = "no-store";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class PublicSystemAccessDenied extends Schema.TaggedError<PublicSystemAccessDenied>()(
+export class PublicSystemAccessDenied extends TaggedErrorClass<PublicSystemAccessDenied>()(
   "PublicSystemAccessDenied",
   {
     status: Schema.Literals([401, 403, 404]),
@@ -24,8 +24,7 @@ export class PublicSystemAccessDenied extends Schema.TaggedError<PublicSystemAcc
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class PublicSystemOperationError extends Schema.TaggedError<PublicSystemOperationError>()(
+export class PublicSystemOperationError extends TaggedErrorClass<PublicSystemOperationError>()(
   "PublicSystemOperationError",
   { cause: Schema.Defect() },
 ) {}

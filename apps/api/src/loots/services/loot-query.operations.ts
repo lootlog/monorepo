@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
@@ -20,8 +21,7 @@ type LootItemWithSnapshot = LootQueryRecord["lootItems"][number];
 type LootPlayerWithSnapshot = LootQueryRecord["lootPlayers"][number];
 type LootNpcWithSnapshot = LootQueryRecord["lootNpcs"][number];
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootQueryError extends Schema.TaggedError<LootQueryError>()(
+export class LootQueryError extends TaggedErrorClass<LootQueryError>()(
   "LootQueryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

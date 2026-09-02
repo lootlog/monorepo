@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { Effect, Schema } from "effect";
 import { ExecutionError } from "redlock";
@@ -52,8 +53,7 @@ export interface EventTimersPort {
   ) => Effect.Effect<Timer[], EventTimersError>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventTimersError extends Schema.TaggedError<EventTimersError>()(
+export class EventTimersError extends TaggedErrorClass<EventTimersError>()(
   "EventTimersError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

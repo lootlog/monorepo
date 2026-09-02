@@ -1,7 +1,7 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class BattlelogOperationFailure extends Schema.TaggedError<BattlelogOperationFailure>()(
+export class BattlelogOperationFailure extends TaggedErrorClass<BattlelogOperationFailure>()(
   "BattlelogOperationFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

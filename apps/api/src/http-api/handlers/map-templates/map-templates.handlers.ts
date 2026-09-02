@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
@@ -23,8 +24,7 @@ type StoredMapTemplate = {
   readonly createdAt: Date;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MapTemplatesAccessDenied extends Schema.TaggedError<MapTemplatesAccessDenied>()(
+export class MapTemplatesAccessDenied extends TaggedErrorClass<MapTemplatesAccessDenied>()(
   "MapTemplatesAccessDenied",
   {
     status: Schema.Literals([401, 403, 404]),
@@ -32,8 +32,7 @@ export class MapTemplatesAccessDenied extends Schema.TaggedError<MapTemplatesAcc
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MapTemplateNotFound extends Schema.TaggedError<MapTemplateNotFound>()(
+export class MapTemplateNotFound extends TaggedErrorClass<MapTemplateNotFound>()(
   "MapTemplateNotFound",
   {
     status: Schema.Literal(404),
@@ -41,8 +40,7 @@ export class MapTemplateNotFound extends Schema.TaggedError<MapTemplateNotFound>
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MapTemplatesPersistenceError extends Schema.TaggedError<MapTemplatesPersistenceError>()(
+export class MapTemplatesPersistenceError extends TaggedErrorClass<MapTemplatesPersistenceError>()(
   "MapTemplatesPersistenceError",
   {
     cause: Schema.Defect(),

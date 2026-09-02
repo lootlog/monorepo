@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   DiscordGuildSyncStatus,
@@ -52,8 +53,7 @@ type ResolveGuildResult =
   | { kind: "not_found"; lastError: string }
   | { kind: "failed"; cause: unknown };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DiscordSyncFailure extends Schema.TaggedError<DiscordSyncFailure>()(
+export class DiscordSyncFailure extends TaggedErrorClass<DiscordSyncFailure>()(
   "DiscordSyncFailure",
   {
     operation: Schema.String,

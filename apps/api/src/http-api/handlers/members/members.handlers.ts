@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import {
@@ -29,20 +30,17 @@ export type MembersGuildAccess = MembersIdentity & {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MembersAccessDenied extends Schema.TaggedError<MembersAccessDenied>()(
+export class MembersAccessDenied extends TaggedErrorClass<MembersAccessDenied>()(
   "MembersAccessDenied",
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MembersNotFound extends Schema.TaggedError<MembersNotFound>()(
+export class MembersNotFound extends TaggedErrorClass<MembersNotFound>()(
   "MembersNotFound",
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MembersOperationError extends Schema.TaggedError<MembersOperationError>()(
+export class MembersOperationError extends TaggedErrorClass<MembersOperationError>()(
   "MembersOperationError",
   { cause: Schema.Defect() },
 ) {}

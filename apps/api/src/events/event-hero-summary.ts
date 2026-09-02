@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import superjson from "superjson";
@@ -13,8 +14,7 @@ import { NotFoundException } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { EventTimersPort } from "./services/event-timers.port.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventHeroSummaryError extends Schema.TaggedError<EventHeroSummaryError>()(
+export class EventHeroSummaryError extends TaggedErrorClass<EventHeroSummaryError>()(
   "EventHeroSummaryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

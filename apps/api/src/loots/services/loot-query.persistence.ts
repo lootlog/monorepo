@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
   asc,
@@ -29,8 +30,7 @@ import {
   type LootQueryVisibilityRole,
 } from "./loot-query-filter.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootQueryPersistenceError extends Schema.TaggedError<LootQueryPersistenceError>()(
+export class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersistenceError>()(
   "LootQueryPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

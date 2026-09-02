@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import {
   isRetryableMemberRefreshStatus,
@@ -9,8 +10,7 @@ import type {
 } from "./member-refresh-scheduler.js";
 import type { MemberRefreshAttempt, MemberSyncResult } from "./member.types.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MemberRefreshFailure extends Schema.TaggedError<MemberRefreshFailure>()(
+export class MemberRefreshFailure extends TaggedErrorClass<MemberRefreshFailure>()(
   "MemberRefreshFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

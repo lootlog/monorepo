@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
@@ -46,20 +47,17 @@ export type TimersGuildAccess = TimersIdentity & {
   readonly roles: Role[];
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class TimersAccessDenied extends Schema.TaggedError<TimersAccessDenied>()(
+export class TimersAccessDenied extends TaggedErrorClass<TimersAccessDenied>()(
   "TimersAccessDenied",
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class TimersNotFound extends Schema.TaggedError<TimersNotFound>()(
+export class TimersNotFound extends TaggedErrorClass<TimersNotFound>()(
   "TimersNotFound",
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class TimersOperationError extends Schema.TaggedError<TimersOperationError>()(
+export class TimersOperationError extends TaggedErrorClass<TimersOperationError>()(
   "TimersOperationError",
   { cause: Schema.Defect() },
 ) {}

@@ -1,11 +1,11 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import { HttpBody } from "effect/unstable/http";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 
 export type OutboundHttpMethod = "GET" | "POST";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class OutboundHttpFailure extends Schema.TaggedError<OutboundHttpFailure>()(
+export class OutboundHttpFailure extends TaggedErrorClass<OutboundHttpFailure>()(
   "OutboundHttpFailure",
   {
     reason: Schema.Literals(["response-too-large", "timeout", "transport"]),

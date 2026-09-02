@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createId } from "@paralleldrive/cuid2";
 import {
   and,
@@ -27,7 +28,7 @@ import {
 } from "#src/database/schema";
 import type { CreateActivity, QueryActivities } from "./activity-model.js";
 
-export class ActivityNotFound extends Schema.TaggedError<ActivityNotFound>()(
+export class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
   "ActivityNotFound",
   { id: Schema.String },
 ) {}

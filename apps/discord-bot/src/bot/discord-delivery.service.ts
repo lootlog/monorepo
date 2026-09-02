@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Result, Schema } from "effect";
 import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
@@ -12,8 +13,7 @@ import type { RabbitPublisher } from "./rabbit-publisher.js";
 
 const discordMessageLimit = 2000;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DiscordDeliveryFailure extends Schema.TaggedError<DiscordDeliveryFailure>()(
+export class DiscordDeliveryFailure extends TaggedErrorClass<DiscordDeliveryFailure>()(
   "DiscordDeliveryFailure",
   {
     operation: Schema.Literals([

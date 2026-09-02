@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
 import { Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
@@ -36,8 +37,7 @@ export interface ProofVerificationOptions {
   readonly clanId?: number;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MargonemSigningKeyFailure extends Schema.TaggedError<MargonemSigningKeyFailure>()(
+export class MargonemSigningKeyFailure extends TaggedErrorClass<MargonemSigningKeyFailure>()(
   "MargonemSigningKeyFailure",
   {
     reason: Schema.Literals([

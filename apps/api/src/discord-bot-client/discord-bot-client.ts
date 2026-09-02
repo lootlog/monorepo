@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type {
   DiscordGuildChannelSnapshot,
   DiscordGuildSyncState,
@@ -15,8 +16,7 @@ type GuildChannels = {
   readonly syncState: DiscordGuildSyncState;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DiscordBotClientFailure extends Schema.TaggedError<DiscordBotClientFailure>()(
+export class DiscordBotClientFailure extends TaggedErrorClass<DiscordBotClientFailure>()(
   "DiscordBotClientFailure",
   {
     reason: Schema.Literals(["invalid-response", "status"]),

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
   eq,
@@ -158,8 +159,7 @@ const guildColumns = (bucket: boolean): FilterColumns => {
   };
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class KillStatsPersistenceError extends Schema.TaggedError<KillStatsPersistenceError>()(
+export class KillStatsPersistenceError extends TaggedErrorClass<KillStatsPersistenceError>()(
   "KillStatsPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
@@ -28,8 +29,7 @@ import {
   LootlogApi,
 } from "../../lootlog-api.generated.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class InternalGuildsOperationError extends Schema.TaggedError<InternalGuildsOperationError>()(
+export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
   "InternalGuildsOperationError",
   { cause: Schema.Defect() },
 ) {}

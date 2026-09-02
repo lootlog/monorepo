@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Effect, Schema } from "effect";
@@ -19,8 +20,7 @@ import {
   type KillStatsPeriod,
 } from "./utils/kill-stats-period.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class GuildKillQueriesError extends Schema.TaggedError<GuildKillQueriesError>()(
+export class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
   "GuildKillQueriesError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

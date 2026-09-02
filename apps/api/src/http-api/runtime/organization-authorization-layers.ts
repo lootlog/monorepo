@@ -1,4 +1,5 @@
-import { Effect, Layer, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { Effect, Layer } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import {
@@ -65,8 +66,7 @@ import {
   type OrganizationContext,
 } from "./organization-context.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-class OrganizationForbidden extends Schema.TaggedError<OrganizationForbidden>()(
+class OrganizationForbidden extends TaggedErrorClass<OrganizationForbidden>()(
   "OrganizationForbidden",
   {},
 ) {}

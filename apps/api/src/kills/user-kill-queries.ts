@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
@@ -14,8 +15,7 @@ import { getKillStatsPeriodStart } from "./utils/kill-stats-period.js";
 const CACHE_TTL_SECONDS = 30;
 const CACHE_PREFIX = "kill-stats";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class UserKillQueriesError extends Schema.TaggedError<UserKillQueriesError>()(
+export class UserKillQueriesError extends TaggedErrorClass<UserKillQueriesError>()(
   "UserKillQueriesError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

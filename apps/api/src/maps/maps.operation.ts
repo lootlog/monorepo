@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { RedisService } from "#src/redis/redis.service";
@@ -6,8 +7,7 @@ const cacheKey = "maps:all";
 const cacheTtlSeconds = 60 * 60;
 const responseLimitBytes = 1024 * 1024;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MapsOperationFailure extends Schema.TaggedError<MapsOperationFailure>()(
+export class MapsOperationFailure extends TaggedErrorClass<MapsOperationFailure>()(
   "MapsOperationFailure",
   {
     reason: Schema.Literals([
