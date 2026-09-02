@@ -1,8 +1,25 @@
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Redacted } from "effect";
-import { RabbitMessaging } from "@lootlog/messaging";
+import {
+  RabbitMessaging,
+  type FailurePolicy,
+  type RabbitDelivery,
+} from "@lootlog/messaging";
+import {
+  RabbitRoutingKey,
+  type RabbitRoutingKeyName,
+} from "@lootlog/protocol/rabbit/topology";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Permission } from "@lootlog/schema/permissions";
+import type {
+  DiscordGuildChannelDeletedEvent,
+  DiscordGuildChannelUpsertedEvent,
+  DiscordGuildChannelsSyncFailedEvent,
+  DiscordGuildChannelsSyncedEvent,
+  DiscordGuildSyncStateUpdatedEvent,
+  DiscordNotificationDeliveryResultEvent,
+  LootCreatedNotificationEventV2,
+} from "@lootlog/schema/notifications";
 import { Queue, Worker } from "bullmq";
 import type { Logger } from "winston";
 import { AuthService } from "#src/auth/auth.service";
@@ -17,6 +34,7 @@ import { DiscordService } from "#src/discord/discord.service";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { DiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
+import { Queue as ApiQueue } from "#src/enum/queue.enum";
 import { EVENT_HERO_KILL_QUEUE } from "#src/events/constants/event-hero-kill-queue.constant";
 import { RESPAWN_WINDOW_QUEUE } from "#src/events/constants/respawn-queue.constant";
 import { EventsAssignmentController } from "#src/events/events-assignment.controller";
@@ -57,6 +75,7 @@ import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
 import { GuildsService } from "#src/guilds/guilds.service";
+import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
 import { GuildConfigurationService } from "#src/guilds/guild-configuration.service";
 import { GuildAccessSummaryService } from "#src/guilds/guild-access-summary.service";
 import { UserGuildAccessResolver } from "#src/guilds/user-guild-access-resolver.service";
@@ -104,6 +123,9 @@ import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/pub
 import { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { RolesRepository } from "#src/roles/roles.repository";
 import { RolesService } from "#src/roles/roles.service";
+import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
+import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
+import type { UpdateRoleDto } from "#src/roles/dto/update-role.dto";
 import { ReservationEventsPublisher } from "#src/reservations/reservation-events.publisher";
 import { ReservationSharingRepository } from "#src/reservations/reservation-sharing.repository";
 import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
@@ -124,6 +146,7 @@ import { NotificationMatchingService } from "#src/notifications/notification-mat
 import { NotificationRuleService } from "#src/notifications/notification-rule.service";
 import { NotificationTargetService } from "#src/notifications/notification-target.service";
 import { NotificationsDispatchProcessor } from "#src/notifications/notifications-dispatch.processor";
+import { NotificationsEventsHandler } from "#src/notifications/notifications-events.handler";
 import { NotificationsGuildController } from "#src/notifications/notifications-guild.controller";
 import { NotificationsRepository } from "#src/notifications/notifications.repository";
 import { NotificationsUserController } from "#src/notifications/notifications-user.controller";
@@ -1211,6 +1234,237 @@ const NativeNotificationsServicesLive = Layer.effect(
 
 const NativeNotificationsData = Layer.unwrap(
   Effect.map(NativeNotificationsServices, ({ layer }) => layer),
+);
+
+interface PresenceCoveragePayload {
+  readonly guildId: string;
+  readonly mapName: string;
+  readonly discordId: string;
+  readonly hasPlayer: boolean;
+  readonly isAfk?: boolean;
+}
+
+interface TimerUpdatedPayload {
+  readonly guildId: string;
+  readonly world: string;
+  readonly npcId: number;
+  readonly timerKey: string;
+  readonly minSpawnTime: string;
+  readonly maxSpawnTime: string;
+  readonly npc?: { readonly name?: string } | null;
+}
+
+interface TimerDeletedPayload {
+  readonly guildId: string;
+  readonly world: string;
+  readonly timerKey: string;
+  readonly npcId?: number;
+}
+
+const rabbitRetryPolicy = (
+  retryRoutingKey: RabbitRoutingKeyName,
+  deadLetterRoutingKey: RabbitRoutingKeyName,
+): FailurePolicy => ({
+  strategy: "retry",
+  maxRetries: 3,
+  retryRoutingKey,
+  deadLetterRoutingKey,
+});
+
+const decodeRabbitJson = <Payload>(delivery: RabbitDelivery): Payload =>
+  JSON.parse(new TextDecoder().decode(delivery.content)) as Payload;
+
+export const NativeRabbitConsumers = Layer.effectDiscard(
+  Effect.gen(function* () {
+    const rabbit = yield* RabbitMessaging;
+    const redis = yield* ApiRedis;
+    const { runtime } = yield* NativeMemberServices;
+    const { guilds, channels } = yield* NativeUsersGuildsServices;
+    const { events } = yield* NativeEventsServices;
+    const { jobs, matching, repository, targets } =
+      yield* NativeNotificationsServices;
+    const roles = new RolesService(
+      new RolesRepository(runtime),
+      nativeLogger,
+      redis,
+    );
+    const notificationEvents = new NotificationsEventsHandler(
+      repository,
+      jobs,
+      matching,
+      targets,
+      guilds,
+    );
+
+    const consume = <Payload>(
+      queue: string,
+      handler: (
+        payload: Payload,
+        delivery: RabbitDelivery,
+      ) => Promise<void> | void,
+      failurePolicy: FailurePolicy = { strategy: "nack" },
+    ) =>
+      Effect.acquireRelease(
+        rabbit.consume({ queue, failurePolicy }, (delivery) =>
+          Effect.tryPromise({
+            try: () =>
+              Promise.resolve(
+                handler(decodeRabbitJson<Payload>(delivery), delivery),
+              ),
+            catch: (cause) => cause,
+          }),
+        ),
+        ({ cancel }) => cancel.pipe(Effect.ignore),
+      );
+
+    const retry = {
+      guildCreate: rabbitRetryPolicy(
+        RabbitRoutingKey.GUILDS_CREATE_RETRY,
+        RabbitRoutingKey.GUILDS_CREATE_DLQ,
+      ),
+      guildUpdate: rabbitRetryPolicy(
+        RabbitRoutingKey.GUILDS_UPDATE_RETRY,
+        RabbitRoutingKey.GUILDS_UPDATE_DLQ,
+      ),
+      guildDelete: rabbitRetryPolicy(
+        RabbitRoutingKey.GUILDS_DELETE_RETRY,
+        RabbitRoutingKey.GUILDS_DELETE_DLQ,
+      ),
+      roleCreate: rabbitRetryPolicy(
+        RabbitRoutingKey.GUILDS_CREATE_ROLE_RETRY,
+        RabbitRoutingKey.GUILDS_CREATE_ROLE_DLQ,
+      ),
+      roleUpdate: rabbitRetryPolicy(
+        RabbitRoutingKey.GUILDS_UPDATE_ROLE_RETRY,
+        RabbitRoutingKey.GUILDS_UPDATE_ROLE_DLQ,
+      ),
+      roleDelete: rabbitRetryPolicy(
+        RabbitRoutingKey.GUILDS_DELETE_ROLE_RETRY,
+        RabbitRoutingKey.GUILDS_DELETE_ROLE_DLQ,
+      ),
+    } as const;
+
+    yield* consume<CreateGuildDto>(
+      ApiQueue.GUILDS_CREATE,
+      async (data) => guilds.createGuild(data),
+      retry.guildCreate,
+    );
+    yield* consume<CreateGuildDto>(
+      ApiQueue.GUILDS_UPDATE,
+      async (data) => guilds.updateGuild(data),
+      retry.guildUpdate,
+    );
+    yield* consume<CreateGuildDto>(
+      ApiQueue.GUILDS_DELETE,
+      async (data) => guilds.deleteGuild(data),
+      retry.guildDelete,
+    );
+    yield* consume<CreateRoleDto>(
+      ApiQueue.GUILDS_CREATE_ROLE,
+      async (data) => roles.createOrUpdateRole(data),
+      retry.roleCreate,
+    );
+    yield* consume<UpdateRoleDto>(
+      ApiQueue.GUILDS_UPDATE_ROLE,
+      async (data) => roles.createOrUpdateRole(data),
+      retry.roleUpdate,
+    );
+    yield* consume<DeleteRoleDto>(
+      ApiQueue.GUILDS_DELETE_ROLE,
+      async (data) => roles.deleteRole(data),
+      retry.roleDelete,
+    );
+
+    const dlqQueues = [
+      ApiQueue.GUILDS_CREATE_DLQ,
+      ApiQueue.GUILDS_UPDATE_DLQ,
+      ApiQueue.GUILDS_DELETE_DLQ,
+      ApiQueue.GUILDS_CREATE_ROLE_DLQ,
+      ApiQueue.GUILDS_UPDATE_ROLE_DLQ,
+      ApiQueue.GUILDS_DELETE_ROLE_DLQ,
+    ] as const;
+    for (const queue of dlqQueues) {
+      yield* consume<Record<string, unknown>>(queue, (data, delivery) =>
+        Effect.runSync(
+          Effect.logError(
+            "RabbitMQ DLQ message requires manual intervention",
+          ).pipe(
+            Effect.annotateLogs({
+              queue,
+              data,
+              retryCount:
+                delivery.properties.headers?.["x-lootlog-retry-count"],
+            }),
+          ),
+        ),
+      );
+    }
+
+    yield* consume<DiscordGuildChannelsSyncedEvent>(
+      "backend-discord-guild-channels-synced",
+      (data) => channels.handleGuildChannelsSynced(data),
+    );
+    yield* consume<DiscordGuildChannelUpsertedEvent>(
+      "backend-discord-guild-channel-upserted",
+      (data) => channels.handleGuildChannelUpserted(data),
+    );
+    yield* consume<DiscordGuildChannelDeletedEvent>(
+      "backend-discord-guild-channel-deleted",
+      (data) => channels.handleGuildChannelDeleted(data),
+    );
+    yield* consume<DiscordGuildChannelsSyncFailedEvent>(
+      "backend-discord-guild-channels-sync-failed",
+      (data) => channels.handleGuildChannelsSyncFailed(data),
+    );
+    yield* consume<DiscordGuildSyncStateUpdatedEvent>(
+      "backend-discord-guild-sync-state-updated",
+      (data) => channels.handleGuildSyncStateUpdated(data),
+    );
+
+    yield* consume<PresenceCoveragePayload>(
+      ApiQueue.PRESENCE_COVERAGE_CHECK,
+      async ({ guildId, mapName, discordId, hasPlayer, isAfk }) => {
+        try {
+          await events.handlePlayerPresenceChange(
+            guildId,
+            mapName,
+            discordId,
+            hasPlayer,
+            isAfk ?? false,
+          );
+        } catch (error) {
+          nativeLogger.log({
+            level: "error",
+            message: "Failed to handle player presence change",
+            error: error instanceof Error ? error.message : error,
+            guildId,
+            mapName,
+          });
+        }
+      },
+    );
+
+    yield* consume<TimerUpdatedPayload>(
+      "backend-notifications-timer-updated",
+      (data) => notificationEvents.handleTimerUpdated(data),
+    );
+    yield* consume<TimerDeletedPayload>(
+      "backend-notifications-timer-deleted",
+      (data) => notificationEvents.handleTimerDeleted(data),
+    );
+    yield* consume<LootCreatedNotificationEventV2>(
+      "backend-notifications-loot-created",
+      (data) => notificationEvents.handleLootCreated(data),
+    );
+    yield* consume<DiscordNotificationDeliveryResultEvent>(
+      "backend-notifications-delivery-result",
+      (data) => notificationEvents.handleDeliveryResult(data),
+    );
+    yield* consume<DiscordGuildChannelDeletedEvent>(
+      "backend-notifications-discord-guild-channel-deleted",
+      (data) => notificationEvents.handleDiscordGuildChannelDeleted(data),
+    );
+  }),
 );
 
 export const NativeBullWorkers = Layer.effectDiscard(
