@@ -1,5 +1,5 @@
 import { RabbitMessaging } from "@lootlog/messaging";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, FiberSet, Layer } from "effect";
 import { AuthService } from "#src/auth/auth-service";
 import { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import {
@@ -7,6 +7,10 @@ import {
   type GatewayConfiguration,
 } from "#src/config/gateway-config";
 import { GuildStore } from "#src/guilds/guild-store";
+import {
+  makeBackgroundTaskRunner,
+  type BackgroundTaskRunner,
+} from "#src/platform/background-tasks";
 import { RedisGatewayStore } from "#src/platform/redis-store";
 import {
   gatewayQueueDefinitions,
@@ -28,6 +32,7 @@ export interface GatewayApplicationService {
   readonly presence: PresenceStore;
   readonly commands: CommandHandler;
   readonly activity: ActivityPublisher;
+  readonly runBackground: BackgroundTaskRunner;
 }
 
 export class GatewayApplication extends Context.Service<
@@ -39,6 +44,10 @@ export class GatewayApplication extends Context.Service<
     Effect.gen(function* () {
       const config = yield* GatewayConfig;
       const messaging = yield* RabbitMessaging;
+      const backgroundFibers = yield* FiberSet.make<void, never>();
+      const runBackgroundEffect =
+        yield* FiberSet.runtime(backgroundFibers)<never>();
+      const runBackground = makeBackgroundTaskRunner(runBackgroundEffect);
       const redis = yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: async () => {
@@ -52,10 +61,16 @@ export class GatewayApplication extends Context.Service<
         (store) => Effect.promise(() => store.close()),
       );
       const auth = new AuthService(config);
-      const hub = new RealtimeHub(config, redis);
+      const hub = new RealtimeHub(config, redis, runBackground);
       yield* Effect.promise(() => hub.start());
       const coverage = new CoveragePublisher(messaging);
-      const presence = new PresenceStore(redis, hub, Date.now, coverage);
+      const presence = new PresenceStore(
+        redis,
+        hub,
+        Date.now,
+        coverage,
+        runBackground,
+      );
       yield* Effect.acquireRelease(
         Effect.sync(() => presence.start()),
         () => Effect.sync(() => presence.stop()),
@@ -97,6 +112,7 @@ export class GatewayApplication extends Context.Service<
         presence,
         commands,
         activity,
+        runBackground,
       });
     }),
   );
@@ -212,15 +228,18 @@ export const GatewayServer = Layer.effectDiscard(
               application.hub.register(socket);
             },
             message(socket, message) {
-              void application.commands.handle(socket, message);
+              application.runBackground("websocket.message", () =>
+                application.commands.handle(socket, message),
+              );
             },
             close(socket) {
               application.hub.unregister(socket);
-              void application.activity.publish(
-                "DISCONNECT_EVENT",
-                socket.data,
+              application.runBackground("websocket.disconnect-activity", () =>
+                application.activity.publish("DISCONNECT_EVENT", socket.data),
               );
-              void application.presence.disconnect(socket.data);
+              application.runBackground("websocket.disconnect-presence", () =>
+                application.presence.disconnect(socket.data),
+              );
             },
           },
         }),
