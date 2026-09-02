@@ -63,7 +63,7 @@
       ]
     }
   },
-  "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
+  "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**", "repos/**"],
   "ignoreDependencies": [
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
