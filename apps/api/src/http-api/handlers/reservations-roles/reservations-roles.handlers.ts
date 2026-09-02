@@ -8,6 +8,7 @@ import type { ReservationMutationsService } from "#src/reservations/reservation-
 import type { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import type { ReservationViewerContext } from "#src/reservations/reservation-viewer";
 import type { ReservationsService } from "#src/reservations/reservations.service";
+import type { ReservationReadService } from "#src/reservations/reservation-read.service";
 import type { RolesService } from "#src/roles/roles.service";
 import type { CreateReservationDto as LegacyCreateReservationDto } from "#src/reservations/dto/create-reservation.dto";
 import type { MyReservationsQueryDto as LegacyMyReservationsQueryDto } from "#src/reservations/dto/reservation-query.dto";
@@ -87,13 +88,6 @@ const mutableDto = <A>(value: unknown): A =>
 export class ReservationsRolesData extends Context.Service<
   ReservationsRolesData,
   {
-    readonly listSpots: (context: ReservationViewerContext) => DataEffect;
-    readonly listWindow: (
-      context: ReservationViewerContext,
-      spotId: string,
-      from: string,
-      to: string,
-    ) => DataEffect;
     readonly create: (
       context: ReservationViewerContext,
       spotId: string,
@@ -102,16 +96,6 @@ export class ReservationsRolesData extends Context.Service<
     readonly deleteVisible: (
       context: ReservationViewerContext,
       reservationId: number,
-    ) => DataEffect;
-    readonly pinSpot: (
-      userId: string,
-      guildId: string,
-      spotId: string,
-    ) => DataEffect;
-    readonly unpinSpot: (
-      userId: string,
-      guildId: string,
-      spotId: string,
     ) => DataEffect;
     readonly listMine: (
       identity: ReservationsRolesIdentity,
@@ -140,12 +124,6 @@ export class ReservationsRolesData extends Context.Service<
     return Layer.succeed(
       ReservationsRolesData,
       ReservationsRolesData.of({
-        listSpots: (context) =>
-          attempt(() => options.reservations.listSpots(context)),
-        listWindow: (context, spotId, from, to) =>
-          attempt(() =>
-            options.reservations.listWindow(context, spotId, from, to),
-          ),
         create: (context, spotId, payload) =>
           attempt(() =>
             options.mutations.create({
@@ -157,12 +135,6 @@ export class ReservationsRolesData extends Context.Service<
         deleteVisible: (context, reservationId) =>
           attempt(() =>
             options.mutations.deleteVisible({ context, reservationId }),
-          ),
-        pinSpot: (userId, guildId, spotId) =>
-          attempt(() => options.reservations.pinSpot(userId, guildId, spotId)),
-        unpinSpot: (userId, guildId, spotId) =>
-          attempt(() =>
-            options.reservations.unpinSpot(userId, guildId, spotId),
           ),
         listMine: ({ userId, discordId }, query) =>
           attempt(() =>
@@ -191,6 +163,48 @@ export class ReservationsRolesData extends Context.Service<
           ),
       }),
     );
+  }
+}
+
+export class ReservationReadData extends Context.Service<
+  ReservationReadData,
+  {
+    readonly listSpots: (context: ReservationViewerContext) => DataEffect;
+    readonly listWindow: (
+      context: ReservationViewerContext,
+      spotId: string,
+      from: string,
+      to: string,
+    ) => DataEffect;
+    readonly pinSpot: (
+      userId: string,
+      guildId: string,
+      spotId: string,
+    ) => DataEffect;
+    readonly unpinSpot: (
+      userId: string,
+      guildId: string,
+      spotId: string,
+    ) => DataEffect;
+  }
+>()("@lootlog/api/http-api/reservation-read/data") {
+  static makeService(
+    service: ReservationReadService,
+  ): ReservationReadData["Service"] {
+    const attempt = (operation: () => PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new ReservationsRolesOperationError({ cause }),
+      });
+    return ReservationReadData.of({
+      listSpots: (context) => attempt(() => service.listSpots(context)),
+      listWindow: (context, spotId, from, to) =>
+        attempt(() => service.listWindow(context, spotId, from, to)),
+      pinSpot: (userId, guildId, spotId) =>
+        attempt(() => service.pinSpot(userId, guildId, spotId)),
+      unpinSpot: (userId, guildId, spotId) =>
+        attempt(() => service.unpinSpot(userId, guildId, spotId)),
+    });
   }
 }
 
@@ -307,6 +321,12 @@ const data = <A>(
   ) => Effect.Effect<A, ReservationsRolesOperationError>,
 ) => Effect.flatMap(ReservationsRolesData, operation);
 
+const readData = <A>(
+  operation: (
+    service: ReservationReadData["Service"],
+  ) => Effect.Effect<A, ReservationsRolesOperationError>,
+) => Effect.flatMap(ReservationReadData, operation);
+
 const rolesData = <A>(
   operation: (
     service: RolesData["Service"],
@@ -388,7 +408,9 @@ export const listReservationSpots = Effect.fn("listReservationSpots")(
     const access = yield* requireGuild(guildId, [
       Permission.LOOTLOG_RESERVATIONS_READ,
     ]);
-    const value = yield* data((service) => service.listSpots(toViewer(access)));
+    const value = yield* readData((service) =>
+      service.listSpots(toViewer(access)),
+    );
     return yield* decode(ListReservationSpots200, value);
   },
 );
@@ -449,7 +471,7 @@ export const ReservationsHandlers = HttpApiBuilder.group(
             const access = yield* requireGuild(params.guildId, [
               Permission.LOOTLOG_RESERVATIONS_READ,
             ]);
-            const value = yield* data((service) =>
+            const value = yield* readData((service) =>
               service.listWindow(
                 toViewer(access),
                 params.spotId,
@@ -477,7 +499,7 @@ export const ReservationsHandlers = HttpApiBuilder.group(
             const access = yield* requireGuild(params.guildId, [
               Permission.LOOTLOG_RESERVATIONS_READ,
             ]);
-            yield* data((service) =>
+            yield* readData((service) =>
               service.pinSpot(access.userId, access.guildId, params.spotId),
             );
           }),
@@ -489,7 +511,7 @@ export const ReservationsHandlers = HttpApiBuilder.group(
             const access = yield* requireGuild(params.guildId, [
               Permission.LOOTLOG_RESERVATIONS_READ,
             ]);
-            yield* data((service) =>
+            yield* readData((service) =>
               service.unpinSpot(access.userId, access.guildId, params.spotId),
             );
           }),

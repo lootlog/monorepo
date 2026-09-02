@@ -25,6 +25,9 @@ import { RolesService } from "#src/roles/roles.service";
 import { ReservationEventsPublisher } from "#src/reservations/reservation-events.publisher";
 import { ReservationSharingRepository } from "#src/reservations/reservation-sharing.repository";
 import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
+import { ReservationCatalogService } from "#src/reservations/reservation-catalog.service";
+import { ReservationReadService } from "#src/reservations/reservation-read.service";
+import { ReservationsRepository } from "#src/reservations/reservations.repository";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
@@ -39,6 +42,7 @@ import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import {
   ReservationSharingData,
+  ReservationReadData,
   RolesData,
 } from "../handlers/reservations-roles/reservations-roles.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
@@ -304,6 +308,31 @@ const NativeReservationSharingData = Layer.unwrap(
   ),
 );
 
+const NativeReservationReadData = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    return makeScopedCompatibilityLayer(ReservationReadData, (runtime) => {
+      const guilds = new GuildsRepository(runtime);
+      const sharing = new ReservationSharingService(
+        new ReservationSharingRepository(runtime),
+        {
+          getGuildsForRequiredPermissions: (discordId, permissions) =>
+            guilds.findForPermissions(discordId, permissions),
+        },
+        new ReservationEventsPublisher(makeAmqpAdapter(rabbit)),
+      );
+      return ReservationReadData.makeService(
+        new ReservationReadService(
+          new ReservationsRepository(runtime),
+          new ReservationCatalogService(redis),
+          sharing,
+        ),
+      );
+    });
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -318,4 +347,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeRolesData,
   NativeGuildConfigurationData,
   NativeReservationSharingData,
+  NativeReservationReadData,
 ).pipe(Layer.provide(ApiDatabaseLive));
