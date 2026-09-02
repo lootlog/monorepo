@@ -46,6 +46,7 @@
     "@lootlog/domain": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@nestjs/bullmq": "catalog:",
     "@nestjs/common": "catalog:",
