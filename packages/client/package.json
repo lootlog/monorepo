@@ -5,6 +5,9 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
+  "imports": {
+    "#test/*": "./test/*.ts"
+  },
   "exports": {
     "./realtime": "./src/realtime/index.ts",
     "./transport": "./src/transport.ts",
@@ -17,7 +20,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src/*.ts src/realtime scripts orval.config.ts --deny-warnings",
-    "test": "vitest run",
+    "test": "bun test",
     "client:check": "bun ./scripts/check-openapi-parity.ts && bun ./scripts/check-generated.ts",
     "client:generate": "bun ./scripts/generate.ts",
     "openapi:parity": "bun ./scripts/check-openapi-parity.ts"
@@ -28,12 +31,12 @@
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@tanstack/react-query": "catalog:",
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "orval": "^8.26.0",
     "react": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:",
     "yaml": "catalog:"
   },
   "peerDependencies": {

@@ -2,7 +2,7 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { RealtimeClient, type RealtimeWebSocket } from "./realtime-client.js";
 
 type Listener = (event: { readonly data?: unknown }) => void;

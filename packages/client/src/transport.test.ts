@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import {
   type ApiRequestContext,
   ApiError,
@@ -9,6 +9,11 @@ import {
   getApiErrorStatus,
   isApiError,
 } from "./transport";
+
+type TestFetch = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
 
 describe("API client transport", () => {
   let restoreConfiguration: (() => void) | undefined;
@@ -21,7 +26,7 @@ describe("API client transport", () => {
   });
 
   it("uses configured service defaults and lets request options override them", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+    const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         headers: { "content-type": "application/json" },
         status: 200,
@@ -54,7 +59,7 @@ describe("API client transport", () => {
     });
 
     expect(response).toEqual({ ok: true });
-    expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(fetchImplementation).toHaveBeenCalledTimes(1);
 
     const [requestUrl, requestInit] = fetchImplementation.mock.calls[0] ?? [];
     expect(String(requestUrl)).toBe(
@@ -69,7 +74,7 @@ describe("API client transport", () => {
   });
 
   it("preserves the receiver for a service-configured fetch", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>(function (
+    const fetchImplementation = vi.fn<TestFetch>(function (
       this: typeof globalThis | undefined,
       _input: RequestInfo | URL,
       _init?: RequestInit,
@@ -89,15 +94,15 @@ describe("API client transport", () => {
     await expect(createApiClient("main").get("/status")).resolves.toEqual({
       ok: true,
     });
-    expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(fetchImplementation).toHaveBeenCalledTimes(1);
   });
 
   it("supports isolated per-request configuration without global state", async () => {
     const firstFetch = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "first" }));
     const secondFetch = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "second" }));
 
     const [firstResponse, secondResponse] = await Promise.all([
@@ -126,7 +131,7 @@ describe("API client transport", () => {
   });
 
   it("preserves the receiver for a per-request fetch override", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>(function (
+    const fetchImplementation = vi.fn<TestFetch>(function (
       this: typeof globalThis | undefined,
       _input: RequestInfo | URL,
       _init?: RequestInit,
@@ -145,15 +150,15 @@ describe("API client transport", () => {
         },
       }),
     ).resolves.toEqual({ ok: true });
-    expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(fetchImplementation).toHaveBeenCalledTimes(1);
   });
 
   it("restores nested configurations safely when disposed out of order", async () => {
     const firstFetch = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "first" }));
     const secondFetch = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "second" }));
     const restoreFirst = configureApiClients({
       main: {
@@ -182,7 +187,7 @@ describe("API client transport", () => {
   it("normalizes failed responses and notifies the configured error handler", async () => {
     const onError =
       vi.fn<(error: ApiError<unknown>, context: ApiRequestContext) => void>();
-    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+    const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(
       new Response(JSON.stringify({ message: ["Session expired"] }), {
         headers: { "content-type": "application/json" },
         status: 401,
@@ -206,7 +211,7 @@ describe("API client transport", () => {
       url: "https://auth.example.test/session",
     });
 
-    expect(onError).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledTimes(1);
     const error = onError.mock.calls[0]?.[0];
     expect(isApiError(error)).toBe(true);
     expect(getApiErrorStatus(error)).toBe(401);
@@ -216,7 +221,7 @@ describe("API client transport", () => {
   it("preserves the network failure as the cause of ApiError", async () => {
     const networkError = new TypeError("Connection refused");
     const fetchImplementation = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockRejectedValue(networkError);
 
     const request = executeApiRequest("main", "/healthz", {
@@ -238,7 +243,7 @@ describe("API client transport", () => {
 
   it("serializes JSON request bodies without replacing caller headers", async () => {
     const fetchImplementation = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ id: "created" }));
     const client = createApiClient("main", {
       baseUrl: "https://api.example.test",
@@ -262,7 +267,7 @@ describe("API client transport", () => {
   });
 
   it("returns text and empty responses without forcing JSON parsing", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>();
+    const fetchImplementation = vi.fn<TestFetch>();
     fetchImplementation
       .mockResolvedValueOnce(
         new Response("ready", {
@@ -294,7 +299,7 @@ describe("API client transport", () => {
 
   it("uses an absolute request URL without service configuration", async () => {
     const fetchImplementation = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ ok: true }));
     vi.stubGlobal("fetch", fetchImplementation);
 
@@ -308,7 +313,7 @@ describe("API client transport", () => {
 
   it("uses the global fetch fallback", async () => {
     const fetchImplementation = vi
-      .fn<typeof fetch>()
+      .fn<TestFetch>()
       .mockResolvedValue(Response.json({ ok: true }));
     vi.stubGlobal("fetch", fetchImplementation);
     restoreConfiguration = configureApiClients({
@@ -320,7 +325,7 @@ describe("API client transport", () => {
     await expect(createApiClient("main").get("/status")).resolves.toEqual({
       ok: true,
     });
-    expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(fetchImplementation).toHaveBeenCalledTimes(1);
   });
 
   it("reports when fetch is unavailable in the current runtime", async () => {
