@@ -65,13 +65,14 @@ on the rewrite branch.
   alone is insufficient, incomplete identity fails closed with 401, concurrent
   requests cannot share identity, and the OpenAPI contract still marks exactly
   194 operations as protected while leaving the same 5 operations public.
-- Chat, Members, Reservations/Roles, Users/Guilds, Lootlog Config, Docs,
-  Events, Kills/Loots, and Notifications now share one Organization
-  authorization adapter. It preserves the legacy Redis fail-open member lookup
-  and vanity resolution, passes the canonical Organization and existing
-  member/role snapshot to data operations, and keeps missing Organizations
-  (404) distinct from missing membership or capabilities (403). Eight focused
-  runtime tests and the full 1,060-test API suite pass.
+- All 12 Organization-aware authorization ports now share one adapter. This
+  includes Chat, Members, Reservations/Roles, Users/Guilds, Lootlog Config,
+  Docs, Events, Kills/Loots, Notifications, Map Templates, Timers, and the
+  authenticated stats-card operation. The adapter preserves the legacy Redis
+  fail-open member lookup and vanity resolution, passes the canonical
+  Organization and existing member/role snapshot to data operations, and keeps
+  missing Organizations (404) distinct from missing membership or capabilities
+  (403). Eight focused runtime tests and the full 1,060-test API suite pass.
 - Activity's legacy migration chain and Drizzle baseline match mechanically on
   a real TimescaleDB, including column order, types, defaults, constraints,
   indexes, one-day chunks, and seven-day retention. Positive and negative

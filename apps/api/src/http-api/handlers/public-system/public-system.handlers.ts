@@ -21,7 +21,7 @@ const LOCAL_CACHE_CONTROL = "no-store";
 export class PublicSystemAccessDenied extends Schema.TaggedError<PublicSystemAccessDenied>()(
   "PublicSystemAccessDenied",
   {
-    status: Schema.Literals([401, 403]),
+    status: Schema.Literals([401, 403, 404]),
     code: Schema.String,
   },
 ) {}
@@ -38,7 +38,7 @@ export class PublicSystemAuthorization extends Context.Service<
     readonly requireCapability: (options: {
       readonly guildId: string;
       readonly anyOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<void, PublicSystemAccessDenied>;
+    }) => Effect.Effect<{ readonly guildId: string }, PublicSystemAccessDenied>;
   }
 >()("@lootlog/api/http-api/public-system/authorization") {}
 
@@ -106,7 +106,7 @@ export const refreshStatsCard = Effect.fn("refreshStatsCard")(function* (
   guildId: string,
 ) {
   const authorization = yield* PublicSystemAuthorization;
-  yield* authorization.requireCapability({
+  const access = yield* authorization.requireCapability({
     guildId,
     anyOf: [Permission.OWNER, Permission.ADMIN],
   });
@@ -114,7 +114,7 @@ export const refreshStatsCard = Effect.fn("refreshStatsCard")(function* (
   const data = yield* PublicSystemData;
   return yield* decode(
     AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
-    yield* data.refreshStatsCard(guildId),
+    yield* data.refreshStatsCard(access.guildId),
   );
 });
 

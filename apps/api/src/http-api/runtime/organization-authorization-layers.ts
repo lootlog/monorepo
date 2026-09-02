@@ -26,6 +26,10 @@ import {
   LootlogConfigAuthorization,
 } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import {
+  MapTemplatesAccessDenied,
+  MapTemplatesAuthorization,
+} from "../handlers/map-templates/map-templates.handlers.js";
+import {
   NotificationsAccessDenied,
   NotificationsAuthorization,
   NotificationsNotFound,
@@ -40,6 +44,15 @@ import {
   ReservationsRolesAuthorization,
   ReservationsRolesNotFound,
 } from "../handlers/reservations-roles/reservations-roles.handlers.js";
+import {
+  PublicSystemAccessDenied,
+  PublicSystemAuthorization,
+} from "../handlers/public-system/public-system.handlers.js";
+import {
+  TimersAccessDenied,
+  TimersAuthorization,
+  TimersNotFound,
+} from "../handlers/timers/timers.handlers.js";
 import {
   UsersGuildsAccessDenied,
   UsersGuildsAuthorization,
@@ -363,6 +376,78 @@ const notificationsAuthorization = Effect.map(
     }),
 );
 
+const mapTemplatesAuthorization = Effect.map(
+  OrganizationContextLookup,
+  (lookup) =>
+    MapTemplatesAuthorization.of({
+      requireCapability: ({ guildId, capability }) =>
+        resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
+          Effect.map(({ context }) => ({ guildId: context.guildId })),
+          Effect.mapError((error) =>
+            error instanceof OrganizationNotFound
+              ? new MapTemplatesAccessDenied({
+                  status: 404,
+                  code: "GUILD_NOT_FOUND",
+                })
+              : new MapTemplatesAccessDenied({
+                  status: 403,
+                  code: "FORBIDDEN",
+                }),
+          ),
+        ),
+    }),
+);
+
+const publicSystemAuthorization = Effect.map(
+  OrganizationContextLookup,
+  (lookup) =>
+    PublicSystemAuthorization.of({
+      requireCapability: ({ guildId, anyOf }) =>
+        resolveAccess(lookup, guildId, { anyOf }).pipe(
+          Effect.map(({ context }) => ({ guildId: context.guildId })),
+          Effect.mapError((error) =>
+            error instanceof OrganizationNotFound
+              ? new PublicSystemAccessDenied({
+                  status: 404,
+                  code: "GUILD_NOT_FOUND",
+                })
+              : new PublicSystemAccessDenied({
+                  status: 403,
+                  code: "FORBIDDEN",
+                }),
+          ),
+        ),
+    }),
+);
+
+const timersAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
+  TimersAuthorization.of({
+    identity: requestScopedIdentity,
+    requireGuild: ({ guildId, capability }) =>
+      resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
+        Effect.map(({ identity, context }) => ({
+          ...identity,
+          guild: context.guild,
+          roles: [...context.roles],
+          accessPolicy: createAccessPolicy({
+            capabilities: context.permissions,
+          }),
+        })),
+        Effect.mapError((error) =>
+          mapAccessError(error, {
+            notFound: () =>
+              new TimersNotFound({
+                status: 404,
+                code: "GUILD_NOT_FOUND",
+              }),
+            forbidden: () =>
+              new TimersAccessDenied({ status: 403, code: "FORBIDDEN" }),
+          }),
+        ),
+      ),
+  }),
+);
+
 /** Organization-aware handler ports backed by the legacy context boundary. */
 export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(ChatAuthorization, chatAuthorization),
@@ -374,4 +459,7 @@ export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(EventsAuthorization, eventsAuthorization),
   Layer.effect(KillsLootsAuthorization, killsLootsAuthorization),
   Layer.effect(NotificationsAuthorization, notificationsAuthorization),
+  Layer.effect(MapTemplatesAuthorization, mapTemplatesAuthorization),
+  Layer.effect(PublicSystemAuthorization, publicSystemAuthorization),
+  Layer.effect(TimersAuthorization, timersAuthorization),
 );

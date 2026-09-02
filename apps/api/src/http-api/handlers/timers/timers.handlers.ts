@@ -57,6 +57,12 @@ export class TimersAccessDenied extends Schema.TaggedError<TimersAccessDenied>()
 ) {}
 
 // oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
+export class TimersNotFound extends Schema.TaggedError<TimersNotFound>()(
+  "TimersNotFound",
+  { status: Schema.Literal(404), code: Schema.String },
+) {}
+
+// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
 export class TimersOperationError extends Schema.TaggedError<TimersOperationError>()(
   "TimersOperationError",
   { cause: Schema.Defect() },
@@ -69,7 +75,7 @@ export class TimersAuthorization extends Context.Service<
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
-    }) => Effect.Effect<TimersGuildAccess, TimersAccessDenied>;
+    }) => Effect.Effect<TimersGuildAccess, TimersAccessDenied | TimersNotFound>;
   }
 >()("@lootlog/api/http-api/timers/authorization") {}
 
@@ -240,7 +246,9 @@ const defectCause = (error: unknown) =>
   error instanceof TimersOperationError ? error.cause : error;
 
 const errorStatus = (error: unknown): number | undefined => {
-  if (error instanceof TimersAccessDenied) return error.status;
+  if (error instanceof TimersAccessDenied || error instanceof TimersNotFound) {
+    return error.status;
+  }
   const cause = defectCause(error);
   if (
     typeof cause === "object" &&

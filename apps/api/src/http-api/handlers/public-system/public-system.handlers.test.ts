@@ -32,7 +32,7 @@ const makeAuthorization = (
   overrides: Partial<PublicSystemAuthorization["Service"]> = {},
 ) =>
   PublicSystemAuthorization.of({
-    requireCapability: () => Effect.void,
+    requireCapability: ({ guildId }) => Effect.succeed({ guildId }),
     ...overrides,
   });
 
@@ -78,7 +78,7 @@ describe("public system HttpApi handlers", () => {
       makeAuthorization({
         requireCapability: (options) => {
           authorizationCalls.push(options);
-          return Effect.void;
+          return Effect.succeed({ guildId: options.guildId });
         },
       }),
     );
