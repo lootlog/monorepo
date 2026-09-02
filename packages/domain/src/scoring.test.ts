@@ -37,7 +37,7 @@ const rules: EventScoringRules = {
   ],
 };
 
-describe("@lootlog/scoring", () => {
+describe("domain scoring", () => {
   it("evaluates the same domain rules for every consumer", () => {
     const result = evaluateEventScoring({
       mode: "ADVANCED",

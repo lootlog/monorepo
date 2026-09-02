@@ -56,6 +56,9 @@ Do not delete an old package until `rg` finds no consumer and browser-safety bun
 
 - A frozen Bun install succeeds twice from a clean cache and produces no lockfile diff.
 - The Bun dependency graph contains no unexpected install-script package.
-- No runtime dependency on Nest, Prisma, Socket.IO, Necord, backend Winston/RxJS, Zod DTO adapters, or obsolete internal packages remains.
+- No runtime dependency on Nest, Prisma, Socket.IO, Necord, backend
+  Winston/RxJS, `nestjs-zod` DTO adapters, or obsolete internal packages
+  remains. Direct Zod use is retained where it provides framework-neutral
+  validation or codecs.
 - Required Vite/DOM Vitest workspaces are documented; every other test workspace runs through `bun:test`.
 - All source-export packages pass TypeScript resolution and browser-safety bundling without `dist`.

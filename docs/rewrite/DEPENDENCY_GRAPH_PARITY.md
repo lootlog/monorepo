@@ -22,5 +22,6 @@ The package-manager listing additionally includes the repository root package.
 
 ## Install verification
 
-`bun install --frozen-lockfile` completed without lockfile changes after the import.
-It checked 1,795 installs across 2,093 package records with the isolated linker.
+`bun install --frozen-lockfile` completed without lockfile changes after the
+rewrite cleanup. The final graph reports 1,279 installs across 1,574 package
+records with the isolated linker.

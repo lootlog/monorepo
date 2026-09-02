@@ -1,5 +1,5 @@
 import { ServiceUnavailableException } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as WinstonLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
 import { MembersService } from "#src/members/members.service";
@@ -75,7 +75,7 @@ export class UsersService {
   private readonly battlelogServiceUrl: string;
 
   constructor(
-    private readonly logger: WinstonLogger,
+    private readonly logger: ApplicationLogger,
     private readonly repository: UsersRepository,
     private readonly authService: AuthService,
     private readonly membersService: MembersService,
