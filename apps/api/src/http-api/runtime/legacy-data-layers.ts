@@ -47,10 +47,7 @@ import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-loot
 import { UsersGuildsData } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 import { LegacyNestApplication } from "./legacy-nest-application.js";
-import {
-  createEventsLoopbackDispatcher,
-  createNotificationsLoopbackDispatcher,
-} from "./legacy-loopback-dispatcher.js";
+import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
 import { OrganizationContextLookup } from "./organization-context.js";
 
 /**
@@ -67,12 +64,13 @@ export const LegacyApiDataLayers = Layer.unwrap(
 
     const guilds = service(GuildsService);
     const loots = service(LootsService);
+    const dispatch = createControllerDispatcher(app);
 
     return Layer.mergeAll(
       InternalGuildsData.layerService(guilds),
       UserLootlogConfigData.layerService(service(UserLootlogConfigService)),
       MessagingData.layerService(service(MessagingService)),
-      EventsData.layerLegacy(createEventsLoopbackDispatcher(app)),
+      EventsData.layerLegacy(dispatch),
       ReadyRoomData.layerServices(service(ReadyRoomService), guilds),
       MembersData.layerService(service(MembersService)),
       UsersGuildsData.layerServices(service(UsersService), guilds),
@@ -105,7 +103,7 @@ export const LegacyApiDataLayers = Layer.unwrap(
         lootSubmissionAcceptance: service(LootSubmissionAcceptanceService),
         lootAllocation: service(LootAllocationService),
       }),
-      NotificationsData.layerLegacy(createNotificationsLoopbackDispatcher(app)),
+      NotificationsData.layerLegacy(dispatch),
       OrganizationContextLookup.layerLegacy(service(MemberContextService)),
     );
   }),
