@@ -1,9 +1,7 @@
-import { HttpService } from "@nestjs/axios";
 import { type INestApplication } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { of } from "rxjs";
 import request from "supertest";
 import { vi } from "vitest";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -16,9 +14,9 @@ describe("Account Deletion E2E", () => {
   let database: TestDatabase;
   let redis: RedisService;
 
-  const battlelogHttpMock = {
-    post: vi.fn(() => of({ data: { status: "ACCEPTED" } })),
-  };
+  const battlelogFetchMock = vi.fn(async () =>
+    Response.json({ status: "ACCEPTED" }),
+  );
 
   const deletedUser = {
     oldAuthUserId: "auth-user-old",
@@ -37,8 +35,6 @@ describe("Account Deletion E2E", () => {
     })
       .overrideProvider(AmqpConnection)
       .useValue(createMockAmqpConnection())
-      .overrideProvider(HttpService)
-      .useValue(battlelogHttpMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -60,7 +56,8 @@ describe("Account Deletion E2E", () => {
   });
 
   beforeEach(async () => {
-    battlelogHttpMock.post.mockClear();
+    battlelogFetchMock.mockClear();
+    vi.stubGlobal("fetch", battlelogFetchMock);
 
     await database.truncate(
       "Guild",
@@ -178,10 +175,12 @@ describe("Account Deletion E2E", () => {
       .expect(200)
       .expect({ status: "OK" });
 
-    expect(battlelogHttpMock.post).toHaveBeenCalledWith(
+    expect(battlelogFetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/internal/delete-user-data"),
-      { userId: deletedUser.oldAuthUserId },
-      { timeout: 5000 },
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ userId: deletedUser.oldAuthUserId }),
+      }),
     );
 
     const personalStatsResponse = await request(app.getHttpServer())
