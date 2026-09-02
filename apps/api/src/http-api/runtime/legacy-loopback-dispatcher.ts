@@ -17,7 +17,6 @@ type Endpoint = {
 type InjectResponse = {
   readonly statusCode: number;
   readonly payload: string;
-  readonly headers?: Readonly<Record<string, string | string[] | undefined>>;
 };
 
 export interface FastifyInjector {

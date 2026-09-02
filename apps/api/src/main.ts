@@ -1,20 +1,7 @@
-import { env } from "#src/config/env";
-import { createApp } from "#src/app.factory";
-import {
-  createOpenApiDocument,
-  setupOpenApi,
-} from "#src/openapi/openapi-document";
+import "reflect-metadata";
 import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
+import { ApiApplicationLive } from "./http-api/runtime/api-application.js";
+import { runApiRuntime } from "./http-api/runtime/bun-runtime.js";
 
-async function bootstrap() {
-  registerNodeWarningDiagnostics();
-
-  const app = await createApp();
-  const document = createOpenApiDocument(app);
-
-  setupOpenApi(app, document);
-
-  await app.startAllMicroservices();
-  await app.listen(env.PORT, "0.0.0.0");
-}
-bootstrap();
+registerNodeWarningDiagnostics();
+runApiRuntime(ApiApplicationLive);

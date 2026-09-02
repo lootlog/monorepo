@@ -6,8 +6,15 @@ import { LootlogApiHandlers } from "../handlers/handlers-layer.js";
 import { LootlogApi } from "../lootlog-api.generated.js";
 import { ForwardAuthMiddlewareLive } from "./forward-auth-middleware.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
+import { LegacyApiDataLayers } from "./legacy-data-layers.js";
 import { OrganizationAuthorizationLayers } from "./organization-authorization-layers.js";
 import { RequestIdentityLayers } from "./request-identity-layers.js";
+
+const HandlerInfrastructure = Layer.mergeAll(
+  LegacyApiDataLayers,
+  OrganizationAuthorizationLayers.pipe(Layer.provide(LegacyApiDataLayers)),
+  RequestIdentityLayers,
+);
 
 /**
  * Complete API router without infrastructure implementations.
@@ -20,12 +27,12 @@ export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   openapiPath: "/openapi.json",
 }).pipe(
   Layer.provide(LootlogApiHandlers),
-  Layer.provide(OrganizationAuthorizationLayers),
-  Layer.provide(RequestIdentityLayers),
   Layer.provide(ForwardAuthMiddlewareLive),
 );
 
-export const LootlogApiHttp = HttpRouter.serve(LootlogApiRoutes);
+export const LootlogApiHttp = HttpRouter.serve(LootlogApiRoutes).pipe(
+  Layer.provide(HandlerInfrastructure),
+);
 
 export const ApiHttpServerLive = Layer.unwrap(
   Effect.map(ApiRuntimeConfig, ({ port }) =>
@@ -33,4 +40,4 @@ export const ApiHttpServerLive = Layer.unwrap(
       Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
     ),
   ),
-).pipe(Layer.provide(ApiRuntimeConfig.layer));
+);
