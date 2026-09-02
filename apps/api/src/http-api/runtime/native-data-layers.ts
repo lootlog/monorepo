@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Effect, Layer } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { Permission } from "@lootlog/schema/permissions";
 import type { Logger } from "winston";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
@@ -10,7 +11,7 @@ import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
 import { MembersRepository } from "#src/members/members.repository";
-import type { ChatService } from "#src/chat/chat.service";
+import { ChatService } from "#src/chat/chat.service";
 import { MessagingService } from "#src/messaging/messaging.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
 import { ReadyRoomPublisher } from "#src/messaging/ready-room/ready-room-publisher";
@@ -30,6 +31,7 @@ import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
+import { ChatData } from "../handlers/chat/chat.handlers.js";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 
@@ -130,6 +132,37 @@ const makeReadyRoomService = (
     randomUUID,
   );
 
+const makeGuildPermissionsFacade = (runtime: DrizzleDatabaseRuntime) => {
+  const guildsRepository = new GuildsRepository(runtime);
+  const membersRepository = new MembersRepository(runtime);
+  return {
+    getMultipleGuildsPermissions: async (
+      discordId: string,
+      guildIds: string[],
+    ) => {
+      const [guilds, members] = await Promise.all([
+        guildsRepository.findByIds(guildIds, true),
+        membersRepository.findMembersByUserGuildIds(discordId, guildIds, true),
+      ]);
+      const memberByGuild = new Map(
+        members.map((member) => [member.guildId, member]),
+      );
+      const allPermissions = Object.values(Permission);
+      return guilds.map((guild) => {
+        const member = memberByGuild.get(guild.id);
+        return {
+          guild,
+          permissions:
+            guild.ownerId === discordId
+              ? allPermissions
+              : (member?.roles.flatMap(({ permissions }) => permissions) ?? []),
+          roles: member?.roles ?? [],
+        };
+      });
+    },
+  };
+};
+
 const NativeMessagingData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
@@ -173,6 +206,24 @@ const NativeReadyRoomData = Layer.unwrap(
   }),
 );
 
+const NativeChatData = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const amqp = makeAmqpAdapter(rabbit);
+    return makeScopedCompatibilityLayer(ChatData, (runtime) =>
+      ChatData.makeService(
+        new ChatService(
+          amqp,
+          redis,
+          makeGuildPermissionsFacade(runtime) as never,
+          nativeLogger,
+        ),
+      ),
+    );
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -182,4 +233,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeInternalGuildsData,
   NativeMessagingData,
   NativeReadyRoomData,
+  NativeChatData,
 ).pipe(Layer.provide(ApiDatabaseLive));
