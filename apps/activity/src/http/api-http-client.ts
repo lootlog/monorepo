@@ -1,10 +1,10 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpClient } from "effect/unstable/http";
 
 const RESPONSE_LIMIT_BYTES = 1024 * 1024;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ApiHttpClientFailure extends Schema.TaggedError<ApiHttpClientFailure>()(
+export class ApiHttpClientFailure extends TaggedErrorClass<ApiHttpClientFailure>()(
   "ApiHttpClientFailure",
   {
     operationId: Schema.String,

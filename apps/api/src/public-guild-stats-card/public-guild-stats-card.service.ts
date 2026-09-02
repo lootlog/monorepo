@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   HttpException,
   HttpStatus,
@@ -41,8 +42,7 @@ const ICON_FETCH_TIMEOUT_MS = 2_000;
 const MAX_ICON_BYTES = 2_000_000;
 const REFRESH_COOLDOWN_SECONDS = 300;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class PublicGuildStatsCardAdapterError extends Schema.TaggedError<PublicGuildStatsCardAdapterError>()(
+export class PublicGuildStatsCardAdapterError extends TaggedErrorClass<PublicGuildStatsCardAdapterError>()(
   "PublicGuildStatsCardAdapterError",
   { cause: Schema.Defect() },
 ) {}

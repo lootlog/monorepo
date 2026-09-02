@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, countDistinct, eq, gte, isNull, sql } from "drizzle-orm";
 import { Context, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -21,8 +22,7 @@ export type GuildStatsCardLootStats = {
   readonly heroicItems: number;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class PublicGuildStatsCardPersistenceError extends Schema.TaggedError<PublicGuildStatsCardPersistenceError>()(
+export class PublicGuildStatsCardPersistenceError extends TaggedErrorClass<PublicGuildStatsCardPersistenceError>()(
   "PublicGuildStatsCardPersistenceError",
   { cause: Schema.Defect() },
 ) {}

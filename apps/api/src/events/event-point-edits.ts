@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, ne } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -19,8 +20,7 @@ import type {
   UpdateRankingPointsDto,
 } from "./dto/update-points.dto.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventPointEditError extends Schema.TaggedError<EventPointEditError>()(
+export class EventPointEditError extends TaggedErrorClass<EventPointEditError>()(
   "EventPointEditError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

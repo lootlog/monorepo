@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -12,8 +13,7 @@ import { ForbiddenException } from "#src/shared/http/http-errors";
 import type { CreateCommentDto } from "./dto/create-comment-dto.js";
 import { ErrorKey } from "./enum/error-key.enum.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootPersistenceError extends Schema.TaggedError<LootPersistenceError>()(
+export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(
   "LootPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

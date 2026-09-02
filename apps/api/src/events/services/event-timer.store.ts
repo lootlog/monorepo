@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -14,8 +15,7 @@ type TimerWrite = Omit<
 >;
 type TimerPatch = Partial<Omit<TimerWrite, "guildId" | "world" | "timerKey">>;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventTimerStoreFailure extends Schema.TaggedError<EventTimerStoreFailure>()(
+export class EventTimerStoreFailure extends TaggedErrorClass<EventTimerStoreFailure>()(
   "EventTimerStoreFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

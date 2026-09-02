@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -19,8 +20,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/logging/applicatio
 import type { AcknowledgeExpiredParticipationConfirmationsDto } from "./dto/acknowledge-participation-confirmations.dto.js";
 import type { EventRankingPublisher } from "./event-point-edits.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventParticipationError extends Schema.TaggedError<EventParticipationError>()(
+export class EventParticipationError extends TaggedErrorClass<EventParticipationError>()(
   "EventParticipationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

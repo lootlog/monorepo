@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import superjson from "superjson";
@@ -12,8 +13,7 @@ import type { RedisService } from "#src/redis/redis.service";
 import { NotFoundException } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventGapReadError extends Schema.TaggedError<EventGapReadError>()(
+export class EventGapReadError extends TaggedErrorClass<EventGapReadError>()(
   "EventGapReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

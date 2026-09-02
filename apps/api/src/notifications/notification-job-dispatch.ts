@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type {
   NotificationJobStore,
@@ -34,8 +35,7 @@ export interface NotificationDispatchPublisher {
   readonly publish: (payload: unknown) => Effect.Effect<void, unknown, never>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationJobDispatchFailure extends Schema.TaggedError<NotificationJobDispatchFailure>()(
+export class NotificationJobDispatchFailure extends TaggedErrorClass<NotificationJobDispatchFailure>()(
   "NotificationJobDispatchFailure",
   { operation: Schema.String, jobId: Schema.String, cause: Schema.Defect() },
 ) {}

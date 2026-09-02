@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import {
@@ -25,14 +26,12 @@ export type ReadyRoomIdentity = {
   readonly discordId: string;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ReadyRoomAccessDenied extends Schema.TaggedError<ReadyRoomAccessDenied>()(
+export class ReadyRoomAccessDenied extends TaggedErrorClass<ReadyRoomAccessDenied>()(
   "ReadyRoomAccessDenied",
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ReadyRoomOperationError extends Schema.TaggedError<ReadyRoomOperationError>()(
+export class ReadyRoomOperationError extends TaggedErrorClass<ReadyRoomOperationError>()(
   "ReadyRoomOperationError",
   { cause: Schema.Defect() },
 ) {}

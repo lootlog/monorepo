@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
@@ -23,8 +24,7 @@ import {
   type UpdateTimerSettingsDto,
 } from "../../lootlog-api.generated.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class SettingsAccessDenied extends Schema.TaggedError<SettingsAccessDenied>()(
+export class SettingsAccessDenied extends TaggedErrorClass<SettingsAccessDenied>()(
   "SettingsAccessDenied",
   {
     status: Schema.Literal(401),
@@ -32,8 +32,7 @@ export class SettingsAccessDenied extends Schema.TaggedError<SettingsAccessDenie
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class SettingsOperationError extends Schema.TaggedError<SettingsOperationError>()(
+export class SettingsOperationError extends TaggedErrorClass<SettingsOperationError>()(
   "SettingsOperationError",
   { cause: Schema.Defect() },
 ) {}

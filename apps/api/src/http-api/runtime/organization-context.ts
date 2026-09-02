@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, or } from "drizzle-orm";
 import { Context, Effect, Layer, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
@@ -36,8 +37,7 @@ export interface OrganizationContextCache {
   readonly del: (key: string) => Effect.Effect<unknown, unknown>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class OrganizationNotFound extends Schema.TaggedError<OrganizationNotFound>()(
+export class OrganizationNotFound extends TaggedErrorClass<OrganizationNotFound>()(
   "OrganizationNotFound",
   { guildId: Schema.String },
 ) {}

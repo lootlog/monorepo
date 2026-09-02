@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { and, eq, or } from "drizzle-orm";
@@ -49,8 +50,7 @@ export type AuthorizedGuild = {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class UsersGuildsAccessDenied extends Schema.TaggedError<UsersGuildsAccessDenied>()(
+export class UsersGuildsAccessDenied extends TaggedErrorClass<UsersGuildsAccessDenied>()(
   "UsersGuildsAccessDenied",
   {
     status: Schema.Literals([401, 403]),
@@ -58,8 +58,7 @@ export class UsersGuildsAccessDenied extends Schema.TaggedError<UsersGuildsAcces
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class UsersGuildsNotFound extends Schema.TaggedError<UsersGuildsNotFound>()(
+export class UsersGuildsNotFound extends TaggedErrorClass<UsersGuildsNotFound>()(
   "UsersGuildsNotFound",
   {
     status: Schema.Literal(404),
@@ -67,8 +66,7 @@ export class UsersGuildsNotFound extends Schema.TaggedError<UsersGuildsNotFound>
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class UsersGuildsOperationError extends Schema.TaggedError<UsersGuildsOperationError>()(
+export class UsersGuildsOperationError extends TaggedErrorClass<UsersGuildsOperationError>()(
   "UsersGuildsOperationError",
   { cause: Schema.Defect() },
 ) {}

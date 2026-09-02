@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   normalizeEventScoringMode,
@@ -17,8 +18,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/logging/applicatio
 import type { CreateEventDto } from "./dto/create-event.dto.js";
 import { attachComputedEventActive } from "./utils/event-activity.util.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventCreationError extends Schema.TaggedError<EventCreationError>()(
+export class EventCreationError extends TaggedErrorClass<EventCreationError>()(
   "EventCreationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -44,8 +45,7 @@ type FetchedLoot = Effect.Success<
   ReturnType<LootQueryOperations["fetchLootById"]>
 >;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootsOperationError extends Schema.TaggedError<LootsOperationError>()(
+export class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
   "LootsOperationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

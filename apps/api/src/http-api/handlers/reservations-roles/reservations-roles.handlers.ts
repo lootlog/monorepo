@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -64,20 +65,17 @@ export type ReservationsRolesGuildAccess = ReservationsRolesIdentity & {
   readonly permissions: ReadonlyArray<PermissionValue>;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ReservationsRolesAccessDenied extends Schema.TaggedError<ReservationsRolesAccessDenied>()(
+export class ReservationsRolesAccessDenied extends TaggedErrorClass<ReservationsRolesAccessDenied>()(
   "ReservationsRolesAccessDenied",
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ReservationsRolesNotFound extends Schema.TaggedError<ReservationsRolesNotFound>()(
+export class ReservationsRolesNotFound extends TaggedErrorClass<ReservationsRolesNotFound>()(
   "ReservationsRolesNotFound",
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ReservationsRolesOperationError extends Schema.TaggedError<ReservationsRolesOperationError>()(
+export class ReservationsRolesOperationError extends TaggedErrorClass<ReservationsRolesOperationError>()(
   "ReservationsRolesOperationError",
   { cause: Schema.Defect() },
 ) {}

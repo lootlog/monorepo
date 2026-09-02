@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -57,8 +58,7 @@ export interface AuthorizedGuildCaller extends AuthenticatedCaller {
   readonly roles: ReadonlyArray<Role>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class KillsLootsAccessDenied extends Schema.TaggedError<KillsLootsAccessDenied>()(
+export class KillsLootsAccessDenied extends TaggedErrorClass<KillsLootsAccessDenied>()(
   "KillsLootsAccessDenied",
   {
     status: Schema.Literals([401, 403]),
@@ -66,8 +66,7 @@ export class KillsLootsAccessDenied extends Schema.TaggedError<KillsLootsAccessD
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class KillsLootsNotFound extends Schema.TaggedError<KillsLootsNotFound>()(
+export class KillsLootsNotFound extends TaggedErrorClass<KillsLootsNotFound>()(
   "KillsLootsNotFound",
   {
     status: Schema.Literal(404),
@@ -75,8 +74,7 @@ export class KillsLootsNotFound extends Schema.TaggedError<KillsLootsNotFound>()
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class KillsLootsBadRequest extends Schema.TaggedError<KillsLootsBadRequest>()(
+export class KillsLootsBadRequest extends TaggedErrorClass<KillsLootsBadRequest>()(
   "KillsLootsBadRequest",
   {
     status: Schema.Literal(400),
@@ -84,8 +82,7 @@ export class KillsLootsBadRequest extends Schema.TaggedError<KillsLootsBadReques
   },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class KillsLootsDataError extends Schema.TaggedError<KillsLootsDataError>()(
+export class KillsLootsDataError extends TaggedErrorClass<KillsLootsDataError>()(
   "KillsLootsDataError",
   { cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -17,8 +18,7 @@ export interface EventDeletionQueue {
   readonly delayed: () => Promise<ReadonlyArray<EventDeletionJob>>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventDeletionError extends Schema.TaggedError<EventDeletionError>()(
+export class EventDeletionError extends TaggedErrorClass<EventDeletionError>()(
   "EventDeletionError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Job, Queue as BullQueue } from "bullmq";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
@@ -26,8 +27,7 @@ type MemberRefreshJobState =
   | "waiting"
   | "waiting-children";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MemberRefreshSchedulerFailure extends Schema.TaggedError<MemberRefreshSchedulerFailure>()(
+export class MemberRefreshSchedulerFailure extends TaggedErrorClass<MemberRefreshSchedulerFailure>()(
   "MemberRefreshSchedulerFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

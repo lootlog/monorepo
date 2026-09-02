@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import type {
   SettingsDomain,
@@ -26,14 +27,12 @@ const getPostgresErrorCode = (error: unknown): string | undefined => {
   return getPostgresErrorCode(error.cause);
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class InvalidSettingsPatchError extends Schema.TaggedError<InvalidSettingsPatchError>()(
+export class InvalidSettingsPatchError extends TaggedErrorClass<InvalidSettingsPatchError>()(
   "InvalidSettingsPatchError",
   { message: Schema.String },
 ) {}
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class SettingsPersistenceError extends Schema.TaggedError<SettingsPersistenceError>()(
+export class SettingsPersistenceError extends TaggedErrorClass<SettingsPersistenceError>()(
   "SettingsPersistenceError",
   { cause: Schema.Defect() },
 ) {}

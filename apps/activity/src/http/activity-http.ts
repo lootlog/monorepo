@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { BunHttpServer } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -125,8 +126,7 @@ export class ActivityHealth extends Context.Service<
   );
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class ActivityHttpFailure extends Schema.TaggedError<ActivityHttpFailure>()(
+export class ActivityHttpFailure extends TaggedErrorClass<ActivityHttpFailure>()(
   "ActivityHttpFailure",
   {
     status: Schema.Literals([401, 403, 404, 500]),

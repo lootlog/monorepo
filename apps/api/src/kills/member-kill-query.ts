@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
@@ -15,8 +16,7 @@ import {
 } from "./kill-query-support.js";
 import { getKillStatsPeriodStart } from "./utils/kill-stats-period.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MemberKillQueryError extends Schema.TaggedError<MemberKillQueryError>()(
+export class MemberKillQueryError extends TaggedErrorClass<MemberKillQueryError>()(
   "MemberKillQueryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Job } from "bullmq";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
@@ -12,8 +13,7 @@ export interface NotificationDispatch {
   ) => Effect.Effect<void, unknown, never>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationDispatchFailure extends Schema.TaggedError<NotificationDispatchFailure>()(
+export class NotificationDispatchFailure extends TaggedErrorClass<NotificationDispatchFailure>()(
   "NotificationDispatchFailure",
   { jobId: Schema.String, cause: Schema.Defect() },
 ) {}

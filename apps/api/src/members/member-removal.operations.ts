@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -7,8 +8,7 @@ import type {
   MemberRemovalNotificationTarget,
 } from "./member.types.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MemberRemovalFailure extends Schema.TaggedError<MemberRemovalFailure>()(
+export class MemberRemovalFailure extends TaggedErrorClass<MemberRemovalFailure>()(
   "MemberRemovalFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
@@ -14,8 +15,7 @@ import type { RedisGatewayStore } from "#src/platform/redis-store";
 
 const RESPONSE_LIMIT_BYTES = 1024 * 1024;
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class GuildStoreFailure extends Schema.TaggedError<GuildStoreFailure>()(
+export class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
   "GuildStoreFailure",
   {
     reason: Schema.Literals([

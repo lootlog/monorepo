@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
   and,
@@ -41,8 +42,7 @@ import type { ReorderLocationsDto } from "./dto/reorder-locations.dto.js";
 import type { UpdateHeroDto } from "./dto/update-hero.dto.js";
 import type { UpdateLocationDto } from "./dto/update-location.dto.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventCatalogMutationError extends Schema.TaggedError<EventCatalogMutationError>()(
+export class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

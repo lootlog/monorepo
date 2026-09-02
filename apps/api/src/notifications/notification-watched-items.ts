@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray, or } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -44,8 +45,7 @@ export interface NotificationWatchedItemJobs {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationWatchedItemFailure extends Schema.TaggedError<NotificationWatchedItemFailure>()(
+export class NotificationWatchedItemFailure extends TaggedErrorClass<NotificationWatchedItemFailure>()(
   "NotificationWatchedItemFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

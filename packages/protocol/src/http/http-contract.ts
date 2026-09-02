@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { NonEmptyString } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import {
@@ -6,9 +7,7 @@ import {
   HttpApiSecurity,
 } from "effect/unstable/httpapi";
 
-/* oxlint-disable unicorn/throw-new-error -- Effect TaggedError is a class factory. */
-
-export class BadRequest extends Schema.TaggedError<BadRequest>()(
+export class BadRequest extends TaggedErrorClass<BadRequest>()(
   "BadRequest",
   {
     code: NonEmptyString,
@@ -18,7 +17,7 @@ export class BadRequest extends Schema.TaggedError<BadRequest>()(
   { httpApiStatus: 400 },
 ) {}
 
-export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
+export class Unauthorized extends TaggedErrorClass<Unauthorized>()(
   "Unauthorized",
   {
     code: NonEmptyString,
@@ -27,7 +26,7 @@ export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
   { httpApiStatus: 401 },
 ) {}
 
-export class Forbidden extends Schema.TaggedError<Forbidden>()(
+export class Forbidden extends TaggedErrorClass<Forbidden>()(
   "Forbidden",
   {
     code: NonEmptyString,
@@ -36,7 +35,7 @@ export class Forbidden extends Schema.TaggedError<Forbidden>()(
   { httpApiStatus: 403 },
 ) {}
 
-export class NotFound extends Schema.TaggedError<NotFound>()(
+export class NotFound extends TaggedErrorClass<NotFound>()(
   "NotFound",
   {
     code: NonEmptyString,
@@ -45,7 +44,7 @@ export class NotFound extends Schema.TaggedError<NotFound>()(
   { httpApiStatus: 404 },
 ) {}
 
-export class Conflict extends Schema.TaggedError<Conflict>()(
+export class Conflict extends TaggedErrorClass<Conflict>()(
   "Conflict",
   {
     code: NonEmptyString,
@@ -54,7 +53,7 @@ export class Conflict extends Schema.TaggedError<Conflict>()(
   { httpApiStatus: 409 },
 ) {}
 
-export class ServiceUnavailable extends Schema.TaggedError<ServiceUnavailable>()(
+export class ServiceUnavailable extends TaggedErrorClass<ServiceUnavailable>()(
   "ServiceUnavailable",
   {
     code: NonEmptyString,

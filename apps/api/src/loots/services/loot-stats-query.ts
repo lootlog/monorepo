@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { sql, type SQL } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -14,8 +15,7 @@ const bindQuery = (
   return sql.join(chunks);
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class LootStatsQueryError extends Schema.TaggedError<LootStatsQueryError>()(
+export class LootStatsQueryError extends TaggedErrorClass<LootStatsQueryError>()(
   "LootStatsQueryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

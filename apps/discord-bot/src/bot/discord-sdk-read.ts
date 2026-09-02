@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import { DiscordAPIError } from "discord.js";
 
@@ -9,8 +10,7 @@ const isRetryable = (cause: unknown) =>
   !(cause instanceof DiscordAPIError) ||
   !nonRetryableErrorCodes.has(Number(cause.code));
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class DiscordSdkReadFailure extends Schema.TaggedError<DiscordSdkReadFailure>()(
+export class DiscordSdkReadFailure extends TaggedErrorClass<DiscordSdkReadFailure>()(
   "DiscordSdkReadFailure",
   {
     operation: Schema.String,

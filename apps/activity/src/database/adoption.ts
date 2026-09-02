@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { PgClient } from "@effect/sql-pg";
 import { createHash } from "node:crypto";
 import { Effect, Schema } from "effect";
@@ -56,7 +57,7 @@ export const ACTIVITY_SCHEMA_FINGERPRINT = createHash("sha256")
 export const isAcceptedActivitySchema = (shape: unknown): boolean =>
   stableJson(shape) === stableJson(acceptedActivitySchemaShape);
 
-export class DatabaseAdoptionError extends Schema.TaggedError<DatabaseAdoptionError>()(
+export class DatabaseAdoptionError extends TaggedErrorClass<DatabaseAdoptionError>()(
   "DatabaseAdoptionError",
   { message: Schema.String, cause: Schema.optional(Schema.Defect()) },
 ) {}

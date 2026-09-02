@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -52,8 +53,7 @@ export interface NotificationCancellationFilters {
   readonly sourceEntityId?: string;
 }
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class NotificationJobSchedulerFailure extends Schema.TaggedError<NotificationJobSchedulerFailure>()(
+export class NotificationJobSchedulerFailure extends TaggedErrorClass<NotificationJobSchedulerFailure>()(
   "NotificationJobSchedulerFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

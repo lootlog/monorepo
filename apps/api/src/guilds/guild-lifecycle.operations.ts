@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, eq } from "drizzle-orm";
@@ -25,8 +26,7 @@ import {
   getPermissionsCachePattern,
 } from "#src/shared/constants/cache.constant";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class GuildLifecycleFailure extends Schema.TaggedError<GuildLifecycleFailure>()(
+export class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
   "GuildLifecycleFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

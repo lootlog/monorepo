@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -22,8 +23,7 @@ import type { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto.js";
 import type { EventTimersPort } from "./services/event-timers.port.js";
 import { getSyntheticNpcId } from "./utils/get-synthetic-npc-id.js";
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventRespawnCommandError extends Schema.TaggedError<EventRespawnCommandError>()(
+export class EventRespawnCommandError extends TaggedErrorClass<EventRespawnCommandError>()(
   "EventRespawnCommandError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

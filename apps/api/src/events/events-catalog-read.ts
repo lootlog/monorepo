@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -37,8 +38,7 @@ type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class EventCatalogReadError extends Schema.TaggedError<EventCatalogReadError>()(
+export class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadError>()(
   "EventCatalogReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

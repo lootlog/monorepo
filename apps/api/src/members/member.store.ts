@@ -1,3 +1,4 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -19,8 +20,7 @@ type MemberWrite = {
   readonly lastDiscordStatus: string;
 };
 
-// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
-export class MemberStoreFailure extends Schema.TaggedError<MemberStoreFailure>()(
+export class MemberStoreFailure extends TaggedErrorClass<MemberStoreFailure>()(
   "MemberStoreFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
