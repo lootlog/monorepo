@@ -89,7 +89,7 @@ describe("Docs HttpApi handlers", () => {
       generated.indexOf("export class LootlogApi"),
     );
     const generatedIdentifiers = Array.from(
-      group.matchAll(/HttpApiEndpoint\.[a-z]+\("([^"]+)"/g),
+      group.matchAll(/HttpApiEndpoint\.[a-z]+\(\s*"([^"]+)"/g),
       (match) => match[1],
     );
 

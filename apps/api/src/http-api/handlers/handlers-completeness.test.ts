@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const EXPECTED_ENDPOINT_TOTAL = 199;
 const endpointPattern = /HttpApiEndpoint\.[a-z]+\(\s*"([^"]+)"/g;
@@ -24,14 +24,9 @@ const duplicatesIn = (identifiers: ReadonlyArray<string>) => {
 
 describe("HttpApi handler completeness", () => {
   it("handles every generated endpoint exactly once", async () => {
-    const handlersDirectory = join(
-      process.cwd(),
-      "src",
-      "http-api",
-      "handlers",
-    );
+    const handlersDirectory = fileURLToPath(new URL(".", import.meta.url));
     const generatedSource = await Bun.file(
-      join(handlersDirectory, "..", "lootlog-api.generated.ts"),
+      new URL("../lootlog-api.generated.ts", import.meta.url),
     ).text();
     const generatedIdentifiers = identifiersFrom(
       generatedSource,
