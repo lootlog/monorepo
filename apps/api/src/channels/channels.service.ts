@@ -8,7 +8,7 @@ import {
   type DiscordGuildChannelsSyncedEvent,
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/schema/notifications";
-import type { ApplicationLogger as WinstonLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
@@ -28,7 +28,7 @@ export class ChannelsService {
     private readonly discordBotClient: DiscordBotClientService,
     private readonly amqpConnection: AmqpPublisher,
 
-    private readonly winstonLogger: WinstonLogger,
+    private readonly logger: ApplicationLogger,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
   }
@@ -220,7 +220,7 @@ export class ChannelsService {
       );
     }
 
-    this.winstonLogger.log({
+    this.logger.log({
       level: "info",
       message: "Discord guild channels synchronized",
       guildId: event.guildId,
@@ -264,7 +264,7 @@ export class ChannelsService {
   }
 
   private logSkippedSyncEvent(guildId: string, eventType: string) {
-    this.winstonLogger.warn({
+    this.logger.warn({
       message: "Skipped Discord sync event for unknown guild",
       guildId,
       eventType,

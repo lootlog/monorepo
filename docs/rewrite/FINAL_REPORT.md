@@ -1,114 +1,116 @@
 # Bun, Effect, and Drizzle rewrite report
 
 Baseline behavior is pinned to
-`633f8f0157cca04ef2b609ba0e2f1903b1c28949`. The live implementation ledger is
-[`status.md`](status.md); this report records only evidence already reproduced
-on the rewrite branch.
+`633f8f0157cca04ef2b609ba0e2f1903b1c28949`. The implementation ledger is
+[`status.md`](status.md), and command-level evidence is summarized in
+[`VERIFICATION_REPORT.md`](VERIFICATION_REPORT.md).
 
-## Verified results
+## Result
 
-- Bun `1.4.0` performs a frozen isolated workspace install, and the imported
-  dependency graph retains every normalized package identity from the pnpm
-  baseline.
-- Five OpenAPI specifications expose 244 operation IDs: API 199, Activity 9,
-  Auth 5, Battlelog 26, and Search 5. The sole additive operation issues the
-  short-lived one-time realtime ticket required by the coordinated WebSocket
-  cutover; the other 243 operation IDs remain unchanged.
-- The official Effect OpenAPI generator deterministically renders the API's
-  schema-first `HttpApi` contract as one 1,018,058-byte source file containing
-  exactly the same 199 operation IDs. The guarded generator validates the full
-  identifier set, converts all 544 OpenAPI 3.0 `nullable` schemas without
-  breaking nested references, preserves unconstrained JSON values, deduplicates
-  identical generated components, preserves the legacy parameter and model-name
-  representation consumed by Orval, and then
-  atomically replaces the output. The normalized operation parity gate passes
-  for all 243 baseline operations plus the allowlisted realtime ticket.
-- Orval uses `mode: "single"` and emits one generated TypeScript file for each
-  independently hosted OpenAPI document: five files instead of 1,176. Repeated
-  generation after the ticket addition is deterministic.
-- Browser bundling succeeds for Schema, Domain, Protocol, Messaging, and all
-  five generated client entries.
-- Auth, Search, Discord Bot, Activity, Battlelog, and Gateway have Bun/Effect
-  application slices with passing local lint, typecheck, test, and build gates.
-- Realtime v1 passes a real Redis verification with two independent hubs,
-  source exclusion, federation, reconnect/resubscribe, one-time ticket
-  consumption, map-ping and air-tag TTL, deduplication, and rate limits. Web,
-  Game Client, Protocol, Gateway, Auth, and Client gates pass without active
-  Socket.IO imports.
-- The local seed CLI no longer imports Prisma. A fresh PostgreSQL verification
-  exercised cleanup plus Drizzle inserts for organizations, roles, members, and
-  timers.
-- API production queries and the complete E2E database harness no longer import
-  Prisma. The legacy API suite passes 1,060 tests, while 16 real PostgreSQL and
-  Redis E2E suites pass 95 tests through `ApiDatabaseLive` and Drizzle.
-- API Prisma runtime and tooling have been removed. The legacy schema and 139
-  migrations remain archived under Drizzle with 140 verified SHA-256 entries.
-  A real PostgreSQL run covered empty-database baseline installation, legacy
-  adoption, idempotent re-entry, and rollback on a mismatched catalog.
-- The E2E migration exposed a timezone mismatch when a JavaScript `Date` cutoff
-  was compared with a PostgreSQL `timestamp without time zone`. Authorization
-  now derives the same absolute cutoff from the database clock; the exact Loot
-  PATCH regression test changed from deterministic 403 to green without
-  weakening the ten-minute submission window.
-- Effect HttpApi handlers are implemented and contract-tested for all 26 API
-  groups and all 199 generated operations. One central Layer composes each
-  group exactly once, while completeness tests mechanically reject missing,
-  duplicate, or unexpected handlers. In total, 89 focused handler tests pass.
-  This includes all 49 Events, 11 Members, 27 Notifications, 10 Timers, and 9
-  Party Ready Room operations, fail-closed
-  authentication, capability checks, visibility, cross-Organization cases, the
-  public PNG response's binary body and cache headers, and the existing JSON body
-  returned by timer-settings migration.
-- The Effect security middleware preserves the deployed Traefik `forwardAuth`
-  boundary: Auth validates the JWT/session, while API requires the complete
-  request-scoped `x-auth-user-id` and `x-auth-discord-id` pair. A bearer value
-  alone is insufficient, incomplete identity fails closed with 401, concurrent
-  requests cannot share identity, and the OpenAPI contract still marks exactly
-  194 operations as protected while leaving the same 5 operations public.
-- All 12 Organization-aware authorization ports now share one adapter. This
-  includes Chat, Members, Reservations/Roles, Users/Guilds, Lootlog Config,
-  Docs, Events, Kills/Loots, Notifications, Map Templates, Timers, and the
-  authenticated stats-card operation. The adapter preserves the legacy Redis
-  fail-open member lookup and vanity resolution, passes the canonical
-  Organization and existing member/role snapshot to data operations, and keeps
-  missing Organizations (404) distinct from missing membership or capabilities
-  (403). Eight focused runtime tests and the full 1,060-test API suite pass.
-- Bun/Effect now owns the API's sole public HTTP listener. The transitional
-  Nest container is initialized without calling `listen`, supplies the
-  remaining application services and queue consumers, and is acquired and
-  released inside the Effect scope. Focused lifecycle tests cover normal
-  shutdown and partial-start cleanup. A built-artifact import under Bun 1.4
-  exposed and then eliminated the incompatible `nest-winston` CommonJS bridge.
-- Activity's legacy migration chain and Drizzle baseline match mechanically on
-  a real TimescaleDB, including column order, types, defaults, constraints,
-  indexes, one-day chunks, and seven-day retention. Positive and negative
-  adoption checks behave fail-closed.
-- API, Auth, Activity, Battlelog, Gateway, Search, Discord Bot, and Developer
-  container targets build as non-root Bun images with `dumb-init`, source maps,
-  and healthchecks.
-  Runtime entrypoints were inspected, and current Trivy scans reported zero
-  fixed high or critical vulnerabilities for the verified images.
-- Wrangler dry-runs pass for Wiki and Traffic Splitter without publishing or
-  mutating Cloudflare resources.
-- React Doctor's changed-source scan reports no errors and 10 warnings (score
-  63); every reported location is also present in the baseline full scan, whose
-  score is 46. The rewrite therefore introduces no new React Doctor category at
-  the reported locations.
-- The obsolete Types, Access Policy, Loot Visibility, Reservations, and Scoring
-  packages plus API Helpers have no active consumers and were removed after
-  their contracts moved to Schema or Domain.
+- Bun `1.4.0` is the package manager and backend runtime. Frozen isolated
+  installs and the imported pnpm dependency-identity comparison pass.
+- Effect `4.0.0-rc.112` owns backend composition, configuration, logging,
+  telemetry boundaries, resources, background fibers, and graceful shutdown.
+- Drizzle ORM/Kit `1.0.0-rc.4` owns database access. API and Activity migrated
+  from Prisma; Auth and Battlelog use the same pinned Drizzle generation. Search
+  and Discord Bot did not gain databases.
+- Active runtime code contains no Nest, Prisma Client, Socket.IO, Necord,
+  Winston, RxJS, or removed framework adapter imports.
+- Browser-safe Schema, Domain, Protocol, and Client packages plus the scoped
+  Messaging transport replace the former Types and framework-coupled package
+  graph. Obsolete micro-packages have no consumers and are removed.
 
-## Preserved risks
+## Preserved contracts
 
-- Activity keeps the existing weak deduplication behavior.
-- Battlelog keeps the existing database-to-R2 failure window.
-- Discord delivery can still repeat after redelivery.
-- Existing production databases are adopted only after a known fingerprint;
-  schema drift intentionally blocks startup/migration.
+- Five OpenAPI specifications contain 244 operation IDs: the 243 baseline
+  operations plus the allowlisted realtime-ticket endpoint. Methods, paths,
+  status codes, security declarations, public battle links, and all other
+  operation IDs remain at parity.
+- Orval `mode: "single"` generates one TypeScript file for each of the five API
+  inputs instead of 1,176 files. Two-pass generation is deterministic.
+- API preserves the Traefik `forwardAuth` boundary. Auth validates the JWT or
+  session, then API requires the complete trusted `x-auth-user-id` and
+  `x-auth-discord-id` pair. Bearer authentication directly against API fails
+  closed.
+- RabbitMQ topology, payloads, retries, dead-lettering, and ack/nack behavior are
+  preserved. A real broker test covers delivery, TTL retry, retry count, and
+  DLQ routing.
+- Database migrations preserve physical schemas, constraints, transactions,
+  locks, and effect ordering. Existing databases are adopted only after a
+  fail-closed fingerprint match.
+- Better Auth remains a raw handler under `/idp` and `/idp/*`, retaining
+  cookies, redirects, JWT/JWKS behavior, provider tokens, forward-auth, and the
+  existing Redis fail-open boundary.
+- The Battlelog workspace is `apps/battlelog` / `@lootlog/battlelog`; deployment
+  identity remains `battlelog-service` for the separate infrastructure change.
 
-## Evidence still required before completion
+## Realtime and presence
 
-The rewrite is not complete until the API application layer no longer depends
-on its non-listening Nest compatibility container, remaining legacy helper
-packages are removed, and the remaining integration, shutdown, and performance
-matrices described in [`status.md`](status.md) are recorded.
+- Gateway implements the coordinated realtime v1 WebSocket protocol with
+  MessagePack command, response, and event envelopes. The client exposes
+  Promise request/response, push subscriptions, explicit connection state,
+  reconnect with jitter, re-authentication, rejoin, and resubscription.
+- RealtimeHub owns logical subscriptions, Redis federation, cross-instance
+  lookup, deduplication, and bounded backpressure. Clients do not provide raw
+  room names.
+- Presence uses 25-second heartbeats, 60-second expiry, server `lastSeen`,
+  monotonic revisions, basic versus precise-location visibility, verified
+  versus reported state, and stale-state expiry.
+- Game Client stores selected Organizations additively. It publishes by default
+  only when an Organization matches the active Margonem clan; otherwise it does
+  not publish.
+- `LOOTLOG_PRESENCE_LOCATION_READ` is added with a backfill for roles that
+  already held `LOOTLOG_ONLINE_PLAYERS_READ`.
+- First-party clients authenticate with the session cookie. Cross-origin Game
+  Client connections use a short-lived, origin-bound, one-time ticket without
+  putting credentials in a query string.
+- A real Redis run verifies two independent Gateway instances plus ticket
+  origin, reuse, and expiry behavior.
+
+## Database and application evidence
+
+- API's native Bun/Effect listener serves all 26 groups and 199 operations.
+  RabbitMQ consumers, BullMQ workers, scheduled jobs, data layers, and shutdown
+  are scoped Effect resources. The gate passes 337 unit tests, 136 Effect
+  boundary tests, and 9 real PostgreSQL/Redis E2E tests.
+- API archives the legacy schema and 139 migrations with 140 checked SHA-256
+  entries. Real PostgreSQL verification covers a clean baseline, adoption,
+  idempotent re-entry, and rollback on fingerprint mismatch.
+- Activity's legacy and Drizzle definitions match on a real TimescaleDB,
+  including compound keys, indexes, one-day hypertable chunks, and seven-day
+  retention.
+- Battlelog passes a real PostgreSQL smoke while retaining the known
+  database-to-R2 failure window. The Drizzle seed CLI was also exercised against
+  PostgreSQL.
+- Web, Game Client, Wiki, and generated clients use the new HTTP and realtime
+  boundaries. Web passes 610 tests, Game Client 1,300, and Client 19.
+
+## Delivery evidence
+
+- All eight Bun image targets build as non-root images with healthchecks,
+  `dumb-init`, and source maps. Recorded Trivy scans report zero fixed high or
+  critical vulnerabilities.
+- Wiki and Traffic Splitter Wrangler dry-runs pass without publishing or
+  changing Cloudflare resources.
+- The repository-wide frozen install, lint, typecheck, test, build, E2E,
+  OpenAPI parity, generated-client, browser-safety, and forbidden-import gates
+  pass.
+- ADRs 0003–0008 and a normal Changeset document the runtime, contract,
+  database, messaging, and realtime decisions.
+
+## Deliberately preserved risks
+
+- Activity keeps its existing weak deduplication behavior.
+- Battlelog keeps its database-to-R2 failure window.
+- Discord delivery can repeat after redelivery.
+- Realtime v1 is intentionally incompatible with Socket.IO and requires a
+  coordinated Gateway, Web, and Game Client rollout.
+
+## Deployment boundary
+
+This repository change performs no deployment and mutates no production
+PostgreSQL, TimescaleDB, Redis, RabbitMQ, Meilisearch, R2, or Cloudflare
+resource. The separate infrastructure pull request must consume immutable
+artifacts and attach its promotion evidence, including the live 3,000-WebSocket
+smoke, HTTP burst near 1,000 requests per second, short soak, and bounded
+shutdown checks. See [`DEPLOYMENT_HANDOFF.md`](DEPLOYMENT_HANDOFF.md).

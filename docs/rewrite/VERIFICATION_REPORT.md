@@ -6,129 +6,106 @@ Rewrite branch: `feature/bun-effect-rewrite`
 
 ## Verdict
 
-The rewrite is not complete. Bun owns the public backend listeners, Prisma and
-Socket.IO are absent from active runtime code, the generated HTTP client uses
-Orval `single` mode, and four API data paths now run on native Effect layers.
-The API still starts a scoped Nest application context for its remaining
-services, RabbitMQ subscribers, BullMQ processors, and scheduled jobs. This is
-a release blocker for the stated Nest removal criterion.
+The repository rewrite is complete. Bun owns backend execution and package
+management, Effect owns backend composition and lifecycle, service databases use
+Drizzle, and active runtime code no longer depends on Nest, Prisma, Socket.IO,
+Necord, Winston, or RxJS. The generated HTTP client uses one file per OpenAPI
+input.
 
-Do not deploy or cut over realtime from this branch until every release blocker
-in this report is closed and the final gates pass from a clean checkout.
+Production deployment, infrastructure changes, and the coordinated realtime
+cutover are intentionally outside this repository change. Their promotion-only
+evidence is listed in [`DEPLOYMENT_HANDOFF.md`](DEPLOYMENT_HANDOFF.md).
 
-## Verified evidence
+## Contract evidence
 
-### HTTP and generated clients
+- The normalized OpenAPI comparison preserves all 243 baseline operations. The
+  only allowlisted addition is the realtime-ticket operation.
+- The five documents contain 244 operation IDs: API 199, Activity 9, Auth 5,
+  Battlelog 26, and Search 5.
+- API accepts only the complete trusted `x-auth-user-id` and
+  `x-auth-discord-id` pair produced by Traefik `forwardAuth`. Auth validates the
+  session or JWT; a bearer token sent directly to API is insufficient.
+- Orval `mode: "single"` emits five generated TypeScript files instead of the
+  previous per-operation tree. Two consecutive generations produce identical
+  hashes and leave Git clean.
+- RabbitMQ exchanges, routing keys, retry queues, dead-letter queues, payloads,
+  and acknowledgement behavior are preserved. A real RabbitMQ test verifies
+  initial delivery, TTL retry, retry count, and dead-lettering.
+- Realtime v1 covers MessagePack decoding, unknown and malformed frames,
+  origin-bound one-time authentication tickets, reconnect and resubscription,
+  bounded backpressure, permission rebalance, presence expiry, map pings, and
+  air tags. A real Redis test verifies two independent Gateway hubs and ticket
+  origin, reuse, and expiry behavior.
 
-- `bun run client:check` passes.
-- The normalized OpenAPI comparison contains all 243 baseline operations and
-  the allowlisted realtime ticket endpoint.
-- Orval generates one file per OpenAPI input: Activity, Auth, Battlelog, API,
-  and Search. It no longer generates per-operation file trees.
-- API runtime routing is Effect `HttpApi` on Bun. Events and Notifications no
-  longer use Fastify `app.inject()` loopback requests.
-- API trusts the complete `x-auth-user-id` and `x-auth-discord-id` pair only.
-  Traefik `forwardAuth` sends credentials to Auth, and Auth validates the
-  session or JWT before returning those headers. A bearer token sent directly
-  to API without the trusted header pair is rejected.
+## Runtime and database evidence
 
-### API test gate
+- API uses a native Bun/Effect HTTP listener for all 26 groups and 199
+  operations. RabbitMQ consumers, BullMQ workers, scheduled jobs, data layers,
+  and shutdown are scoped Effect resources; no Nest application context is
+  created.
+- API passes 337 unit tests, 136 Effect boundary tests, and 9 real PostgreSQL and
+  Redis E2E tests. Its active queries and test harness are Prisma-free.
+- The API migration runner verifies 140 SHA-256 entries for the archived legacy
+  schema and 139 migrations. Real PostgreSQL tests cover baseline installation,
+  legacy adoption, idempotent re-entry, and rejection with rollback for a
+  mismatched catalog.
+- Activity's legacy and Drizzle schemas match mechanically on TimescaleDB,
+  including keys, indexes, one-day chunks, and seven-day retention. Positive
+  and negative adoption checks pass.
+- Battlelog's Drizzle path passes a real PostgreSQL smoke test while preserving
+  the existing database-to-R2 ordering and failure window.
+- The local seed CLI uses Drizzle and was exercised against PostgreSQL for
+  organizations, roles, members, and timers.
 
-The previous API test command ran only `src/**/*.spec.ts`. It silently skipped
-32 `bun:test` files under `src/http-api`. The package gate now runs both suites:
+## Repository gates
 
-1. `test:legacy`: 112 Vitest files, 1,060 tests.
-2. `test:effect`: 32 Bun test files, 131 tests.
+The final tree passes:
 
-`bun run test --filter=@lootlog/api` passes all 1,191 tests. The Bun command
-ignores `dist` so compiled copies cannot run twice or read source fixtures from
-the wrong directory.
+```sh
+bun install --frozen-lockfile
+bun run lint
+bun run typecheck
+bun run test
+bun run build
+bun run test:e2e
+bun run openapi:parity
+bun run client:check
+```
 
-### Database and runtime cleanup
+Backend and runtime-neutral packages use `bun:test`. Vitest remains only in the
+Vite, DOM, Cloudflare, coverage, or benchmark workspaces: Docs, Game Client,
+Landing, Traffic Splitter, Web, Wiki, and UI.
 
-- Active application and package code contains no Prisma client import.
-- `MapTemplatesData` and `LootlogConfigData` use
-  `drizzle-orm/effect-postgres` through the scoped `ApiDatabaseLive` layer.
-- The health handler is Effect-native and has no service lookup.
-- Active application and package code contains no Socket.IO runtime import.
-- Active application, package, tool, and CI code contains no pnpm command or
-  workspace reference.
-- The repository-wide migration-marker audit returns no match outside vendored repositories.
+All eight Bun image targets build as non-root images with healthchecks,
+`dumb-init`, and source maps. Recorded Trivy checks report no fixed high or
+critical vulnerabilities. Wiki and Traffic Splitter Wrangler dry-runs pass
+without publishing.
 
-### Messaging and realtime lifecycle
+## Cleanup audit
 
-- `RabbitMessaging.consume` owns delivery fibers in a scoped `FiberSet`.
-  Consumer cancellation interrupts deliveries even when broker cancellation
-  fails.
-- Gateway owns websocket callbacks, presence sweeps, registry updates, and
-  permission rebalance tasks in one scoped `FiberSet`.
-- Gateway tests cover MessagePack decoding, origin and ticket authentication,
-  bounded backpressure, reconnect state, permission rebalance, presence expiry,
-  map pings, air tags, and RabbitMQ topology.
+- No active application, package, or tool source imports Nest, Prisma Client,
+  Socket.IO, Necord, Winston, RxJS, or the removed internal adapters.
+- `nestjs-zod` and its DTO adapter are removed. Direct Zod use remains only as a
+  framework-neutral validation and codec implementation.
+- The removed packages have no active consumers: Types, Nest Shared, API
+  Helpers, Socket Parser, Access Policy, Loot Visibility, Reservations, and
+  Scoring.
+- The legacy migration-marker audit returns no matches outside vendored
+  repositories.
 
-## Release blockers
+## Promotion-only evidence
 
-### API still depends on Nest at runtime
+The repository contains the performance harness and deployment instructions,
+but this rewrite did not start deployed applications or use production
+credentials. The infrastructure rollout must attach a 3,000-WebSocket smoke,
+an HTTP burst near 1,000 requests per second, a short soak, immutable image
+digests, and bounded shutdown evidence. These are promotion checks, not missing
+rewrite implementation.
 
-Current source audit:
-
-- 410 API source files import Nest, `nestjs-zod`, the Nest RabbitMQ adapter, or
-  `@lootlog/nest-shared`.
-- 133 providers still use `@Injectable`.
-- 33 controllers remain for legacy OpenAPI generation and compatibility code.
-
-`LegacyNestApplicationLive` starts `NestFactory.createApplicationContext()`.
-It does not listen on a socket and Effect closes it with the application scope,
-but it remains the owner of most API services and background consumers.
-
-Close this blocker by replacing every `app.get()` entry in
-`apps/api/src/http-api/runtime/legacy-data-layers.ts` with native layers,
-moving RabbitMQ, BullMQ, and scheduled jobs to scoped Effect resources, and
-removing `LegacyNestApplicationLive`, Nest packages, and
-`@lootlog/nest-shared` from API runtime code.
-
-### Native API database paths need container acceptance tests
-
-Unit tests cover authorization, decoding, and delegation for Map Templates and
-Lootlog Config. Their new native database implementations still need
-create/read/update/delete acceptance tests against the real PostgreSQL
-container. The tests must also prove Organization scoping and not-found
-behavior.
-
-### Remaining final gates
-
-The following evidence must be rerun after the API Nest removal:
-
-- clean `bun install --frozen-lockfile`;
-- repository `lint`, `typecheck`, `test`, and `build`;
-- deterministic two-pass OpenAPI and Orval generation with clean Git status;
-- database adoption and DDL parity against real PostgreSQL and TimescaleDB;
-- RabbitMQ redelivery, retry, and DLQ tests against a real broker;
-- two-instance Gateway federation against real Redis;
-- bounded SIGTERM for every image;
-- all Docker image builds, non-root checks, health checks, and Trivy scans;
-- 3,000 websocket smoke, 1,000 request/second HTTP burst, and short soak.
-
-## Preserved parity risks
-
-These risks existed before the rewrite and are not redesigned in this branch:
+## Preserved risks
 
 - Activity deduplication remains weak.
 - Battlelog retains the database-to-R2 failure window.
 - Discord notifications can be delivered more than once.
-- Realtime v1 is intentionally incompatible with Socket.IO and requires a
-  coordinated Gateway, Web, and Game Client rollout.
-
-## Audit commands
-
-Run these from the repository root:
-
-```sh
-bun run client:check
-bun run test --filter=@lootlog/api
-rg -n '@nestjs|@golevelup/nestjs|nestjs-zod|@lootlog/nest-shared' apps/api/src
-rg -n '@prisma/client|PrismaClient' apps packages
-rg -n 'socket\.io|socket.io-client' apps packages
-rg -n 'MIGRATION[_]TODO' . --glob '!repos/**'
-git status --short
-```
+- Realtime v1 intentionally requires a coordinated Gateway, Web, and Game
+  Client cutover.
