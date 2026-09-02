@@ -1,6 +1,5 @@
 import type { Type } from "@nestjs/common";
 import { Effect, Layer } from "effect";
-import { ChatService } from "#src/chat/chat.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { KillsService } from "#src/kills/kills.service";
 import { LootAllocationService } from "#src/loots/loot-allocation.service";
@@ -16,7 +15,6 @@ import { MemberContextService } from "#src/shared/permissions/member-context.ser
 import { TimersService } from "#src/timers/timers.service";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { UsersService } from "#src/users/users.service";
-import { ChatData } from "../handlers/chat/chat.handlers.js";
 import { EventsData } from "../handlers/events/events.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { MembersData } from "../handlers/members/members.handlers.js";
@@ -56,7 +54,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
         sharing: service(ReservationSharingService),
       }),
       TimersData.layerService(service(TimersService)),
-      ChatData.layerService(service(ChatService)),
       legacyKillsLootsDataLayer({
         kills: service(KillsService),
         loots,

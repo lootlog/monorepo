@@ -82,40 +82,41 @@ export class ChatData extends Context.Service<
   }
 >()("@lootlog/api/http-api/chat/data") {
   static layerService(service: ChatService) {
+    return Layer.succeed(ChatData, ChatData.makeService(service));
+  }
+
+  static makeService(service: ChatService): ChatData["Service"] {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new ChatOperationError({ cause }),
       });
 
-    return Layer.succeed(
-      ChatData,
-      ChatData.of({
-        getMessages: (discordId, guildId) =>
-          attempt(() => service.getMessages(discordId, guildId)),
-        sendMessage: (discordId, guildId, payload) =>
-          attempt(() =>
-            service.sendMessage(discordId, guildId, {
-              ...payload,
-              type: toLegacyMessageType(payload.type),
-              replyTo: payload.replyTo
-                ? {
-                    ...payload.replyTo,
-                    type: toLegacyReplyType(payload.replyTo.type),
-                  }
-                : undefined,
-            }),
-          ),
-        clearMessages: (discordId, guildId) =>
-          attempt(() => service.clearMessages(discordId, guildId)),
-        deleteMessage: (discordId, guildId, messageId) =>
-          attempt(() => service.deleteMessage(discordId, guildId, messageId)),
-        updateMessage: (discordId, guildId, messageId, message) =>
-          attempt(() =>
-            service.updateMessage(discordId, guildId, messageId, message),
-          ),
-      }),
-    );
+    return ChatData.of({
+      getMessages: (discordId, guildId) =>
+        attempt(() => service.getMessages(discordId, guildId)),
+      sendMessage: (discordId, guildId, payload) =>
+        attempt(() =>
+          service.sendMessage(discordId, guildId, {
+            ...payload,
+            type: toLegacyMessageType(payload.type),
+            replyTo: payload.replyTo
+              ? {
+                  ...payload.replyTo,
+                  type: toLegacyReplyType(payload.replyTo.type),
+                }
+              : undefined,
+          }),
+        ),
+      clearMessages: (discordId, guildId) =>
+        attempt(() => service.clearMessages(discordId, guildId)),
+      deleteMessage: (discordId, guildId, messageId) =>
+        attempt(() => service.deleteMessage(discordId, guildId, messageId)),
+      updateMessage: (discordId, guildId, messageId, message) =>
+        attempt(() =>
+          service.updateMessage(discordId, guildId, messageId, message),
+        ),
+    });
   }
 }
 
