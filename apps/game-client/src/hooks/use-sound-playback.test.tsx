@@ -34,7 +34,8 @@ vi.mock("@/lib/api/generated-helpers", () => ({
   normalizeSoundSettings: (settings: unknown) => settings,
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/sound-settings", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getSoundSettingsControllerGetSettingsQueryKey: () => ["sound-settings"],
 }));
 

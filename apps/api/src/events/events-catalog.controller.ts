@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Body,
   Controller,
@@ -20,11 +20,10 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import {
-  Permission,
-  type Guild,
-  type Role,
-} from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 import { CreateEventDto } from "./dto/create-event.dto.js";
 import {
   EventListItemResponseDto,

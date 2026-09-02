@@ -57,9 +57,9 @@ const cloudflareDevelopmentTargets = new Map([
 const apiClientProducers = new Set([
   "@lootlog/activity",
   "@lootlog/api",
-  "@lootlog/api-client",
+  "@lootlog/client",
   "@lootlog/auth",
-  "@lootlog/battlelog-service",
+  "@lootlog/battlelog",
   "@lootlog/search",
 ]);
 
@@ -105,7 +105,7 @@ export function createCiPlan({
     cloudflareTargets,
     dockerServices,
     packages,
-    runApiClientCheck: packages.some((packageName) =>
+    runClientCheck: packages.some((packageName) =>
       apiClientProducers.has(packageName),
     ),
     versionPullRequest,

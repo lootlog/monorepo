@@ -10,6 +10,8 @@
     "./chat": "./src/chat.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./discord": "./src/discord.ts",
+    "./item-rarity": "./src/item-rarity.ts",
+    "./loot": "./src/loot.ts",
     "./loot-events": "./src/loot-events.ts",
     "./map-ping": "./src/map-ping.ts",
     "./notifications": "./src/notifications.ts",

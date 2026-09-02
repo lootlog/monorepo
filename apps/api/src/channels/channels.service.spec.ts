@@ -1,13 +1,13 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DiscordGuildSyncStatus } from "@lootlog/types";
+import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { ChannelsService } from "./channels.service.js";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
+import { ChannelsRepository } from "./channels.repository.js";
 
 vi.mock("#src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
@@ -15,33 +15,6 @@ vi.mock("#src/config/discord-bot.config", () => ({
 
 describe("ChannelsService", () => {
   let service: ChannelsService;
-
-  const mockTx = {
-    discordGuildChannelSnapshot: {
-      upsert: mockFn(),
-      deleteMany: mockFn(),
-    },
-    discordGuildSyncState: {
-      upsert: mockFn(),
-    },
-    notificationTarget: {
-      updateMany: mockFn(),
-    },
-  };
-
-  const mockPrisma = {
-    $transaction: mockFn(),
-    guild: {
-      findUnique: mockFn(),
-    },
-    discordGuildChannelSnapshot: {
-      findMany: mockFn(),
-    },
-    discordGuildSyncState: {
-      findUnique: mockFn(),
-      upsert: mockFn(),
-    },
-  };
 
   const mockDiscordBotClient = {
     refreshGuildChannels: mockFn(),
@@ -54,6 +27,18 @@ describe("ChannelsService", () => {
   const mockLogger = {
     log: mockFn(),
     warn: mockFn(),
+  };
+
+  const mockRepository = {
+    guildExists: mockFn(),
+    loadGuildDiscordState: mockFn(),
+    listChannelIds: mockFn(),
+    markGuildSyncStale: mockFn(),
+    upsertSyncState: mockFn(),
+    upsertFailure: mockFn(),
+    upsertChannel: mockFn(),
+    deleteChannel: mockFn(),
+    reconcile: mockFn(),
   };
 
   const baseSyncState = {
@@ -90,26 +75,21 @@ describe("ChannelsService", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    mockPrisma.$transaction.mockImplementation(
-      (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
-    );
-    mockPrisma.guild.findUnique.mockResolvedValue({ id: "guild-1" });
-    mockTx.discordGuildChannelSnapshot.upsert.mockResolvedValue(undefined);
-    mockTx.discordGuildChannelSnapshot.deleteMany.mockResolvedValue({
-      count: 0,
-    });
-    mockTx.discordGuildSyncState.upsert.mockResolvedValue(undefined);
-    mockTx.notificationTarget.updateMany.mockResolvedValue({ count: 0 });
-    mockPrisma.discordGuildSyncState.upsert.mockResolvedValue(undefined);
     mockAmqpConnection.publish.mockResolvedValue(undefined);
+    mockRepository.guildExists.mockResolvedValue(true);
+    mockRepository.markGuildSyncStale.mockResolvedValue(undefined);
+    mockRepository.upsertSyncState.mockResolvedValue(undefined);
+    mockRepository.upsertFailure.mockResolvedValue(undefined);
+    mockRepository.upsertChannel.mockResolvedValue(undefined);
+    mockRepository.deleteChannel.mockResolvedValue(undefined);
+    mockRepository.reconcile.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChannelsService,
         {
-          provide: PrismaService,
-          useValue: mockPrisma,
+          provide: ChannelsRepository,
+          useValue: mockRepository,
         },
         {
           provide: DiscordBotClientService,
@@ -130,22 +110,27 @@ describe("ChannelsService", () => {
   });
 
   it("refreshes stale channel snapshots on demand", async () => {
-    mockPrisma.discordGuildChannelSnapshot.findMany
-      .mockResolvedValueOnce([baseChannel])
-      .mockResolvedValueOnce([{ channelId: "channel-1" }])
-      .mockResolvedValueOnce([baseChannel]);
-    mockPrisma.discordGuildSyncState.findUnique
+    mockRepository.loadGuildDiscordState
       .mockResolvedValueOnce({
-        ...baseSyncState,
-        updatedAt: new Date(baseSyncState.updatedAt),
-        status: DiscordGuildSyncStatus.STALE,
+        channels: [baseChannel],
+        syncState: {
+          ...baseSyncState,
+          updatedAt: new Date(baseSyncState.updatedAt),
+          status: DiscordGuildSyncStatus.STALE,
+        },
       })
       .mockResolvedValueOnce({
-        ...baseSyncState,
-        updatedAt: new Date(baseSyncState.updatedAt),
-        lastAttemptAt: new Date(baseSyncState.lastAttemptAt),
-        lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
+        channels: [baseChannel],
+        syncState: {
+          ...baseSyncState,
+          updatedAt: new Date(baseSyncState.updatedAt),
+          lastAttemptAt: new Date(baseSyncState.lastAttemptAt),
+          lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
+        },
       });
+    mockRepository.listChannelIds.mockResolvedValue([
+      { channelId: "channel-1" },
+    ]);
     mockDiscordBotClient.refreshGuildChannels.mockResolvedValue({
       channels: [baseChannel],
       syncState: baseSyncState,
@@ -168,15 +153,15 @@ describe("ChannelsService", () => {
   });
 
   it("keeps the cached snapshot and records FAILED when refresh errors transiently", async () => {
-    mockPrisma.discordGuildChannelSnapshot.findMany.mockResolvedValueOnce([
-      baseChannel,
-    ]);
-    mockPrisma.discordGuildSyncState.findUnique.mockResolvedValueOnce({
-      ...baseSyncState,
-      updatedAt: new Date(baseSyncState.updatedAt),
-      lastAttemptAt: new Date(baseSyncState.lastAttemptAt),
-      lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
-      status: DiscordGuildSyncStatus.STALE,
+    mockRepository.loadGuildDiscordState.mockResolvedValueOnce({
+      channels: [baseChannel],
+      syncState: {
+        ...baseSyncState,
+        updatedAt: new Date(baseSyncState.updatedAt),
+        lastAttemptAt: new Date(baseSyncState.lastAttemptAt),
+        lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
+        status: DiscordGuildSyncStatus.STALE,
+      },
     });
     mockDiscordBotClient.refreshGuildChannels.mockRejectedValue(
       new Error("Discord timeout"),
@@ -195,13 +180,11 @@ describe("ChannelsService", () => {
         lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
       }),
     });
-    expect(mockPrisma.discordGuildSyncState.upsert).toHaveBeenCalledWith(
+    expect(mockRepository.upsertFailure).toHaveBeenCalledWith(
+      "guild-1",
       expect.objectContaining({
-        where: { guildId: "guild-1" },
-        update: expect.objectContaining({
-          status: DiscordGuildSyncStatus.FAILED,
-          lastError: "Discord timeout",
-        }),
+        status: DiscordGuildSyncStatus.FAILED,
+        lastError: "Discord timeout",
       }),
     );
   });
@@ -211,49 +194,28 @@ describe("ChannelsService", () => {
       channels: [baseChannel],
       syncState: baseSyncState,
     });
-    mockPrisma.discordGuildChannelSnapshot.findMany
-      .mockResolvedValueOnce([
-        { channelId: "channel-1" },
-        { channelId: "channel-removed" },
-      ])
-      .mockResolvedValueOnce([baseChannel]);
-    mockPrisma.discordGuildSyncState.findUnique.mockResolvedValueOnce({
-      ...baseSyncState,
-      updatedAt: new Date(baseSyncState.updatedAt),
-      lastAttemptAt: new Date(baseSyncState.lastAttemptAt),
-      lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
+    mockRepository.listChannelIds.mockResolvedValue([
+      { channelId: "channel-1" },
+      { channelId: "channel-removed" },
+    ]);
+    mockRepository.loadGuildDiscordState.mockResolvedValueOnce({
+      channels: [baseChannel],
+      syncState: {
+        ...baseSyncState,
+        updatedAt: new Date(baseSyncState.updatedAt),
+        lastAttemptAt: new Date(baseSyncState.lastAttemptAt),
+        lastSuccessAt: new Date(baseSyncState.lastSuccessAt),
+      },
     });
 
     await service.refreshGuildDiscordChannels("guild-1");
 
-    expect(mockTx.discordGuildChannelSnapshot.deleteMany).toHaveBeenCalledWith({
-      where: {
-        guildId: "guild-1",
-        channelId: {
-          in: ["channel-removed"],
-        },
-      },
-    });
-    expect(mockTx.notificationTarget.updateMany).toHaveBeenCalledWith({
-      where: {
-        ownerType: "GUILD",
-        ownerId: "guild-1",
-        provider: "DISCORD",
-        targetType: "CHANNEL",
-        externalId: "channel-1",
-      },
-      data: {
-        canSend: true,
-        lastSyncedAt: new Date(baseChannel.lastSyncedAt),
-        metadata: {
-          channelType: "GuildText",
-          requiredPermissions: ["ViewChannel", "SendMessages"],
-          grantedPermissions: ["ViewChannel", "SendMessages"],
-          missingPermissions: [],
-          hasRequiredPermissions: true,
-        },
-      },
-    });
+    expect(mockRepository.reconcile).toHaveBeenCalledWith(
+      "guild-1",
+      [baseChannel],
+      ["channel-removed"],
+      baseSyncState,
+    );
     expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
@@ -266,7 +228,7 @@ describe("ChannelsService", () => {
   });
 
   it("skips delta events when the guild does not exist yet", async () => {
-    mockPrisma.guild.findUnique.mockResolvedValue(null);
+    mockRepository.guildExists.mockResolvedValue(false);
 
     await service.handleGuildSyncStateUpdated({
       guildId: "missing-guild",
@@ -276,7 +238,7 @@ describe("ChannelsService", () => {
       },
     });
 
-    expect(mockPrisma.discordGuildSyncState.upsert).not.toHaveBeenCalled();
+    expect(mockRepository.upsertSyncState).not.toHaveBeenCalled();
     expect(mockLogger.warn).toHaveBeenCalledWith({
       message: "Skipped Discord sync event for unknown guild",
       guildId: "missing-guild",
@@ -284,7 +246,7 @@ describe("ChannelsService", () => {
     });
   });
 
-  it("preserves the previous lastSuccessAt when a stale sync-state update arrives", async () => {
+  it("does not synthesize lastSuccessAt for a stale sync-state update", async () => {
     await service.handleGuildSyncStateUpdated({
       guildId: "guild-1",
       syncState: {
@@ -294,9 +256,12 @@ describe("ChannelsService", () => {
       },
     });
 
-    const syncUpsertCall =
-      mockPrisma.discordGuildSyncState.upsert.mock.calls[0]?.[0];
-
-    expect(syncUpsertCall.update).not.toHaveProperty("lastSuccessAt");
+    expect(mockRepository.upsertSyncState).toHaveBeenCalledWith(
+      "guild-1",
+      expect.objectContaining({
+        status: DiscordGuildSyncStatus.STALE,
+        lastSuccessAt: null,
+      }),
+    );
   });
 });

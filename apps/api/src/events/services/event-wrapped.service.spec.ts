@@ -1,15 +1,17 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import type { Guild } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import type { guildTable } from "#src/database/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { LootsService } from "#src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service.js";
+import { EventWrappedRepository } from "./event-wrapped.repository.js";
+
+type Guild = typeof guildTable.$inferSelect;
 
 describe("EventWrappedService", () => {
   let service: EventWrappedService;
 
-  const mockPrismaService = {
+  const mockRepositoryBackend = {
     event: {
       findFirst: mockFn(),
     },
@@ -25,6 +27,39 @@ describe("EventWrappedService", () => {
     eventMapAssignmentHistory: {
       findMany: mockFn(),
     },
+  };
+  const repository = {
+    findEvent: mockFn().mockImplementation((guildId, eventId) =>
+      mockRepositoryBackend.event.findFirst({
+        where: { id: eventId, guildId },
+        select: expect.any(Object),
+      }),
+    ),
+    findRankings: mockFn().mockImplementation((eventId) =>
+      mockRepositoryBackend.eventRanking.findMany({
+        where: { eventId },
+        select: expect.any(Object),
+      }),
+    ),
+    findKills: mockFn().mockImplementation((heroIds) =>
+      mockRepositoryBackend.eventHeroKill.findMany({
+        where: { heroNpcId: { in: heroIds } },
+        select: expect.any(Object),
+        orderBy: { killedAt: "asc" },
+      }),
+    ),
+    findSummaries: mockFn().mockImplementation((heroIds) =>
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany({
+        where: { heroNpcId: { in: heroIds } },
+        select: expect.any(Object),
+      }),
+    ),
+    findAssignments: mockFn().mockImplementation((heroIds) =>
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany({
+        where: { heroNpcId: { in: heroIds } },
+        select: expect.any(Object),
+      }),
+    ),
   };
 
   const mockRedisService = {
@@ -46,10 +81,7 @@ describe("EventWrappedService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventWrappedService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
+        { provide: EventWrappedRepository, useValue: repository },
         {
           provide: RedisService,
           useValue: mockRedisService,
@@ -129,14 +161,14 @@ describe("EventWrappedService", () => {
     const result = await service.getWrapped(guild, "event-1", [], []);
 
     expect(result).toEqual(cachedResponse);
-    expect(mockPrismaService.event.findFirst).not.toHaveBeenCalled();
+    expect(mockRepositoryBackend.event.findFirst).not.toHaveBeenCalled();
   });
 
   it("builds wrapped payload from rankings, coverage and loots", async () => {
     mockRedisService.getOrSetJsonBestEffort.mockImplementation(
       ({ factory }: { factory: () => Promise<unknown> }) => factory(),
     );
-    mockPrismaService.event.findFirst.mockResolvedValue({
+    mockRepositoryBackend.event.findFirst.mockResolvedValue({
       id: "event-1",
       name: "Gwiazda",
       world: "fobos",
@@ -153,7 +185,7 @@ describe("EventWrappedService", () => {
         },
       ],
     });
-    mockPrismaService.eventRanking.findMany.mockResolvedValue([
+    mockRepositoryBackend.eventRanking.findMany.mockResolvedValue([
       {
         memberId: 1,
         heroNpcName: "Maddok",
@@ -181,7 +213,7 @@ describe("EventWrappedService", () => {
         },
       },
     ]);
-    mockPrismaService.eventHeroKill.findMany.mockResolvedValue([
+    mockRepositoryBackend.eventHeroKill.findMany.mockResolvedValue([
       {
         id: "kill-1",
         heroNpcId: "hero-1",
@@ -195,7 +227,7 @@ describe("EventWrappedService", () => {
         minSpawnTimeAtKill: new Date("2026-03-12T10:00:00.000Z"),
       },
     ]);
-    mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([
+    mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue([
       {
         heroNpcId: "hero-1",
         totalWindowSeconds: 3600,
@@ -205,7 +237,7 @@ describe("EventWrappedService", () => {
         mapStats: [{ mapId: "map-1" }, { mapId: "map-2" }],
       },
     ]);
-    mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
+    mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue([
       {
         mapId: "map-1",
         heroNpcId: "hero-1",

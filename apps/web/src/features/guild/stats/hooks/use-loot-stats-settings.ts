@@ -1,6 +1,6 @@
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { LootsControllerGetLootStatsPeriod } from "@lootlog/api-client/models/main/loots-controller-get-loot-stats-period";
+import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
 
 export type LootStatsSettings = {
   period: LootsControllerGetLootStatsPeriod;

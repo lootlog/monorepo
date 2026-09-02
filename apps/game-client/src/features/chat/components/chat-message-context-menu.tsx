@@ -9,7 +9,7 @@ import {
   showCharacterProfile,
   startPrivateMessage,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 

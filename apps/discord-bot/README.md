@@ -1,30 +1,30 @@
 # @lootlog/discord-bot
 
-Discord integration service built with NestJS and Necord.
+Discord integration service built with Bun, Effect, and discord.js.
 
 ## Overview
 
-- Boots the Lootlog bot client and handles Discord-driven workflows from the `bot` module.
-- Integrates with RabbitMQ for cross-service communication and event-driven automation.
-- Keeps a dedicated health check module alongside bot-specific configuration and event handlers.
+- Owns the scoped Discord client and registers Discord event handlers directly.
+- Consumes notification commands and publishes delivery and synchronization events through RabbitMQ.
+- Exposes the existing health and internal synchronization routes through Bun HTTP.
 
 ## Development
 
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/discord-bot dev
+bun run --filter @lootlog/discord-bot dev
 ```
 
 ## Key Scripts
 
-- `pnpm --filter @lootlog/discord-bot build`
-- `pnpm --filter @lootlog/discord-bot start`
-- `pnpm --filter @lootlog/discord-bot lint`
-- `pnpm --filter @lootlog/discord-bot test`
-- `pnpm --filter @lootlog/discord-bot test:e2e`
+- `bun run --filter @lootlog/discord-bot build`
+- `bun run --filter @lootlog/discord-bot start`
+- `bun run --filter @lootlog/discord-bot lint`
+- `bun run --filter @lootlog/discord-bot test`
+- `bun run --filter @lootlog/discord-bot test:e2e`
 
 ## Notes
 
-- Discord and RabbitMQ configuration is wired through `src/config/*`.
-- Production start imports the generated observability bootstrap from `dist/instrumentation.js`.
+- Discord and RabbitMQ resources are wired as scoped Effect Layers.
+- `BunRuntime.runMain` owns SIGINT/SIGTERM interruption and finalization.

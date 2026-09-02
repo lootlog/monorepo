@@ -15,21 +15,21 @@ import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import { getApiErrorMessage } from "./utils/get-api-error-message";
 import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
-import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
+import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import {
   getShowEventOverviewQueryKey,
   useRecalculateEventPoints,
   useShowEventOverview,
   useUpdateEvent,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 

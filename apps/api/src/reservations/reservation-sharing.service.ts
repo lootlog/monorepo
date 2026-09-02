@@ -5,10 +5,13 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
-import { Permission, type Guild } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable } from "#src/database/drizzle/schema";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { ReservationEventsPublisher } from "./reservation-events.publisher.js";
+import { ReservationSharingRepository } from "./reservation-sharing.repository.js";
+
+type Guild = typeof guildTable.$inferSelect;
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -30,19 +33,13 @@ function orderGuildPair(firstGuildId: string, secondGuildId: string) {
 @Injectable()
 export class ReservationSharingService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: ReservationSharingRepository,
     private readonly guildsService: GuildsService,
     private readonly eventsPublisher: ReservationEventsPublisher,
   ) {}
 
   async getVisibleGuildIds(guildId: string): Promise<string[]> {
-    const shares = await this.prisma.reservationShare.findMany({
-      where: {
-        revokedAt: null,
-        OR: [{ firstGuildId: guildId }, { secondGuildId: guildId }],
-      },
-      select: { firstGuildId: true, secondGuildId: true },
-    });
+    const shares = await this.repository.findActiveShares(guildId);
 
     return [
       guildId,
@@ -57,23 +54,8 @@ export class ReservationSharingService {
   async list(guildId: string) {
     const now = new Date();
     const [shares, pendingInvitations] = await Promise.all([
-      this.prisma.reservationShare.findMany({
-        where: {
-          revokedAt: null,
-          OR: [{ firstGuildId: guildId }, { secondGuildId: guildId }],
-        },
-        include: { firstGuild: true, secondGuild: true },
-        orderBy: { createdAt: "desc" },
-      }),
-      this.prisma.reservationShareInvitation.findMany({
-        where: {
-          sourceGuildId: guildId,
-          acceptedAt: null,
-          revokedAt: null,
-          expiresAt: { gt: now },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
+      this.repository.listActiveSharesWithGuilds(guildId),
+      this.repository.findPendingInvitations(guildId, now),
     ]);
 
     return {
@@ -101,13 +83,11 @@ export class ReservationSharingService {
   async createInvitation(guildId: string, userId: string) {
     const token = randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
-    const invitation = await this.prisma.reservationShareInvitation.create({
-      data: {
-        sourceGuildId: guildId,
-        tokenHash: this.hashToken(token),
-        createdByUserId: userId,
-        expiresAt,
-      },
+    const invitation = await this.repository.createInvitation({
+      sourceGuildId: guildId,
+      tokenHash: this.hashToken(token),
+      createdByUserId: userId,
+      expiresAt,
     });
     const invitePath = `/reservation-sharing/invitations/${token}`;
 
@@ -174,50 +154,25 @@ export class ReservationSharingService {
       invitation.sourceGuildId,
       targetGuild.id,
     );
-    const share = await this.prisma.$transaction(async (transaction) => {
-      const acceptedAt = new Date();
-      const claim = await transaction.reservationShareInvitation.updateMany({
-        where: {
-          id: invitation.id,
-          acceptedAt: null,
-          revokedAt: null,
-          expiresAt: { gt: acceptedAt },
-        },
-        data: {
-          acceptedAt,
-          acceptedByUserId: options.userId,
-          targetGuildId: targetGuild.id,
-        },
-      });
-
-      if (claim.count === 0) {
-        throw new GoneException({ code: "INVITATION_EXPIRED" });
-      }
-
-      const existingShare = await transaction.reservationShare.findUnique({
-        where: { firstGuildId_secondGuildId: { firstGuildId, secondGuildId } },
-      });
-      if (existingShare && !existingShare.revokedAt) {
-        throw new ConflictException({ code: "RESERVATION_SHARE_EXISTS" });
-      }
-
-      const nextShare = await transaction.reservationShare.upsert({
-        where: { firstGuildId_secondGuildId: { firstGuildId, secondGuildId } },
-        create: {
-          firstGuildId,
-          secondGuildId,
-          createdByUserId: invitation.createdByUserId,
-          acceptedByUserId: options.userId,
-        },
-        update: {
-          createdByUserId: invitation.createdByUserId,
-          acceptedByUserId: options.userId,
-          revokedAt: null,
-        },
-      });
-
-      return nextShare;
+    const acceptResult = await this.repository.acceptInvitation({
+      invitationId: invitation.id,
+      sourceGuildId: invitation.sourceGuildId,
+      targetGuildId: targetGuild.id,
+      createdByUserId: invitation.createdByUserId,
+      acceptedByUserId: options.userId,
+      firstGuildId,
+      secondGuildId,
     });
+    if (acceptResult.kind === "expired") {
+      throw new GoneException({ code: "INVITATION_EXPIRED" });
+    }
+    if (acceptResult.kind === "exists") {
+      throw new ConflictException({ code: "RESERVATION_SHARE_EXISTS" });
+    }
+    if (acceptResult.kind === "insert-failed") {
+      throw new Error("Reservation share insert returned no row");
+    }
+    const share = acceptResult.share;
 
     await this.eventsPublisher.sharingChanged(invitation.sourceGuildId, [
       invitation.sourceGuildId,
@@ -235,37 +190,22 @@ export class ReservationSharingService {
   }
 
   async revokeInvitation(guildId: string, invitationId: string): Promise<void> {
-    const result = await this.prisma.reservationShareInvitation.updateMany({
-      where: {
-        id: invitationId,
-        sourceGuildId: guildId,
-        acceptedAt: null,
-        revokedAt: null,
-      },
-      data: { revokedAt: new Date() },
-    });
-
-    if (result.count === 0) {
+    const revoked = await this.repository.revokeInvitation(
+      guildId,
+      invitationId,
+    );
+    if (!revoked) {
       throw new NotFoundException({ code: "INVITATION_NOT_FOUND" });
     }
   }
 
   async revokeShare(guildId: string, shareId: string): Promise<void> {
-    const share = await this.prisma.reservationShare.findFirst({
-      where: {
-        id: shareId,
-        revokedAt: null,
-        OR: [{ firstGuildId: guildId }, { secondGuildId: guildId }],
-      },
-    });
+    const share = await this.repository.findActiveShare(guildId, shareId);
     if (!share) {
       throw new NotFoundException({ code: "RESERVATION_SHARE_NOT_FOUND" });
     }
 
-    await this.prisma.reservationShare.update({
-      where: { id: share.id },
-      data: { revokedAt: new Date() },
-    });
+    await this.repository.revokeShare(share.id);
     await this.eventsPublisher.sharingChanged(guildId, [
       share.firstGuildId,
       share.secondGuildId,
@@ -273,10 +213,9 @@ export class ReservationSharingService {
   }
 
   private async getUsableInvitation(token: string) {
-    const invitation = await this.prisma.reservationShareInvitation.findUnique({
-      where: { tokenHash: this.hashToken(token) },
-      include: { sourceGuild: true },
-    });
+    const invitation = await this.repository.findInvitation(
+      this.hashToken(token),
+    );
 
     if (!invitation) {
       throw new NotFoundException({ code: "INVITATION_NOT_FOUND" });

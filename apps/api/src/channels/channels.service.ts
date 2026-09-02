@@ -2,48 +2,31 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import {
   DiscordGuildSyncStatus,
-  type DiscordGuildChannelSnapshot,
   type DiscordGuildChannelDeletedEvent,
   type DiscordGuildChannelUpsertedEvent,
   type DiscordGuildChannelsSyncFailedEvent,
   type DiscordGuildChannelsSyncedEvent,
-  type DiscordGuildSyncState,
   type DiscordGuildSyncStateUpdatedEvent,
-} from "@lootlog/types";
+} from "@lootlog/schema/notifications";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import {
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationProvider as DbNotificationProvider,
-  NotificationTargetType as DbNotificationTargetType,
-} from "#src/generated/prisma/client";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+import { ChannelsRepository } from "./channels.repository.js";
 
 type GetGuildDiscordChannelsOptions = {
   forceRefresh?: boolean;
   refreshIfStale?: boolean;
 };
 
-type GuildSyncStatePersistenceClient = Pick<
-  PrismaService,
-  "discordGuildSyncState"
->;
-
-type GuildChannelPersistenceClient = Pick<
-  PrismaService,
-  "discordGuildChannelSnapshot" | "notificationTarget"
->;
-
 @Injectable()
 export class ChannelsService {
   private readonly staleAfterMs: number;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: ChannelsRepository,
     private readonly discordBotClient: DiscordBotClientService,
     private readonly amqpConnection: AmqpConnection,
     @Inject(WINSTON_MODULE_PROVIDER)
@@ -134,12 +117,11 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await this.upsertGuildChannelSnapshot(tx, event.guildId, event.channel);
-      await this.syncGuildNotificationTarget(tx, event.guildId, event.channel);
-
-      await this.upsertGuildSyncState(tx, event.guildId, event.syncState);
-    });
+    await this.repository.upsertChannel(
+      event.guildId,
+      event.channel,
+      event.syncState,
+    );
   }
 
   async handleGuildChannelDeleted(event: DiscordGuildChannelDeletedEvent) {
@@ -148,16 +130,11 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.discordGuildChannelSnapshot.deleteMany({
-        where: {
-          guildId: event.guildId,
-          channelId: event.channelId,
-        },
-      });
-
-      await this.upsertGuildSyncState(tx, event.guildId, event.syncState);
-    });
+    await this.repository.deleteChannel(
+      event.guildId,
+      event.channelId,
+      event.syncState,
+    );
   }
 
   async handleGuildSyncStateUpdated(event: DiscordGuildSyncStateUpdatedEvent) {
@@ -166,11 +143,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.upsertGuildSyncState(
-      this.prisma,
-      event.guildId,
-      event.syncState,
-    );
+    await this.repository.upsertSyncState(event.guildId, event.syncState);
   }
 
   async handleGuildChannelsSyncFailed(
@@ -181,21 +154,11 @@ export class ChannelsService {
       return;
     }
 
-    await this.upsertGuildSyncFailureState(this.prisma, event.guildId, event);
+    await this.repository.upsertFailure(event.guildId, event);
   }
 
-  private async loadGuildDiscordState(guildId: string) {
-    const [channels, syncState] = await Promise.all([
-      this.prisma.discordGuildChannelSnapshot.findMany({
-        where: { guildId },
-        orderBy: [{ position: "asc" }, { name: "asc" }],
-      }),
-      this.prisma.discordGuildSyncState.findUnique({
-        where: { guildId },
-      }),
-    ]);
-
-    return { channels, syncState };
+  private loadGuildDiscordState(guildId: string) {
+    return this.repository.loadGuildDiscordState(guildId);
   }
 
   async markGuildSyncStale(guildId: string, lastError?: string | null) {
@@ -203,26 +166,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.discordGuildSyncState.upsert({
-      where: { guildId },
-      create: {
-        guildId,
-        status: DiscordGuildSyncStatus.STALE,
-        hasRequiredPermissions: false,
-        requiredPermissions: [],
-        grantedPermissions: [],
-        missingPermissions: [],
-        channelCount: 0,
-        selectableChannelCount: 0,
-        lastAttemptAt: null,
-        lastSuccessAt: null,
-        lastError: lastError ?? null,
-      },
-      update: {
-        status: DiscordGuildSyncStatus.STALE,
-        lastError: lastError ?? null,
-      },
-    });
+    await this.repository.markGuildSyncStale(guildId, lastError ?? null);
   }
 
   private shouldRefresh(
@@ -249,11 +193,9 @@ export class ChannelsService {
   }
 
   private async reconcileGuildChannels(event: DiscordGuildChannelsSyncedEvent) {
-    const existingChannels =
-      await this.prisma.discordGuildChannelSnapshot.findMany({
-        where: { guildId: event.guildId },
-        select: { channelId: true },
-      });
+    const existingChannels = await this.repository.listChannelIds(
+      event.guildId,
+    );
     const nextChannelIds = new Set(
       event.channels.map((channel) => channel.channelId),
     );
@@ -261,27 +203,12 @@ export class ChannelsService {
       .map((channel) => channel.channelId)
       .filter((channelId) => !nextChannelIds.has(channelId));
 
-    await this.prisma.$transaction(async (tx) => {
-      await Promise.all(
-        event.channels.map(async (channel) => {
-          await this.upsertGuildChannelSnapshot(tx, event.guildId, channel);
-          await this.syncGuildNotificationTarget(tx, event.guildId, channel);
-        }),
-      );
-
-      if (removedChannelIds.length > 0) {
-        await tx.discordGuildChannelSnapshot.deleteMany({
-          where: {
-            guildId: event.guildId,
-            channelId: {
-              in: removedChannelIds,
-            },
-          },
-        });
-      }
-
-      await this.upsertGuildSyncState(tx, event.guildId, event.syncState);
-    });
+    await this.repository.reconcile(
+      event.guildId,
+      event.channels,
+      removedChannelIds,
+      event.syncState,
+    );
 
     if (removedChannelIds.length > 0) {
       await Promise.all(
@@ -314,165 +241,16 @@ export class ChannelsService {
     );
   }
 
-  private async upsertGuildSyncState(
-    client: GuildSyncStatePersistenceClient,
-    guildId: string,
-    syncState: DiscordGuildSyncState,
-  ) {
-    const lastAttemptAt = syncState.lastAttemptAt
-      ? new Date(syncState.lastAttemptAt)
-      : null;
-    const lastSuccessAt = syncState.lastSuccessAt
-      ? new Date(syncState.lastSuccessAt)
-      : lastAttemptAt;
-
-    await client.discordGuildSyncState.upsert({
-      where: { guildId },
-      create: {
-        guildId,
-        status: syncState.status,
-        hasRequiredPermissions: syncState.hasRequiredPermissions,
-        requiredPermissions: syncState.requiredPermissions,
-        grantedPermissions: syncState.grantedPermissions,
-        missingPermissions: syncState.missingPermissions,
-        channelCount: syncState.channelCount,
-        selectableChannelCount: syncState.selectableChannelCount,
-        lastAttemptAt,
-        lastSuccessAt,
-        lastError: syncState.lastError,
-      },
-      update: {
-        status: syncState.status,
-        hasRequiredPermissions: syncState.hasRequiredPermissions,
-        requiredPermissions: syncState.requiredPermissions,
-        grantedPermissions: syncState.grantedPermissions,
-        missingPermissions: syncState.missingPermissions,
-        channelCount: syncState.channelCount,
-        selectableChannelCount: syncState.selectableChannelCount,
-        lastAttemptAt,
-        lastError: syncState.lastError,
-        ...(syncState.status === DiscordGuildSyncStatus.SYNCED
-          ? { lastSuccessAt }
-          : {}),
-      },
-    });
-  }
-
-  private async upsertGuildSyncFailureState(
-    client: GuildSyncStatePersistenceClient,
-    guildId: string,
-    failure: Pick<
-      DiscordGuildChannelsSyncFailedEvent,
-      "status" | "lastAttemptAt" | "lastError"
-    >,
-  ) {
-    await client.discordGuildSyncState.upsert({
-      where: { guildId },
-      create: {
-        guildId,
-        status: failure.status,
-        hasRequiredPermissions: false,
-        requiredPermissions: [],
-        grantedPermissions: [],
-        missingPermissions: [],
-        channelCount: 0,
-        selectableChannelCount: 0,
-        lastAttemptAt: new Date(failure.lastAttemptAt),
-        lastSuccessAt: null,
-        lastError: failure.lastError,
-      },
-      update: {
-        status: failure.status,
-        lastAttemptAt: new Date(failure.lastAttemptAt),
-        lastError: failure.lastError,
-      },
-    });
-  }
-
   private async recordGuildSyncFailure(guildId: string, error: unknown) {
     if (!(await this.guildExists(guildId))) {
       return;
     }
 
-    await this.upsertGuildSyncFailureState(this.prisma, guildId, {
+    await this.repository.upsertFailure(guildId, {
       status: DiscordGuildSyncStatus.FAILED,
       lastAttemptAt: new Date().toISOString(),
       lastError: this.getErrorMessage(error),
     });
-  }
-
-  private async upsertGuildChannelSnapshot(
-    client: GuildChannelPersistenceClient,
-    guildId: string,
-    channel: DiscordGuildChannelSnapshot,
-  ) {
-    const channelData = this.createGuildChannelSnapshotData(guildId, channel);
-
-    await client.discordGuildChannelSnapshot.upsert({
-      where: {
-        guildId_channelId: {
-          guildId,
-          channelId: channel.channelId,
-        },
-      },
-      create: channelData,
-      update: channelData,
-    });
-  }
-
-  private async syncGuildNotificationTarget(
-    client: GuildChannelPersistenceClient,
-    guildId: string,
-    channel: DiscordGuildChannelSnapshot,
-  ) {
-    await client.notificationTarget.updateMany({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-        provider: DbNotificationProvider.DISCORD,
-        targetType: DbNotificationTargetType.CHANNEL,
-        externalId: channel.channelId,
-      },
-      data: {
-        canSend: channel.hasRequiredPermissions,
-        lastSyncedAt: new Date(channel.lastSyncedAt),
-        metadata: this.createGuildChannelTargetMetadata(channel),
-      },
-    });
-  }
-
-  private createGuildChannelSnapshotData(
-    guildId: string,
-    channel: DiscordGuildChannelSnapshot,
-  ) {
-    return {
-      guildId,
-      channelId: channel.channelId,
-      name: channel.name,
-      channelType: channel.channelType,
-      parentId: channel.parentId,
-      position: channel.position,
-      active: channel.active,
-      canView: channel.canView,
-      canSend: channel.canSend,
-      hasRequiredPermissions: channel.hasRequiredPermissions,
-      requiredPermissions: channel.requiredPermissions,
-      grantedPermissions: channel.grantedPermissions,
-      missingPermissions: channel.missingPermissions,
-      lastSyncedAt: new Date(channel.lastSyncedAt),
-    };
-  }
-
-  private createGuildChannelTargetMetadata(
-    channel: DiscordGuildChannelSnapshot,
-  ) {
-    return {
-      channelType: channel.channelType,
-      requiredPermissions: channel.requiredPermissions,
-      grantedPermissions: channel.grantedPermissions,
-      missingPermissions: channel.missingPermissions,
-      hasRequiredPermissions: channel.hasRequiredPermissions,
-    };
   }
 
   private getErrorMessage(error: unknown) {
@@ -483,13 +261,8 @@ export class ChannelsService {
     return "Unknown Discord sync error";
   }
 
-  private async guildExists(guildId: string) {
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-      select: { id: true },
-    });
-
-    return guild !== null;
+  private guildExists(guildId: string) {
+    return this.repository.guildExists(guildId);
   }
 
   private logSkippedSyncEvent(guildId: string, eventType: string) {

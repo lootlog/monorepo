@@ -1,7 +1,5 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { PrismaService } from "#src/db/prisma.service";
-import { Permission, type PlayerSnapshot } from "#src/generated/prisma/client";
 import {
   getGuildMemberReferencesCacheKey,
   getGuildMembersSummaryCacheKey,
@@ -14,6 +12,11 @@ import type {
   MemberSummary,
   MemberWithRoles,
 } from "./member.types.js";
+import { MembersRepository } from "./members.repository.js";
+
+type PlayerSnapshotSummary = Awaited<
+  ReturnType<MembersRepository["findPlayerSnapshots"]>
+>[number];
 
 const MEMBER_READ_CACHE_TTL_SECONDS = 30;
 const MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS = 60;
@@ -23,7 +26,7 @@ export class MemberReadService {
   private readonly logger = new Logger(MemberReadService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: MembersRepository,
     private readonly redisService: RedisService,
   ) {}
 
@@ -31,19 +34,7 @@ export class MemberReadService {
     guildId: string,
     includeInactive = false,
   ): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
-      where: {
-        guildId,
-        ...(includeInactive ? {} : { active: true }),
-        globalUserId: { not: null },
-      },
-      include: {
-        roles: {
-          orderBy: { position: "desc" },
-        },
-      },
-      orderBy: { name: "asc" },
-    });
+    return this.repository.findGuildMembers(guildId, includeInactive);
   }
 
   getGuildMemberReferences(
@@ -55,35 +46,17 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild member references",
       async () => {
-        const members = await this.prisma.member.findMany({
-          where: {
-            guildId,
-            ...(includeInactive ? {} : { active: true }),
-            globalUserId: { not: null },
-          },
-          select: {
-            id: true,
-            userId: true,
-            name: true,
-            avatar: true,
-            active: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-              take: 1,
-            },
-          },
-          orderBy: {
-            name: "asc",
-          },
-        });
+        const members = await this.repository.findGuildMembers(
+          guildId,
+          includeInactive,
+        );
 
-        return members.map(({ roles, ...member }) => ({
-          ...member,
+        return members.map(({ id, userId, name, avatar, active, roles }) => ({
+          id,
+          userId,
+          name,
+          avatar,
+          active,
           color: roles[0]?.color ?? null,
         }));
       },
@@ -96,66 +69,20 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild members summary",
       async () => {
-        const guild = await this.prisma.guild.findFirst({
-          where: {
-            id: guildId,
-            active: true,
-          },
-          select: {
-            ownerId: true,
-          },
-        });
-
-        if (!guild) {
+        const ownerId = await this.repository.findActiveGuildOwner(guildId);
+        if (!ownerId) {
           return [];
         }
+        const members = await this.repository.findGuildMembersSummary(
+          guildId,
+          ownerId,
+        );
 
-        const members = await this.prisma.member.findMany({
-          where: {
-            guildId,
-            active: true,
-            globalUserId: { not: null },
-            OR: [
-              {
-                userId: guild.ownerId,
-              },
-              {
-                roles: {
-                  some: {
-                    permissions: {
-                      hasSome: [
-                        Permission.OWNER,
-                        Permission.ADMIN,
-                        Permission.LOOTLOG_ACCESS,
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-          select: {
-            id: true,
-            userId: true,
-            name: true,
-            avatar: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-              take: 1,
-            },
-          },
-          orderBy: {
-            name: "asc",
-          },
-        });
-
-        return members.map(({ roles, ...member }) => ({
-          ...member,
+        return members.map(({ id, userId, name, avatar, roles }) => ({
+          id,
+          userId,
+          name,
+          avatar,
           color: roles[0]?.color ?? null,
         }));
       },
@@ -195,27 +122,13 @@ export class MemberReadService {
       MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS,
       "member lootlog config summary",
       async () => {
-        const member = await this.prisma.member.findUnique({
-          where: {
-            memberId: { userId: discordId, guildId },
-          },
-          select: {
-            userId: true,
-            active: true,
-          },
-        });
+        const member = await this.repository.findMember(discordId, guildId);
 
         if (!member) {
           throw new NotFoundException("Member not found");
         }
 
-        const configs =
-          await this.prisma.userCharactersLootlogSettings.findMany({
-            where: {
-              userId: discordId,
-            },
-            orderBy: [{ accountId: "asc" }, { characterId: "asc" }],
-          });
+        const configs = await this.repository.findLootlogConfigs(discordId);
 
         const validCharacterRefs = this.getValidLootlogCharacterRefs(configs);
         const latestSnapshotsByCharacterKey =
@@ -290,7 +203,7 @@ export class MemberReadService {
     Map<
       string,
       Pick<
-        PlayerSnapshot,
+        PlayerSnapshotSummary,
         "accountId" | "characterId" | "name" | "world" | "icon"
       >
     >
@@ -299,30 +212,13 @@ export class MemberReadService {
       return new Map();
     }
 
-    const snapshots = await this.prisma.playerSnapshot.findMany({
-      where: {
-        OR: characterRefs.map(({ accountId, characterId }) => ({
-          accountId,
-          characterId,
-        })),
-      },
-      select: {
-        accountId: true,
-        characterId: true,
-        name: true,
-        world: true,
-        icon: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const snapshots = await this.repository.findPlayerSnapshots(characterRefs);
 
     return snapshots.reduce<
       Map<
         string,
         Pick<
-          PlayerSnapshot,
+          PlayerSnapshotSummary,
           "accountId" | "characterId" | "name" | "world" | "icon"
         >
       >

@@ -3,18 +3,22 @@ import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { EventTrackingService } from "./event-tracking.service.js";
+import { EventTrackingRepository } from "./event-tracking.repository.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";
-import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
-import { CoverageGapType } from "#src/generated/prisma/client";
 import { TimersService } from "#src/timers/timers.service";
+
+const CoverageGapType = {
+  UNASSIGNED: "UNASSIGNED",
+  UNCOVERED: "UNCOVERED",
+} as const;
 
 describe("EventTrackingService", () => {
   let service: EventTrackingService;
 
-  const mockPrismaService = {
+  const mockRepositoryBackend = {
     eventMap: {
       findFirst: mockFn(),
       findMany: mockFn(),
@@ -90,6 +94,145 @@ describe("EventTrackingService", () => {
     getActiveTimerKeys: mockFn(),
     getEventRespawnTimer: mockFn(),
   };
+  const mockRepository = {
+    findScopedMap: mockFn().mockImplementation((_guildId, _eventId, id) =>
+      mockRepositoryBackend.eventMap.findFirst({
+        where: expect.objectContaining({ id }),
+        include: expect.any(Object),
+      }),
+    ),
+    findMember: mockFn().mockImplementation((guildId, id) =>
+      mockRepositoryBackend.member.findFirst({
+        where: { id, guildId },
+        select: { id: true },
+      }),
+    ),
+    findMemberByDiscordId: mockFn().mockImplementation((userId, guildId) =>
+      mockRepositoryBackend.member.findFirst({
+        where: { userId, guildId, active: true },
+      }),
+    ),
+    findMapWithMembers: mockFn().mockImplementation((id) =>
+      mockRepositoryBackend.eventMap.findUnique({
+        where: { id },
+        include: { assignedMembers: true },
+      }),
+    ),
+    assignMember: mockFn().mockImplementation((id, memberId) =>
+      mockRepositoryBackend.eventMap.update({
+        where: { id },
+        data: { assignedMembers: { connect: { id: memberId } } },
+        include: { assignedMembers: true },
+      }),
+    ),
+    unassignMember: mockFn().mockImplementation((id, memberId) =>
+      mockRepositoryBackend.eventMap.update({
+        where: { id },
+        data: {
+          assignedMembers: memberId
+            ? { disconnect: { id: memberId } }
+            : { set: [] },
+        },
+        include: { assignedMembers: true },
+      }),
+    ),
+    findOpenAssignment: mockFn().mockImplementation((mapId, memberId) =>
+      mockRepositoryBackend.eventMapAssignmentHistory.findFirst({
+        where: { mapId, memberId, unassignedAt: null },
+      }),
+    ),
+    createAssignment: mockFn().mockImplementation(
+      (mapId, heroNpcId, memberId, assignedAt) =>
+        mockRepositoryBackend.eventMapAssignmentHistory.create({
+          data: { mapId, heroNpcId, memberId, assignedAt },
+        }),
+    ),
+    closeAssignments: mockFn().mockImplementation(
+      (mapId, unassignedAt, memberId) =>
+        mockRepositoryBackend.eventMapAssignmentHistory.updateMany({
+          where: { mapId, ...(memberId && { memberId }), unassignedAt: null },
+          data: { unassignedAt },
+        }),
+    ),
+    findOpenGap: mockFn().mockImplementation((mapId, gapType) =>
+      mockRepositoryBackend.eventMapCoverageGap.findFirst({
+        where: { mapId, ...(gapType && { gapType }), endedAt: null },
+      }),
+    ),
+    createGap: mockFn().mockImplementation(
+      (mapId, heroNpcId, gapType, startedAt) =>
+        mockRepositoryBackend.eventMapCoverageGap.create({
+          data: { mapId, heroNpcId, gapType, startedAt },
+        }),
+    ),
+    closeGap: mockFn().mockImplementation((id, endedAt, durationSeconds) =>
+      mockRepositoryBackend.eventMapCoverageGap.update({
+        where: { id },
+        data: { endedAt, durationSeconds },
+      }),
+    ),
+    findOpenGapsForHero: mockFn().mockImplementation((heroNpcId) =>
+      mockRepositoryBackend.eventMapCoverageGap.findMany({
+        where: { heroNpcId, endedAt: null },
+      }),
+    ),
+    closeGaps: mockFn().mockImplementation((gaps, endedAt) =>
+      mockRepositoryBackend.$transaction(
+        gaps.map((gap) =>
+          mockRepositoryBackend.eventMapCoverageGap.update({
+            where: { id: gap.id },
+            data: { endedAt, durationSeconds: expect.any(Number) },
+          }),
+        ),
+      ),
+    ),
+    findMapGaps: mockFn().mockImplementation((mapId) =>
+      mockRepositoryBackend.eventMapCoverageGap.findMany({
+        where: { mapId },
+        orderBy: { startedAt: "desc" },
+      }),
+    ),
+    findHeroGaps: mockFn(),
+    findHero: mockFn().mockImplementation((_guildId, eventId, id) =>
+      mockRepositoryBackend.eventHeroNpc.findFirst({
+        where: expect.objectContaining({ id, eventId }),
+      }),
+    ),
+    findActiveHeroGaps: mockFn(),
+    findActiveMapsByName: mockFn().mockImplementation((_guildId, mapName) =>
+      mockRepositoryBackend.eventMap.findMany({
+        where: expect.objectContaining({ mapName }),
+        include: expect.any(Object),
+      }),
+    ),
+    closePresence: mockFn().mockImplementation((mapId, memberId, endedAt) =>
+      mockRepositoryBackend.eventPresenceLog.updateMany({
+        where: { mapId, memberId, endedAt: null },
+        data: { endedAt },
+      }),
+    ),
+    createPresence: mockFn().mockImplementation((mapId, memberId, isAfk) =>
+      mockRepositoryBackend.eventPresenceLog.create({
+        data: { mapId, memberId, isAfk },
+      }),
+    ),
+    findActiveNonAfkLogs: mockFn().mockImplementation((mapIds) =>
+      mockRepositoryBackend.eventPresenceLog.findMany({
+        where: { mapId: { in: mapIds }, endedAt: null, isAfk: false },
+        select: { mapId: true, memberId: true },
+        distinct: ["mapId", "memberId"],
+      }),
+    ),
+    findActiveLogs: mockFn().mockImplementation((mapId) =>
+      mockRepositoryBackend.eventPresenceLog.findMany({
+        where: { mapId, endedAt: null },
+        select: { memberId: true },
+        distinct: ["memberId"],
+      }),
+    ),
+    findHeroForPresenceStats: mockFn(),
+    findPresenceLogs: mockFn(),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -97,7 +240,7 @@ describe("EventTrackingService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventTrackingService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: EventTrackingRepository, useValue: mockRepository },
         { provide: EventEmitterService, useValue: mockEventEmitter },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
@@ -147,23 +290,27 @@ describe("EventTrackingService", () => {
     };
 
     beforeEach(() => {
-      mockPrismaService.member.findFirst.mockResolvedValue({ id: memberId });
+      mockRepositoryBackend.member.findFirst.mockResolvedValue({
+        id: memberId,
+      });
     });
 
     it("should assign member to map successfully", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
         minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
-      mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue(
+      mockRepositoryBackend.eventMapAssignmentHistory.findFirst.mockResolvedValue(
         null,
       );
-      mockPrismaService.eventMap.update.mockResolvedValue({
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({
         ...mockMap,
         assignedMembers: [{ id: memberId }],
       });
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
       mockEventEmitter.emit.mockResolvedValue(undefined);
 
       const result = await service.assignMemberToMap(
@@ -175,7 +322,7 @@ describe("EventTrackingService", () => {
 
       expect(result.assignedMembers).toHaveLength(1);
       expect(
-        mockPrismaService.eventMapAssignmentHistory.create,
+        mockRepositoryBackend.eventMapAssignmentHistory.create,
       ).toHaveBeenCalled();
     });
 
@@ -184,19 +331,21 @@ describe("EventTrackingService", () => {
         ...mockMap,
         assignedMembers: [{ id: memberId }],
       };
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mapWithMember);
-      mockPrismaService.eventMap.findUnique.mockResolvedValue(mapWithMember);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mapWithMember);
+      mockRepositoryBackend.eventMap.findUnique.mockResolvedValue(
+        mapWithMember,
+      );
 
       await service.assignMemberToMap(guildId, eventId, mapId, memberId);
 
-      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.eventMap.update).not.toHaveBeenCalled();
       expect(
-        mockPrismaService.eventMapAssignmentHistory.create,
+        mockRepositoryBackend.eventMapAssignmentHistory.create,
       ).not.toHaveBeenCalled();
     });
 
     it("should throw NotFoundException when map not found", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(null);
 
       await expect(
         service.assignMemberToMap(guildId, eventId, mapId, memberId),
@@ -204,8 +353,8 @@ describe("EventTrackingService", () => {
     });
 
     it("should throw NotFoundException when member not found", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
 
       await expect(
         service.assignMemberToMap(guildId, eventId, mapId, memberId),
@@ -221,7 +370,7 @@ describe("EventTrackingService", () => {
           event: { mapAssignmentCap: 2, world: "tempest" },
         },
       };
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mapAtCap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mapAtCap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
         minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
@@ -233,43 +382,47 @@ describe("EventTrackingService", () => {
     });
 
     it("should not create duplicate assignment history", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
         minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
-      mockPrismaService.eventMap.update.mockResolvedValue({
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({
         ...mockMap,
         assignedMembers: [{ id: memberId }],
       });
       // Simulate existing open assignment
-      mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue({
-        id: "existing-1",
-        mapId,
-        memberId,
-        unassignedAt: null,
-      });
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapAssignmentHistory.findFirst.mockResolvedValue(
+        {
+          id: "existing-1",
+          mapId,
+          memberId,
+          unassignedAt: null,
+        },
+      );
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.assignMemberToMap(guildId, eventId, mapId, memberId);
 
       expect(
-        mockPrismaService.eventMapAssignmentHistory.create,
+        mockRepositoryBackend.eventMapAssignmentHistory.create,
       ).not.toHaveBeenCalled();
     });
 
     it("should close UNASSIGNED gap when first member is assigned", async () => {
       const emptyMap = { ...mockMap, assignedMembers: [] };
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(emptyMap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(emptyMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
         minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
-      mockPrismaService.eventMap.update.mockResolvedValue({
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({
         ...emptyMap,
         assignedMembers: [{ id: memberId }],
       });
-      mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue(
+      mockRepositoryBackend.eventMapAssignmentHistory.findFirst.mockResolvedValue(
         null,
       );
 
@@ -281,13 +434,15 @@ describe("EventTrackingService", () => {
         startedAt: new Date(),
         endedAt: null,
       };
-      mockPrismaService.eventMapCoverageGap.findFirst
+      mockRepositoryBackend.eventMapCoverageGap.findFirst
         .mockResolvedValueOnce(openGap) // For closeUnassignedGap
         .mockResolvedValueOnce(null); // For openUncoveredGap check
 
       await service.assignMemberToMap(guildId, eventId, mapId, memberId);
 
-      expect(mockPrismaService.eventMapCoverageGap.update).toHaveBeenCalledWith(
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.update,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: openGap.id },
           data: expect.objectContaining({
@@ -298,7 +453,7 @@ describe("EventTrackingService", () => {
     });
 
     it("should throw BadRequestException when assigning after max spawn time", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
         minSpawnTime: new Date(Date.now() - 120_000),
         maxSpawnTime: new Date(Date.now() - 60_000),
@@ -308,11 +463,11 @@ describe("EventTrackingService", () => {
         service.assignMemberToMap(guildId, eventId, mapId, memberId),
       ).rejects.toThrow(BadRequestException);
 
-      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.eventMap.update).not.toHaveBeenCalled();
     });
 
     it("should reject assignment before the configured assignment window", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
         minSpawnTime: new Date(Date.now() + 60 * 60_000),
         maxSpawnTime: new Date(Date.now() + 90 * 60_000),
@@ -322,21 +477,21 @@ describe("EventTrackingService", () => {
         service.assignMemberToMap(guildId, eventId, mapId, memberId),
       ).rejects.toThrow(BadRequestException);
 
-      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.eventMap.update).not.toHaveBeenCalled();
       expect(
-        mockPrismaService.eventMapAssignmentHistory.create,
+        mockRepositoryBackend.eventMapAssignmentHistory.create,
       ).not.toHaveBeenCalled();
     });
 
     it("should reject assignment without an active respawn timer", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(null);
 
       await expect(
         service.assignMemberToMap(guildId, eventId, mapId, memberId),
       ).rejects.toThrow(BadRequestException);
 
-      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.eventMap.update).not.toHaveBeenCalled();
     });
 
     it("should allow assignment exactly when the configured window opens", async () => {
@@ -344,19 +499,21 @@ describe("EventTrackingService", () => {
       vi.setSystemTime(new Date("2026-07-28T12:00:00.000Z"));
 
       try {
-        mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+        mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
         mockTimersService.getEventRespawnTimer.mockResolvedValue({
           minSpawnTime: new Date("2026-07-28T12:05:00.000Z"),
           maxSpawnTime: new Date("2026-07-28T12:30:00.000Z"),
         });
-        mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue(
+        mockRepositoryBackend.eventMapAssignmentHistory.findFirst.mockResolvedValue(
           null,
         );
-        mockPrismaService.eventMap.update.mockResolvedValue({
+        mockRepositoryBackend.eventMap.update.mockResolvedValue({
           ...mockMap,
           assignedMembers: [{ id: memberId }],
         });
-        mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+        mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+          null,
+        );
         mockEventEmitter.emit.mockResolvedValue(undefined);
 
         await expect(
@@ -388,17 +545,19 @@ describe("EventTrackingService", () => {
     };
 
     it("should unassign specific member from map", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
-      mockPrismaService.eventMap.update.mockResolvedValue({
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({
         ...mockMap,
         assignedMembers: [],
       });
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.unassignMemberFromMap(guildId, eventId, mapId, memberId);
 
       expect(
-        mockPrismaService.eventMapAssignmentHistory.updateMany,
+        mockRepositoryBackend.eventMapAssignmentHistory.updateMany,
       ).toHaveBeenCalledWith({
         where: { mapId, memberId, unassignedAt: null },
         data: { unassignedAt: expect.any(Date) },
@@ -406,16 +565,18 @@ describe("EventTrackingService", () => {
     });
 
     it("should unassign all members when no memberId provided", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
-      mockPrismaService.eventMap.update.mockResolvedValue({
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({
         ...mockMap,
         assignedMembers: [],
       });
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.unassignMemberFromMap(guildId, eventId, mapId);
 
-      expect(mockPrismaService.eventMap.update).toHaveBeenCalledWith(
+      expect(mockRepositoryBackend.eventMap.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: {
             assignedMembers: { set: [] },
@@ -425,7 +586,7 @@ describe("EventTrackingService", () => {
     });
 
     it("should throw NotFoundException when map not found", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(null);
 
       await expect(
         service.unassignMemberFromMap(guildId, eventId, mapId, memberId),
@@ -433,24 +594,26 @@ describe("EventTrackingService", () => {
     });
 
     it("should open UNASSIGNED gap when last member is unassigned", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
-      mockPrismaService.eventMap.update.mockResolvedValue({
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({
         ...mockMap,
         assignedMembers: [],
       });
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.unassignMemberFromMap(guildId, eventId, mapId, memberId);
 
-      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith(
-        {
-          data: expect.objectContaining({
-            mapId,
-            heroNpcId: mockMap.heroNpcId,
-            gapType: CoverageGapType.UNASSIGNED,
-          }),
-        },
-      );
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.create,
+      ).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          mapId,
+          heroNpcId: mockMap.heroNpcId,
+          gapType: CoverageGapType.UNASSIGNED,
+        }),
+      });
     });
   });
 
@@ -470,8 +633,8 @@ describe("EventTrackingService", () => {
     });
 
     it("should acquire lock before processing presence change", async () => {
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       mockTimersService.getActiveTimerKeys.mockResolvedValue(new Set());
 
       await service.handlePlayerPresenceChange(
@@ -506,7 +669,7 @@ describe("EventTrackingService", () => {
         ),
       ).resolves.not.toThrow();
 
-      expect(mockPrismaService.eventMap.findMany).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.eventMap.findMany).not.toHaveBeenCalled();
     });
 
     it("should create presence log when player enters map", async () => {
@@ -524,13 +687,13 @@ describe("EventTrackingService", () => {
         },
       };
 
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([mockEventMap]);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([mockEventMap]);
       mockTimersService.getActiveTimerKeys.mockResolvedValue(
         new Set([`${guildId}:tempest:123:test hero`]),
       );
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue({
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue({
         id: "gap-1",
         gapType: CoverageGapType.UNCOVERED,
         startedAt: new Date(),
@@ -544,7 +707,9 @@ describe("EventTrackingService", () => {
         false,
       );
 
-      expect(mockPrismaService.eventPresenceLog.create).toHaveBeenCalledWith({
+      expect(
+        mockRepositoryBackend.eventPresenceLog.create,
+      ).toHaveBeenCalledWith({
         data: {
           mapId: mockEventMap.id,
           memberId: mockMember.id,
@@ -575,12 +740,12 @@ describe("EventTrackingService", () => {
         endedAt: null,
       };
 
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([mockEventMap]);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([mockEventMap]);
       mockTimersService.getActiveTimerKeys.mockResolvedValue(
         new Set([`${guildId}:tempest:123:test hero`]),
       );
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
         openGap,
       );
 
@@ -592,7 +757,9 @@ describe("EventTrackingService", () => {
         false,
       );
 
-      expect(mockPrismaService.eventMapCoverageGap.update).toHaveBeenCalledWith(
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.update,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: openGap.id },
           data: expect.objectContaining({
@@ -616,8 +783,8 @@ describe("EventTrackingService", () => {
         },
       };
 
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([mockEventMap]);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([mockEventMap]);
       // No active timers
       mockTimersService.getActiveTimerKeys.mockResolvedValue(new Set());
 
@@ -630,7 +797,9 @@ describe("EventTrackingService", () => {
       );
 
       // Should not create any presence logs
-      expect(mockPrismaService.eventPresenceLog.create).not.toHaveBeenCalled();
+      expect(
+        mockRepositoryBackend.eventPresenceLog.create,
+      ).not.toHaveBeenCalled();
     });
 
     it("should use batch query for timer checks (N+1 optimization)", async () => {
@@ -661,8 +830,8 @@ describe("EventTrackingService", () => {
         },
       ];
 
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockEventMaps);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockEventMaps);
       mockTimersService.getActiveTimerKeys.mockResolvedValue(new Set());
 
       await service.handlePlayerPresenceChange(
@@ -674,7 +843,7 @@ describe("EventTrackingService", () => {
       );
 
       expect(mockTimersService.getActiveTimerKeys).toHaveBeenCalledTimes(1);
-      expect(mockPrismaService.timer.findUnique).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.timer.findUnique).not.toHaveBeenCalled();
     });
   });
 
@@ -686,23 +855,25 @@ describe("EventTrackingService", () => {
     const heroNpcId = "hero-1";
 
     it("should create UNASSIGNED gap", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.openUnassignedGap(mapId, heroNpcId);
 
-      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith(
-        {
-          data: expect.objectContaining({
-            mapId,
-            heroNpcId,
-            gapType: CoverageGapType.UNASSIGNED,
-          }),
-        },
-      );
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.create,
+      ).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          mapId,
+          heroNpcId,
+          gapType: CoverageGapType.UNASSIGNED,
+        }),
+      });
     });
 
     it("should not create duplicate gap if one already exists", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue({
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue({
         id: "existing-gap",
         gapType: CoverageGapType.UNASSIGNED,
         endedAt: null,
@@ -711,37 +882,41 @@ describe("EventTrackingService", () => {
       await service.openUnassignedGap(mapId, heroNpcId);
 
       expect(
-        mockPrismaService.eventMapCoverageGap.create,
+        mockRepositoryBackend.eventMapCoverageGap.create,
       ).not.toHaveBeenCalled();
     });
 
     it("should use provided startedAt timestamp when creating gap", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
       const customStartedAt = new Date("2026-01-08T12:00:00.000Z");
 
       await service.openUnassignedGap(mapId, heroNpcId, customStartedAt);
 
-      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith(
-        {
-          data: expect.objectContaining({
-            mapId,
-            heroNpcId,
-            gapType: CoverageGapType.UNASSIGNED,
-            startedAt: customStartedAt,
-          }),
-        },
-      );
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.create,
+      ).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          mapId,
+          heroNpcId,
+          gapType: CoverageGapType.UNASSIGNED,
+          startedAt: customStartedAt,
+        }),
+      });
     });
 
     it("should use current time when startedAt is not provided", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
       const beforeCall = new Date();
 
       await service.openUnassignedGap(mapId, heroNpcId);
 
       const afterCall = new Date();
       const callArgs =
-        mockPrismaService.eventMapCoverageGap.create.mock.calls[0][0];
+        mockRepositoryBackend.eventMapCoverageGap.create.mock.calls[0][0];
       const usedStartedAt = callArgs.data.startedAt;
 
       expect(usedStartedAt.getTime()).toBeGreaterThanOrEqual(
@@ -756,23 +931,25 @@ describe("EventTrackingService", () => {
     const heroNpcId = "hero-1";
 
     it("should create UNCOVERED gap", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.openUncoveredGap(mapId, heroNpcId);
 
-      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith(
-        {
-          data: expect.objectContaining({
-            mapId,
-            heroNpcId,
-            gapType: CoverageGapType.UNCOVERED,
-          }),
-        },
-      );
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.create,
+      ).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          mapId,
+          heroNpcId,
+          gapType: CoverageGapType.UNCOVERED,
+        }),
+      });
     });
 
     it("should not create duplicate gap if one already exists", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue({
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue({
         id: "existing-gap",
         gapType: CoverageGapType.UNCOVERED,
         endedAt: null,
@@ -781,33 +958,37 @@ describe("EventTrackingService", () => {
       await service.openUncoveredGap(mapId, heroNpcId);
 
       expect(
-        mockPrismaService.eventMapCoverageGap.create,
+        mockRepositoryBackend.eventMapCoverageGap.create,
       ).not.toHaveBeenCalled();
     });
 
     it("should use provided startedAt timestamp when creating gap", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
       const customStartedAt = new Date("2026-01-08T12:00:00.000Z");
 
       await service.openUncoveredGap(mapId, heroNpcId, customStartedAt);
 
-      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith(
-        {
-          data: expect.objectContaining({
-            startedAt: customStartedAt,
-          }),
-        },
-      );
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.create,
+      ).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          startedAt: customStartedAt,
+        }),
+      });
     });
 
     it("should use current time when startedAt is not provided", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
       const beforeCall = new Date();
 
       await service.openUncoveredGap(mapId, heroNpcId);
 
       const callArgs =
-        mockPrismaService.eventMapCoverageGap.create.mock.calls[0][0];
+        mockRepositoryBackend.eventMapCoverageGap.create.mock.calls[0][0];
       const usedStartedAt = callArgs.data.startedAt;
 
       expect(usedStartedAt.getTime()).toBeGreaterThanOrEqual(
@@ -827,13 +1008,15 @@ describe("EventTrackingService", () => {
         startedAt: new Date(Date.now() - 60000),
         endedAt: null,
       };
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
         openGap,
       );
 
       await service.closeUnassignedGap(mapId);
 
-      expect(mockPrismaService.eventMapCoverageGap.update).toHaveBeenCalledWith(
+      expect(
+        mockRepositoryBackend.eventMapCoverageGap.update,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: openGap.id },
           data: expect.objectContaining({
@@ -845,12 +1028,14 @@ describe("EventTrackingService", () => {
     });
 
     it("should do nothing if no open gap exists", async () => {
-      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMapCoverageGap.findFirst.mockResolvedValue(
+        null,
+      );
 
       await service.closeUnassignedGap(mapId);
 
       expect(
-        mockPrismaService.eventMapCoverageGap.update,
+        mockRepositoryBackend.eventMapCoverageGap.update,
       ).not.toHaveBeenCalled();
     });
   });
@@ -863,22 +1048,22 @@ describe("EventTrackingService", () => {
         { id: "gap-1", startedAt: new Date(Date.now() - 60000), endedAt: null },
         { id: "gap-2", startedAt: new Date(Date.now() - 30000), endedAt: null },
       ];
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue(
         openGaps,
       );
-      mockPrismaService.$transaction.mockResolvedValue([]);
+      mockRepositoryBackend.$transaction.mockResolvedValue([]);
 
       await service.closeAllGapsForHero(heroNpcId);
 
-      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockRepositoryBackend.$transaction).toHaveBeenCalled();
     });
 
     it("should do nothing if no open gaps", async () => {
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       await service.closeAllGapsForHero(heroNpcId);
 
-      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.$transaction).not.toHaveBeenCalled();
     });
   });
 
@@ -891,8 +1076,8 @@ describe("EventTrackingService", () => {
     const mapId = "map-1";
 
     it("should return coverage gaps for a map", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue({ id: mapId });
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue({ id: mapId });
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([
         { id: "gap-1", gapType: CoverageGapType.UNASSIGNED },
       ]);
 
@@ -900,7 +1085,7 @@ describe("EventTrackingService", () => {
 
       expect(result).toHaveLength(1);
       expect(
-        mockPrismaService.eventMapCoverageGap.findMany,
+        mockRepositoryBackend.eventMapCoverageGap.findMany,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { mapId },
@@ -910,7 +1095,7 @@ describe("EventTrackingService", () => {
     });
 
     it("should throw NotFoundException when map not found", async () => {
-      mockPrismaService.eventMap.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventMap.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getMapCoverageGaps(guildId, eventId, mapId),
@@ -924,12 +1109,12 @@ describe("EventTrackingService", () => {
 
     it("should return active member by discord ID", async () => {
       const mockMember = { id: 1, userId: discordId, guildId, active: true };
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
 
       const result = await service.getMemberByDiscordId(discordId, guildId);
 
       expect(result).toEqual(mockMember);
-      expect(mockPrismaService.member.findFirst).toHaveBeenCalledWith({
+      expect(mockRepositoryBackend.member.findFirst).toHaveBeenCalledWith({
         where: {
           userId: discordId,
           guildId,
@@ -939,7 +1124,7 @@ describe("EventTrackingService", () => {
     });
 
     it("should return null for non-existing member", async () => {
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
 
       const result = await service.getMemberByDiscordId(discordId, guildId);
 

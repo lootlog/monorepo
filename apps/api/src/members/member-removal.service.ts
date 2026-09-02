@@ -9,7 +9,6 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { DiscordService } from "#src/discord/discord.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
@@ -21,17 +20,17 @@ import { MEMBER_LAST_DISCORD_STATUS } from "./constants/member-discord-status.co
 import { ErrorKey } from "./enum/error-key.enum.js";
 import type {
   DeactivateMembersMissingFromDiscordGuildsOptions,
-  DeleteMembersByGuildIdOptions,
   DeleteMembersByGuildIdResult,
   MemberRemovalNotificationTarget,
   MemberWithRoles,
 } from "./member.types.js";
+import { MembersRepository } from "./members.repository.js";
 
 @Injectable()
 export class MemberRemovalService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    private readonly repository: MembersRepository,
     private readonly discordService: DiscordService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
@@ -43,10 +42,10 @@ export class MemberRemovalService {
   }): Promise<MemberWithRoles> {
     const { discordId, guildId } = options;
 
-    const member = await this.prisma.member.findUnique({
-      where: { memberId: { userId: discordId, guildId } },
-      include: { roles: true },
-    });
+    const member = await this.repository.findMemberWithRoles(
+      discordId,
+      guildId,
+    );
 
     if (!member) {
       throw new NotFoundException("Member not found");
@@ -56,16 +55,13 @@ export class MemberRemovalService {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
-    const deactivatedMember = await this.prisma.member.update({
-      where: { memberId: { userId: discordId, guildId } },
-      data: {
-        active: false,
-        lastDiscordAttemptAt: new Date(),
-        lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.MANUALLY_DEACTIVATED,
-        roles: { set: [] },
-      },
-      include: { roles: true },
-    });
+    const result = await this.repository.deactivateMember(
+      discordId,
+      guildId,
+      new Date(),
+      MEMBER_LAST_DISCORD_STATUS.MANUALLY_DEACTIVATED,
+    );
+    if (!result) throw new NotFoundException("Member not found");
 
     await this.notifyMemberRemoved({
       discordId,
@@ -73,48 +69,29 @@ export class MemberRemovalService {
       globalUserId: member.globalUserId,
     });
 
-    return deactivatedMember;
+    return result.updated;
   }
 
   async deactivateMembersMissingFromDiscordGuilds(
     options: DeactivateMembersMissingFromDiscordGuildsOptions,
   ): Promise<number> {
     const { discordId, userId, activeDiscordGuildIds, status } = options;
-    const missingMembers = await this.prisma.member.findMany({
-      where: {
-        userId: discordId,
-        globalUserId: userId,
-        active: true,
-        guildId: { notIn: activeDiscordGuildIds },
-        guild: { active: true },
-      },
-      select: {
-        userId: true,
-        guildId: true,
-        globalUserId: true,
-      },
-    });
+    const missingMembers = await this.repository.findMissingActiveMembers(
+      discordId,
+      userId,
+      activeDiscordGuildIds,
+    );
 
     if (missingMembers.length === 0) {
       return 0;
     }
 
     const syncTimestamp = new Date();
-    await Promise.all(
-      missingMembers.map((member) =>
-        this.prisma.member.update({
-          where: {
-            memberId: { userId: member.userId, guildId: member.guildId },
-          },
-          data: {
-            active: false,
-            lastDiscordAttemptAt: syncTimestamp,
-            lastDiscordSyncAt: syncTimestamp,
-            lastDiscordStatus: status,
-            roles: { set: [] },
-          },
-        }),
-      ),
+    await this.repository.deactivateMembers(
+      missingMembers,
+      syncTimestamp,
+      status,
+      true,
     );
 
     await this.notifyMembersRemoved(
@@ -130,34 +107,14 @@ export class MemberRemovalService {
 
   async deleteMembersByGuildId(
     guildId: string,
-    options?: DeleteMembersByGuildIdOptions,
+    _options?: unknown,
   ): Promise<DeleteMembersByGuildIdResult> {
-    const client = options?.tx ?? this.prisma;
-
     try {
-      const affectedMembers = await client.member.findMany({
-        where: {
-          guildId,
-          active: true,
-        },
-        select: {
-          userId: true,
-          guildId: true,
-          globalUserId: true,
-        },
-      });
-
-      const result = await client.member.updateMany({
-        where: {
-          guildId,
-          active: true,
-        },
-        data: {
-          active: false,
-          lastDiscordAttemptAt: new Date(),
-          lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
-        },
-      });
+      const result = await this.repository.deactivateGuildMembers(
+        guildId,
+        new Date(),
+        MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
+      );
 
       this.logger.log({
         level: "info",
@@ -165,7 +122,7 @@ export class MemberRemovalService {
       });
       return {
         count: result.count,
-        affectedMembers: affectedMembers.map((member) => ({
+        affectedMembers: result.members.map((member) => ({
           discordId: member.userId,
           guildId: member.guildId,
           globalUserId: member.globalUserId,

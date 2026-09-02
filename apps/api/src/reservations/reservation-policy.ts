@@ -5,7 +5,7 @@ import {
 import {
   validateReservationTime as getReservationTimeValidationIssue,
   type ReservationSettings,
-} from "@lootlog/reservations";
+} from "@lootlog/domain/reservations";
 
 const MAX_WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
 export function parseReservationWindow(fromValue: string, toValue: string) {

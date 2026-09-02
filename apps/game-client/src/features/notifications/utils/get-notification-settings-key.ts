@@ -1,5 +1,6 @@
 import { NpcType } from "@/api/npcs.api";
-import { getNpcTypeByWt, type NotificationType } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type { NotificationType } from "@lootlog/schema/account-preferences";
 
 const notificationSettingsKeys = [
   NpcType.ELITE2,

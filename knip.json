@@ -68,7 +68,6 @@
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
     "@lootlog/ui",
-    "@prisma/client",
     "@tailwindcss/postcss",
     "@types/mdx",
     "tailwindcss",

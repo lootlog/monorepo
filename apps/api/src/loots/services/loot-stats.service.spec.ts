@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
 import { LootStatsService } from "./loot-stats.service.js";
+
+type Role = typeof roleTable.$inferSelect;
 
 function role(id: string, permissions: Permission[]): Role {
   return {

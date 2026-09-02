@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import {
   ContextMenu,
   ContextMenuContent,

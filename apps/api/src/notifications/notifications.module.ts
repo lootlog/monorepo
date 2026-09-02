@@ -3,7 +3,6 @@ import { BullModule } from "@nestjs/bullmq";
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsModule } from "#src/channels/channels.module";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
-import { PrismaModule } from "#src/db/prisma.module";
 import { GuildsModule } from "#src/guilds/guilds.module";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import { NotificationContentService } from "#src/notifications/notification-content.service";
@@ -16,10 +15,11 @@ import { NotificationsEventsHandler } from "#src/notifications/notifications-eve
 import { NotificationsGuildController } from "#src/notifications/notifications-guild.controller";
 import { NotificationsUserController } from "#src/notifications/notifications-user.controller";
 import { WatchedItemService } from "#src/notifications/watched-item.service";
+import { NotificationsRepository } from "#src/notifications/notifications.repository";
+import { NotificationJobsRepository } from "#src/notifications/notification-jobs.repository";
 
 @Module({
   imports: [
-    PrismaModule,
     ChannelsModule,
     GuildsModule,
     BullModule.registerQueue({
@@ -29,6 +29,8 @@ import { WatchedItemService } from "#src/notifications/watched-item.service";
   ],
   controllers: [NotificationsGuildController, NotificationsUserController],
   providers: [
+    NotificationsRepository,
+    NotificationJobsRepository,
     NotificationContentService,
     NotificationJobService,
     NotificationMatchingService,

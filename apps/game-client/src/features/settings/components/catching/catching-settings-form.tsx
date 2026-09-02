@@ -7,11 +7,12 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 import {
+  useUsersControllerGetCurrentUserAccessibleGuilds,
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
-} from "@lootlog/api-client/react-query/main/user-lootlog-config";
+} from "@lootlog/client/main";
+
 import { useGameStore } from "@/store/game.store";
 
 type CatchingSettingsFormProps = {

@@ -4,34 +4,37 @@ Baseline: `633f8f0157cca04ef2b609ba0e2f1903b1c28949`.
 
 Update this file after each checkpoint. `complete` means implementation and the listed verification both pass. A local commit is not evidence by itself.
 
-| Slice                                           | State    | Required evidence                                                                                                        |
-| ----------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Baseline identity and inventory                 | complete | 30 workspaces; five OpenAPI files; 243 operation IDs; RabbitMQ, realtime, DB, jobs, env names, and key families recorded |
-| Read-only baseline worktree                     | complete | `/Users/kamil/workspace/margo/lootlog-baseline` is detached at the baseline SHA and `chmod -R a-w`                       |
-| Bun package manager and Turbo graph             | pending  | frozen install, graph comparison, serialized generation, CI/release scripts                                              |
-| Schema / Domain / Protocol / Messaging packages | pending  | browser-safe builds, consumer migration, no framework imports                                                            |
-| Generated Client replacement                    | pending  | normalized OpenAPI diff and deterministic double generation                                                              |
-| Auth Effect slice                               | pending  | Better Auth HTTP/cookie/JWT/Redis parity and graceful shutdown                                                           |
-| Battlelog Effect/Drizzle slice and rename       | pending  | DDL parity, fixtures, public links, R2 compensation tests                                                                |
-| Search Effect slice                             | pending  | RabbitMQ/Meilisearch projection parity; no relational DB                                                                 |
-| API and Discord compatible slice                | pending  | HTTP/RabbitMQ parity and cross-service tests                                                                             |
-| Activity Effect/Drizzle slice                   | pending  | Timescale hypertable, one-day chunks, seven-day retention, fixtures                                                      |
-| Gateway WebSocket v1                            | pending  | schema/MessagePack, federation, auth, backpressure, two-instance tests                                                   |
-| Presence target model                           | pending  | heartbeat/expiry/revision/trust/location capability/backfill tests                                                       |
-| Web Game client Wiki consumers                  | pending  | HTTP/realtime cutover and persisted-setting compatibility                                                                |
-| Docker Cloudflare and CI                        | pending  | multi-target non-root images, shutdown, Trivy, Workers dry-runs                                                          |
-| Legacy dependency cleanup                       | pending  | zero forbidden imports and zero `MIGRATION_TODO`                                                                         |
-| ADRs Changeset and handoff reports              | pending  | accepted/proposed records, release note, infra handoff                                                                   |
-| Final verification                              | pending  | Bun gates, E2E, integration, OpenAPI, DDL, shutdown, 3000 WS, HTTP burst, soak                                           |
+| Slice                                           | State       | Required evidence                                                                                                                                                                         |
+| ----------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Baseline identity and inventory                 | complete    | 30 workspaces; five OpenAPI files; 243 operation IDs; RabbitMQ, realtime, DB, jobs, env names, and key families recorded                                                                  |
+| Read-only baseline worktree                     | complete    | `/Users/kamil/workspace/margo/lootlog-baseline` is detached at the baseline SHA and `chmod -R a-w`                                                                                        |
+| Bun package manager and Turbo graph             | complete    | Bun 1.4 frozen isolated install and pnpm graph parity pass; CI, release, Husky, workspace, and active-source pnpm audits are clean                                                        |
+| Schema / Domain / Protocol / Messaging packages | complete    | browser-safe source exports, consumer migration, and package gates pass                                                                                                                   |
+| Generated Client replacement                    | complete    | Orval `single` mode emits five files instead of 1,176 for five OpenAPI inputs; deterministic regeneration preserves all 243 baseline operations plus the realtime ticket; 19 tests pass   |
+| Auth Effect slice                               | complete    | Better Auth raw handler, cookie/JWT/JWKS, Redis fail-open, HTTP parity, and 20 tests pass                                                                                                 |
+| Battlelog Effect/Drizzle slice and rename       | complete    | Official Effect PostgreSQL driver, scoped lifecycle, real PostgreSQL smoke, 106 tests, build, and byte-identical OpenAPI pass                                                             |
+| Search Effect slice                             | complete    | RabbitMQ/Meilisearch projection parity passes and no relational DB was added                                                                                                              |
+| API and Discord compatible slice                | in progress | Discord is complete; API source and E2E query layers are Prisma-free; one composed Effect HttpApi handler layer covers all 26 groups and 199 operations; 89 focused handler tests pass    |
+| Activity Effect/Drizzle slice                   | complete    | real Timescale legacy-vs-Drizzle DDL diff, adoption checks, transactions, and 13 tests pass                                                                                               |
+| Gateway WebSocket v1                            | complete    | MessagePack, bounded backpressure, one-time origin-bound tickets, two-hub Redis federation, reconnect, map-ping, and air-tag tests pass                                                   |
+| Presence target model                           | complete    | heartbeat/expiry, monotonic revisions, verified/reported trust, location permission/backfill, selection, rejoin, and rebalance tests pass                                                 |
+| Web Game client Wiki consumers                  | complete    | Web 610, Game Client 1,300, and client 19 tests plus builds pass on HTTP and realtime v1; no active Socket.IO imports remain                                                              |
+| Docker Cloudflare and CI                        | in progress | Bun Auth, Activity, Gateway, Search, Discord Bot, and Developer images build non-root; verified Trivy scans are clean; Wiki and Traffic Splitter dry-runs pass; full image matrix remains |
+| Legacy dependency cleanup                       | in progress | obsolete domain packages, API Helpers, Socket.IO parser, and API Prisma runtime/tooling removed; CLI seed is Prisma-free and real-PostgreSQL verified; Nest awaits API host cutover       |
+| ADRs Changeset and handoff reports              | in progress | ADRs 0003-0008 added; Changeset and final handoff reports remain                                                                                                                          |
+| Final verification                              | in progress | API unit 1,060/1,060 and real PostgreSQL/Redis E2E 95/95 pass; remaining integration, OpenAPI, DDL, shutdown, 3000 WS, HTTP burst, and soak gates are pending                             |
 
 ## Current exceptions and risks
 
-- Concurrent Turbo tasks can race Prisma generation. Sequential baseline gates are green.
+- The legacy baseline had a concurrent Prisma-generation race. The API no longer
+  consumes generated Prisma code, and its archived schema and migration evidence
+  are adopted through the fail-closed Drizzle runner.
 - Activity deduplication is weak and remains a parity risk.
 - Battlelog has a DB-to-R2 failure window and remains a parity risk.
 - Discord notification delivery can be repeated and remains a parity risk.
-- Presence is currently tied to socket lifetime and uses one capability for basic status and precise location.
-- The planned realtime v1 is not wire-compatible with Socket.IO and therefore needs a coordinated Gateway, Web, and Game-client release.
+- Full API E2E reruns exposed an intermittent one-second `TRUNCATE` timeout in
+  the Timers suite (93/95 and 94/95); the isolated Timers file passes 29/29.
+- Realtime v1 is not wire-compatible with Socket.IO and therefore needs a coordinated Gateway, Web, and Game-client release.
 
 ## Handoff rule
 

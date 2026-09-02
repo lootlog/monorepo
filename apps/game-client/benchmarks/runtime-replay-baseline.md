@@ -7,7 +7,7 @@ the pinned workspace toolchain. The full-pipeline baseline was added on
 Command:
 
 ```bash
-pnpm --filter @lootlog/game-client bench:runtime --run
+bun run --filter=@lootlog/game-client bench:runtime --run
 ```
 
 To also persist p50/p95 latency and work counters as JSON Lines, provide an
@@ -15,7 +15,7 @@ explicit output path:
 
 ```bash
 RUNTIME_REPLAY_METRICS_FILE=/tmp/game-client-runtime-replay.jsonl \
-  pnpm --filter @lootlog/game-client bench:runtime --run
+  bun run --filter=@lootlog/game-client bench:runtime --run
 ```
 
 ## Bridge-only before/after

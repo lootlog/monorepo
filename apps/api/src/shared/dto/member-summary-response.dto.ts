@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 
 const MemberSummaryResponseSchema = z.object({
   id: z.number(),

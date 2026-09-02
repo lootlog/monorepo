@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { MyReservationsQueryDto } from "./dto/reservation-query.dto.js";
 import { ReservationCatalogService } from "./reservation-catalog.service.js";
@@ -10,11 +9,12 @@ import {
   canModerateReservations,
   type ReservationViewerContext,
 } from "./reservation-viewer.js";
+import { ReservationsRepository } from "./reservations.repository.js";
 
 @Injectable()
 export class ReservationsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: ReservationsRepository,
     private readonly guildsService: GuildsService,
     private readonly catalogService: ReservationCatalogService,
     private readonly sharingService: ReservationSharingService,
@@ -25,19 +25,12 @@ export class ReservationsService {
     const [spots, visibleGuildIds, pinnedSpots] = await Promise.all([
       this.catalogService.getSpots(),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.userPinnedReservationSpot.findMany({
-        where: { userId: context.userId, guildId: context.guildId },
-        select: { spotId: true },
-      }),
+      this.repository.findPinnedSpotIds(context.userId, context.guildId),
     ]);
-    const reservations = await this.prisma.reservation.findMany({
-      where: {
-        guildId: { in: visibleGuildIds },
-        endsAt: { gt: now },
-      },
-      include: { guild: true },
-      orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    });
+    const reservations = await this.repository.findUpcoming(
+      visibleGuildIds,
+      now,
+    );
     const pinnedSpotIds = new Set(pinnedSpots.map(({ spotId }) => spotId));
     const viewer = this.toPresentationViewer(context);
 
@@ -91,16 +84,12 @@ export class ReservationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservations = await this.prisma.reservation.findMany({
-      where: {
-        guildId: { in: visibleGuildIds },
-        spotId,
-        startsAt: { lt: to },
-        endsAt: { gt: from },
-      },
-      include: { guild: true },
-      orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    });
+    const reservations = await this.repository.findWindow(
+      visibleGuildIds,
+      spotId,
+      from,
+      to,
+    );
     const viewer = this.toPresentationViewer(context);
 
     return {
@@ -117,11 +106,7 @@ export class ReservationsService {
     spotId: string,
   ): Promise<void> {
     await this.catalogService.getSpot(spotId);
-    await this.prisma.userPinnedReservationSpot.upsert({
-      where: { userId_guildId_spotId: { userId, guildId, spotId } },
-      create: { userId, guildId, spotId },
-      update: {},
-    });
+    await this.repository.pinSpot(userId, guildId, spotId);
   }
 
   async unpinSpot(
@@ -129,9 +114,7 @@ export class ReservationsService {
     guildId: string,
     spotId: string,
   ): Promise<void> {
-    await this.prisma.userPinnedReservationSpot.deleteMany({
-      where: { userId, guildId, spotId },
-    });
+    await this.repository.unpinSpot(userId, guildId, spotId);
   }
 
   async listMine(options: {
@@ -146,24 +129,13 @@ export class ReservationsService {
       );
     const now = new Date();
     const retentionStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const statusFilter =
-      options.query.status === "past"
-        ? { endsAt: { gte: retentionStart, lt: now } }
-        : { endsAt: { gte: now } };
-    const reservations = await this.prisma.reservation.findMany({
-      where: {
-        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
-        ...statusFilter,
-        OR: [
-          { createdByUserId: options.userId },
-          { legacyCreatedByDiscordId: options.discordId },
-        ],
-      },
-      include: { guild: true },
-      orderBy:
-        options.query.status === "past"
-          ? [{ endsAt: "desc" }, { id: "desc" }]
-          : [{ startsAt: "asc" }, { id: "asc" }],
+    const reservations = await this.repository.findMine({
+      guildIds: accessibleGuilds.map((guild) => guild.id),
+      userId: options.userId,
+      discordId: options.discordId,
+      status: options.query.status,
+      now,
+      retentionStart,
     });
     const viewer = {
       guildId: null,

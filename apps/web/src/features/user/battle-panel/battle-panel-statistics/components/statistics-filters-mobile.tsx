@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { Input } from "@lootlog/ui/components/input";
-import { useBattlesControllerGetUserCharacters } from "@lootlog/api-client/react-query/battlelog/battles";
+import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";

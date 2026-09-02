@@ -1,8 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { PrismaService } from "#src/db/prisma.service";
 import { MembersService } from "#src/members/members.service";
 import {
   getGuildCacheKey,
@@ -11,6 +10,7 @@ import {
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { MemberContextService } from "./member-context.service.js";
+import { MemberContextRepository } from "./member-context.repository.js";
 
 describe("MemberContextService", () => {
   let service: MemberContextService;
@@ -19,10 +19,8 @@ describe("MemberContextService", () => {
     warn: mockFn(),
   };
 
-  const mockPrismaService = {
-    guild: {
-      findFirst: mockFn(),
-    },
+  const mockRepository = {
+    findActiveGuild: mockFn(),
   };
 
   const mockRedisService = {
@@ -52,8 +50,8 @@ describe("MemberContextService", () => {
           useValue: mockLogger,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: MemberContextRepository,
+          useValue: mockRepository,
         },
         {
           provide: RedisService,
@@ -172,7 +170,7 @@ describe("MemberContextService", () => {
     mockRedisService.get
       .mockRejectedValueOnce(new Error("redis guild fail"))
       .mockRejectedValueOnce(new Error("redis perms fail"));
-    mockPrismaService.guild.findFirst.mockResolvedValue(guild);
+    mockRepository.findActiveGuild.mockResolvedValue(guild);
     mockMembersService.getGuildMemberById.mockResolvedValue({
       id: 1,
       active: true,
@@ -267,7 +265,7 @@ describe("MemberContextService", () => {
 
   it("loads guild from the database and caches it under id and vanity url", async () => {
     mockRedisService.get.mockResolvedValue(null);
-    mockPrismaService.guild.findFirst.mockResolvedValue(guild);
+    mockRepository.findActiveGuild.mockResolvedValue(guild);
     mockMembersService.getGuildMemberById.mockResolvedValue({
       id: 1,
       active: true,
@@ -286,12 +284,7 @@ describe("MemberContextService", () => {
       guildId: guild.id,
     });
 
-    expect(mockPrismaService.guild.findFirst).toHaveBeenCalledWith({
-      where: {
-        active: true,
-        OR: [{ id: guild.id }, { vanityUrl: guild.id }],
-      },
-    });
+    expect(mockRepository.findActiveGuild).toHaveBeenCalledWith(guild.id);
     expect(mockRedisService.set).toHaveBeenCalledWith(
       getGuildCacheKey(guild.id),
       JSON.stringify(guild),
@@ -306,7 +299,7 @@ describe("MemberContextService", () => {
 
   it("throws not found when the guild does not exist", async () => {
     mockRedisService.get.mockResolvedValue(null);
-    mockPrismaService.guild.findFirst.mockResolvedValue(null);
+    mockRepository.findActiveGuild.mockResolvedValue(null);
 
     await expect(
       service.getMemberContext({

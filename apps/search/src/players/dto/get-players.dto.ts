@@ -1,20 +1,19 @@
-import { createZodDto, type ZodDto } from "nestjs-zod";
 import { parseSearchTermsQuery } from "#src/shared/query-list.utils";
-import { z } from "zod";
-
-export const getPlayersQuerySchema = z.object({
-  limit: z.coerce.number().optional().default(10),
-  search: z
-    .preprocess(
-      parseSearchTermsQuery,
-      z.union([z.string(), z.array(z.string())]),
-    )
-    .optional(),
-  world: z.string().optional(),
-});
-
-const GetPlayersDtoBase: ZodDto<typeof getPlayersQuerySchema> = createZodDto(
-  getPlayersQuerySchema,
-);
-
-export class GetPlayersDto extends GetPlayersDtoBase {}
+export interface GetPlayersDto {
+  readonly limit: number;
+  readonly search?: string | string[];
+  readonly world?: string;
+}
+export const parseGetPlayersQuery = (url: URL): GetPlayersDto => {
+  const rawSearch = parseSearchTermsQuery(
+    url.searchParams.get("search") ?? undefined,
+  );
+  return {
+    limit: Number(url.searchParams.get("limit") ?? 10),
+    search:
+      typeof rawSearch === "string" || Array.isArray(rawSearch)
+        ? rawSearch
+        : undefined,
+    world: url.searchParams.get("world") ?? undefined,
+  };
+};

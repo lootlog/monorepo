@@ -7,23 +7,18 @@ import { HttpService } from "@nestjs/axios";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger as WinstonLogger } from "winston";
 import { firstValueFrom } from "rxjs";
-import { PrismaService } from "#src/db/prisma.service";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
-import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { Prisma } from "#src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import {
-  CHAT_APPEARANCE_READABLE_PRESET,
   DETECTOR_NPC_TYPES,
   defaultAirTagPreferences,
   defaultDetectorSettings,
   defaultMapPingPreferences,
   defaultNotificationsSettings,
-  mergeChatAppearanceSettings,
-  normalizeChatAppearanceSettings,
   type DetectorNpcType,
   type AirTagPreferences,
   type DetectorRoutingRule,
@@ -31,17 +26,23 @@ import {
   type DetectorSettingsPatch,
   type DetectorTypeSettings,
   type DetectorTypeSettingsPatch,
-  type MutedNpcPreference,
-  type MutedPlayerPreference,
-  type NotificationMutes,
   type NotificationSettings,
   type NotificationType,
   type NotificationsSettings,
   type MapPingPreferences,
   type UpdateUserGameAccountPreferencesPayload,
   type UserGameAccountPreferences,
-  type UserPreferences,
-} from "@lootlog/types";
+} from "@lootlog/schema/account-preferences";
+import {
+  mergeChatAppearanceSettings,
+  normalizeChatAppearanceSettings,
+} from "@lootlog/domain/chat-appearance";
+import type {
+  MutedNpcPreference,
+  MutedPlayerPreference,
+  NotificationMutes,
+  UserPreferences,
+} from "@lootlog/schema/user-preferences";
 import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
 import {
   GuildsService,
@@ -49,6 +50,7 @@ import {
 } from "#src/guilds/guilds.service";
 import type { UpdateUserGameAccountPreferencesDto } from "#src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "#src/users/dto/update-user-preferences.dto";
+import { UsersRepository } from "./users.repository.js";
 
 type DeleteAccountParams = {
   authUserId: string;
@@ -82,7 +84,7 @@ export class UsersService {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
-    private readonly prisma: PrismaService,
+    private readonly repository: UsersRepository,
     private readonly authService: AuthService,
     private readonly membersService: MembersService,
     private readonly redisService: RedisService,
@@ -95,27 +97,12 @@ export class UsersService {
   async getUserPreferences(userId: string) {
     const [userSettings, notificationMutesSettings, appearanceDocument] =
       await Promise.all([
-        this.prisma.userSettings.findUnique({
-          where: { userId },
-        }),
-        this.prisma.userGameAccountSettings.findUnique({
-          where: {
-            userId_accountId: {
-              userId,
-              accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-            },
-          },
-        }),
-        this.prisma.userSettingDocument?.findUnique({
-          where: {
-            userId_domain_scopeType_scopeId: {
-              userId,
-              domain: "appearance",
-              scopeType: "USER",
-              scopeId: userId,
-            },
-          },
-        }),
+        this.repository.findUserSettings(userId),
+        this.repository.findGameAccountSettings(
+          userId,
+          GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+        ),
+        this.repository.findAppearanceDocument(userId),
       ]);
 
     const settings = userSettings ?? this.createDefaultUserPreferences(userId);
@@ -147,65 +134,10 @@ export class UsersService {
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
     await this.triggerBattlelogCleanup(authUserId);
 
-    const deletedMembers = await this.prisma.$transaction(async (tx) => {
-      const members = await tx.member.findMany({
-        where: { userId: discordId },
-        select: {
-          id: true,
-          guildId: true,
-          globalUserId: true,
-          userId: true,
-        },
-      });
-
-      const memberIds = members.map((member) => member.id);
-
-      if (memberIds.length > 0) {
-        await tx.npcKillStats.deleteMany({
-          where: { memberId: { in: memberIds } },
-        });
-      }
-
-      await tx.userKillStats.deleteMany({ where: { userId: discordId } });
-      await tx.userCharactersLootlogSettings.deleteMany({
-        where: { userId: discordId },
-      });
-      await tx.userSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userSettingDocument.deleteMany({
-        where: { userId: authUserId },
-      });
-      await tx.userGameAccountSettings.deleteMany({
-        where: { userId: authUserId },
-      });
-      await tx.userTimerSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userSoundSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userGuildTimerSettings.deleteMany({
-        where: { userId: authUserId },
-      });
-      await tx.userPinnedEvent.deleteMany({
-        where: { userId: authUserId },
-      });
-
-      await Promise.all(
-        members.map((member) =>
-          tx.member.update({
-            where: { id: member.id },
-            data: {
-              active: false,
-              lastDiscordAttemptAt: new Date(),
-              lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.ACCOUNT_DELETED,
-              roles: { set: [] },
-            },
-          }),
-        ),
-      );
-
-      return members.map((member) => ({
-        discordId: member.userId,
-        guildId: member.guildId,
-        globalUserId: member.globalUserId,
-      }));
-    });
+    const deletedMembers = await this.repository.deleteAccount(
+      authUserId,
+      discordId,
+    );
 
     await Promise.all([
       this.authService.invalidateIdpTokenCache(authUserId),
@@ -253,18 +185,9 @@ export class UsersService {
   ) {
     const [currentUserSettings, currentMutes, currentAppearanceDocument] =
       await Promise.all([
-        this.prisma.userSettings.findUnique({ where: { userId } }),
+        this.repository.findUserSettings(userId),
         this.getUserNotificationMutes(userId),
-        this.prisma.userSettingDocument?.findUnique({
-          where: {
-            userId_domain_scopeType_scopeId: {
-              userId,
-              domain: "appearance",
-              scopeType: "USER",
-              scopeId: userId,
-            },
-          },
-        }),
+        this.repository.findAppearanceDocument(userId),
       ]);
     const legacyChatAppearance = (
       currentUserSettings as { chatAppearance?: unknown } | null
@@ -295,81 +218,34 @@ export class UsersService {
 
     const [userSettings] = await Promise.all([
       shouldUpdateUserSettings
-        ? this.prisma.userSettings.upsert({
-            where: { userId },
-            update: {
-              ...nextUserSettingsPayload,
-              updatedAt: new Date(),
-            },
-            create: {
-              userId,
-              ...this.getDefaultUserPreferencesData(),
-              ...nextUserSettingsPayload,
-            },
-          })
+        ? this.repository.upsertUserSettings(userId, nextUserSettingsPayload)
         : Promise.resolve(currentUserSettings),
       preferences.mutes
-        ? this.prisma.userGameAccountSettings.upsert({
-            where: {
-              userId_accountId: {
-                userId,
-                accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-              },
-            },
-            update: {
-              settings: {
-                mutes: nextMutes,
-              } as unknown as Prisma.InputJsonValue,
-              updatedAt: new Date(),
-            },
-            create: {
-              userId,
-              accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-              settings: {
-                mutes: nextMutes,
-              } as unknown as Prisma.InputJsonValue,
-            },
-          })
+        ? this.repository.upsertGameAccountSettings(
+            userId,
+            GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+            { mutes: nextMutes },
+          )
         : Promise.resolve(null),
-      nextChatAppearance && this.prisma.userSettingDocument
-        ? this.prisma.userSettingDocument.upsert({
-            where: {
-              userId_domain_scopeType_scopeId: {
-                userId,
-                domain: "appearance",
-                scopeType: "USER",
-                scopeId: userId,
-              },
-            },
-            create: {
-              userId,
+      nextChatAppearance
+        ? this.repository.upsertAppearanceDocument(
+            userId,
+            applySettingsPatch({
               domain: "appearance",
-              scopeType: "USER",
-              scopeId: userId,
-              overrides: {
-                chat: nextChatAppearance,
-              } as unknown as Prisma.InputJsonValue,
-              schemaVersion: 1,
-            },
-            update: {
-              overrides: applySettingsPatch({
-                domain: "appearance",
-                scope: { type: "USER", id: userId },
-                currentOverrides:
-                  currentAppearanceDocument?.overrides &&
-                  typeof currentAppearanceDocument.overrides === "object" &&
-                  !Array.isArray(currentAppearanceDocument.overrides)
-                    ? (currentAppearanceDocument.overrides as Record<
-                        string,
-                        unknown
-                      >)
-                    : {},
-                set: { chat: nextChatAppearance },
-                unset: [],
-              }) as Prisma.InputJsonValue,
-              schemaVersion: 1,
-            },
-          })
+              scope: { type: "USER", id: userId },
+              currentOverrides:
+                currentAppearanceDocument?.overrides &&
+                typeof currentAppearanceDocument.overrides === "object" &&
+                !Array.isArray(currentAppearanceDocument.overrides)
+                  ? (currentAppearanceDocument.overrides as Record<
+                      string,
+                      unknown
+                    >)
+                  : {},
+              set: { chat: nextChatAppearance },
+              unset: [],
+            }),
+          )
         : Promise.resolve(null),
     ]);
 
@@ -388,15 +264,10 @@ export class UsersService {
     userId: string,
     accountId: string,
   ): Promise<UserGameAccountPreferences> {
-    const gameAccountSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId,
-          },
-        },
-      });
+    const gameAccountSettings = await this.repository.findGameAccountSettings(
+      userId,
+      accountId,
+    );
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
       gameAccountSettings?.settings,
     );
@@ -435,15 +306,10 @@ export class UsersService {
     accountId: string,
     preferences: UpdateUserGameAccountPreferencesDto,
   ): Promise<UserGameAccountPreferences> {
-    const gameAccountSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId,
-          },
-        },
-      });
+    const gameAccountSettings = await this.repository.findGameAccountSettings(
+      userId,
+      accountId,
+    );
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
       gameAccountSettings?.settings,
     );
@@ -510,23 +376,11 @@ export class UsersService {
       ...(hasStoredAirTags ? { airTags: nextAirTags } : {}),
     };
 
-    await this.prisma.userGameAccountSettings.upsert({
-      where: {
-        userId_accountId: {
-          userId,
-          accountId,
-        },
-      },
-      update: {
-        settings: nextSettings as Prisma.InputJsonValue,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId,
-        accountId,
-        settings: nextSettings as Prisma.InputJsonValue,
-      },
-    });
+    await this.repository.upsertGameAccountSettings(
+      userId,
+      accountId,
+      nextSettings,
+    );
 
     return {
       accountId,
@@ -555,7 +409,7 @@ export class UsersService {
       theme: string;
     },
     mutes: NotificationMutes,
-    chatAppearance = CHAT_APPEARANCE_READABLE_PRESET,
+    chatAppearance: unknown = CHAT_APPEARANCE_READABLE_PRESET,
   ): UserPreferences {
     return {
       userId: settings.userId,
@@ -606,38 +460,32 @@ export class UsersService {
 
   private async getUserNotificationMutes(userId: string) {
     const notificationMutesSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-          },
-        },
-      });
+      await this.repository.findGameAccountSettings(
+        userId,
+        GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+      );
 
     return this.getStoredNotificationMutes(notificationMutesSettings?.settings);
   }
 
-  private getStoredNotificationMutes(
-    settings: Prisma.JsonValue | undefined,
-  ): NotificationMutes {
+  private getStoredNotificationMutes(settings: unknown): NotificationMutes {
     if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
       return this.cloneNotificationMutes();
     }
 
-    const settingsObject = settings as Prisma.JsonObject & {
+    const settingsObject = settings as Record<string, unknown> & {
       mutes?: Partial<NotificationMutes>;
     };
 
     return this.normalizeNotificationMutes(settingsObject.mutes);
   }
 
-  private getStoredGameAccountSettings(settings: Prisma.JsonValue | undefined) {
+  private getStoredGameAccountSettings(settings: unknown) {
     if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
       return null;
     }
 
-    return settings as Prisma.JsonObject & {
+    return settings as Record<string, unknown> & {
       notifications?: Partial<NotificationsSettings>;
       detector?: Partial<DetectorSettings>;
       pings?: Partial<MapPingPreferences>;

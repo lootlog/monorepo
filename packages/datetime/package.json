@@ -3,29 +3,20 @@
   "version": "1.0.1",
   "private": true,
   "license": "MIT",
-  "files": [
-    "dist"
-  ],
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsc --noEmit",
     "lint": "oxlint src",
-    "test": "vitest run",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "tsdown": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   }
 }

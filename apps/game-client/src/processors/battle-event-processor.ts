@@ -1,7 +1,7 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import { mergeBattleWarriorPatches } from "@/hooks/game-events/helpers/battle.helpers";
 import { useGameStore } from "@/store/game.store";

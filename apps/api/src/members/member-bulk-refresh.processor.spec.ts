@@ -5,15 +5,15 @@ import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
+import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
 import { MembersService } from "./members.service.js";
-import { PrismaService } from "#src/db/prisma.service";
 
 describe("MemberBulkRefreshProcessor", () => {
   let processor: MemberBulkRefreshProcessor;
   let membersService: {
     refreshMember: Mock;
   };
-  let prismaService: {
+  let refreshJobStorage: {
     memberRefreshJob: {
       update: Mock;
       findUnique: Mock;
@@ -65,7 +65,7 @@ describe("MemberBulkRefreshProcessor", () => {
       refreshMember: mockFn(),
     };
 
-    const mockPrismaService = {
+    const mockRefreshJobStorage = {
       memberRefreshJob: {
         update: mockFn(),
         findUnique: mockFn().mockResolvedValue(mockJobRecord),
@@ -88,8 +88,19 @@ describe("MemberBulkRefreshProcessor", () => {
           useValue: mockMembersService,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: MemberRefreshJobRepository,
+          useValue: {
+            update: (id: number, data: unknown) =>
+              mockRefreshJobStorage.memberRefreshJob.update({
+                where: { id },
+                data,
+              }),
+            incrementFailed: (id: number) =>
+              mockRefreshJobStorage.memberRefreshJob.update({
+                where: { id },
+                data: { failedMembers: { increment: 1 } },
+              }),
+          },
         },
         {
           provide: MemberRefreshJobEventsService,
@@ -106,7 +117,7 @@ describe("MemberBulkRefreshProcessor", () => {
       MemberBulkRefreshProcessor,
     );
     membersService = module.get(MembersService);
-    prismaService = module.get(PrismaService);
+    refreshJobStorage = mockRefreshJobStorage as never;
     memberRefreshJobEventsService = module.get(MemberRefreshJobEventsService);
     logger = module.get(WINSTON_MODULE_PROVIDER);
   });
@@ -135,7 +146,7 @@ describe("MemberBulkRefreshProcessor", () => {
       skipTtlCheck: true,
     });
 
-    expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
+    expect(refreshJobStorage.memberRefreshJob.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
         status: "COMPLETED",

@@ -1,15 +1,25 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module.js";
-import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
-import { serviceConfig } from "#src/config/service.config";
+import "dotenv/config";
+import { BunRuntime } from "@effect/platform-bun";
+import { Layer } from "effect";
+import { FetchHttpClient } from "effect/unstable/http";
+import {
+  OtlpLogger,
+  OtlpSerialization,
+  OtlpTracer,
+} from "effect/unstable/observability";
+import { BotApplication } from "./bot-application.js";
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+const ObservabilityLive = Layer.merge(
+  OtlpTracer.layerFromConfig({ resource: { serviceName: "discord-bot" } }),
+  OtlpLogger.layerFromConfig({
+    resource: { serviceName: "discord-bot" },
+    mergeWithExisting: true,
+  }),
+).pipe(
+  Layer.provide(OtlpSerialization.layerJson),
+  Layer.provide(FetchHttpClient.layer),
+);
 
-  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-
-  await app.startAllMicroservices();
-  await app.listen(serviceConfig.port);
-}
-
-bootstrap();
+BunRuntime.runMain(
+  Layer.launch(BotApplication.pipe(Layer.provide(ObservabilityLive))),
+);

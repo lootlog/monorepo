@@ -18,8 +18,8 @@ import {
   useNotificationsUserControllerCreateUserTarget,
   useNotificationsUserControllerTriggerUserTargetTest,
   useNotificationsUserControllerUpdateUserTarget,
-} from "@lootlog/api-client/react-query/main/notifications";
-import type { NotificationTargetWithTestTriggerResponseDto } from "@lootlog/api-client/models/main/notification-target-with-test-trigger-response-dto";
+} from "@lootlog/client/main";
+import type { NotificationTargetWithTestTriggerResponseDto } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Tooltip,
@@ -27,7 +27,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
-import { NotificationTargetType } from "@lootlog/types";
+import { NotificationTargetType } from "@lootlog/schema/notifications";
 
 type DmActionsCardProps = {
   dmTarget: NotificationTargetWithTestTriggerResponseDto | null;

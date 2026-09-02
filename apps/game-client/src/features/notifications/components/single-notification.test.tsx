@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
-import type { NotificationMutes, NotificationSettings } from "@lootlog/types";
+import type { NotificationMutes } from "@lootlog/schema/user-preferences";
+import type { NotificationSettings } from "@lootlog/schema/account-preferences";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoredNotification } from "@/store/notifications.store";
 import { SingleNotification } from "./single-notification";

@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
 

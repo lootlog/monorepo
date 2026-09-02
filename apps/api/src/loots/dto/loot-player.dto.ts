@@ -1,4 +1,4 @@
-import type { Profession } from "#src/generated/prisma/client";
+import type { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 
 export type LootPlayerDto = {
   id: string;

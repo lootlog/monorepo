@@ -1,11 +1,11 @@
 ---
-"@lootlog/access-policy": minor
 "@lootlog/nest-shared": minor
-"@lootlog/types": patch
+"@lootlog/domain": minor
+"@lootlog/schema": patch
 "@lootlog/api": patch
 "@lootlog/activity": patch
 "@lootlog/auth": patch
-"@lootlog/battlelog-service": patch
+"@lootlog/battlelog": patch
 "@lootlog/developer": patch
 "@lootlog/discord-bot": patch
 "@lootlog/gateway": patch

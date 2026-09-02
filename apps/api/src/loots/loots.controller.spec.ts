@@ -1,14 +1,13 @@
 import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
-  LootSource,
-  Permission,
-  Profession,
-  type Guild,
-  type Role,
-} from "#src/generated/prisma/client";
+  LootSourceEnum as LootSource,
+  ProfessionEnum as Profession,
+} from "@lootlog/schema/loot";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";
@@ -24,6 +23,9 @@ import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.se
 import { LootsController } from "./loots.controller.js";
 import { LootsService } from "./loots.service.js";
 import { LootStatsService } from "./services/loot-stats.service.js";
+
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 
 describe("LootsController", () => {
   let controller: LootsController;
@@ -45,6 +47,13 @@ describe("LootsController", () => {
     icon: "icon.png",
     ownerId: "owner123",
     notificationRuleLimit: 20,
+    publicStatsCardEnabled: false,
+    reservationMaxDurationMinutes: 180,
+    reservationMinDurationMinutes: 30,
+    reservationTimeGranularityMinutes: 15,
+    reservationMaxAdvanceDays: 7,
+    reservationActiveLimitPerSpot: 3,
+    documentLimit: 50,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),

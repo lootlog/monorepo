@@ -1,11 +1,11 @@
 import { queryClient } from "@/lib/query-client";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/api-client/react-query/main/sound-settings";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
 import {
   disposeSoundPlayback,
   playSoundRequest,
 } from "@/lib/shared-audio-playback";
-import type { UserSoundSettings } from "@lootlog/types";
+import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";

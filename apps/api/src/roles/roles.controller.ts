@@ -8,13 +8,15 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
 import { RolesService } from "#src/roles/roles.service";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { RoleResponseDto } from "#src/shared/dto/role-response.dto";
+
+type GuildDataValue = { readonly id: string };
 
 @ApiTags("roles")
 @ApiBearerAuth()
@@ -40,7 +42,7 @@ export class RolesController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getGuildRoles(@GuildData() guild: Guild) {
+  getGuildRoles(@GuildData() guild: GuildDataValue) {
     return this.rolesService.getRolesByGuildId(guild.id);
   }
 
@@ -63,8 +65,8 @@ export class RolesController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "Role not found" })
-  async updateGuildRole(
-    @GuildData() guild: Guild,
+  updateGuildRole(
+    @GuildData() guild: GuildDataValue,
     @Param("roleId") roleId: string,
     @DiscordId() discordId: string,
     @Body() data: UpdateRolePermissionsDto,

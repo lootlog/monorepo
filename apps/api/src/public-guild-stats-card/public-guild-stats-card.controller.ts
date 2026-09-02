@@ -8,7 +8,7 @@ import {
 } from "@nestjs/swagger";
 import type { FastifyReply } from "fastify";
 import { serviceConfig } from "#src/config/service.config";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 
 const CACHE_CONTROL_HEADER = "public, max-age=300, must-revalidate";

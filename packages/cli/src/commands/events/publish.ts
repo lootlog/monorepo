@@ -85,15 +85,15 @@ const showHelp = (): void => {
 ${chalk.bold("publish - Publish test events to RabbitMQ")}
 
 ${chalk.bold("Usage:")}
-  pnpm events publish [options]
+  bun run events:publish [options]
 
 ${chalk.bold("Interactive Mode (recommended):")}
-  pnpm events publish
+  bun run events:publish
 
   Launches an interactive menu to select and publish predefined events.
 
 ${chalk.bold("Continuous Mode:")}
-  pnpm events publish --continuous
+  bun run events:publish --continuous
 
   Keeps the connection open and allows publishing multiple events sequentially
   without restarting the script. Fixtures are automatically reloaded before each
@@ -101,8 +101,8 @@ ${chalk.bold("Continuous Mode:")}
   testing event flows.
 
 ${chalk.bold("Non-Interactive Mode:")}
-  pnpm events publish --event <name>
-  pnpm events publish --exchange <name> --routing-key <key> --payload <json>
+  bun run events:publish --event <name>
+  bun run events:publish --exchange <name> --routing-key <key> --payload <json>
 
 ${chalk.bold("Options:")}
   -c, --continuous             Enable continuous mode (publish multiple events)
@@ -114,22 +114,22 @@ ${chalk.bold("Options:")}
 
 ${chalk.bold("Examples:")}
   ${chalk.gray("# Interactive mode (single event)")}
-  pnpm events publish
+  bun run events:publish
 
   ${chalk.gray("# Continuous mode (multiple events)")}
-  pnpm events publish --continuous
+  bun run events:publish --continuous
 
   ${chalk.gray("# Publish predefined event")}
-  pnpm events publish --event loot-created
+  bun run events:publish --event loot-created
 
   ${chalk.gray("# Custom event")}
-  pnpm events publish \\
+  bun run events:publish \\
     --exchange lootlog.events \\
     --routing-key custom.test \\
     --payload '{"test": "data"}'
 
 ${chalk.bold("Available Events:")}
-  Run 'pnpm events publish' to see available predefined events.
+  Run 'bun run events:publish' to see available predefined events.
 
 ${chalk.bold("Requirements:")}
   - RABBITMQ_URI environment variable must be set

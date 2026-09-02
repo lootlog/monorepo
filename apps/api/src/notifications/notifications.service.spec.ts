@@ -1,10 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { NotificationTargetType } from "@lootlog/types";
-import { NpcType, Permission, Prisma } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import { NotificationTargetType } from "@lootlog/schema/notifications";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import { Error as NotificationError } from "#src/notifications/enum/error.enum";
@@ -16,6 +17,9 @@ import { NotificationMatchingService } from "./notification-matching.service.js"
 import { NotificationRuleService } from "./notification-rule.service.js";
 import { NotificationTargetService } from "./notification-target.service.js";
 import { NotificationsEventsHandler } from "./notifications-events.handler.js";
+import { NotificationsRepository } from "./notifications.repository.js";
+import { NotificationJobsRepository } from "./notification-jobs.repository.js";
+import type { JsonValue } from "./notification-database.types.js";
 import { WatchedItemService } from "./watched-item.service.js";
 
 describe("Notification Services", () => {
@@ -27,7 +31,7 @@ describe("Notification Services", () => {
 
   const watchedItemTimestamp = new Date("2026-04-21T10:00:00.000Z");
   const createMockNotificationRule = (
-    filters: Prisma.JsonValue = {
+    filters: JsonValue = {
       itemId: 123,
       guildIds: ["guild-1"],
     },
@@ -88,6 +92,7 @@ describe("Notification Services", () => {
     },
     notificationRule: {
       count: mockFn(),
+      findUnique: mockFn(),
       findFirst: mockFn(),
       findMany: mockFn(),
       create: mockFn(),
@@ -152,6 +157,316 @@ describe("Notification Services", () => {
     publish: mockFn(),
   };
 
+  const mockNotificationsRepository = {
+    findActiveMemberships: (ownerIds: string[], guildIds: string[]) =>
+      mockPrisma.member.findMany({
+        where: {
+          userId: { in: ownerIds },
+          guildId: { in: guildIds },
+          active: true,
+        },
+        select: {
+          userId: true,
+          guildId: true,
+          guild: { select: { ownerId: true } },
+          roles: {
+            select: {
+              id: true,
+              permissions: true,
+              lvlRangeFrom: true,
+              lvlRangeTo: true,
+            },
+          },
+        },
+      }),
+    findTimerRules: (...args: unknown[]) =>
+      mockPrisma.notificationRule.findMany(...args),
+    findWatchedItemsForLoot: (itemIds: number[], world: string) =>
+      mockPrisma.watchedItem.findMany({
+        where: {
+          enabled: true,
+          itemId: { in: itemIds },
+          world,
+          notificationRule: {
+            is: {
+              enabled: true,
+              triggerType: "WATCHED_ITEM_DROPPED",
+              world,
+              targets: { some: {} },
+            },
+          },
+        },
+        include: {
+          notificationRule: {
+            include: { targets: { include: { target: true } } },
+          },
+        },
+      }),
+    findTimersForRule: (...args: unknown[]) =>
+      mockPrisma.timer.findMany(...args),
+    listTargets: (...args: unknown[]) =>
+      mockPrisma.notificationTarget.findMany(...args),
+    upsertTarget: (values: Record<string, unknown>) => {
+      const { ownerType, ownerId, provider, targetType, externalId } = values;
+      return mockPrisma.notificationTarget.upsert({
+        where: {
+          ownerType_ownerId_provider_targetType_externalId: {
+            ownerType,
+            ownerId,
+            provider,
+            targetType,
+            externalId,
+          },
+        },
+        create: values,
+        update: {
+          displayName: values.displayName,
+          metadata: values.metadata,
+          active: values.active,
+          canSend: values.canSend,
+          lastSyncedAt: values.lastSyncedAt,
+        },
+      });
+    },
+    updateTarget: (id: number, data: unknown) =>
+      mockPrisma.notificationTarget.update({ where: { id }, data }),
+    findTarget: (ownerType: string, ownerId: string, id: number) =>
+      mockPrisma.notificationTarget.findFirst({
+        where: { id, ownerType, ownerId },
+      }),
+    findTargetIds: (...args: unknown[]) =>
+      mockPrisma.notificationTarget.findMany(...args),
+    findSingleTargetRuleIds: (targetId: number) =>
+      mockPrisma.notificationRuleTarget
+        .findMany({ where: { targetId } })
+        .then((entries) =>
+          entries
+            .filter((entry) => entry.rule._count.targets === 1)
+            .map((entry) => entry.ruleId),
+        ),
+    deleteTargetAndRules: async (targetId: number, ruleIds: number[]) => {
+      await mockPrisma.notificationTarget.delete({ where: { id: targetId } });
+      if (ruleIds.length > 0) {
+        await mockPrisma.notificationRule.deleteMany({
+          where: { id: { in: ruleIds } },
+        });
+      }
+    },
+    getOrCreateUserDmTestRule: async (
+      discordId: string,
+      targetId: number,
+      name: string,
+    ) => {
+      let rule = await mockPrisma.notificationRule.findFirst({
+        where: {
+          ownerType: "USER",
+          ownerId: discordId,
+          triggerType: "SCHEDULED_MESSAGE",
+          name,
+        },
+      });
+      if (!rule) {
+        rule = await mockPrisma.notificationRule.create({
+          data: {
+            ownerType: "USER",
+            ownerId: discordId,
+            triggerType: "SCHEDULED_MESSAGE",
+            guildId: null,
+            world: null,
+            name,
+            filters: null,
+            contentTemplate: null,
+            scheduleStrategy: "FIXED_DATETIME",
+            scheduleAnchor: null,
+            scheduleOffsetMinutes: null,
+            scheduledAt: null,
+            scheduleIntervalType: "ONCE",
+            scheduleIntervalValue: null,
+            scheduleWeekday: null,
+            scheduleTimeOfDay: null,
+            scheduledUntil: null,
+            scheduleTimezone: null,
+            enabled: false,
+            dedupeWindowSeconds: 0,
+          },
+        });
+      }
+      await mockPrisma.notificationRuleTarget.createMany({
+        data: [{ ruleId: rule.id, targetId }],
+        skipDuplicates: true,
+      });
+      return rule;
+    },
+    attachUserTargetToWatchedItemRules: async (
+      discordId: string,
+      targetId: number,
+    ) => {
+      const watchedItems = await mockPrisma.watchedItem.findMany({
+        where: { userId: discordId },
+      });
+      const data = watchedItems.flatMap((item) =>
+        item.notificationRuleId
+          ? [{ ruleId: item.notificationRuleId, targetId }]
+          : [],
+      );
+      if (data.length > 0) {
+        await mockPrisma.notificationRuleTarget.createMany({
+          data,
+          skipDuplicates: true,
+        });
+      }
+    },
+    findRecentTestJobs: (targetIds: number[], threshold: Date) =>
+      mockPrisma.notificationJob.findMany({
+        where: {
+          targetId: { in: targetIds },
+          jobKind: "TEST",
+          createdAt: { gte: threshold },
+        },
+        select: { targetId: true, createdAt: true },
+        orderBy: [{ createdAt: "asc" }],
+      }),
+    findRule: (ownerType: string, ownerId: string, ruleId: number) =>
+      mockPrisma.notificationRule.findFirst({
+        where: { id: ruleId, ownerType, ownerId },
+      }),
+    findRuleWithTargets: (
+      _ownerType: string,
+      _ownerId: string,
+      ruleId: number,
+    ) =>
+      mockPrisma.notificationRule.findFirst({
+        where: { id: ruleId },
+        include: { targets: { include: { target: true } } },
+      }),
+    findWatchedItem: (userId: string, itemId: number, world: string) =>
+      mockPrisma.watchedItem.findUnique({
+        where: { userId_itemId_world: { userId, itemId, world } },
+        include: { notificationRule: true },
+      }),
+    countWatchedItems: (userId: string) =>
+      mockPrisma.watchedItem.count({ where: { userId } }),
+    updateWatchedItem: async (options: Record<string, unknown>) => {
+      await mockPrisma.$transaction(async (tx) => {
+        await tx.watchedItem.update({
+          where: { id: options.watchedItemId },
+          data: { enabled: true, itemName: options.itemName },
+        });
+        await tx.notificationRule.update({
+          where: { id: options.ruleId },
+          data: {
+            enabled: true,
+            world: options.world,
+            filters: { itemId: options.itemId, guildIds: options.guildIds },
+          },
+        });
+        await tx.notificationRuleTarget.createMany({
+          data: (options.targetIds as number[]).map((targetId) => ({
+            ruleId: options.ruleId,
+            targetId,
+          })),
+          skipDuplicates: true,
+        });
+      });
+    },
+    createWatchedItem: async (options: Record<string, unknown>) => {
+      const watchedItem = await mockPrisma.$transaction(async (tx) => {
+        const rule = await tx.notificationRule.create({ data: {} });
+        return tx.watchedItem.upsert({
+          where: {
+            userId_itemId_world: {
+              userId: options.userId,
+              itemId: options.itemId,
+              world: options.world,
+            },
+          },
+          create: { notificationRuleId: rule.id },
+          update: { notificationRuleId: rule.id },
+          include: {
+            notificationRule: {
+              include: { targets: { include: { target: true } } },
+            },
+          },
+        });
+      });
+      mockPrisma.watchedItem.findUnique.mockResolvedValueOnce(watchedItem);
+      return watchedItem;
+    },
+  };
+
+  const mockNotificationJobsRepository = {
+    findCancelableJobIds: (filters: Record<string, unknown>) => {
+      const { jobId, ...remainingFilters } = filters;
+      return mockPrisma.notificationJob.findMany({
+        where: {
+          ...remainingFilters,
+          ...(jobId ? { id: jobId } : {}),
+          status: { in: ["PENDING", "BLOCKED"] },
+        },
+        select: { id: true },
+      });
+    },
+    cancelJobs: (ids: string[]) =>
+      mockPrisma.notificationJob.updateMany({
+        where: { id: { in: ids }, status: { in: ["PENDING", "BLOCKED"] } },
+        data: { status: "CANCELED", processedAt: expect.any(Date) },
+      }),
+    findJobWithRelations: (id: string) =>
+      mockPrisma.notificationJob.findUnique({
+        where: { id },
+        include: { rule: true, target: true },
+      }),
+    findJob: (id: string) =>
+      mockPrisma.notificationJob.findUnique({ where: { id } }),
+    findGuildJob: (guildId: string, id: string) =>
+      mockPrisma.notificationJob.findFirst({
+        where: { id, ownerType: "GUILD", ownerId: guildId },
+      }),
+    updateJob: (id: string, data: unknown) =>
+      mockPrisma.notificationJob.update({ where: { id }, data }),
+    claimJob: async (id: string) => {
+      const result = await mockPrisma.notificationJob.updateMany({
+        where: { id, status: { in: ["PENDING", "BLOCKED"] } },
+        data: {
+          status: "PROCESSING",
+          blockedReason: null,
+          attemptCount: { increment: 1 },
+        },
+      });
+      return result.count > 0;
+    },
+    createJob: async (data: Record<string, unknown>) => {
+      try {
+        return await mockPrisma.notificationJob.create({ data });
+      } catch {
+        const existing = await mockPrisma.notificationJob.findUnique({
+          where: { idempotencyKey: data.idempotencyKey },
+        });
+        if (existing?.status !== "CANCELED") return null;
+        return mockPrisma.$transaction(async (tx) => {
+          await tx.notificationJob.update({
+            where: { id: existing.id },
+            data: {
+              idempotencyKey: `${String(data.idempotencyKey)}:canceled:${randomUUID()}`,
+            },
+          });
+          return tx.notificationJob.create({ data });
+        });
+      }
+    },
+    findRuleById: (id: number) =>
+      mockPrisma.notificationRule.findUnique({
+        where: { id },
+        include: { targets: { include: { target: true } } },
+      }),
+    findTimers: () => mockPrisma.timer.findMany({}),
+    findCycleJobStatuses: () => mockPrisma.notificationJob.findMany({}),
+    advanceRuleSchedule: async () => true,
+    listJobsForOwner: () => mockPrisma.notificationJob.findMany({}),
+    deleteStaleJobs: async () => undefined,
+    recordDelivery: async () => undefined,
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -208,6 +523,12 @@ describe("Notification Services", () => {
       id: 77,
       ownerType: "GUILD",
       ownerId: "guild-1",
+    });
+    mockPrisma.notificationRule.findUnique.mockResolvedValue({
+      id: 77,
+      ownerType: "GUILD",
+      ownerId: "guild-1",
+      targets: [],
     });
     mockPrisma.notificationRule.findMany.mockResolvedValue([]);
     mockPrisma.notificationJob.findFirst.mockResolvedValue({
@@ -276,8 +597,12 @@ describe("Notification Services", () => {
         NotificationsEventsHandler,
         WatchedItemService,
         {
-          provide: PrismaService,
-          useValue: mockPrisma,
+          provide: NotificationsRepository,
+          useValue: mockNotificationsRepository,
+        },
+        {
+          provide: NotificationJobsRepository,
+          useValue: mockNotificationJobsRepository,
         },
         {
           provide: ChannelsService,
@@ -497,7 +822,7 @@ describe("Notification Services", () => {
         guildId: null,
         world: null,
         name: "__system:user-dm-test__",
-        filters: Prisma.DbNull,
+        filters: null,
         contentTemplate: null,
         scheduleStrategy: "FIXED_DATETIME",
         scheduleAnchor: null,
@@ -1257,11 +1582,6 @@ describe("Notification Services", () => {
       code: string;
     };
     uniqueConstraintError.code = "P2002";
-    Object.setPrototypeOf(
-      uniqueConstraintError,
-      Prisma.PrismaClientKnownRequestError.prototype,
-    );
-
     mockPrisma.notificationJob.create.mockRejectedValueOnce(
       uniqueConstraintError,
     );

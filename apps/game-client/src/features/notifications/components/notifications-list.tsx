@@ -14,8 +14,9 @@ import {
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
-import { usePartyReadyRoomControllerApply } from "@lootlog/api-client/react-query/main/party-ready-room";
+  usePartyReadyRoomControllerApply,
+} from "@lootlog/client/main";
+
 import {
   type StoredNotification,
   useNotificationsStore,
@@ -23,12 +24,10 @@ import {
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
-import type {
-  NotificationMutesPatch,
-  NotificationsSettings,
-  NpcTypeColors,
-  PartyReadyRoomProjection,
-} from "@lootlog/types";
+import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
+import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 

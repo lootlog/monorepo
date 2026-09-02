@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import {
   Controller,
@@ -24,7 +24,7 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { MembersService } from "./members.service.js";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import {
@@ -39,6 +39,8 @@ import { MemberSummaryResponseDto } from "#src/shared/dto/member-summary-respons
 import { MemberLootlogConfigSummaryResponseDto } from "#src/shared/dto/member-lootlog-config-summary-response.dto";
 import { MemberReferenceResponseDto } from "#src/shared/dto/member-reference-response.dto";
 import { ErrorKey } from "./enum/error-key.enum.js";
+
+type Guild = { readonly id: string };
 
 @ApiTags("members")
 @ApiBearerAuth()

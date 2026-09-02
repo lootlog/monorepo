@@ -1,15 +1,8 @@
-import {
-  Inject,
-  Injectable,
-  type OnApplicationBootstrap,
-} from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
-import { Meilisearch } from "meilisearch";
+import type { Meilisearch } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/constants/meilisearch";
 import { NPCS_INDEX } from "#src/npcs/constants/meilisearch";
 import { PLAYERS_INDEX } from "#src/players/constants/meilisearch";
-import { MEILISEARCH_CLIENT } from "./meilisearch.constants.js";
+import type { AppLogger } from "#src/shared/logger";
 import { getMeilisearchErrorCode } from "./meilisearch.utils.js";
 
 const itemFilterableAttributes = [
@@ -30,11 +23,10 @@ const indexPrimaryKeys = {
   [ITEMS_INDEX]: "uid",
 } as const;
 
-@Injectable()
-export class MeilisearchIndexesService implements OnApplicationBootstrap {
+export class MeilisearchIndexesService {
   constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly meilisearch: Meilisearch,
+    private readonly logger: AppLogger,
   ) {}
 
   async onApplicationBootstrap() {

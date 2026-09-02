@@ -1,6 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { DiscordGuildSyncStatus } from "#src/generated/prisma/client";
+import * as z from "zod";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
@@ -35,7 +34,7 @@ export class DiscordGuildChannelSnapshotResponseDto extends createZodDto(
 
 const DiscordGuildSyncStateResponseSchema = z.object({
   guildId: z.string(),
-  status: z.nativeEnum(DiscordGuildSyncStatus),
+  status: z.enum(["SYNCED", "SYNCING", "FAILED", "STALE", "NOT_FOUND"]),
   hasRequiredPermissions: z.boolean(),
   requiredPermissions: z.array(z.string()),
   grantedPermissions: z.array(z.string()),

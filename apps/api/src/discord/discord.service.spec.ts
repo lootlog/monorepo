@@ -22,7 +22,7 @@ import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unava
 import { InvalidScopesError } from "#src/auth/errors/invalid-scopes.error";
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 
 vi.mock("#src/config/service.config", () => ({
   serviceConfig: { env: "local" },

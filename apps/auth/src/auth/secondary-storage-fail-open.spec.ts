@@ -1,26 +1,22 @@
+import { describe, expect, it, mock } from "bun:test";
 import type { SecondaryStorage } from "better-auth";
 import {
   createFailOpenSecondaryStorage,
   type SecondaryStorageErrorHandler,
 } from "./secondary-storage-fail-open.js";
 
-type SecondaryStorageGetAndDelete = NonNullable<
-  SecondaryStorage["getAndDelete"]
->;
-type SecondaryStorageIncrement = NonNullable<SecondaryStorage["increment"]>;
-
 describe("createFailOpenSecondaryStorage", () => {
   it("delegates successful storage operations", async () => {
     const storage = {
-      get: vi.fn<SecondaryStorage["get"]>().mockResolvedValue("cached-value"),
-      getAndDelete: vi
-        .fn<SecondaryStorageGetAndDelete>()
-        .mockResolvedValue("consumed-value"),
-      increment: vi.fn<SecondaryStorageIncrement>().mockResolvedValue(2),
-      set: vi.fn<SecondaryStorage["set"]>().mockResolvedValue(undefined),
-      delete: vi.fn<SecondaryStorage["delete"]>().mockResolvedValue(undefined),
+      get: mock((_key: string) => Promise.resolve("cached-value")),
+      getAndDelete: mock((_key: string) => Promise.resolve("consumed-value")),
+      increment: mock((_key: string, _ttl?: number) => Promise.resolve(2)),
+      set: mock((_key: string, _value: string, _ttl?: number) =>
+        Promise.resolve(undefined),
+      ),
+      delete: mock((_key: string) => Promise.resolve(undefined)),
     } satisfies SecondaryStorage;
-    const onError = vi.fn<SecondaryStorageErrorHandler>();
+    const onError = mock<SecondaryStorageErrorHandler>();
     const failOpenStorage = createFailOpenSecondaryStorage(storage, onError);
 
     await expect(failOpenStorage.get("session-token")).resolves.toBe(
@@ -50,15 +46,22 @@ describe("createFailOpenSecondaryStorage", () => {
   it("falls back when Redis storage operations fail", async () => {
     const error = new Error("redis unavailable");
     const storage = {
-      get: vi.fn<SecondaryStorage["get"]>().mockRejectedValue(error),
-      getAndDelete: vi
-        .fn<SecondaryStorageGetAndDelete>()
-        .mockRejectedValue(error),
-      increment: vi.fn<SecondaryStorageIncrement>().mockRejectedValue(error),
-      set: vi.fn<SecondaryStorage["set"]>().mockRejectedValue(error),
-      delete: vi.fn<SecondaryStorage["delete"]>().mockRejectedValue(error),
+      get: mock(
+        (_key: string): Promise<string | null> => Promise.reject(error),
+      ),
+      getAndDelete: mock(
+        (_key: string): Promise<string | null> => Promise.reject(error),
+      ),
+      increment: mock(
+        (_key: string, _ttl?: number): Promise<number> => Promise.reject(error),
+      ),
+      set: mock(
+        (_key: string, _value: string, _ttl?: number): Promise<void> =>
+          Promise.reject(error),
+      ),
+      delete: mock((_key: string): Promise<void> => Promise.reject(error)),
     } satisfies SecondaryStorage;
-    const onError = vi.fn<SecondaryStorageErrorHandler>();
+    const onError = mock<SecondaryStorageErrorHandler>();
     const failOpenStorage = createFailOpenSecondaryStorage(storage, onError);
 
     await expect(failOpenStorage.get("session-token")).resolves.toBeNull();
@@ -84,9 +87,11 @@ describe("createFailOpenSecondaryStorage", () => {
 
   it("uses get and delete when storage has no native getAndDelete", async () => {
     const storage = {
-      get: vi.fn<SecondaryStorage["get"]>().mockResolvedValue("cached-value"),
-      set: vi.fn<SecondaryStorage["set"]>().mockResolvedValue(undefined),
-      delete: vi.fn<SecondaryStorage["delete"]>().mockResolvedValue(undefined),
+      get: mock((_key: string) => Promise.resolve("cached-value")),
+      set: mock((_key: string, _value: string, _ttl?: number) =>
+        Promise.resolve(undefined),
+      ),
+      delete: mock((_key: string) => Promise.resolve(undefined)),
     } satisfies SecondaryStorage;
     const failOpenStorage = createFailOpenSecondaryStorage(storage);
 

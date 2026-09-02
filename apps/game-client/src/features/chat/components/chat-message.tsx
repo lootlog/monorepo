@@ -2,9 +2,15 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
 import { useState, type FC } from "react";
 import { MessageType } from "@/api/chat.api";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
-import type { ChatAppearanceSettings, NpcTypeColors } from "@lootlog/types";
+import {
+  type ChatMessageResponseDtoOutput as ChatMessageType,
+  type MemberSummaryResponseDtoOutput as GuildMember,
+  useChatControllerDeleteChatMessage,
+  useChatControllerUpdateChatMessage,
+} from "@lootlog/client/main";
+
+import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useGameStore } from "@/store/game.store";
 import { PartyGatheringCard } from "./party-gathering-card";
@@ -17,10 +23,7 @@ import { canReplyToChatMessage } from "@/features/chat/chat-reply.helpers";
 import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  useChatControllerDeleteChatMessage,
-  useChatControllerUpdateChatMessage,
-} from "@lootlog/api-client/react-query/main/chat";
+
 import {
   removeChatMessage,
   updateChatMessage,

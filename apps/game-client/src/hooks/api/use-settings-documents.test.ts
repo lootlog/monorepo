@@ -2,7 +2,7 @@ import {
   getChatAppearanceFromSettingsDocuments,
   updateChatAppearanceInSettingsDocuments,
 } from "./use-settings-documents";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { describe, expect, it } from "vitest";
 
 describe("settings documents helpers", () => {

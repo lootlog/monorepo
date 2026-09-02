@@ -2,7 +2,7 @@
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import type { TFunction } from "i18next";
-import type { EventScoringRules } from "@lootlog/scoring";
+import type { EventScoringRules } from "@lootlog/domain/scoring";
 import { afterEach, describe, expect, it } from "vitest";
 import { MultipliersCard } from "./multipliers-card";
 

@@ -105,12 +105,12 @@
       ],
       "outputs": ["openapi.yaml"]
     },
-    "api-client:generate": {
+    "client:generate": {
       "dependsOn": [
         "@lootlog/activity#openapi:generate",
         "@lootlog/api#openapi:generate",
         "@lootlog/auth#openapi:generate",
-        "@lootlog/battlelog-service#openapi:generate",
+        "@lootlog/battlelog#openapi:generate",
         "@lootlog/search#openapi:generate"
       ],
       "inputs": [
@@ -118,14 +118,14 @@
         "$TURBO_ROOT$/apps/activity/openapi.yaml",
         "$TURBO_ROOT$/apps/api/openapi.yaml",
         "$TURBO_ROOT$/apps/auth/openapi.yaml",
-        "$TURBO_ROOT$/apps/battlelog-service/openapi.yaml",
+        "$TURBO_ROOT$/apps/battlelog/openapi.yaml",
         "$TURBO_ROOT$/apps/search/openapi.yaml"
       ],
       "outputs": ["src/generated/**"]
     },
-    "api-client:check": {
+    "client:check": {
       "cache": false,
-      "dependsOn": ["api-client:generate"],
+      "dependsOn": ["client:generate"],
       "outputs": []
     },
     "test:coverage": {

@@ -4,7 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { Permission } from "@lootlog/types";
+import type { Permission } from "@lootlog/schema/permissions";
 import type { MouseEventHandler } from "react";
 import { useTranslation } from "react-i18next";
 import type { PermissionCategory } from "../roles/constants/permission-categories";

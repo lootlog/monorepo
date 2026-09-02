@@ -1,23 +1,21 @@
-// oxlint-disable-next-line consistent-type-imports
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   NotificationTargetType,
   type DiscordNotificationDeliveryResultEvent,
   type DiscordNotificationSendCommand,
-} from "@lootlog/types";
+} from "@lootlog/schema/notifications";
+import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ChannelType, Client, DiscordAPIError } from "discord.js";
-import { RoutingKey } from "#src/bot/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { AppLogger } from "#src/shared/logger";
+import type { RabbitPublisher } from "./rabbit-publisher.js";
 import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./constants/non-retryable-discord-error-codes.constant.js";
 
-@Injectable()
 export class DiscordDeliveryService {
-  private readonly logger = new Logger(DiscordDeliveryService.name);
+  private readonly logger = new AppLogger(DiscordDeliveryService.name);
 
   constructor(
-    private readonly amqpConnection: AmqpConnection,
-    @Inject(Client) private readonly client: Client,
+    private readonly amqpConnection: RabbitPublisher,
+    private readonly client: Client,
   ) {}
 
   async sendNotification(command: DiscordNotificationSendCommand) {

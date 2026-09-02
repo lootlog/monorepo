@@ -3,8 +3,8 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
 
 export type MemberRefreshJobUpdateDetails = {
   refreshedIds?: string[];
@@ -16,7 +16,7 @@ export type MemberRefreshJobUpdateDetails = {
 export class MemberRefreshJobEventsService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    private readonly refreshJobs: MemberRefreshJobRepository,
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
@@ -25,9 +25,7 @@ export class MemberRefreshJobEventsService {
     details: MemberRefreshJobUpdateDetails = {},
   ): Promise<void> {
     try {
-      const job = await this.prisma.memberRefreshJob.findUnique({
-        where: { id: jobId },
-      });
+      const job = await this.refreshJobs.findById(jobId);
 
       if (!job) {
         this.logger.log({

@@ -13,14 +13,14 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventKillService } from "./event-kill.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
-import { PrismaService } from "#src/db/prisma.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import { TimersService } from "#src/timers/timers.service";
+import { EventRespawnRepository } from "./event-respawn.repository.js";
 
 describe("EventRespawnService", () => {
   let service: EventRespawnService;
 
-  const mockPrismaService = {
+  const mockRepositoryBackend = {
     eventHeroNpc: {
       findFirst: mockFn(),
     },
@@ -82,6 +82,52 @@ describe("EventRespawnService", () => {
     ),
     invalidateEvent: mockFn(),
   };
+  const mockRepository = {
+    findHeroWithMaps: mockFn().mockImplementation((guildId, eventId, heroId) =>
+      mockRepositoryBackend.eventHeroNpc.findFirst({
+        where: { id: heroId, event: { id: eventId, guildId } },
+        include: {
+          event: true,
+          maps: { include: { assignedMembers: true } },
+        },
+      }),
+    ),
+    findHero: mockFn().mockImplementation((guildId, eventId, heroId) =>
+      mockRepositoryBackend.eventHeroNpc.findFirst({
+        where: { id: heroId, event: { id: eventId, guildId } },
+        include: { event: true },
+      }),
+    ),
+    findFirstMemberId: mockFn().mockImplementation(async (guildId) => {
+      const member = await mockRepositoryBackend.member.findFirst({
+        where: { guildId },
+        select: { id: true },
+      });
+      return member?.id ?? null;
+    }),
+    findMaps: mockFn().mockImplementation((heroNpcId) =>
+      mockRepositoryBackend.eventMap.findMany({
+        where: { heroNpcId },
+        include: { assignedMembers: true },
+      }),
+    ),
+    clearMapAssignments: mockFn().mockImplementation((mapIds, closedAt) =>
+      mockRepositoryBackend.$transaction(async (tx) => {
+        await Promise.all(
+          mapIds.map((id) =>
+            tx.eventMap.update({
+              where: { id },
+              data: { assignedMembers: { set: [] } },
+            }),
+          ),
+        );
+        await tx.eventMapAssignmentHistory.updateMany({
+          where: { mapId: { in: mapIds }, unassignedAt: null },
+          data: { unassignedAt: closedAt },
+        });
+      }),
+    ),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -89,7 +135,7 @@ describe("EventRespawnService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventRespawnService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: EventRespawnRepository, useValue: mockRepository },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventEmitterService, useValue: mockEventEmitter },
@@ -144,9 +190,9 @@ describe("EventRespawnService", () => {
     };
 
     it("should close respawn window and record kill on manual close", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([]);
       mockKillService.recordHeroKill.mockResolvedValue(undefined);
@@ -170,9 +216,9 @@ describe("EventRespawnService", () => {
     });
 
     it("should await kill recording (not fire-and-forget)", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([]);
 
@@ -189,14 +235,16 @@ describe("EventRespawnService", () => {
     });
 
     it("should auto-close without recording kill points", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
-      mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
-        count: 1,
-      });
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockPrismaService),
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMapAssignmentHistory.updateMany.mockResolvedValue(
+        {
+          count: 1,
+        },
+      );
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
+        callback(mockRepositoryBackend),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([]);
@@ -223,9 +271,9 @@ describe("EventRespawnService", () => {
     });
 
     it("should emit map status update for maps with assigned members", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([]);
       mockKillService.recordHeroKill.mockResolvedValue(undefined);
@@ -239,14 +287,16 @@ describe("EventRespawnService", () => {
     });
 
     it("should emit map status update when auto-closing a window", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
-      mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
-        count: 1,
-      });
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockPrismaService),
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMapAssignmentHistory.updateMany.mockResolvedValue(
+        {
+          count: 1,
+        },
+      );
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
+        callback(mockRepositoryBackend),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([]);
@@ -264,7 +314,7 @@ describe("EventRespawnService", () => {
     });
 
     it("should skip kill recording if no timer exists", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(null);
       mockQueue.getJobs.mockResolvedValue([]);
 
@@ -280,9 +330,9 @@ describe("EventRespawnService", () => {
         data: { heroId },
         remove: mockFn().mockResolvedValue(undefined),
       };
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([mockJob]);
       mockKillService.recordHeroKill.mockResolvedValue(undefined);
@@ -293,7 +343,7 @@ describe("EventRespawnService", () => {
     });
 
     it("should throw NotFoundException when hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(
         service.closeRespawnWindow(guildId, eventId, heroId, {}),
@@ -301,19 +351,19 @@ describe("EventRespawnService", () => {
     });
 
     it("should create new window when createNewWindow is true", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
       mockQueue.getJobs.mockResolvedValue([]);
       mockKillService.recordHeroKill.mockResolvedValue(undefined);
 
-      mockPrismaService.member.findFirst.mockResolvedValue({ id: 1 });
+      mockRepositoryBackend.member.findFirst.mockResolvedValue({ id: 1 });
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         ...mockTimer,
         member: { id: 1 },
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       mockQueue.add.mockResolvedValue({});
 
       const newMinSpawnTime = new Date(Date.now() + 60000);
@@ -333,11 +383,11 @@ describe("EventRespawnService", () => {
         ...mockHero,
         npcId: null,
       };
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(
         heroWithoutNpcId,
       );
       mockTimersService.getEventRespawnTimer.mockResolvedValue(null);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockRepositoryBackend.eventMap.update.mockResolvedValue({});
       mockQueue.getJobs.mockResolvedValue([]);
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {
@@ -377,8 +427,8 @@ describe("EventRespawnService", () => {
     const mockMember = { id: 1 };
 
     it("should create timer without scheduling auto-close", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         guildId,
         world: "tempest",
@@ -387,7 +437,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime,
         member: mockMember,
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       mockQueue.add.mockResolvedValue({});
 
       const result = await service.openRespawnWindow(guildId, eventId, heroId, {
@@ -406,8 +456,8 @@ describe("EventRespawnService", () => {
         { id: "map-2", mapName: "Map 2", assignedMembers: [{ id: 1 }] },
       ];
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         guildId,
         world: "tempest",
@@ -416,7 +466,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime,
         member: mockMember,
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
       mockQueue.add.mockResolvedValue({});
 
       await service.openRespawnWindow(guildId, eventId, heroId, {
@@ -439,7 +489,7 @@ describe("EventRespawnService", () => {
     });
 
     it("should throw NotFoundException when hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(
         service.openRespawnWindow(guildId, eventId, heroId, {
@@ -450,8 +500,8 @@ describe("EventRespawnService", () => {
     });
 
     it("should throw BadRequestException when no members in guild", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
 
       await expect(
         service.openRespawnWindow(guildId, eventId, heroId, {
@@ -462,8 +512,8 @@ describe("EventRespawnService", () => {
     });
 
     it("should emit respawn window opened event", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         guildId,
         world: "tempest",
@@ -472,7 +522,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime,
         member: mockMember,
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       mockQueue.add.mockResolvedValue({});
 
       await service.openRespawnWindow(guildId, eventId, heroId, {
@@ -489,8 +539,8 @@ describe("EventRespawnService", () => {
     it("should not schedule auto-close when maxSpawnTime is in the past", async () => {
       const pastMaxSpawnTime = new Date(Date.now() - 6 * 60 * 1000); // 6 minutes ago
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         guildId,
         world: "tempest",
@@ -499,7 +549,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime: pastMaxSpawnTime,
         member: mockMember,
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
 
       await service.openRespawnWindow(guildId, eventId, heroId, {
         minSpawnTime,
@@ -516,8 +566,8 @@ describe("EventRespawnService", () => {
       ];
 
       const windowOpenedAt = new Date();
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         guildId,
         world: "tempest",
@@ -527,7 +577,7 @@ describe("EventRespawnService", () => {
         member: mockMember,
         windowOpenedAt,
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
       mockQueue.add.mockResolvedValue({});
 
       await service.openRespawnWindow(guildId, eventId, heroId, {
@@ -555,8 +605,8 @@ describe("EventRespawnService", () => {
         { id: "map-3", assignedMembers: [] },
       ];
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
       const windowOpenedAt = new Date();
       mockTimersService.openEventRespawnTimer.mockResolvedValue({
         guildId,
@@ -567,7 +617,7 @@ describe("EventRespawnService", () => {
         member: mockMember,
         windowOpenedAt,
       });
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
       mockQueue.add.mockResolvedValue({});
 
       await service.openRespawnWindow(guildId, eventId, heroId, {
@@ -608,7 +658,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime: new Date(now.getTime() + 60000),
       };
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(timer);
 
       const result = await service.getHeroRespawnConfig(
@@ -628,7 +678,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime: new Date(now.getTime() + 120000),
       };
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(timer);
 
       const result = await service.getHeroRespawnConfig(
@@ -642,7 +692,7 @@ describe("EventRespawnService", () => {
     });
 
     it("should return NONE status when no timer exists", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(null);
 
       const result = await service.getHeroRespawnConfig(
@@ -665,7 +715,7 @@ describe("EventRespawnService", () => {
         maxSpawnTime: new Date(now.getTime() - 60000),
       };
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(timer);
 
       const result = await service.getHeroRespawnConfig(
@@ -680,7 +730,7 @@ describe("EventRespawnService", () => {
     });
 
     it("should throw NotFoundException when hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getHeroRespawnConfig(guildId, eventId, heroId),

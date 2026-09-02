@@ -1,15 +1,19 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import { CoverageGapType } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
 import { EventSummaryService } from "./event-summary.service.js";
+import { EventSummaryRepository } from "./event-summary.repository.js";
+
+const CoverageGapType = {
+  UNASSIGNED: "UNASSIGNED",
+  UNCOVERED: "UNCOVERED",
+} as const;
 
 describe("EventSummaryService", () => {
   let service: EventSummaryService;
 
   const mockTransaction = mockFn();
 
-  const mockPrismaService = {
+  const mockRepositoryBackend = {
     eventMap: {
       findMany: mockFn(),
     },
@@ -30,6 +34,97 @@ describe("EventSummaryService", () => {
     },
     $transaction: mockTransaction,
   };
+  const repository = {
+    findMaps: mockFn().mockImplementation((heroNpcId) =>
+      mockRepositoryBackend.eventMap.findMany({
+        where: { heroNpcId },
+        select: { id: true, mapName: true, mapId: true },
+      }),
+    ),
+    findPresenceLogs: mockFn().mockImplementation(
+      (mapIds, windowOpenedAt, windowClosedAt) =>
+        mockRepositoryBackend.eventPresenceLog.findMany({
+          where: {
+            mapId: { in: mapIds },
+            OR: [
+              { startedAt: { gte: windowOpenedAt, lte: windowClosedAt } },
+              {
+                startedAt: { lt: windowOpenedAt },
+                OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
+              },
+            ],
+          },
+          include: {
+            member: { select: { id: true, name: true, avatar: true } },
+          },
+        }),
+    ),
+    findGaps: mockFn().mockImplementation(
+      (heroNpcId, windowOpenedAt, windowClosedAt) =>
+        mockRepositoryBackend.eventMapCoverageGap.findMany({
+          where: {
+            heroNpcId,
+            OR: [
+              { startedAt: { gte: windowOpenedAt, lte: windowClosedAt } },
+              {
+                startedAt: { lt: windowOpenedAt },
+                OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
+              },
+            ],
+          },
+        }),
+    ),
+    saveSummary: mockFn().mockImplementation((options) =>
+      mockRepositoryBackend.$transaction(async (tx) => {
+        await tx.eventRespawnWindowSummary.create({ data: options.data });
+        const deletedLogs = await tx.eventPresenceLog.deleteMany({
+          where: {
+            mapId: { in: options.mapIds },
+            OR: [
+              {
+                startedAt: {
+                  gte: options.windowOpenedAt,
+                  lte: options.windowClosedAt,
+                },
+              },
+              {
+                startedAt: { lt: options.windowOpenedAt },
+                endedAt: { lte: options.windowClosedAt },
+              },
+            ],
+          },
+        });
+        const deletedGaps = await tx.eventMapCoverageGap.deleteMany({
+          where: {
+            heroNpcId: options.heroNpcId,
+            endedAt: { not: null, lte: options.windowClosedAt },
+          },
+        });
+        return {
+          deletedLogs: deletedLogs.count,
+          deletedGaps: deletedGaps.count,
+        };
+      }),
+    ),
+    heroExists: mockFn().mockImplementation(
+      async (guildId, eventId, heroNpcId) =>
+        Boolean(
+          await mockRepositoryBackend.eventHeroNpc.findFirst({
+            where: { id: heroNpcId, eventId, event: { guildId } },
+          }),
+        ),
+    ),
+    findSummaries: mockFn().mockImplementation((heroNpcId, limit, cursor) =>
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany({
+        where: {
+          heroNpcId,
+          ...(cursor && { id: { lt: cursor } }),
+        },
+        orderBy: { windowClosedAt: "desc" },
+        take: limit + 1,
+      }),
+    ),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -37,10 +132,7 @@ describe("EventSummaryService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventSummaryService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
+        { provide: EventSummaryRepository, useValue: repository },
       ],
     }).compile();
 
@@ -89,7 +181,7 @@ describe("EventSummaryService", () => {
     });
 
     it("should skip summary creation when no maps exist for hero", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
 
       await service.createWindowSummary(
         heroNpcId,
@@ -101,20 +193,20 @@ describe("EventSummaryService", () => {
         wasManualClose,
       );
 
-      expect(mockPrismaService.eventMap.findMany).toHaveBeenCalledWith({
+      expect(mockRepositoryBackend.eventMap.findMany).toHaveBeenCalledWith({
         where: { heroNpcId },
         select: { id: true, mapName: true, mapId: true },
       });
       expect(
-        mockPrismaService.eventPresenceLog.findMany,
+        mockRepositoryBackend.eventPresenceLog.findMany,
       ).not.toHaveBeenCalled();
       expect(mockTransaction).not.toHaveBeenCalled();
     });
 
     it("should fetch presence logs and coverage gaps for the window period", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       await service.createWindowSummary(
         heroNpcId,
@@ -126,7 +218,9 @@ describe("EventSummaryService", () => {
         wasManualClose,
       );
 
-      expect(mockPrismaService.eventPresenceLog.findMany).toHaveBeenCalledWith({
+      expect(
+        mockRepositoryBackend.eventPresenceLog.findMany,
+      ).toHaveBeenCalledWith({
         where: {
           mapId: { in: ["map-1", "map-2"] },
           OR: [
@@ -145,7 +239,7 @@ describe("EventSummaryService", () => {
       });
 
       expect(
-        mockPrismaService.eventMapCoverageGap.findMany,
+        mockRepositoryBackend.eventMapCoverageGap.findMany,
       ).toHaveBeenCalledWith({
         where: {
           heroNpcId,
@@ -163,7 +257,7 @@ describe("EventSummaryService", () => {
     });
 
     it("should calculate member statistics from presence logs", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
 
       const presenceLogs = [
         {
@@ -186,10 +280,10 @@ describe("EventSummaryService", () => {
         },
       ];
 
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue(
         presenceLogs,
       );
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
       mockTransaction.mockImplementation((callback) => {
@@ -242,8 +336,8 @@ describe("EventSummaryService", () => {
     });
 
     it("should calculate coverage gap statistics", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue([]);
 
       const gaps = [
         {
@@ -264,7 +358,9 @@ describe("EventSummaryService", () => {
         },
       ];
 
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(gaps);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue(
+        gaps,
+      );
 
       let capturedData: unknown;
       mockTransaction.mockImplementation((callback) => {
@@ -312,7 +408,7 @@ describe("EventSummaryService", () => {
     });
 
     it("should clamp presence logs to window boundaries", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
 
       // Presence log that extends beyond window boundaries
       const presenceLogs = [
@@ -327,10 +423,10 @@ describe("EventSummaryService", () => {
         },
       ];
 
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue(
         presenceLogs,
       );
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
       mockTransaction.mockImplementation((callback) => {
@@ -370,9 +466,9 @@ describe("EventSummaryService", () => {
     });
 
     it("should handle null killId for auto-close without kill", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
       mockTransaction.mockImplementation((callback) => {
@@ -413,9 +509,9 @@ describe("EventSummaryService", () => {
     });
 
     it("should delete raw data after creating summary", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       const deleteLogsMock = mockFn().mockResolvedValue({ count: 5 });
       const deleteGapsMock = mockFn().mockResolvedValue({ count: 3 });
@@ -461,7 +557,7 @@ describe("EventSummaryService", () => {
     });
 
     it("should calculate map statistics with coverage and gaps per map", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
 
       const presenceLogs = [
         {
@@ -486,10 +582,12 @@ describe("EventSummaryService", () => {
         },
       ];
 
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue(
         presenceLogs,
       );
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(gaps);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue(
+        gaps,
+      );
 
       let capturedData: unknown;
       mockTransaction.mockImplementation((callback) => {
@@ -540,7 +638,7 @@ describe("EventSummaryService", () => {
     });
 
     it("should not count AFK time as coverage", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
 
       const presenceLogs = [
         {
@@ -554,10 +652,10 @@ describe("EventSummaryService", () => {
         },
       ];
 
-      mockPrismaService.eventPresenceLog.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventPresenceLog.findMany.mockResolvedValue(
         presenceLogs,
       );
-      mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
       mockTransaction.mockImplementation((callback) => {
@@ -606,7 +704,7 @@ describe("EventSummaryService", () => {
     const heroNpcId = "hero-npc-1";
 
     it("should return empty result when hero does not exist", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       const result = await service.getHeroWindowSummaries(
         guildId,
@@ -616,7 +714,7 @@ describe("EventSummaryService", () => {
 
       expect(result).toEqual({ data: [], nextCursor: null });
       expect(
-        mockPrismaService.eventRespawnWindowSummary.findMany,
+        mockRepositoryBackend.eventRespawnWindowSummary.findMany,
       ).not.toHaveBeenCalled();
     });
 
@@ -627,8 +725,8 @@ describe("EventSummaryService", () => {
         { id: "summary-2", heroNpcId, windowClosedAt: new Date() },
       ];
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
         mockSummaries,
       );
 
@@ -638,16 +736,18 @@ describe("EventSummaryService", () => {
         heroNpcId,
       );
 
-      expect(mockPrismaService.eventHeroNpc.findFirst).toHaveBeenCalledWith({
-        where: {
-          id: heroNpcId,
-          eventId,
-          event: { guildId },
+      expect(mockRepositoryBackend.eventHeroNpc.findFirst).toHaveBeenCalledWith(
+        {
+          where: {
+            id: heroNpcId,
+            eventId,
+            event: { guildId },
+          },
         },
-      });
+      );
 
       expect(
-        mockPrismaService.eventRespawnWindowSummary.findMany,
+        mockRepositoryBackend.eventRespawnWindowSummary.findMany,
       ).toHaveBeenCalledWith({
         where: { heroNpcId },
         orderBy: { windowClosedAt: "desc" },
@@ -662,8 +762,8 @@ describe("EventSummaryService", () => {
       const mockHero = { id: heroNpcId, eventId };
       const cursor = "previous-summary-id";
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
         [],
       );
 
@@ -676,7 +776,7 @@ describe("EventSummaryService", () => {
       );
 
       expect(
-        mockPrismaService.eventRespawnWindowSummary.findMany,
+        mockRepositoryBackend.eventRespawnWindowSummary.findMany,
       ).toHaveBeenCalledWith({
         where: {
           heroNpcId,
@@ -695,8 +795,8 @@ describe("EventSummaryService", () => {
         windowClosedAt: new Date(),
       }));
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
         mockSummaries,
       );
 
@@ -715,8 +815,8 @@ describe("EventSummaryService", () => {
       const mockHero = { id: heroNpcId, eventId };
       const customLimit = 5;
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
         [],
       );
 
@@ -728,7 +828,7 @@ describe("EventSummaryService", () => {
       );
 
       expect(
-        mockPrismaService.eventRespawnWindowSummary.findMany,
+        mockRepositoryBackend.eventRespawnWindowSummary.findMany,
       ).toHaveBeenCalledWith({
         where: { heroNpcId },
         orderBy: { windowClosedAt: "desc" },

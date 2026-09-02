@@ -3,9 +3,10 @@ import {
   getSoundSettingsControllerGetSettingsQueryKey,
   useSoundSettingsControllerGetSettings,
   soundSettingsControllerUpdateSettings,
-} from "@lootlog/api-client/react-query/main/sound-settings";
-import type { SoundSettingsResponseDto } from "@lootlog/api-client/models/main/sound-settings-response-dto";
-import type { UpdateSoundSettingsDto } from "@lootlog/api-client/models/main/update-sound-settings-dto";
+  type SoundSettingsResponseDto,
+  type UpdateSoundSettingsDto,
+} from "@lootlog/client/main";
+
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 
 const SOUND_SETTINGS_QUERY_KEY =

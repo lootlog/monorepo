@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
-import type { ChatAppearanceSettings, NpcTypeColors } from "@lootlog/types";
+import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC } from "react";
 import { ChatAppearancePresetMiniPreview } from "./chat-appearance-preset-mini-preview";
 

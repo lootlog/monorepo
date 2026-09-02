@@ -1,6 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { MemberType } from "#src/generated/prisma/client";
+import * as z from "zod";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
@@ -11,7 +10,7 @@ const MemberResponseSchema = z.object({
   id: z.number(),
   userId: z.string(),
   guildId: z.string(),
-  type: z.nativeEnum(MemberType),
+  type: z.enum(["OWNER", "ADMIN", "USER", "BOT"]),
   name: z.string(),
   avatar: z.string().nullable().optional(),
   banner: z.string().nullable().optional(),

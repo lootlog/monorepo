@@ -1,18 +1,25 @@
-import { env } from "#src/config/env";
-import { createApp } from "#src/app.factory";
+import "dotenv/config";
+import { BunRuntime } from "@effect/platform-bun";
+import { Layer } from "effect";
+import { FetchHttpClient } from "effect/unstable/http";
 import {
-  createOpenApiDocument,
-  setupOpenApi,
-} from "#src/openapi/openapi-document";
+  OtlpLogger,
+  OtlpSerialization,
+  OtlpTracer,
+} from "effect/unstable/observability";
+import { SearchApplication } from "./search-application.js";
 
-async function bootstrap() {
-  const app = await createApp();
-  const document = createOpenApiDocument(app);
+const ObservabilityLive = Layer.merge(
+  OtlpTracer.layerFromConfig({ resource: { serviceName: "search" } }),
+  OtlpLogger.layerFromConfig({
+    resource: { serviceName: "search" },
+    mergeWithExisting: true,
+  }),
+).pipe(
+  Layer.provide(OtlpSerialization.layerJson),
+  Layer.provide(FetchHttpClient.layer),
+);
 
-  setupOpenApi(app, document);
-
-  await app.startAllMicroservices();
-  await app.listen(env.PORT, "0.0.0.0");
-}
-
-void bootstrap();
+BunRuntime.runMain(
+  Layer.launch(SearchApplication.pipe(Layer.provide(ObservabilityLive))),
+);

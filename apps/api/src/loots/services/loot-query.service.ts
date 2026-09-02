@@ -1,77 +1,28 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
-import {
-  ItemRarity,
-  NpcType,
-  Permission,
-  Profession,
-  type Guild,
-  type Prisma,
-  type Role,
-} from "#src/generated/prisma/client";
+import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
+import type { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
 import type { LootItemDto } from "#src/loots/dto/loot-item.dto";
 import type { LootNpcDto } from "#src/loots/dto/loot-npc.dto";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import { LootShareResponseSchema } from "#src/shared/dto/loot-response.dto";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination.js";
-import { buildLootNpcVisibilityWhere } from "#src/loots/loot-visibility.prisma";
-import {
-  getProfByShortname,
-  getShortnameByProf,
-} from "#src/shared/utils/get-prof-by-shortname";
+import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
+import { LootQueryRepository } from "./loot-query.repository.js";
 
-const lootItemSelect = {
-  hid: true,
-  itemSnapshot: {
-    select: {
-      itemId: true,
-      name: true,
-      icon: true,
-      lvl: true,
-      rarity: true,
-      itemType: true,
-      statRaw: true,
-    },
-  },
-} satisfies Prisma.LootItemSelect;
-
-type LootItemWithSnapshot = Prisma.LootItemGetPayload<{
-  select: typeof lootItemSelect;
-}>;
-
-type LootPlayerWithSnapshot = Prisma.LootPlayerGetPayload<{
-  include: { playerSnapshot: true };
-}>;
-
-type LootNpcWithSnapshot = Prisma.LootNpcGetPayload<{
-  include: { npcSnapshot: true };
-}>;
-
-type LootWhereOptions = {
-  npcTypes?: string[];
-  npcs?: string[];
-  players?: string[];
-  rarities?: string[];
-  professions?: string[];
-  npcLevelMin?: number;
-  npcLevelMax?: number;
-  itemLevelMin?: number;
-  itemLevelMax?: number;
-  playerLevelMin?: number;
-  playerLevelMax?: number;
-  search?: string;
-  world?: string;
-  hid?: string;
-  itemSnapshotIds?: number[];
-  cursor?: number | null;
-  createdAtMin?: string;
-  createdAtMax?: string;
-};
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
+type LootQueryRecord = Awaited<
+  ReturnType<LootQueryRepository["findMany"]>
+>[number];
+type LootItemWithSnapshot = LootQueryRecord["lootItems"][number];
+type LootPlayerWithSnapshot = LootQueryRecord["lootPlayers"][number];
+type LootNpcWithSnapshot = LootQueryRecord["lootNpcs"][number];
 
 @Injectable()
 export class LootQueryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: LootQueryRepository) {}
 
   async fetchLootsByGuildId(
     guild: Guild,
@@ -105,7 +56,7 @@ export class LootQueryService {
       return [];
     }
 
-    const lootWhere = this.buildLootWhereCondition(permissions, roles, {
+    const filters = {
       npcTypes,
       npcs,
       players,
@@ -124,62 +75,19 @@ export class LootQueryService {
       cursor,
       createdAtMin,
       createdAtMax,
-    });
+    };
 
-    const organizationRecords =
-      await this.prisma.organizationLootRecord.findMany({
-        where: {
-          guildId: guild.id,
-          archivedAt: null,
-          loot: lootWhere,
-        },
-        orderBy: { lootId: "desc" },
-        take: limit,
-        select: {
-          submissions: {
-            include: {
-              member: {
-                select: {
-                  name: true,
-                  avatar: true,
-                  userId: true,
-                },
-              },
-            },
-          },
-          _count: { select: { comments: true } },
-          loot: {
-            select: {
-              id: true,
-              uniqueId: true,
-              world: true,
-              source: true,
-              location: true,
-              lootShare: true,
-              createdAt: true,
-              updatedAt: true,
-              lootItems: {
-                select: lootItemSelect,
-                orderBy: { id: "asc" },
-              },
-              lootPlayers: {
-                include: { playerSnapshot: true },
-                orderBy: { id: "asc" },
-              },
-              lootNpcs: {
-                include: { npcSnapshot: true },
-                orderBy: { id: "asc" },
-              },
-            },
-          },
-        },
-      });
+    const organizationRecords = await this.repository.findMany({
+      guildId: guild.id,
+      permissions,
+      roles,
+      filters,
+      limit,
+    });
 
     if (organizationRecords.length === 0) return [];
 
-    return organizationRecords.map((organizationRecord): LootQueryResult => {
-      const { loot } = organizationRecord;
-
+    return organizationRecords.map((loot): LootQueryResult => {
       return {
         id: loot.id,
         uniqueId: loot.uniqueId,
@@ -196,13 +104,13 @@ export class LootQueryService {
           (entry) => this.mapPlayerFromSnapshot(entry),
         ),
         npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
-        submissions: organizationRecord.submissions.map((submission) => ({
+        submissions: loot.submissions.map((submission) => ({
           guildId: guild.id,
           lootId: loot.id,
           memberId: submission.memberId,
           member: submission.member,
         })),
-        commentsCount: organizationRecord._count.comments,
+        commentsCount: loot.commentsCount,
       };
     });
   }
@@ -237,7 +145,7 @@ export class LootQueryService {
       return 0;
     }
 
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
+    const filters = {
       npcTypes,
       npcs,
       players,
@@ -256,10 +164,13 @@ export class LootQueryService {
       cursor: null,
       createdAtMin,
       createdAtMax,
-    });
+    };
 
-    return this.prisma.loot.count({
-      where: baseWhere,
+    return this.repository.count({
+      guildId: guild.id,
+      permissions,
+      roles,
+      filters,
     });
   }
 
@@ -269,61 +180,14 @@ export class LootQueryService {
     roles: Role[],
     lootId: number,
   ): Promise<LootQueryResult | null> {
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
-      cursor: null,
-    });
-
-    const loot = await this.prisma.loot.findFirst({
-      where: {
-        ...baseWhere,
-        id: lootId,
-      },
-      select: {
-        id: true,
-        uniqueId: true,
-        world: true,
-        source: true,
-        location: true,
-        lootShare: true,
-        createdAt: true,
-        updatedAt: true,
-        organizationLootRecords: {
-          where: { guildId: guild.id, archivedAt: null },
-          take: 1,
-          select: {
-            submissions: {
-              include: {
-                member: {
-                  select: {
-                    name: true,
-                    avatar: true,
-                    userId: true,
-                  },
-                },
-              },
-            },
-            _count: { select: { comments: true } },
-          },
-        },
-        lootItems: {
-          select: lootItemSelect,
-          orderBy: { id: "asc" },
-        },
-        lootPlayers: {
-          include: { playerSnapshot: true },
-          orderBy: { id: "asc" },
-        },
-        lootNpcs: {
-          include: { npcSnapshot: true },
-          orderBy: { id: "asc" },
-        },
-      },
+    const loot = await this.repository.findOne({
+      guildId: guild.id,
+      permissions,
+      roles,
+      filters: { lootId },
     });
 
     if (!loot) return null;
-
-    const organizationRecord = loot.organizationLootRecords[0];
-    if (!organizationRecord) return null;
 
     return {
       id: loot.id,
@@ -335,17 +199,17 @@ export class LootQueryService {
       createdAt: loot.createdAt,
       updatedAt: loot.updatedAt,
       items: this.mapItems(loot.lootItems),
-      players: loot.lootPlayers.map((entry) =>
-        this.mapPlayerFromSnapshot(entry),
+      players: (loot.lootPlayers as unknown as LootPlayerWithSnapshot[]).map(
+        (entry) => this.mapPlayerFromSnapshot(entry),
       ),
-      npcs: this.mapNpcs(loot.lootNpcs),
-      submissions: organizationRecord.submissions.map((submission) => ({
+      npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
+      submissions: loot.submissions.map((submission) => ({
         guildId: guild.id,
         lootId: loot.id,
         memberId: submission.memberId,
         member: submission.member,
       })),
-      commentsCount: organizationRecord._count.comments,
+      commentsCount: loot.commentsCount,
     };
   }
 
@@ -361,26 +225,13 @@ export class LootQueryService {
       return null;
     }
 
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
-      cursor: null,
+    const item = await this.repository.resolveItemByHid({
+      guildId: guild.id,
+      permissions,
+      roles,
       hid,
       world: options.world,
     });
-
-    const loot = await this.prisma.loot.findFirst({
-      where: baseWhere,
-      orderBy: { id: "desc" },
-      select: {
-        lootItems: {
-          where: { hid },
-          select: lootItemSelect,
-          orderBy: { id: "asc" },
-          take: 1,
-        },
-      },
-    });
-
-    const item = loot?.lootItems[0];
 
     return item ? this.mapItemFromSnapshot(item) : null;
   }
@@ -396,482 +247,13 @@ export class LootQueryService {
       return undefined;
     }
 
-    const snapshots = await this.prisma.itemSnapshot.findMany({
-      where: {
-        name: {
-          in: names,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
+    const snapshots = await this.repository.findItemSnapshotIds(names);
 
     return snapshots.map((snapshot) => snapshot.id);
   }
 
-  private buildBaseWhereCondition(
-    guild: Guild,
-    permissions: Permission[],
-    roles: Role[],
-    options: LootWhereOptions,
-  ): Prisma.LootWhereInput {
-    return {
-      ...this.buildLootWhereCondition(permissions, roles, options),
-      organizationLootRecords: {
-        some: {
-          guildId: guild.id,
-          archivedAt: null,
-        },
-      },
-    };
-  }
-
-  private buildLootWhereCondition(
-    permissions: Permission[],
-    roles: Role[],
-    {
-      npcTypes = [],
-      npcs = [],
-      players = [],
-      rarities = [],
-      professions = [],
-      npcLevelMin,
-      npcLevelMax,
-      itemLevelMin,
-      itemLevelMax,
-      playerLevelMin,
-      playerLevelMax,
-      search,
-      world,
-      hid,
-      itemSnapshotIds,
-      cursor,
-      createdAtMin,
-      createdAtMax,
-    }: LootWhereOptions,
-  ): Prisma.LootWhereInput {
-    const visibilityCondition = buildLootNpcVisibilityWhere(permissions, roles);
-    const playersCondition = this.buildPlayersCondition(players);
-    const npcsCondition = this.buildNpcsCondition(npcs);
-    const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
-    const raritiesCondition = this.buildRaritiesCondition(rarities);
-    const itemProfessionsCondition =
-      this.buildItemProfessionsCondition(professions);
-    const npcLevelsCondition = this.buildNpcLevelsCondition(
-      npcLevelMin,
-      npcLevelMax,
-    );
-    const itemLevelsCondition = this.buildItemLevelsCondition(
-      itemLevelMin,
-      itemLevelMax,
-    );
-    const playerLevelsCondition = this.buildPlayerLevelsCondition(
-      playerLevelMin,
-      playerLevelMax,
-    );
-    const searchCondition = this.buildSearchCondition(search);
-    const cursorCondition = this.buildCursorCondition(cursor ?? null);
-    const hidCondition = this.buildHidCondition(hid);
-    const itemSnapshotIdsCondition =
-      this.buildItemSnapshotIdsCondition(itemSnapshotIds);
-    const createdAtCondition = this.buildCreatedAtCondition(
-      createdAtMin,
-      createdAtMax,
-    );
-
-    const lootWhere: Prisma.LootWhereInput = {};
-
-    if (world) {
-      lootWhere.world = world;
-    }
-
-    const andConditions = [
-      cursorCondition,
-      playersCondition,
-      npcsCondition,
-      npcTypesCondition,
-      raritiesCondition,
-      itemProfessionsCondition,
-      npcLevelsCondition,
-      itemLevelsCondition,
-      playerLevelsCondition,
-      visibilityCondition,
-      searchCondition,
-      hidCondition,
-      itemSnapshotIdsCondition,
-      createdAtCondition,
-    ].filter(Boolean) as Prisma.LootWhereInput[];
-
-    if (andConditions.length > 0) {
-      lootWhere.AND = andConditions;
-    }
-
-    return lootWhere;
-  }
-
-  private parseLootShare(lootShare: Prisma.JsonValue) {
+  private parseLootShare(lootShare: unknown) {
     return LootShareResponseSchema.parse(lootShare);
-  }
-
-  private buildPlayersCondition(
-    players: string[],
-  ): Prisma.LootWhereInput | null {
-    if (!players || players.length === 0) {
-      return null;
-    }
-
-    return {
-      lootPlayers: {
-        some: {
-          playerSnapshot: {
-            name: {
-              in: players,
-            },
-          },
-        },
-      },
-    };
-  }
-
-  private buildNpcsCondition(npcs: string[]): Prisma.LootWhereInput | null {
-    if (!npcs || npcs.length === 0) {
-      return null;
-    }
-
-    return {
-      lootNpcs: {
-        some: {
-          npcSnapshot: {
-            name: {
-              in: npcs,
-            },
-          },
-        },
-      },
-    };
-  }
-
-  private buildHidCondition(hid?: string): Prisma.LootWhereInput | null {
-    if (!hid) {
-      return null;
-    }
-
-    return {
-      lootItems: {
-        some: {
-          hid,
-        },
-      },
-    };
-  }
-
-  private buildItemSnapshotIdsCondition(
-    itemSnapshotIds?: number[],
-  ): Prisma.LootWhereInput | null {
-    if (!itemSnapshotIds) {
-      return null;
-    }
-
-    return {
-      lootItems: {
-        some: {
-          itemSnapshotId: {
-            in: itemSnapshotIds,
-          },
-        },
-      },
-    };
-  }
-
-  private buildNpcTypesCondition(
-    npcTypes: string[],
-  ): Prisma.LootWhereInput | null {
-    const allowedTypes = this.filterEnumValues(npcTypes, NpcType);
-    if (allowedTypes.length === 0) {
-      return null;
-    }
-
-    return {
-      lootNpcs: {
-        some: {
-          npcSnapshot: {
-            type: {
-              in: allowedTypes,
-            },
-          },
-        },
-      },
-    };
-  }
-
-  private buildRaritiesCondition(
-    rarities: string[],
-  ): Prisma.LootWhereInput | null {
-    const allowedRarities = this.filterEnumValues(rarities, ItemRarity);
-    if (allowedRarities.length === 0) {
-      return null;
-    }
-
-    return {
-      lootItems: {
-        some: {
-          itemSnapshot: {
-            rarity: {
-              in: allowedRarities,
-            },
-          },
-        },
-      },
-    };
-  }
-
-  private buildItemProfessionsCondition(
-    professions: string[],
-  ): Prisma.LootWhereInput | null {
-    const allowedProfessions = this.filterEnumValues(professions, Profession);
-    if (allowedProfessions.length === 0) {
-      return null;
-    }
-
-    return {
-      lootItems: {
-        some: {
-          itemSnapshot: {
-            OR: [
-              {
-                statRaw: {
-                  not: {
-                    contains: "reqp=",
-                  },
-                },
-              },
-              ...allowedProfessions.map((profession) => ({
-                statsSnapshot: {
-                  path: ["reqp"],
-                  string_contains: getShortnameByProf(profession),
-                },
-              })),
-            ],
-          },
-        },
-      },
-    };
-  }
-
-  private buildNpcLevelsCondition(
-    npcLevelMin?: number | null,
-    npcLevelMax?: number | null,
-  ): Prisma.LootWhereInput | null {
-    const levelRange = this.buildNullableIntRangeFilter(
-      npcLevelMin,
-      npcLevelMax,
-    );
-
-    if (!levelRange) {
-      return null;
-    }
-
-    return {
-      lootNpcs: {
-        some: {
-          npcSnapshot: {
-            lvl: levelRange,
-          },
-        },
-      },
-    };
-  }
-
-  private buildItemLevelsCondition(
-    itemLevelMin?: number | null,
-    itemLevelMax?: number | null,
-  ): Prisma.LootWhereInput | null {
-    const levelRange = this.buildNullableIntRangeFilter(
-      itemLevelMin,
-      itemLevelMax,
-    );
-
-    if (!levelRange) {
-      return null;
-    }
-
-    return {
-      lootItems: {
-        some: {
-          itemSnapshot: {
-            lvl: levelRange,
-          },
-        },
-      },
-    };
-  }
-
-  private buildPlayerLevelsCondition(
-    playerLevelMin?: number | null,
-    playerLevelMax?: number | null,
-  ): Prisma.LootWhereInput | null {
-    const levelRange = this.buildNullableIntRangeFilter(
-      playerLevelMin,
-      playerLevelMax,
-    );
-
-    if (!levelRange) {
-      return null;
-    }
-
-    return {
-      lootPlayers: {
-        some: {
-          lvl: levelRange,
-        },
-      },
-    };
-  }
-
-  private buildCursorCondition(
-    cursor: number | null,
-  ): Prisma.LootWhereInput | null {
-    if (!cursor) {
-      return null;
-    }
-
-    return {
-      id: {
-        lt: Number(cursor),
-      },
-    };
-  }
-
-  private buildCreatedAtCondition(
-    createdAtMin?: string,
-    createdAtMax?: string,
-  ): Prisma.LootWhereInput | null {
-    const createdAtRange = this.buildDateTimeRangeFilter(
-      createdAtMin,
-      createdAtMax,
-    );
-
-    if (!createdAtRange) {
-      return null;
-    }
-
-    return {
-      createdAt: createdAtRange,
-    };
-  }
-
-  private buildSearchCondition(
-    search?: string | null,
-  ): Prisma.LootWhereInput | null {
-    if (!search) {
-      return null;
-    }
-
-    const trimmedSearch = search.trim();
-
-    if (!trimmedSearch) {
-      return null;
-    }
-
-    return {
-      OR: [
-        {
-          location: {
-            contains: trimmedSearch,
-            mode: "insensitive",
-          },
-        },
-        {
-          lootItems: {
-            some: {
-              itemSnapshot: {
-                name: {
-                  contains: trimmedSearch,
-                  mode: "insensitive",
-                },
-              },
-            },
-          },
-        },
-        {
-          lootNpcs: {
-            some: {
-              npcSnapshot: {
-                name: {
-                  contains: trimmedSearch,
-                  mode: "insensitive",
-                },
-              },
-            },
-          },
-        },
-        {
-          lootPlayers: {
-            some: {
-              playerSnapshot: {
-                name: {
-                  contains: trimmedSearch,
-                  mode: "insensitive",
-                },
-              },
-            },
-          },
-        },
-      ],
-    };
-  }
-
-  private filterEnumValues<T extends string>(
-    values: string[],
-    enumObject: Record<string, T>,
-  ): T[] {
-    const enumValues = Object.values(enumObject) as T[];
-    return values.filter((value): value is T =>
-      enumValues.includes(value as T),
-    );
-  }
-
-  private buildNullableIntRangeFilter(
-    min?: number | null,
-    max?: number | null,
-  ): Prisma.IntNullableFilter | null {
-    if (min === undefined && max === undefined) {
-      return null;
-    }
-
-    const rangeFilter: Prisma.IntNullableFilter = {};
-
-    if (min !== undefined && min !== null) {
-      rangeFilter.gte = min;
-    }
-
-    if (max !== undefined && max !== null) {
-      rangeFilter.lte = max;
-    }
-
-    return rangeFilter;
-  }
-
-  private buildDateTimeRangeFilter(
-    min?: string,
-    max?: string,
-  ): Prisma.DateTimeFilter | null {
-    if (min === undefined && max === undefined) {
-      return null;
-    }
-
-    const rangeFilter: Prisma.DateTimeFilter = {};
-
-    if (min !== undefined) {
-      rangeFilter.gte = new Date(min);
-    }
-
-    if (max !== undefined) {
-      rangeFilter.lte = new Date(max);
-    }
-
-    return rangeFilter;
   }
 
   private mapItems(entries: LootItemWithSnapshot[]): LootItemDto[] {

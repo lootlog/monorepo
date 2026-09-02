@@ -2,7 +2,7 @@ import type { Battle } from "@/lib/api/battlelog-types";
 import {
   battlesControllerGetPlayerVsPlayerBattles,
   getBattlesControllerGetBattleQueryOptions,
-} from "@lootlog/api-client/react-query/battlelog/battles";
+} from "@lootlog/client/battlelog";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { getRecentOpponentBattleContext } from "../components/recent-opponent-battle-context";
 

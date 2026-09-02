@@ -2,7 +2,7 @@ import {
   getListReservationSpotsQueryKey,
   getListReservationSpotsQueryOptions,
   getListSpotReservationsQueryOptions,
-} from "@lootlog/api-client/react-query/main/reservations";
+} from "@lootlog/client/main";
 
 export const reservationSpotsQueryOptions = (guildId: string) =>
   getListReservationSpotsQueryOptions(

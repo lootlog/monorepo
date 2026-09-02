@@ -1,4 +1,14 @@
 import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
+import {
+  AirTagObservationBatchSchema,
+  AirTagScopeSnapshotSchema,
+  AirTagUpdateEventSchema,
+} from "@lootlog/schema/air-tag";
+import {
+  MapPingAckSchema,
+  MapPingEventSchema,
+  MapPingSendPayloadSchema,
+} from "@lootlog/schema/map-ping";
 import { Schema } from "effect";
 import {
   GuildLootCreatedEventV2,
@@ -166,27 +176,53 @@ export const UnsubscribeCommand = command(
 );
 export const MapPingCommand = command(
   "map-ping.send",
-  Schema.Struct({
-    expectedMapId: NonNegativeInt,
-    type: Schema.Literals(["attention", "enemy", "regroup", "avoid"]),
-    x: NonNegativeInt,
-    y: NonNegativeInt,
-  }),
+  MapPingSendPayloadSchema,
 );
 export const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
+    requestId: RequestId,
     enabled: Schema.Boolean,
     expectedMapId: Schema.optional(NonNegativeInt),
   }),
 );
 export const AirTagObservationCommand = command(
   "air-tag.observation",
-  Schema.Struct({
-    expectedMapId: NonNegativeInt,
-    observations: Schema.Array(Schema.Unknown),
-  }),
+  AirTagObservationBatchSchema,
 );
+
+export const AirTagRejectCode = Schema.Literals([
+  "forbidden",
+  "invalid-context",
+  "invalid-payload",
+  "rate-limited",
+  "temporarily-unavailable",
+]);
+export const AirTagSubscriptionAck = Schema.Union([
+  Schema.Struct({
+    status: Schema.Literal("accepted"),
+    requestId: RequestId,
+    scopes: Schema.Array(AirTagScopeSnapshotSchema),
+  }),
+  Schema.Struct({
+    status: Schema.Literal("rejected"),
+    requestId: RequestId,
+    code: AirTagRejectCode,
+  }),
+]);
+export const AirTagObservationAck = Schema.Union([
+  Schema.Struct({
+    status: Schema.Literal("accepted"),
+    acceptedScopes: NonNegativeInt,
+    acceptedTargets: NonNegativeInt,
+  }),
+  Schema.Struct({
+    status: Schema.Literal("rejected"),
+    code: AirTagRejectCode,
+    retryAfterMs: Schema.optional(NonNegativeInt),
+  }),
+]);
+export { MapPingAckSchema };
 
 export const ClientCommand = Schema.Union([
   SessionJoinCommand,
@@ -249,6 +285,7 @@ export const ServerEvent = Schema.Union([
   serverEvent(
     "session.joined",
     Schema.Struct({
+      connectionId: NonEmptyString,
       organizationIds: Schema.Array(NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
     }),
@@ -278,8 +315,8 @@ export const ServerEvent = Schema.Union([
   serverEvent("party-gathering.updated", OrganizationEvent),
   serverEvent("party-gathering.cancelled", OrganizationEvent),
   serverEvent("party-ready-room.updated", OrganizationEvent),
-  serverEvent("map-ping.received", OrganizationEvent),
-  serverEvent("air-tag.updated", OrganizationEvent),
+  serverEvent("map-ping.received", MapPingEventSchema),
+  serverEvent("air-tag.updated", AirTagUpdateEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),
   serverEvent("event.ranking-updated", OrganizationEvent),

@@ -1,0 +1,46 @@
+import { RabbitMessaging } from "@lootlog/messaging";
+import { Effect, Layer } from "effect";
+import {
+  ActivityConsumers,
+  activityQueues,
+} from "#src/activities/activity-consumer";
+import { ActivityRepository } from "#src/activities/activity-repository";
+import { ActivityConfig } from "#src/config/activity-config";
+import { verifyAndAdoptDatabase } from "#src/database/adoption";
+import { ActivityDatabase, PgClientLive } from "#src/database/database";
+import { ActivityHealth, ActivityHttpServer } from "#src/http/activity-http";
+import { Permissions } from "#src/permissions/permissions";
+
+const RabbitLive = Layer.unwrap(
+  Effect.gen(function* () {
+    const config = yield* ActivityConfig;
+    return RabbitMessaging.layer({
+      uri: config.rabbitmqUri,
+      connectionName: config.serviceName,
+      queues: activityQueues,
+    });
+  }),
+).pipe(Layer.provide(ActivityConfig.layer));
+const RepositoryLive = ActivityRepository.layer.pipe(
+  Layer.provide(ActivityDatabase.layer),
+  Layer.provide(PgClientLive),
+);
+const HealthLive = ActivityHealth.layer.pipe(Layer.provide(PgClientLive));
+const DatabaseAdoption = Layer.effectDiscard(verifyAndAdoptDatabase()).pipe(
+  Layer.provide(PgClientLive),
+);
+const DatabaseServices = Layer.mergeAll(
+  RepositoryLive,
+  HealthLive,
+  DatabaseAdoption,
+);
+
+export const ActivityApplication = Layer.merge(
+  ActivityHttpServer,
+  ActivityConsumers,
+).pipe(
+  Layer.provide(DatabaseServices),
+  Layer.provide(Permissions.layer),
+  Layer.provide(RabbitLive),
+  Layer.provide(ActivityConfig.layer),
+);

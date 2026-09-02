@@ -1,22 +1,15 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import type { AppLogger } from "#src/shared/logger";
 import type { GetPlayersDto } from "./dto/get-players.dto.js";
 import { PLAYERS_INDEX } from "./constants/meilisearch.js";
 import type { IndexPlayersDto } from "./dto/index-players.dto.js";
-import type { playerHitSchema } from "./dto/player-hit.schema.js";
+import type { PlayerHit } from "./dto/player-hit.schema.js";
 
-type PlayerHit = z.infer<typeof playerHitSchema>;
-
-@Injectable()
 export class PlayersService {
   constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly meilisearch: Meilisearch,
+    private readonly logger: AppLogger,
   ) {}
 
   async getPlayers({ limit, search, world }: GetPlayersDto) {

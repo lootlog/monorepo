@@ -1,5 +1,5 @@
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import type { UpdateSoundSettingsDto } from "@lootlog/api-client/models/main/update-sound-settings-dto";
+import type { UpdateSoundSettingsDto } from "@lootlog/client/main";
 import { useRef } from "react";
 import { mergeSoundSettingsPatches } from "./sound-settings-patch";
 

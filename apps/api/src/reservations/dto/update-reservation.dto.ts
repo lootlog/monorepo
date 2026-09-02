@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 import { reservationReminderMinutesSchema } from "./create-reservation.dto.js";
 
 const UpdateReservationSchema = z

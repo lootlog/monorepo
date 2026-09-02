@@ -1,5 +1,5 @@
 import * as winston from "winston";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { context, isSpanContextValid, trace } from "@opentelemetry/api";
 import type { WinstonModuleOptions } from "nest-winston";
 

@@ -9,16 +9,23 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventPointsService } from "./event-points.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
-import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
-import type { Event, EventHeroNpc } from "#src/generated/prisma/client";
+import type {
+  eventHeroNpcTable,
+  eventTable,
+} from "#src/database/drizzle/schema";
 import { TimersService } from "#src/timers/timers.service";
+import { ActiveEventHeroRepository } from "./active-event-hero.repository.js";
+import { EventKillRepository } from "./event-kill.repository.js";
+
+type Event = typeof eventTable.$inferSelect;
+type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
 
 describe("EventKillService", () => {
   let service: EventKillService;
 
-  const mockPrismaService = {
+  const mockRepositoryBackend = {
     event: {
       findFirst: mockFn(),
     },
@@ -171,6 +178,222 @@ describe("EventKillService", () => {
   const mockTimersService = {
     getTimersForEventHeroFilters: mockFn(),
   };
+  const mockActiveEventHeroRepository = {
+    findMatches: mockFn().mockImplementation(
+      async (guildId, world, npcId, npcName, referenceTime) => {
+        const direct = await mockRepositoryBackend.eventHeroNpc.findMany({
+          where: {
+            npcId,
+            event: {
+              guildId,
+              world,
+              AND: [
+                {
+                  OR: [
+                    { startsAt: null },
+                    { startsAt: { lte: referenceTime } },
+                  ],
+                },
+                { OR: [{ endsAt: null }, { endsAt: { gt: referenceTime } }] },
+              ],
+            },
+          },
+          include: { event: true },
+        });
+        const named = await mockRepositoryBackend.eventHeroNpc.findMany({
+          where: {
+            npcName,
+            event: {
+              guildId,
+              world,
+              AND: [
+                {
+                  OR: [
+                    { startsAt: null },
+                    { startsAt: { lte: referenceTime } },
+                  ],
+                },
+                { OR: [{ endsAt: null }, { endsAt: { gt: referenceTime } }] },
+              ],
+            },
+          },
+          include: { event: true },
+        });
+        const unique = new Map();
+        for (const hero of [...direct, ...named]) {
+          unique.set(hero.id, { eventHero: hero, event: hero.event });
+        }
+        return [...unique.values()];
+      },
+    ),
+  };
+  const mockRepository = {
+    findEventWithHeroes: mockFn().mockImplementation((guildId, id) =>
+      mockRepositoryBackend.event.findFirst({
+        where: { id, guildId },
+        select: expect.any(Object),
+      }),
+    ),
+    findEventWithHeroStats: mockFn().mockImplementation((guildId, id) =>
+      mockRepositoryBackend.event.findFirst({
+        where: { id, guildId },
+        include: expect.any(Object),
+      }),
+    ),
+    findNpcStats: mockFn().mockImplementation((guildId, world, npcIds) =>
+      mockRepositoryBackend.npcKillStats.findMany({
+        where: expect.objectContaining({
+          guildId,
+          world,
+          npcId: { in: npcIds },
+        }),
+        select: expect.any(Object),
+        orderBy: expect.any(Object),
+        distinct: ["npcId"],
+      }),
+    ),
+    updateHero: mockFn().mockImplementation((id, data) =>
+      mockRepositoryBackend.eventHeroNpc.update({ where: { id }, data }),
+    ),
+    findMaps: mockFn().mockImplementation((heroNpcId) =>
+      mockRepositoryBackend.eventMap.findMany({
+        where: { heroNpcId },
+        select: expect.any(Object),
+      }),
+    ),
+    findMapsForHeroes: mockFn().mockImplementation((heroNpcIds) =>
+      mockRepositoryBackend.eventMap.findMany({
+        where: { heroNpcId: { in: heroNpcIds } },
+        select: expect.any(Object),
+      }),
+    ),
+    findAssignments: mockFn().mockImplementation((params) =>
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany({
+        where: {
+          assignedAt: { lte: params.killedAt },
+          OR: [
+            { unassignedAt: null },
+            { unassignedAt: { gte: params.overlapStart } },
+          ],
+          ...(params.mapIds && { mapId: { in: params.mapIds } }),
+          ...(params.memberIds && { memberId: { in: params.memberIds } }),
+          ...(params.heroNpcIds && {
+            heroNpcId: { in: params.heroNpcIds },
+          }),
+        },
+        select: expect.any(Object),
+        orderBy: expect.any(Array),
+      }),
+    ),
+    recordKill: mockFn().mockImplementation((params, buildPoints) =>
+      mockRepositoryBackend.$transaction(async (tx) => {
+        const heroKill = await tx.eventHeroKill.create({
+          data: {
+            heroNpcId: params.heroNpcId,
+            killedAt: params.killedAt,
+            minSpawnTimeAtKill: params.minSpawnTimeAtKill,
+            maxSpawnTimeAtKill: params.maxSpawnTimeAtKill,
+            timerCreatedById: params.timerCreatedById,
+            isManualClose: params.isManualClose,
+          },
+        });
+        const assignments = await tx.eventMapAssignmentHistory.findMany({
+          where: {
+            mapId: { in: params.mapIds },
+            assignedAt: { lte: params.killedAt },
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: params.assignmentOverlapStart } },
+            ],
+          },
+          select: expect.any(Object),
+          orderBy: { assignedAt: "asc" },
+        });
+        const points = await buildPoints(assignments, heroKill.id);
+        if (points.length > 0)
+          await tx.eventKillPoint.createMany({ data: points });
+        await Promise.all(
+          params.mapIds.map((id) =>
+            tx.eventMap.update({
+              where: { id },
+              data: { assignedMembers: { set: [] } },
+            }),
+          ),
+        );
+        await tx.eventMapAssignmentHistory.updateMany({
+          where: expect.any(Object),
+          data: { unassignedAt: params.killedAt },
+        });
+        const createdPoints = await tx.eventKillPoint.findMany({
+          where: { killId: heroKill.id },
+        });
+        return {
+          kill: heroKill,
+          points: createdPoints,
+          clearedMapIds: params.mapIds,
+        };
+      }),
+    ),
+    findHero: mockFn().mockImplementation((_guildId, eventId, id) =>
+      mockRepositoryBackend.eventHeroNpc.findFirst({
+        where: expect.objectContaining({ id, eventId }),
+        select: { id: true },
+      }),
+    ),
+    findEvent: mockFn().mockImplementation((guildId, id) =>
+      mockRepositoryBackend.event.findFirst({
+        where: { id, guildId },
+        select: { id: true },
+      }),
+    ),
+    findMember: mockFn().mockImplementation((guildId, id) =>
+      mockRepositoryBackend.member.findFirst({
+        where: { id, guildId },
+        select: expect.any(Object),
+      }),
+    ),
+    findKills: mockFn().mockImplementation((params) =>
+      mockRepositoryBackend.eventHeroKill.findMany({
+        where: expect.any(Object),
+        orderBy: { killedAt: "desc" },
+        take: params.limit,
+        include: expect.any(Object),
+      }),
+    ),
+    findKillDetail: mockFn().mockImplementation(
+      (_guildId, _eventId, heroNpcId, id) =>
+        mockRepositoryBackend.eventHeroKill.findFirst({
+          where: expect.objectContaining({ id, heroNpcId }),
+          include: expect.any(Object),
+        }),
+    ),
+    findWindowSummaries: mockFn().mockImplementation((ids) =>
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany({
+        where: { killId: { in: ids } },
+        select: expect.any(Object),
+      }),
+    ),
+    findWindowSummary: mockFn().mockImplementation((killId) =>
+      mockRepositoryBackend.eventRespawnWindowSummary.findUnique({
+        where: { killId },
+        select: expect.any(Object),
+      }),
+    ),
+    findTimelineAssignments: mockFn().mockImplementation((params) =>
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany({
+        where: {
+          mapId: { in: params.mapIds },
+          assignedAt: { lte: params.killedAt },
+          OR: [
+            { unassignedAt: null },
+            { unassignedAt: { gte: params.overlapStart } },
+          ],
+        },
+        include: expect.any(Object),
+        orderBy: expect.any(Array),
+      }),
+    ),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -178,15 +401,21 @@ describe("EventKillService", () => {
     mockRedisService.set.mockResolvedValue("OK");
     mockRedisService.del.mockResolvedValue(1);
     mockRedisService.setNX.mockResolvedValue(true);
-    mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
-    mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
+    mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
+      [],
+    );
+    mockRepositoryBackend.eventRespawnWindowSummary.findUnique.mockResolvedValue(
       null,
     );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventKillService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: EventKillRepository, useValue: mockRepository },
+        {
+          provide: ActiveEventHeroRepository,
+          useValue: mockActiveEventHeroRepository,
+        },
         { provide: RedisService, useValue: mockRedisService },
         { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
@@ -239,7 +468,7 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(mockEvent);
       mockTimersService.getTimersForEventHeroFilters.mockResolvedValue(
         mockTimers,
       );
@@ -250,7 +479,7 @@ describe("EventKillService", () => {
     });
 
     it("should return empty array when event has no heroes", async () => {
-      mockPrismaService.event.findFirst.mockResolvedValue({
+      mockRepositoryBackend.event.findFirst.mockResolvedValue({
         id: eventId,
         heroNpcs: [],
       });
@@ -261,7 +490,7 @@ describe("EventKillService", () => {
     });
 
     it("should throw NotFoundException when event not found", async () => {
-      mockPrismaService.event.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getEventHeroTimers(guildId, eventId, world),
@@ -275,7 +504,7 @@ describe("EventKillService", () => {
         heroNpcs: [{ id: "hero-1", npcId: null, npcName: "Named Hero" }],
       };
 
-      mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(mockEvent);
       mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
         {
           npcId: -12345,
@@ -321,8 +550,8 @@ describe("EventKillService", () => {
         ],
       };
 
-      mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
-      mockPrismaService.npcKillStats.findMany.mockResolvedValue([
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(mockEvent);
+      mockRepositoryBackend.npcKillStats.findMany.mockResolvedValue([
         { npcId: 123, npcProf: "w" },
         { npcId: 456, npcProf: "m" },
       ]);
@@ -337,7 +566,7 @@ describe("EventKillService", () => {
     });
 
     it("should throw NotFoundException when event not found", async () => {
-      mockPrismaService.event.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(null);
 
       await expect(service.getEventHeroStats(guildId, eventId)).rejects.toThrow(
         NotFoundException,
@@ -362,7 +591,7 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHeroNpc])
         .mockResolvedValueOnce([]);
 
@@ -385,7 +614,7 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([mockHeroNpc]);
 
@@ -397,7 +626,9 @@ describe("EventKillService", () => {
       );
 
       expect(result).not.toBeNull();
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(mockRepositoryBackend.eventHeroNpc.findMany).toHaveBeenCalledTimes(
+        2,
+      );
     });
 
     it("should find hero by name even when stored npcId is incorrect", async () => {
@@ -408,7 +639,7 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([mockHeroNpc]);
 
@@ -432,7 +663,7 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHeroNpc])
         .mockResolvedValueOnce([mockHeroNpc]);
 
@@ -448,7 +679,7 @@ describe("EventKillService", () => {
     });
 
     it("should return null if hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
@@ -495,7 +726,9 @@ describe("EventKillService", () => {
       );
 
       expect(mockRedisService.setNX).not.toHaveBeenCalled();
-      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
+      expect(
+        mockRepositoryBackend.eventHeroNpc.findMany,
+      ).not.toHaveBeenCalled();
     });
 
     it("should skip duplicate kill when lock is already held", async () => {
@@ -511,7 +744,9 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
+      expect(
+        mockRepositoryBackend.eventHeroNpc.findMany,
+      ).not.toHaveBeenCalled();
       expect(mockRedisService.del).not.toHaveBeenCalled();
     });
 
@@ -530,7 +765,9 @@ describe("EventKillService", () => {
       );
 
       expect(mockRedisService.setNX).not.toHaveBeenCalled();
-      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
+      expect(
+        mockRepositoryBackend.eventHeroNpc.findMany,
+      ).not.toHaveBeenCalled();
     });
 
     it("should skip automatic kill when recent dedup becomes active after lock", async () => {
@@ -549,14 +786,16 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
+      expect(
+        mockRepositoryBackend.eventHeroNpc.findMany,
+      ).not.toHaveBeenCalled();
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
       );
     });
 
     it("should skip if NPC is not an event hero", async () => {
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
@@ -569,7 +808,7 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockRepositoryBackend.$transaction).not.toHaveBeenCalled();
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
       );
@@ -585,14 +824,14 @@ describe("EventKillService", () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHero])
         .mockResolvedValueOnce([]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      mockPrismaService.eventHeroNpc.update.mockResolvedValue(updatedHero);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventHeroNpc.update.mockResolvedValue(updatedHero);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -609,7 +848,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -623,7 +862,7 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockPrismaService.eventHeroNpc.update).toHaveBeenCalledWith({
+      expect(mockRepositoryBackend.eventHeroNpc.update).toHaveBeenCalledWith({
         where: { id: "hero-1" },
         data: { npcId, npcIcon },
       });
@@ -639,14 +878,14 @@ describe("EventKillService", () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      mockPrismaService.eventHeroNpc.update.mockResolvedValue(updatedHero);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventHeroNpc.update.mockResolvedValue(updatedHero);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -663,7 +902,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -677,7 +916,7 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockPrismaService.eventHeroNpc.update).toHaveBeenCalledWith({
+      expect(mockRepositoryBackend.eventHeroNpc.update).toHaveBeenCalledWith({
         where: { id: "hero-1" },
         data: { npcId, npcIcon },
       });
@@ -692,7 +931,7 @@ describe("EventKillService", () => {
         event: { id: "event-1" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHero])
         .mockResolvedValueOnce([mockHero]);
       mockRedisService.get
@@ -725,10 +964,10 @@ describe("EventKillService", () => {
         event: { id: "event-1" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHero])
         .mockResolvedValueOnce([]);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -745,7 +984,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -804,7 +1043,7 @@ describe("EventKillService", () => {
         event: { id: "event-2" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([heroA, heroB])
         .mockResolvedValueOnce([]);
       mockRedisService.get.mockResolvedValue(null);
@@ -854,7 +1093,7 @@ describe("EventKillService", () => {
         redisValues.add(key);
         return "OK";
       });
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHero])
         .mockResolvedValueOnce([]);
 
@@ -880,7 +1119,9 @@ describe("EventKillService", () => {
       );
 
       expect(recordSpy).toHaveBeenCalledTimes(1);
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(mockRepositoryBackend.eventHeroNpc.findMany).toHaveBeenCalledTimes(
+        2,
+      );
       recordSpy.mockRestore();
     });
 
@@ -896,11 +1137,11 @@ describe("EventKillService", () => {
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      mockPrismaService.eventHeroNpc.findMany
+      mockRepositoryBackend.eventHeroNpc.findMany
         .mockResolvedValueOnce([mockHero])
         .mockResolvedValueOnce([]);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
-      mockPrismaService.$transaction.mockRejectedValue(new Error("boom"));
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.$transaction.mockRejectedValue(new Error("boom"));
 
       await expect(
         service.checkAndRecordEventHeroKill(
@@ -967,7 +1208,7 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
 
       // Mock transaction to use the tx proxy properly
       const txMock = {
@@ -1000,7 +1241,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1069,7 +1310,7 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(mockMaps);
 
       const txMock = {
         eventHeroKill: {
@@ -1095,7 +1336,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1151,7 +1392,7 @@ describe("EventKillService", () => {
         windowOpenedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
       ]);
 
@@ -1180,7 +1421,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1236,7 +1477,7 @@ describe("EventKillService", () => {
         windowOpenedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
       ]);
 
@@ -1271,7 +1512,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1317,7 +1558,7 @@ describe("EventKillService", () => {
         windowOpenedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
       ]);
 
@@ -1352,7 +1593,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1411,7 +1652,7 @@ describe("EventKillService", () => {
         windowOpenedAt: new Date("2026-02-20T02:07:46.133Z"),
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
       ]);
 
@@ -1440,7 +1681,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1497,7 +1738,7 @@ describe("EventKillService", () => {
         windowOpenedAt: new Date("2026-02-20T02:07:46.133Z"),
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
       ]);
 
@@ -1526,7 +1767,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1584,7 +1825,7 @@ describe("EventKillService", () => {
         windowOpenedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
         { id: "map-2", mapName: "Map 2" },
       ]);
@@ -1621,7 +1862,7 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1681,7 +1922,7 @@ describe("EventKillService", () => {
         windowOpenedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
         { id: "map-2", mapName: "Map 2" },
       ]);
@@ -1718,7 +1959,7 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1769,7 +2010,7 @@ describe("EventKillService", () => {
         windowOpenedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
         { id: "map-2", mapName: "Map 2" },
       ]);
@@ -1806,7 +2047,7 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1856,7 +2097,7 @@ describe("EventKillService", () => {
         windowOpenedAt: killedAt,
       };
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1" },
       ]);
 
@@ -1884,7 +2125,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1929,7 +2170,7 @@ describe("EventKillService", () => {
     });
 
     it("should handle kill with no assigned members", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -1946,7 +2187,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1963,7 +2204,7 @@ describe("EventKillService", () => {
     });
 
     it("should close coverage gaps after kill", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -1980,7 +2221,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1998,7 +2239,7 @@ describe("EventKillService", () => {
     });
 
     it("should emit hero killed event", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -2015,7 +2256,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2034,7 +2275,7 @@ describe("EventKillService", () => {
     });
 
     it("should create window summary after kill", async () => {
-      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
           create: mockFn().mockResolvedValue({ id: "kill-1" }),
@@ -2051,7 +2292,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2084,7 +2325,7 @@ describe("EventKillService", () => {
         { id: "map-2", assignedMembers: [] },
       ];
 
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
 
       const txMock = {
         eventHeroKill: {
@@ -2102,7 +2343,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2142,7 +2383,7 @@ describe("EventKillService", () => {
       };
 
       const heroMaps = [{ id: "map-1", assignedMembers: [] }];
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
 
       const txMock = {
         eventHeroKill: {
@@ -2160,7 +2401,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2190,7 +2431,7 @@ describe("EventKillService", () => {
       };
 
       const heroMaps = [{ id: "map-1", assignedMembers: [] }];
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
 
       const txMock = {
         eventHeroKill: {
@@ -2208,7 +2449,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2235,7 +2476,7 @@ describe("EventKillService", () => {
       };
 
       const heroMaps = [{ id: "map-1", assignedMembers: [] }];
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
 
       const txMock = {
         eventHeroKill: {
@@ -2253,7 +2494,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2283,7 +2524,7 @@ describe("EventKillService", () => {
       };
 
       const heroMaps = [{ id: "map-1", assignedMembers: [] }];
-      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue(heroMaps);
 
       const txMock = {
         eventHeroKill: {
@@ -2301,7 +2542,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockRepositoryBackend.$transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2342,25 +2583,27 @@ describe("EventKillService", () => {
       const minSpawnTimeAtKill = new Date("2026-02-18T11:25:18.230Z");
       const windowOpenedAt = new Date("2026-02-18T09:27:52.727Z");
 
-      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue({
+      mockRepositoryBackend.eventHeroKill.findFirst.mockResolvedValue({
         minSpawnTimeAtKill,
         killedAt,
       });
-      mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue({
-        gapsTimeline: [],
-        windowOpenedAt,
-      });
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventRespawnWindowSummary.findUnique.mockResolvedValue(
+        {
+          gapsTimeline: [],
+          windowOpenedAt,
+        },
+      );
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1", mapId: 1 },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
         [],
       );
 
       await service.getKillTimelineData(guildId, eventId, heroId, killId);
 
       expect(
-        mockPrismaService.eventMapAssignmentHistory.findMany,
+        mockRepositoryBackend.eventMapAssignmentHistory.findMany,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -2378,24 +2621,24 @@ describe("EventKillService", () => {
       const killedAt = new Date("2026-02-18T11:25:18.230Z");
       const minSpawnTimeAtKill = new Date("2026-02-18T10:00:00.000Z");
 
-      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue({
+      mockRepositoryBackend.eventHeroKill.findFirst.mockResolvedValue({
         minSpawnTimeAtKill,
         killedAt,
       });
-      mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
+      mockRepositoryBackend.eventRespawnWindowSummary.findUnique.mockResolvedValue(
         null,
       );
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1", mapId: 1 },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
         [],
       );
 
       await service.getKillTimelineData(guildId, eventId, heroId, killId);
 
       expect(
-        mockPrismaService.eventMapAssignmentHistory.findMany,
+        mockRepositoryBackend.eventMapAssignmentHistory.findMany,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -2437,8 +2680,8 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroKill.findMany.mockResolvedValue(mockKills);
 
       const result = await service.getHeroKillHistory(
         guildId,
@@ -2493,20 +2736,22 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1", heroNpcId: heroId },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
-        {
-          heroNpcId: heroId,
-          mapId: "map-1",
-          memberId: 1,
-          assignedAt: new Date("2026-03-02T10:45:19.661Z"),
-          unassignedAt: null,
-        },
-      ]);
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [
+          {
+            heroNpcId: heroId,
+            mapId: "map-1",
+            memberId: 1,
+            assignedAt: new Date("2026-03-02T10:45:19.661Z"),
+            unassignedAt: null,
+          },
+        ],
+      );
 
       const result = await service.getHeroKillHistory(
         guildId,
@@ -2562,31 +2807,35 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
-      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([
-        {
-          killId: "kill-1",
-          windowOpenedAt,
-        },
-      ]);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRepositoryBackend.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
+        [
+          {
+            killId: "kill-1",
+            windowOpenedAt,
+          },
+        ],
+      );
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1", heroNpcId: heroId },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
-        {
-          heroNpcId: heroId,
-          mapId: "map-1",
-          memberId: 1,
-          assignedAt: new Date("2026-03-02T09:45:19.661Z"),
-          unassignedAt: null,
-        },
-      ]);
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [
+          {
+            heroNpcId: heroId,
+            mapId: "map-1",
+            memberId: 1,
+            assignedAt: new Date("2026-03-02T09:45:19.661Z"),
+            unassignedAt: null,
+          },
+        ],
+      );
 
       await service.getHeroKillHistory(guildId, eventId, heroId, 20);
 
       expect(
-        mockPrismaService.eventMapAssignmentHistory.findMany,
+        mockRepositoryBackend.eventMapAssignmentHistory.findMany,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -2600,7 +2849,7 @@ describe("EventKillService", () => {
     });
 
     it("should throw NotFoundException when hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getHeroKillHistory(guildId, eventId, heroId),
@@ -2682,21 +2931,23 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
-      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(mockEvent);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Map 1", heroNpcId: heroId },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
-        {
-          heroNpcId: heroId,
-          mapId: "map-1",
-          memberId,
-          assignedAt: new Date("2026-03-02T10:45:19.661Z"),
-          unassignedAt: null,
-        },
-      ]);
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [
+          {
+            heroNpcId: heroId,
+            mapId: "map-1",
+            memberId,
+            assignedAt: new Date("2026-03-02T10:45:19.661Z"),
+            unassignedAt: null,
+          },
+        ],
+      );
 
       const result = await service.getMemberKillHistory(
         guildId,
@@ -2760,9 +3011,9 @@ describe("EventKillService", () => {
         },
       ];
 
-      mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
-      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
-      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(mockEvent);
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(mockMember);
+      mockRepositoryBackend.eventHeroKill.findMany.mockResolvedValue(mockKills);
 
       const result = await service.getMemberKillHistory(
         guildId,
@@ -2780,7 +3031,7 @@ describe("EventKillService", () => {
     });
 
     it("should throw NotFoundException when event not found", async () => {
-      mockPrismaService.event.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getMemberKillHistory(guildId, eventId, memberId, 20),
@@ -2788,8 +3039,8 @@ describe("EventKillService", () => {
     });
 
     it("should throw NotFoundException when member not found", async () => {
-      mockPrismaService.event.findFirst.mockResolvedValue({ id: eventId });
-      mockPrismaService.member.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.event.findFirst.mockResolvedValue({ id: eventId });
+      mockRepositoryBackend.member.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getMemberKillHistory(guildId, eventId, memberId, 20),
@@ -2834,11 +3085,11 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue(mockKill);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventHeroKill.findFirst.mockResolvedValue(mockKill);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Test Map" },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
         [],
       );
       mockPointsService.getMembersPresenceStatsPerMap.mockResolvedValue([]);
@@ -2890,18 +3141,20 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue(mockKill);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventHeroKill.findFirst.mockResolvedValue(mockKill);
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Test Map" },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
-        {
-          mapId: "map-1",
-          memberId: 1,
-          assignedAt: new Date("2026-02-20T02:00:00.000Z"),
-          unassignedAt: null,
-        },
-      ]);
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [
+          {
+            mapId: "map-1",
+            memberId: 1,
+            assignedAt: new Date("2026-02-20T02:00:00.000Z"),
+            unassignedAt: null,
+          },
+        ],
+      );
       mockPointsService.getMembersPresenceStatsPerMap.mockResolvedValue([
         {
           memberId: 1,
@@ -2961,24 +3214,28 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue(mockKill);
-      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([
-        {
-          killId,
-          windowOpenedAt,
-        },
-      ]);
-      mockPrismaService.eventMap.findMany.mockResolvedValue([
+      mockRepositoryBackend.eventHeroKill.findFirst.mockResolvedValue(mockKill);
+      mockRepositoryBackend.eventRespawnWindowSummary.findMany.mockResolvedValue(
+        [
+          {
+            killId,
+            windowOpenedAt,
+          },
+        ],
+      );
+      mockRepositoryBackend.eventMap.findMany.mockResolvedValue([
         { id: "map-1", mapName: "Test Map" },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
-        {
-          mapId: "map-1",
-          memberId: 1,
-          assignedAt: new Date("2026-02-20T02:45:00.000Z"),
-          unassignedAt: null,
-        },
-      ]);
+      mockRepositoryBackend.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [
+          {
+            mapId: "map-1",
+            memberId: 1,
+            assignedAt: new Date("2026-02-20T02:45:00.000Z"),
+            unassignedAt: null,
+          },
+        ],
+      );
       mockPointsService.getMembersPresenceStatsPerMap.mockResolvedValue([
         {
           memberId: 1,
@@ -2991,7 +3248,7 @@ describe("EventKillService", () => {
       await service.getKillDetail(guildId, eventId, heroId, killId);
 
       expect(
-        mockPrismaService.eventMapAssignmentHistory.findMany,
+        mockRepositoryBackend.eventMapAssignmentHistory.findMany,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -3013,7 +3270,7 @@ describe("EventKillService", () => {
     });
 
     it("should throw NotFoundException when kill not found", async () => {
-      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue(null);
+      mockRepositoryBackend.eventHeroKill.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getKillDetail(guildId, eventId, heroId, killId),

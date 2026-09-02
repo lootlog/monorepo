@@ -1,6 +1,6 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
-import { LootSource } from "#src/generated/prisma/client";
+import { LootSourceEnum as LootSource } from "@lootlog/schema/loot";
 
 const LootSchema = z.object({
   hid: z.string().min(1),

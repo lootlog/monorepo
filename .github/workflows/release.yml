@@ -69,14 +69,14 @@ jobs:
           BASE_SHA="$base_sha" \
             HEAD_REF="$head_ref" \
             HEAD_SHA="$head_sha" \
-            node tools/ci/dispatch-automated-pr-ci.mjs
+            bun tools/ci/dispatch-automated-pr-ci.mjs
 
       - name: Prepare release plan
         id: plan
         env:
           PUBLISHED_PACKAGES: ${{ steps.changesets.outputs['published-packages'] || '[]' }}
         run: |
-          plan="$(node tools/release/create-deployment-matrix.mjs "$PUBLISHED_PACKAGES")"
+          plan="$(bun tools/release/create-deployment-matrix.mjs "$PUBLISHED_PACKAGES")"
           echo "value=$(jq -c . <<< "$plan")" >> "$GITHUB_OUTPUT"
           echo "docker=$(jq -c '.docker' <<< "$plan")" >> "$GITHUB_OUTPUT"
           echo "cloudflare=$(jq -c '.cloudflare' <<< "$plan")" >> "$GITHUB_OUTPUT"
@@ -285,7 +285,7 @@ jobs:
                 api) migration_path="apps/api/prisma/migrations" ;;
                 activity) migration_path="apps/activity/prisma/migrations" ;;
                 auth) migration_path="apps/auth/drizzle" ;;
-                battlelog-service) migration_path="apps/battlelog-service/drizzle" ;;
+                battlelog-service) migration_path="apps/battlelog/drizzle" ;;
                 *) continue ;;
               esac
 
@@ -385,7 +385,7 @@ jobs:
             config_path="$(jq -r '.configPath // empty' <<< "$item")"
             artifact_name="cloudflare-$project-$version-$GITHUB_SHA"
             artifact_directory="$(
-              node tools/release/resolve-cloudflare-artifact-directory.mjs \
+              bun tools/release/resolve-cloudflare-artifact-directory.mjs \
                 "$RUNNER_TEMP/cloudflare-artifacts" \
                 "$artifact_name"
             )"
@@ -487,7 +487,7 @@ jobs:
             fetch https://lootlog.pl/privacy-policy | grep -q 'Polityka prywatności'
             fetch https://lootlog.pl/terms-of-service | grep -q 'Regulamin serwisu'
             fetch https://lootlog.pl/brand/lootlog-social.png >/dev/null
-            node tools/release/verify-public-static-assets.mjs \
+            bun tools/release/verify-public-static-assets.mjs \
               https://lootlog.pl \
               /landing-assets \
               / \
@@ -501,7 +501,7 @@ jobs:
             fetch https://docs.lootlog.pl/docs/installation | grep -q 'Instalacja'
             fetch https://docs.lootlog.pl/api/search | jq -e '.type == "advanced"' >/dev/null
             fetch https://docs.lootlog.pl/brand/favicon.svg >/dev/null
-            node tools/release/verify-public-static-assets.mjs \
+            bun tools/release/verify-public-static-assets.mjs \
               https://docs.lootlog.pl \
               /docs-assets \
               /docs \

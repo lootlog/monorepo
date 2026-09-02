@@ -7,18 +7,21 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ExecutionError } from "redlock";
-import { CoverageGapType } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import { buildActiveEventWhere } from "../utils/event-activity.util.js";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { TimersService } from "#src/timers/timers.service";
+import { EventTrackingRepository } from "./event-tracking.repository.js";
+
+const CoverageGapType = {
+  UNASSIGNED: "UNASSIGNED",
+  UNCOVERED: "UNCOVERED",
+} as const;
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
@@ -27,7 +30,7 @@ export class EventTrackingService implements OnModuleInit {
   private readonly presenceLockTtl = 5000;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: EventTrackingRepository,
     private readonly eventEmitter: EventEmitterService,
     private readonly eventReadCache: EventReadCacheService,
     private readonly amqpConnection: AmqpConnection,
@@ -54,43 +57,13 @@ export class EventTrackingService implements OnModuleInit {
     mapId: string,
     memberId: number,
   ) {
-    const map = await this.prisma.eventMap.findFirst({
-      where: {
-        id: mapId,
-        heroNpc: {
-          event: {
-            id: eventId,
-            guildId,
-          },
-        },
-      },
-      include: {
-        assignedMembers: true,
-        heroNpc: {
-          include: {
-            event: {
-              select: {
-                assignmentTimeoutMinutes: true,
-                world: true,
-                mapAssignmentCap: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const map = await this.repository.findScopedMap(guildId, eventId, mapId);
 
     if (!map) {
       throw new NotFoundException("Map not found");
     }
 
-    const member = await this.prisma.member.findFirst({
-      where: {
-        id: memberId,
-        guildId,
-      },
-      select: { id: true },
-    });
+    const member = await this.repository.findMember(guildId, memberId);
 
     if (!member) {
       throw new NotFoundException("Member not found");
@@ -105,10 +78,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
         memberId,
       });
-      return await this.prisma.eventMap.findUnique({
-        where: { id: mapId },
-        include: { assignedMembers: true },
-      });
+      return await this.repository.findMapWithMembers(mapId);
     }
 
     const effectiveNpcId =
@@ -154,36 +124,20 @@ export class EventTrackingService implements OnModuleInit {
 
     const wasUnassigned = map.assignedMembers.length === 0;
 
-    const updated = await this.prisma.eventMap.update({
-      where: { id: mapId },
-      data: {
-        assignedMembers: {
-          connect: { id: memberId },
-        },
-      },
-      include: {
-        assignedMembers: true,
-      },
-    });
+    const updated = await this.repository.assignMember(mapId, memberId);
 
-    const existingOpenAssignment =
-      await this.prisma.eventMapAssignmentHistory.findFirst({
-        where: {
-          mapId,
-          memberId,
-          unassignedAt: null,
-        },
-      });
+    const existingOpenAssignment = await this.repository.findOpenAssignment(
+      mapId,
+      memberId,
+    );
 
     if (!existingOpenAssignment) {
-      await this.prisma.eventMapAssignmentHistory.create({
-        data: {
-          mapId,
-          heroNpcId: map.heroNpcId,
-          memberId,
-          assignedAt: new Date(),
-        },
-      });
+      await this.repository.createAssignment(
+        mapId,
+        map.heroNpcId,
+        memberId,
+        new Date(),
+      );
     }
 
     if (wasUnassigned) {
@@ -217,49 +171,19 @@ export class EventTrackingService implements OnModuleInit {
     mapId: string,
     memberId?: number,
   ) {
-    const map = await this.prisma.eventMap.findFirst({
-      where: {
-        id: mapId,
-        heroNpc: {
-          event: {
-            id: eventId,
-            guildId,
-          },
-        },
-      },
-      include: {
-        assignedMembers: true,
-        heroNpc: true,
-      },
-    });
+    const map = await this.repository.findScopedMap(guildId, eventId, mapId);
 
     if (!map) {
       throw new NotFoundException("Map not found");
     }
 
-    const updated = await this.prisma.eventMap.update({
-      where: { id: mapId },
-      data: {
-        assignedMembers: memberId
-          ? { disconnect: { id: memberId } }
-          : { set: [] },
-      },
-      include: {
-        assignedMembers: true,
-      },
-    });
+    const updated = await this.repository.unassignMember(mapId, memberId);
 
     const now = new Date();
     if (memberId) {
-      await this.prisma.eventMapAssignmentHistory.updateMany({
-        where: { mapId, memberId, unassignedAt: null },
-        data: { unassignedAt: now },
-      });
+      await this.repository.closeAssignments(mapId, now, memberId);
     } else {
-      await this.prisma.eventMapAssignmentHistory.updateMany({
-        where: { mapId, unassignedAt: null },
-        data: { unassignedAt: now },
-      });
+      await this.repository.closeAssignments(mapId, now);
     }
 
     if (updated.assignedMembers.length === 0) {
@@ -280,13 +204,7 @@ export class EventTrackingService implements OnModuleInit {
   }
 
   getMemberByDiscordId(discordId: string, guildId: string) {
-    return this.prisma.member.findFirst({
-      where: {
-        userId: discordId,
-        guildId,
-        active: true,
-      },
-    });
+    return this.repository.findMemberByDiscordId(discordId, guildId);
   }
 
   async openUnassignedGap(
@@ -294,26 +212,21 @@ export class EventTrackingService implements OnModuleInit {
     heroNpcId: string,
     startedAt?: Date,
   ): Promise<void> {
-    const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
-      where: {
-        mapId,
-        gapType: CoverageGapType.UNASSIGNED,
-        endedAt: null,
-      },
-    });
+    const existingGap = await this.repository.findOpenGap(
+      mapId,
+      CoverageGapType.UNASSIGNED,
+    );
 
     if (existingGap) {
       return;
     }
 
-    await this.prisma.eventMapCoverageGap.create({
-      data: {
-        mapId,
-        heroNpcId,
-        gapType: CoverageGapType.UNASSIGNED,
-        startedAt: startedAt ?? new Date(),
-      },
-    });
+    await this.repository.createGap(
+      mapId,
+      heroNpcId,
+      CoverageGapType.UNASSIGNED,
+      startedAt ?? new Date(),
+    );
 
     this.logger.debug({
       message: "Opened UNASSIGNED gap",
@@ -325,13 +238,10 @@ export class EventTrackingService implements OnModuleInit {
   async closeUnassignedGap(mapId: string): Promise<void> {
     const now = new Date();
 
-    const openGap = await this.prisma.eventMapCoverageGap.findFirst({
-      where: {
-        mapId,
-        gapType: CoverageGapType.UNASSIGNED,
-        endedAt: null,
-      },
-    });
+    const openGap = await this.repository.findOpenGap(
+      mapId,
+      CoverageGapType.UNASSIGNED,
+    );
 
     if (!openGap) {
       return;
@@ -341,13 +251,7 @@ export class EventTrackingService implements OnModuleInit {
       (now.getTime() - openGap.startedAt.getTime()) / 1000,
     );
 
-    await this.prisma.eventMapCoverageGap.update({
-      where: { id: openGap.id },
-      data: {
-        endedAt: now,
-        durationSeconds,
-      },
-    });
+    await this.repository.closeGap(openGap.id, now, durationSeconds);
 
     this.logger.debug({
       message: "Closed UNASSIGNED gap",
@@ -361,26 +265,21 @@ export class EventTrackingService implements OnModuleInit {
     heroNpcId: string,
     startedAt?: Date,
   ): Promise<void> {
-    const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
-      where: {
-        mapId,
-        gapType: CoverageGapType.UNCOVERED,
-        endedAt: null,
-      },
-    });
+    const existingGap = await this.repository.findOpenGap(
+      mapId,
+      CoverageGapType.UNCOVERED,
+    );
 
     if (existingGap) {
       return;
     }
 
-    await this.prisma.eventMapCoverageGap.create({
-      data: {
-        mapId,
-        heroNpcId,
-        gapType: CoverageGapType.UNCOVERED,
-        startedAt: startedAt ?? new Date(),
-      },
-    });
+    await this.repository.createGap(
+      mapId,
+      heroNpcId,
+      CoverageGapType.UNCOVERED,
+      startedAt ?? new Date(),
+    );
 
     this.logger.debug({
       message: "Opened UNCOVERED gap",
@@ -392,13 +291,10 @@ export class EventTrackingService implements OnModuleInit {
   async closeUncoveredGap(mapId: string): Promise<void> {
     const now = new Date();
 
-    const openGap = await this.prisma.eventMapCoverageGap.findFirst({
-      where: {
-        mapId,
-        gapType: CoverageGapType.UNCOVERED,
-        endedAt: null,
-      },
-    });
+    const openGap = await this.repository.findOpenGap(
+      mapId,
+      CoverageGapType.UNCOVERED,
+    );
 
     if (!openGap) {
       return;
@@ -408,13 +304,7 @@ export class EventTrackingService implements OnModuleInit {
       (now.getTime() - openGap.startedAt.getTime()) / 1000,
     );
 
-    await this.prisma.eventMapCoverageGap.update({
-      where: { id: openGap.id },
-      data: {
-        endedAt: now,
-        durationSeconds,
-      },
-    });
+    await this.repository.closeGap(openGap.id, now, durationSeconds);
 
     this.logger.debug({
       message: "Closed UNCOVERED gap",
@@ -426,31 +316,13 @@ export class EventTrackingService implements OnModuleInit {
   async closeAllGapsForHero(heroNpcId: string): Promise<void> {
     const now = new Date();
 
-    const openGaps = await this.prisma.eventMapCoverageGap.findMany({
-      where: {
-        heroNpcId,
-        endedAt: null,
-      },
-    });
+    const openGaps = await this.repository.findOpenGapsForHero(heroNpcId);
 
     if (openGaps.length === 0) {
       return;
     }
 
-    await this.prisma.$transaction(
-      openGaps.map((gap) => {
-        const durationSeconds = Math.round(
-          (now.getTime() - gap.startedAt.getTime()) / 1000,
-        );
-        return this.prisma.eventMapCoverageGap.update({
-          where: { id: gap.id },
-          data: {
-            endedAt: now,
-            durationSeconds,
-          },
-        });
-      }),
-    );
+    await this.repository.closeGaps(openGaps, now);
 
     this.logger.debug({
       message: "Closed all gaps for hero",
@@ -465,24 +337,17 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
       }),
       async () => {
-        const map = await this.prisma.eventMap.findFirst({
-          where: {
-            id: mapId,
-            heroNpc: {
-              eventId,
-              event: { guildId },
-            },
-          },
-        });
+        const map = await this.repository.findScopedMap(
+          guildId,
+          eventId,
+          mapId,
+        );
 
         if (!map) {
           throw new NotFoundException("Map not found");
         }
 
-        return this.prisma.eventMapCoverageGap.findMany({
-          where: { mapId },
-          orderBy: { startedAt: "desc" },
-        });
+        return this.repository.findMapGaps(mapId);
       },
     );
   }
@@ -493,30 +358,17 @@ export class EventTrackingService implements OnModuleInit {
         heroNpcId,
       }),
       async () => {
-        const hero = await this.prisma.eventHeroNpc.findFirst({
-          where: {
-            id: heroNpcId,
-            eventId,
-            event: { guildId },
-          },
-        });
+        const hero = await this.repository.findHero(
+          guildId,
+          eventId,
+          heroNpcId,
+        );
 
         if (!hero) {
           throw new NotFoundException("Hero not found");
         }
 
-        return this.prisma.eventMapCoverageGap.findMany({
-          where: { heroNpcId },
-          orderBy: { startedAt: "desc" },
-          include: {
-            map: {
-              select: {
-                mapName: true,
-                mapId: true,
-              },
-            },
-          },
-        });
+        return this.repository.findHeroGaps(heroNpcId);
       },
     );
   }
@@ -527,26 +379,17 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
       }),
       async () => {
-        const map = await this.prisma.eventMap.findFirst({
-          where: {
-            id: mapId,
-            heroNpc: {
-              eventId,
-              event: { guildId },
-            },
-          },
-        });
+        const map = await this.repository.findScopedMap(
+          guildId,
+          eventId,
+          mapId,
+        );
 
         if (!map) {
           throw new NotFoundException("Map not found");
         }
 
-        return this.prisma.eventMapCoverageGap.findFirst({
-          where: {
-            mapId,
-            endedAt: null,
-          },
-        });
+        return this.repository.findOpenGap(mapId);
       },
     );
   }
@@ -557,24 +400,17 @@ export class EventTrackingService implements OnModuleInit {
         heroNpcId,
       }),
       async () => {
-        const hero = await this.prisma.eventHeroNpc.findFirst({
-          where: {
-            id: heroNpcId,
-            eventId,
-            event: { guildId },
-          },
-        });
+        const hero = await this.repository.findHero(
+          guildId,
+          eventId,
+          heroNpcId,
+        );
 
         if (!hero) {
           throw new NotFoundException("Hero not found");
         }
 
-        return this.prisma.eventMapCoverageGap.findMany({
-          where: {
-            heroNpcId,
-            endedAt: null,
-          },
-        });
+        return this.repository.findActiveHeroGaps(heroNpcId);
       },
     );
   }
@@ -622,27 +458,11 @@ export class EventTrackingService implements OnModuleInit {
     const member = await this.getMemberByDiscordId(discordId, guildId);
     const referenceTime = new Date();
 
-    const eventMaps = await this.prisma.eventMap.findMany({
-      where: {
-        mapName,
-        heroNpc: {
-          event: {
-            guildId,
-            ...buildActiveEventWhere(referenceTime),
-          },
-        },
-      },
-      include: {
-        assignedMembers: true,
-        heroNpc: {
-          include: {
-            event: {
-              select: { world: true },
-            },
-          },
-        },
-      },
-    });
+    const eventMaps = await this.repository.findActiveMapsByName(
+      guildId,
+      mapName,
+      referenceTime,
+    );
 
     const now = referenceTime;
 
@@ -679,22 +499,9 @@ export class EventTrackingService implements OnModuleInit {
 
         if (member) {
           if (hasPlayer) {
-            await this.prisma.eventPresenceLog.updateMany({
-              where: {
-                mapId: map.id,
-                memberId: member.id,
-                endedAt: null,
-              },
-              data: { endedAt: now },
-            });
+            await this.repository.closePresence(map.id, member.id, now);
 
-            await this.prisma.eventPresenceLog.create({
-              data: {
-                mapId: map.id,
-                memberId: member.id,
-                isAfk,
-              },
-            });
+            await this.repository.createPresence(map.id, member.id, isAfk);
 
             this.logger.debug({
               message: "Created presence log",
@@ -709,14 +516,11 @@ export class EventTrackingService implements OnModuleInit {
               nonAfkMembers.add(member.id);
             }
           } else {
-            const result = await this.prisma.eventPresenceLog.updateMany({
-              where: {
-                mapId: map.id,
-                memberId: member.id,
-                endedAt: null,
-              },
-              data: { endedAt: now },
-            });
+            const result = await this.repository.closePresence(
+              map.id,
+              member.id,
+              now,
+            );
 
             if (result.count > 0) {
               this.logger.debug({
@@ -772,18 +576,7 @@ export class EventTrackingService implements OnModuleInit {
       return new Map();
     }
 
-    const activeLogs = await this.prisma.eventPresenceLog.findMany({
-      where: {
-        mapId: { in: mapIds },
-        endedAt: null,
-        isAfk: false,
-      },
-      select: {
-        mapId: true,
-        memberId: true,
-      },
-      distinct: ["mapId", "memberId"],
-    });
+    const activeLogs = await this.repository.findActiveNonAfkLogs(mapIds);
 
     const membersByMap = new Map<string, Set<number>>();
     for (const mapId of mapIds) {
@@ -801,16 +594,7 @@ export class EventTrackingService implements OnModuleInit {
   }
 
   async getActivePlayersOnMap(mapId: string): Promise<number[]> {
-    const activeLogs = await this.prisma.eventPresenceLog.findMany({
-      where: {
-        mapId,
-        endedAt: null,
-      },
-      select: {
-        memberId: true,
-      },
-      distinct: ["memberId"],
-    });
+    const activeLogs = await this.repository.findActiveLogs(mapId);
 
     return activeLogs.map((log) => log.memberId);
   }
@@ -857,21 +641,11 @@ export class EventTrackingService implements OnModuleInit {
       afkPercentage: number;
     }>;
   }> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: {
-        id: heroNpcId,
-        eventId,
-        event: { guildId },
-      },
-      include: {
-        event: true,
-        maps: {
-          include: {
-            assignedMembers: true,
-          },
-        },
-      },
-    });
+    const hero = await this.repository.findHeroForPresenceStats(
+      guildId,
+      eventId,
+      heroNpcId,
+    );
 
     if (!hero) {
       throw new NotFoundException("Hero not found");
@@ -893,21 +667,7 @@ export class EventTrackingService implements OnModuleInit {
       }
     }
 
-    const presenceLogs = await this.prisma.eventPresenceLog.findMany({
-      where: {
-        mapId: { in: mapIds },
-      },
-      include: {
-        member: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-      },
-      orderBy: { startedAt: "asc" },
-    });
+    const presenceLogs = await this.repository.findPresenceLogs(mapIds);
 
     const now = new Date();
 

@@ -1,12 +1,26 @@
-import { writeOpenApiDocumentToYamlFile } from "@lootlog/nest-shared/openapi";
-import { createApp } from "#src/app.factory";
-import { createOpenApiDocument } from "./openapi-document.js";
+import { parse } from "yaml";
 
-async function generateOpenApi() {
-  const app = await createApp();
-  const document = createOpenApiDocument(app);
-  writeOpenApiDocumentToYamlFile(document, "openapi.yaml");
-  process.exit(0);
-}
-
-void generateOpenApi();
+const path = new URL("../../openapi.yaml", import.meta.url);
+const source = await Bun.file(path).text();
+const document = parse(source) as {
+  paths?: Record<string, Record<string, { operationId?: string }>>;
+};
+const operationIds = Object.values(document.paths ?? {}).flatMap((pathItem) =>
+  Object.values(pathItem)
+    .map((operation) => operation.operationId)
+    .filter((value): value is string => value !== undefined),
+);
+const expected = [
+  "HealthzController_check",
+  "ActivitiesController_findByGuild",
+  "ActivitiesController_suggestActorNames",
+  "ActivitiesController_suggestWorlds",
+  "ActivitiesController_suggestClanNames",
+  "ActivitiesController_findByUser",
+  "ActivitiesController_getMemberActivityStats",
+  "ActivitiesController_findOne",
+  "ActivitiesController_deleteActivity",
+];
+if (JSON.stringify(operationIds.sort()) !== JSON.stringify(expected.sort()))
+  throw new Error("Activity OpenAPI operation IDs changed");
+await Bun.write(path, source);

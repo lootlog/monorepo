@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
-} from "@lootlog/api-client/react-query/main/user-lootlog-config";
+} from "@lootlog/client/main";
 
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 

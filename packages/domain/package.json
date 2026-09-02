@@ -10,6 +10,7 @@
     "./chat-appearance": "./src/chat-appearance.ts",
     "./loot-visibility": "./src/loot-visibility.ts",
     "./npc-appearance": "./src/npc-appearance.ts",
+    "./npc-permissions": "./src/npc-permissions.ts",
     "./npc-routing": "./src/npc-routing.ts",
     "./npc-type": "./src/npc-type.ts",
     "./reservations": "./src/reservations.ts",

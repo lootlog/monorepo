@@ -45,9 +45,7 @@ describe("RolesController", () => {
       },
     ]);
 
-    await expect(
-      controller.getGuildRoles({ id: "guild-1" } as never),
-    ).resolves.toEqual([
+    await expect(controller.getGuildRoles({ id: "guild-1" })).resolves.toEqual([
       {
         id: "role-1",
         guildId: "guild-1",
@@ -55,5 +53,37 @@ describe("RolesController", () => {
       },
     ]);
     expect(mockRolesService.getRolesByGuildId).toHaveBeenCalledWith("guild-1");
+  });
+
+  it("forwards permissions and level ranges within the route guild", async () => {
+    const update = {
+      permissions: ["LOOTLOG_ACCESS" as const],
+      lvlRangeFrom: 51,
+      lvlRangeTo: 300,
+    };
+    mockRolesService.updateRolePermissions.mockResolvedValue({
+      id: "role-1",
+      guildId: "guild-1",
+      ...update,
+    });
+
+    await expect(
+      controller.updateGuildRole(
+        { id: "guild-1" },
+        "role-1",
+        "discord-1",
+        update,
+      ),
+    ).resolves.toEqual({
+      id: "role-1",
+      guildId: "guild-1",
+      ...update,
+    });
+    expect(mockRolesService.updateRolePermissions).toHaveBeenCalledWith(
+      "discord-1",
+      "guild-1",
+      "role-1",
+      update,
+    );
   });
 });

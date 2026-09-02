@@ -5,7 +5,7 @@ import {
   type AirTagSubscriptionAck,
   type AirTagTarget,
   type AirTagUpdateEvent,
-} from "@lootlog/types";
+} from "@lootlog/schema/air-tag";
 
 const MAX_QUEUED_UPDATES = 1_000;
 const MAX_TARGETS_PER_SCOPE = 100;

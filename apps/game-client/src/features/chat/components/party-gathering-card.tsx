@@ -1,8 +1,12 @@
-import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import {
+  type ChatMessageResponseDtoOutput,
+  type MemberSummaryResponseDtoOutput,
+  usePartyReadyRoomControllerApply,
+} from "@lootlog/client/main";
+
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { usePartyReadyRoomControllerApply } from "@lootlog/api-client/react-query/main/party-ready-room";
+
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

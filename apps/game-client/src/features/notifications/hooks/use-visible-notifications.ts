@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { NotificationsSettings } from "@lootlog/types";
+import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import { useShallow } from "zustand/react/shallow";
 import {
   type MentionNotification,

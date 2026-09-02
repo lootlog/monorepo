@@ -14,14 +14,13 @@ import {
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import {
-  CHAT_MESSAGE_LIMIT,
-  getNpcRoutingTier,
-  type NpcRoutingTier,
-} from "@lootlog/types";
+import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
+import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
+import type { NpcRoutingTier } from "@lootlog/schema/npc-routing";
 import { v6 } from "uuid";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
 import { canViewChatMessage } from "#src/shared/utils/can-view-chat-message";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import type { ChatMessageViewer } from "#src/chat/types/chat-message-viewer.type";
@@ -29,7 +28,9 @@ import {
   canDeleteChatMessage,
   canEditChatMessage,
 } from "#src/chat/chat-message-permissions";
-import { Capability, createAccessPolicy } from "@lootlog/access-policy";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+
+type Role = typeof roleTable.$inferSelect;
 
 type MessageRouting = {
   tier: NpcRoutingTier;

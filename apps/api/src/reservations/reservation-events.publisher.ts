@@ -1,9 +1,11 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
-import type { ReservationChangedEventV2 } from "@lootlog/types";
+import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import type { Reservation } from "#src/generated/prisma/client";
+import type { reservationTable } from "#src/database/drizzle/schema";
+
+type Reservation = typeof reservationTable.$inferSelect;
 
 type ReservationEventInput = {
   sourceGuildId: string;

@@ -7,17 +7,21 @@ import {
 import { mockFn } from "#src/test/mock-fn";
 import { GuildsService } from "./guilds.service.js";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { PrismaService } from "#src/db/prisma.service";
 import { ChannelsService } from "#src/channels/channels.service";
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
 import { DiscordService } from "#src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
+import { Permission } from "@lootlog/schema/permissions";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import { UserGuildAccessResolver } from "./user-guild-access-resolver.service.js";
+import {
+  GuildsRepository,
+  type GuildRecord as Guild,
+} from "./guilds.repository.js";
+import { MembersRepository } from "#src/members/members.repository";
 
 vi.mock("#src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
@@ -34,7 +38,9 @@ describe("GuildsService", () => {
     debug: mockFn(),
   };
 
-  const mockPrismaService = {
+  // Persistence-shaped fixture used behind the repository mock. Keeping it
+  // local ensures service tests do not depend on the retired database client.
+  const mockPersistence = {
     guild: {
       findMany: mockFn(),
       findFirst: mockFn(),
@@ -115,6 +121,24 @@ describe("GuildsService", () => {
     publish: mockFn(),
   };
 
+  const mockGuildsRepository = {
+    findActive: mockFn(),
+    findById: mockFn(),
+    findByIds: mockFn(),
+    findForPermissions: mockFn(),
+    getGuildOrder: mockFn(),
+    update: mockFn(),
+    upsert: mockFn(),
+    getWorlds: mockFn(),
+    findSyncState: mockFn(),
+    ensureDefaultLootlogConfig: mockFn(),
+    deleteOrganization: mockFn(),
+  };
+
+  const mockMembersRepository = {
+    findMembersByUserGuildIds: mockFn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -125,8 +149,12 @@ describe("GuildsService", () => {
           useValue: mockLogger,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: GuildsRepository,
+          useValue: mockGuildsRepository,
+        },
+        {
+          provide: MembersRepository,
+          useValue: mockMembersRepository,
         },
         {
           provide: MembersService,
@@ -157,7 +185,88 @@ describe("GuildsService", () => {
 
     service = module.get<GuildsService>(GuildsService);
     userGuildAccessResolver = module.get(UserGuildAccessResolver);
-    mockPrismaService.$transaction.mockImplementation(
+    mockGuildsRepository.findActive.mockImplementation((id: string) =>
+      mockPersistence.guild.findFirst({
+        where: {
+          active: true,
+          OR: [{ id }, { vanityUrl: id }],
+        },
+      }),
+    );
+    mockGuildsRepository.findById.mockImplementation((id: string) =>
+      mockPersistence.guild.findUnique({ where: { id } }),
+    );
+    mockGuildsRepository.findByIds.mockImplementation(
+      (ids: string[], activeOnly = false) =>
+        mockPersistence.guild.findMany({
+          where: { id: { in: ids }, ...(activeOnly ? { active: true } : {}) },
+        }),
+    );
+    mockGuildsRepository.findForPermissions.mockImplementation(() =>
+      mockPersistence.guild.findMany(),
+    );
+    mockGuildsRepository.getGuildOrder.mockImplementation(async (userId) => {
+      const settings = await mockPersistence.userSettings.findUnique({
+        where: { userId },
+        select: { guildsOrder: true },
+      });
+      return settings?.guildsOrder ?? null;
+    });
+    mockGuildsRepository.update.mockImplementation((id, data) =>
+      mockPersistence.guild.update({ where: { id }, data }),
+    );
+    mockGuildsRepository.upsert.mockImplementation((data) =>
+      mockPersistence.guild.upsert({
+        where: { id: data.id },
+        update: {
+          name: data.name,
+          icon: data.icon,
+          ownerId: data.ownerId,
+          active: true,
+        },
+        create: { ...data, active: true },
+      }),
+    );
+    mockGuildsRepository.getWorlds.mockImplementation((guildId) =>
+      mockPersistence.timer.findMany({
+        where: { guildId },
+        select: { world: true },
+        distinct: ["world"],
+      }),
+    );
+    mockGuildsRepository.findSyncState.mockImplementation((guildId) =>
+      mockPersistence.discordGuildSyncState.findUnique({
+        where: { guildId },
+      }),
+    );
+    mockGuildsRepository.ensureDefaultLootlogConfig.mockImplementation(
+      (guildId) =>
+        mockPersistence.lootlogConfig.upsert({ where: { id: guildId } }),
+    );
+    mockGuildsRepository.deleteOrganization.mockImplementation(
+      async (guildId) => {
+        const guild = await mockPersistence.guild.findUnique({
+          where: { id: guildId },
+        });
+        let affectedMembers = [];
+        await mockPersistence.$transaction(async (tx) => {
+          await tx.lootlogConfigNpc.deleteMany();
+          await tx.lootlogConfig.deleteMany();
+          const deletion = await mockMembersService.deleteMembersByGuildId(
+            guildId,
+            { tx },
+          );
+          affectedMembers = deletion.affectedMembers;
+          await mockRolesService.deleteRolesByGuildId(guildId);
+          await tx.guild.update();
+        });
+        return { vanityUrl: guild?.vanityUrl ?? null, affectedMembers };
+      },
+    );
+    mockMembersRepository.findMembersByUserGuildIds.mockImplementation(() =>
+      mockPersistence.member.findMany(),
+    );
+    mockPersistence.$transaction.mockImplementation(
       (
         callback: (
           tx: typeof mockTransactionClient,
@@ -179,7 +288,7 @@ describe("GuildsService", () => {
     mockMembersService.deactivateMembersMissingFromDiscordGuilds.mockResolvedValue(
       0,
     );
-    mockPrismaService.member.findMany.mockResolvedValue([]);
+    mockPersistence.member.findMany.mockResolvedValue([]);
     mockRedisService.get.mockResolvedValue(null);
     mockRedisService.getJson.mockResolvedValue(null);
     mockRedisService.set.mockResolvedValue(undefined);
@@ -215,14 +324,14 @@ describe("GuildsService", () => {
   });
 
   it("marks discord sync as stale after creating a guild", async () => {
-    mockPrismaService.guild.upsert.mockResolvedValue(
+    mockPersistence.guild.upsert.mockResolvedValue(
       createGuild({ id: "guild-sync" }),
     );
-    mockPrismaService.guild.findUnique.mockResolvedValue(
+    mockPersistence.guild.findUnique.mockResolvedValue(
       createGuild({ id: "guild-sync" }),
     );
     mockRolesService.bulkCreateRoles.mockResolvedValue(undefined);
-    mockPrismaService.lootlogConfig.upsert.mockResolvedValue(undefined);
+    mockPersistence.lootlogConfig.upsert.mockResolvedValue(undefined);
 
     await service.createGuild({
       guildId: "guild-sync",
@@ -253,7 +362,7 @@ describe("GuildsService", () => {
       updatedAt: "2026-03-31T12:00:00.000Z",
     };
 
-    mockPrismaService.discordGuildSyncState.findUnique.mockResolvedValue(null);
+    mockPersistence.discordGuildSyncState.findUnique.mockResolvedValue(null);
     mockChannelsService.refreshGuildDiscordChannels.mockResolvedValue({
       channels: [],
       syncState,
@@ -289,7 +398,7 @@ describe("GuildsService", () => {
         fresh: true,
         complete: true,
       });
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         ownerGuild,
         adminGuild,
       ]);
@@ -342,7 +451,7 @@ describe("GuildsService", () => {
         fresh: true,
         complete: true,
       });
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-present", ownerId: "owner-1" }),
       ]);
 
@@ -409,11 +518,11 @@ describe("GuildsService", () => {
         fresh: true,
         complete: true,
       });
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-access", ownerId: "owner-1", name: "Access" }),
         createGuild({ id: "guild-stale", ownerId: "owner-2", name: "Stale" }),
       ]);
-      mockPrismaService.member.findMany
+      mockPersistence.member.findMany
         .mockResolvedValueOnce([
           {
             guildId: "guild-access",
@@ -448,7 +557,7 @@ describe("GuildsService", () => {
             ],
           },
         ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue({
+      mockPersistence.userSettings.findUnique.mockResolvedValue({
         guildsOrder: ["guild-stale", "guild-access"],
       });
       mockMembersService.refreshGuildMemberWithinBudget.mockResolvedValue({
@@ -499,10 +608,10 @@ describe("GuildsService", () => {
           HttpStatus.TOO_MANY_REQUESTS,
         ),
       );
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-access", ownerId: "owner-1", name: "Access" }),
       ]);
-      mockPrismaService.member.findMany.mockResolvedValue([
+      mockPersistence.member.findMany.mockResolvedValue([
         {
           guildId: "guild-access",
           active: true,
@@ -519,7 +628,7 @@ describe("GuildsService", () => {
           ],
         },
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockPersistence.userSettings.findUnique.mockResolvedValue(null);
       mockMembersService.isMemberSoftStale.mockReturnValue(false);
 
       const result = await service.getCurrentUserGuildAccessSummaries(
@@ -554,10 +663,10 @@ describe("GuildsService", () => {
           message: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
         }),
       );
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-access", ownerId: "owner-1", name: "Access" }),
       ]);
-      mockPrismaService.member.findMany.mockResolvedValue([
+      mockPersistence.member.findMany.mockResolvedValue([
         {
           guildId: "guild-access",
           active: true,
@@ -574,7 +683,7 @@ describe("GuildsService", () => {
           ],
         },
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockPersistence.userSettings.findUnique.mockResolvedValue(null);
       mockMembersService.isMemberSoftStale.mockReturnValue(false);
 
       const result = await service.getCurrentUserGuildAccessSummaries(
@@ -603,10 +712,10 @@ describe("GuildsService", () => {
     });
 
     it("returns accessible guilds with access metadata without waiting on Discord", async () => {
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-access", ownerId: "owner-1", name: "Access" }),
       ]);
-      mockPrismaService.member.findMany.mockResolvedValue([
+      mockPersistence.member.findMany.mockResolvedValue([
         {
           guildId: "guild-access",
           active: true,
@@ -623,7 +732,7 @@ describe("GuildsService", () => {
           ],
         },
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockPersistence.userSettings.findUnique.mockResolvedValue(null);
       mockMembersService.isMemberSoftStale.mockReturnValue(false);
 
       const result = await service.getCurrentUserAccessibleGuilds(
@@ -658,10 +767,10 @@ describe("GuildsService", () => {
     });
 
     it("marks stale accessible guild data and queues a background refresh", async () => {
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-stale", ownerId: "owner-1", name: "Stale" }),
       ]);
-      mockPrismaService.member.findMany.mockResolvedValue([
+      mockPersistence.member.findMany.mockResolvedValue([
         {
           guildId: "guild-stale",
           active: true,
@@ -678,7 +787,7 @@ describe("GuildsService", () => {
           ],
         },
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockPersistence.userSettings.findUnique.mockResolvedValue(null);
       mockMembersService.isMemberSoftStale.mockReturnValue(true);
 
       const result = await service.getCurrentUserAccessibleGuilds(
@@ -730,8 +839,8 @@ describe("GuildsService", () => {
       await Promise.resolve();
 
       expect(result).toEqual(cachedGuilds);
-      expect(mockPrismaService.guild.findMany).not.toHaveBeenCalled();
-      expect(mockPrismaService.member.findMany).not.toHaveBeenCalled();
+      expect(mockPersistence.guild.findMany).not.toHaveBeenCalled();
+      expect(mockPersistence.member.findMany).not.toHaveBeenCalled();
       expect(mockMembersService.queueMemberRefresh).toHaveBeenCalledWith({
         discordId: "discord-123",
         guildId: "guild-stale",
@@ -745,15 +854,15 @@ describe("GuildsService", () => {
   describe("getUserGuilds", () => {
     it("restores cached accessible guilds for the legacy game source when Discord returns no guilds", async () => {
       mockDiscordService.getUserGuilds.mockResolvedValue([]);
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({
           id: "guild-cached",
           name: "Cached",
           ownerId: "owner-cached",
         }),
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
-      mockPrismaService.member.findMany
+      mockPersistence.userSettings.findUnique.mockResolvedValue(null);
+      mockPersistence.member.findMany
         .mockResolvedValueOnce([
           {
             guildId: "guild-cached",
@@ -885,11 +994,11 @@ describe("GuildsService", () => {
         fresh: true,
         complete: true,
       });
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({ id: "guild-a", name: "Alpha", ownerId: "owner-a" }),
         createGuild({ id: "guild-b", name: "Beta", ownerId: "owner-b" }),
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue({
+      mockPersistence.userSettings.findUnique.mockResolvedValue({
         guildsOrder: ["guild-b", "guild-a"],
       });
 
@@ -905,17 +1014,17 @@ describe("GuildsService", () => {
   describe("getUserGuildsWithPermissions", () => {
     it("uses cached database permissions without calling Discord", async () => {
       mockRedisService.getJson.mockReset();
-      mockPrismaService.guild.findMany.mockReset();
-      mockPrismaService.member.findMany.mockReset();
+      mockPersistence.guild.findMany.mockReset();
+      mockPersistence.member.findMany.mockReset();
       mockRedisService.getJson.mockResolvedValue(null);
-      mockPrismaService.guild.findMany.mockResolvedValue([
+      mockPersistence.guild.findMany.mockResolvedValue([
         createGuild({
           id: "guild-access",
           name: "Access",
           ownerId: "owner-1",
         }),
       ]);
-      mockPrismaService.member.findMany.mockResolvedValue([
+      mockPersistence.member.findMany.mockResolvedValue([
         {
           guildId: "guild-access",
           active: true,
@@ -980,7 +1089,7 @@ describe("GuildsService", () => {
       );
 
       expect(result).toEqual(cachedPermissions);
-      expect(mockPrismaService.guild.findMany).not.toHaveBeenCalled();
+      expect(mockPersistence.guild.findMany).not.toHaveBeenCalled();
       expect(mockDiscordService.getUserGuilds).not.toHaveBeenCalled();
       expect(
         mockDiscordService.getFreshCompleteUserGuilds,
@@ -1062,7 +1171,7 @@ describe("GuildsService", () => {
           ],
         },
       ];
-      mockPrismaService.member.findMany.mockResolvedValue(members);
+      mockPersistence.member.findMany.mockResolvedValue(members);
 
       await testService.refreshGuildCandidatesWithinBudget({
         discordId: "discord-123",
@@ -1142,7 +1251,7 @@ describe("GuildsService", () => {
           ],
         },
       ];
-      mockPrismaService.member.findMany.mockResolvedValue(members);
+      mockPersistence.member.findMany.mockResolvedValue(members);
 
       await testService.refreshGuildCandidatesWithinBudget({
         discordId: "discord-123",
@@ -1185,12 +1294,12 @@ describe("GuildsService", () => {
         reservationActiveLimitPerSpot: 4,
       });
 
-      mockPrismaService.guild.findUnique.mockResolvedValue({
+      mockPersistence.guild.findUnique.mockResolvedValue({
         vanityUrl: "guild-vanity",
         reservationMinDurationMinutes: 30,
         reservationMaxDurationMinutes: 180,
       });
-      mockPrismaService.guild.update.mockResolvedValue(updatedGuild);
+      mockPersistence.guild.update.mockResolvedValue(updatedGuild);
 
       await expect(
         service.updateGuildConfig("guild-123", {
@@ -1202,7 +1311,7 @@ describe("GuildsService", () => {
         }),
       ).resolves.toEqual(updatedGuild);
 
-      expect(mockPrismaService.guild.update).toHaveBeenCalledWith({
+      expect(mockPersistence.guild.update).toHaveBeenCalledWith({
         where: { id: "guild-123" },
         data: {
           reservationMaxDurationMinutes: 240,
@@ -1229,7 +1338,7 @@ describe("GuildsService", () => {
         status: 400,
       });
 
-      expect(mockPrismaService.guild.update).not.toHaveBeenCalled();
+      expect(mockPersistence.guild.update).not.toHaveBeenCalled();
     });
   });
 
@@ -1247,7 +1356,7 @@ describe("GuildsService", () => {
           globalUserId: "user-456",
         },
       ];
-      mockPrismaService.guild.findUnique.mockResolvedValue({
+      mockPersistence.guild.findUnique.mockResolvedValue({
         vanityUrl: "guild-vanity",
       });
       mockMembersService.deleteMembersByGuildId.mockResolvedValue({
@@ -1278,10 +1387,10 @@ describe("GuildsService", () => {
 
     it("should not notify affected members when guild deletion fails", async () => {
       const error = new Error("guild delete failed");
-      mockPrismaService.guild.findUnique.mockResolvedValue({
+      mockPersistence.guild.findUnique.mockResolvedValue({
         vanityUrl: null,
       });
-      mockPrismaService.$transaction.mockRejectedValue(error);
+      mockPersistence.$transaction.mockRejectedValue(error);
 
       await expect(
         service.deleteGuild({ guildId: "guild-123" }),

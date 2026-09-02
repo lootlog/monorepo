@@ -1,18 +1,17 @@
-import { z } from "zod";
-
-const indexPlayerSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  lvl: z.number(),
-  prof: z.string(),
-  icon: z.string(),
-  characterId: z.number(),
-  accountId: z.number(),
-  world: z.string(),
+import { Schema } from "effect";
+export const IndexPlayer = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  lvl: Schema.Number,
+  prof: Schema.String,
+  icon: Schema.String,
+  characterId: Schema.Number,
+  accountId: Schema.Number,
+  world: Schema.String,
 });
-
-export const indexPlayersPayloadSchema = z.array(indexPlayerSchema);
-
+export const IndexPlayersPayload = Schema.Array(IndexPlayer);
 export type IndexPlayersDto = {
-  players: z.infer<typeof indexPlayersPayloadSchema>;
+  readonly players: typeof IndexPlayersPayload.Type;
 };
+export const decodeIndexPlayersPayload =
+  Schema.decodeUnknownSync(IndexPlayersPayload);

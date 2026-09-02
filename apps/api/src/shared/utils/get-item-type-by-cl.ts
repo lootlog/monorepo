@@ -1,4 +1,7 @@
-import { ItemType } from "#src/generated/prisma/client";
+import {
+  ItemTypeEnum as ItemType,
+  type ItemTypeEnum as ItemTypeValue,
+} from "@lootlog/schema/loot";
 
 const ITEM_TYPES = {
   1: ItemType.ONE_HAND_WEAPON,
@@ -35,6 +38,6 @@ const ITEM_TYPES = {
   32: ItemType.TELEPORTS,
 };
 
-export const getItemTypeByCl = (cl: number): ItemType | undefined => {
+export const getItemTypeByCl = (cl: number): ItemTypeValue | undefined => {
   return ITEM_TYPES[cl];
 };

@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 import { isoDatetimeCodec } from "./zod-response-codecs.js";
 
 const LootCommentMemberRoleResponseSchema = z.object({

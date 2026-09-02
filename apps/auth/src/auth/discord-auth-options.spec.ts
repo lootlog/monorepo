@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { DiscordProfile } from "better-auth/social-providers";
 import { getTestInstance } from "better-auth/test";
 import { createDiscordAuthOptions } from "./discord-auth-options.js";
@@ -65,53 +66,52 @@ const storeResponseCookies = (
   );
 };
 
-describe("Discord OAuth identity", async () => {
-  const { auth, client } = await getTestInstance(
-    createDiscordAuthOptions({
-      clientId: "test-client-id",
-      clientSecret: "test-client-secret",
-      redirectURI: "http://localhost:3000/api/auth/callback/discord",
-      scopes: ["identify", "email"],
-    }),
-    { disableTestUser: true },
-  );
+const { auth, client } = await getTestInstance(
+  createDiscordAuthOptions({
+    clientId: "test-client-id",
+    clientSecret: "test-client-secret",
+    redirectURI: "http://localhost:3000/api/auth/callback/discord",
+    scopes: ["identify", "email"],
+  }),
+  { disableTestUser: true },
+);
 
+const originalFetch = globalThis.fetch;
+
+describe("Discord OAuth identity", () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn<typeof fetch>((input) => {
-        const requestURL =
-          input instanceof Request ? input.url : input.toString();
-        const parsedRequestURL = new URL(requestURL);
+    globalThis.fetch = mock((input: URL | RequestInfo) => {
+      const requestURL =
+        input instanceof Request ? input.url : input.toString();
+      const parsedRequestURL = new URL(requestURL);
 
-        if (requestURL === "https://discord.com/api/oauth2/token") {
-          return Promise.resolve(
-            Response.json({
-              access_token: "test-access-token",
-              refresh_token: "test-refresh-token",
-              token_type: "Bearer",
-              expires_in: 3600,
-              scope: "identify email",
-            }),
-          );
-        }
-
-        if (
-          parsedRequestURL.origin === "https://discord.com" &&
-          decodeURIComponent(parsedRequestURL.pathname) === "/api/users/@me"
-        ) {
-          return Promise.resolve(Response.json(discordProfile));
-        }
-
-        return Promise.reject(
-          new Error(`Unexpected external request: ${requestURL}`),
+      if (requestURL === "https://discord.com/api/oauth2/token") {
+        return Promise.resolve(
+          Response.json({
+            access_token: "test-access-token",
+            refresh_token: "test-refresh-token",
+            token_type: "Bearer",
+            expires_in: 3600,
+            scope: "identify email",
+          }),
         );
-      }),
-    );
+      }
+
+      if (
+        parsedRequestURL.origin === "https://discord.com" &&
+        decodeURIComponent(parsedRequestURL.pathname) === "/api/users/@me"
+      ) {
+        return Promise.resolve(Response.json(discordProfile));
+      }
+
+      return Promise.reject(
+        new Error(`Unexpected external request: ${requestURL}`),
+      );
+    }) as unknown as typeof fetch;
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    globalThis.fetch = originalFetch;
   });
 
   const signInWithDiscord = async () => {

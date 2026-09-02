@@ -4,11 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import {
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationTriggerType as DbNotificationTriggerType,
-} from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
 import {
@@ -23,6 +18,7 @@ import { Error as NotificationError } from "#src/notifications/enum/error.enum";
 import { ensureLimitNotExceeded } from "#src/notifications/utils/ensure-limit-not-exceeded.util";
 import type { CreateWatchedItemQuickAddDto } from "#src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "#src/notifications/dto/create-watched-item.dto";
+import { NotificationsRepository } from "./notifications.repository.js";
 
 const USER_WATCHED_ITEM_LIMIT = 20;
 
@@ -44,7 +40,7 @@ type WatchedItemWithUnknownSnapshot = Omit<
 @Injectable()
 export class WatchedItemService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: NotificationsRepository,
     private readonly guildsService: GuildsService,
     private readonly targetService: NotificationTargetService,
     private readonly jobService: NotificationJobService,
@@ -52,21 +48,7 @@ export class WatchedItemService {
   ) {}
 
   async listWatchedItems(discordId: string) {
-    const watchedItems = await this.prisma.watchedItem.findMany({
-      where: { userId: discordId },
-      include: {
-        notificationRule: {
-          include: {
-            targets: {
-              include: {
-                target: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+    const watchedItems = await this.repository.listWatchedItems(discordId);
 
     const pairs = [
       ...new Map(
@@ -77,25 +59,7 @@ export class WatchedItemService {
       ).values(),
     ];
 
-    const snapshots = await this.prisma.itemSnapshot.findMany({
-      where: {
-        OR: pairs.map(({ itemId, itemName }) => ({
-          itemId,
-          name: itemName,
-        })),
-      },
-      orderBy: { createdAt: "desc" },
-      distinct: ["itemId", "name"],
-      select: {
-        itemId: true,
-        name: true,
-        icon: true,
-        rarity: true,
-        lvl: true,
-        itemType: true,
-        statRaw: true,
-      },
-    });
+    const snapshots = await this.repository.findLatestItemSnapshots(pairs);
 
     const snapshotByKey = new Map(
       snapshots.map((s) => [`${s.itemId}:${s.name}`, s]),
@@ -186,16 +150,11 @@ export class WatchedItemService {
       );
     }
 
-    const existingWatchedItem = await this.prisma.watchedItem.findUnique({
-      where: {
-        userId_itemId_world: {
-          userId: discordId,
-          itemId: params.itemId,
-          world: params.world,
-        },
-      },
-      include: { notificationRule: true },
-    });
+    const existingWatchedItem = await this.repository.findWatchedItem(
+      discordId,
+      params.itemId,
+      params.world,
+    );
 
     const existingFilters = existingWatchedItem?.notificationRule
       ? this.matchingService.parseFilters(
@@ -205,39 +164,14 @@ export class WatchedItemService {
     const guildIds = params.resolveGuildIds(existingFilters);
 
     if (existingWatchedItem?.notificationRuleId) {
-      await this.prisma.$transaction(async (tx) => {
-        await tx.watchedItem.update({
-          where: { id: existingWatchedItem.id },
-          data: {
-            enabled: true,
-            itemName: params.itemName,
-          },
-        });
-        await tx.notificationRule.update({
-          where: { id: existingWatchedItem.notificationRuleId },
-          data: {
-            enabled: true,
-            world: params.world,
-            filters: {
-              itemId: params.itemId,
-              guildIds,
-            },
-          },
-        });
-        const notificationRuleId = existingWatchedItem.notificationRuleId;
-        if (!notificationRuleId) {
-          throw new globalThis.Error(
-            "Missing notification rule id for watched item",
-          );
-        }
-
-        await tx.notificationRuleTarget.createMany({
-          data: targetIds.map((targetId) => ({
-            ruleId: notificationRuleId,
-            targetId,
-          })),
-          skipDuplicates: true,
-        });
+      await this.repository.updateWatchedItem({
+        watchedItemId: existingWatchedItem.id,
+        ruleId: existingWatchedItem.notificationRuleId,
+        itemId: params.itemId,
+        itemName: params.itemName,
+        world: params.world,
+        guildIds,
+        targetIds,
       });
 
       return this.getWatchedItemByScope({
@@ -251,71 +185,26 @@ export class WatchedItemService {
       await this.ensureWatchedItemLimitNotExceeded(discordId);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const notificationRule = await tx.notificationRule.create({
-        data: {
-          ownerType: DbNotificationOwnerType.USER,
-          ownerId: discordId,
-          triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-          world: params.world,
-          filters: {
-            itemId: params.itemId,
-            guildIds,
-          },
-          enabled: true,
-          dedupeWindowSeconds: 0,
-          targets: {
-            createMany: {
-              data: targetIds.map((targetId) => ({ targetId })),
-            },
-          },
-        },
-      });
-
-      return tx.watchedItem
-        .upsert({
-          where: {
-            userId_itemId_world: {
-              userId: discordId,
-              itemId: params.itemId,
-              world: params.world,
-            },
-          },
-          create: {
-            userId: discordId,
-            itemId: params.itemId,
-            itemName: params.itemName,
-            world: params.world,
-            notificationRuleId: notificationRule.id,
-          },
-          update: {
-            enabled: true,
-            itemName: params.itemName,
-            notificationRuleId: notificationRule.id,
-          },
-          include: {
-            notificationRule: {
-              include: {
-                targets: {
-                  include: {
-                    target: true,
-                  },
-                },
-              },
-            },
-          },
-        })
-        .then((watchedItem) => this.mapWatchedItem(watchedItem));
+    await this.repository.createWatchedItem({
+      userId: discordId,
+      itemId: params.itemId,
+      itemName: params.itemName,
+      world: params.world,
+      guildIds,
+      targetIds,
+    });
+    return this.getWatchedItemByScope({
+      discordId,
+      itemId: params.itemId,
+      world: params.world,
     });
   }
 
   async deleteWatchedItem(discordId: string, watchedItemId: number) {
-    const watchedItem = await this.prisma.watchedItem.findFirst({
-      where: {
-        id: watchedItemId,
-        userId: discordId,
-      },
-    });
+    const watchedItem = await this.repository.findWatchedItemById(
+      discordId,
+      watchedItemId,
+    );
 
     if (!watchedItem) {
       throw new NotFoundException(NotificationError.WATCHED_ITEM_NOT_FOUND);
@@ -327,25 +216,17 @@ export class WatchedItemService {
       });
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.watchedItem.delete({ where: { id: watchedItem.id } });
-
-      if (watchedItem.notificationRuleId) {
-        await tx.notificationRule.delete({
-          where: { id: watchedItem.notificationRuleId },
-        });
-      }
-    });
+    await this.repository.deleteWatchedItem(
+      watchedItem.id,
+      watchedItem.notificationRuleId,
+    );
 
     return { success: true };
   }
 
   private async ensureWatchedItemLimitNotExceeded(discordId: string) {
-    const currentWatchedItemCount = await this.prisma.watchedItem.count({
-      where: {
-        userId: discordId,
-      },
-    });
+    const currentWatchedItemCount =
+      await this.repository.countWatchedItems(discordId);
 
     ensureLimitNotExceeded({
       currentCount: currentWatchedItemCount,
@@ -401,27 +282,8 @@ export class WatchedItemService {
     itemId: number;
     world: string;
   }) {
-    return this.prisma.watchedItem
-      .findUnique({
-        where: {
-          userId_itemId_world: {
-            userId: params.discordId,
-            itemId: params.itemId,
-            world: params.world,
-          },
-        },
-        include: {
-          notificationRule: {
-            include: {
-              targets: {
-                include: {
-                  target: true,
-                },
-              },
-            },
-          },
-        },
-      })
+    return this.repository
+      .findWatchedItem(params.discordId, params.itemId, params.world)
       .then((watchedItem) =>
         watchedItem ? this.mapWatchedItem(watchedItem) : null,
       );

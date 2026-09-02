@@ -1,5 +1,5 @@
-import { NotificationTargetType } from "@lootlog/types";
-import { z } from "zod";
+import { NotificationTargetType } from "@lootlog/schema/notifications";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 
 const CreateNotificationTargetSchema = z.object({

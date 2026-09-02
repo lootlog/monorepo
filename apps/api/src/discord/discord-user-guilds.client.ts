@@ -29,7 +29,7 @@ import {
 } from "./discord-cache.util.js";
 import { serviceConfig } from "#src/config/service.config";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {
   recordInvalidDiscordRequest,

@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
 import { useGlobalStore } from "@/store/global.store";
@@ -7,7 +7,8 @@ import { usePartyFinderStore } from "@/store/party-finder.store";
 
 const listReadyRooms = vi.fn<() => Promise<unknown[]>>();
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   partyReadyRoomControllerList: () => listReadyRooms(),
 }));
 

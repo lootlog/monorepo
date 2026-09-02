@@ -52,6 +52,55 @@ describe("realtime MessagePack codec", () => {
     expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   });
 
+  test("exposes the connection challenge identifier after session join", () => {
+    const frame = {
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection-1",
+        organizationIds: ["organization-1"],
+        subscriptionScopes: [],
+      },
+    } satisfies RealtimeFrame;
+
+    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
+  });
+
+  test("round-trips the exact legacy map ping event shape", () => {
+    const frame = {
+      v: 1,
+      type: "map-ping.received",
+      data: {
+        pingId: "ping-1",
+        world: "classic",
+        mapId: 7,
+        type: "enemy",
+        x: 10,
+        y: 11,
+        sender: { characterId: "123", name: "Hero" },
+        createdAt: 1_000,
+      },
+    } satisfies RealtimeFrame;
+    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
+  });
+
+  test("rejects malformed air tag observations at the protocol boundary", () => {
+    const invalid = {
+      v: 1,
+      type: "air-tag.observation",
+      requestId: "request-1",
+      data: {
+        expectedMapId: 7,
+        observations: [
+          { targetId: "target", nickname: "Enemy", relation: 99, x: 1, y: 2 },
+        ],
+      },
+    };
+    expect(() => decodeRealtimeFrame(encode(invalid))).toThrow(
+      RealtimeCodecError,
+    );
+  });
+
   test("rejects malformed and unknown frames", () => {
     const malformed = new Uint8Array([0xc1]);
     expect(() => decodeRealtimeFrame(malformed)).toThrow(RealtimeCodecError);

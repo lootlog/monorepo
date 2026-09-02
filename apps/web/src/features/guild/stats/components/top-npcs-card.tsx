@@ -19,8 +19,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
-} from "@lootlog/api-client/react-query/main/kills";
-import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
+} from "@lootlog/client/main";
+import type { NpcType } from "@lootlog/client/main";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";

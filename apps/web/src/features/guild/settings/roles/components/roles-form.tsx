@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { toast } from "sonner";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   Accordion,
   AccordionContent,
@@ -45,8 +45,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   invalidateRolesControllerGetGuildRoles,
   useRolesControllerUpdateGuildRole,
-} from "@lootlog/api-client/react-query/main/roles";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
+} from "@lootlog/client/main";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 
 const PERMISSION_GROUPS = [
   {

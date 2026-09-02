@@ -1,17 +1,12 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
 import { getMeilisearchErrorCode } from "#src/meilisearch/meilisearch.utils";
+import type { AppLogger } from "#src/shared/logger";
 import type { GetItemsDto } from "./dto/get-items.dto.js";
 import { ITEMS_INDEX } from "./constants/meilisearch.js";
 import type { IndexItemsDto } from "./dto/index-items.dto.js";
-import type { itemHitSchema } from "./dto/item-hit.schema.js";
+import type { ItemHit } from "./dto/item-hit.schema.js";
 import { createItemSearchFields } from "./utils/create-item-search-fields.js";
 
-type ItemHit = z.infer<typeof itemHitSchema>;
 type SearchItemsResponse = {
   estimatedTotalHits: number;
   facetDistribution: Record<string, Record<string, number>>;
@@ -43,11 +38,10 @@ const buildItemWorldFilter = (world: string) => {
   return `(worlds = ${formattedWorld} OR world = ${formattedWorld})`;
 };
 
-@Injectable()
 export class ItemsService {
   constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly meilisearch: Meilisearch,
+    private readonly logger: AppLogger,
   ) {}
 
   async searchItems({

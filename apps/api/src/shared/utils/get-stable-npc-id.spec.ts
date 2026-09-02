@@ -1,4 +1,4 @@
-import { NpcType } from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { getStableNpcId } from "./get-stable-npc-id.js";
 
 describe("getStableNpcId", () => {

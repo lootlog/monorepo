@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   BadRequestException,
   Body,
@@ -21,7 +21,9 @@ import {
 } from "@nestjs/swagger";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
+type Role = typeof roleTable.$inferSelect;
 import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,

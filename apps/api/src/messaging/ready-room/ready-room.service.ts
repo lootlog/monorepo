@@ -15,7 +15,7 @@ import type {
   PartyReadyRoomOrganizerProjection,
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 import { ChatService } from "#src/chat/chat.service";
 import {
   createReadyRoomClientUpdate,

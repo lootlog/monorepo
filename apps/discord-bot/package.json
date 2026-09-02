@@ -7,54 +7,34 @@
   "author": "",
   "type": "module",
   "imports": {
-    "#src/*": {
-      "types": "./src/*.ts",
-      "default": "./dist/src/*.js"
-    }
+    "#src/*": "./src/*.ts"
   },
   "scripts": {
-    "dev": "nest start --watch",
-    "build": "nest build",
-    "start": "bun --preload ./dist/src/instrumentation.js dist/src/main.js",
-    "start:debug": "nest start --debug --watch",
+    "dev": "bun --watch src/main.ts",
+    "build": "bun build src/main.ts --target=bun --packages=external --outdir=dist/src --sourcemap=linked",
+    "start": "bun --enable-source-maps dist/src/main.js",
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
     "format": "oxfmt src test",
-    "test": "vitest run --config ./vitest.config.ts",
-    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
-    "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "test:watch": "vitest --config ./vitest.config.ts"
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "test:e2e": "bun test test",
+    "test:watch": "bun test --watch"
   },
   "dependencies": {
-    "@golevelup/nestjs-rabbitmq": "^9.0.2",
-    "@lootlog/instrumentation": "workspace:*",
-    "@lootlog/nest-shared": "workspace:*",
-    "@lootlog/types": "workspace:*",
-    "@nestjs/common": "catalog:",
-    "@nestjs/core": "catalog:",
-    "@nestjs/microservices": "catalog:",
-    "@nestjs/platform-express": "catalog:",
+    "@effect/platform-bun": "catalog:",
+    "@lootlog/messaging": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
+    "@lootlog/schema": "workspace:*",
     "discord-api-types": "0.37.120",
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
-    "necord": "^6.14.0",
-    "nest-winston": "catalog:",
-    "reflect-metadata": "catalog:",
-    "rxjs": "catalog:",
-    "winston": "^3.19.0",
-    "zod": "catalog:"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@nestjs/cli": "catalog:",
-    "@nestjs/schematics": "catalog:",
-    "@nestjs/testing": "catalog:",
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "@types/supertest": "^7.2.1",
-    "@vitest/coverage-v8": "catalog:",
-    "supertest": "^7.2.2",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   }
 }

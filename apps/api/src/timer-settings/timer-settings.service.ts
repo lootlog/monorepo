@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import type { Prisma } from "#src/generated/prisma/client";
 import {
   SettingsDocumentsService,
   type SettingsDocumentsResponse,
@@ -20,8 +19,29 @@ const APPEARANCE_FIELDS = [
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+type JsonObject = { [key: string]: JsonValue };
+
 const asRecord = (value: unknown) => (isRecord(value) ? value : {});
-const asJsonObject = (value: unknown) => asRecord(value) as Prisma.JsonObject;
+const asJsonValue = (value: unknown): JsonValue => {
+  if (value === null) return null;
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(asJsonValue);
+  if (!isRecord(value)) return null;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
+  );
+};
+const asJsonObject = (value: unknown): JsonObject => {
+  const normalized = asJsonValue(value);
+  return isRecord(normalized) ? normalized : {};
+};
 const asStringArray = (value: unknown) =>
   Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")

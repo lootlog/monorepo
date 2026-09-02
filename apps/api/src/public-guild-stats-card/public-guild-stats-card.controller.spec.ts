@@ -3,7 +3,7 @@ import type { FastifyReply } from "fastify";
 import { serviceConfig } from "#src/config/service.config";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { mockFn } from "#src/test/mock-fn";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { PublicGuildStatsCardController } from "./public-guild-stats-card.controller.js";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 

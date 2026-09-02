@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
   refetchPreferences: vi.fn(),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   useUsersControllerGetCurrentUserGuilds: () => ({
     data: [
       { id: "guild-1", name: "Alpha", icon: null },

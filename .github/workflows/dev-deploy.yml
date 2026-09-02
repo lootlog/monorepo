@@ -65,7 +65,7 @@ jobs:
             jq -c '[.data.affectedPackages.items[].name]' <<< "$affected"
           )"
           plan="$(
-            node tools/ci/create-ci-plan.mjs \
+            bun tools/ci/create-ci-plan.mjs \
               "$affected_packages" \
               "$pull_request_heads"
           )"

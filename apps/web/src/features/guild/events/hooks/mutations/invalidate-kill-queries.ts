@@ -3,7 +3,7 @@ import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
   getListPendingParticipationConfirmationsQueryKey,
   getShowEventOverviewQueryKey,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { invalidateRankingQueries } from "./invalidate-ranking-queries";
 
 const getEventKillsPath = (guildId: string, eventId: string) =>

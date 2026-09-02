@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { PrismaService } from "../src/db/prisma.service.js";
-import { Permission } from "../src/generated/prisma/client.js";
+import { TestDatabase } from "./test-database.js";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   closeE2EApp,
   createE2EApp,
@@ -20,24 +20,24 @@ import {
 
 describe("Events Ranking E2E", () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let database: TestDatabase;
   let redis: RedisService;
 
   beforeAll(async () => {
-    ({ app, prisma, redis } = await createE2EApp());
+    ({ app, database, redis } = await createE2EApp());
   });
 
   afterAll(async () => {
-    await closeE2EApp(app, prisma);
+    await closeE2EApp(app, database);
   });
 
   beforeEach(async () => {
-    await resetEventsTimersState(prisma, redis);
+    await resetEventsTimersState(database, redis);
   });
 
   it("covers ranking, timers, stats, histories, detail, edit history and point updates", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { member } = await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { member } = await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_READ,
@@ -46,15 +46,15 @@ describe("Events Ranking E2E", () => {
         Permission.OWNER,
       ],
     });
-    const { event, hero } = await createEventFixture(prisma, {
+    const { event, hero } = await createEventFixture(database, {
       guildId: guild.id,
     });
-    await createTimerFixture(prisma, {
+    await createTimerFixture(database, {
       guildId: guild.id,
       memberId: member.id,
       world: TEST_WORLD,
     });
-    const { kill, ranking, killPointId } = await createKillFixture(prisma, {
+    const { kill, ranking, killPointId } = await createKillFixture(database, {
       eventId: event.id,
       heroNpcId: hero.id,
       member,
@@ -158,19 +158,19 @@ describe("Events Ranking E2E", () => {
   });
 
   it("covers pending and confirm participation", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { member } = await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { member } = await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_READ,
         Permission.LOOTLOG_EVENTS_WRITE,
       ],
     });
-    const { event, hero } = await createEventFixture(prisma, {
+    const { event, hero } = await createEventFixture(database, {
       guildId: guild.id,
       participationConfirmationMinutes: 10,
     });
-    const { kill } = await createKillFixture(prisma, {
+    const { kill } = await createKillFixture(database, {
       eventId: event.id,
       heroNpcId: hero.id,
       member,
@@ -196,12 +196,12 @@ describe("Events Ranking E2E", () => {
   });
 
   it("rejects invalid ranking and kill requests", async () => {
-    const guild = await createGuildFixture(prisma);
-    await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [Permission.LOOTLOG_EVENTS_READ, Permission.OWNER],
     });
-    const { event, hero } = await createEventFixture(prisma, {
+    const { event, hero } = await createEventFixture(database, {
       guildId: guild.id,
     });
 
@@ -225,21 +225,21 @@ describe("Events Ranking E2E", () => {
   });
 
   it("enforces ranking permissions", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { member } = await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { member } = await createMemberFixture(database, {
       guildId: guild.id,
       auth: TEST_AUTH,
       permissions: [Permission.LOOTLOG_EVENTS_READ],
     });
-    const { event, hero } = await createEventFixture(prisma, {
+    const { event, hero } = await createEventFixture(database, {
       guildId: guild.id,
     });
-    const { ranking } = await createKillFixture(prisma, {
+    const { ranking } = await createKillFixture(database, {
       eventId: event.id,
       heroNpcId: hero.id,
       member,
     });
-    await createMemberFixture(prisma, {
+    await createMemberFixture(database, {
       guildId: guild.id,
       auth: FORBIDDEN_AUTH,
       permissions: [],

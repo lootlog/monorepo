@@ -1,11 +1,11 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import {
-  ItemRarity,
-  LootSource,
-  NpcType,
-  Profession,
-} from "#src/generated/prisma/client";
+  LootSourceEnum as LootSource,
+  ProfessionEnum as Profession,
+} from "@lootlog/schema/loot";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import * as z from "zod";
 import { isoDatetimeCodec } from "./zod-response-codecs.js";
 
 const LootItemResponseSchema = z

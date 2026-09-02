@@ -11,7 +11,6 @@ import type { APIGuildMember } from "discord-api-types/v10";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordService } from "#src/discord/discord.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -26,6 +25,7 @@ import {
 } from "./member-discord-sync-status.js";
 import { MemberRemovalService } from "./member-removal.service.js";
 import type { MemberSyncResult, MemberWithRoles } from "./member.types.js";
+import { MembersRepository } from "./members.repository.js";
 
 @Injectable()
 export class MemberDiscordSyncService {
@@ -33,7 +33,7 @@ export class MemberDiscordSyncService {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    private readonly repository: MembersRepository,
     private readonly discordService: DiscordService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly amqpConnection: AmqpConnection,
@@ -223,22 +223,18 @@ export class MemberDiscordSyncService {
     const syncTimestamp = new Date();
 
     try {
-      const existingRoleIds =
-        roleIds.length > 0
-          ? (
-              await this.prisma.role.findMany({
-                where: { id: { in: roleIds } },
-                select: { id: true },
-              })
-            ).map((role) => role.id)
-          : [];
+      const existingRoleIds = await this.repository.findExistingRoleIds(
+        roleIds,
+        guildId,
+      );
 
       const memberName = nick ?? user.global_name ?? user.username;
       const memberAvatar = avatar ?? user.avatar;
 
-      const member = await this.prisma.member.upsert({
-        where: { memberId: { userId: id, guildId } },
-        update: {
+      const member = await this.repository.upsertMemberWithRoles(
+        id,
+        guildId,
+        {
           avatar: memberAvatar,
           banner,
           name: memberName,
@@ -247,23 +243,9 @@ export class MemberDiscordSyncService {
           lastDiscordAttemptAt: syncTimestamp,
           lastDiscordSyncAt: syncTimestamp,
           lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-          roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
         },
-        create: {
-          userId: id,
-          guild: { connect: { id: guildId } },
-          avatar: memberAvatar,
-          active: true,
-          name: memberName,
-          globalUserId,
-          banner,
-          lastDiscordAttemptAt: syncTimestamp,
-          lastDiscordSyncAt: syncTimestamp,
-          lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-          roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
-        },
-        include: { roles: true },
-      });
+        existingRoleIds,
+      );
 
       await Promise.all([
         this.amqpConnection.publish(
@@ -306,33 +288,20 @@ export class MemberDiscordSyncService {
       deactivate = false,
       markSynced = false,
     } = options;
-    const existingMember = await this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-    });
+    const existingMember = await this.repository.findMember(discordId, guildId);
 
     if (!existingMember) {
       return null;
     }
 
     const attemptTimestamp = new Date();
-    const member = await this.prisma.member.update({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-      data: {
-        lastDiscordAttemptAt: attemptTimestamp,
-        lastDiscordStatus: status,
-        ...(markSynced ? { lastDiscordSyncAt: attemptTimestamp } : {}),
-        ...(deactivate
-          ? {
-              active: false,
-              roles: { set: [] },
-            }
-          : {}),
-      },
-      include: { roles: true },
+    const member = await this.repository.markSyncAttempt({
+      userId: discordId,
+      guildId,
+      status,
+      deactivate,
+      markSynced,
+      attemptedAt: attemptTimestamp,
     });
 
     if (deactivate && existingMember.active) {

@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "#src/db/prisma.service";
 import { env } from "#src/config/env";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
+import { TimersRepository } from "./timers.repository.js";
 
 @Injectable()
 export class TimersCleanupService {
@@ -10,7 +10,7 @@ export class TimersCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(private readonly timersRepository: TimersRepository) {
     this.enabled = env.TIMER_CLEANUP_ENABLED !== "false";
     this.retentionDays = env.TIMER_RETENTION_DAYS;
   }
@@ -84,10 +84,9 @@ export class TimersCleanupService {
   }
 
   private deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {
-    return this.prisma.$executeRaw<number>`
-      DELETE FROM "Timer"
-      WHERE "maxSpawnTime" < ${cutoffDate}
-        AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
-    `;
+    return this.timersRepository.cleanupExpiredManualTimers(
+      cutoffDate,
+      TIMER_TYPES.CUSTOM_MANUAL,
+    );
   }
 }

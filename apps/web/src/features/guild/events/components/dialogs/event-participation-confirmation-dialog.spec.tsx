@@ -41,7 +41,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/events", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getListPendingParticipationConfirmationsQueryKey: () => [
     "participation-confirmations",
   ],

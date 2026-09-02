@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import {
   getEventRespawnWindowStatus,
   type EventRespawnWindowStatus,
 } from "../utils/event-respawn-window.util.js";
+import { EventCoordinationRepository } from "./event-coordination.repository.js";
+
+type CoverageGapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
 type CoordinationPriority = "CRITICAL" | "WARNING" | "OK" | "IDLE";
 type RecommendedAction =
@@ -69,39 +71,12 @@ const WINDOW_STATUS_RANK: Record<EventRespawnWindowStatus, number> = {
 @Injectable()
 export class EventCoordinationService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: EventCoordinationRepository,
     private readonly timersService: TimersService,
   ) {}
 
   async getCoordination(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: {
-        assignmentTimeoutMinutes: true,
-        id: true,
-        world: true,
-        heroNpcs: {
-          select: {
-            id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            npcLvl: true,
-            maps: {
-              orderBy: { mapId: "asc" },
-              select: {
-                id: true,
-                mapId: true,
-                mapName: true,
-                assignedMembers: {
-                  select: { id: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const event = await this.repository.findEvent(guildId, eventId);
 
     if (!event) {
       throw new NotFoundException("Event not found");
@@ -114,26 +89,7 @@ export class EventCoordinationService {
         event.world,
         event.heroNpcs,
       ),
-      this.prisma.eventMapCoverageGap.findMany({
-        where: {
-          heroNpcId: { in: event.heroNpcs.map((hero) => hero.id) },
-          endedAt: null,
-        },
-        select: {
-          id: true,
-          mapId: true,
-          heroNpcId: true,
-          gapType: true,
-          startedAt: true,
-          durationSeconds: true,
-          map: {
-            select: {
-              mapId: true,
-              mapName: true,
-            },
-          },
-        },
-      }),
+      this.repository.findActiveGaps(event.heroNpcs.map((hero) => hero.id)),
     ]);
 
     const timersByKey = new Map(timers.map((timer) => [timer.timerKey, timer]));
@@ -150,7 +106,7 @@ export class EventCoordinationService {
         const activeGapMapIds = new Set(heroActiveGaps.map((gap) => gap.mapId));
         const uncoveredGapMapIds = new Set(
           heroActiveGaps
-            .filter((gap) => gap.gapType === CoverageGapType.UNCOVERED)
+            .filter((gap) => gap.gapType === "UNCOVERED")
             .map((gap) => gap.mapId),
         );
         const totalMaps = hero.maps.length;
@@ -164,7 +120,7 @@ export class EventCoordinationService {
         );
         const unassignedMapCount = Math.max(0, totalMaps - assignedMaps);
         const unassignedGapCount = heroActiveGaps.filter(
-          (gap) => gap.gapType === CoverageGapType.UNASSIGNED,
+          (gap) => gap.gapType === "UNASSIGNED",
         ).length;
         const uncoveredGapCount = uncoveredGapMapIds.size;
         const unassignedMaps =
@@ -357,9 +313,9 @@ function compareActiveGaps(
   first: { gapType: CoverageGapType; startedAt: Date },
   second: { gapType: CoverageGapType; startedAt: Date },
 ) {
-  const gapRank = {
-    [CoverageGapType.UNASSIGNED]: 0,
-    [CoverageGapType.UNCOVERED]: 1,
+  const gapRank: Record<CoverageGapType, number> = {
+    UNASSIGNED: 0,
+    UNCOVERED: 1,
   };
 
   return (

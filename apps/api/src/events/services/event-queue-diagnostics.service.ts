@@ -1,34 +1,24 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { PrismaService } from "#src/db/prisma.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
+import { EventQueueDiagnosticsRepository } from "./event-queue-diagnostics.repository.js";
 
 @Injectable()
 export class EventQueueDiagnosticsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: EventQueueDiagnosticsRepository,
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
   async getAutoCloseJobsStatus(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: { id: true },
-    });
-
-    if (!event) {
+    if (!(await this.repository.eventExists(guildId, eventId))) {
       throw new NotFoundException("Event not found");
     }
 
-    const heroes = await this.prisma.eventHeroNpc.findMany({
-      where: { eventId },
-      select: { id: true },
-    });
-
-    const heroIds = new Set(heroes.map((hero) => hero.id));
+    const heroIds = new Set(await this.repository.findHeroIds(eventId));
 
     const [pendingJobs, delayedJobs, failedJobs] = await Promise.all([
       this.respawnWindowQueue.getJobs(["waiting", "active"]),
@@ -71,12 +61,7 @@ export class EventQueueDiagnosticsService {
   }
 
   async getQueueHealth(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: { id: true },
-    });
-
-    if (!event) {
+    if (!(await this.repository.eventExists(guildId, eventId))) {
       throw new NotFoundException("Event not found");
     }
 

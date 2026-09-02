@@ -1,4 +1,4 @@
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { ReservationMutationsService } from "./reservation-mutations.service.js";
 import type { ReservationViewerContext } from "./reservation-viewer.js";
 
@@ -47,26 +47,15 @@ describe("ReservationMutationsService", () => {
     actorIsOwner: false,
     permissions: [Permission.LOOTLOG_RESERVATIONS_WRITE],
   };
-  const transaction = {
-    reservation: {
-      findFirst: vi.fn(),
-      count: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-  };
-  const prisma = {
-    guild: {
-      findUniqueOrThrow: vi.fn(),
-      findUnique: vi.fn(),
-    },
-    member: { findFirst: vi.fn() },
-    reservation: {
-      delete: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
-    },
-    $transaction: vi.fn(),
+  const repository = {
+    findGuild: vi.fn(),
+    findActiveMember: vi.fn(),
+    createWithGuards: vi.fn(),
+    findOwned: vi.fn(),
+    findVisible: vi.fn(),
+    updateWithOverlapGuard: vi.fn(),
+    restore: vi.fn(),
+    delete: vi.fn(),
   };
   const guildsService = { getCurrentUserAccessibleGuilds: vi.fn() };
   const catalogService = { getSpot: vi.fn() };
@@ -87,17 +76,18 @@ describe("ReservationMutationsService", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-26T12:00:00.000Z"));
     vi.clearAllMocks();
-    prisma.guild.findUniqueOrThrow.mockResolvedValue(guild);
-    prisma.guild.findUnique.mockResolvedValue(guild);
-    prisma.member.findFirst.mockResolvedValue(member);
-    prisma.$transaction.mockImplementation(
-      (callback: (value: typeof transaction) => unknown) =>
-        callback(transaction),
-    );
-    transaction.reservation.findFirst.mockResolvedValue(null);
-    transaction.reservation.count.mockResolvedValue(0);
-    transaction.reservation.create.mockResolvedValue(reservation);
-    transaction.reservation.update.mockResolvedValue(reservation);
+    repository.findGuild.mockResolvedValue(guild);
+    repository.findActiveMember.mockResolvedValue(member);
+    repository.createWithGuards.mockResolvedValue({
+      kind: "created",
+      reservation,
+    });
+    repository.findOwned.mockResolvedValue(reservation);
+    repository.findVisible.mockResolvedValue(reservation);
+    repository.updateWithOverlapGuard.mockResolvedValue({
+      kind: "updated",
+      reservation,
+    });
     catalogService.getSpot.mockResolvedValue({
       id: reservation.spotId,
       name: reservation.spotName,
@@ -115,7 +105,7 @@ describe("ReservationMutationsService", () => {
     eventsPublisher.updated.mockResolvedValue(undefined);
 
     service = new ReservationMutationsService(
-      prisma as never,
+      repository as never,
       guildsService as never,
       catalogService as never,
       sharingService as never,
@@ -138,15 +128,14 @@ describe("ReservationMutationsService", () => {
       },
     });
 
-    expect(transaction.reservation.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        createdByUserId: context.userId,
+    expect(repository.createWithGuards).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: context.userId,
         authorDisplayName: member.name,
       }),
-      include: { guild: true },
-    });
-    const createInput = transaction.reservation.create.mock.calls[0]?.[0];
-    expect(createInput?.data).not.toHaveProperty("legacyCreatedByDiscordId");
+    );
+    const createInput = repository.createWithGuards.mock.calls[0]?.[0];
+    expect(createInput).not.toHaveProperty("legacyCreatedByDiscordId");
     expect(eventsPublisher.created).toHaveBeenCalledWith(
       expect.objectContaining({
         audienceGuildIds: [guild.id, "partner-guild"],
@@ -155,16 +144,6 @@ describe("ReservationMutationsService", () => {
   });
 
   it("does not let a partner reservation block a local write", async () => {
-    transaction.reservation.findFirst.mockImplementation(
-      (query: { where: { guildId: string | { in: string[] } } }) =>
-        Promise.resolve(
-          typeof query.where.guildId !== "string" &&
-            query.where.guildId.in.includes("partner-guild")
-            ? { id: 99 }
-            : null,
-        ),
-    );
-
     await service.create({
       context,
       spotId: reservation.spotId,
@@ -174,17 +153,16 @@ describe("ReservationMutationsService", () => {
       },
     });
 
-    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({
+    expect(repository.createWithGuards).toHaveBeenCalledWith(
+      expect.objectContaining({
         guildId: guild.id,
         spotId: reservation.spotId,
       }),
-      select: { id: true },
-    });
+    );
   });
 
   it("rejects an overlapping reservation in the current organization", async () => {
-    transaction.reservation.findFirst.mockResolvedValue({ id: 99 });
+    repository.createWithGuards.mockResolvedValue({ kind: "overlap" });
 
     await expect(
       service.create({
@@ -197,14 +175,13 @@ describe("ReservationMutationsService", () => {
       }),
     ).rejects.toMatchObject({ status: 409 });
 
-    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({ guildId: guild.id }),
-      select: { id: true },
-    });
+    expect(repository.createWithGuards).toHaveBeenCalledWith(
+      expect.objectContaining({ guildId: guild.id }),
+    );
   });
 
   it("does not let a local moderator delete a partner reservation", async () => {
-    prisma.reservation.findFirst.mockResolvedValue({
+    repository.findVisible.mockResolvedValue({
       ...reservation,
       guildId: "partner-guild",
       createdByUserId: "another-user",
@@ -221,12 +198,12 @@ describe("ReservationMutationsService", () => {
       }),
     ).rejects.toMatchObject({ status: 403 });
     expect(reminderService.cancel).not.toHaveBeenCalled();
-    expect(prisma.reservation.delete).not.toHaveBeenCalled();
+    expect(repository.delete).not.toHaveBeenCalled();
   });
 
   it("invalidates only the source organization's sharing audience when an owner deletes through a partner calendar", async () => {
     const sourceGuildId = "partner-guild";
-    prisma.reservation.findFirst.mockResolvedValue({
+    repository.findVisible.mockResolvedValue({
       ...reservation,
       guildId: sourceGuildId,
     });
@@ -271,7 +248,7 @@ describe("ReservationMutationsService", () => {
         },
       }),
     ).rejects.toMatchObject({ status: 422 });
-    expect(transaction.reservation.create).not.toHaveBeenCalled();
+    expect(repository.createWithGuards).not.toHaveBeenCalled();
   });
 
   it("updates an owned reservation without treating it as an overlap", async () => {
@@ -283,17 +260,11 @@ describe("ReservationMutationsService", () => {
       reminderMinutesBefore: 15,
     };
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
-    prisma.reservation.findFirst.mockResolvedValue(reservation);
-    transaction.reservation.findFirst.mockImplementation(
-      (query: { where: { guildId: string | { in: string[] } } }) =>
-        Promise.resolve(
-          typeof query.where.guildId !== "string" &&
-            query.where.guildId.in.includes("partner-guild")
-            ? { id: 99 }
-            : null,
-        ),
-    );
-    transaction.reservation.update.mockResolvedValue(updatedReservation);
+    repository.findOwned.mockResolvedValue(reservation);
+    repository.updateWithOverlapGuard.mockResolvedValue({
+      kind: "updated",
+      reservation: updatedReservation,
+    });
     reminderService.prepare.mockResolvedValue({
       target: { id: 1 },
       scheduledFor: new Date("2026-08-26T12:15:00.000Z"),
@@ -311,24 +282,16 @@ describe("ReservationMutationsService", () => {
       },
     });
 
-    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({
-        id: { not: reservation.id },
-        guildId: guild.id,
-        spotId: reservation.spotId,
-      }),
-      select: { id: true },
-    });
-    expect(transaction.reservation.update).toHaveBeenCalledWith({
-      where: { id: reservation.id },
-      data: {
+    expect(repository.updateWithOverlapGuard).toHaveBeenCalledWith(
+      reservation,
+      {
         startsAt: updatedReservation.startsAt,
         endsAt: updatedReservation.endsAt,
         comment: "Po aktualizacji",
         reminderMinutesBefore: 15,
+        checkOverlap: true,
       },
-      include: { guild: true },
-    });
+    );
     expect(reminderService.cancel).toHaveBeenCalledWith(reservation.id);
     expect(reminderService.schedule).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -353,8 +316,8 @@ describe("ReservationMutationsService", () => {
 
   it("rejects a time edit overlapping the source organization", async () => {
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
-    prisma.reservation.findFirst.mockResolvedValue(reservation);
-    transaction.reservation.findFirst.mockResolvedValue({ id: 99 });
+    repository.findOwned.mockResolvedValue(reservation);
+    repository.updateWithOverlapGuard.mockResolvedValue({ kind: "overlap" });
 
     await expect(
       service.updateOwned({
@@ -368,22 +331,20 @@ describe("ReservationMutationsService", () => {
       }),
     ).rejects.toMatchObject({ status: 409 });
 
-    expect(transaction.reservation.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({
-        id: { not: reservation.id },
-        guildId: guild.id,
-        spotId: reservation.spotId,
-      }),
-      select: { id: true },
-    });
-    expect(transaction.reservation.update).not.toHaveBeenCalled();
+    expect(repository.updateWithOverlapGuard).toHaveBeenCalledWith(
+      reservation,
+      expect.objectContaining({ checkOverlap: true }),
+    );
   });
 
   it("does not reschedule an unchanged reminder for a comment-only edit", async () => {
     const updatedReservation = { ...reservation, comment: "Nowy komentarz" };
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
-    prisma.reservation.findFirst.mockResolvedValue(reservation);
-    transaction.reservation.update.mockResolvedValue(updatedReservation);
+    repository.findOwned.mockResolvedValue(reservation);
+    repository.updateWithOverlapGuard.mockResolvedValue({
+      kind: "updated",
+      reservation: updatedReservation,
+    });
 
     await service.updateOwned({
       userId: context.userId,
@@ -399,7 +360,7 @@ describe("ReservationMutationsService", () => {
 
   it("does not reveal whether another user's reservation exists during edit", async () => {
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
-    prisma.reservation.findFirst.mockResolvedValue(null);
+    repository.findOwned.mockResolvedValue(null);
 
     await expect(
       service.updateOwned({
@@ -410,13 +371,13 @@ describe("ReservationMutationsService", () => {
       }),
     ).rejects.toMatchObject({ status: 404 });
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(repository.updateWithOverlapGuard).not.toHaveBeenCalled();
     expect(eventsPublisher.updated).not.toHaveBeenCalled();
   });
 
   it("deletes only an owned reservation from an accessible organization", async () => {
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
-    prisma.reservation.findFirst.mockResolvedValue(reservation);
+    repository.findOwned.mockResolvedValue(reservation);
 
     await service.deleteOwned({
       userId: context.userId,
@@ -424,15 +385,11 @@ describe("ReservationMutationsService", () => {
       reservationId: reservation.id,
     });
 
-    expect(prisma.reservation.findFirst).toHaveBeenCalledWith({
-      where: {
-        id: reservation.id,
-        guildId: { in: [guild.id] },
-        OR: [
-          { createdByUserId: context.userId },
-          { legacyCreatedByDiscordId: context.discordId },
-        ],
-      },
+    expect(repository.findOwned).toHaveBeenCalledWith({
+      reservationId: reservation.id,
+      guildIds: [guild.id],
+      userId: context.userId,
+      discordId: context.discordId,
     });
     expect(eventsPublisher.deleted).toHaveBeenCalledWith(
       expect.objectContaining({

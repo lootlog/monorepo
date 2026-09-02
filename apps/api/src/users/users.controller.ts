@@ -64,7 +64,7 @@ export class UsersController {
     description: "User preferences",
     type: UserPreferencesResponseDto,
   })
-  async getUserPreferences(@UserId() userId: string) {
+  getUserPreferences(@UserId() userId: string) {
     return this.usersService.getUserPreferences(userId);
   }
 
@@ -141,7 +141,7 @@ export class UsersController {
     description: "User game account preferences",
     type: UserGameAccountPreferencesResponseDto,
   })
-  async getUserGameAccountPreferences(
+  getUserGameAccountPreferences(
     @UserId() userId: string,
     @Param("accountId") accountId: string,
   ) {
@@ -164,7 +164,7 @@ export class UsersController {
     description: "Updated user game account preferences",
     type: UserGameAccountPreferencesResponseDto,
   })
-  async updateUserGameAccountPreferences(
+  updateUserGameAccountPreferences(
     @UserId() userId: string,
     @Param("accountId") accountId: string,
     @Body() preferences: UpdateUserGameAccountPreferencesDto,

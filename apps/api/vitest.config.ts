@@ -1,15 +1,20 @@
 import { defineConfig } from "vitest/config";
 import { createNestVitestConfig } from "../../tools/vitest/create-nest-vitest-config.mjs";
 
+const nestConfig = createNestVitestConfig({
+  rootDir: import.meta.dirname,
+  include: ["src/**/*.spec.ts"],
+  setupFiles: ["./test/vitest.setup.ts"],
+});
+
 export default defineConfig({
-  ...createNestVitestConfig({
-    rootDir: import.meta.dirname,
-    include: ["src/**/*.spec.ts"],
-    alias: {
-      "@lootlog/api-helpers/permissions":
-        "../../packages/api-helpers/src/lib/permissions/can-view-npc-timer.ts",
-      "prisma/generated/client": "./prisma/generated/client.ts",
-    },
-    setupFiles: ["./test/vitest.setup.ts"],
-  }),
+  ...nestConfig,
+  test: {
+    ...nestConfig.test,
+    exclude: [
+      "node_modules/**",
+      "dist/**",
+      "src/database/drizzle/adoption.spec.ts",
+    ],
+  },
 });

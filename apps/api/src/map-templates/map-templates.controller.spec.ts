@@ -1,4 +1,4 @@
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { MapTemplatesController } from "./map-templates.controller.js";
 

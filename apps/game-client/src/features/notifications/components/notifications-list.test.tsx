@@ -52,21 +52,19 @@ vi.mock("@/hooks/api/use-user-preferences", () => ({
   }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   usePartyReadyRoomControllerApply: () => ({
     isPending: false,
     mutate: vi.fn(),
   }),
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
+  useUsersControllerGetCurrentUserAccessibleGuilds: () => ({ data: [] }),
 }));
 
 vi.mock("@/lib/api/generated-helpers", () => ({
   buildCurrentCharacterPayload: () => ({}),
   getGuildNamesById: () => ({}),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
-  useUsersControllerGetCurrentUserAccessibleGuilds: () => ({ data: [] }),
 }));
 
 const notification: StoredNotification = {

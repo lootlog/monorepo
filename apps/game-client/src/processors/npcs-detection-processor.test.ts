@@ -11,7 +11,7 @@ import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type * as Api from "@/api";
-import type * as LootlogTypes from "@lootlog/types";
+import type * as NpcTypeDomain from "@lootlog/domain/npc-type";
 import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useGameStore } from "@/store/game.store";
@@ -65,8 +65,8 @@ vi.mock("@/lib/sound-playback", () => ({
   playSound: (...args: unknown[]) => mockPlaySound(...args),
 }));
 
-vi.mock("@lootlog/types", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof LootlogTypes>();
+vi.mock("@lootlog/domain/npc-type", async (importOriginal) => {
+  const originalModule = await importOriginal<typeof NpcTypeDomain>();
   return {
     ...originalModule,
     getNpcTypeByWt: (...args: unknown[]) => mockGetNpcTypeByWt(...args),

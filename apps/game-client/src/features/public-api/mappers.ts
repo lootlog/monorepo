@@ -4,7 +4,7 @@ import type {
   PlayerPresence,
   PlayerPresenceResponse,
 } from "@/lib/online-players-presence";
-import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
+import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import type {
   PublicGuild,
   PublicMember,

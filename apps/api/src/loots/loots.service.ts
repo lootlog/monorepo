@@ -1,16 +1,12 @@
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
-} from "@lootlog/access-policy";
+} from "@lootlog/domain/access-policy";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { PrismaService } from "#src/db/prisma.service";
-import {
-  Permission,
-  type Guild,
-  type Role,
-} from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import type { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
@@ -19,6 +15,10 @@ import { LootCommentService } from "#src/loots/services/loot-comment.service";
 import { LootQueryService } from "#src/loots/services/loot-query.service";
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import type { Logger } from "winston";
+import { LootsRepository } from "./loots.repository.js";
+
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 
 type CachedLootQueryResult = Omit<
   LootQueryResult,
@@ -33,7 +33,7 @@ const LOOTS_LIST_CACHE_TTL_SECONDS = 10;
 @Injectable()
 export class LootsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: LootsRepository,
     private readonly lootQueryService: LootQueryService,
     private readonly lootCommentService: LootCommentService,
     private readonly lootStatsService: LootStatsService,
@@ -82,31 +82,13 @@ export class LootsService {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 
-    const actor = await this.prisma.member.findUnique({
-      where: {
-        memberId: {
-          userId: options.discordId,
-          guildId: options.guild.id,
-        },
-      },
-      select: { id: true },
+    const archived = await this.repository.archive({
+      discordId: options.discordId,
+      guildId: options.guild.id,
+      lootId: options.lootId,
+      archivedAt: new Date(),
     });
-    if (!actor) {
-      throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
-    }
-
-    const archived = await this.prisma.organizationLootRecord.updateMany({
-      where: {
-        guildId: options.guild.id,
-        lootId: options.lootId,
-        archivedAt: null,
-      },
-      data: {
-        archivedAt: new Date(),
-        archivedByMemberId: actor.id,
-      },
-    });
-    if (archived.count === 0) {
+    if (!archived) {
       throw new NotFoundException(ErrorKey.CANT_DELETE_LOOT);
     }
 

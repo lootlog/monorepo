@@ -5,11 +5,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
 import {
-  deriveNpcSurfaceColors,
   isHexAppearanceColor,
   type CombatNpcType,
-} from "@lootlog/types";
+} from "@lootlog/schema/npc-appearance";
 import { RotateCcw } from "lucide-react";
 import { useRef, useState, type FC, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";

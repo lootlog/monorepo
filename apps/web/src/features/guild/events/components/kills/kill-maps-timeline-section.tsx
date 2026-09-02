@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import { useParams } from "@tanstack/react-router";
 import { Map } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/api-client/react-query/main/events";
+import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/client/main";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 
 interface KillMapsTimelineSectionProps {

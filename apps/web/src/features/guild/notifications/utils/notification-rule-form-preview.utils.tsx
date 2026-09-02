@@ -1,5 +1,5 @@
 import { defaultUrlTransform, type Components } from "react-markdown";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 
 const ROLE_LINK_PREFIX = "role:";

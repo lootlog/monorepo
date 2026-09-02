@@ -1,10 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  CHAT_APPEARANCE_READABLE_PRESET,
-  DEFAULT_NPC_TYPE_COLORS,
-} from "@lootlog/types";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -53,14 +51,12 @@ vi.mock("@/hooks/api/use-settings-documents", async (importOriginal) => ({
   }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/preferences", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getSettingsDocumentsControllerGetPreferencesQueryKey: () => [
     "settings-documents",
   ],
   settingsDocumentsControllerPatchPreferences: mocks.patchPreferences,
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetUserPreferencesQueryKey: () => ["user-preferences"],
 }));
 

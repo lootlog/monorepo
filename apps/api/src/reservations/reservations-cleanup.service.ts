@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "#src/db/prisma.service";
 import { env } from "#src/config/env";
+import { ReservationsCleanupRepository } from "./reservations-cleanup.repository.js";
 
 @Injectable()
 export class ReservationsCleanupService {
@@ -9,7 +9,7 @@ export class ReservationsCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(private readonly repository: ReservationsCleanupRepository) {
     this.enabled = env.RESERVATIONS_CLEANUP_ENABLED !== "false";
     this.retentionDays = env.RESERVATIONS_RETENTION_DAYS;
   }
@@ -36,11 +36,7 @@ export class ReservationsCleanupService {
     const startTime = Date.now();
 
     try {
-      const { count } = await this.prisma.reservation.deleteMany({
-        where: {
-          endsAt: { lt: cutoffDate },
-        },
-      });
+      const count = await this.repository.deleteExpired(cutoffDate);
 
       const duration = Date.now() - startTime;
 
@@ -64,11 +60,7 @@ export class ReservationsCleanupService {
       `Manual cleanup of expired reservations (cutoff: ${cutoffDate.toISOString()}, retention: ${retentionDays} days)`,
     );
 
-    const { count } = await this.prisma.reservation.deleteMany({
-      where: {
-        endsAt: { lt: cutoffDate },
-      },
-    });
+    const count = await this.repository.deleteExpired(cutoffDate);
 
     this.logger.log(`Manual cleanup deleted ${count} expired reservations`);
 

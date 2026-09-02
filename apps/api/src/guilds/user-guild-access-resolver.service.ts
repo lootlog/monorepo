@@ -4,10 +4,12 @@ import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordService } from "#src/discord/discord.service";
-import { PrismaService } from "#src/db/prisma.service";
-import type { Guild } from "#src/generated/prisma/client";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
 import { MembersService } from "#src/members/members.service";
+import {
+  GuildsRepository,
+  type GuildRecord as Guild,
+} from "./guilds.repository.js";
 
 export interface GuildRefreshCandidate {
   guild: Guild;
@@ -19,7 +21,7 @@ export interface GuildRefreshCandidate {
 export class UserGuildAccessResolver {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    private readonly guildsRepository: GuildsRepository,
     private readonly discordService: DiscordService,
     private readonly membersService: MembersService,
   ) {}
@@ -70,12 +72,7 @@ export class UserGuildAccessResolver {
     const discordGuildMap = new Map(
       discordGuilds.map((guild) => [guild.id, guild] as const),
     );
-    const guilds = await this.prisma.guild.findMany({
-      where: {
-        id: { in: discordGuildIds },
-        active: true,
-      },
-    });
+    const guilds = await this.guildsRepository.findByIds(discordGuildIds, true);
 
     return guilds.map((guild) => {
       const discordGuild = discordGuildMap.get(guild.id);

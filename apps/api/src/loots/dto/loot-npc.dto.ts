@@ -1,4 +1,5 @@
-import type { NpcType, Profession } from "#src/generated/prisma/client";
+import type { ProfessionEnum as Profession } from "@lootlog/schema/loot";
+import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 export type LootNpcDto = {
   id: number;

@@ -1,6 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
+import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
 import { ReservationsSettingsForm } from "./reservations-settings-form";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 

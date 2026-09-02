@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
+} from "@lootlog/client/main";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";

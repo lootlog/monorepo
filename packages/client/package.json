@@ -1,0 +1,51 @@
+{
+  "name": "@lootlog/client",
+  "version": "5.0.5",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./realtime": "./src/realtime/index.ts",
+    "./transport": "./src/transport.ts",
+    "./activity": "./src/generated/activity.ts",
+    "./auth": "./src/generated/auth.ts",
+    "./battlelog": "./src/generated/battlelog.ts",
+    "./main": "./src/generated/main.ts",
+    "./search": "./src/generated/search.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src/*.ts src/realtime scripts orval.config.ts --deny-warnings",
+    "test": "vitest run",
+    "client:check": "bun ./scripts/check-openapi-parity.ts && bun ./scripts/check-generated.ts",
+    "client:generate": "bun ./scripts/generate.ts",
+    "openapi:parity": "bun ./scripts/check-openapi-parity.ts"
+  },
+  "dependencies": {
+    "@lootlog/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@types/node": "catalog:",
+    "orval": "^8.26.0",
+    "react": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "yaml": "catalog:"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.102.8",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  }
+}

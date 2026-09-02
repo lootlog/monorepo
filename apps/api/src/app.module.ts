@@ -37,11 +37,13 @@ import { PerfDiagnosticsMiddleware } from "#src/shared/diagnostics/perf-diagnost
 import { PublicGuildStatsCardModule } from "#src/public-guild-stats-card/public-guild-stats-card.module";
 import { DocsModule } from "#src/docs/docs.module";
 import { SettingsDocumentsModule } from "#src/settings-documents/settings-documents.module";
+import { DrizzleDatabaseModule } from "#src/database/drizzle/drizzle-database.module";
 
 const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
 @Module({
   imports: [
+    DrizzleDatabaseModule,
     WinstonModule.forRoot(winstonConfig),
     BullModule.forRoot({
       connection: {

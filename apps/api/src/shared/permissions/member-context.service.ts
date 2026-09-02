@@ -7,8 +7,7 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { type Guild, Permission } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import { Permission } from "@lootlog/schema/permissions";
 import { MembersService } from "#src/members/members.service";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -18,8 +17,13 @@ import {
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/constants/cache.constant";
-import { resolveCapabilities } from "@lootlog/access-policy";
+import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
+import { MemberContextRepository } from "./member-context.repository.js";
+
+type Guild = NonNullable<
+  Awaited<ReturnType<MemberContextRepository["findActiveGuild"]>>
+>;
 
 type GuildLookupResult = {
   guild: Guild;
@@ -30,7 +34,7 @@ type GuildLookupResult = {
 export class MemberContextService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    private readonly repository: MemberContextRepository,
     private readonly redisService: RedisService,
     @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
@@ -278,12 +282,7 @@ export class MemberContextService {
       });
     }
 
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        active: true,
-        OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }],
-      },
-    });
+    const guild = await this.repository.findActiveGuild(idOrVanityURL);
 
     if (!guild) {
       throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });

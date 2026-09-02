@@ -16,13 +16,13 @@ describe("ReservationsService", () => {
     legacyCreatedByDiscordId: null,
     guild,
   };
-  const prisma = {
-    reservation: { findMany: vi.fn() },
-    userPinnedReservationSpot: {
-      findMany: vi.fn(),
-      upsert: vi.fn(),
-      deleteMany: vi.fn(),
-    },
+  const repository = {
+    findPinnedSpotIds: vi.fn(),
+    findUpcoming: vi.fn(),
+    findWindow: vi.fn(),
+    findMine: vi.fn(),
+    pinSpot: vi.fn(),
+    unpinSpot: vi.fn(),
   };
   const guildsService = { getCurrentUserAccessibleGuilds: vi.fn() };
   const catalogService = {
@@ -37,7 +37,7 @@ describe("ReservationsService", () => {
     vi.setSystemTime(new Date("2026-08-26T12:00:00.000Z"));
     vi.clearAllMocks();
     service = new ReservationsService(
-      prisma as never,
+      repository as never,
       guildsService as never,
       catalogService as never,
       sharingService as never,
@@ -62,8 +62,8 @@ describe("ReservationsService", () => {
       guild.id,
       "partner-guild",
     ]);
-    prisma.userPinnedReservationSpot.findMany.mockResolvedValue([]);
-    prisma.reservation.findMany.mockResolvedValue([
+    repository.findPinnedSpotIds.mockResolvedValue([]);
+    repository.findUpcoming.mockResolvedValue([
       {
         ...reservation,
         guildId: "partner-guild",
@@ -107,8 +107,8 @@ describe("ReservationsService", () => {
       guild.id,
       "partner-guild",
     ]);
-    prisma.userPinnedReservationSpot.findMany.mockResolvedValue([]);
-    prisma.reservation.findMany.mockResolvedValue([
+    repository.findPinnedSpotIds.mockResolvedValue([]);
+    repository.findUpcoming.mockResolvedValue([
       {
         ...reservation,
         guildId: "partner-guild",
@@ -144,21 +144,11 @@ describe("ReservationsService", () => {
 
     await service.pinSpot("user-1", guild.id, reservation.spotId);
 
-    expect(prisma.userPinnedReservationSpot.upsert).toHaveBeenCalledWith({
-      where: {
-        userId_guildId_spotId: {
-          userId: "user-1",
-          guildId: guild.id,
-          spotId: reservation.spotId,
-        },
-      },
-      create: {
-        userId: "user-1",
-        guildId: guild.id,
-        spotId: reservation.spotId,
-      },
-      update: {},
-    });
+    expect(repository.pinSpot).toHaveBeenCalledWith(
+      "user-1",
+      guild.id,
+      reservation.spotId,
+    );
   });
 
   it("returns every reservation in the selected personal history window", async () => {
@@ -171,10 +161,7 @@ describe("ReservationsService", () => {
       endsAt: new Date("2026-08-26T15:15:00.000Z"),
     };
     guildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([guild]);
-    prisma.reservation.findMany.mockResolvedValue([
-      reservation,
-      laterReservation,
-    ]);
+    repository.findMine.mockResolvedValue([reservation, laterReservation]);
 
     const result = await service.listMine({
       userId: "user-1",
@@ -188,8 +175,13 @@ describe("ReservationsService", () => {
         expect.objectContaining({ id: laterReservation.id }),
       ],
     });
-    expect(prisma.reservation.findMany.mock.calls[0]?.[0]).not.toHaveProperty(
-      "take",
+    expect(repository.findMine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildIds: [guild.id],
+        userId: "user-1",
+        discordId: "discord-1",
+        status: "upcoming",
+      }),
     );
   });
 });

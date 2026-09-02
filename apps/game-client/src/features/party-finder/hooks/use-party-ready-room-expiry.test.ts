@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
 
@@ -12,7 +12,8 @@ const projection = {
   status: "ACTIVE",
 } as PartyReadyRoomProjection;
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   partyReadyRoomControllerGet: () => getReadyRoom(),
 }));
 

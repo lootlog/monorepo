@@ -1,10 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { ItemsService } from "#src/items/items.service";
-import { NpcsService } from "#src/npcs/npcs.service";
-import { PlayersService } from "#src/players/players.service";
+import type { ItemsService } from "#src/items/items.service";
+import type { NpcsService } from "#src/npcs/npcs.service";
+import type { PlayersService } from "#src/players/players.service";
 import type { SearchAllDto } from "./dto/search-all.dto.js";
 
-@Injectable()
 export class AllService {
   constructor(
     private readonly itemsService: ItemsService,

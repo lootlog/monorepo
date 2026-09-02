@@ -3,7 +3,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { Package, Layers, Crown, Sword } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { LootStatsResponseDtoOutputOverview } from "@lootlog/api-client/models/main/loot-stats-response-dto-output-overview";
+import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 
 const OVERVIEW_CONFIG = {
   totalLoots: {

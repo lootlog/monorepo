@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { PrismaService } from "../src/db/prisma.service.js";
-import { Permission } from "../src/generated/prisma/client.js";
+import { TestDatabase } from "./test-database.js";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   closeE2EApp,
   createE2EApp,
@@ -20,24 +20,24 @@ import {
 
 describe("Events Catalog E2E", () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let database: TestDatabase;
   let redis: RedisService;
 
   beforeAll(async () => {
-    ({ app, prisma, redis } = await createE2EApp());
+    ({ app, database, redis } = await createE2EApp());
   });
 
   afterAll(async () => {
-    await closeE2EApp(app, prisma);
+    await closeE2EApp(app, database);
   });
 
   beforeEach(async () => {
-    await resetEventsTimersState(prisma, redis);
+    await resetEventsTimersState(database, redis);
   });
 
   it("covers create, list, show, overview, maps, wrapped, update, recalculate and delete", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { member } = await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { member } = await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_MANAGE,
@@ -90,7 +90,7 @@ describe("Events Catalog E2E", () => {
       .expect(200)
       .expect((response) => expect(response.body.heroNpcs).toHaveLength(1));
 
-    await createKillFixture(prisma, {
+    await createKillFixture(database, {
       eventId,
       heroNpcId: createResponse.body.heroNpcs[0].id,
       member,
@@ -126,14 +126,14 @@ describe("Events Catalog E2E", () => {
     )
       .expect(200)
       .expect((response) => expect(response.body.success).toBe(true));
-    await expect(prisma.event.count({ where: { id: eventId } })).resolves.toBe(
-      0,
-    );
+    await expect(
+      database.event.count({ where: { id: eventId } }),
+    ).resolves.toBe(0);
   });
 
   it("rejects invalid create/update payloads and missing events", async () => {
-    const guild = await createGuildFixture(prisma);
-    await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_MANAGE,
@@ -165,12 +165,12 @@ describe("Events Catalog E2E", () => {
   });
 
   it("enforces catalog permissions", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { event } = await createEventFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { event } = await createEventFixture(database, {
       guildId: guild.id,
       world: TEST_WORLD,
     });
-    await createMemberFixture(prisma, {
+    await createMemberFixture(database, {
       guildId: guild.id,
       auth: FORBIDDEN_AUTH,
       permissions: [],

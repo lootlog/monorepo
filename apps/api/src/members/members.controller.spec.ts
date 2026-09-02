@@ -1,18 +1,17 @@
 import { ForbiddenException } from "@nestjs/common";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { createAccessPolicy } from "@lootlog/access-policy";
-import {
-  type Guild,
-  type Member,
-  MemberType,
-  Permission,
-} from "#src/generated/prisma/client";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, memberTable } from "#src/database/drizzle/schema";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";
 import { MembersController } from "./members.controller.js";
 import { MembersService } from "./members.service.js";
+
+type Guild = typeof guildTable.$inferSelect;
+type Member = typeof memberTable.$inferSelect;
 
 describe("MembersController", () => {
   let controller: MembersController;
@@ -45,7 +44,7 @@ describe("MembersController", () => {
     id: 123,
     userId: "discord-123",
     guildId: "guild-123",
-    type: MemberType.USER,
+    type: "USER",
     name: "Test User",
     avatar: "avatar.png",
     banner: null,

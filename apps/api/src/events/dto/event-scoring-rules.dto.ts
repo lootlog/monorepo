@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 import {
   CLOCK_PATTERN,
@@ -6,7 +6,7 @@ import {
   EVENT_SCORING_BOOLEAN_FACTORS,
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 
 const NumericConditionSchema = z
   .object({

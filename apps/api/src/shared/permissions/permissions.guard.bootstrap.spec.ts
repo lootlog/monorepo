@@ -5,13 +5,13 @@ import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RequiresCapabilities } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { Permission } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import { Permission } from "@lootlog/schema/permissions";
 import { MembersModule } from "#src/members/members.module";
 import { MembersService } from "#src/members/members.service";
 import { MemberContextModule } from "./member-context.module.js";
 import { MemberContextService } from "./member-context.service.js";
 import { PermissionsGuard } from "./permissions.guard.js";
+import { MemberContextRepository } from "./member-context.repository.js";
 
 const mockLogger = {
   debug: mockFn(),
@@ -42,11 +42,9 @@ class GuardedPermissionsController {
       },
     },
     {
-      provide: PrismaService,
+      provide: MemberContextRepository,
       useValue: {
-        guild: {
-          findFirst: mockFn(),
-        },
+        findActiveGuild: mockFn(),
       },
     },
     {

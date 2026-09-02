@@ -10,8 +10,8 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerGetLootStatsQueryKey,
   useLootsControllerGetLootStats,
-} from "@lootlog/api-client/react-query/main/loots";
-import type { LootsControllerGetLootStatsPeriod } from "@lootlog/api-client/models/main/loots-controller-get-loot-stats-period";
+} from "@lootlog/client/main";
+import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
 import { LootTimelineChart } from "./components/loot-timeline-chart";

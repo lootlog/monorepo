@@ -21,9 +21,14 @@ interface SettingsState {
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
   selectedGuildIdsForTimersByCharId: Record<string, string[]>;
+  presenceOrganizationIdsByCharId: Record<string, string[]>;
   ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
+  setPresenceOrganizationIds: (
+    charId: string,
+    organizationIds: string[],
+  ) => void;
   setLootDebugLoggingEnabled: (enabled: boolean) => void;
   setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
@@ -43,6 +48,7 @@ export const useSettingsStore = create<SettingsState>()(
       worldByGuildId: {},
       guildIdByCharId: {},
       selectedGuildIdsForTimersByCharId: {},
+      presenceOrganizationIdsByCharId: {},
       ensureGuildId: (charId: string, orderedGuildIds: string[]) => {
         set((state) => {
           const currentGuildId = state.guildIdByCharId[charId];
@@ -79,6 +85,14 @@ export const useSettingsStore = create<SettingsState>()(
           selectedGuildIdsForTimersByCharId: {
             ...state.selectedGuildIdsForTimersByCharId,
             [charId]: guildIds,
+          },
+        }));
+      },
+      setPresenceOrganizationIds: (charId, organizationIds) => {
+        set((state) => ({
+          presenceOrganizationIdsByCharId: {
+            ...state.presenceOrganizationIdsByCharId,
+            [charId]: [...new Set(organizationIds)],
           },
         }));
       },
@@ -120,10 +134,11 @@ export const useSettingsStore = create<SettingsState>()(
         guildIdByCharId: state.guildIdByCharId,
         selectedGuildIdsForTimersByCharId:
           state.selectedGuildIdsForTimersByCharId,
+        presenceOrganizationIdsByCharId: state.presenceOrganizationIdsByCharId,
       }),
       storage: createJSONStorage(() => localStorage),
       migrate: migrateSettingsState,
-      version: 4,
+      version: 5,
     },
   ),
 );

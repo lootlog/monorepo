@@ -5,7 +5,7 @@ import {
   getCoordinationPriorityLabelKey,
   getCoordinationPriorityTone,
 } from "../../utils/coordination-utils";
-import type { EventCoordinationResponseDtoHeroesItemPriority } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item-priority";
+import type { EventCoordinationResponseDtoHeroesItemPriority } from "@lootlog/client/main";
 import { EventCoordinationPriorityIcon } from "./event-coordination-priority-icon";
 
 interface EventCoordinationPriorityBadgeProps {

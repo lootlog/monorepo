@@ -1,3 +1,3 @@
 export type GetTimersDto = {
-  world: string;
+  world?: string;
 };

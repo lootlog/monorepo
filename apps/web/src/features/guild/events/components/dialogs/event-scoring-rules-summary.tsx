@@ -1,5 +1,8 @@
 import type { TFunction } from "i18next";
-import type { EventScoringMode, EventScoringRules } from "@lootlog/scoring";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "@lootlog/domain/scoring";
 import {
   formatScoringAction,
   formatScoringCondition,

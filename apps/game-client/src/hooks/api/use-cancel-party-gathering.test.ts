@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
 import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
-import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/api-client/react-query/main/chat";
+import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 
 const mockCancelPartyGathering = vi.fn();
 const mockSetOpen = vi.fn();
@@ -13,7 +13,8 @@ type MockWindowsStoreState = {
   setOpen: typeof mockSetOpen;
 };
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   partyReadyRoomControllerCancel: (...args: unknown[]) =>
     mockCancelPartyGathering(...args),
 }));

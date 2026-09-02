@@ -1,11 +1,11 @@
-import type { AccessPolicy, Capability } from "@lootlog/access-policy";
+import type { AccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Crosshair } from "lucide-react";
 import { toast } from "sonner";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -17,7 +17,7 @@ import {
   useEventsAssignmentControllerSelfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow,
   useEventsMonitoringControllerGetCoordination,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventCoordinationHeroCard } from "./components/coordination/event-coordination-hero-card";
 import { EventCoordinationSummaryCard } from "./components/coordination/event-coordination-summary-card";
@@ -25,7 +25,7 @@ import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { getAssignmentAvailability } from "./utils/get-assignment-availability";
-import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
+import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/client/main";
 
 const getRouteId = (value: string | undefined) => value ?? "";
 

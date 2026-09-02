@@ -2,8 +2,8 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { NpcKillersPage } from "@/features/guild/stats/npc-killers-page";
 import { NpcDetailPageSkeleton } from "@/features/guild/stats/npc-detail-page-skeleton";
 import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-query-params";
-import { getKillsControllerGetNpcKillersQueryOptions } from "@lootlog/api-client/react-query/main/kills";
-import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@lootlog/api-client/react-query/main/members";
+import { getKillsControllerGetNpcKillersQueryOptions } from "@lootlog/client/main";
+import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@lootlog/client/main";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

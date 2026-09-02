@@ -20,8 +20,8 @@ import {
   getNotificationsUserControllerGetWatchedItemsQueryKey,
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
-} from "@lootlog/api-client/react-query/main/notifications";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 
 export const UserNotifications = () => {
   const { t } = useTranslation();

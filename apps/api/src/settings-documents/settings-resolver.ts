@@ -1,12 +1,14 @@
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
-  type SettingsDocumentLayer,
-  type SettingsDomain,
-  type SettingsDomainResolution,
-  type SettingsScope,
-  type SettingsValueSource,
-} from "@lootlog/types";
+} from "@lootlog/domain/settings-documents";
+import type {
+  SettingsDocumentLayer,
+  SettingsDomain,
+  SettingsDomainResolution,
+  SettingsScope,
+  SettingsValueSource,
+} from "@lootlog/schema/settings-documents";
 
 type JsonRecord = Record<string, unknown>;
 

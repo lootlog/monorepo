@@ -1,0 +1,129 @@
+import {
+  Permission,
+  UserGuildPermissionsDtoSchema,
+  type UserGuildPermissionsDto,
+} from "@lootlog/schema/permissions";
+import { Context, Effect, Layer, Schema } from "effect";
+import { Redis } from "ioredis";
+import { ActivityConfig } from "#src/config/activity-config";
+
+export interface PermissionsValue {
+  readonly resolveGuildId: (id: string) => Effect.Effect<string | null, Error>;
+  readonly getUserGuildPermissions: (
+    discordId: string,
+    userId: string,
+    guildId: string,
+  ) => Effect.Effect<Permission[]>;
+}
+
+export class Permissions extends Context.Service<
+  Permissions,
+  PermissionsValue
+>()("@lootlog/activity/Permissions") {
+  static readonly layer = Layer.effect(
+    Permissions,
+    Effect.gen(function* () {
+      const config = yield* ActivityConfig;
+      const memory = new Map<string, { expiresAt: number; value: unknown }>();
+      const redis = config.redisUrl
+        ? yield* Effect.acquireRelease(
+            Effect.sync(
+              () => new Redis(config.redisUrl!, { lazyConnect: true }),
+            ),
+            (client) => Effect.promise(() => client.quit()).pipe(Effect.ignore),
+          )
+        : undefined;
+      if (redis)
+        yield* Effect.tryPromise({
+          try: () => redis.connect(),
+          catch: (cause) => new Error("Redis connection failed", { cause }),
+        });
+      const get = async <A>(key: string): Promise<A | undefined> => {
+        if (redis) {
+          const value = await redis.get(key);
+          return value ? (JSON.parse(value) as A) : undefined;
+        }
+        const entry = memory.get(key);
+        return entry && entry.expiresAt > Date.now()
+          ? (entry.value as A)
+          : undefined;
+      };
+      const set = async (key: string, value: unknown): Promise<void> => {
+        if (redis) {
+          await redis.set(key, JSON.stringify(value), "PX", 300_000);
+          return;
+        }
+        memory.set(key, { value, expiresAt: Number.POSITIVE_INFINITY });
+      };
+      const decodeGuild = Schema.decodeUnknownSync(
+        Schema.Struct({ id: Schema.NonEmptyString }),
+      );
+      const decodePermissions = Schema.decodeUnknownSync(
+        Schema.Array(UserGuildPermissionsDtoSchema),
+      );
+      const resolveGuildId = Effect.fn("Permissions.resolveGuildId")(function* (
+        id: string,
+      ) {
+        const key = `guild-id:${id}`;
+        const cached = yield* Effect.promise(() => get<string>(key));
+        if (cached) return cached;
+        const response = yield* Effect.tryPromise({
+          try: () =>
+            fetch(
+              `${config.apiServiceUrl}/internal/guilds/${encodeURIComponent(id)}`,
+            ),
+          catch: (cause) => new Error("Guild resolution failed", { cause }),
+        });
+        if (response.status === 404) return null;
+        if (!response.ok)
+          return yield* Effect.fail(
+            new Error(`Guild resolution failed with ${response.status}`),
+          );
+        const guild = decodeGuild(yield* Effect.promise(() => response.json()));
+        yield* Effect.promise(() => set(key, guild.id));
+        return guild.id;
+      });
+      const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
+        function* (discordId: string, userId: string) {
+          const key = `permissions:${userId}:${discordId}`;
+          const cached = yield* Effect.promise(() =>
+            get<UserGuildPermissionsDto[]>(key),
+          );
+          if (cached) return cached;
+          const url = new URL(
+            "/internal/guilds/user-permissions",
+            config.apiServiceUrl,
+          );
+          url.searchParams.set("discordId", discordId);
+          url.searchParams.set("userId", userId);
+          const permissions = yield* Effect.tryPromise({
+            try: async () => {
+              const response = await fetch(url);
+              if (!response.ok)
+                throw new Error(
+                  `Permissions request failed with ${response.status}`,
+                );
+              return decodePermissions(await response.json());
+            },
+            catch: (cause) =>
+              new Error("Permissions request failed", { cause }),
+          }).pipe(
+            Effect.catch(() => Effect.succeed([] as UserGuildPermissionsDto[])),
+          );
+          yield* Effect.promise(() => set(key, permissions));
+          return permissions;
+        },
+      );
+      const getUserGuildPermissions = Effect.fn(
+        "Permissions.getUserGuildPermissions",
+      )(function* (discordId: string, userId: string, guildId: string) {
+        const grants = yield* getUserPermissions(discordId, userId);
+        const guild = grants.find((entry) => entry.guild.id === guildId);
+        if (!guild) return [];
+        if (guild.guild.ownerId === discordId) return Object.values(Permission);
+        return [...new Set(guild.roles.flatMap((role) => role.permissions))];
+      });
+      return Permissions.of({ resolveGuildId, getUserGuildPermissions });
+    }),
+  );
+}

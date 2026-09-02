@@ -1,4 +1,4 @@
-import type { PinnedEventResponseDto } from "@lootlog/api-client/models/main/pinned-event-response-dto";
+import type { PinnedEventResponseDto } from "@lootlog/client/main";
 import { describe, expect, it } from "vitest";
 import {
   addPinnedEvent,

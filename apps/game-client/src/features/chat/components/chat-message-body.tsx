@@ -7,7 +7,7 @@ import {
   type ChatMentionContext,
 } from "@/features/chat/chat-mentions.helpers";
 import { cn } from "@/lib/utils";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { Loader2 } from "lucide-react";
 import type { ChangeEventHandler, FC, FormEventHandler } from "react";
 import { useTranslation } from "react-i18next";

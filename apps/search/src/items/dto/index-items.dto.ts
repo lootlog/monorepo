@@ -1,19 +1,17 @@
-import { z } from "zod";
+import { Schema } from "effect";
 
-const indexItemSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  icon: z.string(),
-  stat: z.string(),
-  lvl: z.number(),
-  rarity: z.string().nullable(),
-  type: z.string().nullable(),
-  world: z.string().optional(),
-  worlds: z.array(z.string()).optional(),
+export const IndexItem = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  icon: Schema.String,
+  stat: Schema.String,
+  lvl: Schema.Number,
+  rarity: Schema.NullOr(Schema.String),
+  type: Schema.NullOr(Schema.String),
+  world: Schema.optional(Schema.String),
+  worlds: Schema.optional(Schema.Array(Schema.String)),
 });
-
-export const indexItemsPayloadSchema = z.array(indexItemSchema);
-
-export type IndexItemsDto = {
-  items: z.infer<typeof indexItemsPayloadSchema>;
-};
+export const IndexItemsPayload = Schema.Array(IndexItem);
+export type IndexItemsDto = { readonly items: typeof IndexItemsPayload.Type };
+export const decodeIndexItemsPayload =
+  Schema.decodeUnknownSync(IndexItemsPayload);

@@ -6,11 +6,14 @@ import { Switch } from "@/components/ui/switch";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { NotificationSettings, NotificationType } from "@lootlog/types";
+import type {
+  NotificationSettings,
+  NotificationType,
+} from "@lootlog/schema/account-preferences";
 import { type FC, type FormEvent, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";

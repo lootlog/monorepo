@@ -1,23 +1,23 @@
 import { NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import { mockFn } from "#src/test/mock-fn";
 import { EventCoordinationService } from "./event-coordination.service.js";
+import { EventCoordinationRepository } from "./event-coordination.repository.js";
+
+const CoverageGapType = {
+  UNASSIGNED: "UNASSIGNED",
+  UNCOVERED: "UNCOVERED",
+} as const;
 
 describe("EventCoordinationService", () => {
   const now = new Date("2026-06-19T12:00:00.000Z");
   const guildId = "guild-1";
   const eventId = "event-1";
 
-  const mockPrisma = {
-    event: {
-      findFirst: mockFn(),
-    },
-    eventMapCoverageGap: {
-      findMany: mockFn(),
-    },
+  const repository = {
+    findEvent: mockFn(),
+    findActiveGaps: mockFn(),
   };
 
   const mockTimersService = {
@@ -32,17 +32,17 @@ describe("EventCoordinationService", () => {
     vi.clearAllMocks();
 
     service = new EventCoordinationService(
-      mockPrisma as unknown as PrismaService,
+      repository as unknown as EventCoordinationRepository,
       mockTimersService as unknown as TimersService,
     );
 
-    mockPrisma.event.findFirst.mockResolvedValue({
+    repository.findEvent.mockResolvedValue({
       assignmentTimeoutMinutes: 7,
       id: eventId,
       world: "tempest",
       heroNpcs: [createHero()],
     });
-    mockPrisma.eventMapCoverageGap.findMany.mockResolvedValue([]);
+    repository.findActiveGaps.mockResolvedValue([]);
     mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([]);
   });
 
@@ -51,7 +51,7 @@ describe("EventCoordinationService", () => {
   });
 
   it("throws when event does not exist", async () => {
-    mockPrisma.event.findFirst.mockResolvedValue(null);
+    repository.findEvent.mockResolvedValue(null);
 
     await expect(service.getCoordination(guildId, eventId)).rejects.toThrow(
       NotFoundException,
@@ -92,7 +92,7 @@ describe("EventCoordinationService", () => {
         maxSpawnTime: "2026-06-19T12:30:00.000Z",
       }),
     ]);
-    mockPrisma.eventMapCoverageGap.findMany.mockResolvedValue([
+    repository.findActiveGaps.mockResolvedValue([
       {
         id: "gap-1",
         mapId: "map-2",
@@ -201,7 +201,7 @@ describe("EventCoordinationService", () => {
   });
 
   it("recommends joining a map for uncovered active gaps", async () => {
-    mockPrisma.event.findFirst.mockResolvedValue({
+    repository.findEvent.mockResolvedValue({
       id: eventId,
       world: "tempest",
       heroNpcs: [
@@ -219,7 +219,7 @@ describe("EventCoordinationService", () => {
         maxSpawnTime: "2026-06-19T12:30:00.000Z",
       }),
     ]);
-    mockPrisma.eventMapCoverageGap.findMany.mockResolvedValue([
+    repository.findActiveGaps.mockResolvedValue([
       {
         id: "gap-1",
         mapId: "map-2",
@@ -249,7 +249,7 @@ describe("EventCoordinationService", () => {
   });
 
   it("sorts critical, active, waiting, then idle heroes", async () => {
-    mockPrisma.event.findFirst.mockResolvedValue({
+    repository.findEvent.mockResolvedValue({
       id: eventId,
       world: "tempest",
       heroNpcs: [

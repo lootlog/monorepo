@@ -7,8 +7,8 @@ import {
 import { RedisService } from "@lootlog/nest-shared/redis";
 import sharp from "sharp";
 import { serviceConfig } from "#src/config/service.config";
-import { PrismaService } from "#src/db/prisma.service";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";
 
 type GuildStatsCardData = {
   guild: {
@@ -22,12 +22,6 @@ type GuildStatsCardData = {
     legendaryItems: number;
     heroicItems: number;
   };
-};
-
-type LootStatsRow = {
-  total_loots: bigint | number | null;
-  legendary_items: bigint | number | null;
-  heroic_items: bigint | number | null;
 };
 
 type GuildStatsCardGuild = GuildStatsCardData["guild"];
@@ -48,7 +42,7 @@ const REFRESH_COOLDOWN_SECONDS = 300;
 @Injectable()
 export class PublicGuildStatsCardService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: PublicGuildStatsCardRepository,
     private readonly redis: RedisService,
   ) {}
 
@@ -136,18 +130,7 @@ export class PublicGuildStatsCardService {
   }
 
   private async getCardGuild(guildId: string): Promise<GuildStatsCardGuild> {
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        id: guildId,
-        active: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        icon: true,
-        publicStatsCardEnabled: true,
-      },
-    });
+    const guild = await this.repository.findActiveGuild(guildId);
 
     if (!guild || !guild.publicStatsCardEnabled) {
       throw new NotFoundException("Guild not found");
@@ -160,39 +143,13 @@ export class PublicGuildStatsCardService {
     guildId: string,
   ): Promise<GuildStatsCardData["stats"]> {
     const dateFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const rows = await this.prisma.$queryRaw<LootStatsRow[]>`
-      WITH valid_loots AS (
-        SELECT DISTINCT l.id
-        FROM "OrganizationLootRecord" olr
-        INNER JOIN "Loot" l ON l.id = olr."lootId"
-        WHERE olr."guildId" = ${guildId}
-          AND olr."archivedAt" IS NULL
-          AND l."createdAt" >= ${dateFrom}
-      )
-      SELECT
-        COUNT(DISTINCT l.id) AS total_loots,
-        COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') AS legendary_items,
-        COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') AS heroic_items
-      FROM valid_loots vl
-      INNER JOIN "Loot" l ON l.id = vl.id
-      LEFT JOIN "LootItem" li ON li."lootId" = l.id
-      LEFT JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-    `;
-    const row = rows[0];
+    const row = await this.repository.getLootStats(guildId, dateFrom);
 
     return {
-      totalLoots: this.toNumber(row?.total_loots),
-      legendaryItems: this.toNumber(row?.legendary_items),
-      heroicItems: this.toNumber(row?.heroic_items),
+      totalLoots: row.totalLoots,
+      legendaryItems: row.legendaryItems,
+      heroicItems: row.heroicItems,
     };
-  }
-
-  private toNumber(value: bigint | number | null | undefined) {
-    if (typeof value === "bigint") {
-      return Number(value);
-    }
-
-    return value ?? 0;
   }
 
   private async renderCard(data: GuildStatsCardData): Promise<Buffer> {

@@ -17,7 +17,7 @@ import type {
   EventMapLocation,
   EventMapsResponse,
 } from "./types/api";
-import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
+import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -39,7 +39,7 @@ import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { toast } from "sonner";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventHeroesTable } from "./components/heroes/event-heroes-table";
@@ -48,7 +48,7 @@ import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import { getEventStatusAtTimestamp } from "./utils/event-activity";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
@@ -66,7 +66,7 @@ import {
   useListEventRanking,
   useShowEventOverview,
   useUpdateEvent,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { useToggleEventPin } from "./hooks/mutations/use-toggle-event-pin";

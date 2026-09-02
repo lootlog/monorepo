@@ -1,4 +1,6 @@
-import type { MemberType } from "#src/generated/prisma/client";
+import type { memberTypeEnum } from "#src/database/drizzle/schema";
+
+type MemberType = (typeof memberTypeEnum.enumValues)[number];
 
 export class GuildMemberDto {
   id: string;

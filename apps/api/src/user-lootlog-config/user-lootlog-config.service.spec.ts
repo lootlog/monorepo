@@ -1,21 +1,19 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { mockFn } from "#src/test/mock-fn";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "./user-lootlog-config.service.js";
+import { UserLootlogConfigRepository } from "./user-lootlog-config.repository.js";
 
 describe("UserLootlogConfigService", () => {
   let service: UserLootlogConfigService;
 
-  const mockPrismaService = {
-    userCharactersLootlogSettings: {
-      findMany: mockFn(),
-      findFirst: mockFn(),
-      update: mockFn(),
-      upsert: mockFn(),
-    },
+  const mockRepository = {
+    findAccountConfig: mockFn(),
+    findCharacterConfig: mockFn(),
+    findPlayers: mockFn(),
+    upsertCharacterConfig: mockFn(),
   };
   const mockGuildsService = {
     getGuildsForRequiredPermissions: mockFn(),
@@ -30,8 +28,8 @@ describe("UserLootlogConfigService", () => {
       providers: [
         UserLootlogConfigService,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: UserLootlogConfigRepository,
+          useValue: mockRepository,
         },
         {
           provide: GuildsService,
@@ -56,16 +54,14 @@ describe("UserLootlogConfigService", () => {
 
   describe("getLootlogAccountConfig", () => {
     it("returns only catching guild IDs where user has write access without pruning stored config", async () => {
-      mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
-        [
-          {
-            userId: "discord1",
-            accountId: "account1",
-            characterId: "character1",
-            catchingGuildIds: ["guild1", "guild4", "guild2"],
-          },
-        ],
-      );
+      mockRepository.findAccountConfig.mockResolvedValue([
+        {
+          userId: "discord1",
+          accountId: "account1",
+          characterId: "character1",
+          catchingGuildIds: ["guild1", "guild4", "guild2"],
+        },
+      ]);
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
         { id: "guild1" },
         { id: "guild2" },
@@ -88,9 +84,7 @@ describe("UserLootlogConfigService", () => {
       expect(
         mockGuildsService.getGuildsForRequiredPermissions,
       ).toHaveBeenCalledWith("discord1", [Permission.LOOTLOG_LOOTS_WRITE]);
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.update,
-      ).not.toHaveBeenCalled();
+      expect(mockRepository.upsertCharacterConfig).not.toHaveBeenCalled();
     });
   });
 
@@ -99,7 +93,7 @@ describe("UserLootlogConfigService", () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
         { id: "guild1", name: "Alpha" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.findMany
+      mockRepository.findPlayers
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           {
@@ -133,9 +127,7 @@ describe("UserLootlogConfigService", () => {
         { id: "guild1", name: "Alpha" },
       ]);
       expect(mockRedisService.getOrSetJsonBestEffort).not.toHaveBeenCalled();
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.findMany,
-      ).toHaveBeenCalledTimes(2);
+      expect(mockRepository.findPlayers).toHaveBeenCalledTimes(2);
     });
 
     it("deduplicates requested players and returns only shared accessible guilds", async () => {
@@ -143,22 +135,20 @@ describe("UserLootlogConfigService", () => {
         { id: "guild1", name: "Alpha" },
         { id: "guild2", name: "Beta" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
-        [
-          {
-            userId: "player-discord-1",
-            accountId: "account1",
-            characterId: "character1",
-            catchingGuildIds: ["guild1", "guild3", "guild1"],
-          },
-          {
-            userId: "player-discord-2",
-            accountId: "account2",
-            characterId: "character2",
-            catchingGuildIds: ["guild2"],
-          },
-        ],
-      );
+      mockRepository.findPlayers.mockResolvedValue([
+        {
+          userId: "player-discord-1",
+          accountId: "account1",
+          characterId: "character1",
+          catchingGuildIds: ["guild1", "guild3", "guild1"],
+        },
+        {
+          userId: "player-discord-2",
+          accountId: "account2",
+          characterId: "character2",
+          catchingGuildIds: ["guild2"],
+        },
+      ]);
 
       const result = await service.getPlayersCatchingGuilds("viewer-discord", {
         players: [
@@ -185,41 +175,26 @@ describe("UserLootlogConfigService", () => {
         ],
       });
 
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.findMany,
-      ).toHaveBeenCalledWith({
-        where: {
-          OR: [
-            {
-              userId: "player-discord-1",
-              accountId: "account1",
-              characterId: "character1",
-            },
-            {
-              userId: "player-discord-2",
-              accountId: "account2",
-              characterId: "character2",
-            },
-            {
-              userId: "player-discord-3",
-              accountId: "account3",
-              characterId: "character3",
-            },
-          ],
-          catchingGuildIds: {
-            hasSome: ["guild1", "guild2"],
+      expect(mockRepository.findPlayers).toHaveBeenCalledWith(
+        [
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
           },
-        },
-        select: {
-          userId: true,
-          accountId: true,
-          characterId: true,
-          catchingGuildIds: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+          {
+            userId: "player-discord-2",
+            accountId: "account2",
+            characterId: "character2",
+          },
+          {
+            userId: "player-discord-3",
+            accountId: "account3",
+            characterId: "character3",
+          },
+        ],
+        ["guild1", "guild2"],
+      );
       expect(result).toEqual({
         players: [
           {
@@ -278,9 +253,7 @@ describe("UserLootlogConfigService", () => {
           },
         ],
       });
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.findMany,
-      ).not.toHaveBeenCalled();
+      expect(mockRepository.findPlayers).not.toHaveBeenCalled();
     });
 
     it("keeps same account and character separated by user ID", async () => {
@@ -288,22 +261,20 @@ describe("UserLootlogConfigService", () => {
         { id: "guild1", name: "Alpha" },
         { id: "guild2", name: "Beta" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
-        [
-          {
-            userId: "player-discord-1",
-            accountId: "account1",
-            characterId: "character1",
-            catchingGuildIds: ["guild1"],
-          },
-          {
-            userId: "player-discord-2",
-            accountId: "account1",
-            characterId: "character1",
-            catchingGuildIds: ["guild2"],
-          },
-        ],
-      );
+      mockRepository.findPlayers.mockResolvedValue([
+        {
+          userId: "player-discord-1",
+          accountId: "account1",
+          characterId: "character1",
+          catchingGuildIds: ["guild1"],
+        },
+        {
+          userId: "player-discord-2",
+          accountId: "account1",
+          characterId: "character1",
+          catchingGuildIds: ["guild2"],
+        },
+      ]);
 
       const result = await service.getPlayersCatchingGuilds("viewer-discord", {
         players: [
@@ -345,12 +316,17 @@ describe("UserLootlogConfigService", () => {
         { id: "guild3" },
         { id: "guild4" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.upsert.mockImplementation(
-        ({ create }: { create: { catchingGuildIds: string[] } }) => ({
-          userId: "discord1",
-          accountId: "account1",
-          characterId: "character1",
-          catchingGuildIds: create.catchingGuildIds,
+      mockRepository.upsertCharacterConfig.mockImplementation(
+        (
+          userId: string,
+          accountId: string,
+          characterId: string,
+          catchingGuildIds: string[],
+        ) => ({
+          userId,
+          accountId,
+          characterId,
+          catchingGuildIds,
         }),
       );
 
@@ -363,26 +339,12 @@ describe("UserLootlogConfigService", () => {
         },
       );
 
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.upsert,
-      ).toHaveBeenCalledWith({
-        where: {
-          userId_accountId_characterId: {
-            userId: "discord1",
-            accountId: "account1",
-            characterId: "character1",
-          },
-        },
-        update: {
-          catchingGuildIds: ["guild1", "guild4", "guild2", "guild3"],
-        },
-        create: {
-          userId: "discord1",
-          accountId: "account1",
-          characterId: "character1",
-          catchingGuildIds: ["guild1", "guild4", "guild2", "guild3"],
-        },
-      });
+      expect(mockRepository.upsertCharacterConfig).toHaveBeenCalledWith(
+        "discord1",
+        "account1",
+        "character1",
+        ["guild1", "guild4", "guild2", "guild3"],
+      );
 
       expect(result).toEqual({
         userId: "discord1",
@@ -397,12 +359,17 @@ describe("UserLootlogConfigService", () => {
         { id: "guild1" },
         { id: "guild3" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.upsert.mockImplementation(
-        ({ create }: { create: { catchingGuildIds: string[] } }) => ({
-          userId: "discord1",
-          accountId: "account1",
-          characterId: "character1",
-          catchingGuildIds: create.catchingGuildIds,
+      mockRepository.upsertCharacterConfig.mockImplementation(
+        (
+          userId: string,
+          accountId: string,
+          characterId: string,
+          catchingGuildIds: string[],
+        ) => ({
+          userId,
+          accountId,
+          characterId,
+          catchingGuildIds,
         }),
       );
 
@@ -415,26 +382,12 @@ describe("UserLootlogConfigService", () => {
         },
       );
 
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.upsert,
-      ).toHaveBeenCalledWith({
-        where: {
-          userId_accountId_characterId: {
-            userId: "discord1",
-            accountId: "account1",
-            characterId: "character1",
-          },
-        },
-        update: {
-          catchingGuildIds: ["guild1", "guild3"],
-        },
-        create: {
-          userId: "discord1",
-          accountId: "account1",
-          characterId: "character1",
-          catchingGuildIds: ["guild1", "guild3"],
-        },
-      });
+      expect(mockRepository.upsertCharacterConfig).toHaveBeenCalledWith(
+        "discord1",
+        "account1",
+        "character1",
+        ["guild1", "guild3"],
+      );
 
       expect(result.catchingGuildIds).toEqual(["guild1", "guild3"]);
     });

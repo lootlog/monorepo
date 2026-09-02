@@ -28,10 +28,10 @@ removed before forwarding or probing.
 ## Commands
 
 ```bash
-pnpm --filter @lootlog/traffic-splitter test
-pnpm --filter @lootlog/traffic-splitter typecheck
-pnpm --filter @lootlog/traffic-splitter lint
-pnpm --filter @lootlog/traffic-splitter build
+bun run --filter=@lootlog/traffic-splitter test
+bun run --filter=@lootlog/traffic-splitter typecheck
+bun run --filter=@lootlog/traffic-splitter lint
+bun run --filter=@lootlog/traffic-splitter build
 ```
 
 The `dev` command and merges to `main` target only the Wrangler `develop`

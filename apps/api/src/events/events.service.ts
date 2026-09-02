@@ -1,17 +1,17 @@
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
-} from "@lootlog/access-policy";
+} from "@lootlog/domain/access-policy";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import type {
-  Event,
-  EventHeroNpc,
-  EventKillPoint,
-  Guild,
-  Role,
-} from "#src/generated/prisma/client";
+  eventKillPointTable,
+  eventHeroNpcTable,
+  eventTable,
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto.js";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
 import type { CreateEventDto } from "./dto/create-event.dto.js";
@@ -37,6 +37,12 @@ import {
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
 } from "./utils/event-hero-kill-job.js";
+
+type Event = typeof eventTable.$inferSelect;
+type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
+type EventKillPoint = typeof eventKillPointTable.$inferSelect;
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 import { EventAccessService } from "./services/event-access.service.js";
 import { EventCatalogService } from "./services/event-catalog.service.js";
 import { EventKillService } from "./services/event-kill.service.js";

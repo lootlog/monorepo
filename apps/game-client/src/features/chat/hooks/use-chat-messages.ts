@@ -10,7 +10,7 @@ import {
 import {
   getMembersControllerGetMeQueryKey,
   membersControllerGetMe,
-} from "@lootlog/api-client/react-query/main/members";
+} from "@lootlog/client/main";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import {
   getChatMentionNotificationId,

@@ -1,4 +1,4 @@
-import { defaultDetectorSettings } from "@lootlog/types";
+import { defaultDetectorSettings } from "@lootlog/schema/account-preferences";
 import {
   getEffectiveDetectorSettings,
   resolveDetectorGuildIds,

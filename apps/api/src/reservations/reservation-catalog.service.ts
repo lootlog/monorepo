@@ -1,7 +1,7 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { z } from "zod";
+import * as z from "zod";
 import { lastValueFrom } from "rxjs";
 import { env } from "#src/config/env";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";

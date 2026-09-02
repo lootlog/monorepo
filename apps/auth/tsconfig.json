@@ -1,11 +1,12 @@
 {
-  "extends": "@lootlog/typescript-config/nestjs.json",
+  "extends": "@lootlog/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": false,
+    "declarationMap": false,
     "rootDir": ".",
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true
+    "types": ["bun", "node"]
   },
-  "include": ["src", "vitest.d.ts"]
+  "include": ["src", "scripts"],
+  "exclude": ["dist", "node_modules"]
 }

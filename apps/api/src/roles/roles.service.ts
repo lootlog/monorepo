@@ -1,25 +1,25 @@
-import { Capability, createAccessPolicy } from "@lootlog/access-policy";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Permission, type Prisma } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { PrismaService } from "#src/db/prisma.service";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
 import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
 import type { UpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
+import { RolesRepository } from "./roles.repository.js";
 
 @Injectable()
 export class RolesService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: RolesRepository,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
@@ -30,23 +30,17 @@ export class RolesService {
       : [];
   }
 
-  async getRolesByGuildId(guildId: string) {
-    const roles = await this.prisma.role.findMany({
-      where: { guildId },
-      orderBy: { position: "desc" },
-    });
-
-    return roles;
+  getRolesByGuildId(guildId: string) {
+    return this.repository.findByGuildId(guildId);
   }
 
   bulkCreateRoles(
     guildId: string,
     roles: GuildRoleDto[],
-  ): Promise<Prisma.BatchPayload | undefined> {
+  ): Promise<{ count: number } | undefined> {
     try {
-      return this.prisma.role.createMany({
-        skipDuplicates: true,
-        data: roles.map(({ id, name, color, admin, position }) => ({
+      return this.repository.bulkCreate(
+        roles.map(({ id, name, color, admin, position }) => ({
           id,
           guildId,
           name,
@@ -54,7 +48,7 @@ export class RolesService {
           position,
           permissions: this.getAdminPermissions(admin),
         })),
-      });
+      );
     } catch (error) {
       this.logger.log({
         level: "error",
@@ -69,12 +63,17 @@ export class RolesService {
     const permissions = this.getAdminPermissions(data.admin);
 
     try {
-      const existingRole = await this.prisma.role.findUnique({
-        where: { id: data.id, guildId: data.guildId },
-        select: { permissions: true },
-      });
+      const existingRole = await this.repository.findById(
+        data.id,
+        data.guildId,
+      );
 
-      const updateData: Prisma.RoleUpdateInput = {
+      const updateData: {
+        name: string;
+        color: number | null;
+        position: number | null;
+        permissions?: Permission[];
+      } = {
         name: data.name,
         color: data.color,
         position: data.position,
@@ -90,10 +89,8 @@ export class RolesService {
         updateData.permissions = permissions;
       }
 
-      await this.prisma.role.upsert({
-        where: { id: data.id },
-        update: updateData,
-        create: {
+      await this.repository.upsert(
+        {
           id: data.id,
           guildId: data.guildId,
           name: data.name,
@@ -101,7 +98,8 @@ export class RolesService {
           position: data.position,
           permissions,
         },
-      });
+        updateData,
+      );
 
       await this.redisService.deleteByPattern(
         getPermissionsCachePattern(data.guildId),
@@ -123,19 +121,14 @@ export class RolesService {
     roleId: string,
     data: UpdateRolePermissionsDto,
   ) {
-    const role = await this.prisma.role.findUnique({
-      where: { id: roleId, guildId },
-    });
+    const role = await this.repository.findById(roleId, guildId);
 
     if (!role) {
       throw new NotFoundException();
     }
 
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-    });
-
-    const isOwner = guild.ownerId === discordId;
+    const guildOwnerId = await this.repository.findGuildOwnerId(guildId);
+    const isOwner = guildOwnerId === discordId;
 
     const roleIsAdministrative = createAccessPolicy({
       capabilities: role.permissions,
@@ -150,14 +143,13 @@ export class RolesService {
       throw new ForbiddenException();
     }
 
-    const updatedRole = await this.prisma.role.update({
-      where: { id: roleId },
-      data: {
-        permissions: data.permissions,
-        lvlRangeFrom: data.lvlRangeFrom,
-        lvlRangeTo: data.lvlRangeTo,
-      },
-    });
+    const updatedRole = await this.repository.updatePermissions(
+      roleId,
+      guildId,
+      data.permissions,
+      data.lvlRangeFrom,
+      data.lvlRangeTo,
+    );
 
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(guildId),
@@ -167,17 +159,13 @@ export class RolesService {
   }
 
   async deleteRole(data: DeleteRoleDto) {
-    const role = await this.prisma.role.findUnique({
-      where: { id: data.id, guildId: data.guildId },
-    });
+    const role = await this.repository.findById(data.id, data.guildId);
 
     if (!role) {
       return;
     }
 
-    await this.prisma.role.delete({
-      where: { id: data.id },
-    });
+    await this.repository.deleteById(data.id, data.guildId);
 
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(data.guildId),
@@ -186,9 +174,7 @@ export class RolesService {
 
   async deleteRolesByGuildId(guildId: string) {
     try {
-      await this.prisma.role.deleteMany({
-        where: { guildId },
-      });
+      await this.repository.deleteByGuildId(guildId);
 
       await this.redisService.deleteByPattern(
         getPermissionsCachePattern(guildId),

@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Body,
   Controller,
@@ -16,7 +16,9 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
+type Role = typeof roleTable.$inferSelect;
 import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto.js";
 import { EventCoordinationResponseDto } from "./dto/event-coordination-response.dto.js";
 import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto.js";

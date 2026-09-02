@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ChatMessageResponseDtoOutputCharacterData } from "@lootlog/api-client/models/main/chat-message-response-dto-output-character-data";
+import type { ChatMessageResponseDtoOutputCharacterData } from "@lootlog/client/main";
 import type { FC, ReactElement } from "react";
 
 type ChatCharacterTooltipProps = {

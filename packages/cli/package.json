@@ -21,10 +21,10 @@
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "@lootlog/battle-processor": "workspace:*",
-    "@lootlog/types": "workspace:*",
-    "@prisma/adapter-pg": "catalog:",
+    "@lootlog/domain": "workspace:*",
+    "@lootlog/schema": "workspace:*",
     "amqplib": "^2.0.1",
-    "drizzle-orm": "1.0.0-beta.20",
+    "drizzle-orm": "catalog:",
     "node-html-parser": "^9.0.2",
     "pg": "^8.23.0",
     "random-words": "^2.0.1",
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "dotenv": "^17.4.2",

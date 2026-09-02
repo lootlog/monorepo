@@ -1,5 +1,3 @@
-import type { Prisma } from "#src/generated/prisma/client";
-
 type EventActivityWindow = {
   startsAt: Date | null;
   endsAt: Date | null;
@@ -20,9 +18,7 @@ export function isEventActiveAt(
   );
 }
 
-export function buildActiveEventWhere(
-  referenceTime: Date,
-): Prisma.EventWhereInput {
+export function buildActiveEventWhere(referenceTime: Date) {
   return {
     AND: [
       {

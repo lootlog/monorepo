@@ -1,6 +1,6 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
-import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/reservations";
+import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 
 const UpdateGuildConfigSchema = z.object({

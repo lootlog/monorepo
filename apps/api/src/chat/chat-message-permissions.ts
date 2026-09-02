@@ -1,4 +1,4 @@
-import { Capability, createAccessPolicy } from "@lootlog/access-policy";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import type { ChatMessageViewer } from "#src/chat/types/chat-message-viewer.type";
 

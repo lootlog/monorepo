@@ -1,8 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { canViewLoot, type LootVisibilityNpc } from "@lootlog/loot-visibility";
-import type { NotificationFilters } from "@lootlog/types";
-import { Permission, type Prisma } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+import {
+  canViewLoot,
+  type LootVisibilityNpc,
+} from "@lootlog/domain/loot-visibility";
+import type { NotificationFilters } from "@lootlog/schema/notifications";
+import { Permission } from "@lootlog/schema/permissions";
+import type { JsonValue } from "./notification-database.types.js";
+import { NotificationsRepository } from "./notifications.repository.js";
 
 type LootCreatedEvent = {
   lootId: number;
@@ -25,9 +29,9 @@ type MemberRoleInfo = {
 
 @Injectable()
 export class NotificationMatchingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: NotificationsRepository) {}
 
-  matchesTimerRule(filtersValue: Prisma.JsonValue, npcId: number) {
+  matchesTimerRule(filtersValue: JsonValue, npcId: number) {
     const filters = this.parseFilters(filtersValue);
 
     if (filters.npcId && filters.npcId !== npcId) {
@@ -41,7 +45,7 @@ export class NotificationMatchingService {
     return true;
   }
 
-  matchesLootRule(filtersValue: Prisma.JsonValue, event: LootCreatedEvent) {
+  matchesLootRule(filtersValue: JsonValue, event: LootCreatedEvent) {
     const filters = this.parseFilters(filtersValue);
 
     if (filters.itemId && !event.itemIds.includes(filters.itemId)) {
@@ -69,7 +73,7 @@ export class NotificationMatchingService {
     return true;
   }
 
-  parseFilters(filtersValue: Prisma.JsonValue): NotificationFilters {
+  parseFilters(filtersValue: JsonValue): NotificationFilters {
     if (
       !filtersValue ||
       typeof filtersValue !== "object" ||
@@ -81,10 +85,7 @@ export class NotificationMatchingService {
     return filtersValue as unknown as NotificationFilters;
   }
 
-  getMatchingLootGuildIds(
-    filtersValue: Prisma.JsonValue,
-    eventGuildIds: string[],
-  ) {
+  getMatchingLootGuildIds(filtersValue: JsonValue, eventGuildIds: string[]) {
     const filters = this.parseFilters(filtersValue);
 
     if (filters.guildIds?.length) {
@@ -108,30 +109,10 @@ export class NotificationMatchingService {
       return result;
     }
 
-    const memberships = await this.prisma.member.findMany({
-      where: {
-        userId: { in: uniqueOwnerIds },
-        guildId: { in: uniqueGuildIds },
-        active: true,
-      },
-      select: {
-        userId: true,
-        guildId: true,
-        guild: {
-          select: {
-            ownerId: true,
-          },
-        },
-        roles: {
-          select: {
-            id: true,
-            permissions: true,
-            lvlRangeFrom: true,
-            lvlRangeTo: true,
-          },
-        },
-      },
-    });
+    const memberships = await this.repository.findActiveMemberships(
+      uniqueOwnerIds,
+      uniqueGuildIds,
+    );
 
     for (const membership of memberships) {
       const existing = result.get(membership.userId) ?? [];

@@ -1,14 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import {
-  NotificationScheduleAnchor as DbNotificationScheduleAnchor,
-  NotificationTargetType as DbNotificationTargetType,
-  NotificationTriggerType as DbNotificationTriggerType,
-  type Prisma,
-  type NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-} from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
-import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
   TIMER_NOTIFICATION_TITLE,
@@ -29,11 +21,34 @@ import {
 } from "#src/notifications/constants/notification-messages.constant";
 import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
+import type { JsonObject, JsonValue } from "./notification-database.types.js";
+import { NotificationsRepository } from "./notifications.repository.js";
+
+const DbNotificationScheduleAnchor = {
+  MAX_SPAWN: "MAX_SPAWN",
+  MIN_SPAWN: "MIN_SPAWN",
+} as const;
+type DbNotificationScheduleAnchor =
+  (typeof DbNotificationScheduleAnchor)[keyof typeof DbNotificationScheduleAnchor];
+type DbNotificationScheduleStrategy =
+  | "FIXED_DATETIME"
+  | "SPAWN_WINDOW_RELATIVE";
+const DbNotificationTargetType = { CHANNEL: "CHANNEL", DM: "DM" } as const;
+type DbNotificationTargetType =
+  (typeof DbNotificationTargetType)[keyof typeof DbNotificationTargetType];
+const DbNotificationTriggerType = {
+  NPC_SPAWNED: "NPC_SPAWNED",
+  SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
+  TIMER_BEFORE_SPAWN: "TIMER_BEFORE_SPAWN",
+  WATCHED_ITEM_DROPPED: "WATCHED_ITEM_DROPPED",
+} as const;
+type DbNotificationTriggerType =
+  (typeof DbNotificationTriggerType)[keyof typeof DbNotificationTriggerType];
 
 type AllowedMention = "roles" | "users" | "everyone";
 
 const parseAllowedMentionList = (
-  value: Prisma.JsonValue | undefined,
+  value: JsonValue | undefined,
 ): AllowedMention[] | undefined =>
   Array.isArray(value)
     ? value.filter(
@@ -42,9 +57,7 @@ const parseAllowedMentionList = (
       )
     : undefined;
 
-const parseStringList = (
-  value: Prisma.JsonValue | undefined,
-): string[] | undefined =>
+const parseStringList = (value: JsonValue | undefined): string[] | undefined =>
   Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : undefined;
@@ -63,7 +76,7 @@ const hasAllowedMentionValues = (params: {
 @Injectable()
 export class NotificationContentService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: NotificationsRepository,
     private readonly matchingService: NotificationMatchingService,
   ) {}
 
@@ -134,7 +147,7 @@ export class NotificationContentService {
       contentTemplate:
         params.notificationRule.contentTemplate ??
         DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies JsonObject;
   }
 
   buildScheduledMessagePayload(params: {
@@ -176,7 +189,7 @@ export class NotificationContentService {
       contentTemplate:
         params.notificationRule.contentTemplate ??
         DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies JsonObject;
   }
 
   async buildTestNotificationPayload(params: {
@@ -188,7 +201,7 @@ export class NotificationContentService {
       name: string | null;
       world: string | null;
       triggerType: DbNotificationTriggerType;
-      filters: Prisma.JsonValue;
+      filters: JsonValue | null;
       scheduleStrategy: DbNotificationScheduleStrategy | null;
       scheduleAnchor: DbNotificationScheduleAnchor | null;
       scheduleOffsetMinutes: number | null;
@@ -235,7 +248,7 @@ export class NotificationContentService {
       ruleName: params.notificationRule.name,
       triggerType: params.notificationRule.triggerType,
       world: params.notificationRule.world,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies JsonObject;
   }
 
   /**
@@ -273,10 +286,10 @@ export class NotificationContentService {
       ...(parse.length > 0 ? { parse } : {}),
       ...(roleIds.length > 0 ? { roles: roleIds } : {}),
       repliedUser: false,
-    } satisfies Prisma.InputJsonObject;
+    } satisfies JsonObject;
   }
 
-  parseAllowedMentions(value: Prisma.JsonValue | undefined) {
+  parseAllowedMentions(value: JsonValue | undefined) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       return undefined;
     }
@@ -405,30 +418,17 @@ export class NotificationContentService {
     notificationRule: {
       guildId: string | null;
       world: string | null;
-      filters: Prisma.JsonValue;
+      filters: JsonValue;
       scheduleAnchor: DbNotificationScheduleAnchor | null;
       scheduleOffsetMinutes: number | null;
     },
     scheduledFor: Date,
   ) {
     if (notificationRule.guildId) {
-      const timers = await this.prisma.timer.findMany({
-        where: {
-          guildId: notificationRule.guildId,
-          deletedAt: null,
-          ...(notificationRule.world ? { world: notificationRule.world } : {}),
-        },
-        select: {
-          npcId: true,
-          world: true,
-          timerKey: true,
-          minSpawnTime: true,
-          maxSpawnTime: true,
-          npc: true,
-        },
-        orderBy: [{ minSpawnTime: "asc" }],
-        take: 50,
-      });
+      const timers = await this.repository.findTimersForRule(
+        notificationRule.guildId,
+        notificationRule.world,
+      );
 
       const matchingTimer = timers.find((timer) =>
         this.matchingService.matchesTimerRule(
@@ -440,13 +440,7 @@ export class NotificationContentService {
       if (matchingTimer) {
         return {
           npcId: matchingTimer.npcId,
-          npcName:
-            matchingTimer.npc &&
-            typeof matchingTimer.npc === "object" &&
-            !Array.isArray(matchingTimer.npc) &&
-            typeof matchingTimer.npc.name === "string"
-              ? matchingTimer.npc.name
-              : null,
+          npcName: this.readNpcName(matchingTimer.npc),
           world: matchingTimer.world,
           timerKey: matchingTimer.timerKey,
           minSpawnTime: matchingTimer.minSpawnTime,
@@ -478,5 +472,11 @@ export class NotificationContentService {
       minSpawnTime,
       maxSpawnTime,
     };
+  }
+
+  private readNpcName(npc: unknown) {
+    if (!npc || typeof npc !== "object" || Array.isArray(npc)) return null;
+    const name = (npc as Record<string, unknown>).name;
+    return typeof name === "string" ? name : null;
   }
 }

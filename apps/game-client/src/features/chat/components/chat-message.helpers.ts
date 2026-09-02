@@ -2,10 +2,11 @@ import {
   type ChatMessage as ChatMessageType,
   MessageType,
 } from "@/api/chat.api";
-import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/api-client/models/main/chat-message-response-dto-output-npc";
+import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/client/main";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "@/utils/local-date";
-import { getNpcTypeByWt, type NpcTypeColors } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { NpcType } from "@/api/npcs.api";
 
 export const isChatMessageYesterdayOrOlder = (

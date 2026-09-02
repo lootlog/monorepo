@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./http": "./src/http/http-contract.ts",
+    "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/events": "./src/rabbit/events.ts",
     "./rabbit/topology": "./src/rabbit/topology.ts",
     "./realtime": "./src/realtime/protocol.ts",

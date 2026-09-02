@@ -5,16 +5,16 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { AuthService } from "#src/auth/auth.service";
-import { PrismaService } from "#src/db/prisma.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { MembersService } from "#src/members/members.service";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import {
-  CHAT_APPEARANCE_READABLE_PRESET,
   defaultDetectorSettings,
   defaultNotificationsSettings,
-} from "@lootlog/types";
+} from "@lootlog/schema/account-preferences";
 import { UsersService } from "./users.service.js";
+import { UsersRepository } from "./users.repository.js";
 
 vi.mock("#src/config/battlelog.config", () => ({
   battlelogConfig: { serviceUrl: "http://battlelog-service:4000" },
@@ -75,7 +75,9 @@ describe("UsersService", () => {
     },
   };
 
-  const mockPrismaService = {
+  // This persistence-shaped fixture keeps the service tests focused on the
+  // repository contract without importing or depending on the retired client.
+  const mockPersistence = {
     $transaction: mockFn(),
     userSettings: {
       findUnique: mockFn(),
@@ -90,6 +92,15 @@ describe("UsersService", () => {
       upsert: mockFn(),
     },
   };
+  const mockRepository = {
+    findUserSettings: mockFn(),
+    findGameAccountSettings: mockFn(),
+    findAppearanceDocument: mockFn(),
+    upsertUserSettings: mockFn(),
+    upsertGameAccountSettings: mockFn(),
+    upsertAppearanceDocument: mockFn(),
+    deleteAccount: mockFn(),
+  };
   const mockLogger = { warn: mockFn() };
   const mockAuthService = { invalidateIdpTokenCache: mockFn() };
   const mockMembersService = { notifyMembersRemoved: mockFn() };
@@ -103,7 +114,7 @@ describe("UsersService", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    mockPrismaService.$transaction.mockImplementation(
+    mockPersistence.$transaction.mockImplementation(
       (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
 
@@ -126,8 +137,127 @@ describe("UsersService", () => {
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockRedisService.deleteByPattern.mockResolvedValue(1);
     mockHttpService.post.mockReturnValue(of({ data: { status: "ACCEPTED" } }));
-    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
-    mockPrismaService.userSettingDocument.upsert.mockResolvedValue(null);
+    mockPersistence.userSettingDocument.findUnique.mockResolvedValue(null);
+    mockPersistence.userSettingDocument.upsert.mockResolvedValue(null);
+    mockRepository.findUserSettings.mockImplementation((userId: string) =>
+      mockPersistence.userSettings.findUnique({ where: { userId } }),
+    );
+    mockRepository.findGameAccountSettings.mockImplementation(
+      (userId: string, accountId: string) =>
+        mockPersistence.userGameAccountSettings.findUnique({
+          where: { userId_accountId: { userId, accountId } },
+        }),
+    );
+    mockRepository.findAppearanceDocument.mockImplementation((userId: string) =>
+      mockPersistence.userSettingDocument.findUnique({
+        where: {
+          userId_domain_scopeType_scopeId: {
+            userId,
+            domain: "appearance",
+            scopeType: "USER",
+            scopeId: userId,
+          },
+        },
+      }),
+    );
+    mockRepository.upsertUserSettings.mockImplementation(
+      (userId: string, values: Record<string, unknown>) =>
+        mockPersistence.userSettings.upsert({
+          where: { userId },
+          update: { ...values, updatedAt: expect.any(Date) },
+          create: {
+            userId,
+            guildsOrder: [],
+            hiddenGuildIds: [],
+            theme: "default",
+            ...values,
+          },
+        }),
+    );
+    mockRepository.upsertGameAccountSettings.mockImplementation(
+      (userId: string, accountId: string, settings: unknown) =>
+        mockPersistence.userGameAccountSettings.upsert({
+          where: { userId_accountId: { userId, accountId } },
+          update: { settings, updatedAt: expect.any(Date) },
+          create: { userId, accountId, settings },
+        }),
+    );
+    mockRepository.upsertAppearanceDocument.mockImplementation(
+      (userId: string, overrides: unknown) =>
+        mockPersistence.userSettingDocument.upsert({
+          where: {
+            userId_domain_scopeType_scopeId: {
+              userId,
+              domain: "appearance",
+              scopeType: "USER",
+              scopeId: userId,
+            },
+          },
+          create: {
+            userId,
+            domain: "appearance",
+            scopeType: "USER",
+            scopeId: userId,
+            overrides,
+            schemaVersion: 1,
+          },
+          update: { overrides, schemaVersion: 1 },
+        }),
+    );
+    mockRepository.deleteAccount.mockImplementation(
+      (authUserId: string, discordId: string) =>
+        mockPersistence.$transaction(async (tx: typeof mockTx) => {
+          const members = await tx.member.findMany({
+            where: { userId: discordId },
+            select: {
+              id: true,
+              guildId: true,
+              globalUserId: true,
+              userId: true,
+            },
+          });
+          const memberIds = members.map(({ id }) => id);
+          await tx.npcKillStats.deleteMany({
+            where: { memberId: { in: memberIds } },
+          });
+          await tx.userKillStats.deleteMany({ where: { userId: discordId } });
+          await tx.userCharactersLootlogSettings.deleteMany({
+            where: { userId: discordId },
+          });
+          await tx.userSettings.deleteMany({ where: { userId: authUserId } });
+          await tx.userSettingDocument.deleteMany({
+            where: { userId: authUserId },
+          });
+          await tx.userGameAccountSettings.deleteMany({
+            where: { userId: authUserId },
+          });
+          await tx.userTimerSettings.deleteMany({
+            where: { userId: authUserId },
+          });
+          await tx.userSoundSettings.deleteMany({
+            where: { userId: authUserId },
+          });
+          await tx.userGuildTimerSettings.deleteMany({
+            where: { userId: authUserId },
+          });
+          await tx.userPinnedEvent.deleteMany({
+            where: { userId: authUserId },
+          });
+          await Promise.all(
+            members.map((member) =>
+              tx.member.update({
+                where: { id: member.id },
+                data: expect.objectContaining({ active: false }),
+              }),
+            ),
+          );
+          return members.map((member) => ({
+            discordId: member.userId,
+            guildId: member.guildId,
+            globalUserId: member.globalUserId,
+          }));
+        }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -137,8 +267,8 @@ describe("UsersService", () => {
           useValue: mockLogger,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: UsersRepository,
+          useValue: mockRepository,
         },
         {
           provide: AuthService,
@@ -171,15 +301,13 @@ describe("UsersService", () => {
   });
 
   it("returns default user preferences with empty notification mutes", async () => {
-    mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
-      null,
-    );
-    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
+    mockPersistence.userSettings.findUnique.mockResolvedValue(null);
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue(null);
+    mockPersistence.userSettingDocument.findUnique.mockResolvedValue(null);
 
     const result = await service.getUserPreferences("auth-user-current");
 
-    expect(mockPrismaService.userSettings.findUnique).toHaveBeenCalledWith({
+    expect(mockPersistence.userSettings.findUnique).toHaveBeenCalledWith({
       where: { userId: "auth-user-current" },
     });
     expect(result).toEqual({
@@ -205,18 +333,16 @@ describe("UsersService", () => {
   });
 
   it("normalizes a malformed stored chat appearance value", async () => {
-    mockPrismaService.userSettings.findUnique.mockResolvedValue({
+    mockPersistence.userSettings.findUnique.mockResolvedValue({
       userId: "auth-user-current",
       guildsOrder: ["guild-1"],
       hiddenGuildIds: [],
       theme: "default",
     });
-    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+    mockPersistence.userSettingDocument.findUnique.mockResolvedValue({
       overrides: "broken-json-shape",
     });
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
-      null,
-    );
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue(null);
 
     const result = await service.getUserPreferences("auth-user-current");
 
@@ -238,19 +364,15 @@ describe("UsersService", () => {
       ...currentSettings,
       hiddenGuildIds: ["guild-unavailable", "guild-1"],
     };
-    mockPrismaService.userSettings.findUnique.mockResolvedValue(
-      currentSettings,
-    );
-    mockPrismaService.userSettings.upsert.mockResolvedValue(updatedSettings);
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
-      null,
-    );
+    mockPersistence.userSettings.findUnique.mockResolvedValue(currentSettings);
+    mockPersistence.userSettings.upsert.mockResolvedValue(updatedSettings);
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue(null);
 
     const result = await service.updateUserPreferences("auth-user-current", {
       hiddenGuildIds: ["guild-unavailable", "guild-1"],
     });
 
-    expect(mockPrismaService.userSettings.upsert).toHaveBeenCalledWith({
+    expect(mockPersistence.userSettings.upsert).toHaveBeenCalledWith({
       where: { userId: "auth-user-current" },
       update: {
         hiddenGuildIds: ["guild-unavailable", "guild-1"],
@@ -284,13 +406,9 @@ describe("UsersService", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    mockPrismaService.userSettings.findUnique.mockResolvedValue(
-      currentSettings,
-    );
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
-      null,
-    );
-    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+    mockPersistence.userSettings.findUnique.mockResolvedValue(currentSettings);
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue(null);
+    mockPersistence.userSettingDocument.findUnique.mockResolvedValue({
       overrides: {
         chat: {
           ...CHAT_APPEARANCE_READABLE_PRESET,
@@ -298,7 +416,7 @@ describe("UsersService", () => {
         },
       },
     });
-    mockPrismaService.userSettingDocument.upsert.mockResolvedValue({
+    mockPersistence.userSettingDocument.upsert.mockResolvedValue({
       overrides: {
         chat: {
           ...CHAT_APPEARANCE_READABLE_PRESET,
@@ -316,8 +434,8 @@ describe("UsersService", () => {
       },
     });
 
-    expect(mockPrismaService.userSettings.upsert).not.toHaveBeenCalled();
-    expect(mockPrismaService.userSettingDocument.upsert).toHaveBeenCalledWith({
+    expect(mockPersistence.userSettings.upsert).not.toHaveBeenCalled();
+    expect(mockPersistence.userSettingDocument.upsert).toHaveBeenCalledWith({
       where: {
         userId_domain_scopeType_scopeId: {
           userId: "auth-user-current",
@@ -437,11 +555,9 @@ describe("UsersService", () => {
   });
 
   it("updates global notification mutes without requiring account-scoped preferences", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
-      null,
-    );
-    mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
-    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue(null);
+    mockPersistence.userSettings.findUnique.mockResolvedValue(null);
+    mockPersistence.userGameAccountSettings.upsert.mockResolvedValue({
       id: 10,
       userId: "auth-user-current",
       accountId: "__global-notification-mutes__",
@@ -485,65 +601,65 @@ describe("UsersService", () => {
       },
     });
 
-    expect(
-      mockPrismaService.userGameAccountSettings.upsert,
-    ).toHaveBeenCalledWith({
-      where: {
-        userId_accountId: {
+    expect(mockPersistence.userGameAccountSettings.upsert).toHaveBeenCalledWith(
+      {
+        where: {
+          userId_accountId: {
+            userId: "auth-user-current",
+            accountId: "__global-notification-mutes__",
+          },
+        },
+        update: {
+          settings: {
+            mutes: {
+              players: [
+                {
+                  discordId: "discord-1",
+                  displayName: "Kamil 2",
+                },
+              ],
+              npcs: [
+                {
+                  npcKey: "npc:123",
+                  npcId: 123,
+                  name: "Mushita 2",
+                  npcType: "HERO",
+                  lvl: 24,
+                  prof: null,
+                  icon: null,
+                },
+              ],
+            },
+          },
+          updatedAt: expect.any(Date),
+        },
+        create: {
           userId: "auth-user-current",
           accountId: "__global-notification-mutes__",
-        },
-      },
-      update: {
-        settings: {
-          mutes: {
-            players: [
-              {
-                discordId: "discord-1",
-                displayName: "Kamil 2",
-              },
-            ],
-            npcs: [
-              {
-                npcKey: "npc:123",
-                npcId: 123,
-                name: "Mushita 2",
-                npcType: "HERO",
-                lvl: 24,
-                prof: null,
-                icon: null,
-              },
-            ],
-          },
-        },
-        updatedAt: expect.any(Date),
-      },
-      create: {
-        userId: "auth-user-current",
-        accountId: "__global-notification-mutes__",
-        settings: {
-          mutes: {
-            players: [
-              {
-                discordId: "discord-1",
-                displayName: "Kamil 2",
-              },
-            ],
-            npcs: [
-              {
-                npcKey: "npc:123",
-                npcId: 123,
-                name: "Mushita 2",
-                npcType: "HERO",
-                lvl: 24,
-                prof: null,
-                icon: null,
-              },
-            ],
+          settings: {
+            mutes: {
+              players: [
+                {
+                  discordId: "discord-1",
+                  displayName: "Kamil 2",
+                },
+              ],
+              npcs: [
+                {
+                  npcKey: "npc:123",
+                  npcId: 123,
+                  name: "Mushita 2",
+                  npcType: "HERO",
+                  lvl: 24,
+                  prof: null,
+                  icon: null,
+                },
+              ],
+            },
           },
         },
       },
-    });
+    );
     expect(result).toEqual({
       userId: "auth-user-current",
       guildsOrder: [],
@@ -573,9 +689,7 @@ describe("UsersService", () => {
   });
 
   it("returns default game account preferences when no account-scoped settings exist", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
-      null,
-    );
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue(null);
 
     const result = await service.getUserGameAccountPreferences(
       "auth-user-current",
@@ -583,7 +697,7 @@ describe("UsersService", () => {
     );
 
     expect(
-      mockPrismaService.userGameAccountSettings.findUnique,
+      mockPersistence.userGameAccountSettings.findUnique,
     ).toHaveBeenCalledWith({
       where: {
         userId_accountId: {
@@ -607,7 +721,7 @@ describe("UsersService", () => {
   });
 
   it("updates one account bucket without overwriting top-level preferences or other accounts", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 7,
       userId: "auth-user-current",
       accountId: "111",
@@ -666,7 +780,7 @@ describe("UsersService", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.upsert.mockResolvedValue({
       id: 7,
       userId: "auth-user-current",
       accountId: "111",
@@ -688,31 +802,31 @@ describe("UsersService", () => {
       },
     );
 
-    expect(
-      mockPrismaService.userGameAccountSettings.upsert,
-    ).toHaveBeenCalledWith({
-      where: {
-        userId_accountId: {
+    expect(mockPersistence.userGameAccountSettings.upsert).toHaveBeenCalledWith(
+      {
+        where: {
+          userId_accountId: {
+            userId: "auth-user-current",
+            accountId: "111",
+          },
+        },
+        update: {
+          settings: {
+            notifications: expect.objectContaining({
+              HERO: expect.objectContaining({
+                sound: true,
+                guildIds: ["guild-3"],
+              }),
+            }),
+          },
+          updatedAt: expect.any(Date),
+        },
+        create: expect.objectContaining({
           userId: "auth-user-current",
           accountId: "111",
-        },
+        }),
       },
-      update: {
-        settings: {
-          notifications: expect.objectContaining({
-            HERO: expect.objectContaining({
-              sound: true,
-              guildIds: ["guild-3"],
-            }),
-          }),
-        },
-        updatedAt: expect.any(Date),
-      },
-      create: expect.objectContaining({
-        userId: "auth-user-current",
-        accountId: "111",
-      }),
-    });
+    );
     expect(result).toEqual({
       accountId: "111",
       airTags: { enabled: false },
@@ -733,7 +847,7 @@ describe("UsersService", () => {
   });
 
   it("updates detector settings without overwriting stored notifications", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 8,
       userId: "auth-user-current",
       accountId: "222",
@@ -743,7 +857,7 @@ describe("UsersService", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.upsert.mockResolvedValue({
       id: 8,
       userId: "auth-user-current",
       accountId: "222",
@@ -771,38 +885,38 @@ describe("UsersService", () => {
       },
     );
 
-    expect(
-      mockPrismaService.userGameAccountSettings.upsert,
-    ).toHaveBeenCalledWith({
-      where: {
-        userId_accountId: {
+    expect(mockPersistence.userGameAccountSettings.upsert).toHaveBeenCalledWith(
+      {
+        where: {
+          userId_accountId: {
+            userId: "auth-user-current",
+            accountId: "222",
+          },
+        },
+        update: {
+          settings: {
+            notifications: defaultNotificationsSettings,
+            detector: expect.objectContaining({
+              routingRules: [
+                {
+                  id: "hero-range-1",
+                  name: "Hero route",
+                  minLevel: 100,
+                  maxLevel: 200,
+                  world: "pandora",
+                  guildIds: ["guild-2"],
+                },
+              ],
+            }),
+          },
+          updatedAt: expect.any(Date),
+        },
+        create: expect.objectContaining({
           userId: "auth-user-current",
           accountId: "222",
-        },
+        }),
       },
-      update: {
-        settings: {
-          notifications: defaultNotificationsSettings,
-          detector: expect.objectContaining({
-            routingRules: [
-              {
-                id: "hero-range-1",
-                name: "Hero route",
-                minLevel: 100,
-                maxLevel: 200,
-                world: "pandora",
-                guildIds: ["guild-2"],
-              },
-            ],
-          }),
-        },
-        updatedAt: expect.any(Date),
-      },
-      create: expect.objectContaining({
-        userId: "auth-user-current",
-        accountId: "222",
-      }),
-    });
+    );
     expect(result).toEqual({
       accountId: "222",
       airTags: { enabled: false },
@@ -829,7 +943,7 @@ describe("UsersService", () => {
   });
 
   it("updates map pings without overwriting stored notification and detector settings", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 9,
       userId: "auth-user-current",
       accountId: "333",
@@ -840,7 +954,7 @@ describe("UsersService", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({});
+    mockPersistence.userGameAccountSettings.upsert.mockResolvedValue({});
 
     const result = await service.updateUserGameAccountPreferences(
       "auth-user-current",
@@ -848,9 +962,7 @@ describe("UsersService", () => {
       { pings: { enabled: true } },
     );
 
-    expect(
-      mockPrismaService.userGameAccountSettings.upsert,
-    ).toHaveBeenCalledWith(
+    expect(mockPersistence.userGameAccountSettings.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         update: expect.objectContaining({
           settings: {
@@ -872,7 +984,7 @@ describe("UsersService", () => {
   });
 
   it("updates AirTags without overwriting stored notification and detector settings", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 9,
       userId: "auth-user-current",
       accountId: "333",
@@ -883,7 +995,7 @@ describe("UsersService", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({});
+    mockPersistence.userGameAccountSettings.upsert.mockResolvedValue({});
 
     const result = await service.updateUserGameAccountPreferences(
       "auth-user-current",
@@ -891,9 +1003,7 @@ describe("UsersService", () => {
       { airTags: { enabled: true } },
     );
 
-    expect(
-      mockPrismaService.userGameAccountSettings.upsert,
-    ).toHaveBeenCalledWith(
+    expect(mockPersistence.userGameAccountSettings.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         update: expect.objectContaining({
           settings: {
@@ -915,7 +1025,7 @@ describe("UsersService", () => {
   });
 
   it("normalizes detector routing rules when reading stored account settings", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 9,
       userId: "auth-user-current",
       accountId: "333",
@@ -972,7 +1082,7 @@ describe("UsersService", () => {
   });
 
   it("trims detector routing rule names and keeps old rules without name", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+    mockPersistence.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 10,
       userId: "auth-user-current",
       accountId: "444",
@@ -1052,7 +1162,7 @@ describe("UsersService", () => {
       { timeout: 5000 },
     );
 
-    expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockPersistence.$transaction).toHaveBeenCalledTimes(1);
     expect(mockTx.member.findMany).toHaveBeenCalledWith({
       where: { userId: "discord-123" },
       select: {
