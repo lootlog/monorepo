@@ -7,6 +7,10 @@ import {
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
+import {
+  type BackgroundTaskRunner,
+  unmanagedBackgroundTaskRunner,
+} from "#src/platform/background-tasks";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
@@ -34,13 +38,13 @@ export class PresenceStore {
     private readonly hub: RealtimeHub,
     private readonly now: () => number = Date.now,
     private readonly coverage?: CoveragePublisher,
+    private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
   start(): void {
-    this.sweepTimer = setInterval(
-      () => void this.sweepExpired(),
-      SWEEP_INTERVAL_MS,
-    );
+    this.sweepTimer = setInterval(() => {
+      this.runBackground("presence.sweep", () => this.sweepExpired());
+    }, SWEEP_INTERVAL_MS);
   }
 
   stop(): void {

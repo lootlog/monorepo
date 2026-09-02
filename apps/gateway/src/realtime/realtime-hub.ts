@@ -8,6 +8,10 @@ import type {
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
+import {
+  type BackgroundTaskRunner,
+  unmanagedBackgroundTaskRunner,
+} from "#src/platform/background-tasks";
 import { Logger } from "#src/platform/logger";
 import type {
   FederatedRealtimeMessage,
@@ -63,6 +67,7 @@ export class RealtimeHub {
   constructor(
     private readonly config: GatewayConfiguration,
     private readonly redis: RedisGatewayStore,
+    private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
   async start(): Promise<void> {
@@ -71,18 +76,22 @@ export class RealtimeHub {
 
   register(socket: GatewaySocket): void {
     this.sockets.set(socket.data.connectionId, socket);
-    void this.refreshRegistry(socket.data);
+    this.runBackground("registry.register", () =>
+      this.refreshRegistry(socket.data),
+    );
   }
 
   unregister(socket: GatewaySocket): void {
     this.sockets.delete(socket.data.connectionId);
-    void Promise.all([
-      this.redis.command.del(this.connectionKey(socket.data.connectionId)),
-      this.redis.command.srem(
-        this.userConnectionsKey(socket.data.userId),
-        socket.data.connectionId,
-      ),
-    ]);
+    this.runBackground("registry.unregister", async () => {
+      await Promise.all([
+        this.redis.command.del(this.connectionKey(socket.data.connectionId)),
+        this.redis.command.srem(
+          this.userConnectionsKey(socket.data.userId),
+          socket.data.connectionId,
+        ),
+      ]);
+    });
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -297,7 +306,9 @@ export class RealtimeHub {
     if (message.control) {
       if (!this.remember(message.id)) return;
       for (const listener of this.permissionRebalanceListeners) {
-        void listener(message.control.discordId, message.control.userId);
+        this.runBackground("permissions.rebalance", () =>
+          listener(message.control!.discordId, message.control!.userId),
+        );
       }
       return;
     }
