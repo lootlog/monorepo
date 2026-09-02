@@ -39,6 +39,7 @@ import {
 import { MembersRepository } from "#src/members/members.repository";
 import { GuildConfigurationService } from "./guild-configuration.service.js";
 import { GuildListMemberRefreshService } from "./guild-list-member-refresh.service.js";
+import { GuildAccessSummaryService } from "./guild-access-summary.service.js";
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,
@@ -53,7 +54,7 @@ type GetGuildDiscordSyncStateOptions = {
   refreshIfStale?: boolean;
 };
 
-type GuildPermissionMember = {
+export type GuildPermissionMember = {
   guildId: string;
   active: boolean;
   globalUserId: string | null;
@@ -68,12 +69,12 @@ type GuildPermissionMember = {
 };
 
 const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
-const CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS = 30;
 @Injectable()
 export class GuildsService {
   private readonly staleAfterMs: number;
   private readonly guildConfiguration: GuildConfigurationService;
   private readonly guildListMemberRefresh: GuildListMemberRefreshService;
+  private readonly guildAccessSummary: GuildAccessSummaryService;
 
   constructor(
     @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
@@ -96,6 +97,14 @@ export class GuildsService {
     this.guildListMemberRefresh = new GuildListMemberRefreshService(
       this.logger,
       this.membersRepository,
+      this.membersService,
+      this.redisService,
+    );
+    this.guildAccessSummary = new GuildAccessSummaryService(
+      this.logger,
+      this.guildsRepository,
+      this.membersRepository,
+      this.membersService,
       this.membersService,
       this.redisService,
     );
@@ -239,76 +248,10 @@ export class GuildsService {
     discordId: string,
     userId: string,
   ): Promise<CurrentUserGuildAccessSummary[]> {
-    const cacheKey = this.getCurrentUserAccessibleGuildsCacheKey(
+    return this.guildAccessSummary.getCurrentUserAccessibleGuilds(
       discordId,
       userId,
     );
-
-    const cached =
-      await this.redisService.getJson<CurrentUserGuildAccessSummary[]>(
-        cacheKey,
-      );
-
-    if (cached !== null) {
-      this.logger.debug({
-        message: "Cache hit for current user accessible guilds",
-        cacheKey,
-        discordId,
-        userId,
-      });
-      this.queueStaleAccessibleGuildSummaryRefreshes({
-        discordId,
-        userId,
-        guilds: cached,
-      });
-      return cached;
-    }
-
-    this.logger.debug({
-      message: "Cache miss for current user accessible guilds",
-      cacheKey,
-      discordId,
-      userId,
-    });
-
-    const requiredPermissions = [Permission.LOOTLOG_ACCESS];
-    const guilds = await this.getGuildsForRequiredPermissions(
-      discordId,
-      requiredPermissions,
-    );
-
-    if (guilds.length === 0) {
-      return [];
-    }
-
-    const members = await this.getGuildMembersForPermissions(
-      discordId,
-      guilds.map((guild) => guild.id),
-    );
-    this.queueStaleAccessibleGuildRefreshes({
-      discordId,
-      userId,
-      guilds,
-      members,
-    });
-
-    const result = await this.sortGuildEntriesByUserPreferences(
-      userId,
-      this.buildCurrentUserGuildAccessSummaries({
-        discordId,
-        guilds,
-        members,
-        requiredPermissions,
-      }).filter((guild) => guild.hasLootlogAccess),
-    );
-
-    await this.redisService.setJson(
-      cacheKey,
-      result,
-      CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS,
-    );
-
-    return result;
   }
 
   async getManageableUserGuilds(discordId: string, userId: string) {
@@ -817,7 +760,6 @@ export class GuildsService {
     userId: string,
   ) {
     const guilds = await this.getCurrentUserAccessibleGuilds(discordId, userId);
-
     return guilds.map(
       ({
         hasLootlogAccess: _hasLootlogAccess,
@@ -825,92 +767,6 @@ export class GuildsService {
         ...guild
       }) => guild,
     );
-  }
-
-  private getCurrentUserAccessibleGuildsCacheKey(
-    discordId: string,
-    userId: string,
-  ): string {
-    return `user:${userId}:discord:${discordId}:accessible-guilds`;
-  }
-
-  private queueStaleAccessibleGuildSummaryRefreshes(options: {
-    discordId: string;
-    userId: string;
-    guilds: CurrentUserGuildAccessSummary[];
-  }): void {
-    const { discordId, userId, guilds } = options;
-    const staleGuildIds = guilds
-      .filter((guild) => guild.ownerId !== discordId)
-      .filter((guild) => guild.isAccessDataStale)
-      .map((guild) => guild.id);
-
-    if (staleGuildIds.length === 0) {
-      return;
-    }
-
-    void Promise.all(
-      staleGuildIds.map((guildId) =>
-        this.membersService.queueMemberRefresh({
-          discordId,
-          guildId,
-          userId,
-          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-          reason: "guild-access-cache-background",
-        }),
-      ),
-    ).catch((error) => {
-      this.logger.warn({
-        message: "Failed to queue cached stale accessible guild refreshes",
-        discordId,
-        userId,
-        error,
-      });
-    });
-  }
-
-  private queueStaleAccessibleGuildRefreshes(options: {
-    discordId: string;
-    userId: string;
-    guilds: Guild[];
-    members: GuildPermissionMember[];
-  }): void {
-    const { discordId, userId, guilds, members } = options;
-    const memberByGuildId = new Map(
-      members.map((member) => [member.guildId, member] as const),
-    );
-    const staleGuildIds = guilds
-      .filter((guild) => guild.ownerId !== discordId)
-      .filter((guild) => {
-        const member = memberByGuildId.get(guild.id);
-        return Boolean(
-          member?.globalUserId && this.membersService.isMemberSoftStale(member),
-        );
-      })
-      .map((guild) => guild.id);
-
-    if (staleGuildIds.length === 0) {
-      return;
-    }
-
-    void Promise.all(
-      staleGuildIds.map((guildId) =>
-        this.membersService.queueMemberRefresh({
-          discordId,
-          guildId,
-          userId,
-          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-          reason: "guild-access-background",
-        }),
-      ),
-    ).catch((error) => {
-      this.logger.warn({
-        message: "Failed to queue stale accessible guild refreshes",
-        discordId,
-        userId,
-        error,
-      });
-    });
   }
 
   private toGuildRefreshCandidates(guilds: Guild[]): GuildRefreshCandidate[] {
