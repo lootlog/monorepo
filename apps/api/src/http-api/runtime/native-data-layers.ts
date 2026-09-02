@@ -136,6 +136,7 @@ import { ReservationMutationsRepository } from "#src/reservations/reservation-mu
 import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import { ReservationReminderRepository } from "#src/reservations/reservation-reminder.repository";
 import { ReservationReminderService } from "#src/reservations/reservation-reminder.service";
+import { ReservationsCleanupRepository } from "#src/reservations/reservations-cleanup.repository";
 import { ReservationsRepository } from "#src/reservations/reservations.repository";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import { NotificationJobSchedulerService } from "#src/notifications/notification-job-scheduler.service";
@@ -156,6 +157,7 @@ import { SettingsDocumentsService } from "#src/settings-documents/settings-docum
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
 import { TimerSettingsService } from "#src/timer-settings/timer-settings.service";
 import { TimersRepository } from "#src/timers/timers.repository";
+import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { TimersService } from "#src/timers/timers.service";
 import { UserLootlogConfigRepository } from "#src/user-lootlog-config/user-lootlog-config.repository";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
@@ -198,6 +200,7 @@ import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
 import { OrganizationContextLookup } from "./organization-context.js";
+import { forkCronTask } from "./cron.js";
 
 const makeScopedCompatibilityLayer = <I, S>(
   service: import("effect").Context.Key<I, S>,
@@ -1551,6 +1554,75 @@ export const NativeBullWorkers = Layer.effectDiscard(
   }),
 );
 
+export const NativeScheduledJobs = Layer.effectDiscard(
+  Effect.gen(function* () {
+    const config = yield* ApiRuntimeConfig;
+    const { runtime } = yield* NativeMemberServices;
+    const reservations = new ReservationsCleanupRepository(runtime);
+    const timers = new TimersRepository(runtime);
+
+    const cleanupReservations = Effect.tryPromise({
+      try: async () => {
+        if (config.reservationsCleanup.enabled === "false") return;
+        const cutoff = new Date();
+        cutoff.setDate(
+          cutoff.getDate() - config.reservationsCleanup.retentionDays,
+        );
+        const deleted = await reservations.deleteExpired(cutoff);
+        yieldDeletedReservationsLog(deleted, cutoff);
+      },
+      catch: (cause) => cause,
+    }).pipe(
+      Effect.catch((cause) =>
+        Effect.logError("Reservation cleanup failed").pipe(
+          Effect.annotateLogs({ cause }),
+        ),
+      ),
+    );
+
+    const cleanupTimers = Effect.tryPromise({
+      try: async () => {
+        if (config.timerCleanup.enabled === "false") return;
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - config.timerCleanup.retentionDays);
+        const deleted = await timers.cleanupExpiredManualTimers(
+          cutoff,
+          TIMER_TYPES.CUSTOM_MANUAL,
+        );
+        yieldDeletedTimersLog(deleted, cutoff);
+      },
+      catch: (cause) => cause,
+    }).pipe(
+      Effect.catch((cause) =>
+        Effect.logError("Timer cleanup failed").pipe(
+          Effect.annotateLogs({ cause }),
+        ),
+      ),
+    );
+
+    yield* forkCronTask(cleanupTimers, "0 3 * * *");
+    yield* forkCronTask(cleanupReservations, "0 4 * * *");
+  }),
+);
+
+const yieldDeletedReservationsLog = (deleted: number, cutoff: Date): void => {
+  nativeLogger.log({
+    level: "info",
+    message: "Expired reservations deleted",
+    deleted,
+    cutoff: cutoff.toISOString(),
+  });
+};
+
+const yieldDeletedTimersLog = (deleted: number, cutoff: Date): void => {
+  nativeLogger.log({
+    level: "info",
+    message: "Expired manual timers deleted",
+    deleted,
+    cutoff: cutoff.toISOString(),
+  });
+};
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -1577,6 +1649,9 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeKillsLootsData,
   NativeEventsData,
   NativeNotificationsData,
+  NativeBullWorkers,
+  NativeRabbitConsumers,
+  NativeScheduledJobs,
 ).pipe(
   Layer.provide(NativeNotificationsServicesLive),
   Layer.provide(NativeEventsServicesLive),
