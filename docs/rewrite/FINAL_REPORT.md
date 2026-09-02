@@ -1,5 +1,10 @@
 # Bun, Effect, and Drizzle rewrite report
 
+> Final repository implementation report. The code migration and local
+> verification are complete. Use
+> [`VERIFICATION_REPORT.md`](VERIFICATION_REPORT.md) for command evidence and
+> the staging-only promotion blocker.
+
 Baseline behavior is pinned to
 `633f8f0157cca04ef2b609ba0e2f1903b1c28949`. The implementation ledger is
 [`status.md`](status.md), and command-level evidence is summarized in
@@ -14,11 +19,19 @@ Baseline behavior is pinned to
 - Drizzle ORM/Kit `1.0.0-rc.4` owns database access. API and Activity migrated
   from Prisma; Auth and Battlelog use the same pinned Drizzle generation. Search
   and Discord Bot did not gain databases.
-- Active runtime code contains no Nest, Prisma Client, Socket.IO, Necord,
+- Active runtime code contains no removed backend framework, ORM client, Socket.IO, Necord,
   Winston, RxJS, or removed framework adapter imports.
 - Browser-safe Schema, Domain, Protocol, and Client packages plus the scoped
   Messaging transport replace the former Types and framework-coupled package
   graph. Obsolete micro-packages have no consumers and are removed.
+- API, Battlelog, and Discord Bot application operations compose Effects
+  directly. Compatibility Layers, the legacy controller dispatcher, the static
+  route table, and pass-through Promise application bridges are removed;
+  Promises remain at real infrastructure and SDK adapter boundaries.
+- Better Auth and its Redis storage are pinned to `1.7.2`. The transactional
+  Drizzle adapter uses `provider-id` identity and the account migration adds the
+  deterministic Discord issuer plus the `(issuer, accountId)` uniqueness
+  contract with collision preflight.
 
 ## Preserved contracts
 
@@ -95,6 +108,13 @@ Baseline behavior is pinned to
 - The repository-wide frozen install, lint, typecheck, test, build, E2E,
   OpenAPI parity, generated-client, browser-safety, and forbidden-import gates
   pass.
+- HttpApi, OpenAPI, and client outputs reproduce byte-for-byte across two
+  complete generation runs. The Game Client replay remains above 90% of every
+  matching baseline.
+- All six project Prisma skills and their lock entries are removed. References
+  and direct runtime dependencies/imports for the removed backend framework are
+  absent; direct Prisma runtime dependencies/imports are also absent. Immutable
+  migration evidence and changelogs remain intact.
 - ADRs 0003–0008 and a normal Changeset document the runtime, contract,
   database, messaging, and realtime decisions.
 

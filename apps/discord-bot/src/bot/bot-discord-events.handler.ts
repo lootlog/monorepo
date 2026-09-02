@@ -1,35 +1,53 @@
+import { Effect } from "effect";
 import { Events, type Client, type GuildBasedChannel } from "discord.js";
-import { DiscordSyncService } from "#src/bot/discord-sync.service";
+import type { DiscordSync } from "#src/bot/discord-sync.service";
+
+const runEvent = (event: Effect.Effect<void, unknown>) =>
+  Effect.runFork(
+    event.pipe(
+      Effect.catchCause((cause) =>
+        Effect.logError("Discord event synchronization failed", cause),
+      ),
+    ),
+  );
 
 export const registerDiscordEventHandlers = (
   client: Client,
-  sync: DiscordSyncService,
+  sync: DiscordSync,
 ): void => {
   client.on(
     Events.ClientReady,
-    (readyClient) => void sync.handleClientReady(readyClient),
+    (readyClient) => void runEvent(sync.handleClientReady(readyClient)),
   );
-  client.on(Events.GuildCreate, (guild) => void sync.handleGuildCreate(guild));
+  client.on(
+    Events.GuildCreate,
+    (guild) => void runEvent(sync.handleGuildCreate(guild)),
+  );
   client.on(
     Events.GuildUpdate,
-    (oldGuild, newGuild) => void sync.handleGuildUpdate(oldGuild, newGuild),
+    (oldGuild, newGuild) =>
+      void runEvent(sync.handleGuildUpdate(oldGuild, newGuild)),
   );
-  client.on(Events.GuildDelete, (guild) => void sync.handleGuildDelete(guild));
+  client.on(
+    Events.GuildDelete,
+    (guild) => void runEvent(sync.handleGuildDelete(guild)),
+  );
   client.on(
     Events.GuildRoleCreate,
-    (role) => void sync.handleGuildRoleCreate(role),
+    (role) => void runEvent(sync.handleGuildRoleCreate(role)),
   );
   client.on(
     Events.GuildRoleUpdate,
-    (oldRole, newRole) => void sync.handleGuildRoleUpdate(oldRole, newRole),
+    (oldRole, newRole) =>
+      void runEvent(sync.handleGuildRoleUpdate(oldRole, newRole)),
   );
   client.on(
     Events.GuildRoleDelete,
-    (role) => void sync.handleGuildRoleDelete(role),
+    (role) => void runEvent(sync.handleGuildRoleDelete(role)),
   );
   client.on(Events.ChannelCreate, (channel) => {
     if ("guild" in channel && channel.guild)
-      void sync.handleChannelCreate(channel as GuildBasedChannel);
+      void runEvent(sync.handleChannelCreate(channel as GuildBasedChannel));
   });
   client.on(Events.ChannelUpdate, (oldChannel, newChannel) => {
     if (
@@ -38,13 +56,15 @@ export const registerDiscordEventHandlers = (
       "guild" in newChannel &&
       newChannel.guild
     )
-      void sync.handleChannelUpdate(
-        oldChannel as GuildBasedChannel,
-        newChannel as GuildBasedChannel,
+      void runEvent(
+        sync.handleChannelUpdate(
+          oldChannel as GuildBasedChannel,
+          newChannel as GuildBasedChannel,
+        ),
       );
   });
   client.on(Events.ChannelDelete, (channel) => {
     if ("guild" in channel && channel.guild)
-      void sync.handleChannelDelete(channel as GuildBasedChannel);
+      void runEvent(sync.handleChannelDelete(channel as GuildBasedChannel));
   });
 };

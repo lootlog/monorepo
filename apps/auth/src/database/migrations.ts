@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type pg from "pg";
 import type { AuthDatabaseConnection } from "./drizzle.js";
@@ -8,14 +9,9 @@ import type { AuthDatabaseConnection } from "./drizzle.js";
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
 const authTableNames = ["user", "session", "account", "verification", "jwks"];
-const migrationsFolder = path.resolve(process.cwd(), "drizzle");
-
-type MigrationJournal = {
-  entries: Array<{
-    when: number;
-    tag: string;
-  }>;
-};
+const migrationsFolder = fileURLToPath(
+  new URL("../../drizzle", import.meta.url),
+);
 
 type LocalMigration = {
   createdAt: number;
@@ -29,7 +25,14 @@ type SchemaColumn = {
   isNullable: "NO" | "YES";
 };
 
-export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> = [
+export type AuthMigrationPlan = {
+  readonly source: "fresh" | "better-auth-1.6" | "better-auth-1.7";
+  readonly pendingMigrations: number;
+  readonly accountCount: number;
+  readonly issuerBackfillCount: number;
+};
+
+export const AUTH_SCHEMA_FINGERPRINT_V1_6: ReadonlyArray<SchemaColumn> = [
   ["account", "accessToken", "text", "YES"],
   ["account", "accessTokenExpiresAt", "timestamp with time zone", "YES"],
   ["account", "accountId", "text", "NO"],
@@ -82,27 +85,54 @@ export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> = [
   isNullable,
 })) as ReadonlyArray<SchemaColumn>;
 
-function getMigrationJournalPath() {
-  return path.join(migrationsFolder, "meta", "_journal.json");
-}
+export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> =
+  AUTH_SCHEMA_FINGERPRINT_V1_6.flatMap((column) =>
+    column.tableName === "account" && column.columnName === "password"
+      ? [
+          {
+            tableName: "account",
+            columnName: "issuer",
+            dataType: "text",
+            isNullable: "NO" as const,
+          },
+          column,
+        ]
+      : [column],
+  );
 
 function readLocalMigrations(): LocalMigration[] {
-  const journalPath = getMigrationJournalPath();
+  const migrationDirectories = fs
+    .readdirSync(migrationsFolder, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^\d{14}_/.test(entry.name))
+    .map((entry) => entry.name)
+    .sort();
 
-  if (!fs.existsSync(journalPath)) {
-    throw new Error(`Missing auth migration journal at ${journalPath}`);
+  if (migrationDirectories.length === 0) {
+    throw new Error(`Missing auth migrations in ${migrationsFolder}`);
   }
 
-  const journal = JSON.parse(
-    fs.readFileSync(journalPath, "utf8"),
-  ) as MigrationJournal;
-
-  return journal.entries.map(({ when, tag }) => {
-    const migrationPath = path.join(migrationsFolder, `${tag}.sql`);
+  return migrationDirectories.map((directory) => {
+    const migrationPath = path.join(
+      migrationsFolder,
+      directory,
+      "migration.sql",
+    );
+    if (!fs.existsSync(migrationPath)) {
+      throw new Error(`Missing auth migration at ${migrationPath}`);
+    }
     const sqlContent = fs.readFileSync(migrationPath, "utf8");
+    const timestamp = directory.slice(0, 14);
+    const createdAt = Date.UTC(
+      Number(timestamp.slice(0, 4)),
+      Number(timestamp.slice(4, 6)) - 1,
+      Number(timestamp.slice(6, 8)),
+      Number(timestamp.slice(8, 10)),
+      Number(timestamp.slice(10, 12)),
+      Number(timestamp.slice(12, 14)),
+    );
 
     return {
-      createdAt: when,
+      createdAt,
       hash: crypto.createHash("sha256").update(sqlContent).digest("hex"),
     };
   });
@@ -158,7 +188,7 @@ async function repairLegacyJwtSchema(pool: pg.Pool) {
   `);
 }
 
-export async function assertAuthSchemaFingerprint(pool: pg.Pool) {
+async function readAuthSchemaFingerprint(pool: pg.Pool) {
   const result = await pool.query<{
     tableName: string;
     columnName: string;
@@ -179,16 +209,30 @@ export async function assertAuthSchemaFingerprint(pool: pg.Pool) {
     [authTableNames],
   );
 
-  if (JSON.stringify(result.rows) !== JSON.stringify(AUTH_SCHEMA_FINGERPRINT)) {
+  return result.rows;
+}
+
+function matchesFingerprint(
+  actual: ReadonlyArray<SchemaColumn>,
+  expected: ReadonlyArray<SchemaColumn>,
+) {
+  return JSON.stringify(actual) === JSON.stringify(expected);
+}
+
+export async function assertAuthSchemaFingerprint(pool: pg.Pool) {
+  const fingerprint = await readAuthSchemaFingerprint(pool);
+
+  if (!matchesFingerprint(fingerprint, AUTH_SCHEMA_FINGERPRINT)) {
     throw new Error(
-      "Auth database schema does not match the adopted Drizzle baseline; refusing to mark migrations as applied.",
+      "Auth database schema does not match the Better Auth 1.7 Drizzle schema.",
     );
   }
 }
 
-async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
-  const localMigrations = readLocalMigrations();
-
+async function markMigrationsAsApplied(
+  pool: pg.Pool,
+  localMigrations: ReadonlyArray<LocalMigration>,
+) {
   await Promise.all(
     localMigrations.map((migration) =>
       pool.query(
@@ -201,6 +245,123 @@ async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
       ),
     ),
   );
+}
+
+function unknownSchemaError() {
+  return new Error(
+    "Auth database schema does not match the adopted Better Auth 1.6 or 1.7 Drizzle schema; refusing to mark migrations as applied.",
+  );
+}
+
+async function readCount(pool: pg.Pool, sql: string) {
+  const result = await pool.query<{ count: string }>(sql);
+  return Number(result.rows[0]?.count ?? "0");
+}
+
+export async function planAuthMigration(
+  pool: pg.Pool,
+): Promise<AuthMigrationPlan> {
+  const existingAuthTableCount = await getExistingAuthTableCount(pool);
+  const localMigrationCount = readLocalMigrations().length;
+
+  if (existingAuthTableCount === 0) {
+    return {
+      source: "fresh",
+      pendingMigrations: localMigrationCount,
+      accountCount: 0,
+      issuerBackfillCount: 0,
+    };
+  }
+
+  const fingerprint = await readAuthSchemaFingerprint(pool);
+
+  if (matchesFingerprint(fingerprint, AUTH_SCHEMA_FINGERPRINT_V1_6)) {
+    const unsupportedProviderCount = await readCount(
+      pool,
+      `SELECT COUNT(*)::text AS count FROM "account" WHERE "providerId" <> 'discord'`,
+    );
+    if (unsupportedProviderCount > 0) {
+      throw new Error(
+        "Better Auth 1.7 migration cannot infer issuer for a non-Discord account.",
+      );
+    }
+
+    const collisionCount = await readCount(
+      pool,
+      `
+        SELECT COUNT(*)::text AS count
+        FROM (
+          SELECT "accountId"
+          FROM "account"
+          GROUP BY "accountId"
+          HAVING COUNT(*) > 1
+        ) AS collisions
+      `,
+    );
+    if (collisionCount > 0) {
+      throw new Error(
+        "Better Auth 1.7 migration found an issuer/accountId collision.",
+      );
+    }
+
+    const accountCount = await readCount(
+      pool,
+      `SELECT COUNT(*)::text AS count FROM "account"`,
+    );
+    return {
+      source: "better-auth-1.6",
+      pendingMigrations: Math.max(localMigrationCount - 1, 0),
+      accountCount,
+      issuerBackfillCount: accountCount,
+    };
+  }
+
+  if (matchesFingerprint(fingerprint, AUTH_SCHEMA_FINGERPRINT)) {
+    const invalidAccountCount = await readCount(
+      pool,
+      `
+        SELECT COUNT(*)::text AS count
+        FROM "account"
+        WHERE "providerId" <> 'discord'
+          OR "issuer" <> 'local:oauth:discord'
+      `,
+    );
+    if (invalidAccountCount > 0) {
+      throw new Error(
+        "Better Auth 1.7 migration found an account with an unexpected issuer.",
+      );
+    }
+
+    const collisionCount = await readCount(
+      pool,
+      `
+        SELECT COUNT(*)::text AS count
+        FROM (
+          SELECT "issuer", "accountId"
+          FROM "account"
+          GROUP BY "issuer", "accountId"
+          HAVING COUNT(*) > 1
+        ) AS collisions
+      `,
+    );
+    if (collisionCount > 0) {
+      throw new Error(
+        "Better Auth 1.7 migration found an issuer/accountId collision.",
+      );
+    }
+
+    return {
+      source: "better-auth-1.7",
+      pendingMigrations: 0,
+      accountCount: await readCount(
+        pool,
+        `SELECT COUNT(*)::text AS count FROM "account"`,
+      ),
+      issuerBackfillCount: 0,
+    };
+  }
+
+  throw unknownSchemaError();
 }
 
 export async function initializeAuthMigrations(pool: pg.Pool) {
@@ -219,8 +380,24 @@ export async function initializeAuthMigrations(pool: pg.Pool) {
   }
 
   await repairLegacyJwtSchema(pool);
-  await assertAuthSchemaFingerprint(pool);
-  await markBaselineMigrationsAsApplied(pool);
+  const fingerprint = await readAuthSchemaFingerprint(pool);
+  const localMigrations = readLocalMigrations();
+
+  if (matchesFingerprint(fingerprint, AUTH_SCHEMA_FINGERPRINT_V1_6)) {
+    const baselineMigration = localMigrations[0];
+    if (!baselineMigration) {
+      throw new Error("Missing Better Auth 1.6 baseline migration.");
+    }
+    await markMigrationsAsApplied(pool, [baselineMigration]);
+    return;
+  }
+
+  if (matchesFingerprint(fingerprint, AUTH_SCHEMA_FINGERPRINT)) {
+    await markMigrationsAsApplied(pool, localMigrations);
+    return;
+  }
+
+  throw unknownSchemaError();
 }
 
 export async function runAuthMigrations(connection: AuthDatabaseConnection) {
@@ -230,4 +407,5 @@ export async function runAuthMigrations(connection: AuthDatabaseConnection) {
     migrationsSchema,
     migrationsTable,
   });
+  await assertAuthSchemaFingerprint(connection.pool);
 }

@@ -1,38 +1,36 @@
 import { Queue, Worker } from "bullmq";
 import { Context, Effect, Layer } from "effect";
 import {
-  BattlesController,
-  PublicBattlesController,
+  makeBattlelogOperations,
+  type BattlelogOperations,
 } from "#src/battles/battles.controller";
-import { BattlesService } from "#src/battles/battles.service";
+import { makeBattles, type Battles } from "#src/battles/battles.service";
 import { DELETE_USER_BATTLES_QUEUE } from "#src/battles/constants/delete-user-battles-queue.constant";
 import {
-  DeleteUserBattlesProcessor,
+  makeDeleteUserBattlesProcessor,
   type DeleteUserBattlesJobData,
 } from "#src/battles/delete-user-battles.processor";
-import { InternalController } from "#src/battles/internal.controller";
-import { AbyssSeasonCalculatorService } from "#src/battles/services/abyss-season-calculator.service";
-import { BattleAnalyticsCacheService } from "#src/battles/services/battle-analytics-cache.service";
-import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
-import { BattleAnalyticsPagingService } from "#src/battles/services/battle-analytics-paging.service";
-import { BattleAnalyticsQueryService } from "#src/battles/services/battle-analytics-query.service";
-import { BattleAnalyticsService } from "#src/battles/services/battle-analytics.service";
-import { BattleListFilterService } from "#src/battles/services/battle-list-filter.service";
-import { BattleMetadataService } from "#src/battles/services/battle-metadata.service";
-import { BattleSummaryCalculatorService } from "#src/battles/services/battle-summary-calculator.service";
-import { CombatProfileCalculatorService } from "#src/battles/services/combat-profile-calculator.service";
-import { HeadToHeadCalculatorService } from "#src/battles/services/head-to-head-calculator.service";
-import { PaginationService } from "#src/battles/services/pagination.service";
-import { PlayerVsPlayerCalculatorService } from "#src/battles/services/player-vs-player-calculator.service";
+import { makeAbyssSeasonCalculator } from "#src/battles/services/abyss-season-calculator.service";
+import { makeBattleAnalyticsCache } from "#src/battles/services/battle-analytics-cache.service";
+import { battleAnalyticsDomain } from "#src/battles/services/battle-analytics-domain.service";
+import { battleAnalyticsPaging } from "#src/battles/services/battle-analytics-paging.service";
+import { makeBattleAnalyticsQuery } from "#src/battles/services/battle-analytics-query.service";
+import { makeBattleAnalytics } from "#src/battles/services/battle-analytics.service";
+import { makeBattleListFilter } from "#src/battles/services/battle-list-filter.service";
+import { makeBattleMetadata } from "#src/battles/services/battle-metadata.service";
+import { makeBattleSummaryCalculator } from "#src/battles/services/battle-summary-calculator.service";
+import { makeCombatProfileCalculator } from "#src/battles/services/combat-profile-calculator.service";
+import { makeHeadToHeadCalculator } from "#src/battles/services/head-to-head-calculator.service";
+import { makeBattlePagination } from "#src/battles/services/pagination.service";
+import { makePlayerVsPlayerCalculator } from "#src/battles/services/player-vs-player-calculator.service";
 import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
-import { createRequestHandler } from "#src/http/router";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
-import { R2Service } from "#src/shared/modules/r2/r2.service";
-import { RedisService } from "#src/shared/modules/redis/redis.service";
+import { makeDrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
+import { makeBattleObjectStorage } from "#src/shared/modules/r2/r2.service";
+import { makeRedisStore } from "#src/shared/modules/redis/redis.service";
 
 export interface BattlelogApplicationService {
   readonly port: number;
-  readonly fetch: (request: Request) => Promise<Response>;
+  readonly operations: BattlelogOperations;
 }
 
 export class BattlelogApplication extends Context.Service<
@@ -46,58 +44,45 @@ export class BattlelogApplication extends Context.Service<
       const drizzle = yield* acquireDrizzle(config);
       const redis = yield* acquireRedis(config);
 
-      const cacheService = new BattleAnalyticsCacheService(redis);
-      const domainService = new BattleAnalyticsDomainService();
-      const pagingService = new BattleAnalyticsPagingService();
-      const queryService = new BattleAnalyticsQueryService(
-        drizzle,
-        cacheService,
-      );
-      const summaryCalculator = new BattleSummaryCalculatorService(
-        domainService,
-      );
-      const combatProfileCalculator = new CombatProfileCalculatorService(
-        domainService,
-      );
-      const headToHeadCalculator = new HeadToHeadCalculatorService(
-        domainService,
-      );
-      const playerVsPlayerCalculator = new PlayerVsPlayerCalculatorService(
-        domainService,
-      );
-      const abyssSeasonCalculator = new AbyssSeasonCalculatorService(
-        domainService,
-      );
-      const analyticsService = new BattleAnalyticsService(
+      const cacheService = makeBattleAnalyticsCache(redis);
+      const domain = battleAnalyticsDomain;
+      const paging = battleAnalyticsPaging;
+      const queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
+      const summaryCalculator = makeBattleSummaryCalculator(domain);
+      const combatProfileCalculator = makeCombatProfileCalculator(domain);
+      const headToHeadCalculator = makeHeadToHeadCalculator(domain);
+      const playerVsPlayerCalculator = makePlayerVsPlayerCalculator(domain);
+      const abyssSeasonCalculator = makeAbyssSeasonCalculator(domain);
+      const analyticsService = makeBattleAnalytics(
         drizzle,
         cacheService,
         queryService,
-        domainService,
-        pagingService,
+        domain,
+        paging,
         summaryCalculator,
         combatProfileCalculator,
         headToHeadCalculator,
         playerVsPlayerCalculator,
         abyssSeasonCalculator,
       );
-      const metadataService = new BattleMetadataService(drizzle, redis);
-      const battlesService = new BattlesService(
+      const metadataService = makeBattleMetadata(drizzle, redis);
+      const battlesService = makeBattles(
         drizzle,
-        new R2Service(redis, config.r2),
+        makeBattleObjectStorage(redis, config.r2),
         redis,
-        new PaginationService(drizzle),
+        makeBattlePagination(drizzle),
         analyticsService,
-        new BattleListFilterService(drizzle),
+        makeBattleListFilter(drizzle),
         metadataService,
       );
       const queue = yield* acquireDeleteQueue(config);
       yield* acquireDeleteWorker(config, battlesService);
 
-      const fetch = createRequestHandler({
-        battles: new BattlesController(battlesService, analyticsService),
-        publicBattles: new PublicBattlesController(battlesService),
-        internal: new InternalController(queue),
-      });
+      const operations = makeBattlelogOperations(
+        battlesService,
+        analyticsService,
+        queue,
+      );
 
       yield* Effect.logInfo("Battlelog application initialized").pipe(
         Effect.annotateLogs({
@@ -106,7 +91,7 @@ export class BattlelogApplication extends Context.Service<
         }),
       );
 
-      return BattlelogApplication.of({ fetch, port: config.port });
+      return BattlelogApplication.of({ operations, port: config.port });
     }),
   );
 
@@ -119,7 +104,7 @@ const acquireDrizzle = (config: BattlelogConfiguration) =>
   Effect.acquireRelease(
     Effect.tryPromise({
       try: async () => {
-        const drizzle = new DrizzleService(config.postgresqlConnectionUri);
+        const drizzle = makeDrizzleDatabase(config.postgresqlConnectionUri);
         await drizzle.connect();
         return drizzle;
       },
@@ -132,7 +117,7 @@ const acquireRedis = (config: BattlelogConfiguration) =>
   Effect.acquireRelease(
     Effect.tryPromise({
       try: async () => {
-        const redis = new RedisService(config.redis);
+        const redis = makeRedisStore(config.redis);
         await redis.connect();
         return redis;
       },
@@ -155,36 +140,16 @@ const acquireDeleteQueue = (config: BattlelogConfiguration) =>
 
 const acquireDeleteWorker = (
   config: BattlelogConfiguration,
-  battlesService: BattlesService,
+  battlesService: Battles,
 ) =>
   Effect.acquireRelease(
     Effect.sync(() => {
-      const processor = new DeleteUserBattlesProcessor(battlesService);
+      const processor = makeDeleteUserBattlesProcessor(battlesService);
       return new Worker<DeleteUserBattlesJobData>(
         DELETE_USER_BATTLES_QUEUE,
-        (job) => processor.process(job),
+        (job) => Effect.runPromise(processor.process(job)),
         { connection: config.redis, prefix: "{bull}" },
       );
     }),
     (worker) => Effect.promise(() => worker.close()),
   );
-
-export const BattlelogServer = Layer.effectDiscard(
-  Effect.gen(function* () {
-    const application = yield* BattlelogApplication;
-    const server = yield* Effect.acquireRelease(
-      Effect.sync(() =>
-        Bun.serve({
-          hostname: "0.0.0.0",
-          port: application.port,
-          fetch: application.fetch,
-        }),
-      ),
-      (server) => Effect.promise(() => server.stop(true)),
-    );
-
-    yield* Effect.logInfo("Battlelog HTTP server listening").pipe(
-      Effect.annotateLogs({ hostname: server.hostname, port: server.port }),
-    );
-  }),
-).pipe(Layer.provide(BattlelogApplication.layer));

@@ -134,52 +134,6 @@ export class NotificationsData extends Context.Service<
   static layer(service: NotificationsData["Service"]) {
     return Layer.succeed(NotificationsData, NotificationsData.of(service));
   }
-
-  static layerLegacy(
-    execute: (
-      endpoint: NotificationEndpointIdentifier,
-      request: NotificationRequest,
-      caller: NotificationContext,
-    ) => PromiseLike<unknown> | unknown,
-  ) {
-    const legacyFailure = (
-      cause: unknown,
-    ):
-      | NotificationsAccessDenied
-      | NotificationsBadRequest
-      | NotificationsConflict
-      | NotificationsDataError
-      | NotificationsNotFound => {
-      const status =
-        typeof cause === "object" &&
-        cause !== null &&
-        "getStatus" in cause &&
-        typeof cause.getStatus === "function"
-          ? cause.getStatus()
-          : undefined;
-      if (status === 400) {
-        return new NotificationsBadRequest({ status, code: "BAD_REQUEST" });
-      }
-      if (status === 403) {
-        return new NotificationsAccessDenied({ status, code: "FORBIDDEN" });
-      }
-      if (status === 404) {
-        return new NotificationsNotFound({ status, code: "NOT_FOUND" });
-      }
-      if (status === 409) {
-        return new NotificationsConflict({ status, code: "CONFLICT" });
-      }
-      return new NotificationsDataError({ cause });
-    };
-
-    return NotificationsData.layer({
-      execute: (endpoint, request, caller) =>
-        Effect.tryPromise({
-          try: () => Promise.resolve(execute(endpoint, request, caller)),
-          catch: legacyFailure,
-        }),
-    });
-  }
 }
 
 const isGuildEndpoint = (endpoint: NotificationEndpointIdentifier) =>

@@ -9,49 +9,51 @@ type BattlelogDatabase = Effect.Success<
   ReturnType<typeof makeWithDefaults<typeof relations>>
 >;
 
-export class DrizzleService {
-  private readonly logger = new Logger(DrizzleService.name);
-  private readonly runtime;
-  private database: BattlelogDatabase | null = null;
+export const makeDrizzleDatabase = (connectionString: string) => {
+  const logger = new Logger("DrizzleDatabase");
+  const runtime = ManagedRuntime.make(
+    PgClient.layer({
+      url: Redacted.make(connectionString),
+      applicationName: "battlelog-service",
+    }),
+  );
+  let database: BattlelogDatabase | null = null;
 
-  constructor(connectionString: string) {
-    this.runtime = ManagedRuntime.make(
-      PgClient.layer({
-        url: Redacted.make(connectionString),
-        applicationName: "battlelog-service",
-      }),
-    );
-  }
-
-  get db(): BattlelogDatabase {
-    if (!this.database) {
+  const db = (): BattlelogDatabase => {
+    if (!database) {
       throw new Error("Battlelog database was used before connect()");
     }
 
-    return this.database;
-  }
+    return database;
+  };
 
-  async connect(): Promise<void> {
+  const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> =>
+    runtime.runPromise(effect);
+
+  const connect = async (): Promise<void> => {
     try {
-      this.database = await this.runtime.runPromise(
-        makeWithDefaults({ relations }),
-      );
-      await this.run(
-        this.database.execute<{ id: number }>(sql`select 1 as id`),
-      );
-      this.logger.log("Database connection established");
+      database = await runtime.runPromise(makeWithDefaults({ relations }));
+      await run(database.execute<{ id: number }>(sql`select 1 as id`));
+      logger.log("Database connection established");
     } catch (error) {
-      this.logger.error("Failed to connect to database", error);
+      logger.error("Failed to connect to database", error);
       throw error;
     }
-  }
+  };
 
-  run<A, E>(effect: Effect.Effect<A, E>): Promise<A> {
-    return this.runtime.runPromise(effect);
-  }
+  const close = async (): Promise<void> => {
+    database = null;
+    await runtime.dispose();
+  };
 
-  async close(): Promise<void> {
-    this.database = null;
-    await this.runtime.dispose();
-  }
-}
+  return {
+    close,
+    connect,
+    get db() {
+      return db();
+    },
+    run,
+  };
+};
+
+export type DrizzleDatabase = ReturnType<typeof makeDrizzleDatabase>;

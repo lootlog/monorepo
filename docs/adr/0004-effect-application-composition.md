@@ -5,10 +5,10 @@
 
 ## Context
 
-Backend applications used Nest modules, decorators, global lifecycle hooks, and
-several logging and configuration adapters. Resource ownership was distributed
-between framework modules, which made shutdown order and test isolation hard to
-verify.
+Backend applications used class-based modules, decorators, global lifecycle
+hooks, and several logging and configuration adapters. Resource ownership was
+distributed between framework modules, which made shutdown order and test
+isolation hard to verify.
 
 The rewrite needs one composition model for HTTP servers, database pools,
 Redis, RabbitMQ, observability, configuration, and background work.

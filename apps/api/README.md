@@ -1,12 +1,12 @@
 # @lootlog/api
 
-Main NestJS backend for Lootlog clan management.
+Main Effect HttpApi backend for Lootlog organization management.
 
 ## Overview
 
 - Owns the core HTTP API for guilds, members, loots, timers, reservations, chat, notifications, events, maps, kills, and user-facing configuration.
 - Uses Effect-native Drizzle PostgreSQL access, BullMQ with Redis for background work, and shared auth and permission layers across the monorepo.
-- Composes feature modules from `src/app.module.ts` and exposes a health check through the local `healthz` module.
+- Composes typed handler and infrastructure Layers under `src/http-api` and exposes health through the generated HttpApi contract.
 
 ## Development
 

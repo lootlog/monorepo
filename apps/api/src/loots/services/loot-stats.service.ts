@@ -9,6 +9,7 @@ import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
 import { createHash } from "node:crypto";
+import { Effect } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
   buildLootNpcVisibilitySql,
@@ -24,7 +25,7 @@ import type {
   TopContributor,
   TopItem,
 } from "../dto/loot-stats.dto.js";
-import { LootsRepository } from "../loots.repository.js";
+import type { LootStatsQuery } from "./loot-stats-query.js";
 
 type Role = typeof roleTable.$inferSelect;
 
@@ -34,28 +35,33 @@ export class LootStatsService {
   private readonly logger = new Logger(LootStatsService.name);
 
   constructor(
-    private readonly repository: LootsRepository,
+    private readonly query: LootStatsQuery,
     private readonly redis: RedisService,
   ) {}
 
-  async invalidateCache(guildIds: string[]) {
+  invalidateCache(guildIds: string[]) {
     const uniqueGuildIds = [...new Set(guildIds)];
-
-    await Promise.all(
-      uniqueGuildIds.map(async (guildId) => {
-        try {
-          await this.redis.deleteByPattern(`loot-stats:${guildId}:*`);
-        } catch (error) {
-          this.logger.warn("Failed to invalidate loot stats cache", {
-            error,
-            guildId,
-          });
-        }
-      }),
-    );
+    return Effect.all(
+      uniqueGuildIds.map((guildId) =>
+        Effect.tryPromise({
+          try: () => this.redis.deleteByPattern(`loot-stats:${guildId}:*`),
+          catch: (cause) => cause,
+        }).pipe(
+          Effect.catch((error) =>
+            Effect.sync(() =>
+              this.logger.warn("Failed to invalidate loot stats cache", {
+                error,
+                guildId,
+              }),
+            ),
+          ),
+        ),
+      ),
+      { concurrency: "unbounded" },
+    ).pipe(Effect.asVoid);
   }
 
-  async getLootStats(
+  getLootStatsEffect(
     guildId: string,
     accessPolicy: AccessPolicy,
     roles: Role[],
@@ -63,7 +69,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: string[],
     excludeColossus?: boolean,
-  ): Promise<LootStatsResponse> {
+  ) {
     const permissions = getEffectiveCapabilities(accessPolicy);
     const cacheKey = this.buildCacheKey(
       guildId,
@@ -74,30 +80,25 @@ export class LootStatsService {
       npcTypes,
       excludeColossus,
     );
+    const visibilityCondition = buildLootNpcVisibilitySql(permissions, roles);
+    const dateFrom = this.getDateFromPeriod(period);
+    const npcTypeFilter = npcTypes?.length
+      ? npcTypes.filter((type): type is NpcType =>
+          Object.values(NpcType).includes(type as NpcType),
+        )
+      : undefined;
 
-    const cached = await this.redis.getJson<LootStatsResponse>(cacheKey);
-    if (cached !== null) {
-      this.logger.debug(`Cache hit for ${cacheKey}`);
-      return cached;
-    }
-
-    this.logger.debug(`Cache miss for ${cacheKey}`);
-
-    return this.redis.getOrSetJson({
-      key: cacheKey,
-      ttlSeconds: CACHE_TTL_SECONDS,
-      factory: async () => {
-        const visibilityCondition = buildLootNpcVisibilitySql(
-          permissions,
-          roles,
-        );
-        const dateFrom = this.getDateFromPeriod(period);
-        const npcTypeFilter = npcTypes?.length
-          ? npcTypes.filter((t): t is NpcType =>
-              Object.values(NpcType).includes(t as NpcType),
-            )
-          : undefined;
-
+    return Effect.gen(
+      function* (this: LootStatsService) {
+        const cached = yield* Effect.tryPromise({
+          try: () => this.redis.getJson<LootStatsResponse>(cacheKey),
+          catch: (cause) => cause,
+        });
+        if (cached !== null) {
+          this.logger.debug(`Cache hit for ${cacheKey}`);
+          return cached;
+        }
+        this.logger.debug(`Cache miss for ${cacheKey}`);
         const [
           overview,
           byRarity,
@@ -105,68 +106,79 @@ export class LootStatsService {
           topNpcs,
           topContributors,
           topItems,
-        ] = await Promise.all([
-          this.getOverview(
-            guildId,
-            dateFrom,
-            world,
-            npcTypeFilter,
-            excludeColossus,
-            visibilityCondition,
-          ),
-          this.getByRarity(
-            guildId,
-            dateFrom,
-            world,
-            npcTypeFilter,
-            excludeColossus,
-            visibilityCondition,
-          ),
-          this.getTimeline(
-            guildId,
-            dateFrom,
-            period,
-            world,
-            npcTypeFilter,
-            excludeColossus,
-            visibilityCondition,
-          ),
-          this.getTopNpcs(
-            guildId,
-            dateFrom,
-            world,
-            npcTypeFilter,
-            excludeColossus,
-            visibilityCondition,
-          ),
-          this.getTopContributors(
-            guildId,
-            dateFrom,
-            world,
-            npcTypeFilter,
-            excludeColossus,
-            visibilityCondition,
-          ),
-          this.getTopLegendaryItems(
-            guildId,
-            dateFrom,
-            world,
-            npcTypeFilter,
-            excludeColossus,
-            visibilityCondition,
-          ),
-        ]);
-
-        return {
+        ] = yield* Effect.all(
+          [
+            this.getOverview(
+              guildId,
+              dateFrom,
+              world,
+              npcTypeFilter,
+              excludeColossus,
+              visibilityCondition,
+            ),
+            this.getByRarity(
+              guildId,
+              dateFrom,
+              world,
+              npcTypeFilter,
+              excludeColossus,
+              visibilityCondition,
+            ),
+            this.getTimeline(
+              guildId,
+              dateFrom,
+              period,
+              world,
+              npcTypeFilter,
+              excludeColossus,
+              visibilityCondition,
+            ),
+            this.getTopNpcs(
+              guildId,
+              dateFrom,
+              world,
+              npcTypeFilter,
+              excludeColossus,
+              visibilityCondition,
+            ),
+            this.getTopContributors(
+              guildId,
+              dateFrom,
+              world,
+              npcTypeFilter,
+              excludeColossus,
+              visibilityCondition,
+            ),
+            this.getTopLegendaryItems(
+              guildId,
+              dateFrom,
+              world,
+              npcTypeFilter,
+              excludeColossus,
+              visibilityCondition,
+            ),
+          ] as const,
+          { concurrency: "unbounded" },
+        );
+        const response = {
           overview,
           byRarity,
           timeline,
           topNpcs,
           topContributors,
           topItems,
-        };
-      },
-    });
+        } satisfies LootStatsResponse;
+        yield* Effect.tryPromise({
+          try: () => this.redis.setJson(cacheKey, response, CACHE_TTL_SECONDS),
+          catch: (cause) => cause,
+        });
+        return response;
+      }.bind(this),
+    ).pipe(
+      Effect.withSpan("LootsController_getLootStats", {
+        attributes: { adapter: "loot-stats", retryCount: 0 },
+      }),
+    );
   }
 
   private buildCacheKey(
@@ -284,14 +296,14 @@ export class LootStatsService {
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
-  private async getOverview(
+  private getOverview(
     guildId: string,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
     visibilityCondition = "",
-  ): Promise<LootStatsOverview> {
+  ) {
     const {
       dateCondition,
       worldCondition,
@@ -301,7 +313,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.repository.queryRaw<
+    return this.query<
       Array<{
         total_loots: bigint;
         total_items: bigint;
@@ -310,6 +322,7 @@ export class LootStatsService {
         avg_item_level: number | null;
       }>
     >(
+      "loot-stats.overview",
       needsNpcFilter
         ? `
         WITH valid_loots AS (
@@ -356,28 +369,30 @@ export class LootStatsService {
         ${worldCondition}
       `,
       params,
+    ).pipe(
+      Effect.map((result): LootStatsOverview => {
+        const row = result[0];
+        return {
+          totalLoots: Number(row?.total_loots ?? 0),
+          totalItems: Number(row?.total_items ?? 0),
+          legendaryItems: Number(row?.legendary_items ?? 0),
+          heroicItems: Number(row?.heroic_items ?? 0),
+          avgItemLevel: row?.avg_item_level
+            ? Math.round(Number(row.avg_item_level))
+            : 0,
+        };
+      }),
     );
-
-    const row = result[0];
-    return {
-      totalLoots: Number(row?.total_loots ?? 0),
-      totalItems: Number(row?.total_items ?? 0),
-      legendaryItems: Number(row?.legendary_items ?? 0),
-      heroicItems: Number(row?.heroic_items ?? 0),
-      avgItemLevel: row?.avg_item_level
-        ? Math.round(Number(row.avg_item_level))
-        : 0,
-    };
   }
 
-  private async getByRarity(
+  private getByRarity(
     guildId: string,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
     visibilityCondition = "",
-  ): Promise<Partial<Record<ItemRarity, RarityStats>>> {
+  ) {
     const {
       dateCondition,
       worldCondition,
@@ -387,12 +402,13 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.repository.queryRaw<
+    return this.query<
       Array<{
         rarity: ItemRarity;
         count: bigint;
       }>
     >(
+      "loot-stats.by-rarity",
       needsNpcFilter
         ? `
         WITH valid_loots AS (
@@ -437,23 +453,24 @@ export class LootStatsService {
         GROUP BY isnap.rarity
       `,
       params,
+    ).pipe(
+      Effect.map((result): Partial<Record<ItemRarity, RarityStats>> => {
+        const total = result.reduce((sum, row) => sum + Number(row.count), 0);
+        const byRarity: Partial<Record<ItemRarity, RarityStats>> = {};
+        for (const row of result) {
+          const count = Number(row.count);
+          byRarity[row.rarity] = {
+            count,
+            percentage:
+              total > 0 ? Math.round((count / total) * 100 * 10) / 10 : 0,
+          };
+        }
+        return byRarity;
+      }),
     );
-
-    const total = result.reduce((sum, r) => sum + Number(r.count), 0);
-    const byRarity: Partial<Record<ItemRarity, RarityStats>> = {};
-
-    for (const row of result) {
-      const count = Number(row.count);
-      byRarity[row.rarity] = {
-        count,
-        percentage: total > 0 ? Math.round((count / total) * 100 * 10) / 10 : 0,
-      };
-    }
-
-    return byRarity;
   }
 
-  private async getTimeline(
+  private getTimeline(
     guildId: string,
     dateFrom: Date | null,
     period: Period,
@@ -461,7 +478,7 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
     visibilityCondition = "",
-  ): Promise<TimelinePoint[]> {
+  ) {
     const {
       dateCondition,
       worldCondition,
@@ -472,13 +489,14 @@ export class LootStatsService {
     const truncUnit = this.getTimelineTruncUnit(period);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.repository.queryRaw<
+    return this.query<
       Array<{
         date: Date;
         rarity: ItemRarity | null;
         count: bigint;
       }>
     >(
+      "loot-stats.timeline",
       needsNpcFilter
         ? `
         WITH valid_loots AS (
@@ -524,35 +542,30 @@ export class LootStatsService {
         ORDER BY date ASC
       `,
       params,
+    ).pipe(
+      Effect.map((result): TimelinePoint[] => {
+        const timelineMap = new Map<
+          string,
+          { total: number; byRarity: Partial<Record<ItemRarity, number>> }
+        >();
+        for (const row of result) {
+          const date = row.date.toISOString();
+          const entry = timelineMap.get(date) ?? { total: 0, byRarity: {} };
+          const count = Number(row.count);
+          entry.total += count;
+          if (row.rarity) {
+            entry.byRarity[row.rarity] =
+              (entry.byRarity[row.rarity] ?? 0) + count;
+          }
+          timelineMap.set(date, entry);
+        }
+        return Array.from(timelineMap.entries()).map(([date, data]) => ({
+          date,
+          total: data.total,
+          byRarity: data.byRarity,
+        }));
+      }),
     );
-
-    const timelineMap = new Map<
-      string,
-      { total: number; byRarity: Partial<Record<ItemRarity, number>> }
-    >();
-
-    for (const row of result) {
-      const dateStr = row.date.toISOString();
-      if (!timelineMap.has(dateStr)) {
-        timelineMap.set(dateStr, { total: 0, byRarity: {} });
-      }
-
-      const entry = timelineMap.get(dateStr);
-      if (!entry) {
-        continue;
-      }
-      const count = Number(row.count);
-      entry.total += count;
-      if (row.rarity) {
-        entry.byRarity[row.rarity] = (entry.byRarity[row.rarity] ?? 0) + count;
-      }
-    }
-
-    return Array.from(timelineMap.entries()).map(([date, data]) => ({
-      date,
-      total: data.total,
-      byRarity: data.byRarity,
-    }));
   }
 
   private getTimelineTruncUnit(period: Period): string {
@@ -573,7 +586,7 @@ export class LootStatsService {
     }
   }
 
-  private async getTopNpcs(
+  private getTopNpcs(
     guildId: string,
     dateFrom: Date | null,
     world?: string,
@@ -581,7 +594,7 @@ export class LootStatsService {
     excludeColossus?: boolean,
     visibilityCondition = "",
     limit = 10,
-  ): Promise<TopNpc[]> {
+  ) {
     const {
       dateCondition,
       worldCondition,
@@ -593,7 +606,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.repository.queryRaw<
+    return this.query<
       Array<{
         npc_id: number;
         name: string;
@@ -605,6 +618,7 @@ export class LootStatsService {
         heroic: bigint;
       }>
     >(
+      "loot-stats.top-npcs",
       `
       WITH ranked_npcs AS (
         SELECT
@@ -661,23 +675,25 @@ export class LootStatsService {
       LIMIT $${limitParamIndex}
     `,
       params,
+    ).pipe(
+      Effect.map((result): TopNpc[] =>
+        result.map((row) => ({
+          npcId: row.npc_id,
+          name: row.name,
+          type: row.type,
+          lvl: row.lvl,
+          icon: row.icon,
+          count: Number(row.count),
+          byRarity: {
+            LEGENDARY: Number(row.legendary),
+            HEROIC: Number(row.heroic),
+          },
+        })),
+      ),
     );
-
-    return result.map((row) => ({
-      npcId: row.npc_id,
-      name: row.name,
-      type: row.type,
-      lvl: row.lvl,
-      icon: row.icon,
-      count: Number(row.count),
-      byRarity: {
-        LEGENDARY: Number(row.legendary),
-        HEROIC: Number(row.heroic),
-      },
-    }));
   }
 
-  private async getTopContributors(
+  private getTopContributors(
     guildId: string,
     dateFrom: Date | null,
     world?: string,
@@ -685,7 +701,7 @@ export class LootStatsService {
     excludeColossus?: boolean,
     visibilityCondition = "",
     limit = 10,
-  ): Promise<TopContributor[]> {
+  ) {
     const {
       dateCondition,
       worldCondition,
@@ -698,7 +714,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.repository.queryRaw<
+    return this.query<
       Array<{
         member_id: number;
         name: string;
@@ -711,6 +727,7 @@ export class LootStatsService {
         upgraded: bigint;
       }>
     >(
+      "loot-stats.top-contributors",
       needsNpcFilter
         ? `
         WITH valid_loots AS (
@@ -779,24 +796,26 @@ export class LootStatsService {
         LIMIT $${limitParamIndex}
       `,
       params,
+    ).pipe(
+      Effect.map((result): TopContributor[] =>
+        result.map((row) => ({
+          memberId: row.member_id,
+          name: row.name,
+          avatar: row.avatar,
+          userId: row.user_id,
+          count: Number(row.count),
+          byRarity: {
+            LEGENDARY: Number(row.legendary),
+            HEROIC: Number(row.heroic),
+            UNIQUE: Number(row.unique),
+            UPGRADED: Number(row.upgraded),
+          },
+        })),
+      ),
     );
-
-    return result.map((row) => ({
-      memberId: row.member_id,
-      name: row.name,
-      avatar: row.avatar,
-      userId: row.user_id,
-      count: Number(row.count),
-      byRarity: {
-        LEGENDARY: Number(row.legendary),
-        HEROIC: Number(row.heroic),
-        UNIQUE: Number(row.unique),
-        UPGRADED: Number(row.upgraded),
-      },
-    }));
   }
 
-  private async getTopLegendaryItems(
+  private getTopLegendaryItems(
     guildId: string,
     dateFrom: Date | null,
     world?: string,
@@ -804,7 +823,7 @@ export class LootStatsService {
     excludeColossus?: boolean,
     visibilityCondition = "",
     limit = 10,
-  ): Promise<TopItem[]> {
+  ) {
     const {
       dateCondition,
       worldCondition,
@@ -816,7 +835,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.repository.queryRaw<
+    return this.query<
       Array<{
         item_id: number;
         hid: string;
@@ -827,6 +846,7 @@ export class LootStatsService {
         count: bigint;
       }>
     >(
+      "loot-stats.top-items",
       `
       WITH ranked_npcs AS (
         SELECT
@@ -878,16 +898,18 @@ export class LootStatsService {
       LIMIT $${limitParamIndex}
     `,
       params,
+    ).pipe(
+      Effect.map((result): TopItem[] =>
+        result.map((row) => ({
+          itemId: row.item_id,
+          hid: row.hid,
+          name: row.name,
+          icon: row.icon,
+          rarity: row.rarity,
+          lvl: row.lvl,
+          count: Number(row.count),
+        })),
+      ),
     );
-
-    return result.map((row) => ({
-      itemId: row.item_id,
-      hid: row.hid,
-      name: row.name,
-      icon: row.icon,
-      rarity: row.rarity,
-      lvl: row.lvl,
-      count: Number(row.count),
-    }));
   }
 }

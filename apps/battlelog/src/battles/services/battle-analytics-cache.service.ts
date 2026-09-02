@@ -1,125 +1,18 @@
 import { Logger } from "#src/platform/logger";
-import { RedisService } from "#src/shared/modules/redis/redis.service";
+import type { RedisStore } from "#src/shared/modules/redis/redis.service";
 import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
 import type { QueryBattleStatisticsDto } from "#src/battles/dto/query-battle-statistics.dto";
+import { Effect } from "effect";
 
-export class BattleAnalyticsCacheService {
-  private readonly logger = new Logger(BattleAnalyticsCacheService.name);
-  private readonly ANALYTICS_CACHE_PREFIX = "analytics";
-  private readonly ANALYTICS_CACHE_TTL_SECONDS = 5 * 60;
+const ANALYTICS_CACHE_PREFIX = "analytics";
+const ANALYTICS_CACHE_TTL_SECONDS = 5 * 60;
 
-  constructor(private readonly redisService: RedisService) {}
+export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
+  const logger = new Logger("BattleAnalyticsCache");
 
-  get ttlSeconds() {
-    return this.ANALYTICS_CACHE_TTL_SECONDS;
-  }
-
-  async getJson<T>(cacheKey: string): Promise<T | null> {
-    const cachedResult = await this.redisService.get(cacheKey);
-    return cachedResult ? (JSON.parse(cachedResult) as T) : null;
-  }
-
-  async setJson<T>(cacheKey: string, result: T): Promise<void> {
-    await this.redisService.set(
-      cacheKey,
-      JSON.stringify(result),
-      this.ANALYTICS_CACHE_TTL_SECONDS,
-    );
-  }
-
-  getOrSetJson<T>(cacheKey: string, factory: () => Promise<T>): Promise<T> {
-    return this.redisService.getOrSetJsonBestEffort({
-      key: cacheKey,
-      ttlSeconds: this.ANALYTICS_CACHE_TTL_SECONDS,
-      factory,
-      onError: (error) =>
-        this.logger.warn("Battle analytics cache unavailable", error),
-    });
-  }
-
-  async invalidateUserAnalytics(userId: string): Promise<void> {
-    try {
-      const patterns = [
-        `${this.ANALYTICS_CACHE_PREFIX}:${userId}:*`,
-        `statistics:*:${userId}:*`,
-        `battle-characters:*:${userId}*`,
-        `battle-worlds:${userId}:*`,
-      ];
-
-      for (const pattern of patterns) {
-        await this.redisService.deleteByPattern(pattern);
-      }
-    } catch (error) {
-      this.logger.warn(
-        `Failed to invalidate analytics cache for user ${userId}:`,
-        error,
-      );
-    }
-  }
-
-  buildAnalyticsCacheKey(
-    userId: string,
-    query: QueryBattleAnalyticsDto,
-  ): string {
-    return [
-      this.ANALYTICS_CACHE_PREFIX,
-      userId,
-      this.formatCacheSegment(query.characterId),
-      this.formatCacheSegment(query.world),
-      this.formatCacheSegment(query.period),
-      this.formatCacheSegment(query.startDate),
-      this.formatCacheSegment(query.endDate),
-      this.formatLevelCacheSegment(query),
-      this.formatBooleanCacheSegment(query.ph, "ph"),
-      this.formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
-    ].join(":");
-  }
-
-  buildStatisticsCacheKey(
-    metric: string,
-    userId: string,
-    query: QueryBattleStatisticsDto,
-    options: { includeBattleFilters?: boolean } = {},
-  ): string {
-    const cacheKeySegments = [
-      "statistics",
-      metric,
-      userId,
-      this.formatCacheSegment(query.characterId),
-      this.formatCacheSegment(query.world),
-      this.formatCacheSegment(query.period),
-      this.formatCacheSegment(query.startDate),
-      this.formatCacheSegment(query.endDate),
-      this.formatLevelCacheSegment(query),
-    ];
-
-    if (options.includeBattleFilters ?? true) {
-      cacheKeySegments.push(
-        this.formatBooleanCacheSegment(query.ph, "ph"),
-        this.formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
-      );
-    }
-
-    return cacheKeySegments.join(":");
-  }
-
-  buildQueryCacheKey(
-    prefix: string,
-    metric: string,
-    userId: string,
-    query: object,
-  ): string {
-    return [
-      prefix,
-      metric,
-      userId,
-      Buffer.from(this.stableSerialize(query)).toString("base64url"),
-    ].join(":");
-  }
-
-  private stableSerialize(value: unknown): string {
+  const stableSerialize = (value: unknown): string => {
     if (Array.isArray(value)) {
-      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+      return `[${value.map(stableSerialize).join(",")}]`;
     }
 
     if (value && typeof value === "object") {
@@ -129,37 +22,184 @@ export class BattleAnalyticsCacheService {
 
       return `{${entries
         .map(
-          ([key, entry]) =>
-            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+          ([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`,
         )
         .join(",")}}`;
     }
 
     return JSON.stringify(value);
-  }
+  };
 
-  private formatCacheSegment(
+  const formatCacheSegment = (
     value: string | number | undefined,
     fallback = "all",
-  ): string {
-    return String(value ?? fallback);
-  }
+  ): string => String(value ?? fallback);
 
-  private formatLevelCacheSegment(query: {
+  const formatLevelCacheSegment = (query: {
     minLevel?: number;
     maxLevel?: number;
-  }): string {
-    return `${this.formatCacheSegment(query.minLevel, "any")}-${this.formatCacheSegment(query.maxLevel, "any")}`;
-  }
+  }): string =>
+    `${formatCacheSegment(query.minLevel, "any")}-${formatCacheSegment(query.maxLevel, "any")}`;
 
-  private formatBooleanCacheSegment(
+  const formatBooleanCacheSegment = (
     enabled: boolean | undefined,
     enabledSegment: string,
-  ): string {
+  ): string => {
     if (enabled === undefined) {
       return "all";
     }
 
     return enabled ? enabledSegment : `not-${enabledSegment}`;
-  }
-}
+  };
+
+  const getJson = <T>(cacheKey: string) =>
+    Effect.tryPromise({
+      try: () => Promise.resolve(redisService.get(cacheKey)),
+      catch: (cause) => cause,
+    }).pipe(
+      Effect.map((cachedResult) =>
+        cachedResult ? (JSON.parse(cachedResult) as T) : null,
+      ),
+      Effect.withSpan("BattleAnalyticsCache_getJson", {
+        attributes: { adapter: "redis", retryCount: 0 },
+      }),
+    );
+
+  const setJson = <T>(cacheKey: string, result: T) =>
+    Effect.tryPromise({
+      try: () =>
+        Promise.resolve(
+          redisService.set(
+            cacheKey,
+            JSON.stringify(result),
+            ANALYTICS_CACHE_TTL_SECONDS,
+          ),
+        ),
+      catch: (cause) => cause,
+    }).pipe(
+      Effect.withSpan("BattleAnalyticsCache_setJson", {
+        attributes: { adapter: "redis", retryCount: 0 },
+      }),
+    );
+
+  const getOrSetJson = <T>(
+    cacheKey: string,
+    factory: () => Effect.Effect<T, unknown>,
+  ) =>
+    Effect.gen(function* () {
+      const cached = yield* getJson<T>(cacheKey).pipe(
+        Effect.catch((error) => {
+          logger.warn("Battle analytics cache unavailable", error);
+          return Effect.succeed(null);
+        }),
+      );
+      if (cached !== null) return cached;
+      const result = yield* factory();
+      yield* setJson(cacheKey, result).pipe(
+        Effect.catch((error) => {
+          logger.warn("Battle analytics cache unavailable", error);
+          return Effect.void;
+        }),
+      );
+      return result;
+    });
+
+  const invalidateUserAnalytics = (userId: string) =>
+    Effect.gen(function* () {
+      const patterns = [
+        `${ANALYTICS_CACHE_PREFIX}:${userId}:*`,
+        `statistics:*:${userId}:*`,
+        `battle-characters:*:${userId}*`,
+        `battle-worlds:${userId}:*`,
+      ];
+
+      for (const pattern of patterns) {
+        yield* Effect.tryPromise({
+          try: () => Promise.resolve(redisService.deleteByPattern(pattern)),
+          catch: (cause) => cause,
+        });
+      }
+    }).pipe(
+      Effect.catch((error) => {
+        logger.warn(
+          `Failed to invalidate analytics cache for user ${userId}:`,
+          error,
+        );
+        return Effect.void;
+      }),
+      Effect.withSpan("BattleAnalyticsCache_invalidateUser", {
+        attributes: { adapter: "redis", retryCount: 0 },
+      }),
+    );
+
+  const buildAnalyticsCacheKey = (
+    userId: string,
+    query: QueryBattleAnalyticsDto,
+  ): string =>
+    [
+      ANALYTICS_CACHE_PREFIX,
+      userId,
+      formatCacheSegment(query.characterId),
+      formatCacheSegment(query.world),
+      formatCacheSegment(query.period),
+      formatCacheSegment(query.startDate),
+      formatCacheSegment(query.endDate),
+      formatLevelCacheSegment(query),
+      formatBooleanCacheSegment(query.ph, "ph"),
+      formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
+    ].join(":");
+
+  const buildStatisticsCacheKey = (
+    metric: string,
+    userId: string,
+    query: QueryBattleStatisticsDto,
+    options: { includeBattleFilters?: boolean } = {},
+  ): string => {
+    const cacheKeySegments = [
+      "statistics",
+      metric,
+      userId,
+      formatCacheSegment(query.characterId),
+      formatCacheSegment(query.world),
+      formatCacheSegment(query.period),
+      formatCacheSegment(query.startDate),
+      formatCacheSegment(query.endDate),
+      formatLevelCacheSegment(query),
+    ];
+
+    if (options.includeBattleFilters ?? true) {
+      cacheKeySegments.push(
+        formatBooleanCacheSegment(query.ph, "ph"),
+        formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
+      );
+    }
+
+    return cacheKeySegments.join(":");
+  };
+
+  const buildQueryCacheKey = (
+    prefix: string,
+    metric: string,
+    userId: string,
+    query: object,
+  ): string =>
+    [
+      prefix,
+      metric,
+      userId,
+      Buffer.from(stableSerialize(query)).toString("base64url"),
+    ].join(":");
+
+  return {
+    buildAnalyticsCacheKey,
+    buildQueryCacheKey,
+    buildStatisticsCacheKey,
+    getJson,
+    getOrSetJson,
+    invalidateUserAnalytics,
+    setJson,
+    ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
+  };
+};
+
+export type BattleAnalyticsCache = ReturnType<typeof makeBattleAnalyticsCache>;

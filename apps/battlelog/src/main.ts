@@ -6,8 +6,9 @@ import {
   OtlpSerialization,
   OtlpTracer,
 } from "effect/unstable/observability";
-import { BattlelogServer } from "#src/app.factory";
+import { BattlelogApplication } from "#src/app.factory";
 import { BattlelogConfig } from "#src/config/env";
+import { BattlelogHttpServer } from "#src/http/battlelog-http";
 
 const ObservabilityLive = Layer.unwrap(
   Effect.gen(function* () {
@@ -31,6 +32,9 @@ const ObservabilityLive = Layer.unwrap(
   Layer.provide(FetchHttpClient.layer),
 );
 
-BunRuntime.runMain(
-  Layer.launch(BattlelogServer.pipe(Layer.provide(ObservabilityLive))),
+const HttpLive = BattlelogHttpServer.pipe(
+  Layer.provide(BattlelogApplication.layer),
 );
+const ApplicationLive = HttpLive.pipe(Layer.provide(ObservabilityLive));
+
+BunRuntime.runMain(Layer.launch(ApplicationLive));

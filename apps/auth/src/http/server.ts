@@ -1,50 +1,71 @@
-import { Context, Effect, FiberSet, Layer } from "effect";
-import { AuthService } from "#src/auth/auth-service";
-import { BetterAuthRuntime } from "#src/auth/better-auth";
+import { BunHttpServer } from "@effect/platform-bun";
+import { Effect, Layer } from "effect";
+import {
+  HttpRouter,
+  HttpServerRequest,
+  HttpServerResponse,
+} from "effect/unstable/http";
+import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { BetterAuthRuntime, type LootlogAuth } from "#src/auth/better-auth";
 import { AppConfig } from "#src/config/env";
-import { handleAuthRequest } from "./application.js";
+import { AuthApi } from "#src/http-api/auth-api.generated";
+import { normalizeBetterAuthRequest } from "./application.js";
+import { AuthHandlers } from "./auth-handlers.js";
 
-export class AuthHttpServer extends Context.Service<
-  AuthHttpServer,
-  Bun.Server<undefined>
->()("@lootlog/auth/AuthHttpServer") {
-  static readonly layer = Layer.effect(
-    AuthHttpServer,
-    Effect.gen(function* () {
-      const config = yield* AppConfig;
-      yield* AuthService;
-      yield* BetterAuthRuntime;
-      const runRequest = yield* FiberSet.makeRuntimePromise<
-        AuthService | BetterAuthRuntime,
-        Response,
-        never
-      >();
-      const requestHandler = (request: Request) =>
-        runRequest(handleAuthRequest(request));
-
-      const server = yield* Effect.acquireRelease(
-        Effect.sync(() =>
-          Bun.serve({
-            hostname: "0.0.0.0",
-            port: config.port,
-            fetch: requestHandler,
-          }),
+const makeBetterAuthHandler = (auth: LootlogAuth) =>
+  Effect.fn("BetterAuth.rawHandler")(
+    function* (request: HttpServerRequest.HttpServerRequest) {
+      const webRequest = yield* HttpServerRequest.toWeb(request);
+      const response = yield* Effect.tryPromise({
+        try: () => auth.handler(normalizeBetterAuthRequest(webRequest)),
+        catch: (cause) => cause,
+      });
+      return HttpServerResponse.fromWeb(response);
+    },
+    Effect.catchCause(() =>
+      Effect.logError("Better Auth raw handler failed").pipe(
+        Effect.as(
+          HttpServerResponse.jsonUnsafe(
+            { message: "Internal server error" },
+            { status: 500 },
+          ),
         ),
-        (runningServer) =>
-          Effect.promise(async () => {
-            await runningServer.stop(true);
-          }),
-      );
-
-      yield* Effect.logInfo("Auth HTTP server listening").pipe(
-        Effect.annotateLogs({
-          host: server.hostname,
-          port: server.port,
-          service: config.serviceName,
-        }),
-      );
-
-      return AuthHttpServer.of(server);
-    }),
+      ),
+    ),
   );
-}
+
+const betterAuthMethods = [
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "OPTIONS",
+] as const;
+// oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.
+const BetterAuthRawRoutes = HttpRouter.use((router) =>
+  Effect.gen(function* () {
+    const auth = yield* BetterAuthRuntime;
+    const handler = makeBetterAuthHandler(auth);
+    yield* router.addAll(
+      betterAuthMethods.map((method) =>
+        HttpRouter.route(method, "/idp/*", handler),
+      ),
+    );
+  }),
+);
+
+export const AuthRoutes = Layer.merge(
+  HttpApiBuilder.layer(AuthApi, { openapiPath: "/openapi.json" }).pipe(
+    Layer.provide(AuthHandlers),
+  ),
+  BetterAuthRawRoutes,
+);
+
+export const AuthHttpServer = Layer.unwrap(
+  Effect.map(AppConfig, ({ port }) =>
+    HttpRouter.serve(AuthRoutes).pipe(
+      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
+    ),
+  ),
+).pipe(Layer.provide(AppConfig.layer));

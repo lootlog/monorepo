@@ -282,8 +282,8 @@ jobs:
               current_tag="$package_name@$version"
 
               case "$service" in
-                api) migration_path="apps/api/prisma/migrations" ;;
-                activity) migration_path="apps/activity/prisma/migrations" ;;
+                api) migration_path="apps/api/drizzle/migrations" ;;
+                activity) migration_path="apps/activity/drizzle/migrations" ;;
                 auth) migration_path="apps/auth/drizzle" ;;
                 battlelog-service) migration_path="apps/battlelog/drizzle" ;;
                 *) continue ;;

@@ -15,8 +15,6 @@ before changing this app.
   or events, not the API database.
 - Publish facts with idempotent consumers and explicit compatibility when an
   independently deployed consumer exists.
-- Keep NestJS DI dependencies as value imports when emitted metadata needs the
-  runtime class or token.
 
 Treat the access and cross-Organization items in the root architecture's known
 gaps as defects to migrate, not as patterns to copy.

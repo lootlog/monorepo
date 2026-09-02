@@ -1,16 +1,62 @@
 import { vi } from "#test/bun-test";
 import { NotFoundException } from "#src/shared/http/http-errors";
-import { RedisService } from "#src/redis/redis.service";
 import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";
-import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
+import { Effect } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import {
+  makePublicGuildStatsCard,
+  type PublicGuildStatsCard,
+  PublicGuildStatsCardImageAdapter,
+} from "./public-guild-stats-card.service.js";
 
-describe("PublicGuildStatsCardService", () => {
-  let service: PublicGuildStatsCardService;
+type PromiseStatsCard = {
+  [Key in keyof PublicGuildStatsCard]: PublicGuildStatsCard[Key] extends (
+    ...arguments_: infer Arguments
+  ) => Effect.Effect<infer Success, infer _Failure>
+    ? (...arguments_: Arguments) => Promise<Success>
+    : never;
+};
+
+describe("public guild stats card Effect module", () => {
+  const unavailableHttpClient = {} as HttpClientValue;
+  let service: PromiseStatsCard;
   let repository: {
     findActiveGuild: ReturnType<typeof mockFn>;
     getLootStats: ReturnType<typeof mockFn>;
+  };
+
+  const createService = (environment: RuntimeEnvironment) => {
+    const effect = <A>(operation: () => Promise<A>) =>
+      Effect.tryPromise({
+        try: () => Promise.resolve(operation()),
+        catch: (error) => error,
+      });
+    const effectService = makePublicGuildStatsCard({
+      repository: {
+        findActiveGuild: (guildId) =>
+          effect(() => repository.findActiveGuild(guildId)),
+        getLootStats: (guildId, dateFrom) =>
+          effect(() => repository.getLootStats(guildId, dateFrom)),
+      } as never,
+      cache: {
+        get: (key) => effect(() => redis.get(key)),
+        set: (key, value, ttl) => effect(() => redis.set(key, value, ttl)),
+        setNX: (key, value, ttl) => effect(() => redis.setNX(key, value, ttl)),
+        del: (key) => effect(() => redis.del(key)),
+      } as never,
+      environment,
+      image: new PublicGuildStatsCardImageAdapter(unavailableHttpClient),
+    });
+    return new Proxy(effectService, {
+      get(target, property) {
+        const operation = Reflect.get(target, property) as (
+          ...arguments_: unknown[]
+        ) => Effect.Effect<unknown, unknown>;
+        return (...arguments_: unknown[]) =>
+          Effect.runPromise(Reflect.apply(operation, target, arguments_));
+      },
+    }) as PromiseStatsCard;
   };
   let redis: {
     get: ReturnType<typeof mockFn>;
@@ -30,11 +76,7 @@ describe("PublicGuildStatsCardService", () => {
       setNX: mockFn(),
       del: mockFn(),
     };
-    service = new PublicGuildStatsCardService(
-      repository as unknown as PublicGuildStatsCardRepository,
-      redis as unknown as RedisService,
-      RuntimeEnvironment.PROD,
-    );
+    service = createService(RuntimeEnvironment.PROD);
 
     vi.stubGlobal("fetch", mockFn());
   });
@@ -115,11 +157,7 @@ describe("PublicGuildStatsCardService", () => {
   });
 
   it("bypasses cache in local environment", async () => {
-    service = new PublicGuildStatsCardService(
-      repository as unknown as PublicGuildStatsCardRepository,
-      redis as unknown as RedisService,
-      RuntimeEnvironment.LOCAL,
-    );
+    service = createService(RuntimeEnvironment.LOCAL);
     redis.get.mockResolvedValue(Buffer.from("cached-png").toString("base64"));
     repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",

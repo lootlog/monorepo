@@ -14,6 +14,8 @@ const realtimeTicketRedis = {
   getdel: () => Promise.resolve(null),
 };
 
+const findDiscordAccountId = () => Effect.succeed("account-row-1");
+
 const createFakeAuth = () => {
   const getSession = mock(() => Promise.resolve(null));
   const getJwks = mock(() =>
@@ -47,6 +49,7 @@ describe("AuthService", () => {
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
+      findDiscordAccountId,
       realtimeTicketRedis,
     });
 
@@ -69,6 +72,7 @@ describe("AuthService", () => {
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
+      findDiscordAccountId,
       realtimeTicketRedis,
     });
 
@@ -97,6 +101,7 @@ describe("AuthService", () => {
     const service = createAuthService({
       auth,
       appUrl: issuer,
+      findDiscordAccountId,
       realtimeTicketRedis,
     });
 
@@ -132,6 +137,7 @@ describe("AuthService", () => {
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
+      findDiscordAccountId,
       realtimeTicketRedis: ticketRedis,
     });
     const request = {
@@ -159,6 +165,7 @@ describe("AuthService", () => {
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
+      findDiscordAccountId,
       realtimeTicketRedis,
     });
 
@@ -174,9 +181,8 @@ describe("AuthService", () => {
     expect(response.expiresIn).toBeGreaterThanOrEqual(59);
     expect(getAccessToken).toHaveBeenCalledWith({
       body: {
-        providerId: "discord",
         userId: "user-1",
-        accountId: "discord-1",
+        accountId: "account-row-1",
       },
     });
   });
@@ -186,6 +192,7 @@ describe("AuthService", () => {
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
+      findDiscordAccountId,
       realtimeTicketRedis,
     });
 

@@ -1,18 +1,36 @@
 import { setTimeout as sleep } from "node:timers/promises";
+import { Effect } from "effect";
 import { RedisService } from "#src/redis/redis.service";
 import {
   buildNotificationRateLimitKey,
+  consumeNotificationRateLimit,
   NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS,
   NOTIFICATION_RATE_LIMIT_WINDOW_MS,
-  NotificationRateLimiterService,
-} from "../src/messaging/notification-rate-limiter.service.js";
+  type MessagingRedis,
+  type NotificationRateLimitOutcome,
+} from "../src/http-api/handlers/messaging/messaging.data-layer.js";
 
 describe("Notification rate limiter Redis integration", () => {
-  const logger = { log: vi.fn<(entry: unknown) => void>() };
   let firstRedis: RedisService;
   let secondRedis: RedisService;
-  let firstLimiter: NotificationRateLimiterService;
-  let secondLimiter: NotificationRateLimiterService;
+  let firstLimiter: (userId: string) => Promise<NotificationRateLimitOutcome>;
+  let secondLimiter: (userId: string) => Promise<NotificationRateLimitOutcome>;
+
+  const limiter = (redis: RedisService) => {
+    const adapter: Pick<MessagingRedis, "eval"> = {
+      eval: <A>(
+        script: string,
+        keys: ReadonlyArray<string>,
+        arguments_: ReadonlyArray<string | number>,
+      ) =>
+        Effect.tryPromise({
+          try: () => redis.eval<A>(script, [...keys], [...arguments_]),
+          catch: (error) => error,
+        }),
+    };
+    return (userId: string) =>
+      Effect.runPromise(consumeNotificationRateLimit(adapter, userId));
+  };
 
   beforeAll(() => {
     const options = {
@@ -23,32 +41,25 @@ describe("Notification rate limiter Redis integration", () => {
     };
     firstRedis = new RedisService(options);
     secondRedis = new RedisService(options);
-    firstRedis.onModuleInit();
-    secondRedis.onModuleInit();
-    firstLimiter = new NotificationRateLimiterService(
-      logger as never,
-      firstRedis,
-    );
-    secondLimiter = new NotificationRateLimiterService(
-      logger as never,
-      secondRedis,
-    );
+    firstRedis.initialize();
+    secondRedis.initialize();
+    firstLimiter = limiter(firstRedis);
+    secondLimiter = limiter(secondRedis);
   });
 
   afterAll(() => {
-    firstRedis.onModuleDestroy();
-    secondRedis.onModuleDestroy();
+    firstRedis.shutdown();
+    secondRedis.shutdown();
   });
 
   beforeEach(async () => {
     await firstRedis.getClient().flushall();
-    vi.clearAllMocks();
   });
 
   it("accepts five attempts in 5000 ms and rejects the sixth", async () => {
     const accepted = await Promise.all(
       Array.from({ length: NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS }, () =>
-        firstLimiter.consume("user-1"),
+        firstLimiter("user-1"),
       ),
     );
 
@@ -57,7 +68,7 @@ describe("Notification rate limiter Redis integration", () => {
         accepted: true,
       })),
     );
-    await expect(firstLimiter.consume("user-1")).resolves.toMatchObject({
+    await expect(firstLimiter("user-1")).resolves.toMatchObject({
       accepted: false,
       retryAfterMs: expect.any(Number),
     });
@@ -72,7 +83,7 @@ describe("Notification rate limiter Redis integration", () => {
       Array.from(
         { length: NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS + 1 },
         (_, index) =>
-          (index % 2 === 0 ? firstLimiter : secondLimiter).consume("user-1"),
+          (index % 2 === 0 ? firstLimiter : secondLimiter)("user-1"),
       ),
     );
 
@@ -82,28 +93,26 @@ describe("Notification rate limiter Redis integration", () => {
 
   it("keeps limits independent between users", async () => {
     const outcomes = await Promise.all([
-      ...Array.from({ length: 5 }, () => firstLimiter.consume("user-1")),
-      ...Array.from({ length: 5 }, () => secondLimiter.consume("user-2")),
+      ...Array.from({ length: 5 }, () => firstLimiter("user-1")),
+      ...Array.from({ length: 5 }, () => secondLimiter("user-2")),
     ]);
 
     expect(outcomes.every((outcome) => outcome.accepted)).toBe(true);
-    await expect(firstLimiter.consume("user-1")).resolves.toMatchObject({
+    await expect(firstLimiter("user-1")).resolves.toMatchObject({
       accepted: false,
     });
-    await expect(secondLimiter.consume("user-2")).resolves.toMatchObject({
+    await expect(secondLimiter("user-2")).resolves.toMatchObject({
       accepted: false,
     });
   });
 
   it("accepts another notification after the window expires", async () => {
-    await Promise.all(
-      Array.from({ length: 5 }, () => firstLimiter.consume("user-1")),
-    );
+    await Promise.all(Array.from({ length: 5 }, () => firstLimiter("user-1")));
     const key = buildNotificationRateLimitKey("user-1");
     await firstRedis.getClient().pexpire(key, 1);
     await sleep(10);
 
-    await expect(firstLimiter.consume("user-1")).resolves.toEqual({
+    await expect(firstLimiter("user-1")).resolves.toEqual({
       accepted: true,
     });
   });

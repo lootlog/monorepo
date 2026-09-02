@@ -16,7 +16,6 @@ this app.
   contract when implementing the target model.
 - Preserve event compatibility across independently deployed API, gateway, and
   game-client versions.
-- Keep NestJS DI dependencies as value imports when runtime metadata needs them.
 
 Before handoff, run relevant gateway tests, lint, and the app build or typecheck
 path used by CI. Add reconnect, room-rebalance, stale-state, and duplicate-event

@@ -1,6 +1,5 @@
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import type { MessagingService } from "#src/messaging/messaging.service";
 import {
   LootlogApi,
   MessagingControllerSendNotification201,
@@ -43,32 +42,7 @@ export class MessagingData extends Context.Service<
       payload: CreateVolunteerDto,
     ) => Effect.Effect<void, MessagingOperationError>;
   }
->()("@lootlog/api/http-api/messaging/data") {
-  static layerService(service: MessagingService) {
-    return Layer.succeed(MessagingData, MessagingData.makeService(service));
-  }
-
-  static makeService(service: MessagingService): MessagingData["Service"] {
-    const attempt = <A>(operation: () => A | PromiseLike<A>) =>
-      Effect.tryPromise({
-        try: () => Promise.resolve(operation()),
-        catch: (cause) => new MessagingOperationError({ cause }),
-      });
-    const mutable = <A>(value: unknown): A =>
-      JSON.parse(JSON.stringify(value)) as A;
-
-    return MessagingData.of({
-      sendNotification: ({ userId, discordId }, payload) =>
-        attempt(() =>
-          service.sendNotification(userId, discordId, mutable(payload)),
-        ),
-      volunteer: (discordId, notificationId, payload) =>
-        attempt(() =>
-          service.volunteer(discordId, notificationId, mutable(payload)),
-        ),
-    });
-  }
-}
+>()("@lootlog/api/http-api/messaging/data") {}
 
 const caller = Effect.flatMap(MessagingIdentity, (identity) => identity.caller);
 

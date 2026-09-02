@@ -9,6 +9,7 @@ import { ActivityConfig } from "#src/config/activity-config";
 import { verifyAndAdoptDatabase } from "#src/database/adoption";
 import { ActivityDatabase, PgClientLive } from "#src/database/database";
 import { ActivityHealth, ActivityHttpServer } from "#src/http/activity-http";
+import { ApiHttpClient } from "#src/http/api-http-client";
 import { Permissions } from "#src/permissions/permissions";
 
 const RabbitLive = Layer.unwrap(
@@ -25,7 +26,13 @@ const RepositoryLive = ActivityRepository.layer.pipe(
   Layer.provide(ActivityDatabase.layer),
   Layer.provide(PgClientLive),
 );
-const HealthLive = ActivityHealth.layer.pipe(Layer.provide(PgClientLive));
+const HealthLive = ActivityHealth.layer.pipe(
+  Layer.provide(ApiHttpClient.layer),
+  Layer.provide(PgClientLive),
+);
+const PermissionsLive = Permissions.layer.pipe(
+  Layer.provide(ApiHttpClient.layer),
+);
 const DatabaseAdoption = Layer.effectDiscard(verifyAndAdoptDatabase()).pipe(
   Layer.provide(PgClientLive),
 );
@@ -40,7 +47,7 @@ export const ActivityApplication = Layer.merge(
   ActivityConsumers,
 ).pipe(
   Layer.provide(DatabaseServices),
-  Layer.provide(Permissions.layer),
+  Layer.provide(PermissionsLive),
   Layer.provide(RabbitLive),
   Layer.provide(ActivityConfig.layer),
 );

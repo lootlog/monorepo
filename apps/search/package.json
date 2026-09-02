@@ -17,6 +17,7 @@
     "test:coverage": "bun test --coverage",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
+    "http-api:generate": "bun ../../tools/openapi/generate-http-api.ts --spec openapi.yaml --output src/http-api/search-api.generated.ts --name SearchApi --count 5",
     "seed": "bun src/scripts/seed.ts"
   },
   "dependencies": {

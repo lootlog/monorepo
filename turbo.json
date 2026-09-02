@@ -105,6 +105,14 @@
       ],
       "outputs": ["openapi.yaml"]
     },
+    "http-api:generate": {
+      "cache": false,
+      "inputs": [
+        "openapi.yaml",
+        "$TURBO_ROOT$/tools/openapi/generate-http-api.ts"
+      ],
+      "outputs": ["src/http-api/*-api.generated.ts"]
+    },
     "client:generate": {
       "dependsOn": [
         "@lootlog/activity#openapi:generate",
@@ -178,6 +186,12 @@
       "cache": false
     },
     "db:migrate:init": {
+      "cache": false
+    },
+    "auth:migrate:plan": {
+      "cache": false
+    },
+    "auth:migrate:apply": {
       "cache": false
     },
     "db:pull": {

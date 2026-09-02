@@ -1,21 +1,28 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { NotFoundException } from "#src/platform/http-error";
-import { BattleAnalyticsService } from "./battle-analytics.service.js";
-import { BattleAnalyticsCacheService } from "./battle-analytics-cache.service.js";
-import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service.js";
-import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service.js";
-import { BattleAnalyticsQueryService } from "./battle-analytics-query.service.js";
-import { AbyssSeasonCalculatorService } from "./abyss-season-calculator.service.js";
-import { BattleSummaryCalculatorService } from "./battle-summary-calculator.service.js";
-import { CombatProfileCalculatorService } from "./combat-profile-calculator.service.js";
-import { HeadToHeadCalculatorService } from "./head-to-head-calculator.service.js";
-import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service.js";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
-import { RedisService } from "#src/shared/modules/redis/redis.service";
+import {
+  makeBattleAnalytics,
+  type BattleAnalytics,
+} from "./battle-analytics.service.js";
+import { makeBattleAnalyticsCache } from "./battle-analytics-cache.service.js";
+import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
+import { battleAnalyticsPaging } from "./battle-analytics-paging.service.js";
+import {
+  makeBattleAnalyticsQuery,
+  type BattleAnalyticsQuery,
+} from "./battle-analytics-query.service.js";
+import { makeAbyssSeasonCalculator } from "./abyss-season-calculator.service.js";
+import { makeBattleSummaryCalculator } from "./battle-summary-calculator.service.js";
+import { makeCombatProfileCalculator } from "./combat-profile-calculator.service.js";
+import { makeHeadToHeadCalculator } from "./head-to-head-calculator.service.js";
+import { makePlayerVsPlayerCalculator } from "./player-vs-player-calculator.service.js";
+import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
+import type { RedisStore } from "#src/shared/modules/redis/redis.service";
 import type {
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
 } from "#src/battles/dto/query-battle-statistics.dto";
+import { runEffectService } from "../../../test/effect-service.js";
 
 const statisticsQuery = (
   overrides: Partial<QueryBattleStatisticsDto> = {},
@@ -35,9 +42,9 @@ const playerVsPlayerQuery = (
   ...overrides,
 });
 
-describe("BattleAnalyticsService", () => {
-  let service: BattleAnalyticsService;
-  let queryService: BattleAnalyticsQueryService;
+describe("battle analytics", () => {
+  let service: ReturnType<typeof runEffectService<BattleAnalytics>>;
+  let queryService: BattleAnalyticsQuery;
   let drizzleService: { db: any };
   let redisService: {
     get: ReturnType<typeof mock>;
@@ -141,22 +148,24 @@ describe("BattleAnalyticsService", () => {
       ),
     };
 
-    const drizzle = mockDrizzleService as unknown as DrizzleService;
-    const redis = mockRedisService as unknown as RedisService;
-    const cacheService = new BattleAnalyticsCacheService(redis);
-    const domainService = new BattleAnalyticsDomainService();
-    queryService = new BattleAnalyticsQueryService(drizzle, cacheService);
-    service = new BattleAnalyticsService(
-      drizzle,
-      cacheService,
-      queryService,
-      domainService,
-      new BattleAnalyticsPagingService(),
-      new BattleSummaryCalculatorService(domainService),
-      new CombatProfileCalculatorService(domainService),
-      new HeadToHeadCalculatorService(domainService),
-      new PlayerVsPlayerCalculatorService(domainService),
-      new AbyssSeasonCalculatorService(domainService),
+    const drizzle = mockDrizzleService as unknown as DrizzleDatabase;
+    const redis = mockRedisService as unknown as RedisStore;
+    const cacheService = makeBattleAnalyticsCache(redis);
+    const domain = battleAnalyticsDomain;
+    queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
+    service = runEffectService(
+      makeBattleAnalytics(
+        drizzle,
+        cacheService,
+        queryService,
+        domain,
+        battleAnalyticsPaging,
+        makeBattleSummaryCalculator(domain),
+        makeCombatProfileCalculator(domain),
+        makeHeadToHeadCalculator(domain),
+        makePlayerVsPlayerCalculator(domain),
+        makeAbyssSeasonCalculator(domain),
+      ),
     );
     drizzleService = mockDrizzleService;
     redisService = mockRedisService;
@@ -997,7 +1006,7 @@ describe("BattleAnalyticsService", () => {
   });
 
   describe("invalidateAnalyticsCache", () => {
-    it("should delete matching cache patterns through RedisService", async () => {
+    it("should delete matching cache patterns through RedisStore", async () => {
       redisService.deleteByPattern.mockResolvedValue(2);
 
       await service.invalidateAnalyticsCache(mockUserId);

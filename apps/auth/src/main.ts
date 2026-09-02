@@ -52,7 +52,7 @@ const AuthServicesLive = AuthService.layer.pipe(
   Layer.provideMerge(AppConfig.layer),
 );
 
-const ApplicationLive = AuthHttpServer.layer.pipe(
+const ApplicationLive = AuthHttpServer.pipe(
   Layer.provide(AuthServicesLive),
   Layer.provide(ObservabilityLive),
 );

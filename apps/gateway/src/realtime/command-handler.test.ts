@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
+import { Effect } from "effect";
 import { CommandHandler } from "./command-handler.js";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GuildStore } from "#src/guilds/guild-store";
@@ -22,10 +23,12 @@ const guild = (
 
 class FakeGuildStore {
   guilds: UserGuildData[] = [guild()];
-  async getUserGuilds(): Promise<UserGuildData[]> {
-    return this.guilds;
+  getUserGuilds(): Effect.Effect<UserGuildData[]> {
+    return Effect.succeed(this.guilds);
   }
-  async invalidate(): Promise<void> {}
+  invalidate(): Effect.Effect<void> {
+    return Effect.void;
+  }
 }
 
 class FakeHub {
@@ -97,7 +100,7 @@ const setup = () => {
     { margonemAccountProofRequired: false } as GatewayConfiguration,
     guilds as unknown as GuildStore,
     {
-      verify: async () => ({ valid: false, reason: "not supplied" }),
+      verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
     } as unknown as MargonemProofVerifier,
     {} as PresenceStore,
     hub as unknown as RealtimeHub,

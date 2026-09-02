@@ -1,12 +1,8 @@
 import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
-import { Effect } from "effect";
-import { ApiDatabase } from "#src/database/drizzle/database";
-import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
+import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { eventHeroNpcTable, eventTable } from "#src/database/drizzle/schema";
 
-export class ActiveEventHeroRepository {
-  constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
-
+export const makeActiveEventHeroStore = (database: ApiDatabaseValue) => ({
   findMatches(
     guildId: string,
     world: string,
@@ -14,31 +10,26 @@ export class ActiveEventHeroRepository {
     npcName: string,
     referenceTime: Date,
   ) {
-    return this.databaseRuntime.runPromise(
-      Effect.flatMap(ApiDatabase, (database) =>
-        database
-          .select({ eventHero: eventHeroNpcTable, event: eventTable })
-          .from(eventHeroNpcTable)
-          .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-          .where(
-            and(
-              eq(eventTable.guildId, guildId),
-              eq(eventTable.world, world),
-              or(
-                eq(eventHeroNpcTable.npcId, npcId),
-                eq(eventHeroNpcTable.npcName, npcName),
-              ),
-              or(
-                isNull(eventTable.startsAt),
-                lte(eventTable.startsAt, referenceTime),
-              ),
-              or(
-                isNull(eventTable.endsAt),
-                gt(eventTable.endsAt, referenceTime),
-              ),
-            ),
+    return database
+      .select({ eventHero: eventHeroNpcTable, event: eventTable })
+      .from(eventHeroNpcTable)
+      .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
+      .where(
+        and(
+          eq(eventTable.guildId, guildId),
+          eq(eventTable.world, world),
+          or(
+            eq(eventHeroNpcTable.npcId, npcId),
+            eq(eventHeroNpcTable.npcName, npcName),
           ),
-      ),
-    );
-  }
-}
+          or(
+            isNull(eventTable.startsAt),
+            lte(eventTable.startsAt, referenceTime),
+          ),
+          or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
+        ),
+      );
+  },
+});
+
+export type ActiveEventHeroStore = ReturnType<typeof makeActiveEventHeroStore>;

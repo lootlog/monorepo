@@ -8,7 +8,8 @@
 RabbitMQ connects independently deployed services. Existing exchange names,
 routing keys, queue arguments, payload shapes, retry queues, dead-letter queues,
 and acknowledgement behavior are deployed contracts. Framework-specific AMQP
-decorators obscured parts of that contract and coupled consumers to Nest.
+decorators obscured parts of that contract and coupled consumers to the old
+application framework.
 
 ## Decision
 

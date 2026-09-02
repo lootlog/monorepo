@@ -31,5 +31,10 @@ const ObservabilityLive = Layer.unwrap(
 );
 
 BunRuntime.runMain(
-  Layer.launch(GatewayServer.pipe(Layer.provide(ObservabilityLive))),
+  Layer.launch(
+    GatewayServer.pipe(
+      Layer.provide(FetchHttpClient.layer),
+      Layer.provide(ObservabilityLive),
+    ),
+  ),
 );

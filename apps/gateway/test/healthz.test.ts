@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { Effect } from "effect";
 import {
   createGatewayFetch,
   type GatewayApplicationService,
@@ -43,7 +44,8 @@ describe("gateway HTTP boundary", () => {
           value: "ticket",
           origin: "https://classic.margonem.pl",
         }),
-        verify: async () => ({ userId: "user-1", discordId: "discord-1" }),
+        verify: () =>
+          Effect.succeed({ userId: "user-1", discordId: "discord-1" }),
         getPlatform: () => "game",
       },
     } as unknown as GatewayApplicationService;

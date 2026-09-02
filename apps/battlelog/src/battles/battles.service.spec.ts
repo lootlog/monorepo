@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { BattlesService } from "./battles.service.js";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
-import { R2Service } from "#src/shared/modules/r2/r2.service";
-import { PaginationService } from "./services/pagination.service.js";
-import { BattleAnalyticsService } from "./services/battle-analytics.service.js";
-import { BattleListFilterService } from "./services/battle-list-filter.service.js";
-import { BattleMetadataService } from "./services/battle-metadata.service.js";
-import { RedisService } from "#src/shared/modules/redis/redis.service";
+import { makeBattles, type Battles } from "./battles.service.js";
+import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
+import type { BattleObjectStorage } from "#src/shared/modules/r2/r2.service";
+import type { BattlePagination } from "./services/pagination.service.js";
+import type { BattleAnalytics } from "./services/battle-analytics.service.js";
+import { makeBattleListFilter } from "./services/battle-list-filter.service.js";
+import { makeBattleMetadata } from "./services/battle-metadata.service.js";
+import type { RedisStore } from "#src/shared/modules/redis/redis.service";
+import { Effect } from "effect";
+import { runEffectService } from "../../test/effect-service.js";
 
-describe("BattlesService", () => {
-  let service: BattlesService;
+describe("battles module", () => {
+  let service: ReturnType<typeof runEffectService<Battles>>;
   let mockDrizzleService: {
     run: ReturnType<typeof mock>;
     db: {
@@ -101,7 +103,7 @@ describe("BattlesService", () => {
     };
 
     const mockPaginationService = {
-      paginateBattles: mock(),
+      paginateBattles: mock(() => Effect.die("not configured")),
     };
 
     mockBattleAnalyticsService = {
@@ -111,7 +113,7 @@ describe("BattlesService", () => {
       getCurrentStreak: mock(),
       getBattleDurationStats: mock(),
       getPhGrowthTimeSeries: mock(),
-      invalidateAnalyticsCache: mock(),
+      invalidateAnalyticsCache: mock(() => Effect.void),
     };
 
     const mockRedisService = {
@@ -128,16 +130,18 @@ describe("BattlesService", () => {
       ),
     };
 
-    const drizzle = mockDrizzleService as unknown as DrizzleService;
-    const redis = mockRedisService as unknown as RedisService;
-    service = new BattlesService(
-      drizzle,
-      mockR2Service as unknown as R2Service,
-      redis,
-      mockPaginationService as unknown as PaginationService,
-      mockBattleAnalyticsService as unknown as BattleAnalyticsService,
-      new BattleListFilterService(drizzle),
-      new BattleMetadataService(drizzle, redis),
+    const drizzle = mockDrizzleService as unknown as DrizzleDatabase;
+    const redis = mockRedisService as unknown as RedisStore;
+    service = runEffectService(
+      makeBattles(
+        drizzle,
+        mockR2Service as unknown as BattleObjectStorage,
+        redis,
+        mockPaginationService as unknown as BattlePagination,
+        mockBattleAnalyticsService as unknown as BattleAnalytics,
+        makeBattleListFilter(drizzle),
+        makeBattleMetadata(drizzle, redis),
+      ),
     );
   });
 

@@ -7,7 +7,8 @@ import type {
   roleTable,
 } from "#src/database/drizzle/schema";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
-import { LootsService } from "#src/loots/loots.service";
+import type { LootsOperations } from "#src/loots/loots.operations";
+import { Effect } from "effect";
 import { RedisService } from "#src/redis/redis.service";
 import { clipToWindowSeconds } from "../utils/tracking-window.util.js";
 import {
@@ -23,7 +24,7 @@ import type {
   EventWrappedResponseDto,
 } from "../dto/event-wrapped.dto.js";
 import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader.js";
-import { EventWrappedRepository } from "./event-wrapped.repository.js";
+import type { EventWrappedStore } from "./event-wrapped.repository.js";
 type Guild = typeof guildTable.$inferSelect;
 type ItemRarity = NonNullable<typeof itemSnapshotTable.$inferSelect.rarity>;
 type Role = typeof roleTable.$inferSelect;
@@ -108,251 +109,282 @@ const countMapStats = (mapStats: unknown): number => {
   return Array.isArray(mapStats) ? mapStats.length : 0;
 };
 
-export class EventWrappedService {
-  private readonly logger = new Logger(EventWrappedService.name);
+export const makeEventWrapped = (
+  repository: EventWrappedStore,
+  redis: RedisService,
+  lootsService: LootsOperations,
+) => {
+  const logger = new Logger("EventWrapped");
 
-  constructor(
-    private readonly repository: EventWrappedRepository,
-    private readonly redis: RedisService,
-    private readonly lootsService: LootsService,
-  ) {}
-
-  getWrapped(
+  function getWrapped(
     guild: Guild,
     eventId: string,
     permissions: Permission[],
     roles: Role[],
-  ): Promise<EventWrappedResponseDto> {
+  ) {
     const cacheKey = getEventWrappedCacheKey(
       guild.id,
       eventId,
-      this.buildVisibilityCacheScope(permissions, roles),
+      buildVisibilityCacheScope(permissions, roles),
     );
 
-    return this.redis.getOrSetJsonBestEffort({
-      key: cacheKey,
-      ttlSeconds: EVENT_WRAPPED_CACHE_TTL_SECONDS,
-      onError: (error) =>
-        this.logger.warn("Event wrapped cache unavailable", error),
-      factory: () =>
-        this.getWrappedUncached(guild, eventId, permissions, roles),
-    });
+    const load = getWrappedUncached(guild, eventId, permissions, roles);
+    return Effect.gen(function* () {
+      const cached = yield* Effect.tryPromise({
+        try: () => redis.getJson<EventWrappedResponseDto>(cacheKey),
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.sync(() => {
+            logger.warn("Event wrapped cache unavailable", error);
+            return null;
+          }),
+        ),
+      );
+      if (cached !== null) return cached;
+      const response = yield* load;
+      yield* Effect.tryPromise({
+        try: () =>
+          redis.setJson(cacheKey, response, EVENT_WRAPPED_CACHE_TTL_SECONDS),
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) =>
+          Effect.sync(() =>
+            logger.warn("Event wrapped cache unavailable", error),
+          ),
+        ),
+      );
+      return response;
+    }).pipe(Effect.withSpan("EventsCatalogController_showEventWrapped"));
   }
 
-  private async getWrappedUncached(
+  function getWrappedUncached(
     guild: Guild,
     eventId: string,
     permissions: Permission[],
     roles: Role[],
-  ): Promise<EventWrappedResponseDto> {
-    const event = await this.repository.findEvent(guild.id, eventId);
+  ) {
+    return Effect.gen(function* () {
+      const event = yield* repository.findEvent(guild.id, eventId);
 
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
-
-    const eventWindowStart = event.startsAt ?? event.createdAt;
-    const eventWindowEnd = event.endsAt ?? new Date();
-    const heroIds = event.heroNpcs.map((hero) => hero.id);
-    const heroByName = new Map(
-      event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
-    );
-
-    const [rankings, kills, windowSummaries, assignments, loots] =
-      await Promise.all([
-        this.repository.findRankings(eventId) as Promise<RankingRow[]>,
-        this.repository.findKills(heroIds),
-        this.repository.findSummaries(heroIds) as Promise<SummaryRow[]>,
-        this.repository.findAssignments(heroIds) as Promise<AssignmentRow[]>,
-        this.getEventLoots({
-          guild,
-          permissions,
-          roles,
-          world: event.world,
-          heroNames: event.heroNpcs.map((hero) => hero.npcName),
-          createdAtMin: eventWindowStart.toISOString(),
-          createdAtMax: eventWindowEnd.toISOString(),
-        }),
-      ]);
-
-    const members = this.aggregateMembers(rankings, assignments, kills, {
-      eventWindowStart,
-      eventWindowEnd,
-    });
-    const heroLoots = this.aggregateHeroLoots(loots, heroByName);
-    const coverage = this.aggregateCoverage(windowSummaries, event.heroNpcs);
-    const avgMapsPerSpawnWindow = this.calculateAverageMapsPerSpawnWindow(
-      kills,
-      assignments,
-    );
-
-    const heroEntries: EventWrappedHeroDto[] = event.heroNpcs
-      .map((hero) => {
-        const heroRankings = rankings.filter(
-          (ranking) => ranking.heroNpcName === hero.npcName,
-        );
-        const totalPoints = heroRankings.reduce(
-          (sum, ranking) => sum + ranking.totalPoints,
-          0,
-        );
-        const totalKills = heroRankings.reduce(
-          (sum, ranking) => sum + ranking.totalKills,
-          0,
-        );
-        const topHunter = selectEventWrappedLeader(
-          heroRankings,
-          (ranking) => ranking.totalKills,
-        );
-
-        return {
-          heroNpcId: hero.id,
-          npcId: hero.npcId,
-          npcName: hero.npcName,
-          npcIcon: hero.npcIcon,
-          mapCount: hero.maps.length,
-          totalKills,
-          totalPoints: roundToTwo(totalPoints),
-          coveragePercentage: roundToTwo(
-            coverage.heroCoverageById.get(hero.id)?.coveragePercentage ?? 0,
-          ),
-          rarityTotals:
-            heroLoots.get(hero.id)?.rarityTotals ?? createEmptyRarityTotals(),
-          topHunter,
-        };
-      })
-      .sort((left, right) => right.totalKills - left.totalKills);
-
-    const killsByHour = new Map<number, number>();
-    for (const kill of kills) {
-      const hour = kill.killedAt.getHours();
-      killsByHour.set(hour, (killsByHour.get(hour) ?? 0) + 1);
-    }
-
-    let busiestHour: number | null = null;
-    let busiestHourKills = 0;
-    for (const [hour, count] of killsByHour.entries()) {
-      if (count > busiestHourKills) {
-        busiestHour = hour;
-        busiestHourKills = count;
+      if (!event) {
+        throw new NotFoundException("Event not found");
       }
-    }
 
-    const totalPoints = Array.from(members.values()).reduce(
-      (sum, member) => sum + member.totalPoints,
-      0,
-    );
-    const totalTrackedSeconds = Array.from(members.values()).reduce(
-      (sum, member) => sum + member.totalTimeSeconds,
-      0,
-    );
-    const totalAfkSeconds = Array.from(members.values()).reduce(
-      (sum, member) => sum + member.totalAfkSeconds,
-      0,
-    );
-    const totalLoots = loots.length;
-    const totalRarityTotals = Array.from(heroLoots.values()).reduce(
-      (accumulator, aggregate) => {
-        accumulator.unique += aggregate.rarityTotals.unique;
-        accumulator.heroic += aggregate.rarityTotals.heroic;
-        accumulator.legendary += aggregate.rarityTotals.legendary;
-        return accumulator;
-      },
-      createEmptyRarityTotals(),
-    );
+      const eventWindowStart = event.startsAt ?? event.createdAt;
+      const eventWindowEnd = event.endsAt ?? new Date();
+      const heroIds = event.heroNpcs.map((hero) => hero.id);
+      const heroByName = new Map(
+        event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
+      );
 
-    const memberList = Array.from(members.values());
-
-    const response: EventWrappedResponseDto = {
-      generatedAt: new Date().toISOString(),
-      event: {
-        id: event.id,
-        name: event.name,
-        world: event.world,
-        startsAt: event.startsAt?.toISOString() ?? null,
-        endsAt: event.endsAt?.toISOString() ?? null,
-        heroCount: event.heroNpcs.length,
-        mapCount: event.heroNpcs.reduce(
-          (sum, hero) => sum + hero.maps.length,
-          0,
-        ),
-        spawnCount: kills.length,
-      },
-      overview: {
-        totalKills: kills.length,
-        participantCount: memberList.length,
-        totalPoints: roundToTwo(totalPoints),
-        totalTrackedSeconds,
-        totalAfkSeconds,
-        coveragePercentage: roundToTwo(coverage.coveragePercentage),
-        avgMapsPerSpawnWindow: roundToTwo(avgMapsPerSpawnWindow),
-        busiestHour,
-        busiestHourKills,
-        totalLoots,
-        rarityTotals: totalRarityTotals,
-      },
-      leaders: {
-        topHunter: selectEventWrappedLeader(
-          memberList,
-          (member) => member.totalKills,
-        ),
-        topScorer: selectEventWrappedLeader(
-          memberList,
-          (member) => member.totalPoints,
-        ),
-        longestDuty: selectEventWrappedLeader(
-          memberList,
-          (member) => member.totalAssignedSeconds,
-        ),
-        topAfk: selectEventWrappedLeader(
-          memberList,
-          (member) => member.totalAfkSeconds,
-        ),
-        mostFlexible: selectEventWrappedLeader(
-          memberList,
-          (member) => member.maxMapsPerRespawn,
-          (member) => member.avgMapsPerRespawn,
-        ),
-        topEfficiency: selectEventWrappedLeader(
-          memberList.filter((member) => member.totalKills > 0),
-          (member) => member.totalPoints / member.totalKills,
-          (member) => member.totalKills,
-        ),
-      },
-      coverage: {
-        totalWindowCount: windowSummaries.length,
-        totalWindowSeconds: coverage.totalWindowSeconds,
-        totalCoverageSeconds: coverage.totalCoverageSeconds,
-        totalUncoveredSeconds: coverage.totalUncoveredSeconds,
-        totalUnassignedSeconds: coverage.totalUnassignedSeconds,
-        coveragePercentage: roundToTwo(coverage.coveragePercentage),
-        avgMapsPerSpawnWindow: roundToTwo(avgMapsPerSpawnWindow),
-        bestHeroCoverage: coverage.bestHeroCoverage,
-        roughestHeroCoverage: coverage.roughestHeroCoverage,
-      },
-      heroes: heroEntries,
-      loot: {
-        totalLoots,
-        rarityTotals: totalRarityTotals,
-        heroBreakdown: event.heroNpcs
-          .map(
-            (hero): EventWrappedLootHeroDto => ({
-              heroNpcId: hero.id,
-              npcName: hero.npcName,
-              npcIcon: hero.npcIcon,
-              totalLoots: heroLoots.get(hero.id)?.totalLoots ?? 0,
-              rarityTotals:
-                heroLoots.get(hero.id)?.rarityTotals ??
-                createEmptyRarityTotals(),
+      const [rankings, kills, windowSummaries, assignments, loots] =
+        yield* Effect.all(
+          [
+            repository.findRankings(eventId),
+            repository.findKills(heroIds),
+            repository.findSummaries(heroIds),
+            repository.findAssignments(heroIds),
+            getEventLoots({
+              guild,
+              permissions,
+              roles,
+              world: event.world,
+              heroNames: event.heroNpcs.map((hero) => hero.npcName),
+              createdAtMin: eventWindowStart.toISOString(),
+              createdAtMax: eventWindowEnd.toISOString(),
             }),
-          )
-          .sort((left, right) => right.totalLoots - left.totalLoots),
-      },
-    };
+          ],
+          { concurrency: "unbounded" },
+        );
 
-    return response;
+      const members = aggregateMembers(
+        rankings as RankingRow[],
+        assignments as AssignmentRow[],
+        kills,
+        {
+          eventWindowStart,
+          eventWindowEnd,
+        },
+      );
+      const heroLoots = aggregateHeroLoots(loots, heroByName);
+      const coverage = aggregateCoverage(
+        windowSummaries as SummaryRow[],
+        event.heroNpcs,
+      );
+      const avgMapsPerSpawnWindow = calculateAverageMapsPerSpawnWindow(
+        kills,
+        assignments,
+      );
+
+      const heroEntries: EventWrappedHeroDto[] = event.heroNpcs
+        .map((hero) => {
+          const heroRankings = rankings.filter(
+            (ranking) => ranking.heroNpcName === hero.npcName,
+          );
+          const totalPoints = heroRankings.reduce(
+            (sum, ranking) => sum + ranking.totalPoints,
+            0,
+          );
+          const totalKills = heroRankings.reduce(
+            (sum, ranking) => sum + ranking.totalKills,
+            0,
+          );
+          const topHunter = selectEventWrappedLeader(
+            heroRankings,
+            (ranking) => ranking.totalKills,
+          );
+
+          return {
+            heroNpcId: hero.id,
+            npcId: hero.npcId,
+            npcName: hero.npcName,
+            npcIcon: hero.npcIcon,
+            mapCount: hero.maps.length,
+            totalKills,
+            totalPoints: roundToTwo(totalPoints),
+            coveragePercentage: roundToTwo(
+              coverage.heroCoverageById.get(hero.id)?.coveragePercentage ?? 0,
+            ),
+            rarityTotals:
+              heroLoots.get(hero.id)?.rarityTotals ?? createEmptyRarityTotals(),
+            topHunter,
+          };
+        })
+        .sort((left, right) => right.totalKills - left.totalKills);
+
+      const killsByHour = new Map<number, number>();
+      for (const kill of kills) {
+        const hour = kill.killedAt.getHours();
+        killsByHour.set(hour, (killsByHour.get(hour) ?? 0) + 1);
+      }
+
+      let busiestHour: number | null = null;
+      let busiestHourKills = 0;
+      for (const [hour, count] of killsByHour.entries()) {
+        if (count > busiestHourKills) {
+          busiestHour = hour;
+          busiestHourKills = count;
+        }
+      }
+
+      const totalPoints = Array.from(members.values()).reduce(
+        (sum, member) => sum + member.totalPoints,
+        0,
+      );
+      const totalTrackedSeconds = Array.from(members.values()).reduce(
+        (sum, member) => sum + member.totalTimeSeconds,
+        0,
+      );
+      const totalAfkSeconds = Array.from(members.values()).reduce(
+        (sum, member) => sum + member.totalAfkSeconds,
+        0,
+      );
+      const totalLoots = loots.length;
+      const totalRarityTotals = Array.from(heroLoots.values()).reduce(
+        (accumulator, aggregate) => {
+          accumulator.unique += aggregate.rarityTotals.unique;
+          accumulator.heroic += aggregate.rarityTotals.heroic;
+          accumulator.legendary += aggregate.rarityTotals.legendary;
+          return accumulator;
+        },
+        createEmptyRarityTotals(),
+      );
+
+      const memberList = Array.from(members.values());
+
+      const response: EventWrappedResponseDto = {
+        generatedAt: new Date().toISOString(),
+        event: {
+          id: event.id,
+          name: event.name,
+          world: event.world,
+          startsAt: event.startsAt?.toISOString() ?? null,
+          endsAt: event.endsAt?.toISOString() ?? null,
+          heroCount: event.heroNpcs.length,
+          mapCount: event.heroNpcs.reduce(
+            (sum, hero) => sum + hero.maps.length,
+            0,
+          ),
+          spawnCount: kills.length,
+        },
+        overview: {
+          totalKills: kills.length,
+          participantCount: memberList.length,
+          totalPoints: roundToTwo(totalPoints),
+          totalTrackedSeconds,
+          totalAfkSeconds,
+          coveragePercentage: roundToTwo(coverage.coveragePercentage),
+          avgMapsPerSpawnWindow: roundToTwo(avgMapsPerSpawnWindow),
+          busiestHour,
+          busiestHourKills,
+          totalLoots,
+          rarityTotals: totalRarityTotals,
+        },
+        leaders: {
+          topHunter: selectEventWrappedLeader(
+            memberList,
+            (member) => member.totalKills,
+          ),
+          topScorer: selectEventWrappedLeader(
+            memberList,
+            (member) => member.totalPoints,
+          ),
+          longestDuty: selectEventWrappedLeader(
+            memberList,
+            (member) => member.totalAssignedSeconds,
+          ),
+          topAfk: selectEventWrappedLeader(
+            memberList,
+            (member) => member.totalAfkSeconds,
+          ),
+          mostFlexible: selectEventWrappedLeader(
+            memberList,
+            (member) => member.maxMapsPerRespawn,
+            (member) => member.avgMapsPerRespawn,
+          ),
+          topEfficiency: selectEventWrappedLeader(
+            memberList.filter((member) => member.totalKills > 0),
+            (member) => member.totalPoints / member.totalKills,
+            (member) => member.totalKills,
+          ),
+        },
+        coverage: {
+          totalWindowCount: windowSummaries.length,
+          totalWindowSeconds: coverage.totalWindowSeconds,
+          totalCoverageSeconds: coverage.totalCoverageSeconds,
+          totalUncoveredSeconds: coverage.totalUncoveredSeconds,
+          totalUnassignedSeconds: coverage.totalUnassignedSeconds,
+          coveragePercentage: roundToTwo(coverage.coveragePercentage),
+          avgMapsPerSpawnWindow: roundToTwo(avgMapsPerSpawnWindow),
+          bestHeroCoverage: coverage.bestHeroCoverage,
+          roughestHeroCoverage: coverage.roughestHeroCoverage,
+        },
+        heroes: heroEntries,
+        loot: {
+          totalLoots,
+          rarityTotals: totalRarityTotals,
+          heroBreakdown: event.heroNpcs
+            .map(
+              (hero): EventWrappedLootHeroDto => ({
+                heroNpcId: hero.id,
+                npcName: hero.npcName,
+                npcIcon: hero.npcIcon,
+                totalLoots: heroLoots.get(hero.id)?.totalLoots ?? 0,
+                rarityTotals:
+                  heroLoots.get(hero.id)?.rarityTotals ??
+                  createEmptyRarityTotals(),
+              }),
+            )
+            .sort((left, right) => right.totalLoots - left.totalLoots),
+        },
+      };
+
+      return response;
+    });
   }
 
-  private buildVisibilityCacheScope(permissions: Permission[], roles: Role[]) {
+  function buildVisibilityCacheScope(permissions: Permission[], roles: Role[]) {
     const visibilityScope = {
       permissions: [...permissions].sort(),
       roles: roles
@@ -365,14 +397,12 @@ export class EventWrappedService {
         .sort((leftRole, rightRole) => leftRole.id.localeCompare(rightRole.id)),
     };
 
-    return Buffer.from(this.stableSerialize(visibilityScope)).toString(
-      "base64url",
-    );
+    return Buffer.from(stableSerialize(visibilityScope)).toString("base64url");
   }
 
-  private stableSerialize(value: unknown): string {
+  function stableSerialize(value: unknown): string {
     if (Array.isArray(value)) {
-      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+      return `[${value.map((entry) => stableSerialize(entry)).join(",")}]`;
     }
 
     if (value && typeof value === "object") {
@@ -382,8 +412,7 @@ export class EventWrappedService {
 
       return `{${entries
         .map(
-          ([key, entry]) =>
-            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+          ([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`,
         )
         .join(",")}}`;
     }
@@ -391,7 +420,7 @@ export class EventWrappedService {
     return JSON.stringify(value);
   }
 
-  private getEventLoots(params: {
+  function getEventLoots(params: {
     guild: Guild;
     permissions: Permission[];
     roles: Role[];
@@ -399,54 +428,54 @@ export class EventWrappedService {
     heroNames: string[];
     createdAtMin: string;
     createdAtMax: string;
-  }): Promise<LootQueryResult[]> {
+  }) {
     if (params.heroNames.length === 0) {
-      return Promise.resolve([]);
+      return Effect.succeed([] as LootQueryResult[]);
     }
 
     const accessPolicy = createAccessPolicy({
       capabilities: params.permissions,
     });
-
-    const fetchLootsBatch = async (
+    const fetchLootsBatch = (
       cursor: number | undefined,
       collectedLoots: LootQueryResult[],
-    ): Promise<LootQueryResult[]> => {
-      const batch = await this.lootsService.fetchLootsByGuildId(
-        params.guild,
-        accessPolicy,
-        params.roles,
-        {
-          limit: 100,
-          cursor,
-          players: [],
-          rarities: [],
-          npcTypes: [],
-          npcs: params.heroNames,
-          world: params.world,
-          createdAtMin: params.createdAtMin,
-          createdAtMax: params.createdAtMax,
-        },
-      );
+    ): Effect.Effect<LootQueryResult[], unknown, never> =>
+      Effect.gen(function* () {
+        const batch = yield* lootsService.fetchLootsByGuildId(
+          params.guild,
+          accessPolicy,
+          params.roles,
+          {
+            limit: 100,
+            cursor,
+            players: [],
+            rarities: [],
+            npcTypes: [],
+            npcs: params.heroNames,
+            world: params.world,
+            createdAtMin: params.createdAtMin,
+            createdAtMax: params.createdAtMax,
+          },
+        );
 
-      collectedLoots.push(...batch);
+        collectedLoots.push(...batch);
 
-      if (batch.length < 100) {
-        return collectedLoots;
-      }
+        if (batch.length < 100) {
+          return collectedLoots;
+        }
 
-      const nextCursor = batch[batch.length - 1]?.id;
-      if (!nextCursor) {
-        return collectedLoots;
-      }
+        const nextCursor = batch[batch.length - 1]?.id;
+        if (!nextCursor) {
+          return collectedLoots;
+        }
 
-      return fetchLootsBatch(nextCursor, collectedLoots);
-    };
+        return yield* fetchLootsBatch(nextCursor, collectedLoots);
+      });
 
     return fetchLootsBatch(undefined, []);
   }
 
-  private aggregateMembers(
+  function aggregateMembers(
     rankings: RankingRow[],
     assignments: AssignmentRow[],
     kills: Array<{
@@ -456,7 +485,7 @@ export class EventWrappedService {
     options: { eventWindowStart: Date; eventWindowEnd: Date },
   ): Map<number, AggregatedMember> {
     const members = new Map<number, AggregatedMember>();
-    const respawnStatsByMemberId = this.calculateMemberRespawnMapStats(
+    const respawnStatsByMemberId = calculateMemberRespawnMapStats(
       kills,
       assignments,
     );
@@ -536,7 +565,7 @@ export class EventWrappedService {
     return members;
   }
 
-  private calculateMemberRespawnMapStats(
+  function calculateMemberRespawnMapStats(
     kills: Array<{
       killedAt: Date;
       minSpawnTimeAtKill: Date;
@@ -595,7 +624,7 @@ export class EventWrappedService {
     );
   }
 
-  private aggregateHeroLoots(
+  function aggregateHeroLoots(
     loots: LootQueryResult[],
     heroByName: Map<
       string,
@@ -638,7 +667,7 @@ export class EventWrappedService {
     return heroLoots;
   }
 
-  private aggregateCoverage(
+  function aggregateCoverage(
     summaries: SummaryRow[],
     heroes: Array<{
       id: string;
@@ -741,7 +770,7 @@ export class EventWrappedService {
     };
   }
 
-  private calculateAverageMapsPerSpawnWindow(
+  function calculateAverageMapsPerSpawnWindow(
     kills: Array<{
       killedAt: Date;
       minSpawnTimeAtKill: Date;
@@ -772,4 +801,8 @@ export class EventWrappedService {
 
     return totalAssignedMapsAcrossWindows / kills.length;
   }
-}
+
+  return { getWrapped };
+};
+
+export type EventWrapped = ReturnType<typeof makeEventWrapped>;

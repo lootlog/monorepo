@@ -1,20 +1,20 @@
 import type { PlayerVsPlayerBattleDto } from "#src/battles/dto/battle-statistics-response.dto";
 import type { QueryPlayerVsPlayerDto } from "#src/battles/dto/query-battle-statistics.dto";
-import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
+import type { BattleAnalyticsDomain } from "#src/battles/services/battle-analytics-domain.service";
 import type { InflatedBattleWithWarriors } from "#src/battles/services/battle-analytics.types";
 
-export class PlayerVsPlayerCalculatorService {
-  constructor(private readonly domainService: BattleAnalyticsDomainService) {}
-
+export const makePlayerVsPlayerCalculator = (
+  domain: BattleAnalyticsDomain,
+) => ({
   calculateBattles(
     battles: InflatedBattleWithWarriors[],
     characterIds: Set<string>,
     query: QueryPlayerVsPlayerDto,
   ): PlayerVsPlayerBattleDto[] {
     return battles
-      .filter((battle) => this.shouldIncludeBattle(battle, query))
+      .filter((battle) => shouldIncludeBattle(battle, query))
       .filter((battle) =>
-        this.domainService.isOpponentLevelInRange(
+        domain.isOpponentLevelInRange(
           battle,
           characterIds,
           query.minLevel,
@@ -22,14 +22,8 @@ export class PlayerVsPlayerCalculatorService {
         ),
       )
       .map((battle) => {
-        const userWarrior = this.domainService.findUserWarrior(
-          battle,
-          characterIds,
-        );
-        const opponentWarrior = this.domainService.findWarrior(
-          battle,
-          query.opponentId,
-        );
+        const userWarrior = domain.findUserWarrior(battle, characterIds);
+        const opponentWarrior = domain.findWarrior(battle, query.opponentId);
 
         return {
           battleId: battle.id,
@@ -42,27 +36,25 @@ export class PlayerVsPlayerCalculatorService {
           ratingDelta: battle.ratingDelta,
           userRating: battle.rating,
           opponentRating: battle.opponentRating,
-          userWarrior: this.domainService.mapPlayerVsPlayerWarrior(userWarrior),
-          opponentWarrior:
-            this.domainService.mapPlayerVsPlayerWarrior(opponentWarrior),
+          userWarrior: domain.mapPlayerVsPlayerWarrior(userWarrior),
+          opponentWarrior: domain.mapPlayerVsPlayerWarrior(opponentWarrior),
         };
       });
-  }
+  },
+});
 
-  private shouldIncludeBattle(
-    battle: InflatedBattleWithWarriors,
-    query: QueryPlayerVsPlayerDto,
-  ): boolean {
-    if (battle.type !== "1v1") {
-      return false;
-    }
+const shouldIncludeBattle = (
+  battle: InflatedBattleWithWarriors,
+  query: QueryPlayerVsPlayerDto,
+): boolean => {
+  if (battle.type !== "1v1") return false;
+  if (query.excludeBattleId && battle.id === query.excludeBattleId)
+    return false;
+  return battle.warriors.some(
+    (warrior) => warrior.originalId === query.opponentId,
+  );
+};
 
-    if (query.excludeBattleId && battle.id === query.excludeBattleId) {
-      return false;
-    }
-
-    return battle.warriors.some(
-      (warrior) => warrior.originalId === query.opponentId,
-    );
-  }
-}
+export type PlayerVsPlayerCalculator = ReturnType<
+  typeof makePlayerVsPlayerCalculator
+>;

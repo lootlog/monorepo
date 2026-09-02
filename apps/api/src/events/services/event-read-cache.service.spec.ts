@@ -1,7 +1,7 @@
 import { vi } from "#test/bun-test";
 import type { JsonCodec, RedisService } from "#src/redis/redis.service";
 import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto.js";
-import { EventReadCacheService } from "./event-read-cache.service.js";
+import { makeEventReadCache } from "./event-read-cache.service.js";
 
 type RedisGetOrSetArgs = {
   key: string;
@@ -9,7 +9,7 @@ type RedisGetOrSetArgs = {
   codec: JsonCodec;
 };
 
-describe("EventReadCacheService", () => {
+describe("EventReadCache", () => {
   const redis = {
     getOrSetJsonBestEffort: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
     deleteByPattern: vi.fn<(...args: unknown[]) => Promise<number>>(),
@@ -28,7 +28,7 @@ describe("EventReadCacheService", () => {
   });
 
   it("round-trips nested and array Date values through the cache codec", async () => {
-    const service = new EventReadCacheService(redis as unknown as RedisService);
+    const service = makeEventReadCache(redis as unknown as RedisService);
 
     const result = await service.getOrSet("event-read:test", () =>
       Promise.resolve({
@@ -47,7 +47,7 @@ describe("EventReadCacheService", () => {
   });
 
   it("feeds revived Date values into response DTO encoding", async () => {
-    const service = new EventReadCacheService(redis as unknown as RedisService);
+    const service = makeEventReadCache(redis as unknown as RedisService);
 
     const result = await service.getOrSet("event-read:test", () =>
       Promise.resolve({

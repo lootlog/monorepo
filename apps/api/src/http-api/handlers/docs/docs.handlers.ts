@@ -6,7 +6,8 @@ import {
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import type { DocsService } from "#src/docs/docs.service";
+import { DocsRepository } from "#src/docs/docs.repository";
+import { makeDocsService, type DocsService } from "#src/docs/docs.service";
 import type { CreateGuildDocumentDto as LegacyCreateGuildDocumentDto } from "#src/docs/dto/create-guild-document.dto";
 import type { UpdateGuildDocumentDto as LegacyUpdateGuildDocumentDto } from "#src/docs/dto/update-guild-document.dto";
 import type {
@@ -155,12 +156,8 @@ export class DocsData extends Context.Service<
     return Layer.succeed(DocsData, DocsData.of(service));
   }
 
-  static layerLegacy(service: DocsService) {
-    return DocsData.layer(DocsData.makeLegacy(service));
-  }
-
-  static makeLegacy(service: DocsService): DocsData["Service"] {
-    const legacyFailure = (cause: unknown): DocsFailure => {
+  static makeService(service: DocsService): DocsData["Service"] {
+    const operationFailure = (cause: unknown): DocsFailure => {
       const status =
         typeof cause === "object" &&
         cause !== null &&
@@ -180,11 +177,8 @@ export class DocsData extends Context.Service<
       }
       return new DocsDataError({ cause });
     };
-    const attempt = <A>(operation: () => PromiseLike<A> | A) =>
-      Effect.tryPromise({
-        try: () => Promise.resolve(operation()),
-        catch: legacyFailure,
-      });
+    const operation = <A, E>(effect: Effect.Effect<A, E>) =>
+      effect.pipe(Effect.mapError(operationFailure));
     const mutableCreatePayload = (
       payload: DocsControllerCreateDocumentRequestJson,
     ): LegacyCreateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
@@ -193,26 +187,26 @@ export class DocsData extends Context.Service<
     ): LegacyUpdateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
 
     return DocsData.of({
-      list: (caller) => attempt(() => service.listDocuments(caller.guild.id)),
+      list: (caller) => operation(service.listDocuments(caller.guild.id)),
       create: (caller, payload) =>
-        attempt(() =>
+        operation(
           service.createDocument(
             caller.guild.id,
             caller.member.userId,
             mutableCreatePayload(payload),
           ),
         ),
-      trash: (caller) => attempt(() => service.listTrash(caller.guild.id)),
+      trash: (caller) => operation(service.listTrash(caller.guild.id)),
       history: (caller, documentId) =>
-        attempt(() => service.listHistory(caller.guild.id, documentId)),
+        operation(service.listHistory(caller.guild.id, documentId)),
       historySnapshot: (caller, documentId, historyId) =>
-        attempt(() =>
+        operation(
           service.getHistorySnapshot(caller.guild.id, documentId, historyId),
         ),
       get: (caller, documentId) =>
-        attempt(() => service.getDocument(caller.guild.id, documentId)),
+        operation(service.getDocument(caller.guild.id, documentId)),
       update: (caller, documentId, payload) =>
-        attempt(() =>
+        operation(
           service.updateDocument(
             caller.guild.id,
             documentId,
@@ -221,7 +215,7 @@ export class DocsData extends Context.Service<
           ),
         ),
       moveToTrash: (caller, documentId) =>
-        attempt(() =>
+        operation(
           service.moveDocumentToTrash(
             caller.guild.id,
             documentId,
@@ -229,7 +223,7 @@ export class DocsData extends Context.Service<
           ),
         ),
       restore: (caller, documentId) =>
-        attempt(() =>
+        operation(
           service.restoreDocument(
             caller.guild.id,
             documentId,
@@ -237,9 +231,16 @@ export class DocsData extends Context.Service<
           ),
         ),
       purge: (caller, documentId) =>
-        attempt(() => service.purgeDocument(caller.guild.id, documentId)),
+        operation(service.purgeDocument(caller.guild.id, documentId)),
     });
   }
+
+  static readonly layerDatabase = Layer.effect(
+    DocsData,
+    Effect.map(DocsRepository, (repository) =>
+      DocsData.makeService(makeDocsService(repository)),
+    ),
+  ).pipe(Layer.provide(DocsRepository.layerDatabase));
 }
 
 const readRequirement = {
@@ -297,7 +298,11 @@ const execute = <A>(
       operation(data, caller),
     );
     return yield* decode(decoder, value);
-  });
+  }).pipe(
+    Effect.withSpan(endpoint, {
+      attributes: { operationId: endpoint },
+    }),
+  );
 
 export const listDocuments = (guildId: string) =>
   execute(

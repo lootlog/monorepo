@@ -6,6 +6,7 @@ import {
 import { Context, Effect, Layer, Schema } from "effect";
 import { Redis } from "ioredis";
 import { ActivityConfig } from "#src/config/activity-config";
+import { ApiHttpClient } from "#src/http/api-http-client";
 
 export interface PermissionsValue {
   readonly resolveGuildId: (id: string) => Effect.Effect<string | null, Error>;
@@ -24,6 +25,7 @@ export class Permissions extends Context.Service<
     Permissions,
     Effect.gen(function* () {
       const config = yield* ActivityConfig;
+      const apiHttpClient = yield* ApiHttpClient;
       const memory = new Map<string, { expiresAt: number; value: unknown }>();
       const redis = config.redisUrl
         ? yield* Effect.acquireRelease(
@@ -67,19 +69,22 @@ export class Permissions extends Context.Service<
         const key = `guild-id:${id}`;
         const cached = yield* Effect.promise(() => get<string>(key));
         if (cached) return cached;
-        const response = yield* Effect.tryPromise({
-          try: () =>
-            fetch(
-              `${config.apiServiceUrl}/internal/guilds/${encodeURIComponent(id)}`,
-            ),
-          catch: (cause) => new Error("Guild resolution failed", { cause }),
-        });
+        const response = yield* apiHttpClient.get(
+          "Permissions.resolveGuildId",
+          `${config.apiServiceUrl}/internal/guilds/${encodeURIComponent(id)}`,
+        );
         if (response.status === 404) return null;
-        if (!response.ok)
+        if (response.status < 200 || response.status >= 300)
           return yield* Effect.fail(
             new Error(`Guild resolution failed with ${response.status}`),
           );
-        const guild = decodeGuild(yield* Effect.promise(() => response.json()));
+        const guild = yield* Effect.try({
+          try: () =>
+            decodeGuild(
+              JSON.parse(new TextDecoder().decode(response.body)) as unknown,
+            ),
+          catch: (cause) => new Error("Guild response was invalid", { cause }),
+        });
         yield* Effect.promise(() => set(key, guild.id));
         return guild.id;
       });
@@ -96,20 +101,34 @@ export class Permissions extends Context.Service<
           );
           url.searchParams.set("discordId", discordId);
           url.searchParams.set("userId", userId);
-          const permissions = yield* Effect.tryPromise({
-            try: async () => {
-              const response = await fetch(url);
-              if (!response.ok)
-                throw new Error(
-                  `Permissions request failed with ${response.status}`,
-                );
-              return decodePermissions(await response.json());
-            },
-            catch: (cause) =>
-              new Error("Permissions request failed", { cause }),
-          }).pipe(
-            Effect.catch(() => Effect.succeed([] as UserGuildPermissionsDto[])),
-          );
+          const permissions = yield* apiHttpClient
+            .get("Permissions.getUserPermissions", url)
+            .pipe(
+              Effect.flatMap((response) => {
+                if (response.status < 200 || response.status >= 300) {
+                  return Effect.fail(
+                    new Error(
+                      `Permissions request failed with ${response.status}`,
+                    ),
+                  );
+                }
+                return Effect.try({
+                  try: () =>
+                    decodePermissions(
+                      JSON.parse(
+                        new TextDecoder().decode(response.body),
+                      ) as unknown,
+                    ),
+                  catch: (cause) =>
+                    new Error("Permissions response was invalid", { cause }),
+                });
+              }),
+            )
+            .pipe(
+              Effect.catch(() =>
+                Effect.succeed([] as UserGuildPermissionsDto[]),
+              ),
+            );
           yield* Effect.promise(() => set(key, permissions));
           return permissions;
         },

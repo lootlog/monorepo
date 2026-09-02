@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
@@ -9,8 +7,6 @@ import {
   GENERIC_NOTIFICATION_TITLE,
   SPAWN_NOTIFICATION_FALLBACK_NAME,
   TIMER_BEFORE_SPAWN_LABEL,
-  FALLBACK_NPC_NAME,
-  FALLBACK_WORLD_NAME,
   timerMaxSpawnReached,
   timerMaxSpawnIn,
   timerMinSpawnReached,
@@ -19,10 +15,8 @@ import {
   ruleTestWithWorld,
   ruleTestWithoutWorld,
 } from "#src/notifications/constants/notification-messages.constant";
-import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
 import type { JsonObject, JsonValue } from "./notification-database.types.js";
-import { NotificationsRepository } from "./notifications.repository.js";
 
 const DbNotificationScheduleAnchor = {
   MAX_SPAWN: "MAX_SPAWN",
@@ -73,12 +67,7 @@ const hasAllowedMentionValues = (params: {
   (params.users?.length ?? 0) > 0 ||
   params.repliedUser !== undefined;
 
-export class NotificationContentService {
-  constructor(
-    private readonly repository: NotificationsRepository,
-    private readonly matchingService: NotificationMatchingService,
-  ) {}
-
+class NotificationContent {
   buildTimerNotificationPayload(params: {
     notificationRule: {
       id: number;
@@ -191,7 +180,7 @@ export class NotificationContentService {
     } satisfies JsonObject;
   }
 
-  async buildTestNotificationPayload(params: {
+  buildGenericTestNotificationPayload(params: {
     notificationRule: {
       id: number;
       ownerType: string;
@@ -209,28 +198,6 @@ export class NotificationContentService {
     scheduledFor: Date;
     targetType: DbNotificationTargetType;
   }) {
-    if (
-      params.notificationRule.triggerType ===
-      DbNotificationTriggerType.TIMER_BEFORE_SPAWN
-    ) {
-      const timerContext = await this.getTimerTestContext(
-        params.notificationRule,
-        params.scheduledFor,
-      );
-
-      return this.buildTimerNotificationPayload({
-        notificationRule: params.notificationRule,
-        target: { targetType: params.targetType },
-        npcId: timerContext.npcId,
-        npcName: timerContext.npcName,
-        world: timerContext.world,
-        timerKey: timerContext.timerKey,
-        minSpawnTime: timerContext.minSpawnTime,
-        maxSpawnTime: timerContext.maxSpawnTime,
-        scheduledFor: params.scheduledFor,
-      });
-    }
-
     return {
       title: GENERIC_NOTIFICATION_TITLE,
       message: this.buildRuleTestNotificationMessage({
@@ -412,70 +379,10 @@ export class NotificationContentService {
       (_match, placeholder) => placeholderValues[placeholder] ?? "",
     );
   }
-
-  private async getTimerTestContext(
-    notificationRule: {
-      guildId: string | null;
-      world: string | null;
-      filters: JsonValue;
-      scheduleAnchor: DbNotificationScheduleAnchor | null;
-      scheduleOffsetMinutes: number | null;
-    },
-    scheduledFor: Date,
-  ) {
-    if (notificationRule.guildId) {
-      const timers = await this.repository.findTimersForRule(
-        notificationRule.guildId,
-        notificationRule.world,
-      );
-
-      const matchingTimer = timers.find((timer) =>
-        this.matchingService.matchesTimerRule(
-          notificationRule.filters,
-          timer.npcId,
-        ),
-      );
-
-      if (matchingTimer) {
-        return {
-          npcId: matchingTimer.npcId,
-          npcName: this.readNpcName(matchingTimer.npc),
-          world: matchingTimer.world,
-          timerKey: matchingTimer.timerKey,
-          minSpawnTime: matchingTimer.minSpawnTime,
-          maxSpawnTime: matchingTimer.maxSpawnTime,
-        };
-      }
-    }
-
-    const filters = this.matchingService.parseFilters(notificationRule.filters);
-    const fallbackNpcId = filters.npcId ?? filters.npcIds?.[0] ?? 0;
-    const anchor = notificationRule.scheduleAnchor;
-    const offsetMinutes = notificationRule.scheduleOffsetMinutes ?? 0;
-    const minSpawnTime =
-      anchor === DbNotificationScheduleAnchor.MAX_SPAWN
-        ? new Date(
-            scheduledFor.getTime() + Math.max(0, offsetMinutes - 20) * 60_000,
-          )
-        : new Date(scheduledFor.getTime() + offsetMinutes * 60_000);
-    const maxSpawnTime =
-      anchor === DbNotificationScheduleAnchor.MAX_SPAWN
-        ? new Date(scheduledFor.getTime() + offsetMinutes * 60_000)
-        : new Date(minSpawnTime.getTime() + 20 * 60_000);
-
-    return {
-      npcId: fallbackNpcId,
-      npcName: fallbackNpcId > 0 ? null : FALLBACK_NPC_NAME,
-      world: notificationRule.world ?? FALLBACK_WORLD_NAME,
-      timerKey: `test-${randomUUID()}`,
-      minSpawnTime,
-      maxSpawnTime,
-    };
-  }
-
-  private readNpcName(npc: unknown) {
-    if (!npc || typeof npc !== "object" || Array.isArray(npc)) return null;
-    const name = (npc as Record<string, unknown>).name;
-    return typeof name === "string" ? name : null;
-  }
 }
+
+export const makeNotificationContent = () => new NotificationContent();
+
+export type NotificationContentModule = ReturnType<
+  typeof makeNotificationContent
+>;

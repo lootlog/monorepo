@@ -2,19 +2,18 @@ import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { Effect } from "effect";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Logger } from "#src/platform/logger";
-import { RedisService } from "#src/shared/modules/redis/redis.service";
-import { BattlesController } from "./battles.controller.js";
-import { BattlesService } from "./battles.service.js";
-import { BattleAnalyticsService } from "./services/battle-analytics.service.js";
-import { BattleListFilterService } from "./services/battle-list-filter.service.js";
-import { BattleMetadataService } from "./services/battle-metadata.service.js";
-import { PaginationService } from "./services/pagination.service.js";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import type { RedisStore } from "#src/shared/modules/redis/redis.service";
+import { makeBattlelogOperations } from "./battles.controller.js";
+import { makeBattles, type Battles } from "./battles.service.js";
+import type { BattleAnalytics } from "./services/battle-analytics.service.js";
+import type { BattleListFilter } from "./services/battle-list-filter.service.js";
+import type { BattleMetadata } from "./services/battle-metadata.service.js";
+import type { BattlePagination } from "./services/pagination.service.js";
+import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
 import { battles, battleWarriors } from "#src/shared/modules/drizzle/schema";
-import { R2Service } from "#src/shared/modules/r2/r2.service";
-import { PublicBattlesController } from "./battles.controller.js";
-import { createRequestHandler } from "#src/http/router";
-import { InternalController } from "./internal.controller.js";
+import type { BattleObjectStorage } from "#src/shared/modules/r2/r2.service";
+import { makeBattlelogTestBoundary } from "../http/battlelog-http.js";
+import { runEffectService } from "../../test/effect-service.js";
 
 const vi = {
   fn: mock,
@@ -23,7 +22,7 @@ const vi = {
 
 type TestApplication = {
   close(): Promise<void>;
-  get(_token: typeof BattlesService): BattlesService;
+  get(_token: typeof makeBattles): ReturnType<typeof runEffectService<Battles>>;
   getHttpServer(): (request: Request) => Promise<Response>;
 };
 
@@ -363,22 +362,24 @@ const createTestApplication = async ({
   redis?: ReturnType<typeof createRedisBoundary>;
 } = {}) => {
   const database = createDatabaseBoundary({ beforeTransaction });
-  const drizzle = database.service as unknown as DrizzleService;
-  const redisService = redis as unknown as RedisService;
+  const drizzle = database.service as unknown as DrizzleDatabase;
+  const redisService = redis as unknown as RedisStore;
   const analyticsService = {
-    invalidateAnalyticsCache: vi.fn(),
-  } as unknown as BattleAnalyticsService;
-  const battlesService = new BattlesService(
+    invalidateAnalyticsCache: vi.fn(() => Effect.void),
+  } as unknown as BattleAnalytics;
+  const battlesModule = makeBattles(
     drizzle,
     {
       uploadBattleData: vi.fn(),
       getBattleData: vi.fn(),
-    } as unknown as R2Service,
+    } as unknown as BattleObjectStorage,
     redisService,
-    {} as PaginationService,
+    {} as BattlePagination,
     analyticsService,
-    {} as BattleListFilterService,
-    { upsertUserCharacter: vi.fn() } as unknown as BattleMetadataService,
+    {} as BattleListFilter,
+    {
+      upsertUserCharacter: vi.fn(() => Effect.void),
+    } as unknown as BattleMetadata,
     {
       cacheTtlSeconds: 10,
       lockRefreshIntervalMs: 10,
@@ -387,15 +388,16 @@ const createTestApplication = async ({
       waitTimeoutMs: 30,
     },
   );
-  const handler = createRequestHandler({
-    battles: new BattlesController(battlesService, analyticsService),
-    publicBattles: new PublicBattlesController(battlesService),
-    internal: new InternalController({ add: vi.fn() } as never),
-  });
+  const battlesService = runEffectService(battlesModule);
+  const boundary = makeBattlelogTestBoundary(
+    makeBattlelogOperations(battlesModule, analyticsService, {
+      add: vi.fn(),
+    } as never),
+  );
   const app: TestApplication = {
-    close: async () => undefined,
+    close: boundary.dispose,
     get: () => battlesService,
-    getHttpServer: () => handler,
+    getHttpServer: () => boundary.handler,
   };
   return { app, database };
 };
@@ -492,7 +494,7 @@ describe("battle creation API deduplication", () => {
       },
     });
     app = testApplication.app;
-    const battlesService = app.get(BattlesService);
+    const battlesService = app.get(makeBattles);
     const firstCreation = battlesService.createBattle({
       data: {
         ...battleContext,
@@ -550,7 +552,7 @@ describe("battle creation API deduplication", () => {
       redis,
     });
     app = testApplication.app;
-    const battlesService = app.get(BattlesService);
+    const battlesService = app.get(makeBattles);
     let creationSettled = false;
     const creationOutcome = battlesService
       .createBattle({
@@ -718,10 +720,6 @@ describe("battle creation API deduplication", () => {
     const redis = createRedisBoundary();
     redis.getJson.mockResolvedValue(null);
     redis.setNX.mockResolvedValue(false);
-    const dateNow = vi
-      .spyOn(Date, "now")
-      .mockReturnValueOnce(1_000)
-      .mockReturnValue(31_000);
     const testApplication = await createTestApplication({ redis });
     app = testApplication.app;
 
@@ -736,6 +734,5 @@ describe("battle creation API deduplication", () => {
       .expect(503);
 
     expect(testApplication.database.storedBattles).toHaveLength(0);
-    dateNow.mockRestore();
   });
 });

@@ -18,23 +18,20 @@ export type EventEmitPayloads = {
 
 export type EventEmitRoutingKey = keyof EventEmitPayloads;
 
-export class EventEmitterService {
-  private readonly logger = new Logger(EventEmitterService.name);
-
-  constructor(private readonly amqpConnection: AmqpPublisher) {}
-
-  async emit<K extends EventEmitRoutingKey>(
+export const makeEventEmitter = (amqpConnection: AmqpPublisher) => {
+  const logger = new Logger("EventEmitter");
+  const emit = async <K extends EventEmitRoutingKey>(
     routingKey: K,
     payload: EventEmitPayloads[K],
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      await this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        routingKey,
-        payload,
-      );
+      await amqpConnection.publish(DEFAULT_EXCHANGE_NAME, routingKey, payload);
     } catch (error) {
-      this.logger.error(`Failed to emit ${routingKey}`, error);
+      logger.error(`Failed to emit ${routingKey}`, error);
     }
-  }
-}
+  };
+
+  return { emit };
+};
+
+export type EventEmitter = ReturnType<typeof makeEventEmitter>;

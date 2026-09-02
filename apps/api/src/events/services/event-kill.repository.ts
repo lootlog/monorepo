@@ -15,11 +15,7 @@ import {
   sql,
 } from "drizzle-orm";
 import { Effect } from "effect";
-import {
-  ApiDatabase,
-  type ApiDatabaseValue,
-} from "#src/database/drizzle/database";
-import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
+import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
   eventHeroNpcTable,
@@ -55,66 +51,70 @@ const normalizeEventJson = <T extends typeof eventTable.$inferSelect>(
   event: T,
 ) => ({ ...event, scoringRules: event.scoringRules as JsonValue | null });
 
-export class EventKillRepository {
-  constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
-
-  private run<A>(operation: (database: Database) => Effect.Effect<A, unknown>) {
-    return this.databaseRuntime.runPromise(
-      Effect.flatMap(ApiDatabase, operation),
-    );
+export const makeEventKillStore = (database: ApiDatabaseValue) => {
+  function run<A>(
+    operation: (database: Database) => Effect.Effect<A, unknown>,
+  ) {
+    return operation(database);
   }
 
-  async findEventWithHeroes(guildId: string, eventId: string) {
-    const rows = await this.run((database) =>
-      database
-        .select()
-        .from(eventTable)
-        .where(and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)))
-        .limit(1),
-    );
-    if (!rows[0]) return null;
-    const heroes = await this.run((database) =>
-      database
-        .select()
-        .from(eventHeroNpcTable)
-        .where(eq(eventHeroNpcTable.eventId, eventId)),
-    );
-    return { ...rows[0], heroNpcs: heroes };
+  function findEventWithHeroes(guildId: string, eventId: string) {
+    return Effect.gen(function* () {
+      const rows = yield* run((database) =>
+        database
+          .select()
+          .from(eventTable)
+          .where(
+            and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)),
+          )
+          .limit(1),
+      );
+      if (!rows[0]) return null;
+      const heroes = yield* run((database) =>
+        database
+          .select()
+          .from(eventHeroNpcTable)
+          .where(eq(eventHeroNpcTable.eventId, eventId)),
+      );
+      return { ...rows[0], heroNpcs: heroes };
+    });
   }
 
-  async findEventWithHeroStats(guildId: string, eventId: string) {
-    const event = await this.findEventWithHeroes(guildId, eventId);
-    if (!event) return null;
-    const heroIds = event.heroNpcs.map(({ id }) => id);
-    const counts =
-      heroIds.length === 0
-        ? []
-        : await this.run((database) =>
-            database
-              .select({
-                heroNpcId: eventHeroKillTable.heroNpcId,
-                count: sql<number>`count(*)`,
-              })
-              .from(eventHeroKillTable)
-              .where(inArray(eventHeroKillTable.heroNpcId, heroIds))
-              .groupBy(eventHeroKillTable.heroNpcId),
-          );
-    return {
-      ...event,
-      heroNpcs: event.heroNpcs.map((hero) => ({
-        ...hero,
-        _count: {
-          kills: Number(
-            counts.find(({ heroNpcId }) => heroNpcId === hero.id)?.count ?? 0,
-          ),
-        },
-      })),
-    };
+  function findEventWithHeroStats(guildId: string, eventId: string) {
+    return Effect.gen(function* () {
+      const event = yield* findEventWithHeroes(guildId, eventId);
+      if (!event) return null;
+      const heroIds = event.heroNpcs.map(({ id }) => id);
+      const counts =
+        heroIds.length === 0
+          ? []
+          : yield* run((database) =>
+              database
+                .select({
+                  heroNpcId: eventHeroKillTable.heroNpcId,
+                  count: sql<number>`count(*)`,
+                })
+                .from(eventHeroKillTable)
+                .where(inArray(eventHeroKillTable.heroNpcId, heroIds))
+                .groupBy(eventHeroKillTable.heroNpcId),
+            );
+      return {
+        ...event,
+        heroNpcs: event.heroNpcs.map((hero) => ({
+          ...hero,
+          _count: {
+            kills: Number(
+              counts.find(({ heroNpcId }) => heroNpcId === hero.id)?.count ?? 0,
+            ),
+          },
+        })),
+      };
+    });
   }
 
-  findNpcStats(guildId: string, world: string, npcIds: number[]) {
-    if (npcIds.length === 0) return Promise.resolve([]);
-    return this.run((database) =>
+  function findNpcStats(guildId: string, world: string, npcIds: number[]) {
+    if (npcIds.length === 0) return Effect.succeed([]);
+    return run((database) =>
       database
         .selectDistinctOn([npcKillStatsTable.npcId], {
           npcId: npcKillStatsTable.npcId,
@@ -133,27 +133,30 @@ export class EventKillRepository {
     );
   }
 
-  updateHero(id: string, data: Partial<typeof eventHeroNpcTable.$inferInsert>) {
-    return this.run((database) =>
+  function updateHero(
+    id: string,
+    data: Partial<typeof eventHeroNpcTable.$inferInsert>,
+  ) {
+    return run((database) =>
       database
         .update(eventHeroNpcTable)
         .set(data)
         .where(eq(eventHeroNpcTable.id, id))
         .returning(),
-    ).then((rows) => rows[0]);
+    ).pipe(Effect.map((rows) => rows[0]));
   }
 
-  findMaps(heroNpcId: string) {
-    return this.run((database) =>
+  function findMaps(heroNpcId: string) {
+    return run((database) =>
       database
         .select()
         .from(eventMapTable)
         .where(eq(eventMapTable.heroNpcId, heroNpcId)),
     );
   }
-  findMapsForHeroes(heroIds: string[]) {
-    if (heroIds.length === 0) return Promise.resolve([]);
-    return this.run((database) =>
+  function findMapsForHeroes(heroIds: string[]) {
+    if (heroIds.length === 0) return Effect.succeed([]);
+    return run((database) =>
       database
         .select()
         .from(eventMapTable)
@@ -161,7 +164,7 @@ export class EventKillRepository {
     );
   }
 
-  findAssignments(params: {
+  function findAssignments(params: {
     mapIds?: string[];
     heroNpcIds?: string[];
     memberIds?: number[];
@@ -173,8 +176,8 @@ export class EventKillRepository {
       params.heroNpcIds?.length === 0 ||
       params.memberIds?.length === 0
     )
-      return Promise.resolve([]);
-    return this.run((database) =>
+      return Effect.succeed([]);
+    return run((database) =>
       database
         .select()
         .from(eventMapAssignmentHistoryTable)
@@ -212,7 +215,7 @@ export class EventKillRepository {
     );
   }
 
-  recordKill(
+  function recordKill(
     params: {
       heroNpcId: string;
       killedAt: Date;
@@ -226,9 +229,9 @@ export class EventKillRepository {
     buildPoints: (
       assignments: Array<typeof eventMapAssignmentHistoryTable.$inferSelect>,
       killId: string,
-    ) => Promise<KillPointInsert[]>,
+    ) => Effect.Effect<KillPointInsert[], unknown>,
   ) {
-    return this.run((database) =>
+    return run((database) =>
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const killId = randomUUID();
@@ -270,9 +273,7 @@ export class EventKillRepository {
                     ),
                   )
                   .orderBy(asc(eventMapAssignmentHistoryTable.assignedAt));
-          const points = yield* Effect.promise(() =>
-            buildPoints(assignments, killId),
-          );
+          const points = yield* buildPoints(assignments, killId);
           if (points.length > 0)
             yield* transaction
               .insert(eventKillPointTable)
@@ -305,8 +306,8 @@ export class EventKillRepository {
     );
   }
 
-  findHero(guildId: string, eventId: string, heroId: string) {
-    return this.run((database) =>
+  function findHero(guildId: string, eventId: string, heroId: string) {
+    return run((database) =>
       database
         .select({ hero: eventHeroNpcTable })
         .from(eventHeroNpcTable)
@@ -319,19 +320,19 @@ export class EventKillRepository {
           ),
         )
         .limit(1),
-    ).then((rows) => rows[0]?.hero ?? null);
+    ).pipe(Effect.map((rows) => rows[0]?.hero ?? null));
   }
-  findEvent(guildId: string, eventId: string) {
-    return this.run((database) =>
+  function findEvent(guildId: string, eventId: string) {
+    return run((database) =>
       database
         .select()
         .from(eventTable)
         .where(and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)))
         .limit(1),
-    ).then((rows) => rows[0] ?? null);
+    ).pipe(Effect.map((rows) => rows[0] ?? null));
   }
-  findMember(guildId: string, memberId: number) {
-    return this.run((database) =>
+  function findMember(guildId: string, memberId: number) {
+    return run((database) =>
       database
         .select()
         .from(memberTable)
@@ -339,56 +340,63 @@ export class EventKillRepository {
           and(eq(memberTable.id, memberId), eq(memberTable.guildId, guildId)),
         )
         .limit(1),
-    ).then((rows) => rows[0] ?? null);
+    ).pipe(Effect.map((rows) => rows[0] ?? null));
   }
 
-  async findKills(params: {
+  function findKills(params: {
     eventId: string;
     heroId?: string;
     memberId?: number;
     cursor?: string;
     limit: number;
   }) {
-    const rows = await this.run((database) =>
-      database
-        .select({ kill: eventHeroKillTable, hero: eventHeroNpcTable })
-        .from(eventHeroKillTable)
-        .innerJoin(
-          eventHeroNpcTable,
-          eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-        )
-        .where(
-          and(
-            eq(eventHeroNpcTable.eventId, params.eventId),
-            params.heroId ? eq(eventHeroNpcTable.id, params.heroId) : undefined,
-            params.cursor
-              ? lt(eventHeroKillTable.id, params.cursor)
-              : undefined,
-            params.memberId
-              ? inArray(
-                  eventHeroKillTable.id,
-                  database
-                    .select({ id: eventKillPointTable.killId })
-                    .from(eventKillPointTable)
-                    .where(eq(eventKillPointTable.memberId, params.memberId)),
-                )
-              : undefined,
-          ),
-        )
-        .orderBy(desc(eventHeroKillTable.killedAt))
-        .limit(params.limit),
-    );
-    return Promise.all(
-      rows.map(async ({ kill, hero }) => ({
-        ...kill,
-        heroNpc: hero,
-        points: await this.findKillPoints(kill.id, params.memberId),
-      })),
-    );
+    return Effect.gen(function* () {
+      const rows = yield* run((database) =>
+        database
+          .select({ kill: eventHeroKillTable, hero: eventHeroNpcTable })
+          .from(eventHeroKillTable)
+          .innerJoin(
+            eventHeroNpcTable,
+            eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
+          )
+          .where(
+            and(
+              eq(eventHeroNpcTable.eventId, params.eventId),
+              params.heroId
+                ? eq(eventHeroNpcTable.id, params.heroId)
+                : undefined,
+              params.cursor
+                ? lt(eventHeroKillTable.id, params.cursor)
+                : undefined,
+              params.memberId
+                ? inArray(
+                    eventHeroKillTable.id,
+                    database
+                      .select({ id: eventKillPointTable.killId })
+                      .from(eventKillPointTable)
+                      .where(eq(eventKillPointTable.memberId, params.memberId)),
+                  )
+                : undefined,
+            ),
+          )
+          .orderBy(desc(eventHeroKillTable.killedAt))
+          .limit(params.limit),
+      );
+      return yield* Effect.forEach(
+        rows,
+        ({ kill, hero }) =>
+          Effect.map(findKillPoints(kill.id, params.memberId), (points) => ({
+            ...kill,
+            heroNpc: hero,
+            points,
+          })),
+        { concurrency: "unbounded" },
+      );
+    });
   }
 
-  private findKillPoints(killId: string, memberId?: number) {
-    return this.run((database) =>
+  function findKillPoints(killId: string, memberId?: number) {
+    return run((database) =>
       database
         .select({ point: eventKillPointTable, member: memberTable })
         .from(eventKillPointTable)
@@ -403,122 +411,126 @@ export class EventKillRepository {
           ),
         )
         .orderBy(desc(eventKillPointTable.createdAt)),
-    ).then((rows) =>
-      rows.map(({ point, member }) => ({
-        ...normalizePointJson(point),
-        member: {
-          id: member.id,
-          name: member.name,
-          avatar: member.avatar,
-          userId: member.userId,
-        },
-      })),
+    ).pipe(
+      Effect.map((rows) =>
+        rows.map(({ point, member }) => ({
+          ...normalizePointJson(point),
+          member: {
+            id: member.id,
+            name: member.name,
+            avatar: member.avatar,
+            userId: member.userId,
+          },
+        })),
+      ),
     );
   }
 
-  async findKillDetail(
+  function findKillDetail(
     guildId: string,
     eventId: string,
     heroId: string,
     killId: string,
   ) {
-    const rows = await this.run((database) =>
-      database
-        .select({
-          kill: eventHeroKillTable,
-          hero: eventHeroNpcTable,
-          event: eventTable,
-          timerMember: memberTable,
-        })
-        .from(eventHeroKillTable)
-        .innerJoin(
-          eventHeroNpcTable,
-          eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-        )
-        .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-        .leftJoin(
-          memberTable,
-          eq(memberTable.id, eventHeroKillTable.timerCreatedById),
-        )
-        .where(
-          and(
-            eq(eventHeroKillTable.id, killId),
-            eq(eventHeroNpcTable.id, heroId),
-            eq(eventTable.id, eventId),
-            eq(eventTable.guildId, guildId),
-          ),
-        )
-        .limit(1),
-    );
-    const row = rows[0];
-    if (!row) return null;
-    const points = await this.findKillPoints(killId);
-    const memberIds = points.map(({ memberId }) => memberId);
-    const roles =
-      memberIds.length === 0
-        ? []
-        : await this.run((database) =>
-            database
-              .select({
-                memberId: memberToRoleTable.A,
-                position: roleTable.position,
-                color: roleTable.color,
-              })
-              .from(memberToRoleTable)
-              .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
-              .where(inArray(memberToRoleTable.A, memberIds))
-              .orderBy(desc(roleTable.position)),
-          );
-    return {
-      ...row.kill,
-      heroNpc: { ...row.hero, event: normalizeEventJson(row.event) },
-      timerCreatedBy: row.timerMember
-        ? {
-            id: row.timerMember.id,
-            name: row.timerMember.name,
-            avatar: row.timerMember.avatar,
-            userId: row.timerMember.userId,
-          }
-        : null,
-      points: points.map((point) => ({
-        ...point,
-        member: {
-          ...point.member,
-          roles: roles
-            .filter(({ memberId }) => memberId === point.memberId)
-            .slice(0, 1)
-            .map(({ position, color }) => ({ position, color })),
-        },
-      })),
-    };
+    return Effect.gen(function* () {
+      const rows = yield* run((database) =>
+        database
+          .select({
+            kill: eventHeroKillTable,
+            hero: eventHeroNpcTable,
+            event: eventTable,
+            timerMember: memberTable,
+          })
+          .from(eventHeroKillTable)
+          .innerJoin(
+            eventHeroNpcTable,
+            eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
+          )
+          .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
+          .leftJoin(
+            memberTable,
+            eq(memberTable.id, eventHeroKillTable.timerCreatedById),
+          )
+          .where(
+            and(
+              eq(eventHeroKillTable.id, killId),
+              eq(eventHeroNpcTable.id, heroId),
+              eq(eventTable.id, eventId),
+              eq(eventTable.guildId, guildId),
+            ),
+          )
+          .limit(1),
+      );
+      const row = rows[0];
+      if (!row) return null;
+      const points = yield* findKillPoints(killId);
+      const memberIds = points.map(({ memberId }) => memberId);
+      const roles =
+        memberIds.length === 0
+          ? []
+          : yield* run((database) =>
+              database
+                .select({
+                  memberId: memberToRoleTable.A,
+                  position: roleTable.position,
+                  color: roleTable.color,
+                })
+                .from(memberToRoleTable)
+                .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
+                .where(inArray(memberToRoleTable.A, memberIds))
+                .orderBy(desc(roleTable.position)),
+            );
+      return {
+        ...row.kill,
+        heroNpc: { ...row.hero, event: normalizeEventJson(row.event) },
+        timerCreatedBy: row.timerMember
+          ? {
+              id: row.timerMember.id,
+              name: row.timerMember.name,
+              avatar: row.timerMember.avatar,
+              userId: row.timerMember.userId,
+            }
+          : null,
+        points: points.map((point) => ({
+          ...point,
+          member: {
+            ...point.member,
+            roles: roles
+              .filter(({ memberId }) => memberId === point.memberId)
+              .slice(0, 1)
+              .map(({ position, color }) => ({ position, color })),
+          },
+        })),
+      };
+    });
   }
 
-  findWindowSummaries(killIds: string[]) {
-    if (killIds.length === 0) return Promise.resolve([]);
-    return this.run((database) =>
+  function findWindowSummaries(killIds: string[]) {
+    if (killIds.length === 0) return Effect.succeed([]);
+    return run((database) =>
       database
         .select()
         .from(eventRespawnWindowSummaryTable)
         .where(inArray(eventRespawnWindowSummaryTable.killId, killIds)),
     );
   }
-  findWindowSummary(killId: string) {
-    return this.run((database) =>
+  function findWindowSummary(killId: string) {
+    return run((database) =>
       database
         .select()
         .from(eventRespawnWindowSummaryTable)
         .where(eq(eventRespawnWindowSummaryTable.killId, killId))
         .limit(1),
-    ).then((rows) => rows[0] ?? null);
+    ).pipe(Effect.map((rows) => rows[0] ?? null));
   }
 
-  async findTimelineAssignments(params: {
+  function findTimelineAssignments(params: {
     mapIds: string[];
     killedAt: Date;
     overlapStart: Date;
   }) {
-    if (params.mapIds.length === 0) return [];
-    return this.run((database) =>
+    if (params.mapIds.length === 0) return Effect.succeed([]);
+    return run((database) =>
       database
         .select({
           assignment: eventMapAssignmentHistoryTable,
@@ -546,8 +558,31 @@ export class EventKillRepository {
           asc(eventMapAssignmentHistoryTable.mapId),
           asc(eventMapAssignmentHistoryTable.assignedAt),
         ),
-    ).then((rows) =>
-      rows.map(({ assignment, member }) => ({ ...assignment, member })),
+    ).pipe(
+      Effect.map((rows) =>
+        rows.map(({ assignment, member }) => ({ ...assignment, member })),
+      ),
     );
   }
-}
+
+  return {
+    findAssignments,
+    findEvent,
+    findEventWithHeroes,
+    findEventWithHeroStats,
+    findHero,
+    findKillDetail,
+    findKills,
+    findMaps,
+    findMapsForHeroes,
+    findMember,
+    findNpcStats,
+    findTimelineAssignments,
+    findWindowSummaries,
+    findWindowSummary,
+    recordKill,
+    updateHero,
+  };
+};
+
+export type EventKillStore = ReturnType<typeof makeEventKillStore>;

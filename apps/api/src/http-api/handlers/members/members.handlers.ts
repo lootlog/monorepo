@@ -1,12 +1,9 @@
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { MembersService } from "#src/members/members.service";
-import type { MemberReadService } from "#src/members/member-read.service";
-import type { MemberRefreshJobReadService } from "#src/members/member-refresh-job-read.service";
 import {
   LootlogApi,
   MembersControllerDeactivateMember200,
@@ -83,56 +80,7 @@ export class MembersData extends Context.Service<
       discordId: string,
     ) => DataEffect;
   }
->()("@lootlog/api/http-api/members/data") {
-  static makeServices(services: {
-    readonly access: Pick<
-      MembersService,
-      "getGuildMemberById" | "refreshMember"
-    >;
-    readonly removal: Pick<MembersService, "deactivateMember">;
-    readonly bulkRefresh: Pick<MembersService, "createBulkRefreshJob">;
-  }): MembersData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new MembersOperationError({ cause }),
-      });
-
-    return MembersData.of({
-      getMe: ({ userId, discordId }, guildId, refresh) =>
-        attempt(() =>
-          services.access.getGuildMemberById({
-            userId,
-            discordId,
-            guildId,
-            standalone: true,
-            ...(refresh ? { refresh: true } : {}),
-          }),
-        ),
-      refreshMember: (guildId, discordId) =>
-        attempt(() => services.access.refreshMember({ guildId, discordId })),
-      deactivateMember: (guildId, discordId) =>
-        attempt(() =>
-          services.removal.deactivateMember({ guildId, discordId }),
-        ),
-      refreshAllMembers: (guildId, discordId) =>
-        attempt(() =>
-          services.bulkRefresh.createBulkRefreshJob(guildId, discordId),
-        ),
-    });
-  }
-
-  static layerService(service: MembersService) {
-    return Layer.succeed(
-      MembersData,
-      MembersData.makeServices({
-        access: service,
-        removal: service,
-        bulkRefresh: service,
-      }),
-    );
-  }
-}
+>()("@lootlog/api/http-api/members/data") {}
 
 export class MemberRefreshJobData extends Context.Service<
   MemberRefreshJobData,
@@ -143,23 +91,7 @@ export class MemberRefreshJobData extends Context.Service<
       jobId: number,
     ) => DataEffect;
   }
->()("@lootlog/api/http-api/member-refresh-job/data") {
-  static makeService(
-    service: MemberRefreshJobReadService,
-  ): MemberRefreshJobData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new MembersOperationError({ cause }),
-      });
-    return MemberRefreshJobData.of({
-      getLatestRefreshJob: (guildId) =>
-        attempt(() => service.getLatest(guildId)),
-      getRefreshJobStatus: (guildId, jobId) =>
-        attempt(() => service.get(guildId, jobId)),
-    });
-  }
-}
+>()("@lootlog/api/http-api/member-refresh-job/data") {}
 
 export class MemberReadData extends Context.Service<
   MemberReadData,
@@ -178,29 +110,7 @@ export class MemberReadData extends Context.Service<
     ) => DataEffect;
     readonly getGuildMembersSummary: (guildId: string) => DataEffect;
   }
->()("@lootlog/api/http-api/member-read/data") {
-  static makeService(service: MemberReadService): MemberReadData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new MembersOperationError({ cause }),
-      });
-    return MemberReadData.of({
-      getLootlogConfigSummary: (guildId, discordId) =>
-        attempt(() =>
-          service.getMemberLootlogConfigSummary({ guildId, discordId }),
-        ),
-      getGuildMembers: (guildId, includeInactive) =>
-        attempt(() => service.getGuildMembers(guildId, includeInactive)),
-      getGuildMemberReferences: (guildId, includeInactive) =>
-        attempt(() =>
-          service.getGuildMemberReferences(guildId, includeInactive),
-        ),
-      getGuildMembersSummary: (guildId) =>
-        attempt(() => service.getGuildMembersSummary(guildId)),
-    });
-  }
-}
+>()("@lootlog/api/http-api/member-read/data") {}
 
 const identity = Effect.flatMap(
   MembersAuthorization,

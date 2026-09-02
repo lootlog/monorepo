@@ -1,5 +1,4 @@
 ---
-"@lootlog/nest-shared": minor
 "@lootlog/domain": minor
 "@lootlog/schema": patch
 "@lootlog/api": patch

@@ -16,7 +16,7 @@ The main loop is:
 ```text
 Margonem runtime
   -> game client observers and processors
-  -> HTTP APIs and Socket.IO gateway
+  -> HTTP APIs and the realtime v1 WebSocket gateway
   -> PostgreSQL / TimescaleDB / R2
   -> RabbitMQ domain and delivery events
   -> gateway, activity, search, Discord, and web consumers
@@ -32,7 +32,7 @@ organization operations.
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | `@lootlog/api`              | Organizations, members, loot, kills, timers, reservations, chat, notifications, events, documents, and configuration | Lootlog PostgreSQL, Redis, RabbitMQ   |
 | `@lootlog/auth`             | Discord sign-in, sessions, JWT/JWKS, provider tokens                                                                 | Users PostgreSQL, Redis, Better Auth  |
-| `@lootlog/gateway`          | Socket.IO authentication, rooms, presence, and real-time fan-out                                                     | Redis adapter, RabbitMQ               |
+| `@lootlog/gateway`          | Realtime v1 WebSocket authentication, subscriptions, presence, and real-time fan-out                                 | Redis federation, RabbitMQ            |
 | `@lootlog/battlelog`        | Battle ingestion, storage, retrieval, and statistics                                                                 | Battle PostgreSQL, R2                 |
 | `@lootlog/activity`         | Durable organization activity and audit records                                                                      | TimescaleDB                           |
 | `@lootlog/search`           | Public item, NPC, and player search projections                                                                      | Meilisearch                           |
@@ -45,10 +45,10 @@ organization operations.
 | `@lootlog/wiki`             | Public Margonem knowledge and search                                                                                 | Search API                            |
 | `@lootlog/developer`        | Future developer surface; currently not a supported product                                                          | Static frontend                       |
 
-Packages contain generated clients, shared API helpers, battle processing,
-Margonem models, scoring, instrumentation, UI, socket parsing, configuration,
-and CLI tools. A package does not own data merely because it defines a shared
-type.
+Packages contain generated clients, browser-safe contracts and domain logic,
+realtime and RabbitMQ protocols, scoped messaging transport, battle processing,
+Margonem models, UI, configuration, and CLI tools. A package does not own data
+merely because it defines a shared type.
 
 ## Data ownership
 
@@ -146,10 +146,10 @@ the legacy event remains accepted during the coordinated rollout.
 
 ## Real-time delivery and presence
 
-Gateway authenticates sockets before joining feature rooms. Room membership and
-per-event checks enforce the same Organization and visibility rules as HTTP.
-Redis federates Socket.IO across gateway instances; it does not make live state
-durable.
+Gateway authenticates realtime v1 WebSocket connections before accepting
+logical subscriptions. Subscription membership and per-event checks enforce
+the same Organization and visibility rules as HTTP. Redis pub/sub and ephemeral
+keys federate gateway instances; they do not make live state durable.
 
 The target Presence model includes:
 

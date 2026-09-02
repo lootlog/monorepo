@@ -1,6 +1,7 @@
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import { describe, expect, it, vi } from "#test/bun-test";
-import { SoundSettingsService } from "./sound-settings.service.js";
+import { Effect } from "effect";
+import { makeSoundSettings } from "./sound-settings.service.js";
 
 const createResolution = (
   effective: Record<string, unknown> = {},
@@ -12,23 +13,25 @@ const createResolution = (
   updatedAt: "2026-07-24T00:00:00.000Z",
 });
 
-const createSettingsDocumentsServiceMock = (
+const createSettingsDocumentsMock = (
   effective: Record<string, unknown> = {},
 ) => {
   let currentEffective = effective;
-  const getPreferences = vi.fn(async () => ({
-    domains: { sounds: createResolution(currentEffective) },
-  }));
-  const patchPreferences = vi.fn(async (_userId, payload) => {
+  const getPreferences = vi.fn(() =>
+    Effect.succeed({
+      domains: { sounds: createResolution(currentEffective) },
+    }),
+  );
+  const patchPreferences = vi.fn((_userId, payload) => {
     const operation = payload.operations[0];
     currentEffective = {
       ...currentEffective,
       ...operation.set,
     };
 
-    return {
+    return Effect.succeed({
       domains: { sounds: createResolution(currentEffective) },
-    };
+    });
   });
 
   return {
@@ -37,12 +40,14 @@ const createSettingsDocumentsServiceMock = (
   };
 };
 
-describe("SoundSettingsService", () => {
+describe("sound settings Effect module", () => {
   it("returns normalized document defaults", async () => {
-    const settingsDocuments = createSettingsDocumentsServiceMock();
-    const service = new SoundSettingsService(settingsDocuments as never);
+    const settingsDocuments = createSettingsDocumentsMock();
+    const service = makeSoundSettings(settingsDocuments as never);
 
-    await expect(service.getSettings("user-1")).resolves.toMatchObject({
+    await expect(
+      Effect.runPromise(service.getSettings("user-1")),
+    ).resolves.toMatchObject({
       userId: "user-1",
       masterVolume: 0.5,
       notificationsVolume: 0.5,
@@ -55,15 +60,17 @@ describe("SoundSettingsService", () => {
   });
 
   it("writes synchronized category settings to the sounds document", async () => {
-    const settingsDocuments = createSettingsDocumentsServiceMock({
+    const settingsDocuments = createSettingsDocumentsMock({
       notificationsVolume: 0.5,
     });
-    const service = new SoundSettingsService(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments as never);
 
-    await service.updateSettings("user-1", {
-      notificationsVolume: 0.8,
-      pingsVolume: 0.4,
-    });
+    await Effect.runPromise(
+      service.updateSettings("user-1", {
+        notificationsVolume: 0.8,
+        pingsVolume: 0.4,
+      }),
+    );
 
     expect(settingsDocuments.patchPreferences).toHaveBeenCalledWith("user-1", {
       operations: [
@@ -81,7 +88,7 @@ describe("SoundSettingsService", () => {
   });
 
   it("merges partial sound configuration entries", async () => {
-    const settingsDocuments = createSettingsDocumentsServiceMock({
+    const settingsDocuments = createSettingsDocumentsMock({
       notificationsConfig: {
         HERO: {
           volume: 0.35,
@@ -89,13 +96,15 @@ describe("SoundSettingsService", () => {
         },
       },
     });
-    const service = new SoundSettingsService(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments as never);
 
-    await service.updateSettings("user-1", {
-      notificationsConfig: {
-        HERO: { soundUrl: "https://example.com/new-hero.mp3" },
-      },
-    });
+    await Effect.runPromise(
+      service.updateSettings("user-1", {
+        notificationsConfig: {
+          HERO: { soundUrl: "https://example.com/new-hero.mp3" },
+        },
+      }),
+    );
 
     expect(settingsDocuments.patchPreferences).toHaveBeenCalledWith(
       "user-1",
@@ -118,7 +127,7 @@ describe("SoundSettingsService", () => {
   });
 
   it("treats an empty sound URL as an explicit reset", async () => {
-    const settingsDocuments = createSettingsDocumentsServiceMock({
+    const settingsDocuments = createSettingsDocumentsMock({
       detectorConfig: {
         TITAN: {
           volume: 0.4,
@@ -126,11 +135,13 @@ describe("SoundSettingsService", () => {
         },
       },
     });
-    const service = new SoundSettingsService(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments as never);
 
-    await service.updateSettings("user-1", {
-      detectorConfig: { TITAN: { soundUrl: "" } },
-    });
+    await Effect.runPromise(
+      service.updateSettings("user-1", {
+        detectorConfig: { TITAN: { soundUrl: "" } },
+      }),
+    );
 
     expect(settingsDocuments.patchPreferences).toHaveBeenCalledWith(
       "user-1",
@@ -149,10 +160,12 @@ describe("SoundSettingsService", () => {
   });
 
   it("does not persist device-local master volume", async () => {
-    const settingsDocuments = createSettingsDocumentsServiceMock();
-    const service = new SoundSettingsService(settingsDocuments as never);
+    const settingsDocuments = createSettingsDocumentsMock();
+    const service = makeSoundSettings(settingsDocuments as never);
 
-    await service.updateSettings("user-1", { masterVolume: 0.9 });
+    await Effect.runPromise(
+      service.updateSettings("user-1", { masterVolume: 0.9 }),
+    );
 
     expect(settingsDocuments.patchPreferences).not.toHaveBeenCalled();
   });

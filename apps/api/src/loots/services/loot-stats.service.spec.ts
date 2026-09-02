@@ -1,4 +1,6 @@
 import { describe, expect, it } from "#test/bun-test";
+import { Effect } from "effect";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
 import { LootStatsService } from "./loot-stats.service.js";
@@ -44,5 +46,38 @@ describe("LootStatsService access-scoped caching", () => {
 
     expect(baseKey).not.toBe(titanKey);
     expect(baseKey).toMatch(/^loot-stats:guild-1:[^:]+:7d$/);
+  });
+
+  it("returns a cached Effect result without executing SQL", async () => {
+    const expected = {
+      overview: {
+        totalLoots: 0,
+        totalItems: 0,
+        legendaryItems: 0,
+        heroicItems: 0,
+        avgItemLevel: 0,
+      },
+      byRarity: {},
+      timeline: [],
+      topNpcs: [],
+      topContributors: [],
+      topItems: [],
+    };
+    const service = new LootStatsService(
+      (() => Effect.die("SQL must not run on a cache hit")) as never,
+      {
+        getJson: async () => expected,
+      } as never,
+    );
+
+    await expect(
+      Effect.runPromise(
+        service.getLootStatsEffect(
+          "guild-1",
+          createAccessPolicy({ capabilities: [Permission.LOOTLOG_LOOTS_READ] }),
+          [role("role", [Permission.LOOTLOG_LOOTS_READ])],
+        ),
+      ),
+    ).resolves.toEqual(expected);
   });
 });

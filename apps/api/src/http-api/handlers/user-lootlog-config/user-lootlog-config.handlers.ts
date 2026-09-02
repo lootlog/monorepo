@@ -1,6 +1,17 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import type { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
+import { and, arrayOverlaps, desc, eq, isNotNull, or } from "drizzle-orm";
+import { Permission } from "@lootlog/schema/permissions";
+import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+  userCharactersLootlogSettingsTable,
+} from "#src/database/drizzle/schema";
+import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
+import { toUserLootlogConfigResponse } from "#src/shared/dto/user-lootlog-config-response.dto";
 import {
   LootlogApi,
   UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
@@ -29,6 +40,18 @@ export class UserLootlogConfigIdentity extends Context.Service<
 
 type Operation = Effect.Effect<unknown, UserLootlogConfigOperationError>;
 
+const CACHE_TTL_SECONDS = 60;
+
+export interface UserLootlogConfigCache {
+  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly setJson: (
+    key: string,
+    value: unknown,
+    ttl: number,
+  ) => Effect.Effect<void, unknown>;
+  readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
+}
+
 export class UserLootlogConfigData extends Context.Service<
   UserLootlogConfigData,
   {
@@ -44,40 +67,224 @@ export class UserLootlogConfigData extends Context.Service<
     ) => Operation;
   }
 >()("@lootlog/api/http-api/user-lootlog-config/data") {
-  static layerService(service: UserLootlogConfigService) {
-    return Layer.succeed(
+  static layerDatabase(cache: UserLootlogConfigCache) {
+    return Layer.effect(
       UserLootlogConfigData,
-      UserLootlogConfigData.makeService(service),
+      Effect.map(ApiDatabase, (database) => {
+        const operation = <A, E>(effect: Effect.Effect<A, E>) =>
+          effect.pipe(
+            Effect.mapError(
+              (cause) => new UserLootlogConfigOperationError({ cause }),
+            ),
+          );
+        const cacheRead = <A>(key: string) =>
+          cache.getJson<A>(key).pipe(Effect.catch(() => Effect.succeed(null)));
+        const cacheWrite = (key: string, value: unknown) =>
+          cache.setJson(key, value, CACHE_TTL_SECONDS).pipe(Effect.ignore);
+        const findGuilds = (discordId: string, permission: Permission) =>
+          database
+            .selectDistinct({ id: guildTable.id, name: guildTable.name })
+            .from(guildTable)
+            .leftJoin(
+              memberTable,
+              and(
+                eq(memberTable.guildId, guildTable.id),
+                eq(memberTable.userId, discordId),
+                eq(memberTable.active, true),
+                isNotNull(memberTable.globalUserId),
+              ),
+            )
+            .leftJoin(
+              memberToRoleTable,
+              eq(memberToRoleTable.A, memberTable.id),
+            )
+            .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
+            .where(
+              and(
+                eq(guildTable.active, true),
+                or(
+                  eq(guildTable.ownerId, discordId),
+                  arrayOverlaps(roleTable.permissions, [permission]),
+                ),
+              ),
+            );
+
+        return UserLootlogConfigData.of({
+          getAccount: (discordId, accountId) =>
+            operation(
+              Effect.gen(function* () {
+                const cacheKey = `user-lootlog-config:${discordId}:account:${accountId}`;
+                const cached = yield* cacheRead<unknown>(cacheKey);
+                if (cached !== null) return cached;
+
+                const [configs, guilds] = yield* Effect.all([
+                  database
+                    .select()
+                    .from(userCharactersLootlogSettingsTable)
+                    .where(
+                      and(
+                        eq(
+                          userCharactersLootlogSettingsTable.userId,
+                          discordId,
+                        ),
+                        eq(
+                          userCharactersLootlogSettingsTable.accountId,
+                          accountId,
+                        ),
+                      ),
+                    )
+                    .orderBy(
+                      desc(userCharactersLootlogSettingsTable.createdAt),
+                    ),
+                  findGuilds(discordId, Permission.LOOTLOG_LOOTS_WRITE),
+                ]);
+                const writableGuildIds = new Set(guilds.map(({ id }) => id));
+                const result = Object.fromEntries(
+                  configs.map((config) => [
+                    config.characterId,
+                    toUserLootlogConfigResponse({
+                      ...config,
+                      catchingGuildIds: config.catchingGuildIds.filter((id) =>
+                        writableGuildIds.has(id),
+                      ),
+                    }),
+                  ]),
+                );
+                yield* cacheWrite(cacheKey, result);
+                return result;
+              }),
+            ),
+          upsertCharacter: (discordId, accountId, payload) =>
+            operation(
+              Effect.gen(function* () {
+                const guilds = yield* findGuilds(
+                  discordId,
+                  Permission.LOOTLOG_LOOTS_WRITE,
+                );
+                const writableGuildIds = new Set(guilds.map(({ id }) => id));
+                const catchingGuildIds = [
+                  ...new Set(payload.catchingGuildIds),
+                ].filter((id) => writableGuildIds.has(id));
+                const now = new Date();
+                const rows = yield* database
+                  .insert(userCharactersLootlogSettingsTable)
+                  .values({
+                    userId: discordId,
+                    accountId,
+                    characterId: payload.characterId,
+                    catchingGuildIds,
+                    createdAt: now,
+                    updatedAt: now,
+                  })
+                  .onConflictDoUpdate({
+                    target: [
+                      userCharactersLootlogSettingsTable.userId,
+                      userCharactersLootlogSettingsTable.accountId,
+                      userCharactersLootlogSettingsTable.characterId,
+                    ],
+                    set: { catchingGuildIds, updatedAt: now },
+                  })
+                  .returning();
+                const config = rows[0];
+                if (!config) {
+                  return yield* Effect.fail(
+                    new Error(
+                      "Lootlog character configuration was not returned",
+                    ),
+                  );
+                }
+                yield* cache
+                  .deleteByPattern(getUserLootlogConfigCachePattern(discordId))
+                  .pipe(Effect.ignore);
+                return toUserLootlogConfigResponse(config);
+              }).pipe(
+                Effect.withSpan("user-lootlog-config.upsert.persistence", {
+                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
+                }),
+              ),
+            ),
+          getPlayersCatchingGuilds: (discordId, payload) =>
+            operation(
+              Effect.gen(function* () {
+                const players = [
+                  ...new Map(
+                    payload.players.map((player) => [
+                      `${player.userId}:${player.accountId}:${player.characterId}`,
+                      player,
+                    ]),
+                  ).values(),
+                ];
+                const guilds = yield* findGuilds(
+                  discordId,
+                  Permission.LOOTLOG_ACCESS,
+                );
+                const guildById = new Map(
+                  guilds.map((guild) => [guild.id, guild]),
+                );
+                if (players.length === 0 || guilds.length === 0) {
+                  return {
+                    players: players.map((player) => ({
+                      ...player,
+                      guilds: [],
+                    })),
+                  };
+                }
+                const predicates = players.map((player) =>
+                  and(
+                    eq(
+                      userCharactersLootlogSettingsTable.userId,
+                      player.userId,
+                    ),
+                    eq(
+                      userCharactersLootlogSettingsTable.accountId,
+                      player.accountId,
+                    ),
+                    eq(
+                      userCharactersLootlogSettingsTable.characterId,
+                      player.characterId,
+                    ),
+                  ),
+                );
+                const configs = yield* database
+                  .select()
+                  .from(userCharactersLootlogSettingsTable)
+                  .where(
+                    and(
+                      or(...predicates),
+                      arrayOverlaps(
+                        userCharactersLootlogSettingsTable.catchingGuildIds,
+                        guilds.map(({ id }) => id),
+                      ),
+                    ),
+                  )
+                  .orderBy(desc(userCharactersLootlogSettingsTable.createdAt));
+                const visibleByPlayer = new Map<string, Set<string>>();
+                for (const config of configs) {
+                  const key = `${config.userId}:${config.accountId}:${config.characterId}`;
+                  const visible = visibleByPlayer.get(key) ?? new Set<string>();
+                  for (const guildId of config.catchingGuildIds) {
+                    if (guildById.has(guildId)) visible.add(guildId);
+                  }
+                  visibleByPlayer.set(key, visible);
+                }
+                return {
+                  players: players.map((player) => ({
+                    ...player,
+                    guilds: [
+                      ...(visibleByPlayer.get(
+                        `${player.userId}:${player.accountId}:${player.characterId}`,
+                      ) ?? []),
+                    ].map((id) => ({
+                      id,
+                      name: guildById.get(id)?.name ?? id,
+                    })),
+                  })),
+                };
+              }),
+            ),
+        });
+      }),
     );
-  }
-
-  static makeService(
-    service: UserLootlogConfigService,
-  ): UserLootlogConfigData["Service"] {
-    const attempt = (operation: () => unknown | PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: () => Promise.resolve(operation()),
-        catch: (cause) => new UserLootlogConfigOperationError({ cause }),
-      });
-    const mutable = <A>(value: unknown): A =>
-      JSON.parse(JSON.stringify(value)) as A;
-
-    return UserLootlogConfigData.of({
-      getAccount: (discordId, accountId) =>
-        attempt(() => service.getLootlogAccountConfig(discordId, accountId)),
-      upsertCharacter: (discordId, accountId, payload) =>
-        attempt(() =>
-          service.createOrUpdateLootlogCharacterConfig(
-            discordId,
-            accountId,
-            mutable(payload),
-          ),
-        ),
-      getPlayersCatchingGuilds: (discordId, payload) =>
-        attempt(() =>
-          service.getPlayersCatchingGuilds(discordId, mutable(payload)),
-        ),
-    });
   }
 }
 
@@ -107,6 +314,16 @@ export const getUserLootlogAccountConfig = (accountId: string) =>
         value,
       ),
     ),
+  ).pipe(
+    Effect.withSpan(
+      "UserLootlogConfigControllerGetUserLootlogConfigByAccountId",
+      {
+        attributes: {
+          operationId:
+            "UserLootlogConfigControllerGetUserLootlogConfigByAccountId",
+        },
+      },
+    ),
   );
 
 export const upsertUserLootlogCharacterConfig = (
@@ -122,6 +339,16 @@ export const upsertUserLootlogCharacterConfig = (
           value,
         ),
     ),
+  ).pipe(
+    Effect.withSpan(
+      "UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
+      {
+        attributes: {
+          operationId:
+            "UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
+        },
+      },
+    ),
   );
 
 export const getPlayersCatchingGuilds = (
@@ -131,6 +358,12 @@ export const getPlayersCatchingGuilds = (
     Effect.flatMap(data.getPlayersCatchingGuilds(discordId, payload), (value) =>
       decode(UserLootlogConfigControllerGetPlayersCatchingGuilds200, value),
     ),
+  ).pipe(
+    Effect.withSpan("UserLootlogConfigControllerGetPlayersCatchingGuilds", {
+      attributes: {
+        operationId: "UserLootlogConfigControllerGetPlayersCatchingGuilds",
+      },
+    }),
   );
 
 const defectCause = (error: unknown) =>

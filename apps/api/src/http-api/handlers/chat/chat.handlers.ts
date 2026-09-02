@@ -1,11 +1,9 @@
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import { MessageType } from "#src/chat/dto/send-message.dto";
-import type { ChatService } from "#src/chat/chat.service";
 import {
   ChatControllerClearChatMessages200,
   ChatControllerDeleteChatMessage200,
@@ -80,63 +78,7 @@ export class ChatData extends Context.Service<
       message: string,
     ) => DataEffect;
   }
->()("@lootlog/api/http-api/chat/data") {
-  static layerService(service: ChatService) {
-    return Layer.succeed(ChatData, ChatData.makeService(service));
-  }
-
-  static makeService(service: ChatService): ChatData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new ChatOperationError({ cause }),
-      });
-
-    return ChatData.of({
-      getMessages: (discordId, guildId) =>
-        attempt(() => service.getMessages(discordId, guildId)),
-      sendMessage: (discordId, guildId, payload) =>
-        attempt(() =>
-          service.sendMessage(discordId, guildId, {
-            ...payload,
-            type: toLegacyMessageType(payload.type),
-            replyTo: payload.replyTo
-              ? {
-                  ...payload.replyTo,
-                  type: toLegacyReplyType(payload.replyTo.type),
-                }
-              : undefined,
-          }),
-        ),
-      clearMessages: (discordId, guildId) =>
-        attempt(() => service.clearMessages(discordId, guildId)),
-      deleteMessage: (discordId, guildId, messageId) =>
-        attempt(() => service.deleteMessage(discordId, guildId, messageId)),
-      updateMessage: (discordId, guildId, messageId, message) =>
-        attempt(() =>
-          service.updateMessage(discordId, guildId, messageId, message),
-        ),
-    });
-  }
-}
-
-const toLegacyMessageType = (type: SendMessageDto["type"]): MessageType => {
-  switch (type) {
-    case "NORMAL":
-      return MessageType.NORMAL;
-    case "NOTIFICATION":
-      return MessageType.NOTIFICATION;
-    case "NPC":
-      return MessageType.NPC;
-    case "PARTY_GATHERING":
-      return MessageType.PARTY_GATHERING;
-  }
-};
-
-const toLegacyReplyType = (
-  type: NonNullable<SendMessageDto["replyTo"]>["type"],
-): MessageType.NORMAL | MessageType.NOTIFICATION =>
-  type === "NORMAL" ? MessageType.NORMAL : MessageType.NOTIFICATION;
+>()("@lootlog/api/http-api/chat/data") {}
 
 const requireGuild = (guildId: string, allOf: ReadonlyArray<PermissionValue>) =>
   Effect.flatMap(ChatAuthorization, (authorization) =>

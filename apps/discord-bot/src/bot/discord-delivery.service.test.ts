@@ -7,7 +7,8 @@ import {
 } from "@lootlog/schema/notifications";
 import { ChannelType, type Client } from "discord.js";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { DiscordDeliveryService } from "./discord-delivery.service.js";
+import { Effect, Fiber } from "effect";
+import { makeDiscordDelivery } from "./discord-delivery.service.js";
 
 const command = (
   targetType: NotificationTargetType,
@@ -27,18 +28,20 @@ const command = (
   },
 });
 
-describe("DiscordDeliveryService", () => {
+describe("Discord delivery", () => {
   test("sends a DM and publishes the delivery result", async () => {
     const send = mock(async () => ({ id: "message-1" }));
-    const publish = mock(async () => undefined);
+    const publish = mock(() => Effect.void);
     const client = {
       users: {
         fetch: mock(async () => ({ createDM: async () => ({ send }) })),
       },
       channels: { fetch: mock() },
     } as unknown as Client;
-    await new DiscordDeliveryService({ publish }, client).sendNotification(
-      command(NotificationTargetType.DM),
+    await Effect.runPromise(
+      makeDiscordDelivery({ publish }, client).sendNotification(
+        command(NotificationTargetType.DM),
+      ),
     );
     expect(send).toHaveBeenCalledWith({
       content: "**Boss alert**\nTanroth spawned",
@@ -56,7 +59,7 @@ describe("DiscordDeliveryService", () => {
 
   test("keeps allowed mentions for guild channels", async () => {
     const send = mock(async () => ({ id: "message-2" }));
-    const publish = mock(async () => undefined);
+    const publish = mock(() => Effect.void);
     const client = {
       users: { fetch: mock() },
       channels: {
@@ -73,8 +76,8 @@ describe("DiscordDeliveryService", () => {
       content: "<@&123> alert",
       allowedMentions: { roles: ["123"] },
     };
-    await new DiscordDeliveryService({ publish }, client).sendNotification(
-      input,
+    await Effect.runPromise(
+      makeDiscordDelivery({ publish }, client).sendNotification(input),
     );
     expect(send).toHaveBeenCalledWith({
       content: "<@&123> alert",
@@ -83,7 +86,7 @@ describe("DiscordDeliveryService", () => {
   });
 
   test("publishes a non-retryable result for invalid channels", async () => {
-    const publish = mock(async () => undefined);
+    const publish = mock(() => Effect.void);
     const client = {
       users: { fetch: mock() },
       channels: {
@@ -94,8 +97,10 @@ describe("DiscordDeliveryService", () => {
         })),
       },
     } as unknown as Client;
-    await new DiscordDeliveryService({ publish }, client).sendNotification(
-      command(NotificationTargetType.CHANNEL),
+    await Effect.runPromise(
+      makeDiscordDelivery({ publish }, client).sendNotification(
+        command(NotificationTargetType.CHANNEL),
+      ),
     );
     expect(publish).toHaveBeenCalledWith(
       "default",
@@ -106,5 +111,25 @@ describe("DiscordDeliveryService", () => {
         errorMessage: "Discord channel is not text-based",
       }),
     );
+  });
+
+  test("propagates interruption to an active Discord SDK mutation", async () => {
+    const fetchPending = new Promise<never>(() => undefined);
+    const publish = mock(() => Effect.void);
+    const fetch = mock(() => fetchPending);
+    const client = {
+      users: { fetch: mock() },
+      channels: { fetch },
+    } as unknown as Client;
+    const fiber = Effect.runFork(
+      makeDiscordDelivery({ publish }, client).sendNotification(
+        command(NotificationTargetType.CHANNEL),
+      ),
+    );
+    while (fetch.mock.calls.length === 0) await Promise.resolve();
+
+    await Effect.runPromise(Fiber.interrupt(fiber));
+
+    expect(publish).not.toHaveBeenCalled();
   });
 });

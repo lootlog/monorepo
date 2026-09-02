@@ -1,19 +1,38 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
-import type { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import type { ReservationViewerContext } from "#src/reservations/reservation-viewer";
-import type { MyReservationsService } from "#src/reservations/my-reservations.service";
-import type { ReservationReadService } from "#src/reservations/reservation-read.service";
-import type { RolesService } from "#src/roles/roles.service";
-import type { CreateReservationDto as LegacyCreateReservationDto } from "#src/reservations/dto/create-reservation.dto";
-import type { MyReservationsQueryDto as LegacyMyReservationsQueryDto } from "#src/reservations/dto/reservation-query.dto";
-import type { UpdateReservationDto as LegacyUpdateReservationDto } from "#src/reservations/dto/update-reservation.dto";
-import type { UpdateRolePermissionsDto as LegacyUpdateRolePermissionsDto } from "#src/roles/dto/update-role-permissions.dto";
+import {
+  and,
+  arrayOverlaps,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lt,
+  or,
+} from "drizzle-orm";
+import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  guildTable,
+  memberTable,
+  memberToRoleTable,
+  reservationTable,
+  roleTable,
+  userSettingsTable,
+} from "#src/database/drizzle/schema";
+import { presentReservation } from "#src/reservations/reservation-presentation";
+import {
+  ForbiddenException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
+import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
 import {
   AcceptReservationShareInvitation201,
   CreateReservation201,
@@ -82,9 +101,6 @@ export class ReservationsRolesAuthorization extends Context.Service<
 
 type DataEffect = Effect.Effect<unknown, ReservationsRolesOperationError>;
 
-const mutableDto = <A>(value: unknown): A =>
-  JSON.parse(JSON.stringify(value)) as A;
-
 export class ReservationsRolesData extends Context.Service<
   ReservationsRolesData,
   {
@@ -107,51 +123,7 @@ export class ReservationsRolesData extends Context.Service<
       payload: UpdateReservationDto,
     ) => DataEffect;
   }
->()("@lootlog/api/http-api/reservations-roles/data") {
-  static makeService(
-    mutations: ReservationMutationsService,
-  ): ReservationsRolesData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new ReservationsRolesOperationError({ cause }),
-      });
-    return ReservationsRolesData.of({
-      create: (context, spotId, payload) =>
-        attempt(() =>
-          mutations.create({
-            context,
-            spotId,
-            data: mutableDto<LegacyCreateReservationDto>(payload),
-          }),
-        ),
-      deleteVisible: (context, reservationId) =>
-        attempt(() => mutations.deleteVisible({ context, reservationId })),
-      deleteOwned: ({ userId, discordId }, reservationId) =>
-        attempt(() =>
-          mutations.deleteOwned({ userId, discordId, reservationId }),
-        ),
-      updateOwned: ({ userId, discordId }, reservationId, payload) =>
-        attempt(() =>
-          mutations.updateOwned({
-            userId,
-            discordId,
-            reservationId,
-            data: mutableDto<LegacyUpdateReservationDto>(payload),
-          }),
-        ),
-    });
-  }
-
-  static layerServices(options: {
-    readonly mutations: ReservationMutationsService;
-  }) {
-    return Layer.succeed(
-      ReservationsRolesData,
-      ReservationsRolesData.makeService(options.mutations),
-    );
-  }
-}
+>()("@lootlog/api/http-api/reservations-roles/data") {}
 
 export class MyReservationsData extends Context.Service<
   MyReservationsData,
@@ -162,22 +134,119 @@ export class MyReservationsData extends Context.Service<
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/my-reservations/data") {
-  static makeService(
-    service: MyReservationsService,
-  ): MyReservationsData["Service"] {
-    return MyReservationsData.of({
-      listMine: ({ userId, discordId }, query) =>
-        Effect.tryPromise({
-          try: () =>
-            service.listMine({
+  static readonly layerDatabase = Layer.effect(
+    MyReservationsData,
+    Effect.map(ApiDatabase, (database) =>
+      MyReservationsData.of({
+        listMine: ({ userId, discordId }, query) =>
+          Effect.gen(function* () {
+            const [guildRows, preferenceRows] = yield* Effect.all([
+              database
+                .selectDistinct({ id: guildTable.id })
+                .from(guildTable)
+                .leftJoin(
+                  memberTable,
+                  and(
+                    eq(memberTable.guildId, guildTable.id),
+                    eq(memberTable.userId, discordId),
+                    eq(memberTable.active, true),
+                    isNotNull(memberTable.globalUserId),
+                  ),
+                )
+                .leftJoin(
+                  memberToRoleTable,
+                  eq(memberToRoleTable.A, memberTable.id),
+                )
+                .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
+                .where(
+                  and(
+                    eq(guildTable.active, true),
+                    or(
+                      eq(guildTable.ownerId, discordId),
+                      arrayOverlaps(roleTable.permissions, [
+                        Permission.LOOTLOG_ACCESS,
+                      ]),
+                    ),
+                  ),
+                ),
+              database
+                .select({ guildsOrder: userSettingsTable.guildsOrder })
+                .from(userSettingsTable)
+                .where(eq(userSettingsTable.userId, userId))
+                .limit(1),
+            ]);
+            if (guildRows.length === 0) return { items: [] };
+            const guildOrder = new Map(
+              (preferenceRows[0]?.guildsOrder ?? []).map((id, index) => [
+                id,
+                index,
+              ]),
+            );
+            const guildIds = guildRows
+              .map(({ id }) => id)
+              .sort(
+                (left, right) =>
+                  (guildOrder.get(left) ?? Number.MAX_SAFE_INTEGER) -
+                  (guildOrder.get(right) ?? Number.MAX_SAFE_INTEGER),
+              );
+            const now = new Date();
+            const timeCondition =
+              query.status === "past"
+                ? and(
+                    gte(
+                      reservationTable.endsAt,
+                      new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+                    ),
+                    lt(reservationTable.endsAt, now),
+                  )
+                : gte(reservationTable.endsAt, now);
+            const rows = yield* database
+              .select({ reservation: reservationTable, guild: guildTable })
+              .from(reservationTable)
+              .innerJoin(
+                guildTable,
+                eq(guildTable.id, reservationTable.guildId),
+              )
+              .where(
+                and(
+                  inArray(reservationTable.guildId, guildIds),
+                  timeCondition,
+                  or(
+                    eq(reservationTable.createdByUserId, userId),
+                    eq(reservationTable.legacyCreatedByDiscordId, discordId),
+                  ),
+                ),
+              )
+              .orderBy(
+                query.status === "past"
+                  ? desc(reservationTable.endsAt)
+                  : asc(reservationTable.startsAt),
+                query.status === "past"
+                  ? desc(reservationTable.id)
+                  : asc(reservationTable.id),
+              );
+            const viewer = {
+              guildId: null,
               userId,
               discordId,
-              query: mutableDto<LegacyMyReservationsQueryDto>(query),
+              canModerateCurrentGuild: false,
+            };
+            return {
+              items: rows.map(({ reservation, guild }) =>
+                presentReservation({ ...reservation, guild }, viewer),
+              ),
+            };
+          }).pipe(
+            Effect.withSpan("listMyReservations.persistence", {
+              attributes: { adapter: "ApiDatabase", retryCount: 0 },
             }),
-          catch: (cause) => new ReservationsRolesOperationError({ cause }),
-        }),
-    });
-  }
+            Effect.mapError(
+              (cause) => new ReservationsRolesOperationError({ cause }),
+            ),
+          ),
+      }),
+    ),
+  );
 }
 
 export class ReservationReadData extends Context.Service<
@@ -201,26 +270,7 @@ export class ReservationReadData extends Context.Service<
       spotId: string,
     ) => DataEffect;
   }
->()("@lootlog/api/http-api/reservation-read/data") {
-  static makeService(
-    service: ReservationReadService,
-  ): ReservationReadData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new ReservationsRolesOperationError({ cause }),
-      });
-    return ReservationReadData.of({
-      listSpots: (context) => attempt(() => service.listSpots(context)),
-      listWindow: (context, spotId, from, to) =>
-        attempt(() => service.listWindow(context, spotId, from, to)),
-      pinSpot: (userId, guildId, spotId) =>
-        attempt(() => service.pinSpot(userId, guildId, spotId)),
-      unpinSpot: (userId, guildId, spotId) =>
-        attempt(() => service.unpinSpot(userId, guildId, spotId)),
-    });
-  }
-}
+>()("@lootlog/api/http-api/reservation-read/data") {}
 
 export class ReservationSharingData extends Context.Service<
   ReservationSharingData,
@@ -242,37 +292,7 @@ export class ReservationSharingData extends Context.Service<
       identity: ReservationsRolesIdentity,
     ) => DataEffect;
   }
->()("@lootlog/api/http-api/reservation-sharing/data") {
-  static makeService(
-    service: ReservationSharingService,
-  ): ReservationSharingData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new ReservationsRolesOperationError({ cause }),
-      });
-    return ReservationSharingData.of({
-      listShares: (guildId) => attempt(() => service.list(guildId)),
-      createInvitation: (guildId, userId) =>
-        attempt(() => service.createInvitation(guildId, userId)),
-      revokeInvitation: (guildId, invitationId) =>
-        attempt(() => service.revokeInvitation(guildId, invitationId)),
-      revokeShare: (guildId, shareId) =>
-        attempt(() => service.revokeShare(guildId, shareId)),
-      previewInvitation: (token, discordId) =>
-        attempt(() => service.previewInvitation(token, discordId)),
-      acceptInvitation: (token, payload, { userId, discordId }) =>
-        attempt(() =>
-          service.acceptInvitation({
-            token,
-            targetGuildId: payload.targetGuildId,
-            userId,
-            discordId,
-          }),
-        ),
-    });
-  }
-}
+>()("@lootlog/api/http-api/reservation-sharing/data") {}
 
 export class RolesData extends Context.Service<
   RolesData,
@@ -286,26 +306,93 @@ export class RolesData extends Context.Service<
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/roles/data") {
-  static makeService(service: RolesService): RolesData["Service"] {
-    const attempt = (operation: () => PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: operation,
-        catch: (cause) => new ReservationsRolesOperationError({ cause }),
-      });
+  static layerDatabase(cache: RolesCache) {
+    return Layer.effect(
+      RolesData,
+      Effect.map(ApiDatabase, (database) => {
+        const operation = <A, E>(effect: Effect.Effect<A, E>) =>
+          effect.pipe(
+            Effect.mapError(
+              (cause) => new ReservationsRolesOperationError({ cause }),
+            ),
+          );
 
-    return RolesData.of({
-      getRoles: (guildId) => attempt(() => service.getRolesByGuildId(guildId)),
-      updateRole: (discordId, guildId, roleId, payload) =>
-        attempt(() =>
-          service.updateRolePermissions(
-            discordId,
-            guildId,
-            roleId,
-            mutableDto<LegacyUpdateRolePermissionsDto>(payload),
-          ),
-        ),
-    });
+        return RolesData.of({
+          getRoles: (guildId) =>
+            operation(
+              database
+                .select()
+                .from(roleTable)
+                .where(eq(roleTable.guildId, guildId))
+                .orderBy(desc(roleTable.position)),
+            ),
+          updateRole: (discordId, guildId, roleId, payload) =>
+            operation(
+              Effect.gen(function* () {
+                const roles = yield* database
+                  .select()
+                  .from(roleTable)
+                  .where(
+                    and(
+                      eq(roleTable.id, roleId),
+                      eq(roleTable.guildId, guildId),
+                    ),
+                  )
+                  .limit(1);
+                const role = roles[0];
+                if (!role) return yield* Effect.fail(new NotFoundException());
+
+                const owners = yield* database
+                  .select({ ownerId: guildTable.ownerId })
+                  .from(guildTable)
+                  .where(eq(guildTable.id, guildId))
+                  .limit(1);
+                const roleIsAdministrative = createAccessPolicy({
+                  capabilities: role.permissions,
+                }).allows(Capability.ADMIN);
+                const newPermissionsAreAdministrative = createAccessPolicy({
+                  capabilities: payload.permissions,
+                }).allows(Capability.ADMIN);
+                if (
+                  roleIsAdministrative !== newPermissionsAreAdministrative &&
+                  owners[0]?.ownerId !== discordId
+                ) {
+                  return yield* Effect.fail(new ForbiddenException());
+                }
+
+                const updated = yield* database
+                  .update(roleTable)
+                  .set({
+                    permissions: [...payload.permissions],
+                    lvlRangeFrom: payload.lvlRangeFrom,
+                    lvlRangeTo: payload.lvlRangeTo,
+                    updatedAt: new Date(),
+                  })
+                  .where(
+                    and(
+                      eq(roleTable.id, roleId),
+                      eq(roleTable.guildId, guildId),
+                    ),
+                  )
+                  .returning();
+                yield* cache.deleteByPattern(
+                  getPermissionsCachePattern(guildId),
+                );
+                return updated[0] ?? null;
+              }).pipe(
+                Effect.withSpan("roles.update.persistence", {
+                  attributes: { adapter: "ApiDatabase", retryCount: 0 },
+                }),
+              ),
+            ),
+        });
+      }),
+    );
   }
+}
+
+export interface RolesCache {
+  readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
 }
 
 const identity = Effect.flatMap(
@@ -462,20 +549,32 @@ export const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
   },
 );
 
-export const updateGuildRole = Effect.fn("updateGuildRole")(function* (
-  guildId: string,
-  roleId: string,
-  payload: UpdateRolePermissionsDto,
-) {
-  const access = yield* requireGuild(guildId, [
-    Permission.LOOTLOG_ACCESS,
-    Permission.ADMIN,
-  ]);
-  const value = yield* rolesData((service) =>
-    service.updateRole(access.discordId, access.guildId, roleId, payload),
-  );
-  return yield* decode(RolesControllerUpdateGuildRole200, value);
-});
+export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
+  function* (
+    guildId: string,
+    roleId: string,
+    payload: UpdateRolePermissionsDto,
+  ) {
+    const access = yield* requireGuild(guildId, [
+      Permission.LOOTLOG_ACCESS,
+      Permission.ADMIN,
+    ]);
+    const value = yield* rolesData((service) =>
+      service.updateRole(access.discordId, access.guildId, roleId, payload),
+    );
+    return yield* decode(RolesControllerUpdateGuildRole200, value);
+  },
+);
+
+export const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(
+  function* (guildId: string) {
+    const access = yield* requireGuild(guildId, [Permission.LOOTLOG_ACCESS]);
+    const value = yield* rolesData((service) =>
+      service.getRoles(access.guildId),
+    );
+    return yield* decode(RolesControllerGetGuildRoles200, value);
+  },
+);
 
 export const ReservationsHandlers = HttpApiBuilder.group(
   LootlogApi,
@@ -662,16 +761,7 @@ export const RolesHandlers = HttpApiBuilder.group(
     handlers
       .handle("RolesControllerGetGuildRoles", ({ params }) =>
         declaredEmptyError(
-          Effect.gen(function* () {
-            const guildId = yield* pathString(params.guildId, "guildId");
-            const access = yield* requireGuild(guildId, [
-              Permission.LOOTLOG_ACCESS,
-            ]);
-            const value = yield* rolesData((service) =>
-              service.getRoles(access.guildId),
-            );
-            return yield* decode(RolesControllerGetGuildRoles200, value);
-          }),
+          Effect.flatMap(pathString(params.guildId, "guildId"), getGuildRoles),
           [403],
         ),
       )

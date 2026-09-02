@@ -1,12 +1,13 @@
 import { RabbitMessaging } from "@lootlog/messaging";
 import { Context, Effect, FiberSet, Layer } from "effect";
-import { AuthService } from "#src/auth/auth-service";
-import { MargonemProofVerifier } from "#src/auth/margonem-proof";
+import { HttpClient } from "effect/unstable/http";
+import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
+import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
 import {
   GatewayConfig,
   type GatewayConfiguration,
 } from "#src/config/gateway-config";
-import { GuildStore } from "#src/guilds/guild-store";
+import { makeGuildStore } from "#src/guilds/guild-store";
 import {
   makeBackgroundTaskRunner,
   type BackgroundTaskRunner,
@@ -27,7 +28,7 @@ import type { SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {
   readonly config: GatewayConfiguration;
-  readonly auth: AuthService;
+  readonly auth: GatewayAuth;
   readonly hub: RealtimeHub;
   readonly presence: PresenceStore;
   readonly commands: CommandHandler;
@@ -44,6 +45,7 @@ export class GatewayApplication extends Context.Service<
     Effect.gen(function* () {
       const config = yield* GatewayConfig;
       const messaging = yield* RabbitMessaging;
+      const httpClient = yield* HttpClient.HttpClient;
       const backgroundFibers = yield* FiberSet.make<void, never>();
       const runBackgroundEffect =
         yield* FiberSet.runtime(backgroundFibers)<never>();
@@ -60,7 +62,7 @@ export class GatewayApplication extends Context.Service<
         }),
         (store) => Effect.promise(() => store.close()),
       );
-      const auth = new AuthService(config);
+      const auth = makeGatewayAuth(config, httpClient);
       const hub = new RealtimeHub(config, redis, runBackground);
       yield* Effect.promise(() => hub.start());
       const coverage = new CoveragePublisher(messaging);
@@ -80,8 +82,8 @@ export class GatewayApplication extends Context.Service<
       const airTags = new AirTagService(redis, hub);
       const commands = new CommandHandler(
         config,
-        new GuildStore(config, redis),
-        new MargonemProofVerifier(config),
+        makeGuildStore(config, redis, httpClient),
+        makeMargonemProofVerifier(config, httpClient),
         presence,
         hub,
         activity,
@@ -186,7 +188,9 @@ export const createGatewayFetch =
     }
     const credential = application.auth.readCredential(request);
     if (!credential) return new Response("Unauthorized", { status: 401 });
-    const identity = await application.auth.verify(credential);
+    const identity = await Effect.runPromise(
+      application.auth.verify(credential),
+    );
     if (!identity) return new Response("Unauthorized", { status: 401 });
 
     const connectionId = crypto.randomUUID();

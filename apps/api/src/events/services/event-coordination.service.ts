@@ -1,12 +1,13 @@
 import { NotFoundException } from "#src/shared/http/http-errors";
+import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
-import { TimersService } from "#src/timers/timers.service";
+import type { EventTimersPort } from "./event-timers.port.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import {
   getEventRespawnWindowStatus,
   type EventRespawnWindowStatus,
 } from "../utils/event-respawn-window.util.js";
-import { EventCoordinationRepository } from "./event-coordination.repository.js";
+import type { EventCoordinationStore } from "./event-coordination.repository.js";
 
 type CoverageGapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
@@ -68,149 +69,163 @@ const WINDOW_STATUS_RANK: Record<EventRespawnWindowStatus, number> = {
   NONE: 3,
 };
 
-export class EventCoordinationService {
-  constructor(
-    private readonly repository: EventCoordinationRepository,
-    private readonly timersService: TimersService,
-  ) {}
+export const makeEventCoordination = (
+  repository: EventCoordinationStore,
+  timersService: EventTimersPort,
+) => ({
+  getCoordination(guildId: string, eventId: string) {
+    return Effect.gen(function* () {
+      const event = yield* repository.findEvent(guildId, eventId);
 
-  async getCoordination(guildId: string, eventId: string) {
-    const event = await this.repository.findEvent(guildId, eventId);
+      if (!event) {
+        return yield* Effect.fail(new NotFoundException("Event not found"));
+      }
 
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
+      const now = new Date();
+      const [timers, activeGaps] = yield* Effect.all(
+        [
+          timersService.getTimersForEventHeroFilters(
+            guildId,
+            event.world,
+            event.heroNpcs,
+          ),
+          repository.findActiveGaps(event.heroNpcs.map((hero) => hero.id)),
+        ],
+        { concurrency: "unbounded" },
+      );
 
-    const now = new Date();
-    const [timers, activeGaps] = await Promise.all([
-      this.timersService.getTimersForEventHeroFilters(
-        guildId,
-        event.world,
-        event.heroNpcs,
-      ),
-      this.repository.findActiveGaps(event.heroNpcs.map((hero) => hero.id)),
-    ]);
+      const timersByKey = new Map(
+        timers.map((timer) => [timer.timerKey, timer]),
+      );
+      const timersByNpcName = new Map(
+        timers.map((timer) => [extractNpcName(timer.npc), timer]),
+      );
+      const activeGapsByHeroId = groupActiveGapsByHeroId(activeGaps);
 
-    const timersByKey = new Map(timers.map((timer) => [timer.timerKey, timer]));
-    const timersByNpcName = new Map(
-      timers.map((timer) => [extractNpcName(timer.npc), timer]),
-    );
-    const activeGapsByHeroId = groupActiveGapsByHeroId(activeGaps);
+      const heroes = event.heroNpcs
+        .map((hero) => {
+          const timer = findHeroTimer(hero, timersByKey, timersByNpcName);
+          const status = getEventRespawnWindowStatus(timer, now);
+          const heroActiveGaps = activeGapsByHeroId.get(hero.id) ?? [];
+          const activeGapMapIds = new Set(
+            heroActiveGaps.map((gap) => gap.mapId),
+          );
+          const uncoveredGapMapIds = new Set(
+            heroActiveGaps
+              .filter((gap) => gap.gapType === "UNCOVERED")
+              .map((gap) => gap.mapId),
+          );
+          const totalMaps = hero.maps.length;
+          const assignedMaps = hero.maps.filter(
+            (map) => map.assignedMembers.length > 0,
+          ).length;
+          const unassignedMapIds = new Set(
+            hero.maps
+              .filter((map) => map.assignedMembers.length === 0)
+              .map((map) => map.id),
+          );
+          const unassignedMapCount = Math.max(0, totalMaps - assignedMaps);
+          const unassignedGapCount = heroActiveGaps.filter(
+            (gap) => gap.gapType === "UNASSIGNED",
+          ).length;
+          const uncoveredGapCount = uncoveredGapMapIds.size;
+          const unassignedMaps =
+            status === "NONE"
+              ? unassignedMapCount
+              : Math.max(unassignedMapCount, unassignedGapCount);
+          const uncoveredOrUnassignedMapIds = new Set([
+            ...activeGapMapIds,
+            ...unassignedMapIds,
+          ]);
+          const coveredMaps =
+            status === "NONE"
+              ? assignedMaps
+              : Math.max(0, totalMaps - uncoveredOrUnassignedMapIds.size);
+          const coverage = {
+            totalMaps,
+            assignedMaps,
+            coveredMaps,
+            unassignedMaps,
+            uncoveredMaps: uncoveredGapCount,
+            activeGapCount: heroActiveGaps.length,
+          };
+          const priority = getPriority(status, coverage);
+          const recommendedAction = getRecommendedAction(status, coverage);
 
-    const heroes = event.heroNpcs
-      .map((hero) => {
-        const timer = findHeroTimer(hero, timersByKey, timersByNpcName);
-        const status = getEventRespawnWindowStatus(timer, now);
-        const heroActiveGaps = activeGapsByHeroId.get(hero.id) ?? [];
-        const activeGapMapIds = new Set(heroActiveGaps.map((gap) => gap.mapId));
-        const uncoveredGapMapIds = new Set(
-          heroActiveGaps
-            .filter((gap) => gap.gapType === "UNCOVERED")
-            .map((gap) => gap.mapId),
-        );
-        const totalMaps = hero.maps.length;
-        const assignedMaps = hero.maps.filter(
-          (map) => map.assignedMembers.length > 0,
-        ).length;
-        const unassignedMapIds = new Set(
-          hero.maps
-            .filter((map) => map.assignedMembers.length === 0)
-            .map((map) => map.id),
-        );
-        const unassignedMapCount = Math.max(0, totalMaps - assignedMaps);
-        const unassignedGapCount = heroActiveGaps.filter(
-          (gap) => gap.gapType === "UNASSIGNED",
-        ).length;
-        const uncoveredGapCount = uncoveredGapMapIds.size;
-        const unassignedMaps =
-          status === "NONE"
-            ? unassignedMapCount
-            : Math.max(unassignedMapCount, unassignedGapCount);
-        const uncoveredOrUnassignedMapIds = new Set([
-          ...activeGapMapIds,
-          ...unassignedMapIds,
-        ]);
-        const coveredMaps =
-          status === "NONE"
-            ? assignedMaps
-            : Math.max(0, totalMaps - uncoveredOrUnassignedMapIds.size);
-        const coverage = {
-          totalMaps,
-          assignedMaps,
-          coveredMaps,
-          unassignedMaps,
-          uncoveredMaps: uncoveredGapCount,
-          activeGapCount: heroActiveGaps.length,
-        };
-        const priority = getPriority(status, coverage);
-        const recommendedAction = getRecommendedAction(status, coverage);
+          return {
+            heroId: hero.id,
+            npcId: hero.npcId,
+            npcName: hero.npcName,
+            npcIcon: hero.npcIcon,
+            npcLvl: hero.npcLvl,
+            timer: timer
+              ? {
+                  npcId: timer.npcId,
+                  world: timer.world,
+                  minSpawnTime: timer.minSpawnTime,
+                  maxSpawnTime: timer.maxSpawnTime,
+                  status,
+                  overdueMs:
+                    status === "OVERDUE"
+                      ? Math.max(
+                          0,
+                          now.getTime() - timer.maxSpawnTime.getTime(),
+                        )
+                      : null,
+                }
+              : null,
+            coverage,
+            activeGaps: heroActiveGaps
+              .map((gap) => ({
+                id: gap.id,
+                mapId: gap.mapId,
+                numericMapId: gap.map.mapId,
+                mapName: gap.map.mapName,
+                gapType: gap.gapType,
+                startedAt: gap.startedAt,
+                durationSeconds:
+                  gap.durationSeconds ??
+                  Math.max(
+                    0,
+                    Math.round(
+                      (now.getTime() - gap.startedAt.getTime()) / 1000,
+                    ),
+                  ),
+              }))
+              .sort(compareActiveGaps),
+            priority,
+            recommendedAction,
+          };
+        })
+        .sort(compareCoordinationHeroes);
 
-        return {
-          heroId: hero.id,
-          npcId: hero.npcId,
-          npcName: hero.npcName,
-          npcIcon: hero.npcIcon,
-          npcLvl: hero.npcLvl,
-          timer: timer
-            ? {
-                npcId: timer.npcId,
-                world: timer.world,
-                minSpawnTime: timer.minSpawnTime,
-                maxSpawnTime: timer.maxSpawnTime,
-                status,
-                overdueMs:
-                  status === "OVERDUE"
-                    ? Math.max(0, now.getTime() - timer.maxSpawnTime.getTime())
-                    : null,
-              }
-            : null,
-          coverage,
-          activeGaps: heroActiveGaps
-            .map((gap) => ({
-              id: gap.id,
-              mapId: gap.mapId,
-              numericMapId: gap.map.mapId,
-              mapName: gap.map.mapName,
-              gapType: gap.gapType,
-              startedAt: gap.startedAt,
-              durationSeconds:
-                gap.durationSeconds ??
-                Math.max(
-                  0,
-                  Math.round((now.getTime() - gap.startedAt.getTime()) / 1000),
-                ),
-            }))
-            .sort(compareActiveGaps),
-          priority,
-          recommendedAction,
-        };
-      })
-      .sort(compareCoordinationHeroes);
+      return {
+        assignmentTimeoutMinutes: event.assignmentTimeoutMinutes,
+        generatedAt: now,
+        eventId: event.id,
+        world: event.world,
+        summary: {
+          criticalCount: heroes.filter((hero) => hero.priority === "CRITICAL")
+            .length,
+          warningCount: heroes.filter((hero) => hero.priority === "WARNING")
+            .length,
+          coveredMaps: heroes.reduce(
+            (total, hero) => total + hero.coverage.coveredMaps,
+            0,
+          ),
+          totalMaps: heroes.reduce(
+            (total, hero) => total + hero.coverage.totalMaps,
+            0,
+          ),
+          nextSpawnAt: getNextSpawnAt(heroes),
+        },
+        heroes,
+      };
+    }).pipe(Effect.withSpan("EventsMonitoringController_getCoordination"));
+  },
+});
 
-    return {
-      assignmentTimeoutMinutes: event.assignmentTimeoutMinutes,
-      generatedAt: now,
-      eventId: event.id,
-      world: event.world,
-      summary: {
-        criticalCount: heroes.filter((hero) => hero.priority === "CRITICAL")
-          .length,
-        warningCount: heroes.filter((hero) => hero.priority === "WARNING")
-          .length,
-        coveredMaps: heroes.reduce(
-          (total, hero) => total + hero.coverage.coveredMaps,
-          0,
-        ),
-        totalMaps: heroes.reduce(
-          (total, hero) => total + hero.coverage.totalMaps,
-          0,
-        ),
-        nextSpawnAt: getNextSpawnAt(heroes),
-      },
-      heroes,
-    };
-  }
-}
+export type EventCoordination = ReturnType<typeof makeEventCoordination>;
 
 function groupActiveGapsByHeroId(activeGaps: ActiveGapForCoordination[]) {
   const grouped = new Map<string, ActiveGapForCoordination[]>();

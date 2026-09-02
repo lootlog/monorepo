@@ -37,7 +37,6 @@
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "dotenv": "^17.4.2",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -1,57 +1,75 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { Effect, Layer } from "effect";
+import { HttpRouter, HttpServer } from "effect/unstable/http";
 import {
-  makeSearchHandler,
-  type SearchServicesValue,
-} from "../src/search-application.js";
+  SearchOperations,
+  type SearchOperationsValue,
+} from "../src/http-api/search-operations.js";
+import { SearchRoutes } from "../src/http-api/search-http.js";
 
-const services = (): SearchServicesValue => ({
-  items: {
-    searchItems: mock((query) => Promise.resolve({ query, hits: [] })),
-  } as unknown as SearchServicesValue["items"],
-  npcs: {
-    getNpcs: mock((query) => Promise.resolve([{ query }])),
-  } as unknown as SearchServicesValue["npcs"],
-  players: {
-    getPlayers: mock((query) => Promise.resolve([{ query }])),
-  } as unknown as SearchServicesValue["players"],
-  all: {
-    searchAll: mock((query) =>
-      Promise.resolve({ query, items: [], npcs: [], players: [] }),
+const makeBoundary = () => {
+  let itemQuery: unknown;
+  const operations: SearchOperationsValue = {
+    searchItems: (query) => {
+      itemQuery = query;
+      return Effect.succeed({
+        hits: [],
+        estimatedTotalHits: 0,
+        facetDistribution: {},
+        facetStats: {},
+      });
+    },
+    searchNpcs: () => Effect.succeed([]),
+    searchPlayers: () => Effect.succeed([]),
+    searchAll: () => Effect.succeed({ items: [], npcs: [], players: [] }),
+    indexItems: () => Effect.void,
+    indexNpcs: () => Effect.void,
+    indexPlayers: () => Effect.void,
+  };
+  const boundary = HttpRouter.toWebHandler(
+    SearchRoutes.pipe(
+      Layer.provide(Layer.succeed(SearchOperations, operations)),
+      Layer.provide(HttpServer.layerServices),
     ),
-  } as unknown as SearchServicesValue["all"],
-});
+    { disableLogger: true },
+  );
+  const handler = boundary.handler as (request: Request) => Promise<Response>;
+  return {
+    handler,
+    dispose: boundary.dispose,
+    readItemQuery: () => itemQuery,
+  };
+};
 
-describe("Search HTTP contract", () => {
-  test("preserves health response", async () => {
-    const response = await makeSearchHandler(services())(
-      new Request("http://localhost/healthz"),
-    );
+describe("Search HttpApi contract", () => {
+  test("preserves the health status", async () => {
+    const { dispose, handler } = makeBoundary();
+    const response = await handler(new Request("http://localhost/healthz"));
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe("OK");
+    await dispose();
   });
 
-  test("parses the item query contract", async () => {
-    const response = await makeSearchHandler(services())(
+  test("decodes the item query through the generated contract", async () => {
+    const { dispose, handler, readItemQuery } = makeBoundary();
+    const response = await handler(
       new Request(
-        "http://localhost/items?limit=5&offset=2&facets=rarity,type&filter=world%20%3D%20berufs",
+        "http://localhost/items?limit=5&offset=2&facets=rarity&facets=type&filter=world%20%3D%20berufs",
       ),
     );
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      query: {
-        limit: 5,
-        offset: 2,
-        filter: "world = berufs",
-        facets: ["rarity", "type"],
-      },
-      hits: [],
+    expect(readItemQuery()).toEqual({
+      limit: 5,
+      offset: 2,
+      filter: "world = berufs",
+      facets: ["rarity", "type"],
     });
+    await dispose();
   });
 
   test("returns 404 for unknown paths", async () => {
-    const response = await makeSearchHandler(services())(
-      new Request("http://localhost/private"),
-    );
+    const { dispose, handler } = makeBoundary();
+    const response = await handler(new Request("http://localhost/private"));
     expect(response.status).toBe(404);
+    await dispose();
   });
 });

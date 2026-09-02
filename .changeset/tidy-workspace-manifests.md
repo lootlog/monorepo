@@ -18,7 +18,6 @@
 "@lootlog/datetime": patch
 "@lootlog/instrumentation": patch
 "@lootlog/margonem": patch
-"@lootlog/nest-shared": patch
 "@lootlog/traffic-splitter": patch
 "@lootlog/ui": patch
 ---

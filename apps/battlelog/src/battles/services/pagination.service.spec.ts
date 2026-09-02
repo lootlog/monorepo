@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { PaginationService } from "./pagination.service.js";
-import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
+import {
+  makeBattlePagination,
+  type BattlePagination,
+} from "./pagination.service.js";
+import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
+import { runEffectService } from "../../../test/effect-service.js";
 
-describe("PaginationService", () => {
-  let service: PaginationService;
+describe("battle pagination", () => {
+  let service: ReturnType<typeof runEffectService<BattlePagination>>;
   let drizzleService: { db: any; run: ReturnType<typeof mock> };
 
   const mockBattles = [
@@ -109,8 +113,8 @@ describe("PaginationService", () => {
       },
     };
 
-    service = new PaginationService(
-      mockDrizzleService as unknown as DrizzleService,
+    service = runEffectService(
+      makeBattlePagination(mockDrizzleService as unknown as DrizzleDatabase),
     );
     drizzleService = mockDrizzleService;
   });

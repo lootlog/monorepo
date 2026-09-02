@@ -70,8 +70,6 @@ This project vendors external repositories under `repos/`.
 - Avoid chained ternaries; use branches or early returns.
 - Keep imports from one module in one statement and use inline `type` specifiers.
 - Use `import type` when a symbol exists only at type level.
-- In NestJS, keep classes and tokens as value imports when dependency injection,
-  decorators, or emitted runtime metadata need them. Generated code is exempt.
 - Follow `.oxlintrc.md` and the effective Oxlint configuration.
 
 ## React and frontend

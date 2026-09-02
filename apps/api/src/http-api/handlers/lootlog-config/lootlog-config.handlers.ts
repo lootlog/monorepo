@@ -6,7 +6,6 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import type { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootlogConfigNpcTable,
@@ -57,25 +56,6 @@ export class LootlogConfigData extends Context.Service<
     ) => Effect.Effect<unknown, LootlogConfigOperationError>;
   }
 >()("@lootlog/api/http-api/lootlog-config/data") {
-  static layerService(service: LootlogConfigService) {
-    const attempt = (operation: () => unknown | PromiseLike<unknown>) =>
-      Effect.tryPromise({
-        try: () => Promise.resolve(operation()),
-        catch: (cause) => new LootlogConfigOperationError({ cause }),
-      });
-    const mutable = <A>(value: unknown): A =>
-      JSON.parse(JSON.stringify(value)) as A;
-
-    return Layer.succeed(
-      LootlogConfigData,
-      LootlogConfigData.of({
-        get: (guildId) => attempt(() => service.getLootlogConfig(guildId)),
-        updateNpc: (guildId, npcId, payload) =>
-          attempt(() => service.updateNpc(guildId, npcId, mutable(payload))),
-      }),
-    );
-  }
-
   static readonly layerDatabase = Layer.effect(
     LootlogConfigData,
     Effect.map(ApiDatabase, (database) => {

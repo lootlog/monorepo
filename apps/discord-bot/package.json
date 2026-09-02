@@ -26,7 +26,6 @@
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "discord-api-types": "0.37.120",
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
     "effect": "catalog:"
