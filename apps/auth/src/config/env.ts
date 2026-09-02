@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { Config, Context, Layer, Option, Redacted } from "effect";
 
 const splitCommaSeparated = (value: string): string[] =>

@@ -11,12 +11,12 @@
     "env:generate": "bun src/commands/env/generate.ts",
     "events": "bun src/index.ts events",
     "events:publish": "bun src/index.ts events publish",
-    "seed": "bun src/index.ts seed",
-    "seed:generate:players": "bun src/index.ts seed generate:players",
-    "seed:scrape": "bun src/index.ts seed scrape:all",
-    "seed:scrape:items": "bun src/index.ts seed scrape:items",
-    "seed:scrape:npcs": "bun src/index.ts seed scrape:npcs",
-    "seed:setup": "bun src/index.ts seed setup"
+    "seed": "bun --env-file=../../.env src/index.ts seed",
+    "seed:generate:players": "bun --env-file=../../.env src/index.ts seed generate:players",
+    "seed:scrape": "bun --env-file=../../.env src/index.ts seed scrape:all",
+    "seed:scrape:items": "bun --env-file=../../.env src/index.ts seed scrape:items",
+    "seed:scrape:npcs": "bun --env-file=../../.env src/index.ts seed scrape:npcs",
+    "seed:setup": "bun --env-file=../../.env src/index.ts seed setup"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
@@ -36,7 +36,6 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
-    "dotenv": "^17.4.2",
     "typescript": "catalog:"
   }
 }

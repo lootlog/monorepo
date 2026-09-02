@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { BunRuntime } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
 import { migrate } from "drizzle-orm/effect-postgres/migrator";

@@ -44,7 +44,6 @@
     "@lootlog/schema": "workspace:*",
     "@paralleldrive/cuid2": "^3.3.0",
     "bullmq": "^5.81.4",
-    "dotenv": "^17.4.2",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "ioredis": "^5.11.1",

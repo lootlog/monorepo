@@ -1,4 +1,3 @@
-import "dotenv/config";
 import {
   GetObjectCommand,
   ListObjectsV2Command,
