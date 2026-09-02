@@ -1213,7 +1213,7 @@ const NativeNotificationsData = Layer.unwrap(
   Effect.map(NativeNotificationsServices, ({ layer }) => layer),
 );
 
-const NativeBullWorkers = Layer.effectDiscard(
+export const NativeBullWorkers = Layer.effectDiscard(
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
     const rabbit = yield* RabbitMessaging;
@@ -1323,7 +1323,6 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeKillsLootsData,
   NativeEventsData,
   NativeNotificationsData,
-  NativeBullWorkers,
 ).pipe(
   Layer.provide(NativeNotificationsServicesLive),
   Layer.provide(NativeEventsServicesLive),
