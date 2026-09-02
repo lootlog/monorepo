@@ -105,111 +105,114 @@ export class ReadyRoomData extends Context.Service<
     readyRoomService: ReadyRoomService,
     guildsService: GuildsService,
   ) {
+    return Layer.succeed(
+      ReadyRoomData,
+      ReadyRoomData.makeServices(readyRoomService, guildsService),
+    );
+  }
+
+  static makeServices(
+    readyRoomService: ReadyRoomService,
+    guildsService: Pick<GuildsService, "getGuildsForRequiredPermissions">,
+  ): ReadyRoomData["Service"] {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new ReadyRoomOperationError({ cause }),
       });
 
-    return Layer.succeed(
-      ReadyRoomData,
-      ReadyRoomData.of({
-        accessibleGuildIds: (discordId) =>
-          attempt(async () => {
-            const guilds = await guildsService.getGuildsForRequiredPermissions(
-              discordId,
-              [...readyRoomPermissions],
-            );
-            return guilds.map(({ id }) => id);
+    return ReadyRoomData.of({
+      accessibleGuildIds: (discordId) =>
+        attempt(async () => {
+          const guilds = await guildsService.getGuildsForRequiredPermissions(
+            discordId,
+            [...readyRoomPermissions],
+          );
+          return guilds.map(({ id }) => id);
+        }),
+      create: (identity, guildIds, payload) =>
+        attempt(() =>
+          readyRoomService.create({
+            organizerDiscordId: identity.discordId,
+            organizerCharacter: payload.character,
+            guildIds: [...guildIds],
+            world: payload.world,
+            ...(payload.description === undefined
+              ? {}
+              : { description: payload.description }),
+            ...(payload.minLvl === undefined ? {} : { minLvl: payload.minLvl }),
+            ...(payload.maxLvl === undefined ? {} : { maxLvl: payload.maxLvl }),
           }),
-        create: (identity, guildIds, payload) =>
-          attempt(() =>
-            readyRoomService.create({
-              organizerDiscordId: identity.discordId,
-              organizerCharacter: payload.character,
-              guildIds: [...guildIds],
-              world: payload.world,
-              ...(payload.description === undefined
-                ? {}
-                : { description: payload.description }),
-              ...(payload.minLvl === undefined
-                ? {}
-                : { minLvl: payload.minLvl }),
-              ...(payload.maxLvl === undefined
-                ? {}
-                : { maxLvl: payload.maxLvl }),
-            }),
-          ),
-        list: (identity, accessibleGuildIds) =>
-          attempt(() =>
-            readyRoomService.list({
-              viewerDiscordId: identity.discordId,
-              accessibleGuildIds: [...accessibleGuildIds],
-            }),
-          ),
-        get: (identity, notificationId, accessibleGuildIds) =>
-          attempt(() =>
-            readyRoomService.get({
-              notificationId,
-              viewerDiscordId: identity.discordId,
-              accessibleGuildIds: [...accessibleGuildIds],
-            }),
-          ),
-        apply: (identity, notificationId, accessibleGuildIds, payload) =>
-          attempt(() =>
-            readyRoomService.join({
-              notificationId,
-              participantDiscordId: identity.discordId,
-              character: payload.character,
-              world: payload.world,
-              accessibleGuildIds: [...accessibleGuildIds],
-            }),
-          ),
-        withdraw: (identity, notificationId, payload) =>
-          attempt(() =>
-            readyRoomService.withdraw({
-              notificationId,
-              participantDiscordId: identity.discordId,
-              participantId: payload.participantId,
-            }),
-          ),
-        remove: (identity, notificationId, payload) =>
-          attempt(() =>
-            readyRoomService.remove({
-              notificationId,
-              organizerDiscordId: identity.discordId,
-              participantId: payload.participantId,
-              expectedRevision: payload.expectedRevision,
-            }),
-          ),
-        resolveInvitationTargets: (identity, notificationId, payload) =>
-          attempt(() =>
-            readyRoomService.resolveInvitationTargets({
-              notificationId,
-              organizerDiscordId: identity.discordId,
-              participantIds: [...payload.participantIds],
-            }),
-          ),
-        observeParty: (identity, notificationId, payload) =>
-          attempt(() =>
-            readyRoomService.observeParty({
-              notificationId,
-              organizerDiscordId: identity.discordId,
-              organizerAccountId: payload.organizerAccountId,
-              organizerCharacterId: payload.organizerCharacterId,
-              memberCharacterIds: [...payload.memberCharacterIds],
-            }),
-          ),
-        cancel: (identity, notificationId, payload) =>
-          attempt(() =>
-            readyRoomService.cancel({
-              notificationId,
-              organizerDiscordId: identity.discordId,
-              expectedRevision: payload.expectedRevision,
-            }),
-          ),
-      }),
-    );
+        ),
+      list: (identity, accessibleGuildIds) =>
+        attempt(() =>
+          readyRoomService.list({
+            viewerDiscordId: identity.discordId,
+            accessibleGuildIds: [...accessibleGuildIds],
+          }),
+        ),
+      get: (identity, notificationId, accessibleGuildIds) =>
+        attempt(() =>
+          readyRoomService.get({
+            notificationId,
+            viewerDiscordId: identity.discordId,
+            accessibleGuildIds: [...accessibleGuildIds],
+          }),
+        ),
+      apply: (identity, notificationId, accessibleGuildIds, payload) =>
+        attempt(() =>
+          readyRoomService.join({
+            notificationId,
+            participantDiscordId: identity.discordId,
+            character: payload.character,
+            world: payload.world,
+            accessibleGuildIds: [...accessibleGuildIds],
+          }),
+        ),
+      withdraw: (identity, notificationId, payload) =>
+        attempt(() =>
+          readyRoomService.withdraw({
+            notificationId,
+            participantDiscordId: identity.discordId,
+            participantId: payload.participantId,
+          }),
+        ),
+      remove: (identity, notificationId, payload) =>
+        attempt(() =>
+          readyRoomService.remove({
+            notificationId,
+            organizerDiscordId: identity.discordId,
+            participantId: payload.participantId,
+            expectedRevision: payload.expectedRevision,
+          }),
+        ),
+      resolveInvitationTargets: (identity, notificationId, payload) =>
+        attempt(() =>
+          readyRoomService.resolveInvitationTargets({
+            notificationId,
+            organizerDiscordId: identity.discordId,
+            participantIds: [...payload.participantIds],
+          }),
+        ),
+      observeParty: (identity, notificationId, payload) =>
+        attempt(() =>
+          readyRoomService.observeParty({
+            notificationId,
+            organizerDiscordId: identity.discordId,
+            organizerAccountId: payload.organizerAccountId,
+            organizerCharacterId: payload.organizerCharacterId,
+            memberCharacterIds: [...payload.memberCharacterIds],
+          }),
+        ),
+      cancel: (identity, notificationId, payload) =>
+        attempt(() =>
+          readyRoomService.cancel({
+            notificationId,
+            organizerDiscordId: identity.discordId,
+            expectedRevision: payload.expectedRevision,
+          }),
+        ),
+    });
   }
 }
 

@@ -27,6 +27,7 @@ import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.han
 import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
+import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { ApiRedis } from "./api-redis.js";
@@ -95,25 +96,45 @@ const NativeInternalGuildsData = Layer.unwrap(
   ),
 );
 
+const nativeLogger = {
+  log: (entry: unknown) =>
+    Effect.runSync(
+      Effect.log(typeof entry === "string" ? entry : JSON.stringify(entry)),
+    ),
+} as Logger;
+
+const makeAmqpAdapter = (rabbit: RabbitMessaging["Service"]) =>
+  ({
+    publish: (exchange: string, routingKey: string, payload: unknown) =>
+      Effect.runPromise(
+        rabbit.publish({
+          exchange: exchange as "default",
+          routingKey: routingKey as Parameters<
+            typeof rabbit.publish
+          >[0]["routingKey"],
+          content: new TextEncoder().encode(JSON.stringify(payload)),
+        }),
+      ),
+  }) as unknown as AmqpConnection;
+
+const makeReadyRoomService = (
+  redis: ApiRedis["Service"],
+  amqp: AmqpConnection,
+) =>
+  new ReadyRoomService(
+    new ReadyRoomRedisRepository(redis),
+    {} as ChatService,
+    Date.now,
+    randomUUID,
+    new ReadyRoomPublisher(amqp, nativeLogger),
+    randomUUID,
+  );
+
 const NativeMessagingData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
-    const logger = {
-      log: (entry: unknown) => Effect.runSync(Effect.log(String(entry))),
-    } as Logger;
-    const amqp = {
-      publish: (exchange: string, routingKey: string, payload: unknown) =>
-        Effect.runPromise(
-          rabbit.publish({
-            exchange: exchange as "default",
-            routingKey: routingKey as Parameters<
-              typeof rabbit.publish
-            >[0]["routingKey"],
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-          }),
-        ),
-    } as unknown as AmqpConnection;
+    const amqp = makeAmqpAdapter(rabbit);
 
     return makeScopedCompatibilityLayer(MessagingData, (runtime) => {
       const guildsRepository = new GuildsRepository(runtime);
@@ -123,23 +144,31 @@ const NativeMessagingData = Layer.unwrap(
           permissions: Parameters<GuildsRepository["findForPermissions"]>[1],
         ) => guildsRepository.findForPermissions(discordId, permissions),
       };
-      const readyRoom = new ReadyRoomService(
-        new ReadyRoomRedisRepository(redis),
-        {} as ChatService,
-        Date.now,
-        randomUUID,
-        new ReadyRoomPublisher(amqp, logger),
-        randomUUID,
-      );
+      const readyRoom = makeReadyRoomService(redis, amqp);
       const service = new MessagingService(
-        logger,
+        nativeLogger,
         amqp,
         guilds as never,
         redis,
         readyRoom,
-        new NotificationRateLimiterService(logger, redis),
+        new NotificationRateLimiterService(nativeLogger, redis),
       );
       return MessagingData.makeService(service);
+    });
+  }),
+);
+
+const NativeReadyRoomData = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const readyRoom = makeReadyRoomService(redis, makeAmqpAdapter(rabbit));
+    return makeScopedCompatibilityLayer(ReadyRoomData, (runtime) => {
+      const guilds = new GuildsRepository(runtime);
+      return ReadyRoomData.makeServices(readyRoom, {
+        getGuildsForRequiredPermissions: (discordId, permissions) =>
+          guilds.findForPermissions(discordId, permissions),
+      });
     });
   }),
 );
@@ -152,4 +181,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativePublicSystemData,
   NativeInternalGuildsData,
   NativeMessagingData,
+  NativeReadyRoomData,
 ).pipe(Layer.provide(ApiDatabaseLive));
