@@ -1,10 +1,5 @@
 import { InjectQueue } from "@nestjs/bullmq";
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import type { Queue as BullQueue } from "bullmq";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
@@ -20,10 +15,12 @@ import type {
   RefreshJobWithCooldown,
 } from "./member.types.js";
 import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
+import { MemberRefreshJobReadService } from "./member-refresh-job-read.service.js";
 
 @Injectable()
 export class MemberBulkRefreshService {
   private readonly env: RuntimeEnvironment;
+  private readonly reads: MemberRefreshJobReadService;
 
   constructor(
     @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
@@ -34,6 +31,7 @@ export class MemberBulkRefreshService {
     private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,
   ) {
     this.env = serviceConfig.env;
+    this.reads = new MemberRefreshJobReadService(this.refreshJobs);
   }
 
   async createBulkRefreshJob(
@@ -98,24 +96,14 @@ export class MemberBulkRefreshService {
   async getLatestRefreshJob(
     guildId: string,
   ): Promise<RefreshJobWithCooldown | null> {
-    const job = await this.refreshJobs.findLatest(guildId);
-
-    return job ? this.withRefreshJobCooldown(job) : null;
+    return this.reads.getLatest(guildId);
   }
 
   async getRefreshJobStatus(options: {
     guildId: string;
     jobId: number;
   }): Promise<RefreshJobWithCooldown> {
-    const job = await this.refreshJobs.findById(options.jobId, options.guildId);
-
-    if (!job) {
-      throw new NotFoundException({
-        message: ErrorKey.REFRESH_JOB_NOT_FOUND,
-      });
-    }
-
-    return this.withRefreshJobCooldown(job);
+    return this.reads.get(options.guildId, options.jobId);
   }
 
   private withRefreshJobCooldown(
