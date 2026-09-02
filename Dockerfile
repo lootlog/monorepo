@@ -227,7 +227,7 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD bun -e 'const response = await fetch("http://127.0.0.1:4000/healthz"); if (!response.ok) process.exit(1)'
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["bun", "--enable-source-maps", "--preload", "./dist/src/instrumentation.js", "dist/src/main.js"]
+CMD ["bun", "--enable-source-maps", "dist/src/main.js"]
 
 FROM runtime-base AS discord-bot
 
