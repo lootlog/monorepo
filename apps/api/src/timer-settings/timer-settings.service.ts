@@ -4,9 +4,11 @@ import type {
   SettingsDocumentsResponse,
 } from "#src/settings-documents/settings-documents.service";
 import { Effect } from "effect";
-import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto.js";
-import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto.js";
-import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto.js";
+import type {
+  MigrateTimerSettingsDto,
+  UpdateGuildTimerSettingsDto,
+  UpdateTimerSettingsDto,
+} from "#src/http-api/lootlog-api";
 
 const APPEARANCE_FIELDS = [
   "displayConfig",
@@ -76,10 +78,10 @@ const mapGlobalSettingsResponse = (
   const timerAppearance = asRecord(appearance?.effective.timers);
   const effectiveTimers = timers?.effective ?? {};
   const updatedAtValues = [appearance?.updatedAt, timers?.updatedAt]
-    .filter((value): value is string => value !== undefined)
-    .sort();
+    .filter((value): value is Date => value !== undefined)
+    .sort((left, right) => left.getTime() - right.getTime());
   const updatedAtValue = updatedAtValues[updatedAtValues.length - 1];
-  const updatedAt = updatedAtValue ? new Date(updatedAtValue) : new Date();
+  const updatedAt = updatedAtValue ?? new Date();
   const timersSortOrder: "asc" | "desc" =
     effectiveTimers.timersSortOrder === "desc" ? "desc" : "asc";
 
@@ -112,7 +114,7 @@ const mapGuildSettingsResponse = (
   response: SettingsDocumentsResponse,
 ) => {
   const timers = response.domains.timers;
-  const updatedAt = timers?.updatedAt ? new Date(timers.updatedAt) : new Date();
+  const updatedAt = timers?.updatedAt ?? new Date();
   return {
     userId,
     guildId,
@@ -193,7 +195,7 @@ export const makeTimerSettings = (
             {
               domain: "appearance" as const,
               scope: { type: "USER" as const, id: userId },
-              set: { timers: appearanceSet },
+              set: { timers: asJsonObject(appearanceSet) },
               unset: [],
             },
           ]
@@ -203,7 +205,7 @@ export const makeTimerSettings = (
             {
               domain: "timers" as const,
               scope: { type: "USER" as const, id: userId },
-              set: timersSet,
+              set: asJsonObject(timersSet),
               unset: [],
             },
           ]

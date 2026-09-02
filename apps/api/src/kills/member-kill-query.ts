@@ -2,7 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { GetMemberKillsDto } from "./dto/get-member-kills.dto.js";
+import type { KillsControllerGetMemberKillsQuery as GetMemberKillsDto } from "#src/http-api/lootlog-api";
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,

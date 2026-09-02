@@ -20,10 +20,7 @@ import {
   canDeleteChatMessage,
   canEditChatMessage,
 } from "#src/chat/chat-message-permissions";
-import {
-  MessageType,
-  type SendMessageDto as LegacySendMessageDto,
-} from "#src/chat/dto/send-message.dto";
+import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import type { ChatMessageViewer } from "#src/chat/types/chat-message-viewer.type";
 import { canViewChatMessage } from "#src/shared/utils/can-view-chat-message";
@@ -31,7 +28,6 @@ import {
   ForbiddenException,
   NotFoundException,
 } from "#src/shared/http/http-errors";
-import type { SendMessageDto } from "../../lootlog-api.generated.js";
 import { ChatData, ChatOperationError } from "./chat.handlers.js";
 
 export interface ChatRedis {
@@ -81,20 +77,6 @@ const routingFor = (message: Pick<ChatStoredMessage, "type" | "npc">) => {
     ? { tier: "base" as const }
     : { tier: getNpcRoutingTier(message.npc), npcLevel: message.npc.lvl };
 };
-
-const toLegacyPayload = (payload: SendMessageDto): LegacySendMessageDto => ({
-  ...payload,
-  type: payload.type as MessageType,
-  replyTo: payload.replyTo
-    ? {
-        ...payload.replyTo,
-        type:
-          payload.replyTo.type === "NORMAL"
-            ? (MessageType.NORMAL as const)
-            : (MessageType.NOTIFICATION as const),
-      }
-    : undefined,
-});
 
 export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
   Effect.map(ApiDatabase, (database) => {
@@ -208,7 +190,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
       endPartyGatheringMessages,
       service: ChatData.of({
         sendMessage: (discordId, guildId, payload) => {
-          const data = toLegacyPayload(payload);
+          const data = payload;
           const message: ChatStoredMessage = {
             ...data,
             id: v6(),

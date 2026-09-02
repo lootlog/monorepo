@@ -8,7 +8,7 @@ import type {
   LootsControllerCreateComment201,
   LootsControllerCreateCommentRequestJson,
   LootsControllerFetchLootById200,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   createComment,
   createKill,

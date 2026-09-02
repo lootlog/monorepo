@@ -1,0 +1,239 @@
+openapi: 3.0.0
+info:
+  title: Discord Bot API
+  version: "1.0"
+  contact: {}
+paths:
+  /healthz:
+    get:
+      tags:
+        - health
+      operationId: health.DiscordBotHealth
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Health check
+  /internal/guilds/{guildId}/channels:
+    get:
+      tags:
+        - internal
+      operationId: internal.DiscordBotGetGuildChannels
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: DiscordGuildChannels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildChannels"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - Discord synchronization failed
+                required:
+                  - message
+  /internal/guilds/{guildId}/channels/refresh:
+    post:
+      tags:
+        - internal
+      operationId: internal.DiscordBotRefreshGuildChannels
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: DiscordGuildChannels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildChannels"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - Discord synchronization failed
+                required:
+                  - message
+  /internal/guilds/{guildId}/sync-status:
+    get:
+      tags:
+        - internal
+      operationId: internal.DiscordBotGetGuildSyncStatus
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: DiscordGuildSyncState
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildSyncState"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - Discord synchronization failed
+                required:
+                  - message
+components:
+  schemas:
+    DiscordGuildChannel:
+      type: object
+      properties:
+        guildId:
+          type: string
+        channelId:
+          type: string
+        name:
+          type: string
+        channelType:
+          type: string
+        parentId:
+          nullable: true
+          type: string
+        position:
+          type: integer
+        active:
+          type: boolean
+        canView:
+          type: boolean
+        canSend:
+          type: boolean
+        hasRequiredPermissions:
+          type: boolean
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+        grantedPermissions:
+          type: array
+          items:
+            type: string
+        missingPermissions:
+          type: array
+          items:
+            type: string
+        lastSyncedAt:
+          type: string
+      required:
+        - guildId
+        - channelId
+        - name
+        - channelType
+        - parentId
+        - position
+        - active
+        - canView
+        - canSend
+        - hasRequiredPermissions
+        - requiredPermissions
+        - grantedPermissions
+        - missingPermissions
+        - lastSyncedAt
+    DiscordGuildSyncState:
+      type: object
+      properties:
+        guildId:
+          type: string
+        status:
+          type: string
+          enum:
+            - SYNCED
+            - SYNCING
+            - FAILED
+            - STALE
+            - NOT_FOUND
+        hasRequiredPermissions:
+          type: boolean
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+        grantedPermissions:
+          type: array
+          items:
+            type: string
+        missingPermissions:
+          type: array
+          items:
+            type: string
+        channelCount:
+          type: integer
+        selectableChannelCount:
+          type: integer
+        lastAttemptAt:
+          nullable: true
+          type: string
+        lastSuccessAt:
+          nullable: true
+          type: string
+        lastError:
+          nullable: true
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - guildId
+        - status
+        - hasRequiredPermissions
+        - requiredPermissions
+        - grantedPermissions
+        - missingPermissions
+        - channelCount
+        - selectableChannelCount
+        - lastAttemptAt
+        - lastSuccessAt
+        - lastError
+        - updatedAt
+    DiscordGuildChannels:
+      type: object
+      properties:
+        guildId:
+          type: string
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscordGuildChannel"
+        syncState:
+          $ref: "#/components/schemas/DiscordGuildSyncState"
+      required:
+        - guildId
+        - channels
+        - syncState
+tags: []

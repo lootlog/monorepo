@@ -6,7 +6,7 @@ import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
-import { authConfig } from "#src/config/auth.config";
+import { apiConfig } from "#src/config/api.config";
 import { RedisService } from "#src/redis/redis.service";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
@@ -34,7 +34,9 @@ export class AuthService {
     private readonly redisService: RedisService,
     private readonly httpClient: HttpClientValue,
   ) {
-    this.authServiceUrl = authConfig.serviceUrl;
+    this.authServiceUrl = apiConfig.authServiceUrl
+      .toString()
+      .replace(/\/$/, "");
   }
 
   private async fetchIdpToken(

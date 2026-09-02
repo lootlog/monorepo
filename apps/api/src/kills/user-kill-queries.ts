@@ -8,8 +8,10 @@ import {
   userKillStatsTable,
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { GetUserKillStatsDto } from "./dto/get-kill-stats.dto.js";
-import type { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto.js";
+import type {
+  KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto,
+  KillsControllerGetUserNpcKillsQuery as GetUserNpcKillsDto,
+} from "#src/http-api/lootlog-api";
 import { getKillStatsPeriodStart } from "./utils/kill-stats-period.js";
 
 const CACHE_TTL_SECONDS = 30;

@@ -11,7 +11,7 @@ import {
   roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import { getAdminBulkRefreshRateLimit } from "#src/members/constants/member-cache.constant";
 import { ErrorKey } from "#src/members/enum/error-key.enum";
 import {
@@ -312,7 +312,7 @@ export const MemberRefreshJobDataLive = Layer.effect(
       ...job,
       nextAvailableAt: new Date(
         job.createdAt.getTime() +
-          getAdminBulkRefreshRateLimit(serviceConfig.env),
+          getAdminBulkRefreshRateLimit(apiConfig.environment),
       ),
     });
     const operation = <A, E>(effect: Effect.Effect<A, E>) =>

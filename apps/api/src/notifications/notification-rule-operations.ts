@@ -10,10 +10,12 @@ import {
   notificationRuleTargetTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
-import { NotificationFiltersResponseDto } from "./dto/notification-response.dto.js";
+import { NotificationFiltersResponse } from "./notification-response.schema.js";
 import type { JsonObject, JsonValue } from "./notification-database.types.js";
-import type { CreateNotificationRuleDto } from "./dto/create-notification-rule.dto.js";
-import type { UpdateNotificationRuleDto } from "./dto/update-notification-rule.dto.js";
+import type {
+  CreateNotificationRuleDto,
+  UpdateNotificationRuleDto,
+} from "#src/http-api/lootlog-api";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import {
   NotificationJobKind,
@@ -119,7 +121,9 @@ export const makeNotificationRuleOperations = (
         filters:
           rule.filters === null
             ? null
-            : NotificationFiltersResponseDto.schema.parse(rule.filters),
+            : Schema.decodeUnknownSync(NotificationFiltersResponse)(
+                rule.filters,
+              ),
         targets: (targetsByRule.get(rule.id) ?? []).map(({ link, target }) => ({
           ...link,
           target: {

@@ -31,7 +31,6 @@
       "packages/*"
     ],
     "catalog": {
-      "@effect/openapi-generator": "4.0.0-rc.112",
       "@effect/platform-bun": "4.0.0-rc.112",
       "@effect/sql-pg": "4.0.0-rc.112",
       "@lexical/code": "0.48.0",
@@ -90,8 +89,7 @@
     "perf:gateway": "bun tools/k6/gateway.mjs",
     "perf:k6": "bun tools/k6/run-k6.mjs",
     "perf:k6:smoke": "bun tools/k6/run-k6.mjs --profile smoke",
-    "openapi:generate": "turbo run openapi:generate --filter=@lootlog/api --filter=@lootlog/search --filter=@lootlog/activity --filter=@lootlog/battlelog --filter=@lootlog/auth",
-    "http-api:generate": "turbo run http-api:generate --filter=@lootlog/search --filter=@lootlog/activity --filter=@lootlog/battlelog --filter=@lootlog/auth",
+    "openapi:generate": "turbo run openapi:generate --filter=@lootlog/api --filter=@lootlog/search --filter=@lootlog/activity --filter=@lootlog/battlelog --filter=@lootlog/auth --filter=@lootlog/gateway --filter=@lootlog/discord-bot",
     "openapi:parity": "bun packages/client/scripts/check-openapi-parity.ts",
     "client:check": "turbo run client:check --filter=@lootlog/client",
     "client:generate": "turbo run client:generate --filter=@lootlog/client",
@@ -132,7 +130,6 @@
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
-    "@effect/openapi-generator": "catalog:",
     "@lootlog/client": "workspace:*",
     "husky": "^9.1.7",
     "jsonc-parser": "^3.3.1",

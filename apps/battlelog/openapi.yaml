@@ -1,26 +1,29 @@
 openapi: 3.0.0
+info:
+  title: Battle Log API
+  version: "1.0"
+  description: The Battle Log API documentation
+  contact: {}
 paths:
   /healthz:
     get:
-      description: Check the health status of the API
+      tags:
+        - health
       operationId: HealthzController_healthCheck
       parameters: []
       responses:
         "200":
           description: API is healthy
+      description: Check the health status of the API
       summary: Health check
-      tags:
-        - health
   /battles:
     post:
+      tags:
+        - battles
       operationId: BattlesController_createBattle
       parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateBattleDto"
+      security:
+        - bearer: []
       responses:
         "201":
           description: ""
@@ -28,49 +31,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleCreatedResponseDto_Output"
-      security:
-        - bearer: []
       summary: Create a battle
-      tags:
-        - battles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBattleDto"
+        required: true
   /battles/@me:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getDashboardBattles
       parameters:
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: number
             minimum: 1
             maximum: 100
             default: 20
-            type: number
-        - name: sortOrder
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
+          schema: &a1
             type: boolean
-        - name: world
           required: false
+        - name: world
           in: query
           schema:
             type: string
-        - name: type
           required: false
+        - name: type
           in: query
           schema:
             type: array
@@ -79,30 +85,29 @@ paths:
               enum:
                 - solo
                 - group
-        - name: userId
           required: false
+        - name: userId
           in: query
           schema:
             type: string
+          required: false
         - name: public
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: characterId
+          schema: *a1
           required: false
+        - name: characterId
           in: query
           schema:
             type: array
             items:
               type: string
-        - name: search
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: result
           required: false
+        - name: result
           in: query
           schema:
             type: array
@@ -112,44 +117,45 @@ paths:
                 - won
                 - lost
                 - flee
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: number
             minimum: 1
             maximum: 1000
-            type: number
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: number
             minimum: 1
             maximum: 1000
-            type: number
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -157,15 +163,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattlesListResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get authenticated user battles
-      tags:
-        - battles
   /battles/@me/characters:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getUserCharacters
       parameters: []
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -173,27 +179,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleCharactersResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get authenticated user battle characters
-      tags:
-        - battles
   /battles/@me/analytics:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getBattleAnalytics
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -205,44 +208,45 @@ paths:
               - 30d
               - 90d
               - 180d
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -250,25 +254,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleAnalyticsResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get authenticated user battle analytics
-      tags:
-        - battles
   /battles/@me/abyss/seasons:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getAbyssSeasons
       parameters:
         - name: characterId
+          in: query
+          schema:
+            type: string
           required: true
-          in: query
-          schema:
-            type: string
         - name: world
-          required: false
           in: query
           schema:
             type: string
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -278,27 +282,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AbyssSeasonResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get authenticated user Abyss seasons
-      tags:
-        - battles
   /battles/@me/statistics/combat-profile:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getCombatProfile
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -311,51 +312,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -365,42 +365,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -408,27 +409,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CombatProfileResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get combat profile statistics
-      tags:
-        - battles
   /battles/@me/statistics/profession-win-rate:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getProfessionWinRate
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -441,51 +439,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -495,42 +492,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -540,27 +538,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProfessionWinRateResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get profession win rate statistics
-      tags:
-        - battles
   /battles/@me/statistics/head-to-head:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getHeadToHead
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -573,51 +568,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -627,42 +621,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -670,27 +665,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeadToHeadPaginatedResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get head-to-head statistics
-      tags:
-        - battles
   /battles/@me/statistics/streak:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getCurrentStreak
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -703,51 +695,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -757,42 +748,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -800,27 +792,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StreakResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get current battle streak statistics
-      tags:
-        - battles
   /battles/@me/statistics/duration:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getBattleDuration
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -833,51 +822,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -887,42 +875,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -930,27 +919,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleDurationStatsResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get battle duration statistics
-      tags:
-        - battles
   /battles/@me/statistics/ph-growth:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getPhGrowth
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -963,51 +949,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -1017,42 +1002,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1062,27 +1048,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PhGrowthDataPointResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get PH growth statistics
-      tags:
-        - battles
   /battles/@me/statistics/rating-growth:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getRatingGrowth
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -1095,51 +1078,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -1149,42 +1131,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1194,27 +1177,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RatingGrowthDataPointResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get rating growth statistics
-      tags:
-        - battles
   /battles/@me/statistics/rating-delta-by-opponent:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getRatingDeltaByOpponent
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -1227,51 +1207,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -1281,42 +1260,43 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1326,27 +1306,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RatingDeltaByOpponentResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get rating delta by opponent statistics
-      tags:
-        - battles
   /battles/@me/statistics/player-vs-player:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getPlayerVsPlayerBattles
       parameters:
         - name: characterId
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: period
           required: false
+        - name: period
           in: query
           schema:
             type: string
@@ -1359,51 +1336,50 @@ paths:
               - 90d
               - 180d
               - all
+          required: false
         - name: minLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: maxLevel
-          required: false
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: startDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: endDate
-          required: false
           in: query
           schema:
+            type: string
             format: date-time
             pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            type: string
+          required: false
         - name: cursor
-          required: false
           in: query
           schema:
             type: string
-        - name: size
           required: false
+        - name: size
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
-        - name: sortBy
           required: false
+        - name: sortBy
           in: query
           schema:
-            default: totalBattles
             type: string
             enum:
               - wins
@@ -1413,52 +1389,53 @@ paths:
               - lastBattleDate
               - totalRatingDelta
               - avgRatingDelta
-        - name: sortOrder
+            default: totalBattles
           required: false
+        - name: sortOrder
           in: query
           schema:
-            default: desc
             type: string
             enum:
               - asc
               - desc
+            default: desc
+          required: false
         - name: includeTotal
-          required: false
           in: query
-          schema:
-            type: boolean
-        - name: search
+          schema: *a1
           required: false
+        - name: search
           in: query
           schema:
             type: string
-        - name: minBattles
           required: false
+        - name: minBattles
           in: query
           schema:
+            type: integer
             minimum: 1
             maximum: 9007199254740991
-            type: integer
+          required: false
         - name: ph
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: matchmaking
-          required: false
           in: query
-          schema:
-            type: boolean
+          schema: *a1
+          required: false
         - name: opponentId
+          in: query
+          schema:
+            type: string
           required: true
-          in: query
-          schema:
-            type: string
         - name: excludeBattleId
-          required: false
           in: query
           schema:
             type: string
+          required: false
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1466,20 +1443,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlayerVsPlayerPaginatedResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get player-vs-player battles
-      tags:
-        - battles
   /battles/@me/warriors/search:
     get:
+      tags:
+        - battles
       operationId: BattlesController_searchWarriors
       parameters:
         - name: q
-          required: true
           in: query
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1487,15 +1464,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleWarriorsSearchResponseDto_Output"
-      security:
-        - bearer: []
       summary: Search warriors for authenticated user
-      tags:
-        - battles
   /battles/@me/worlds:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getUserWorlds
       parameters: []
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1503,20 +1480,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleUserWorldsResponseDto_Output"
-      security:
-        - bearer: []
       summary: Get worlds used by authenticated user battles
-      tags:
-        - battles
   /battles/{battleId}/timeline:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getBattleTimeline
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1526,20 +1503,20 @@ paths:
                 $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
         "404":
           description: Battle not found
-      security:
-        - bearer: []
       summary: Get computed battle timeline
-      tags:
-        - battles
   /battles/{battleId}:
     get:
+      tags:
+        - battles
       operationId: BattlesController_getBattle
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1549,47 +1526,19 @@ paths:
                 $ref: "#/components/schemas/BattleResponseDto_Output"
         "404":
           description: Battle not found
-      security:
-        - bearer: []
       summary: Get a single battle
-      tags:
-        - battles
-    patch:
-      operationId: BattlesController_updateBattle
-      parameters:
-        - name: battleId
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateBattleDto"
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BattleResponseDto_Output"
-        "404":
-          description: Battle not found
-      security:
-        - bearer: []
-      summary: Update battle visibility
-      tags:
-        - battles
     delete:
+      tags:
+        - battles
       operationId: BattlesController_deleteBattle
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1599,20 +1548,48 @@ paths:
                 $ref: "#/components/schemas/BattleDeletedResponseDto_Output"
         "404":
           description: Battle not found
-      security:
-        - bearer: []
       summary: Delete a battle
+    patch:
       tags:
         - battles
-  /battles/{battleId}/raw:
-    get:
-      operationId: BattlesController_getBattleRawData
+      operationId: BattlesController_updateBattle
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Update battle visibility
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBattleDto"
+        required: true
+  /battles/{battleId}/raw:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getBattleRawData
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
       responses:
         "200":
           description: ""
@@ -1622,20 +1599,18 @@ paths:
                 $ref: "#/components/schemas/BattleRawResponseDto_Output"
         "404":
           description: Battle not found
-      security:
-        - bearer: []
       summary: Get raw battle payload
-      tags:
-        - battles
   /battles/public/{battleId}:
     get:
+      tags:
+        - public-battles
       operationId: PublicBattlesController_getPublicBattle
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
       responses:
         "200":
           description: ""
@@ -1646,17 +1621,17 @@ paths:
         "404":
           description: Public battle not found
       summary: Get a public battle
-      tags:
-        - public-battles
   /battles/public/{battleId}/raw:
     get:
+      tags:
+        - public-battles
       operationId: PublicBattlesController_getPublicBattleRaw
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
       responses:
         "200":
           description: ""
@@ -1667,17 +1642,17 @@ paths:
         "404":
           description: Public battle not found
       summary: Get raw payload for a public battle
-      tags:
-        - public-battles
   /battles/public/{battleId}/timeline:
     get:
+      tags:
+        - public-battles
       operationId: PublicBattlesController_getPublicBattleTimeline
       parameters:
         - name: battleId
-          required: true
           in: path
           schema:
             type: string
+          required: true
       responses:
         "200":
           description: ""
@@ -1688,18 +1663,12 @@ paths:
         "404":
           description: Public battle not found
       summary: Get computed timeline for a public battle
-      tags:
-        - public-battles
   /internal/delete-user-data:
     post:
+      tags:
+        - internal
       operationId: InternalController_deleteUserData
       parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DeleteUserDataDto"
       responses:
         "201":
           description: ""
@@ -1708,21 +1677,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/BattleAcceptedResponseDto_Output"
       summary: Queue battle data deletion for a user
-      tags:
-        - internal
-info:
-  title: Battle Log API
-  description: The Battle Log API documentation
-  version: "1.0"
-  contact: {}
-tags: []
-servers: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteUserDataDto"
+        required: true
 components:
-  securitySchemes:
-    bearer:
-      scheme: bearer
-      bearerFormat: JWT
-      type: http
   schemas:
     CreateBattleDto:
       type: object
@@ -1740,7 +1701,6 @@ components:
         matchmaking:
           type: boolean
         events:
-          minItems: 1
           type: array
           items:
             type: object
@@ -1872,6 +1832,7 @@ components:
                 type: number
             required:
               - f
+          minItems: 1
       required:
         - accountId
         - characterId
@@ -1934,6 +1895,7 @@ components:
                 type: object
                 properties:
                   topDamageDealer:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -1948,8 +1910,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   topTank:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -1964,8 +1926,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   bestEfficiency:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -1980,8 +1942,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   criticalMaster:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -1996,8 +1958,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   evasionExpert:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -2012,8 +1974,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   shieldWall:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -2028,8 +1990,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   damagePerTurn:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -2044,8 +2006,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   mostActive:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -2060,8 +2022,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   legendaryWarrior:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -2076,8 +2038,8 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                   untouchable:
+                    nullable: true
                     type: object
                     properties:
                       warriorId:
@@ -2092,7 +2054,6 @@ components:
                       - warriorId
                       - name
                       - value
-                    nullable: true
                 required:
                   - topDamageDealer
                   - topTank
@@ -2105,59 +2066,59 @@ components:
                   - legendaryWarrior
                   - untouchable
               difficultyRank:
-                type: number
                 nullable: true
+                type: number
               result:
-                type: number
                 nullable: true
+                type: number
               ratingDelta:
-                type: number
                 nullable: true
+                type: number
               opponentLvl:
-                type: number
                 nullable: true
+                type: number
               opponentOplvl:
-                type: number
                 nullable: true
+                type: number
               opponentRating:
-                type: number
                 nullable: true
+                type: number
               rating:
-                type: number
                 nullable: true
+                type: number
               status:
-                type: number
                 nullable: true
+                type: number
               pointsGained:
-                type: number
                 nullable: true
+                type: number
               placementCur:
-                type: number
                 nullable: true
+                type: number
               placementMax:
-                type: number
                 nullable: true
+                type: number
               dailyStageId:
-                type: number
                 nullable: true
+                type: number
               dailyPointsCur:
-                type: number
                 nullable: true
+                type: number
               dailyPointsMax:
-                type: number
                 nullable: true
+                type: number
               dailyPointsStep:
-                type: number
                 nullable: true
+                type: number
               dailyRewardsLast:
-                type: number
                 nullable: true
+                type: number
               dailyRewardsCur:
-                type: number
                 nullable: true
+                type: number
               dailyRewardsMax:
-                type: number
                 nullable: true
+                type: number
               warriors:
                 type: array
                 items:
@@ -2563,11 +2524,11 @@ components:
         totalRatingDelta:
           type: number
         peakRating:
-          type: number
           nullable: true
+          type: number
         totalPointsGained:
-          type: number
           nullable: true
+          type: number
       required:
         - id
         - startedAt
@@ -2663,8 +2624,8 @@ components:
               spell:
                 type: string
               skillId:
-                type: number
                 nullable: true
+                type: number
               casts:
                 type: number
               share:
@@ -2987,6 +2948,7 @@ components:
         avgLossDuration:
           type: number
         fastest:
+          nullable: true
           type: object
           properties:
             duration:
@@ -2996,8 +2958,8 @@ components:
           required:
             - duration
             - battleId
-          nullable: true
         longest:
+          nullable: true
           type: object
           properties:
             duration:
@@ -3007,7 +2969,6 @@ components:
           required:
             - duration
             - battleId
-          nullable: true
       required:
         - avgWinDuration
         - avgLossDuration
@@ -3113,14 +3074,14 @@ components:
               matchmaking:
                 type: boolean
               ratingDelta:
-                type: number
                 nullable: true
+                type: number
               userRating:
-                type: number
                 nullable: true
+                type: number
               opponentRating:
-                type: number
                 nullable: true
+                type: number
               userWarrior:
                 type: object
                 properties:
@@ -3288,17 +3249,17 @@ components:
               turn:
                 type: number
               attackerId:
-                type: string
                 nullable: true
+                type: string
               defenderId:
+                nullable: true
                 type: string
-                nullable: true
               attackerHpPercentage:
-                type: number
                 nullable: true
+                type: number
               defenderHpPercentage:
-                type: number
                 nullable: true
+                type: number
               hpByWarrior:
                 type: object
                 additionalProperties:
@@ -3448,11 +3409,11 @@ components:
                     category:
                       type: string
                     actorId:
-                      type: string
                       nullable: true
+                      type: string
                     targetId:
-                      type: string
                       nullable: true
+                      type: string
                     value:
                       type: number
                     handled:
@@ -3803,6 +3764,7 @@ components:
           type: object
           properties:
             topDamageDealer:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3817,8 +3779,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             topTank:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3833,8 +3795,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             bestEfficiency:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3849,8 +3811,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             criticalMaster:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3865,8 +3827,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             evasionExpert:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3881,8 +3843,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             shieldWall:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3897,8 +3859,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             damagePerTurn:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3913,8 +3875,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             mostActive:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3929,8 +3891,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             legendaryWarrior:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3945,8 +3907,8 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
             untouchable:
+              nullable: true
               type: object
               properties:
                 warriorId:
@@ -3961,7 +3923,6 @@ components:
                 - warriorId
                 - name
                 - value
-              nullable: true
           required:
             - topDamageDealer
             - topTank
@@ -3974,59 +3935,59 @@ components:
             - legendaryWarrior
             - untouchable
         difficultyRank:
-          type: number
           nullable: true
+          type: number
         result:
-          type: number
           nullable: true
+          type: number
         ratingDelta:
-          type: number
           nullable: true
+          type: number
         opponentLvl:
-          type: number
           nullable: true
+          type: number
         opponentOplvl:
-          type: number
           nullable: true
+          type: number
         opponentRating:
-          type: number
           nullable: true
+          type: number
         rating:
-          type: number
           nullable: true
+          type: number
         status:
-          type: number
           nullable: true
+          type: number
         pointsGained:
-          type: number
           nullable: true
+          type: number
         placementCur:
-          type: number
           nullable: true
+          type: number
         placementMax:
-          type: number
           nullable: true
+          type: number
         dailyStageId:
-          type: number
           nullable: true
+          type: number
         dailyPointsCur:
-          type: number
           nullable: true
+          type: number
         dailyPointsMax:
-          type: number
           nullable: true
+          type: number
         dailyPointsStep:
-          type: number
           nullable: true
+          type: number
         dailyRewardsLast:
-          type: number
           nullable: true
+          type: number
         dailyRewardsCur:
-          type: number
           nullable: true
+          type: number
         dailyRewardsMax:
-          type: number
           nullable: true
+          type: number
         warriors:
           type: array
           items:
@@ -4325,6 +4286,20 @@ components:
         - dailyRewardsCur
         - dailyRewardsMax
         - warriors
+    BattleDeletedResponseDto_Output:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    UpdateBattleDto:
+      type: object
+      properties:
+        public:
+          type: boolean
+      required:
+        - public
     BattleRawResponseDto_Output:
       type: object
       properties:
@@ -4349,17 +4324,17 @@ components:
                 type: object
                 properties:
                   attackerId:
-                    type: string
                     nullable: true
+                    type: string
                   defenderId:
+                    nullable: true
                     type: string
-                    nullable: true
                   attackerHpPercentage:
-                    type: number
                     nullable: true
+                    type: number
                   defenderHpPercentage:
-                    type: number
                     nullable: true
+                    type: number
                   actions:
                     type: array
                     items:
@@ -4390,20 +4365,6 @@ components:
         - battleId
         - timestamp
         - rawData
-    UpdateBattleDto:
-      type: object
-      properties:
-        public:
-          type: boolean
-      required:
-        - public
-    BattleDeletedResponseDto_Output:
-      type: object
-      properties:
-        message:
-          type: string
-      required:
-        - message
     DeleteUserDataDto:
       type: object
       properties:
@@ -4420,3 +4381,10 @@ components:
             - ACCEPTED
       required:
         - status
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags: []
+servers: []

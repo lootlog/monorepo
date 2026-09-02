@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { UserLootlogConfigControllerGetPlayersCatchingGuilds200 } from "../../lootlog-api.generated.js";
+import { UserLootlogConfigControllerGetPlayersCatchingGuilds200 } from "../../lootlog-api.js";
 import {
   getPlayersCatchingGuilds,
   getUserLootlogAccountConfig,

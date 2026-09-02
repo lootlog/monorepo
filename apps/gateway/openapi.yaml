@@ -1,0 +1,32 @@
+openapi: 3.0.0
+info:
+  title: Realtime Gateway API
+  version: "1.0"
+  contact: {}
+paths:
+  /healthz:
+    get:
+      tags:
+        - health
+      operationId: health.GatewayHealth
+      parameters: []
+      responses:
+        "200":
+          description: GatewayHealth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayHealth"
+      summary: Health check
+components:
+  schemas:
+    GatewayHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+      required:
+        - status
+tags: []

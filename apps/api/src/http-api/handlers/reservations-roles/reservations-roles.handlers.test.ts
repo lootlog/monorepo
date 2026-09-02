@@ -5,7 +5,7 @@ import {
   ReservationResponseDto,
   ReservationSharesResponseDto,
   RoleResponseDto_Output,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   acceptReservationShareInvitation,
   createReservation,

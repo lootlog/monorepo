@@ -3,11 +3,11 @@ import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
-import type { FetchLootsParamsDto } from "../dto/fetch-loots-params.dto.js";
+import type { LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto } from "#src/http-api/lootlog-api";
 import type { LootItemDto } from "../dto/loot-item.dto.js";
 import type { LootNpcDto } from "../dto/loot-npc.dto.js";
 import type { LootQueryResult } from "../dto/loot-query-result.dto.js";
-import { LootShareResponseSchema } from "#src/shared/dto/loot-response.dto";
+import { LootShareResponse } from "#src/loots/loot-response.schema";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination.js";
 import type { LootQueryPersistence } from "./loot-query.persistence.js";
@@ -127,7 +127,11 @@ const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
   world: loot.world,
   source: loot.source,
   location: loot.location,
-  lootShare: LootShareResponseSchema.parse(loot.lootShare),
+  lootShare: Object.fromEntries(
+    Object.entries(
+      Schema.decodeUnknownSync(LootShareResponse)(loot.lootShare),
+    ).map(([key, values]) => [key, [...values]]),
+  ),
   createdAt: loot.createdAt,
   updatedAt: loot.updatedAt,
   items: (loot.lootItems as unknown as LootItemWithSnapshot[]).map(mapItem),
@@ -155,7 +159,7 @@ export const makeLootQueryOperations = (
       }),
     );
 
-  const resolveItemSnapshotIds = (itemNames?: string[]) => {
+  const resolveItemSnapshotIds = (itemNames?: readonly string[]) => {
     const names = Array.from(
       new Set((itemNames ?? []).map((name) => name.trim()).filter(Boolean)),
     );

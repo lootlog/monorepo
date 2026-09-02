@@ -18,6 +18,7 @@
     "./npc-appearance": "./src/npc-appearance.ts",
     "./npc-routing": "./src/npc-routing.ts",
     "./npc-type": "./src/npc-type.ts",
+    "./openapi-compatibility": "./src/openapi-compatibility.ts",
     "./party-ready-room": "./src/party-ready-room.ts",
     "./permissions": "./src/permissions.ts",
     "./primitives": "./src/primitives.ts",

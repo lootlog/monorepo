@@ -1,4 +1,8 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import {
+  SettingsDocumentsResponseSchema,
+  type SettingsDocumentsResponse,
+} from "@lootlog/schema/settings-documents";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
@@ -8,8 +12,6 @@ import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
   LootlogApi,
-  SettingsDocumentsControllerGetPreferences200,
-  SettingsDocumentsControllerPatchPreferences200,
   SoundSettingsControllerGetSettings200,
   SoundSettingsControllerUpdateSettings200,
   TimerSettingsControllerGetGlobalSettings200,
@@ -22,7 +24,7 @@ import {
   type UpdateGuildTimerSettingsDto,
   type UpdateSoundSettingsDto,
   type UpdateTimerSettingsDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export class SettingsAccessDenied extends TaggedErrorClass<SettingsAccessDenied>()(
   "SettingsAccessDenied",
@@ -43,6 +45,10 @@ export class SettingsIdentity extends Context.Service<
 >()("@lootlog/api/http-api/settings/identity") {}
 
 type Operation = Effect.Effect<unknown, SettingsOperationError>;
+type SettingsDocumentsOperation = Effect.Effect<
+  SettingsDocumentsResponse,
+  SettingsOperationError
+>;
 
 export class SettingsData extends Context.Service<
   SettingsData,
@@ -68,11 +74,11 @@ export class SettingsData extends Context.Service<
     readonly getPreferences: (
       userId: string,
       query: SettingsDocumentsControllerGetPreferencesQuery,
-    ) => Operation;
+    ) => SettingsDocumentsOperation;
     readonly patchPreferences: (
       userId: string,
       payload: PatchSettingsDocumentsDto,
-    ) => Operation;
+    ) => SettingsDocumentsOperation;
     readonly getSoundSettings: (userId: string) => Operation;
     readonly updateSoundSettings: (
       userId: string,
@@ -90,22 +96,24 @@ export class SettingsData extends Context.Service<
         effect.pipe(
           Effect.mapError((cause) => new SettingsOperationError({ cause })),
         );
-      const mutable = <A>(value: unknown): A =>
-        JSON.parse(JSON.stringify(value)) as A;
+      const settingsDocumentsResponse = (value: unknown) =>
+        Schema.decodeUnknownEffect(
+          Schema.toType(SettingsDocumentsResponseSchema),
+        )(value).pipe(
+          Effect.mapError((cause) => new SettingsOperationError({ cause })),
+        );
 
       return SettingsData.of({
         getGlobalTimerSettings: (userId) =>
           operation(timer.getGlobalSettings(userId)),
         updateGlobalTimerSettings: (userId, payload) =>
-          operation(timer.updateGlobalSettings(userId, mutable(payload))),
+          operation(timer.updateGlobalSettings(userId, payload)),
         getGuildTimerSettings: (userId, guildId) =>
           operation(timer.getGuildSettings(userId, guildId)),
         updateGuildTimerSettings: (userId, guildId, payload) =>
-          operation(
-            timer.updateGuildSettings(userId, guildId, mutable(payload)),
-          ),
+          operation(timer.updateGuildSettings(userId, guildId, payload)),
         migrateTimerSettings: (userId, payload) =>
-          operation(timer.migrateSettings(userId, mutable(payload))),
+          operation(timer.migrateSettings(userId, payload)),
         getPreferences: (userId, query) =>
           operation(
             Effect.flatMap(documents.parseDomains(query.domains), (domains) =>
@@ -116,21 +124,21 @@ export class SettingsData extends Context.Service<
                 guildId: query.guildId,
               }),
             ),
-          ),
+          ).pipe(Effect.flatMap(settingsDocumentsResponse)),
         patchPreferences: (userId, payload) =>
-          operation(documents.patchPreferences(userId, mutable(payload))),
+          operation(documents.patchPreferences(userId, payload)).pipe(
+            Effect.flatMap(settingsDocumentsResponse),
+          ),
         getSoundSettings: (userId) => operation(sound.getSettings(userId)),
         updateSoundSettings: (userId, payload) =>
-          operation(sound.updateSettings(userId, mutable(payload))),
+          operation(sound.updateSettings(userId, payload)),
       });
     }),
   ).pipe(Layer.provide(SettingsDocumentsRepository.layerDatabase));
 }
 
-const normalize = (value: unknown) => JSON.parse(JSON.stringify(value));
-
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  Schema.decodeUnknownEffect(schema)(normalize(value)).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new SettingsOperationError({ cause })),
   );
 
@@ -193,16 +201,12 @@ export const getPreferences = (
   query: SettingsDocumentsControllerGetPreferencesQuery,
 ) =>
   withIdentity("SettingsDocumentsControllerGetPreferences", (userId, data) =>
-    Effect.flatMap(data.getPreferences(userId, query), (value) =>
-      decode(SettingsDocumentsControllerGetPreferences200, value),
-    ),
+    data.getPreferences(userId, query),
   );
 
 export const patchPreferences = (payload: PatchSettingsDocumentsDto) =>
   withIdentity("SettingsDocumentsControllerPatchPreferences", (userId, data) =>
-    Effect.flatMap(data.patchPreferences(userId, payload), (value) =>
-      decode(SettingsDocumentsControllerPatchPreferences200, value),
-    ),
+    data.patchPreferences(userId, payload),
   );
 
 export const getSoundSettings = () =>

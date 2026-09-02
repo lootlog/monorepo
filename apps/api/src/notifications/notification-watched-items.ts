@@ -14,12 +14,14 @@ import {
   ConflictException,
   NotFoundException,
 } from "#src/shared/http/http-errors";
-import type { CreateWatchedItemQuickAddDto } from "./dto/create-watched-item-quick-add.dto.js";
-import type { CreateWatchedItemDto } from "./dto/create-watched-item.dto.js";
+import type {
+  CreateWatchedItemDto,
+  CreateWatchedItemQuickAddDto,
+} from "#src/http-api/lootlog-api";
 import {
-  NotificationFiltersResponseDto,
-  WatchedItemSnapshotResponseDto,
-} from "./dto/notification-response.dto.js";
+  NotificationFiltersResponse,
+  WatchedItemSnapshotResponse,
+} from "./notification-response.schema.js";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import type { JsonValue } from "./notification-database.types.js";
 import {
@@ -94,7 +96,7 @@ export const makeNotificationWatchedItems = (
     filters:
       rule.filters === null
         ? null
-        : NotificationFiltersResponseDto.schema.parse(rule.filters),
+        : Schema.decodeUnknownSync(NotificationFiltersResponse)(rule.filters),
     targets,
   });
 
@@ -208,7 +210,7 @@ export const makeNotificationWatchedItems = (
           ? mapRule(rule, targets.get(rule.id) ?? [])
           : null,
         itemSnapshot: snapshot
-          ? WatchedItemSnapshotResponseDto.schema.parse({
+          ? Schema.decodeUnknownSync(WatchedItemSnapshotResponse)({
               name: snapshot.name,
               icon: snapshot.icon,
               rarity: snapshot.rarity,
@@ -222,7 +224,7 @@ export const makeNotificationWatchedItems = (
   });
 
   const resolveGuildIds = Effect.fn("notifications.watchedItems.guilds")(
-    function* (discordId: string, userId: string, inputIds: string[]) {
+    function* (discordId: string, userId: string, inputIds: readonly string[]) {
       const uniqueIds = [...new Set(inputIds)];
       if (uniqueIds.length === 0) {
         return yield* Effect.fail(

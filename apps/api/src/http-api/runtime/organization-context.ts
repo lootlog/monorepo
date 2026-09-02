@@ -3,7 +3,7 @@ import { and, eq, or } from "drizzle-orm";
 import { Context, Effect, Layer, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/schema";
 import { getMemberCacheSoftTtl } from "#src/members/constants/member-cache.constant";
@@ -67,7 +67,8 @@ const cachedContextIsFresh = (
   const lastSync = parseDate(context.member.lastDiscordSyncAt);
   return Boolean(
     lastSync &&
-    lastSync.getTime() >= Date.now() - getMemberCacheSoftTtl(serviceConfig.env),
+    lastSync.getTime() >=
+      Date.now() - getMemberCacheSoftTtl(apiConfig.environment),
   );
 };
 

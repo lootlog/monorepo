@@ -24,7 +24,7 @@ import {
   ActivityApi,
   BearerSecurityMiddleware,
   type ActivitiesControllerFindByGuildQuery,
-} from "#src/http-api/activity-api.generated";
+} from "#src/http-api/activity-api";
 import { Permissions } from "#src/permissions/permissions";
 
 type HealthEntry = {

@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
-import { BearerSecurityMiddleware } from "../lootlog-api.generated.js";
+import { BearerSecurityMiddleware } from "../lootlog-api.js";
 import {
   ForwardAuthIdentity,
   type ForwardAuthIdentityValue,

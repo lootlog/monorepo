@@ -4,7 +4,7 @@ import { HttpApi, HttpApiBuilder } from "effect/unstable/httpapi";
 import {
   HealthGroup,
   UserLootlogConfigGroup,
-} from "../src/http-api/lootlog-api.generated.js";
+} from "../src/http-api/lootlog-api.js";
 import {
   UserLootlogConfigData,
   UserLootlogConfigHandlers,

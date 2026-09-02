@@ -8,7 +8,7 @@ import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
-import { LootlogApi } from "../../lootlog-api.generated.js";
+import { LootlogApi } from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;
 type Role = typeof roleTable.$inferSelect;

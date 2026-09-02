@@ -1,6 +1,7 @@
 import { vi } from "#test/bun-test";
+import { Schema } from "effect";
 import type { JsonCodec, RedisService } from "#src/redis/redis.service";
-import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto.js";
+import { EventKillHistoryResponse } from "../event-kill-response.schema.js";
 import { makeEventReadCache } from "./event-read-cache.service.js";
 
 type RedisGetOrSetArgs = {
@@ -73,7 +74,7 @@ describe("EventReadCache", () => {
       }),
     );
 
-    const encoded = EventKillHistoryResponseDto.schema.encode(result);
+    const encoded = Schema.encodeSync(EventKillHistoryResponse)(result);
 
     expect(encoded.data[0]?.minSpawnTimeAtKill).toBe(
       "2026-06-19T09:00:00.000Z",

@@ -5,10 +5,10 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
 import {
+  AcknowledgeExpiredParticipationConfirmationsDto,
   UpdateKillPointDto,
   UpdateRankingPointsDto,
-} from "./dto/update-points.dto.js";
-import { AcknowledgeExpiredParticipationConfirmationsDto } from "./dto/acknowledge-participation-confirmations.dto.js";
+} from "#src/http-api/lootlog-api";
 import type { EventKills } from "./services/event-kill.service.js";
 import type { EventRankingRead } from "./event-ranking-read.js";
 import { Effect } from "effect";

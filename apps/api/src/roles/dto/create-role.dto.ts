@@ -1,13 +1,11 @@
-import * as z from "zod";
-import { createSchemaClass } from "#src/shared/validation/schema-class";
+import { Schema } from "effect";
 
-const CreateRoleSchema = z.object({
-  guildId: z.string(),
-  id: z.string(),
-  name: z.string(),
-  color: z.number(),
-  position: z.number(),
-  admin: z.boolean(),
+export const CreateRoleSchema = Schema.Struct({
+  guildId: Schema.String,
+  id: Schema.String,
+  name: Schema.String,
+  color: Schema.Number,
+  position: Schema.Number,
+  admin: Schema.Boolean,
 });
-
-export class CreateRoleDto extends createSchemaClass(CreateRoleSchema) {}
+export type CreateRoleDto = typeof CreateRoleSchema.Type;

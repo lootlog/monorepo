@@ -1,14 +1,16 @@
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
-import { AssignMemberDto } from "./dto/assign-member.dto.js";
-import { AssignMapLocationDto } from "./dto/assign-map-location.dto.js";
-import { CreateHeroDto } from "./dto/create-hero.dto.js";
-import { CreateLocationDto } from "./dto/create-location.dto.js";
-import { CreateMapDto } from "./dto/create-map.dto.js";
-import { ReorderLocationsDto } from "./dto/reorder-locations.dto.js";
-import { UpdateHeroDto } from "./dto/update-hero.dto.js";
-import { UpdateLocationDto } from "./dto/update-location.dto.js";
+import {
+  AssignMapLocationDto,
+  AssignMemberDto,
+  CreateHeroDto,
+  CreateLocationDto,
+  CreateMapDto,
+  ReorderLocationsDto,
+  UpdateHeroDto,
+  UpdateLocationDto,
+} from "#src/http-api/lootlog-api";
 import { Effect } from "effect";
 import type { EventAccess } from "./event-access.js";
 import type { EventCatalogMutations } from "./event-catalog-mutations.js";

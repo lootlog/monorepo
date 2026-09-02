@@ -1,17 +1,17 @@
 import { describe, expect, it } from "#test/bun-test";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
-import { UpdateGuildConfigDto } from "./update-guild-config.dto.js";
+import { UpdateGuildConfigDto } from "#src/http-api/lootlog-api";
+import { Result, Schema } from "effect";
 
 describe("UpdateGuildConfigDto", () => {
   it("returns a translation key instead of localized backend copy", () => {
-    const result = UpdateGuildConfigDto.schema.safeParse({
+    const result = Schema.decodeUnknownResult(UpdateGuildConfigDto)({
       reservationTimeGranularityMinutes: 7,
     });
 
-    expect(result.success).toBe(false);
-    if (result.success) return;
-
-    expect(result.error.issues[0]?.message).toBe(
+    expect(Result.isFailure(result)).toBe(true);
+    if (Result.isSuccess(result)) return;
+    expect(String(result.failure)).toContain(
       ErrorKey.GUILDS_RESERVATION_TIME_GRANULARITY_INVALID,
     );
   });

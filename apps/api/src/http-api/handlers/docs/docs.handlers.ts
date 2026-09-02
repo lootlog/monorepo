@@ -9,17 +9,15 @@ import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { makeDocsService, type DocsService } from "#src/docs/docs.service";
-import type { CreateGuildDocumentDto as LegacyCreateGuildDocumentDto } from "#src/docs/dto/create-guild-document.dto";
-import type { UpdateGuildDocumentDto as LegacyUpdateGuildDocumentDto } from "#src/docs/dto/update-guild-document.dto";
 import {
-  DocsMutationResponseDto,
-  GuildDocumentHistoryResponseDto,
-  GuildDocumentHistorySnapshotResponseDto,
-  GuildDocumentListResponseDto,
-  GuildDocumentResponseDto,
-  GuildDocumentTrashResponseDto,
-} from "#src/docs/dto/guild-document-response.dto";
-import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
+  DocsMutationResponse,
+  GuildDocumentHistoryResponse,
+  GuildDocumentHistorySnapshotResponse,
+  GuildDocumentListResponse,
+  GuildDocumentResponse,
+  GuildDocumentTrashResponse,
+} from "#src/docs/guild-document-response.schema";
+import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import type {
   guildTable,
   memberTable,
@@ -39,7 +37,7 @@ import {
   DocsControllerUpdateDocument200,
   type DocsControllerUpdateDocumentRequestJson,
   LootlogApi,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;
 type Member = typeof memberTable.$inferSelect;
@@ -188,48 +186,37 @@ export class DocsData extends Context.Service<
       effect: Effect.Effect<A, E>,
       encoder: (value: A) => Encoded,
     ) => operation(effect).pipe(Effect.map(encoder));
-    const mutableCreatePayload = (
-      payload: DocsControllerCreateDocumentRequestJson,
-    ): LegacyCreateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
-    const mutableUpdatePayload = (
-      payload: DocsControllerUpdateDocumentRequestJson,
-    ): LegacyUpdateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
-
     return DocsData.of({
       list: (caller) =>
         encode(service.listDocuments(caller.guild.id), (value) =>
-          encodeUnknownResponse(GuildDocumentListResponseDto.schema, value),
+          encodeUnknownResponse(GuildDocumentListResponse, value),
         ),
       create: (caller, payload) =>
         encode(
           service.createDocument(
             caller.guild.id,
             caller.member.userId,
-            mutableCreatePayload(payload),
+            payload,
           ),
-          (value) =>
-            encodeUnknownResponse(GuildDocumentResponseDto.schema, value),
+          (value) => encodeUnknownResponse(GuildDocumentResponse, value),
         ),
       trash: (caller) =>
         encode(service.listTrash(caller.guild.id), (value) =>
-          encodeUnknownResponse(GuildDocumentTrashResponseDto.schema, value),
+          encodeUnknownResponse(GuildDocumentTrashResponse, value),
         ),
       history: (caller, documentId) =>
         encode(service.listHistory(caller.guild.id, documentId), (value) =>
-          encodeUnknownResponse(GuildDocumentHistoryResponseDto.schema, value),
+          encodeUnknownResponse(GuildDocumentHistoryResponse, value),
         ),
       historySnapshot: (caller, documentId, historyId) =>
         encode(
           service.getHistorySnapshot(caller.guild.id, documentId, historyId),
           (value) =>
-            encodeUnknownResponse(
-              GuildDocumentHistorySnapshotResponseDto.schema,
-              value,
-            ),
+            encodeUnknownResponse(GuildDocumentHistorySnapshotResponse, value),
         ),
       get: (caller, documentId) =>
         encode(service.getDocument(caller.guild.id, documentId), (value) =>
-          encodeUnknownResponse(GuildDocumentResponseDto.schema, value),
+          encodeUnknownResponse(GuildDocumentResponse, value),
         ),
       update: (caller, documentId, payload) =>
         encode(
@@ -237,10 +224,9 @@ export class DocsData extends Context.Service<
             caller.guild.id,
             documentId,
             caller.member.userId,
-            mutableUpdatePayload(payload),
+            payload,
           ),
-          (value) =>
-            encodeUnknownResponse(GuildDocumentResponseDto.schema, value),
+          (value) => encodeUnknownResponse(GuildDocumentResponse, value),
         ),
       moveToTrash: (caller, documentId) =>
         encode(
@@ -249,8 +235,7 @@ export class DocsData extends Context.Service<
             documentId,
             caller.member.userId,
           ),
-          (value) =>
-            encodeUnknownResponse(DocsMutationResponseDto.schema, value),
+          (value) => encodeUnknownResponse(DocsMutationResponse, value),
         ),
       restore: (caller, documentId) =>
         encode(
@@ -259,12 +244,11 @@ export class DocsData extends Context.Service<
             documentId,
             caller.member.userId,
           ),
-          (value) =>
-            encodeUnknownResponse(DocsMutationResponseDto.schema, value),
+          (value) => encodeUnknownResponse(DocsMutationResponse, value),
         ),
       purge: (caller, documentId) =>
         encode(service.purgeDocument(caller.guild.id, documentId), (value) =>
-          encodeUnknownResponse(DocsMutationResponseDto.schema, value),
+          encodeUnknownResponse(DocsMutationResponse, value),
         ),
     });
   }

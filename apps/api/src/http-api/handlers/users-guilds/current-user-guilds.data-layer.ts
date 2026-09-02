@@ -2,7 +2,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import type { APIGuild } from "discord-api-types/v10";
 import { Permission } from "@lootlog/schema/permissions";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -179,7 +179,7 @@ export const makeCurrentUserGuilds = (
       members.map((member) => [member.guildId, member]),
     );
     const staleThreshold =
-      Date.now() - getMemberCacheSoftTtl(serviceConfig.env);
+      Date.now() - getMemberCacheSoftTtl(apiConfig.environment);
     const discordById = new Map(apiGuilds.map((guild) => [guild.id, guild]));
     const candidates = guilds
       .flatMap((guild) => {

@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import type {
+  PatchSettingsDocuments,
   SettingsDomain,
   SettingsScope,
 } from "@lootlog/schema/settings-documents";
@@ -11,11 +12,10 @@ import {
   memberTable,
   userSettingDocumentTable,
 } from "../database/drizzle/schema.js";
-import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto.js";
 import { applySettingsPatch } from "./settings-resolver.js";
 
 type JsonRecord = Record<string, unknown>;
-type SettingsOperation = PatchSettingsDocumentsDto["operations"][number];
+type SettingsOperation = PatchSettingsDocuments["operations"][number];
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
 
 const isRecord = (value: unknown): value is JsonRecord =>

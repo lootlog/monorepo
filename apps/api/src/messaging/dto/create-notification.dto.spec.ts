@@ -1,8 +1,9 @@
-import { CreateNotificationDto } from "./create-notification.dto.js";
+import { CreateNotificationDto } from "#src/http-api/lootlog-api";
+import { Result, Schema } from "effect";
 
 describe("CreateNotificationDto", () => {
   it("keeps npc coordinates when present", () => {
-    const result = CreateNotificationDto.schema.parse({
+    const result = Schema.decodeUnknownSync(CreateNotificationDto)({
       npc: {
         id: 911169,
         hpp: 0,
@@ -25,7 +26,7 @@ describe("CreateNotificationDto", () => {
   });
 
   it("requires the organizer character for party gathering notifications", () => {
-    const result = CreateNotificationDto.schema.safeParse({
+    const result = Schema.decodeUnknownResult(CreateNotificationDto)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",
@@ -40,11 +41,11 @@ describe("CreateNotificationDto", () => {
       isGatheringParty: true,
     });
 
-    expect(result.success).toBe(false);
+    expect(Result.isFailure(result)).toBe(true);
   });
 
   it("accepts a party gathering notification with an organizer character", () => {
-    const result = CreateNotificationDto.schema.safeParse({
+    const result = Schema.decodeUnknownResult(CreateNotificationDto)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",
@@ -67,6 +68,6 @@ describe("CreateNotificationDto", () => {
       },
     });
 
-    expect(result.success).toBe(true);
+    expect(Result.isSuccess(result)).toBe(true);
   });
 });

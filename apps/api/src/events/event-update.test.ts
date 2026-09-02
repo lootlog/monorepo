@@ -4,7 +4,7 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { RedisService } from "#src/redis/redis.service";
 import { BadRequestException } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { UpdateEventDto } from "./dto/update-event.dto.js";
+import type { UpdateEventDto } from "#src/http-api/lootlog-api";
 import type { EventsCatalogRead } from "./events-catalog-read.js";
 import { makeEventUpdate } from "./event-update.js";
 

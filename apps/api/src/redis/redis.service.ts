@@ -54,19 +54,14 @@ return 0
 export class RedisService {
   private client?: Redis;
   private readonly prefix: string;
-  private readonly isOpenApiGeneration: boolean;
 
   constructor(private readonly options: RedisModuleOptions) {
     this.prefix = options.prefix ?? "";
-    this.isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
   }
 
   initialize() {
     const { prefix: _, ...redisOptions } = this.options;
-    this.client = new Redis({
-      ...redisOptions,
-      ...(this.isOpenApiGeneration ? { lazyConnect: true } : {}),
-    });
+    this.client = new Redis(redisOptions);
   }
 
   shutdown() {

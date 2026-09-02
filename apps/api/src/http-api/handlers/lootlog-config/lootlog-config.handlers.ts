@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { encodeDomainJson } from "../../domain-json.schema.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { NotFoundException } from "#src/shared/http/http-errors";
 import {
@@ -17,7 +18,7 @@ import {
   LootlogConfigControllerGetLootlogConfig200,
   LootlogConfigControllerUpdateNpc200,
   type UpdateLootlogConfigNpcDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",
@@ -131,7 +132,8 @@ const authorize = (guildId: unknown) => {
 };
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  Schema.decodeUnknownEffect(schema)(JSON.parse(JSON.stringify(value))).pipe(
+  encodeDomainJson(value).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
     Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),
   );
 

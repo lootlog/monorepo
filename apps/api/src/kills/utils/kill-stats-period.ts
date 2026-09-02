@@ -1,6 +1,6 @@
-import * as z from "zod";
+import { Schema } from "effect";
 
-export const KillStatsPeriodSchema = z.enum([
+export const KillStatsPeriodSchema = Schema.Literals([
   "all",
   "24h",
   "3d",
@@ -9,7 +9,7 @@ export const KillStatsPeriodSchema = z.enum([
   "30d",
 ]);
 
-export type KillStatsPeriod = z.infer<typeof KillStatsPeriodSchema>;
+export type KillStatsPeriod = typeof KillStatsPeriodSchema.Type;
 
 const PERIOD_HOURS: Record<Exclude<KillStatsPeriod, "all">, number> = {
   "24h": 24,
@@ -32,8 +32,7 @@ export const normalizeKillStatsPeriod = (
     return undefined;
   }
 
-  const result = KillStatsPeriodSchema.safeParse(period);
-  return result.success ? result.data : undefined;
+  return Schema.is(KillStatsPeriodSchema)(period) ? period : undefined;
 };
 
 export const getKillStatsPeriodStart = (

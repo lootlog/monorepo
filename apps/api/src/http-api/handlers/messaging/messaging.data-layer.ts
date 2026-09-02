@@ -30,7 +30,7 @@ import {
 import type {
   CreateNotificationDto,
   CreateVolunteerDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 const NOTIFICATION_TTL_SECONDS = 1800;
 export const NOTIFICATION_RATE_LIMIT_WINDOW_MS = 5_000;

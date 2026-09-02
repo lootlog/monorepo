@@ -8,7 +8,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { serviceConfig } from "#src/config/service.config";
+import { apiConfig } from "#src/config/api.config";
 import {
   getAdminBulkRefreshRateLimit,
   getMemberCacheSoftTtl,
@@ -167,8 +167,8 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
 
           const now = new Date();
           const ttl = options.refresh
-            ? getRefreshPermissionsTtl(serviceConfig.env)
-            : getMemberCacheSoftTtl(serviceConfig.env);
+            ? getRefreshPermissionsTtl(apiConfig.environment)
+            : getMemberCacheSoftTtl(apiConfig.environment);
           const stored = yield* memberWithRoles(
             database,
             options.identity.discordId,
@@ -288,7 +288,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
 
       const createBulkRefresh = (guildId: string, requestedBy: string) =>
         Effect.gen(function* () {
-          const rateLimit = getAdminBulkRefreshRateLimit(serviceConfig.env);
+          const rateLimit = getAdminBulkRefreshRateLimit(apiConfig.environment);
           const recent = yield* database
             .select()
             .from(memberRefreshJobTable)

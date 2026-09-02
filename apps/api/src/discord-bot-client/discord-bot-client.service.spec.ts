@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { makeDiscordBotClient } from "./discord-bot-client.js";
 
-vi.mock("#src/config/discord-bot.config", () => ({
-  discordBotConfig: { serviceUrl: "http://discord-bot" },
+vi.mock("#src/config/api.config", () => ({
+  apiConfig: { discordBotServiceUrl: new URL("http://discord-bot") },
 }));
 
 describe("DiscordBotClientService", () => {

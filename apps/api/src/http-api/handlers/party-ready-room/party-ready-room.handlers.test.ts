@@ -3,7 +3,7 @@ import { Effect, Layer, Schema } from "effect";
 import {
   PartyReadyRoomClientUpdateDto_Output,
   PartyReadyRoomProjectionDto_Output,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   ReadyRoomAccessDenied,
   ReadyRoomAuthorization,

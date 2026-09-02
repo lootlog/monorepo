@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { encodeDomainJson } from "../../domain-json.schema.js";
 import { and, arrayOverlaps, desc, eq, isNotNull, or } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -12,7 +13,7 @@ import {
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
-import { toUserLootlogConfigResponse } from "#src/shared/dto/user-lootlog-config-response.dto";
+import { toUserLootlogConfigResponse } from "#src/user-lootlog-config/user-lootlog-config.schema";
 import {
   LootlogApi,
   UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
@@ -20,7 +21,7 @@ import {
   UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
   type CreateOrUpdateLootlogCharacterConfigDto,
   type UserLootlogPlayersCatchingGuildsRequestDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export class UserLootlogConfigAccessDenied extends TaggedErrorClass<UserLootlogConfigAccessDenied>()(
   "UserLootlogConfigAccessDenied",
@@ -288,7 +289,8 @@ export class UserLootlogConfigData extends Context.Service<
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  Schema.decodeUnknownEffect(schema)(JSON.parse(JSON.stringify(value))).pipe(
+  encodeDomainJson(value).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
     Effect.mapError((cause) => new UserLootlogConfigOperationError({ cause })),
   );
 

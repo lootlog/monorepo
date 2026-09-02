@@ -21,7 +21,7 @@ import {
   ForbiddenException,
   ServiceUnavailableException,
 } from "#src/shared/http/http-errors";
-import type { LootShare } from "#src/shared/dto/loot-response.dto";
+import type { LootShare } from "#src/loots/loot-response.schema";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import type { LootAllocationPersistence } from "./loot-allocation-persistence.js";
 

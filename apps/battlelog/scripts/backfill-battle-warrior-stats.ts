@@ -1,18 +1,23 @@
 import pg from "pg";
+import { Config, Effect, Redacted } from "effect";
 import { BATTLE_WARRIOR_STATS_KEYS } from "../src/battles/battle-warrior-stats.types.js";
 
-const databaseUrl = process.env.POSTGRESQL_CONNECTION_URI;
-if (!databaseUrl) {
-  throw new Error("POSTGRESQL_CONNECTION_URI is required");
-}
+const scriptConfig = await Effect.runPromise(
+  Config.all({
+    databaseUrl: Config.redacted("POSTGRESQL_CONNECTION_URI"),
+    batchSize: Config.string("BATTLE_WARRIOR_STATS_BACKFILL_BATCH_SIZE").pipe(
+      Config.withDefault("1000"),
+    ),
+  }),
+);
+const databaseUrl = Redacted.value(scriptConfig.databaseUrl);
 
 function getBatchSize(): number {
   const batchSizeArgIndex = process.argv.indexOf("--batch-size");
   const batchSizeArg =
     batchSizeArgIndex >= 0 ? process.argv[batchSizeArgIndex + 1] : undefined;
-  const rawBatchSize =
-    batchSizeArg ?? process.env.BATTLE_WARRIOR_STATS_BACKFILL_BATCH_SIZE;
-  const parsedBatchSize = Number.parseInt(rawBatchSize ?? "1000", 10);
+  const rawBatchSize = batchSizeArg ?? scriptConfig.batchSize;
+  const parsedBatchSize = Number.parseInt(rawBatchSize, 10);
 
   return Number.isFinite(parsedBatchSize) && parsedBatchSize > 0
     ? parsedBatchSize

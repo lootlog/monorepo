@@ -9,7 +9,7 @@ import {
   TimersControllerResetTimer200,
   type CreateManualTimerDto,
   type ResetTimerDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   createManualGuildTimer,
   deleteGuildTimer,

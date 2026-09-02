@@ -1,12 +1,13 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { encodeDomainJson } from "../../domain-json.schema.js";
 import {
   LootlogApi,
   MessagingControllerSendNotification201,
   type CreateNotificationDto,
   type CreateVolunteerDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export type MessagingCaller = {
   readonly userId: string;
@@ -50,9 +51,10 @@ export const sendNotification = (payload: CreateNotificationDto) =>
     const authenticated = yield* caller;
     const data = yield* MessagingData;
     const result = yield* data.sendNotification(authenticated, payload);
-    return yield* Schema.decodeUnknownEffect(
-      MessagingControllerSendNotification201,
-    )(JSON.parse(JSON.stringify(result))).pipe(
+    return yield* encodeDomainJson(result).pipe(
+      Effect.flatMap(
+        Schema.decodeUnknownEffect(MessagingControllerSendNotification201),
+      ),
       Effect.mapError((cause) => new MessagingOperationError({ cause })),
     );
   });

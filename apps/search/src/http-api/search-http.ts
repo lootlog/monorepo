@@ -3,7 +3,7 @@ import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { SearchConfig } from "#src/config/search-config";
-import { SearchApi } from "./search-api.generated.js";
+import { SearchApi } from "./search-api.js";
 import { SearchHandlers } from "./search-handlers.js";
 
 // oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.

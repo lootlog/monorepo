@@ -42,7 +42,7 @@ import {
   type LootsControllerResolveLootItemByHidQuery,
   type LootsControllerUpdateLoot200,
   type LootsControllerUpdateLootRequestJson,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;
 type Role = typeof roleTable.$inferSelect;

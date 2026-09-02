@@ -3,7 +3,7 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { GetGuildKillStatsDto } from "./dto/get-kill-stats.dto.js";
+import type { KillsControllerGetGuildKillStatsQuery as GetGuildKillStatsDto } from "#src/http-api/lootlog-api";
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,

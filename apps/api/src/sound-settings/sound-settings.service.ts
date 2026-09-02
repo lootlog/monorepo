@@ -5,7 +5,7 @@ import type {
   SettingsDocumentsFailure,
 } from "#src/settings-documents/settings-documents.service";
 import { Effect } from "effect";
-import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto.js";
+import type { UpdateSoundSettingsDto } from "#src/http-api/lootlog-api";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
@@ -88,15 +88,21 @@ const mergeSoundConfigMap = (
   return merged;
 };
 
+const soundConfigMapToJson = (configs: SoundConfigMap): JsonValue =>
+  Object.fromEntries(
+    Object.entries(configs).map(([key, config]) => [
+      key,
+      { volume: config.volume, soundUrl: config.soundUrl },
+    ]),
+  );
+
 const toCompatibilitySettings = (
   userId: string,
   resolution: SettingsDomainResolution | undefined,
 ) => {
   const defaults = getDefaultSettingsData();
   const effective = resolution?.effective ?? {};
-  const updatedAt = resolution?.updatedAt
-    ? new Date(resolution.updatedAt)
-    : new Date();
+  const updatedAt = resolution?.updatedAt ?? new Date();
   return {
     userId,
     masterVolume: defaults.masterVolume,
@@ -151,27 +157,33 @@ export const makeSoundSettings = (
           timersConfig,
           ...scalarPatch
         } = dto;
-        const set: Record<string, unknown> = { ...scalarPatch };
+        const set: Record<string, JsonValue> = { ...scalarPatch };
         const defaults = getDefaultSettingsData();
         if (notificationsConfig) {
-          set.notificationsConfig = mergeSoundConfigMap(
-            currentSettings.notificationsConfig,
-            defaults.notificationsConfig,
-            notificationsConfig,
+          set.notificationsConfig = soundConfigMapToJson(
+            mergeSoundConfigMap(
+              currentSettings.notificationsConfig,
+              defaults.notificationsConfig,
+              notificationsConfig,
+            ),
           );
         }
         if (detectorConfig) {
-          set.detectorConfig = mergeSoundConfigMap(
-            currentSettings.detectorConfig,
-            defaults.detectorConfig,
-            detectorConfig,
+          set.detectorConfig = soundConfigMapToJson(
+            mergeSoundConfigMap(
+              currentSettings.detectorConfig,
+              defaults.detectorConfig,
+              detectorConfig,
+            ),
           );
         }
         if (timersConfig) {
-          set.timersConfig = mergeSoundConfigMap(
-            currentSettings.timersConfig,
-            defaults.timersConfig,
-            timersConfig,
+          set.timersConfig = soundConfigMapToJson(
+            mergeSoundConfigMap(
+              currentSettings.timersConfig,
+              defaults.timersConfig,
+              timersConfig,
+            ),
           );
         }
         if (Object.keys(set).length === 0) return currentSettings;

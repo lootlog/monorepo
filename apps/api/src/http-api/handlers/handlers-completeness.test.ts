@@ -26,7 +26,7 @@ describe("HttpApi handler completeness", () => {
   it("handles every generated endpoint exactly once", async () => {
     const handlersDirectory = fileURLToPath(new URL(".", import.meta.url));
     const generatedSource = await Bun.file(
-      new URL("../lootlog-api.generated.ts", import.meta.url),
+      new URL("../lootlog-api.ts", import.meta.url),
     ).text();
     const generatedIdentifiers = identifiersFrom(
       generatedSource,

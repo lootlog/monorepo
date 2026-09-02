@@ -34,13 +34,15 @@ import {
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
-import type { AssignMapLocationDto } from "./dto/assign-map-location.dto.js";
-import type { CreateHeroDto } from "./dto/create-hero.dto.js";
-import type { CreateLocationDto } from "./dto/create-location.dto.js";
-import type { CreateMapDto } from "./dto/create-map.dto.js";
-import type { ReorderLocationsDto } from "./dto/reorder-locations.dto.js";
-import type { UpdateHeroDto } from "./dto/update-hero.dto.js";
-import type { UpdateLocationDto } from "./dto/update-location.dto.js";
+import type {
+  AssignMapLocationDto,
+  CreateHeroDto,
+  CreateLocationDto,
+  CreateMapDto,
+  ReorderLocationsDto,
+  UpdateHeroDto,
+  UpdateLocationDto,
+} from "#src/http-api/lootlog-api";
 
 export class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",

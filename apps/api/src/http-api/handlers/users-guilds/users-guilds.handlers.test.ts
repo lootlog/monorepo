@@ -4,7 +4,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   GuildResponseDto_Output,
   UserPreferencesResponseDto_Output,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 import {
   GuildConfigurationData,
   getCurrentUserPreferences,

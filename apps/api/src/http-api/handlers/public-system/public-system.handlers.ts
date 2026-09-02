@@ -11,7 +11,7 @@ import {
   AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
   LootlogApi,
   MapsControllerGetMaps200,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 const LOCAL_CACHE_CONTROL = "no-store";

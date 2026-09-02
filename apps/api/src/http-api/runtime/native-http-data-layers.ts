@@ -16,8 +16,6 @@ import {
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { AuthService } from "#src/auth/auth.service";
-import { battlelogConfig } from "#src/config/battlelog.config";
-import { discordBotConfig } from "#src/config/discord-bot.config";
 import {
   ApiDatabase,
   type ApiDatabaseValue,
@@ -189,7 +187,6 @@ import { makeReservationSharingDataLayer } from "../handlers/reservations-roles/
 import { makeReservationReadDataLayer } from "../handlers/reservations-roles/reservation-read.data-layer.js";
 import { makeReservationCatalogAdapter } from "../handlers/reservations-roles/reservation-catalog.adapter.js";
 import { makeReservationMutationsDataLayer } from "../handlers/reservations-roles/reservation-mutations.data-layer.js";
-import { env } from "#src/config/env";
 import {
   PublicSystemData,
   PublicSystemOperationError,
@@ -538,6 +535,7 @@ export const NativeReservationSharingData = Layer.unwrap(
 export const NativeReservationReadData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
+    const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
@@ -549,7 +547,7 @@ export const NativeReservationReadData = Layer.unwrap(
             attempt(() => redis.setJson(key, value, ttl)),
         },
         httpClient,
-        url: env.RESERVATIONS_CARDS_URL,
+        url: config.reservationsCardsUrl.toString(),
       }),
     );
   }),
@@ -892,7 +890,7 @@ export const NativeGuildDiscordSyncLive = Layer.effect(
     const httpClient = yield* HttpClient.HttpClient;
     const discordBot = makeDiscordBotClient(httpClient);
     return makeGuildDiscordSyncData(database, {
-      staleAfterMs: discordBotConfig.channelSnapshotStaleSeconds * 1000,
+      staleAfterMs: 900 * 1000,
       refresh: (guildId) => discordBot.refreshGuildChannels(guildId),
       publishChannelDeleted: (payload) =>
         rabbit.publish({
@@ -935,6 +933,7 @@ export const NativeUsersGuildsOperationsLive = Layer.effect(
     const rabbit = yield* RabbitMessaging;
     const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
+    const config = yield* ApiRuntimeConfig;
     const cacheAttempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
     const deleteAccount = makeUserAccountDeletion(database, {
@@ -947,7 +946,10 @@ export const NativeUsersGuildsOperationsLive = Layer.effect(
           responseLimitBytes: 1024 * 1024,
           retryTimes: 0,
           timeout: "5 seconds",
-          url: `${battlelogConfig.serviceUrl}/internal/delete-user-data`,
+          url: new URL(
+            "/internal/delete-user-data",
+            config.battlelogServiceUrl,
+          ).toString(),
         }).pipe(
           Effect.flatMap((response) => {
             if (response.status < 200 || response.status >= 300) {
@@ -1098,7 +1100,7 @@ export const NativeReservationMutationsData = Layer.unwrap(
           attempt(() => redis.setJson(key, value, ttl)),
       },
       httpClient,
-      url: env.RESERVATIONS_CARDS_URL,
+      url: config.reservationsCardsUrl.toString(),
     });
     return makeReservationMutationsDataLayer({
       catalog,

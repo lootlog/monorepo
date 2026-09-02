@@ -22,7 +22,7 @@ import {
   NotFoundException,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import type { UpdateEventDto } from "./dto/update-event.dto.js";
+import type { UpdateEventDto } from "#src/http-api/lootlog-api";
 import type { EventsCatalogRead } from "./events-catalog-read.js";
 import {
   attachComputedEventActive,

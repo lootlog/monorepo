@@ -1,8 +1,8 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { DiscordGuildSyncStateResponseDto as DiscordGuildSyncStateCodec } from "#src/shared/dto/discord-guild-sync-response.dto";
-import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
+import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
+import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { and, eq, or } from "drizzle-orm";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
@@ -40,7 +40,7 @@ import {
   type UpdateGuildConfigDto,
   type UpdateUserGameAccountPreferencesDto,
   type UpdateUserPreferencesDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export type AuthenticatedIdentity = {
   readonly userId: string;
@@ -560,10 +560,7 @@ const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
       ? service.refreshGuildDiscordSync(authorized.guildId)
       : service.getGuildDiscordSyncStatus(authorized.guildId),
   );
-  const encoded = encodeUnknownResponse(
-    DiscordGuildSyncStateCodec.schema,
-    value,
-  );
+  const encoded = encodeUnknownResponse(DiscordGuildSyncStateCodec, value);
   return yield* decode(DiscordGuildSyncStateSchema, encoded);
 });
 

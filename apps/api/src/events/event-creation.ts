@@ -15,7 +15,7 @@ import {
 import type { RedisService } from "#src/redis/redis.service";
 import { BadRequestException } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import type { CreateEventDto } from "./dto/create-event.dto.js";
+import type { CreateEventDto } from "#src/http-api/lootlog-api";
 import { attachComputedEventActive } from "./utils/event-activity.util.js";
 
 export class EventCreationError extends TaggedErrorClass<EventCreationError>()(

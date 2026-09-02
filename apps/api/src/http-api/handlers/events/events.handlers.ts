@@ -12,7 +12,7 @@ import type {
   memberTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { LootlogApi } from "../../lootlog-api.generated.js";
+import { LootlogApi } from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;
 type Member = typeof memberTable.$inferSelect;

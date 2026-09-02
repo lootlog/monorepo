@@ -2,18 +2,21 @@ import {
   BadRequestException,
   NotFoundException,
 } from "#src/shared/http/http-errors";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,
   GUILD_DOCUMENT_TITLE_MAX_LENGTH,
 } from "./constants/docs-limits.js";
-import type { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
-import type { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto.js";
 import type {
-  GuildDocumentContent,
-  JsonValue,
-} from "./dto/guild-document-content.schema.js";
+  CreateGuildDocumentDto,
+  UpdateGuildDocumentDto,
+} from "#src/http-api/lootlog-api";
+import {
+  GuildDocumentContentSchema,
+  type GuildDocumentContent,
+  type JsonValue,
+} from "./guild-document-content.schema.js";
 import type {
   DocsRepositoryFailure,
   DocsRepositoryService,
@@ -116,10 +119,19 @@ const normalizeTitle = (title: string) => {
   return Effect.succeed(normalizedTitle);
 };
 
-const normalizeContent = (content: GuildDocumentContent) => {
+const normalizeContent = (content: JsonValue) => {
+  let decodedContent: GuildDocumentContent;
+  try {
+    decodedContent = Schema.decodeUnknownSync(GuildDocumentContentSchema)(
+      content,
+    );
+  } catch {
+    return Effect.fail(new BadRequestException("Invalid document content"));
+  }
+
   let stringifiedContent: string;
   try {
-    stringifiedContent = JSON.stringify(content);
+    stringifiedContent = JSON.stringify(decodedContent);
   } catch {
     return Effect.fail(
       new BadRequestException("Document content is not serializable"),
@@ -127,7 +139,7 @@ const normalizeContent = (content: GuildDocumentContent) => {
   }
   return stringifiedContent.length > GUILD_DOCUMENT_CONTENT_MAX_LENGTH
     ? Effect.fail(new BadRequestException("Document content is too long"))
-    : Effect.succeed(content);
+    : Effect.succeed(decodedContent);
 };
 
 const mapDocumentRecordWithEditors = (

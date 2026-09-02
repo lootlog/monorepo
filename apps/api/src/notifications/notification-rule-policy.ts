@@ -1,5 +1,7 @@
-import type { CreateNotificationRuleDto } from "./dto/create-notification-rule.dto.js";
-import type { UpdateNotificationRuleDto } from "./dto/update-notification-rule.dto.js";
+import type {
+  CreateNotificationRuleDto,
+  UpdateNotificationRuleDto,
+} from "#src/http-api/lootlog-api";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import type { JsonObject, JsonValue } from "./notification-database.types.js";
 import {
@@ -71,9 +73,9 @@ const validateNpcSelection = (data: RuleInput) => {
 const buildFilters = (data: RuleInput): JsonObject => {
   const filters: JsonObject = {};
   if (data.npcId !== undefined) filters.npcId = data.npcId;
-  if (data.npcIds !== undefined) filters.npcIds = data.npcIds;
+  if (data.npcIds !== undefined) filters.npcIds = [...data.npcIds];
   if (data.itemId !== undefined) filters.itemId = data.itemId;
-  if (data.itemIds !== undefined) filters.itemIds = data.itemIds;
+  if (data.itemIds !== undefined) filters.itemIds = [...data.itemIds];
   return filters;
 };
 

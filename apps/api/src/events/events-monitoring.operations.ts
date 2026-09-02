@@ -2,8 +2,10 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 
 import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
-import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto.js";
-import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto.js";
+import {
+  CloseRespawnWindowDto,
+  OpenRespawnWindowDto,
+} from "#src/http-api/lootlog-api";
 import type { EventCoordination } from "./services/event-coordination.service.js";
 import type { EventKills } from "./services/event-kill.service.js";
 import type { EventRespawn } from "./services/event-respawn.service.js";

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import type { CreateNotificationRuleDto } from "./dto/create-notification-rule.dto.js";
-import type { UpdateNotificationRuleDto } from "./dto/update-notification-rule.dto.js";
+import type {
+  CreateNotificationRuleDto,
+  UpdateNotificationRuleDto,
+} from "#src/http-api/lootlog-api";
 import {
   NotificationOwnerType,
   NotificationScheduleIntervalType,

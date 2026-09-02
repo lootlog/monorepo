@@ -10,7 +10,7 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import { ForbiddenException } from "#src/shared/http/http-errors";
-import type { CreateCommentDto } from "./dto/create-comment-dto.js";
+import type { CreateCommentDto } from "#src/http-api/lootlog-api";
 import { ErrorKey } from "./enum/error-key.enum.js";
 
 export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(

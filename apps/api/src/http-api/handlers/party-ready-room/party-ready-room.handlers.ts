@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { encodeDomainJson } from "../../domain-json.schema.js";
 import {
   LootlogApi,
   PartyReadyRoomControllerApply201,
@@ -19,7 +20,7 @@ import {
   type PartyReadyRoomParticipantActionDto,
   type PartyReadyRoomParticipantIdentityDto,
   type PartyReadyRoomResolveInvitationTargetsDto,
-} from "../../lootlog-api.generated.js";
+} from "../../lootlog-api.js";
 
 export type ReadyRoomIdentity = {
   readonly userId: string;
@@ -117,17 +118,9 @@ const accessibleGuildIds = (discordId: string) =>
     ),
   );
 
-const toWire = (value: unknown): unknown => {
-  if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) return value.map(toWire);
-  if (typeof value !== "object" || value === null) return value;
-  return Object.fromEntries(
-    Object.entries(value).map(([key, nested]) => [key, toWire(nested)]),
-  );
-};
-
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  Schema.decodeUnknownEffect(schema)(toWire(value)).pipe(
+  encodeDomainJson(value).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
     Effect.mapError((cause) => new ReadyRoomOperationError({ cause })),
   );
 

@@ -1,8 +1,26 @@
 import { rename, unlink } from "node:fs/promises";
 import { OpenApi } from "effect/unstable/httpapi";
 import { stringify } from "yaml";
-import { LootlogApi } from "../http-api/lootlog-api.generated.js";
-import { NULLABLE_JSON_SCHEMA_NAMES } from "../http-api/restore-nullable-schemas.js";
+import { LootlogApi } from "../http-api/lootlog-api.js";
+
+const NULLABLE_JSON_SCHEMA_NAMES = [
+  "TimerSettingsResponseDto__schema0",
+  "NotificationTargetResponseDto__schema0",
+  "GuildNotificationRulesResponseDto__schema0",
+  "NotificationRuleResponseDto__schema0",
+  "NotificationJobsResponseDto__schema0",
+  "NotificationTargetWithTestTriggerResponseDto__schema0",
+  "WatchedItemResponseDto__schema0",
+  "SoundSettingsResponseDto__schema0",
+  "EventMutationResponseDto__schema0",
+  "EventOverviewResponseDto__schema0",
+  "EventKillHistoryResponseDto__schema0",
+  "EventMemberKillHistoryResponseDto__schema0",
+  "KillDetailResponseDto__schema0",
+  "GuildDocumentResponseDto__schema0",
+  "GuildDocumentHistorySnapshotResponseDto__schema0",
+  "UpdateGuildDocumentDto__schema0",
+] as const;
 
 const EXPECTED_OPERATION_COUNT = 199;
 const HTTP_METHODS = [

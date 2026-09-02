@@ -82,36 +82,7 @@
     "openapi:generate": {
       "dependsOn": ["^build"],
       "cache": false,
-      "passThroughEnv": [
-        "ADMIN_ACCOUNT_IDS",
-        "API_SERVICE_URL",
-        "APP_URL",
-        "AUTH_SECRET",
-        "COOKIE_DOMAIN",
-        "COOKIE_PREFIX",
-        "DISCORD_CLIENT_ID",
-        "DISCORD_CLIENT_SECRET",
-        "MAPS_API_URL",
-        "MEILISEARCH_API_KEY",
-        "MEILISEARCH_HOST",
-        "POSTGRESQL_CONNECTION_URI",
-        "POSTGRESQL_DATABASE",
-        "POSTGRESQL_HOST",
-        "POSTGRESQL_PASSWORD",
-        "POSTGRESQL_PORT",
-        "POSTGRESQL_USER",
-        "RESERVATIONS_CARDS_URL",
-        "TRUSTED_ORIGINS"
-      ],
       "outputs": ["openapi.yaml"]
-    },
-    "http-api:generate": {
-      "cache": false,
-      "inputs": [
-        "openapi.yaml",
-        "$TURBO_ROOT$/tools/openapi/generate-http-api.ts"
-      ],
-      "outputs": ["src/http-api/*-api.generated.ts"]
     },
     "client:generate": {
       "dependsOn": [

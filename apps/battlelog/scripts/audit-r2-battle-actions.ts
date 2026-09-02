@@ -4,6 +4,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { BattleProcessor, type ParsedMove } from "@lootlog/battle-processor";
+import { Config, Effect, Option, Redacted } from "effect";
 import { Client } from "pg";
 import { gunzipSync } from "node:zlib";
 import { dirname, resolve } from "node:path";
@@ -34,10 +35,18 @@ type SampleSource =
       battleIds: string[];
     };
 
-const SAMPLE_SIZE = Number.parseInt(
-  process.env.AUDIT_SAMPLE_SIZE ?? "1000",
-  10,
+const auditConfig = await Effect.runPromise(
+  Config.all({
+    sampleSize: Config.int("AUDIT_SAMPLE_SIZE").pipe(Config.withDefault(1000)),
+    databaseUrl: Config.option(Config.redacted("POSTGRESQL_CONNECTION_URI")),
+    r2Region: Config.string("R2_REGION").pipe(Config.withDefault("auto")),
+    r2Endpoint: Config.string("R2_ENDPOINT"),
+    r2AccessKeyId: Config.redacted("R2_ACCESS_KEY_ID"),
+    r2SecretAccessKey: Config.redacted("R2_SECRET_ACCESS_KEY"),
+    r2BucketName: Config.string("R2_BUCKET_NAME"),
+  }),
 );
+const SAMPLE_SIZE = auditConfig.sampleSize;
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(scriptDir, "..");
 const repoRoot = resolve(appRoot, "../..");
@@ -46,26 +55,22 @@ const mechanicsDocPath = resolve(
   "apps/docs/content/docs/battle-panel-mechanics.mdx",
 );
 
-const getRequiredEnv = (key: string): string => {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing required env ${key}`);
-  }
-  return value;
-};
-
 const createR2Client = () =>
   new S3Client({
-    region: process.env.R2_REGION ?? "auto",
-    endpoint: getRequiredEnv("R2_ENDPOINT"),
+    region: auditConfig.r2Region,
+    endpoint: auditConfig.r2Endpoint,
     credentials: {
-      accessKeyId: getRequiredEnv("R2_ACCESS_KEY_ID"),
-      secretAccessKey: getRequiredEnv("R2_SECRET_ACCESS_KEY"),
+      accessKeyId: Redacted.value(auditConfig.r2AccessKeyId),
+      secretAccessKey: Redacted.value(auditConfig.r2SecretAccessKey),
     },
   });
 
 const fetchLatestBattleIdsFromDb = async (): Promise<SampleSource | null> => {
-  const connectionString = process.env.POSTGRESQL_CONNECTION_URI;
+  const configuredDatabaseUrl = Option.getOrUndefined(auditConfig.databaseUrl);
+  const connectionString =
+    configuredDatabaseUrl === undefined
+      ? undefined
+      : Redacted.value(configuredDatabaseUrl);
   if (!connectionString) {
     return null;
   }
@@ -302,7 +307,7 @@ ${params.missingTranslations
 `;
 
 const main = async () => {
-  const bucketName = getRequiredEnv("R2_BUCKET_NAME");
+  const bucketName = auditConfig.r2BucketName;
   const client = createR2Client();
   const source = await resolveSampleSource(client, bucketName);
   const payloads: R2BattlePayload[] = [];
