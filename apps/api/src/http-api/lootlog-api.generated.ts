@@ -1,4 +1,5 @@
 import * as Schema from "effect/Schema";
+import { ForwardAuthIdentity } from "./runtime/forward-auth-identity.js";
 import {
   HttpApi,
   HttpApiEndpoint,
@@ -23473,10 +23474,10 @@ export const BearerSecurity = HttpApiSecurity.bearer.pipe(
   HttpApiSecurity.annotate(OpenApi.Format, "JWT"),
 );
 
-export class BearerSecurityMiddleware extends HttpApiMiddleware.Service<BearerSecurityMiddleware>()(
-  "bearer security",
-  { security: { bearer: BearerSecurity } },
-) {}
+export class BearerSecurityMiddleware extends HttpApiMiddleware.Service<
+  BearerSecurityMiddleware,
+  { provides: ForwardAuthIdentity }
+>()("bearer security", { security: { bearer: BearerSecurity } }) {}
 
 class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.delete("UsersControllerDeleteAccount", "/users/@me", {
