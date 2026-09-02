@@ -149,9 +149,12 @@ if (exitCode !== 0) {
 try {
   await formatTemporaryOutput();
   const rawGeneratedSource = await readFile(temporaryOutputPath, "utf8");
-  const generatedSource = restoreForwardAuthMiddleware(
+  const restoredGeneratedSource = restoreForwardAuthMiddleware(
     restoreNullableSchemas(rawGeneratedSource),
   );
+  await Bun.write(temporaryOutputPath, restoredGeneratedSource);
+  await formatTemporaryOutput();
+  const generatedSource = await readFile(temporaryOutputPath, "utf8");
   assertCompleteOperationSet(
     readOperationIds(openApiSource),
     readGeneratedOperationIds(generatedSource),
