@@ -6,7 +6,6 @@ import {
   Post,
   Query,
   UseGuards,
-  UseInterceptors,
 } from "@nestjs/common";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import {
@@ -28,7 +27,6 @@ import { MemberPermissions } from "#src/shared/decorators/member-permissions.dec
 import { DiscordGuildSyncStateResponseDto } from "#src/shared/dto/discord-guild-sync-response.dto";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
-import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
 import { GuildResponseDto } from "#src/shared/dto/guild-response.dto";
 import type { GuildRecord as Guild } from "./guilds.repository.js";
 
@@ -39,7 +37,6 @@ import type { GuildRecord as Guild } from "./guilds.repository.js";
 export class GuildsController {
   constructor(private readonly guildsService: GuildsService) {}
 
-  @UseInterceptors(MemberSyncInterceptor)
   @Get("/@me")
   @ApiOperation({
     summary: "Get user guilds (deprecated)",

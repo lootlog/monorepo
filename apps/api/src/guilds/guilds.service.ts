@@ -38,6 +38,7 @@ import {
 } from "./guilds.repository.js";
 import { MembersRepository } from "#src/members/members.repository";
 import { GuildConfigurationService } from "./guild-configuration.service.js";
+import { GuildListMemberRefreshService } from "./guild-list-member-refresh.service.js";
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,
@@ -72,6 +73,7 @@ const CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS = 30;
 export class GuildsService {
   private readonly staleAfterMs: number;
   private readonly guildConfiguration: GuildConfigurationService;
+  private readonly guildListMemberRefresh: GuildListMemberRefreshService;
 
   constructor(
     @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
@@ -91,11 +93,22 @@ export class GuildsService {
       this.redisService,
       this.logger,
     );
+    this.guildListMemberRefresh = new GuildListMemberRefreshService(
+      this.logger,
+      this.membersRepository,
+      this.membersService,
+      this.redisService,
+    );
   }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
     if (source === "game") {
-      return this.getCurrentUserAccessibleGuildPlainEntries(discordId, userId);
+      const result = await this.getCurrentUserAccessibleGuildPlainEntries(
+        discordId,
+        userId,
+      );
+      this.queueGuildListRefresh(discordId, userId, result);
+      return result;
     }
 
     const guildCandidates =
@@ -103,9 +116,28 @@ export class GuildsService {
         discordId,
         userId,
       );
-    const guilds = guildCandidates.map(({ guild }) => guild);
+    const result = await this.sortGuildEntriesByUserPreferences(
+      userId,
+      guildCandidates.map(({ guild }) => guild),
+    );
+    this.queueGuildListRefresh(discordId, userId, result);
+    return result;
+  }
 
-    return this.sortGuildEntriesByUserPreferences(userId, guilds);
+  private queueGuildListRefresh(
+    discordId: string,
+    userId: string,
+    guilds: ReadonlyArray<{ id: string }>,
+  ) {
+    void this.guildListMemberRefresh
+      .queue(discordId, userId, guilds)
+      .catch((error) =>
+        this.logger.log({
+          level: "error",
+          message: "Error queuing stale member refreshes",
+          stack: error instanceof Error ? error.stack : String(error),
+        }),
+      );
   }
 
   async getCurrentUserGuildAccessSummaries(

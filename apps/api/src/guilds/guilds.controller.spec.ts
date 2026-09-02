@@ -4,8 +4,6 @@ import { GuildsController } from "./guilds.controller.js";
 import { GuildsService } from "./guilds.service.js";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
-import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
-import type { CallHandler, ExecutionContext } from "@nestjs/common";
 
 describe("GuildsController", () => {
   let controller: GuildsController;
@@ -17,10 +15,6 @@ describe("GuildsController", () => {
     getGuildById: mockFn(),
     updateGuildConfig: mockFn(),
     getWorldsByGuildId: mockFn(),
-  };
-
-  const mockMemberSyncInterceptor = {
-    intercept: (_context: ExecutionContext, next: CallHandler) => next.handle(),
   };
 
   beforeEach(async () => {
@@ -37,8 +31,6 @@ describe("GuildsController", () => {
       .useValue({ canActivate: () => true })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: () => true })
-      .overrideInterceptor(MemberSyncInterceptor)
-      .useValue(mockMemberSyncInterceptor)
       .compile();
 
     controller = module.get<GuildsController>(GuildsController);

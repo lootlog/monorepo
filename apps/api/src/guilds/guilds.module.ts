@@ -12,8 +12,6 @@ import { RetryService } from "#src/rabbitmq/retry.service";
 import { DiscordModule } from "#src/discord/discord.module";
 import { ChannelsModule } from "#src/channels/channels.module";
 import { RedisModule } from "#src/lib/redis/redis.module";
-import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
-import { MemberSyncRepository } from "#src/shared/interceptors/member-sync.repository";
 import { UserGuildAccessResolver } from "./user-guild-access-resolver.service.js";
 import { GuildsRepository } from "./guilds.repository.js";
 
@@ -34,8 +32,6 @@ import { GuildsRepository } from "./guilds.repository.js";
     UserGuildAccessResolver,
     GuildsEventsHandler,
     RetryService,
-    MemberSyncRepository,
-    MemberSyncInterceptor,
   ],
   exports: [GuildsService, GuildsEventsHandler, MemberContextModule],
 })

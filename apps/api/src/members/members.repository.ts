@@ -6,6 +6,8 @@ import {
   eq,
   inArray,
   isNotNull,
+  isNull,
+  lt,
   notInArray,
   or,
 } from "drizzle-orm";
@@ -91,6 +93,35 @@ export class MembersRepository {
         ),
     );
     return this.attachRoles(members);
+  }
+
+  findStaleMembers(
+    discordId: string,
+    guildIds: ReadonlyArray<string>,
+    staleThreshold: Date,
+  ) {
+    if (guildIds.length === 0) return Promise.resolve([]);
+    return this.run((database) =>
+      database
+        .select({
+          userId: memberTable.userId,
+          guildId: memberTable.guildId,
+          globalUserId: memberTable.globalUserId,
+        })
+        .from(memberTable)
+        .where(
+          and(
+            eq(memberTable.userId, discordId),
+            inArray(memberTable.guildId, [...guildIds]),
+            isNotNull(memberTable.globalUserId),
+            eq(memberTable.active, true),
+            or(
+              isNull(memberTable.lastDiscordSyncAt),
+              lt(memberTable.lastDiscordSyncAt, staleThreshold),
+            ),
+          ),
+        ),
+    );
   }
 
   async findActiveGuildOwner(guildId: string) {
