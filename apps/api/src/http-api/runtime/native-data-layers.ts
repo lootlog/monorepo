@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Effect, Layer, Redacted } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Permission } from "@lootlog/schema/permissions";
@@ -57,6 +57,8 @@ import { TimerSettingsService } from "#src/timer-settings/timer-settings.service
 import { UserLootlogConfigRepository } from "#src/user-lootlog-config/user-lootlog-config.repository";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
+import { MemberContextRepository } from "#src/shared/permissions/member-context.repository";
+import { MemberContextService } from "#src/shared/permissions/member-context.service";
 import { MapTemplatesData } from "../handlers/map-templates/map-templates.handlers.js";
 import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import { DocsData } from "../handlers/docs/docs.handlers.js";
@@ -80,6 +82,7 @@ import { ChatData } from "../handlers/chat/chat.handlers.js";
 import { GuildConfigurationData } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
+import { OrganizationContextLookup } from "./organization-context.js";
 
 const makeScopedCompatibilityLayer = <I, S>(
   service: import("effect").Context.Key<I, S>,
@@ -361,25 +364,22 @@ const NativeReservationReadData = Layer.unwrap(
   }),
 );
 
-const NativeMemberReadData = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) =>
-    makeScopedCompatibilityLayer(MemberReadData, (runtime) =>
-      MemberReadData.makeService(
-        new MemberReadService(new MembersRepository(runtime), redis),
-      ),
-    ),
-  ),
-);
+interface NativeMemberServicesValue {
+  readonly runtime: DrizzleDatabaseRuntime;
+  readonly access: MemberDiscordAccessService;
+  readonly removal: MemberRemovalService;
+  readonly bulkRefresh: MemberBulkRefreshService;
+  readonly read: MemberReadService;
+  readonly refreshJobRead: MemberRefreshJobReadService;
+}
 
-const NativeMemberRefreshJobData = makeScopedCompatibilityLayer(
-  MemberRefreshJobData,
-  (runtime) =>
-    MemberRefreshJobData.makeService(
-      new MemberRefreshJobReadService(new MemberRefreshJobRepository(runtime)),
-    ),
-);
+class NativeMemberServices extends Context.Service<
+  NativeMemberServices,
+  NativeMemberServicesValue
+>()("@lootlog/api/http-api/NativeMemberServices") {}
 
-const NativeMembersData = Layer.unwrap(
+const NativeMemberServicesLive = Layer.effect(
+  NativeMemberServices,
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
@@ -393,119 +393,151 @@ const NativeMembersData = Layer.unwrap(
       enableReadyCheck: false,
     };
 
-    return Layer.effect(
-      MembersData,
-      Effect.acquireRelease(
-        Effect.sync(() => {
-          const runtime = new DrizzleDatabaseRuntime();
-          const memberRefreshQueue = new Queue(MEMBER_REFRESH_QUEUE, {
-            connection: queueConnection,
-            prefix: "{bull}",
-          });
-          const memberBulkRefreshQueue = new Queue(MEMBER_BULK_REFRESH_QUEUE, {
-            connection: queueConnection,
-            prefix: "{bull}",
-          });
-          const repository = new MembersRepository(runtime);
-          const refreshJobs = new MemberRefreshJobRepository(runtime);
-          const diagnostics = new DiscordSyncDiagnosticsService(
-            nativeLogger,
-            redis,
-          );
-          const rateLimiter = new DiscordRateLimiterService(
-            nativeLogger,
-            redis,
-          );
-          const redlock = new RedlockService(redis);
-          const restClientFactory = new DiscordRestClientFactory(
-            new AuthService(nativeLogger, redis),
-          );
-          const userGuildsClient = new DiscordUserGuildsClient(
-            nativeLogger,
-            redis,
-            rateLimiter,
-            redlock,
-            diagnostics,
-            restClientFactory,
-          );
-          const guildMemberClient = new DiscordGuildMemberClient(
-            nativeLogger,
-            redis,
-            rateLimiter,
-            redlock,
-            diagnostics,
-            restClientFactory,
-          );
-          userGuildsClient.onModuleInit();
-          guildMemberClient.onModuleInit();
-          const discord = new DiscordService(
-            userGuildsClient,
-            guildMemberClient,
-          );
-          const removal = new MemberRemovalService(
-            nativeLogger,
-            repository,
-            discord,
-            makeAmqpAdapter(rabbit),
-            redis,
-          );
-          const memberDiscordSync = new MemberDiscordSyncService(
-            nativeLogger,
-            repository,
-            discord,
-            rateLimiter,
-            makeAmqpAdapter(rabbit),
-            redis,
-            removal,
-          );
-          const scheduler = new MemberRefreshSchedulerService(
-            nativeLogger,
-            memberRefreshQueue,
-            rateLimiter,
-            redis,
-            diagnostics,
-          );
-          const memberDiscordRefresh = new MemberDiscordRefreshService(
-            rateLimiter,
-            scheduler,
-            diagnostics,
-            memberDiscordSync,
-          );
-          const memberAccess = new MemberDiscordAccessService(
-            repository,
-            memberDiscordRefresh,
-            diagnostics,
-          );
-          const memberRead = new MemberReadService(repository, redis);
-          const refreshJobEvents = new MemberRefreshJobEventsService(
-            nativeLogger,
-            refreshJobs,
-            makeAmqpAdapter(rabbit),
-          );
-          const bulkRefresh = new MemberBulkRefreshService(
-            nativeLogger,
-            memberBulkRefreshQueue,
-            refreshJobs,
-            memberRead,
-            refreshJobEvents,
-          );
+    return yield* Effect.acquireRelease(
+      Effect.sync(() => {
+        const runtime = new DrizzleDatabaseRuntime();
+        const memberRefreshQueue = new Queue(MEMBER_REFRESH_QUEUE, {
+          connection: queueConnection,
+          prefix: "{bull}",
+        });
+        const memberBulkRefreshQueue = new Queue(MEMBER_BULK_REFRESH_QUEUE, {
+          connection: queueConnection,
+          prefix: "{bull}",
+        });
+        const repository = new MembersRepository(runtime);
+        const refreshJobs = new MemberRefreshJobRepository(runtime);
+        const diagnostics = new DiscordSyncDiagnosticsService(
+          nativeLogger,
+          redis,
+        );
+        const rateLimiter = new DiscordRateLimiterService(nativeLogger, redis);
+        const redlock = new RedlockService(redis);
+        const restClientFactory = new DiscordRestClientFactory(
+          new AuthService(nativeLogger, redis),
+        );
+        const userGuildsClient = new DiscordUserGuildsClient(
+          nativeLogger,
+          redis,
+          rateLimiter,
+          redlock,
+          diagnostics,
+          restClientFactory,
+        );
+        const guildMemberClient = new DiscordGuildMemberClient(
+          nativeLogger,
+          redis,
+          rateLimiter,
+          redlock,
+          diagnostics,
+          restClientFactory,
+        );
+        userGuildsClient.onModuleInit();
+        guildMemberClient.onModuleInit();
+        const discord = new DiscordService(userGuildsClient, guildMemberClient);
+        const removal = new MemberRemovalService(
+          nativeLogger,
+          repository,
+          discord,
+          makeAmqpAdapter(rabbit),
+          redis,
+        );
+        const memberDiscordSync = new MemberDiscordSyncService(
+          nativeLogger,
+          repository,
+          discord,
+          rateLimiter,
+          makeAmqpAdapter(rabbit),
+          redis,
+          removal,
+        );
+        const scheduler = new MemberRefreshSchedulerService(
+          nativeLogger,
+          memberRefreshQueue,
+          rateLimiter,
+          redis,
+          diagnostics,
+        );
+        const memberDiscordRefresh = new MemberDiscordRefreshService(
+          rateLimiter,
+          scheduler,
+          diagnostics,
+          memberDiscordSync,
+        );
+        const memberAccess = new MemberDiscordAccessService(
+          repository,
+          memberDiscordRefresh,
+          diagnostics,
+        );
+        const memberRead = new MemberReadService(repository, redis);
+        const refreshJobEvents = new MemberRefreshJobEventsService(
+          nativeLogger,
+          refreshJobs,
+          makeAmqpAdapter(rabbit),
+        );
+        const bulkRefresh = new MemberBulkRefreshService(
+          nativeLogger,
+          memberBulkRefreshQueue,
+          refreshJobs,
+          memberRead,
+          refreshJobEvents,
+        );
 
-          return {
-            runtime,
-            queues: [memberRefreshQueue, memberBulkRefreshQueue] as const,
-            service: MembersData.makeServices({
-              access: memberAccess,
-              removal,
-              bulkRefresh,
-            }),
-          };
+        return {
+          runtime,
+          queues: [memberRefreshQueue, memberBulkRefreshQueue] as const,
+          access: memberAccess,
+          removal,
+          bulkRefresh,
+          read: memberRead,
+          refreshJobRead: new MemberRefreshJobReadService(refreshJobs),
+        };
+      }),
+      ({ runtime, queues }) =>
+        Effect.promise(async () => {
+          await Promise.all(queues.map((queue) => queue.close()));
+          await runtime.onApplicationShutdown();
         }),
-        ({ runtime, queues }) =>
-          Effect.promise(async () => {
-            await Promise.all(queues.map((queue) => queue.close()));
-            await runtime.onApplicationShutdown();
-          }),
-      ).pipe(Effect.map(({ service }) => service)),
+    ).pipe(
+      Effect.map(
+        ({ queues: _queues, ...services }): NativeMemberServicesValue =>
+          services,
+      ),
+    );
+  }),
+);
+
+const NativeMembersData = Layer.effect(
+  MembersData,
+  Effect.map(NativeMemberServices, ({ access, removal, bulkRefresh }) =>
+    MembersData.makeServices({ access, removal, bulkRefresh }),
+  ),
+);
+
+const NativeMemberReadData = Layer.effect(
+  MemberReadData,
+  Effect.map(NativeMemberServices, ({ read }) =>
+    MemberReadData.makeService(read),
+  ),
+);
+
+const NativeMemberRefreshJobData = Layer.effect(
+  MemberRefreshJobData,
+  Effect.map(NativeMemberServices, ({ refreshJobRead }) =>
+    MemberRefreshJobData.makeService(refreshJobRead),
+  ),
+);
+
+const NativeOrganizationContextLookup = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const { runtime, access } = yield* NativeMemberServices;
+    return OrganizationContextLookup.layerLegacy(
+      new MemberContextService(
+        nativeLogger,
+        new MemberContextRepository(runtime),
+        redis,
+        access,
+      ),
     );
   }),
 );
@@ -528,4 +560,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeMemberReadData,
   NativeMemberRefreshJobData,
   NativeMembersData,
-).pipe(Layer.provide(ApiDatabaseLive));
+  NativeOrganizationContextLookup,
+).pipe(Layer.provide(NativeMemberServicesLive), Layer.provide(ApiDatabaseLive));
