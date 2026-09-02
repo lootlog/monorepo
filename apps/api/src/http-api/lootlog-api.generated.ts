@@ -24211,7 +24211,7 @@ class TimersGroup extends HttpApiGroup.make("timers").add(
     .annotate(OpenApi.Description, "Manually create a timer for a guild"),
 ) {}
 
-class UserLootlogConfigGroup extends HttpApiGroup.make(
+export class UserLootlogConfigGroup extends HttpApiGroup.make(
   "user-lootlog-config",
 ).add(
   HttpApiEndpoint.get(
@@ -24558,7 +24558,7 @@ class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
     ),
 ) {}
 
-class HealthGroup extends HttpApiGroup.make("health").add(
+export class HealthGroup extends HttpApiGroup.make("health").add(
   HttpApiEndpoint.get("HealthzControllerHealthCheck", "/healthz", {
     success: HttpApiSchema.Empty(200),
   })

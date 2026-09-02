@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { normalizeOpenApiNullable } from "./normalize-openapi-nullable.js";
 import { restoreNullableSchemas } from "./restore-nullable-schemas.js";
 import { restoreForwardAuthMiddleware } from "./restore-forward-auth-middleware.js";
+import { exportBoundaryGroups } from "./export-boundary-groups.js";
 
 const EXPECTED_OPERATION_COUNT = 199;
 const GENERATED_API_NAME = "LootlogApi";
@@ -149,8 +150,8 @@ if (exitCode !== 0) {
 try {
   await formatTemporaryOutput();
   const rawGeneratedSource = await readFile(temporaryOutputPath, "utf8");
-  const restoredGeneratedSource = restoreForwardAuthMiddleware(
-    restoreNullableSchemas(rawGeneratedSource),
+  const restoredGeneratedSource = exportBoundaryGroups(
+    restoreForwardAuthMiddleware(restoreNullableSchemas(rawGeneratedSource)),
   );
   await Bun.write(temporaryOutputPath, restoredGeneratedSource);
   await formatTemporaryOutput();
