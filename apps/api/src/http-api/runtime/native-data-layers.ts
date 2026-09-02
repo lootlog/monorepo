@@ -23,6 +23,8 @@ import { SettingsDocumentsRepository } from "#src/settings-documents/settings-do
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
 import { TimerSettingsService } from "#src/timer-settings/timer-settings.service";
+import { UserLootlogConfigRepository } from "#src/user-lootlog-config/user-lootlog-config.repository";
+import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { MapTemplatesData } from "../handlers/map-templates/map-templates.handlers.js";
 import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import { DocsData } from "../handlers/docs/docs.handlers.js";
@@ -31,6 +33,7 @@ import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
+import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
@@ -224,6 +227,23 @@ const NativeChatData = Layer.unwrap(
   }),
 );
 
+const NativeUserLootlogConfigData = Layer.unwrap(
+  Effect.map(ApiRedis, (redis) =>
+    makeScopedCompatibilityLayer(UserLootlogConfigData, (runtime) => {
+      const guilds = new GuildsRepository(runtime);
+      const service = new UserLootlogConfigService(
+        new UserLootlogConfigRepository(runtime),
+        {
+          getGuildsForRequiredPermissions: (discordId, permissions) =>
+            guilds.findForPermissions(discordId, permissions),
+        } as never,
+        redis,
+      );
+      return UserLootlogConfigData.makeService(service);
+    }),
+  ),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -234,4 +254,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeMessagingData,
   NativeReadyRoomData,
   NativeChatData,
+  NativeUserLootlogConfigData,
 ).pipe(Layer.provide(ApiDatabaseLive));
