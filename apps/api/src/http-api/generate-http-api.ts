@@ -3,6 +3,7 @@ import { open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { restoreNullableSchemas } from "./restore-nullable-schemas.js";
+import { restoreForwardAuthMiddleware } from "./restore-forward-auth-middleware.js";
 
 const EXPECTED_OPERATION_COUNT = 199;
 const GENERATED_API_NAME = "LootlogApi";
@@ -114,7 +115,9 @@ if (exitCode !== 0) {
 
 try {
   const rawGeneratedSource = await readFile(temporaryOutputPath, "utf8");
-  const generatedSource = restoreNullableSchemas(rawGeneratedSource);
+  const generatedSource = restoreForwardAuthMiddleware(
+    restoreNullableSchemas(rawGeneratedSource),
+  );
   const openApiSource = await readFile(openApiPath, "utf8");
   assertCompleteOperationSet(
     readOperationIds(openApiSource),

@@ -15,7 +15,7 @@ on the rewrite branch.
   short-lived one-time realtime ticket required by the coordinated WebSocket
   cutover; the other 243 operation IDs remain unchanged.
 - The official Effect OpenAPI generator deterministically renders the API's
-  schema-first `HttpApi` contract as one 847,248-byte source file containing
+  schema-first `HttpApi` contract as one 1,012,847-byte source file containing
   exactly the same 199 operation IDs. The guarded generator validates the full
   identifier set, deduplicates identical generated components, preserves the
   legacy parameter and model-name representation consumed by Orval, and then
@@ -57,6 +57,12 @@ on the rewrite branch.
   authentication, capability checks, visibility, cross-Organization cases, the
   public PNG response's binary body and cache headers, and the existing JSON body
   returned by timer-settings migration.
+- The Effect security middleware preserves the deployed Traefik `forwardAuth`
+  boundary: Auth validates the JWT/session, while API requires the complete
+  request-scoped `x-auth-user-id` and `x-auth-discord-id` pair. A bearer value
+  alone is insufficient, incomplete identity fails closed with 401, concurrent
+  requests cannot share identity, and the OpenAPI contract still marks exactly
+  194 operations as protected while leaving the same 5 operations public.
 - Activity's legacy migration chain and Drizzle baseline match mechanically on
   a real TimescaleDB, including column order, types, defaults, constraints,
   indexes, one-day chunks, and seven-day retention. Positive and negative
