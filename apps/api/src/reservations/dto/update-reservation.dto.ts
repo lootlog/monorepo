@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { reservationReminderMinutesSchema } from "./create-reservation.dto.js";
 
@@ -16,6 +16,6 @@ const UpdateReservationSchema = z
     message: "At least one editable field is required",
   });
 
-export class UpdateReservationDto extends createZodDto(
+export class UpdateReservationDto extends createSchemaClass(
   UpdateReservationSchema,
 ) {}

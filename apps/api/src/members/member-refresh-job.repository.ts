@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
@@ -8,7 +7,6 @@ import { memberRefreshJobTable } from "../database/drizzle/schema.js";
 type RefreshJobStatus =
   (typeof memberRefreshJobTable.status.enumValues)[number];
 
-@Injectable()
 export class MemberRefreshJobRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

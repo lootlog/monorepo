@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const OpenRespawnWindowSchema = z
   .object({
@@ -14,6 +14,6 @@ const OpenRespawnWindowSchema = z
     },
   );
 
-export class OpenRespawnWindowDto extends createZodDto(
+export class OpenRespawnWindowDto extends createSchemaClass(
   OpenRespawnWindowSchema,
 ) {}

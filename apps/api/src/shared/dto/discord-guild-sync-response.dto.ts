@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   isoDatetimeCodec,
@@ -25,7 +25,7 @@ const DiscordGuildChannelSnapshotResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class DiscordGuildChannelSnapshotResponseDto extends createZodDto(
+export class DiscordGuildChannelSnapshotResponseDto extends createSchemaClass(
   DiscordGuildChannelSnapshotResponseSchema,
   {
     codec: true,
@@ -48,7 +48,7 @@ const DiscordGuildSyncStateResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class DiscordGuildSyncStateResponseDto extends createZodDto(
+export class DiscordGuildSyncStateResponseDto extends createSchemaClass(
   DiscordGuildSyncStateResponseSchema,
   {
     codec: true,

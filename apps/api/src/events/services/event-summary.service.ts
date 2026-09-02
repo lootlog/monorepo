@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Logger } from "#src/shared/http/http-errors";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
 import { clipToWindow } from "../utils/tracking-window.util.js";
 import { EventSummaryRepository } from "./event-summary.repository.js";
@@ -31,7 +31,6 @@ interface GapTimelineEntry {
   durationSeconds: number;
 }
 
-@Injectable()
 export class EventSummaryService {
   private readonly logger = new Logger(EventSummaryService.name);
 

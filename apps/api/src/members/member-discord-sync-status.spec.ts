@@ -2,7 +2,7 @@ import {
   HttpException,
   HttpStatus,
   ServiceUnavailableException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import {
   getTransientMemberSyncStatus,
   isRetryableMemberRefreshStatus,

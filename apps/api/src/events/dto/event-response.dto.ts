@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
@@ -98,34 +98,36 @@ const EventMapsResponseSchema = z.object({
   heroNpcs: z.array(EventMapsHeroResponseSchema),
 });
 
-export class EventListItemResponseDto extends createZodDto(
+export class EventListItemResponseDto extends createSchemaClass(
   EventListItemResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventOverviewResponseDto extends createZodDto(
+export class EventOverviewResponseDto extends createSchemaClass(
   EventOverviewResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventMapResponseDto extends createZodDto(EventMapResponseSchema) {}
+export class EventMapResponseDto extends createSchemaClass(
+  EventMapResponseSchema,
+) {}
 
-export class EventMutationResponseDto extends createZodDto(
+export class EventMutationResponseDto extends createSchemaClass(
   EventMutationResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventMapsResponseDto extends createZodDto(
+export class EventMapsResponseDto extends createSchemaClass(
   EventMapsResponseSchema,
 ) {}
 
-export class EventsListResponseDto extends createZodDto(
+export class EventsListResponseDto extends createSchemaClass(
   z.array(EventListItemResponseSchema),
   {
     codec: true,
@@ -166,14 +168,14 @@ const EventRankingEntryResponseSchema = z.object({
   editHistory: z.array(RankingEditHistoryEntryResponseSchema),
 });
 
-export class EventRankingEntryResponseDto extends createZodDto(
+export class EventRankingEntryResponseDto extends createSchemaClass(
   EventRankingEntryResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventRankingResponseDto extends createZodDto(
+export class EventRankingResponseDto extends createSchemaClass(
   z.array(EventRankingEntryResponseSchema),
   {
     codec: true,
@@ -187,14 +189,14 @@ const PendingParticipationConfirmationResponseSchema = z.object({
   heroNpc: EventHeroNpcResponseSchema,
 });
 
-export class PendingParticipationConfirmationResponseDto extends createZodDto(
+export class PendingParticipationConfirmationResponseDto extends createSchemaClass(
   PendingParticipationConfirmationResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class PendingParticipationConfirmationsResponseDto extends createZodDto(
+export class PendingParticipationConfirmationsResponseDto extends createSchemaClass(
   z.object({
     items: z.array(PendingParticipationConfirmationResponseSchema),
     expiredItems: z.array(PendingParticipationConfirmationResponseSchema),
@@ -217,28 +219,28 @@ const EventTimerResponseSchema = z.object({
   npc: EventTimerNpcResponseSchema,
 });
 
-export class EventTimerResponseDto extends createZodDto(
+export class EventTimerResponseDto extends createSchemaClass(
   EventTimerResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class EventTimersResponseDto extends createZodDto(
+export class EventTimersResponseDto extends createSchemaClass(
   z.array(EventTimerResponseSchema),
   {
     codec: true,
   },
 ) {}
 
-export class ConfirmParticipationForKillResponseDto extends createZodDto(
+export class ConfirmParticipationForKillResponseDto extends createSchemaClass(
   z.object({
     success: z.boolean(),
     confirmedNow: z.boolean(),
   }),
 ) {}
 
-export class SuccessResponseDto extends createZodDto(
+export class SuccessResponseDto extends createSchemaClass(
   z.object({
     success: z.boolean(),
   }),

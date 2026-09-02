@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const UpdateRoleSchema = z.object({
   guildId: z.string(),
@@ -10,4 +10,4 @@ const UpdateRoleSchema = z.object({
   admin: z.boolean(),
 });
 
-export class UpdateRoleDto extends createZodDto(UpdateRoleSchema) {}
+export class UpdateRoleDto extends createSchemaClass(UpdateRoleSchema) {}

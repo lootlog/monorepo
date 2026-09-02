@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, desc, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import type { Permission } from "@lootlog/schema/permissions";
@@ -15,7 +14,6 @@ type RoleWrite = {
   readonly permissions: ReadonlyArray<Permission>;
 };
 
-@Injectable()
 export class RolesRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

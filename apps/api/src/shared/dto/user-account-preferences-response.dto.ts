@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const NotificationSettingsSchema = z.object({
@@ -57,6 +57,6 @@ const UserGameAccountPreferencesResponseSchema = z.object({
   hasStoredPreferences: z.boolean(),
 });
 
-export class UserGameAccountPreferencesResponseDto extends createZodDto(
+export class UserGameAccountPreferencesResponseDto extends createSchemaClass(
   UserGameAccountPreferencesResponseSchema,
 ) {}

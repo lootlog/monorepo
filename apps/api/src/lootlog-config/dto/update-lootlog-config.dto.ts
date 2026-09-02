@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
@@ -12,6 +12,6 @@ const UpdateLootlogConfigSchema = z.object({
   npcs: z.array(UpdateLootlogConfigNpcsSchema),
 });
 
-export class UpdateLootlogConfigDto extends createZodDto(
+export class UpdateLootlogConfigDto extends createSchemaClass(
   UpdateLootlogConfigSchema,
 ) {}

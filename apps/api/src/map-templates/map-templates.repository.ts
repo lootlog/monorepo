@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import { and, asc, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -11,7 +11,6 @@ type MapTemplateMaps = ReadonlyArray<{
   readonly name: string;
 }>;
 
-@Injectable()
 export class MapTemplatesRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

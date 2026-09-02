@@ -1,16 +1,13 @@
 import {
-  Inject,
-  Injectable,
   NotFoundException,
   HttpException,
   HttpStatus,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";
 
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { ChannelsService } from "#src/channels/channels.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
@@ -69,7 +66,7 @@ export type GuildPermissionMember = {
 };
 
 const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
-@Injectable()
+
 export class GuildsService {
   private readonly staleAfterMs: number;
   private readonly guildConfiguration: GuildConfigurationService;
@@ -77,7 +74,7 @@ export class GuildsService {
   private readonly guildAccessSummary: GuildAccessSummaryService;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly channelsService: ChannelsService,
     private readonly rolesService: RolesService,
@@ -85,7 +82,7 @@ export class GuildsService {
     private readonly membersRepository: MembersRepository,
     private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly userGuildAccessResolver: UserGuildAccessResolver,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;

@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const SettingsDomainSchema = z.enum([
@@ -28,7 +28,7 @@ const SettingsPatchOperationSchema = z
   })
   .strict();
 
-export class GetSettingsDocumentsQueryDto extends createZodDto(
+export class GetSettingsDocumentsQueryDto extends createSchemaClass(
   z
     .object({
       domains: z.string().min(1),
@@ -39,7 +39,7 @@ export class GetSettingsDocumentsQueryDto extends createZodDto(
     .strict(),
 ) {}
 
-export class PatchSettingsDocumentsDto extends createZodDto(
+export class PatchSettingsDocumentsDto extends createSchemaClass(
   z
     .object({
       operations: z.array(SettingsPatchOperationSchema).min(1),
@@ -71,7 +71,7 @@ const SettingsDomainResolutionSchema = z
   })
   .readonly();
 
-export class SettingsDocumentsResponseDto extends createZodDto(
+export class SettingsDocumentsResponseDto extends createSchemaClass(
   z.object({
     domains: z.record(z.string(), SettingsDomainResolutionSchema),
   }),

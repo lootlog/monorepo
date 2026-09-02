@@ -1,13 +1,10 @@
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   ForbiddenException,
-  Inject,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { Permission } from "@lootlog/schema/permissions";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
 import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
@@ -16,11 +13,10 @@ import { RedisService } from "#src/redis/redis.service";
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
 import { RolesRepository } from "./roles.repository.js";
 
-@Injectable()
 export class RolesService {
   constructor(
     private readonly repository: RolesRepository,
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 

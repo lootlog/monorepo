@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 export enum MessageType {
   NORMAL = "NORMAL",
@@ -17,7 +17,7 @@ const PartyGatheringDataSchema = z.object({
   world: z.string().min(1).max(50),
 });
 
-export class PartyGatheringDataDto extends createZodDto(
+export class PartyGatheringDataDto extends createSchemaClass(
   PartyGatheringDataSchema,
 ) {}
 
@@ -30,7 +30,7 @@ const ChatCharacterDataSchema = z.object({
   icon: z.string().min(1),
 });
 
-export class ChatCharacterDataDto extends createZodDto(
+export class ChatCharacterDataDto extends createSchemaClass(
   ChatCharacterDataSchema,
 ) {}
 
@@ -41,7 +41,9 @@ const ReplyToMessageSchema = z.object({
   type: z.enum([MessageType.NORMAL, MessageType.NOTIFICATION]),
 });
 
-export class ReplyToMessageDto extends createZodDto(ReplyToMessageSchema) {}
+export class ReplyToMessageDto extends createSchemaClass(
+  ReplyToMessageSchema,
+) {}
 
 const NpcEmbeddedSchema = z.object({
   id: z.number(),
@@ -66,4 +68,4 @@ const SendMessageSchema = z.object({
   replyTo: ReplyToMessageSchema.optional(),
 });
 
-export class SendMessageDto extends createZodDto(SendMessageSchema) {}
+export class SendMessageDto extends createSchemaClass(SendMessageSchema) {}

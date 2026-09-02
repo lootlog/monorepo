@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import {
   and,
   asc,
@@ -53,7 +53,6 @@ export interface CatalogHeroInput {
   maps?: ReadonlyArray<{ mapId: number; mapName: string }>;
 }
 
-@Injectable()
 export class EventCatalogRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

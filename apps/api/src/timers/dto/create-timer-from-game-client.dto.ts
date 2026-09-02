@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
 import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";
 
@@ -35,6 +35,6 @@ const CreateTimerFromGameClientSchema = z.object({
   actorCharacter: TimerActorCharacterSchema.optional(),
 });
 
-export class CreateTimerFromGameClientDto extends createZodDto(
+export class CreateTimerFromGameClientDto extends createSchemaClass(
   CreateTimerFromGameClientSchema,
 ) {}

@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import {
@@ -12,7 +11,6 @@ import {
 } from "./member-refresh-scheduler.service.js";
 import type { MemberRefreshAttempt } from "./member.types.js";
 
-@Injectable()
 export class MemberDiscordRefreshService {
   private readonly MEMBER_RATE_LIMIT_ENDPOINT = "guild-member";
 

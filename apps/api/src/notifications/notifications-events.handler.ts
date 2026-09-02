@@ -1,5 +1,4 @@
-import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
-import { Injectable, Logger } from "@nestjs/common";
+import { Logger } from "#src/shared/http/http-errors";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
@@ -20,7 +19,6 @@ import type { JsonValue } from "./notification-database.types.js";
 
 const DbNotificationJobKind = { INSTANT: "INSTANT" } as const;
 
-@Injectable()
 export class NotificationsEventsHandler {
   private readonly logger = new Logger(NotificationsEventsHandler.name);
 
@@ -32,14 +30,6 @@ export class NotificationsEventsHandler {
     private readonly guildsService: GuildsService,
   ) {}
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-    queue: "backend-notifications-timer-updated",
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleTimerUpdated(event: {
     guildId: string;
     world: string;
@@ -79,14 +69,6 @@ export class NotificationsEventsHandler {
     );
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.NOTIFICATIONS_TIMER_DELETED,
-    queue: "backend-notifications-timer-deleted",
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleTimerDeleted(event: {
     guildId: string;
     world: string;
@@ -105,14 +87,6 @@ export class NotificationsEventsHandler {
     }
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.NOTIFICATIONS_LOOT_CREATED,
-    queue: "backend-notifications-loot-created",
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleLootCreated(event: LootCreatedNotificationEventV2) {
     const watchedItems = await this.repository.findWatchedItemsForLoot(
       event.itemIds,
@@ -236,14 +210,6 @@ export class NotificationsEventsHandler {
     );
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
-    queue: "backend-notifications-delivery-result",
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleDeliveryResult(event: DiscordNotificationDeliveryResultEvent) {
     try {
       await this.jobService.handleDeliveryResult(event);
@@ -255,14 +221,6 @@ export class NotificationsEventsHandler {
     }
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
-    queue: "backend-notifications-discord-guild-channel-deleted",
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleDiscordGuildChannelDeleted(
     event: DiscordGuildChannelDeletedEvent,
   ) {

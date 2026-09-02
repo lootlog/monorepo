@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const UserLootlogConfigResponseSchema = z.object({
@@ -57,18 +57,18 @@ export function toUserLootlogConfigResponse(
   return config;
 }
 
-export class UserLootlogConfigResponseDto extends createZodDto(
+export class UserLootlogConfigResponseDto extends createSchemaClass(
   UserLootlogConfigResponseSchema,
 ) {}
 
-export class UserLootlogConfigAccountResponseDto extends createZodDto(
+export class UserLootlogConfigAccountResponseDto extends createSchemaClass(
   z.record(z.string(), UserLootlogConfigResponseSchema),
 ) {}
 
-export class UserLootlogPlayersCatchingGuildsRequestDto extends createZodDto(
+export class UserLootlogPlayersCatchingGuildsRequestDto extends createSchemaClass(
   UserLootlogPlayersCatchingGuildsRequestSchema,
 ) {}
 
-export class UserLootlogPlayersCatchingGuildsResponseDto extends createZodDto(
+export class UserLootlogPlayersCatchingGuildsResponseDto extends createSchemaClass(
   UserLootlogPlayersCatchingGuildsResponseSchema,
 ) {}

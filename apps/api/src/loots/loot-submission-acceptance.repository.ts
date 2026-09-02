@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from "@nestjs/common";
+import { ServiceUnavailableException } from "#src/shared/http/http-errors";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -70,7 +70,6 @@ export type NewLootPersistence = {
   submissions: PersistedLootSubmission[];
 };
 
-@Injectable()
 export class LootSubmissionAcceptanceRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

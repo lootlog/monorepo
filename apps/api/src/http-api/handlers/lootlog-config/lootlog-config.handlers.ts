@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import {
   Permission,
   type Permission as PermissionValue,

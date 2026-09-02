@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Effect } from "effect";
 import {
@@ -21,7 +21,6 @@ import {
 type Database = ApiDatabaseValue;
 type GapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
-@Injectable()
 export class EventTrackingRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

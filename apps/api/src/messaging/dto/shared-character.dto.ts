@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const ClanSchema = z.object({
   id: z.number().optional(),
@@ -16,6 +16,6 @@ export const CharacterSchema = z.object({
   clan: ClanSchema.optional(),
 });
 
-export class ClanDto extends createZodDto(ClanSchema) {}
+export class ClanDto extends createSchemaClass(ClanSchema) {}
 
-export class CharacterDto extends createZodDto(CharacterSchema) {}
+export class CharacterDto extends createSchemaClass(CharacterSchema) {}

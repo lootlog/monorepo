@@ -2,12 +2,9 @@ import { randomUUID } from "node:crypto";
 import {
   ConflictException,
   ForbiddenException,
-  Inject,
-  Injectable,
   NotFoundException,
-  Optional,
   UnprocessableEntityException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type {
   PartyReadyRoomCharacter,
   PartyReadyRoomClientUpdate,
@@ -130,22 +127,17 @@ function characterOwnershipMatches(
   );
 }
 
-@Injectable()
 export class ReadyRoomService {
   constructor(
-    @Inject(READY_ROOM_REPOSITORY)
     private readonly repository: ReadyRoomRepository,
     private readonly chatService: ChatService,
-    @Optional()
-    @Inject(READY_ROOM_CLOCK)
+
     private readonly clock: Clock = Date.now,
-    @Optional()
-    @Inject(READY_ROOM_ID_GENERATOR)
+
     private readonly idGenerator: IdGenerator = randomUUID,
-    @Optional()
+
     private readonly publisher?: ReadyRoomPublisher,
-    @Optional()
-    @Inject(READY_ROOM_PARTICIPANT_ID_GENERATOR)
+
     private readonly participantIdGenerator: IdGenerator = randomUUID,
   ) {}
 

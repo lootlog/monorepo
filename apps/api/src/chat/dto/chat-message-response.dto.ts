@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   ChatCharacterDataDto,
@@ -40,10 +40,10 @@ const ChatMessageActionResponseSchema = z.object({
   success: z.boolean(),
 });
 
-export class ChatMessageResponseDto extends createZodDto(
+export class ChatMessageResponseDto extends createSchemaClass(
   ChatMessageResponseSchema,
 ) {}
 
-export class ChatMessageActionResponseDto extends createZodDto(
+export class ChatMessageActionResponseDto extends createSchemaClass(
   ChatMessageActionResponseSchema,
 ) {}

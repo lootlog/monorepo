@@ -1,4 +1,7 @@
-import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  NotFoundException,
+} from "#src/shared/http/http-errors";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/schema";
 import { MessageType } from "#src/chat/dto/send-message.dto";

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Logger, NotFoundException } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import {
   getGuildMemberReferencesCacheKey,
@@ -21,7 +21,6 @@ type PlayerSnapshotSummary = Awaited<
 const MEMBER_READ_CACHE_TTL_SECONDS = 30;
 const MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS = 60;
 
-@Injectable()
 export class MemberReadService {
   private readonly logger = new Logger(MemberReadService.name);
 

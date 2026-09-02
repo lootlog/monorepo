@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const UpdateUserPreferencesSchema = z.object({
   guildsOrder: z
@@ -77,6 +77,6 @@ const UpdateUserPreferencesSchema = z.object({
     .optional(),
 });
 
-export class UpdateUserPreferencesDto extends createZodDto(
+export class UpdateUserPreferencesDto extends createSchemaClass(
   UpdateUserPreferencesSchema,
 ) {}

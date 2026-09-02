@@ -1,8 +1,5 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MembersService } from "./members.service.js";
@@ -16,25 +13,15 @@ interface JobProgress {
   failedIds: string[];
 }
 
-@Injectable()
-@Processor(MEMBER_BULK_REFRESH_QUEUE, {
-  concurrency: 5,
-  limiter: {
-    max: 5,
-    duration: 1000,
-  },
-})
-export class MemberBulkRefreshProcessor extends WorkerHost {
+export class MemberBulkRefreshProcessor {
   private readonly JOB_UPDATE_INTERVAL = 5;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly refreshJobs: MemberRefreshJobRepository,
     private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,
-  ) {
-    super();
-  }
+  ) {}
 
   async process(job: Job<MemberBulkRefreshJobData>): Promise<void> {
     const { jobId, guildId, memberIds } = job.data;

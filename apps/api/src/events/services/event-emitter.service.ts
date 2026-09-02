@@ -1,5 +1,5 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Injectable, Logger } from "@nestjs/common";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+import { Logger } from "#src/shared/http/http-errors";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 
@@ -18,11 +18,10 @@ export type EventEmitPayloads = {
 
 export type EventEmitRoutingKey = keyof EventEmitPayloads;
 
-@Injectable()
 export class EventEmitterService {
   private readonly logger = new Logger(EventEmitterService.name);
 
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(private readonly amqpConnection: AmqpPublisher) {}
 
   async emit<K extends EventEmitRoutingKey>(
     routingKey: K,

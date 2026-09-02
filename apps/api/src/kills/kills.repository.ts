@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import {
   and,
   eq,
@@ -193,7 +193,6 @@ const guildColumns = (bucket: boolean): FilterColumns => {
   };
 };
 
-@Injectable()
 export class KillsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

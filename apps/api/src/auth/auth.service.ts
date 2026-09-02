@@ -1,6 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
@@ -25,12 +23,11 @@ class AuthHttpResponseError extends Error {
   }
 }
 
-@Injectable()
 export class AuthService {
   private authServiceUrl: string;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {
     this.authServiceUrl = authConfig.serviceUrl;

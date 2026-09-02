@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 export const reservationReminderMinutesSchema = z.union([
@@ -17,6 +17,6 @@ const CreateReservationSchema = z
   })
   .strict();
 
-export class CreateReservationDto extends createZodDto(
+export class CreateReservationDto extends createSchemaClass(
   CreateReservationSchema,
 ) {}

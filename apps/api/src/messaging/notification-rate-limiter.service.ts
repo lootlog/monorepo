@@ -1,12 +1,7 @@
 import { randomUUID } from "node:crypto";
-import {
-  Inject,
-  Injectable,
-  ServiceUnavailableException,
-} from "@nestjs/common";
+import { ServiceUnavailableException } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 
 export const NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const NOTIFICATION_RATE_LIMIT_WINDOW_MS = 5_000;
@@ -38,10 +33,9 @@ export type NotificationRateLimitOutcome =
   | { accepted: true }
   | { accepted: false; retryAfterMs: number };
 
-@Injectable()
 export class NotificationRateLimiterService {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 

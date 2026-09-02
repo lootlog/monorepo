@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
 import { reservationReminderMinutesSchema } from "./create-reservation.dto.js";
@@ -39,7 +39,7 @@ export const ReservationResponseSchema = z.object({
   reminderMinutesBefore: reservationReminderMinutesSchema.nullable(),
 });
 
-export class ReservationResponseDto extends createZodDto(
+export class ReservationResponseDto extends createSchemaClass(
   ReservationResponseSchema,
   { codec: true },
 ) {}
@@ -52,7 +52,7 @@ const ReservationWindowResponseSchema = z.object({
   }),
 });
 
-export class ReservationWindowResponseDto extends createZodDto(
+export class ReservationWindowResponseDto extends createSchemaClass(
   ReservationWindowResponseSchema,
   { codec: true },
 ) {}
@@ -72,12 +72,12 @@ const ReservationSpotResponseSchema = z.object({
   nextReservation: ReservationResponseSchema.nullable(),
 });
 
-export class ReservationSpotResponseDto extends createZodDto(
+export class ReservationSpotResponseDto extends createSchemaClass(
   ReservationSpotResponseSchema,
   { codec: true },
 ) {}
 
-export class ReservationSpotsResponseDto extends createZodDto(
+export class ReservationSpotsResponseDto extends createSchemaClass(
   z.array(ReservationSpotResponseSchema),
   { codec: true },
 ) {}
@@ -86,7 +86,7 @@ const MyReservationsResponseSchema = z.object({
   items: z.array(ReservationResponseSchema),
 });
 
-export class MyReservationsResponseDto extends createZodDto(
+export class MyReservationsResponseDto extends createSchemaClass(
   MyReservationsResponseSchema,
   { codec: true },
 ) {}

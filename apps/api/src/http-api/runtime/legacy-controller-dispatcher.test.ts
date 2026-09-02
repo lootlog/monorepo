@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
-import type { INestApplicationContext, Type } from "@nestjs/common";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { controllerRoutes } from "./controller-routes.generated.js";
 import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
 
 const caller = {
@@ -12,41 +12,26 @@ const caller = {
   roles: [{ id: "role-1" }],
 };
 
-const makeApplication = () => {
+const makeRegistry = () => {
   const calls = new Map<string, ReturnType<typeof mock>>();
-  const application = {
-    get(controllerType: Type<unknown>) {
-      const controller = Object.create(controllerType.prototype) as Record<
-        string,
-        (...arguments_: unknown[]) => unknown
-      >;
-      for (const methodName of Object.getOwnPropertyNames(
-        controllerType.prototype,
-      )) {
-        if (methodName === "constructor") continue;
-        const method = controllerType.prototype[methodName] as unknown;
-        if (typeof method !== "function") continue;
-        const operation = Reflect.getMetadata(
-          "swagger/apiOperation",
-          method,
-        ) as { readonly operationId?: string } | undefined;
-        const operationId =
-          operation?.operationId ??
-          `${controllerType.name}${methodName[0]?.toUpperCase()}${methodName.slice(1)}`;
-        const call = mock((...arguments_: unknown[]) => arguments_);
-        calls.set(operationId, call);
-        controller[methodName] = call;
-      }
-      return controller;
-    },
-  } as unknown as INestApplicationContext;
-  return { application, calls };
+  const controllers: Record<
+    string,
+    Record<string, ReturnType<typeof mock>>
+  > = {};
+
+  for (const [endpoint, route] of Object.entries(controllerRoutes)) {
+    const call = mock((...arguments_: ReadonlyArray<unknown>) => arguments_);
+    calls.set(endpoint, call);
+    controllers[route.controller] ??= {};
+    controllers[route.controller][route.method] = call;
+  }
+
+  return { calls, dispatch: createControllerDispatcher(controllers) };
 };
 
-describe("legacy controller dispatcher", () => {
+describe("static service dispatcher", () => {
   test("reconstructs body, query and authorized organization arguments", async () => {
-    const { application, calls } = makeApplication();
-    const dispatch = createControllerDispatcher(application);
+    const { calls, dispatch } = makeRegistry();
 
     await dispatch(
       "listEvents",
@@ -78,9 +63,8 @@ describe("legacy controller dispatcher", () => {
     );
   });
 
-  test("reconstructs forwarded identity arguments without a synthetic HTTP request", async () => {
-    const { application, calls } = makeApplication();
-    const dispatch = createControllerDispatcher(application);
+  test("reconstructs forwarded identity arguments", async () => {
+    const { calls, dispatch } = makeRegistry();
 
     await dispatch(
       "NotificationsUserControllerCreateWatchedItem",
@@ -95,10 +79,8 @@ describe("legacy controller dispatcher", () => {
     });
   });
 
-  test("fails closed for an operation missing from the established controllers", () => {
-    const { application } = makeApplication();
-    const dispatch = createControllerDispatcher(application);
-
+  test("fails closed for a missing operation", () => {
+    const { dispatch } = makeRegistry();
     expect(() => dispatch("missing" as never, {}, caller as never)).toThrow(
       "Missing controller route for missing",
     );

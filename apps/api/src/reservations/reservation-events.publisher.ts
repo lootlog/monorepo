@@ -1,5 +1,5 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Injectable, Logger } from "@nestjs/common";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+import { Logger } from "#src/shared/http/http-errors";
 import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -14,11 +14,10 @@ type ReservationEventInput = {
   actorDiscordId: string;
 };
 
-@Injectable()
 export class ReservationEventsPublisher {
   private readonly logger = new Logger(ReservationEventsPublisher.name);
 
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(private readonly amqpConnection: AmqpPublisher) {}
 
   async created(input: ReservationEventInput): Promise<void> {
     await Promise.all([

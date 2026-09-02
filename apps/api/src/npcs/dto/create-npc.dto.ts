@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const CreateNpcSchema = z.object({
   id: z.number(),
@@ -13,4 +13,4 @@ const CreateNpcSchema = z.object({
   world: z.string(),
 });
 
-export class CreateNpcDto extends createZodDto(CreateNpcSchema) {}
+export class CreateNpcDto extends createSchemaClass(CreateNpcSchema) {}

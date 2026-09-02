@@ -1,10 +1,10 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import {
   commaSeparatedArray,
   intFromString,
   optionalFromQuery,
-} from "@lootlog/nest-shared/validators/query-helpers";
+} from "#src/shared/validation/query-helpers";
 import { MAX_PAGE_LIMIT } from "../config/pagination.js";
 
 const FetchLootsParamsSchema = z.object({
@@ -29,4 +29,6 @@ const FetchLootsParamsSchema = z.object({
   createdAtMax: z.string().datetime({ offset: true }).optional(),
 });
 
-export class FetchLootsParamsDto extends createZodDto(FetchLootsParamsSchema) {}
+export class FetchLootsParamsDto extends createSchemaClass(
+  FetchLootsParamsSchema,
+) {}

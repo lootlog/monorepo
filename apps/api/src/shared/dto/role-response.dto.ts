@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { Permission } from "@lootlog/schema/permissions";
 import * as z from "zod";
 
@@ -13,4 +13,4 @@ const RoleResponseSchema = z.object({
   lvlRangeTo: z.number().nullable().optional(),
 });
 
-export class RoleResponseDto extends createZodDto(RoleResponseSchema) {}
+export class RoleResponseDto extends createSchemaClass(RoleResponseSchema) {}

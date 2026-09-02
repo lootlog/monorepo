@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import {
   and,
   desc,
@@ -41,7 +41,6 @@ const overlapsWindow = (
     ),
   );
 
-@Injectable()
 export class EventSummaryRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

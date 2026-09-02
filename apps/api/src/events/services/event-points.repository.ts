@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import {
   and,
   asc,
@@ -41,7 +41,6 @@ type RankingInsert = typeof eventRankingTable.$inferInsert;
 type KillPointUpdate = Partial<typeof eventKillPointTable.$inferInsert>;
 type RankingUpdate = Partial<typeof eventRankingTable.$inferInsert>;
 
-@Injectable()
 export class EventPointsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

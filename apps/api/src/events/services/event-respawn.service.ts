@@ -1,11 +1,9 @@
-import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
-  Injectable,
   InternalServerErrorException,
   Logger,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type { Queue } from "bullmq";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
@@ -36,13 +34,12 @@ const getRespawnWindowCloseLogMessage = (isAutoClose: boolean): string =>
     ? "Auto-closing respawn window"
     : "Manually closing respawn window";
 
-@Injectable()
 export class EventRespawnService {
   private readonly logger = new Logger(EventRespawnService.name);
 
   constructor(
     private readonly repository: EventRespawnRepository,
-    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
     private readonly eventEmitter: EventEmitterService,
     private readonly killService: EventKillService,

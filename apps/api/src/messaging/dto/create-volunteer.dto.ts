@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { CharacterSchema } from "#src/messaging/dto/shared-character.dto";
 
 const CreateVolunteerSchema = z.object({
@@ -8,4 +8,6 @@ const CreateVolunteerSchema = z.object({
   character: CharacterSchema,
 });
 
-export class CreateVolunteerDto extends createZodDto(CreateVolunteerSchema) {}
+export class CreateVolunteerDto extends createSchemaClass(
+  CreateVolunteerSchema,
+) {}

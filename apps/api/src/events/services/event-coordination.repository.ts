@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -11,7 +10,6 @@ import {
   eventTable,
 } from "#src/database/drizzle/schema";
 
-@Injectable()
 export class EventCoordinationRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

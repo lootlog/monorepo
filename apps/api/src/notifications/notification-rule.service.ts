@@ -2,9 +2,8 @@ import { randomUUID } from "node:crypto";
 import {
   BadRequestException,
   ConflictException,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import {
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
@@ -53,7 +52,6 @@ const firstNonNullish = <T>(
   values.find((value): value is T => value !== null && value !== undefined) ??
   fallback;
 
-@Injectable()
 export class NotificationRuleService {
   constructor(
     private readonly repository: NotificationsRepository,

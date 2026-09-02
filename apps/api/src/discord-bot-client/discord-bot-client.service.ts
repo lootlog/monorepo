@@ -1,11 +1,9 @@
-import { Injectable } from "@nestjs/common";
 import type {
   DiscordGuildChannelSnapshot,
   DiscordGuildSyncState,
 } from "@lootlog/schema/notifications";
 import { discordBotConfig } from "#src/config/discord-bot.config";
 
-@Injectable()
 export class DiscordBotClientService {
   private readonly serviceUrl: string;
 

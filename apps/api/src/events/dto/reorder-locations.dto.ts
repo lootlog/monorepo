@@ -1,8 +1,10 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const ReorderLocationsSchema = z.object({
   locationIds: z.array(z.string()),
 });
 
-export class ReorderLocationsDto extends createZodDto(ReorderLocationsSchema) {}
+export class ReorderLocationsDto extends createSchemaClass(
+  ReorderLocationsSchema,
+) {}

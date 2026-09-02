@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const KillNpcSchema = z.object({
   id: z.number(),
@@ -10,7 +10,7 @@ const KillNpcSchema = z.object({
   icon: z.string().optional(),
 });
 
-export class KillNpcDto extends createZodDto(KillNpcSchema) {}
+export class KillNpcDto extends createSchemaClass(KillNpcSchema) {}
 
 const CreateKillSchema = z.object({
   world: z.string().min(1),
@@ -19,4 +19,4 @@ const CreateKillSchema = z.object({
   accountId: z.string().min(1),
 });
 
-export class CreateKillDto extends createZodDto(CreateKillSchema) {}
+export class CreateKillDto extends createSchemaClass(CreateKillSchema) {}

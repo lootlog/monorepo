@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { HeroMapSchema } from "./create-event.dto.js";
 
 const CreateHeroSchema = z.object({
@@ -8,4 +8,4 @@ const CreateHeroSchema = z.object({
   maps: z.array(HeroMapSchema).optional(),
 });
 
-export class CreateHeroDto extends createZodDto(CreateHeroSchema) {}
+export class CreateHeroDto extends createSchemaClass(CreateHeroSchema) {}

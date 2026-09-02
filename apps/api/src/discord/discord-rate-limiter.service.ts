@@ -1,6 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { RedisService } from "#src/redis/redis.service";
 import type { DiscordEndpoint } from "./discord.types.js";
 
@@ -21,12 +19,11 @@ interface DiscordRateLimitState {
   isBlocked: boolean;
 }
 
-@Injectable()
 export class DiscordRateLimiterService {
   private readonly RATE_LIMIT_KEY_PREFIX = "discord:ratelimit:user:";
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redis: RedisService,
   ) {}
 

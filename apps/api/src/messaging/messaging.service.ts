@@ -1,15 +1,12 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import {
   BadRequestException,
   ForbiddenException,
   HttpException,
   HttpStatus,
-  Inject,
-  Injectable,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
@@ -31,11 +28,10 @@ type NotificationMetadata = {
   createdAt: string;
 };
 
-@Injectable()
 export class MessagingService {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly logger: Logger,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly guildsService: GuildsService,
     private readonly redisService: RedisService,
     private readonly readyRoomService: ReadyRoomService,

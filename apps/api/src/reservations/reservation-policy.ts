@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   UnprocessableEntityException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import {
   validateReservationTime as getReservationTimeValidationIssue,
   type ReservationSettings,

@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   NotificationJobKind,
@@ -29,7 +29,7 @@ const NotificationTestTriggerUsageResponseSchema = z.object({
   nextAvailableAt: z.string().datetime({ offset: true }).nullable(),
 });
 
-export class NotificationTestTriggerUsageResponseDto extends createZodDto(
+export class NotificationTestTriggerUsageResponseDto extends createSchemaClass(
   NotificationTestTriggerUsageResponseSchema,
 ) {}
 
@@ -42,7 +42,7 @@ const NotificationFiltersResponseSchema = z.object({
   itemIds: z.array(z.number().int()).optional(),
 });
 
-export class NotificationFiltersResponseDto extends createZodDto(
+export class NotificationFiltersResponseDto extends createSchemaClass(
   NotificationFiltersResponseSchema,
 ) {}
 
@@ -65,7 +65,7 @@ const NotificationTargetResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class NotificationTargetResponseDto extends createZodDto(
+export class NotificationTargetResponseDto extends createSchemaClass(
   NotificationTargetResponseSchema,
   {
     codec: true,
@@ -77,7 +77,7 @@ const NotificationTargetWithTestTriggerResponseSchema =
     testTrigger: NotificationTestTriggerUsageResponseSchema,
   });
 
-export class NotificationTargetWithTestTriggerResponseDto extends createZodDto(
+export class NotificationTargetWithTestTriggerResponseDto extends createSchemaClass(
   NotificationTargetWithTestTriggerResponseSchema,
   {
     codec: true,
@@ -91,7 +91,7 @@ const NotificationRuleTargetResponseSchema = z.object({
   target: NotificationTargetResponseSchema,
 });
 
-export class NotificationRuleTargetResponseDto extends createZodDto(
+export class NotificationRuleTargetResponseDto extends createSchemaClass(
   NotificationRuleTargetResponseSchema,
   {
     codec: true,
@@ -126,7 +126,7 @@ const NotificationRuleSummaryResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class NotificationRuleSummaryResponseDto extends createZodDto(
+export class NotificationRuleSummaryResponseDto extends createSchemaClass(
   NotificationRuleSummaryResponseSchema,
   {
     codec: true,
@@ -138,7 +138,7 @@ const NotificationRuleResponseSchema =
     targets: z.array(NotificationRuleTargetResponseSchema),
   });
 
-export class NotificationRuleResponseDto extends createZodDto(
+export class NotificationRuleResponseDto extends createSchemaClass(
   NotificationRuleResponseSchema,
   {
     codec: true,
@@ -150,7 +150,7 @@ const NotificationRuleWithTestTriggerResponseSchema =
     testTrigger: NotificationTestTriggerUsageResponseSchema,
   });
 
-export class NotificationRuleWithTestTriggerResponseDto extends createZodDto(
+export class NotificationRuleWithTestTriggerResponseDto extends createSchemaClass(
   NotificationRuleWithTestTriggerResponseSchema,
   {
     codec: true,
@@ -165,7 +165,7 @@ const NotificationRuleLimitsResponseSchema = z.object({
   testTriggerWindowSeconds: z.number().int(),
 });
 
-export class NotificationRuleLimitsResponseDto extends createZodDto(
+export class NotificationRuleLimitsResponseDto extends createSchemaClass(
   NotificationRuleLimitsResponseSchema,
 ) {}
 
@@ -174,7 +174,7 @@ const GuildNotificationRulesResponseSchema = z.object({
   limits: NotificationRuleLimitsResponseSchema,
 });
 
-export class GuildNotificationRulesResponseDto extends createZodDto(
+export class GuildNotificationRulesResponseDto extends createSchemaClass(
   GuildNotificationRulesResponseSchema,
   {
     codec: true,
@@ -190,7 +190,7 @@ const NotificationAllowedMentionsResponseSchema = z
   })
   .meta({ id: "NotificationAllowedMentionsResponseDto" });
 
-export class NotificationAllowedMentionsResponseDto extends createZodDto(
+export class NotificationAllowedMentionsResponseDto extends createSchemaClass(
   NotificationAllowedMentionsResponseSchema,
 ) {}
 
@@ -230,7 +230,7 @@ const NotificationJobPayloadSnapshotResponseSchema = z
   .nullable()
   .meta({ id: "NotificationJobPayloadSnapshotResponseDto" });
 
-export class NotificationJobPayloadSnapshotResponseDto extends createZodDto(
+export class NotificationJobPayloadSnapshotResponseDto extends createSchemaClass(
   NotificationJobPayloadSnapshotResponseSchema,
 ) {}
 
@@ -259,7 +259,7 @@ const NotificationJobResponseSchema = z.object({
   target: NotificationTargetResponseSchema,
 });
 
-export class NotificationJobResponseDto extends createZodDto(
+export class NotificationJobResponseDto extends createSchemaClass(
   NotificationJobResponseSchema,
   {
     codec: true,
@@ -271,7 +271,7 @@ const NotificationJobsResponseSchema = z.object({
   history: z.array(NotificationJobResponseSchema),
 });
 
-export class NotificationJobsResponseDto extends createZodDto(
+export class NotificationJobsResponseDto extends createSchemaClass(
   NotificationJobsResponseSchema,
   {
     codec: true,
@@ -283,7 +283,7 @@ const GuildAvailableNotificationTargetsResponseSchema = z.object({
   syncState: DiscordGuildSyncStateResponseDto.schema.nullable(),
 });
 
-export class GuildAvailableNotificationTargetsResponseDto extends createZodDto(
+export class GuildAvailableNotificationTargetsResponseDto extends createSchemaClass(
   GuildAvailableNotificationTargetsResponseSchema,
   {
     codec: true,
@@ -299,7 +299,7 @@ const WatchedItemSnapshotResponseSchema = z.object({
   stat: z.string(),
 });
 
-export class WatchedItemSnapshotResponseDto extends createZodDto(
+export class WatchedItemSnapshotResponseDto extends createSchemaClass(
   WatchedItemSnapshotResponseSchema,
 ) {}
 
@@ -317,7 +317,7 @@ const WatchedItemResponseSchema = z.object({
   notificationRule: NotificationRuleResponseSchema.nullable(),
 });
 
-export class WatchedItemResponseDto extends createZodDto(
+export class WatchedItemResponseDto extends createSchemaClass(
   WatchedItemResponseSchema,
   {
     codec: true,

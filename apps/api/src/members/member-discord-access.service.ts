@@ -2,9 +2,8 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
 import { serviceConfig } from "#src/config/service.config";
@@ -25,7 +24,6 @@ import type {
 } from "./member.types.js";
 import { MembersRepository } from "./members.repository.js";
 
-@Injectable()
 export class MemberDiscordAccessService {
   private readonly env: RuntimeEnvironment;
   private readonly staleAccessGraceMs = 6 * 60 * 60 * 1000;

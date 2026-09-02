@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   isoDatetimeCodec,
@@ -17,14 +17,14 @@ const MemberRefreshJobResponseSchema = z.object({
   completedAt: nullableIsoDatetimeCodec.optional(),
 });
 
-export class MemberRefreshJobResponseDto extends createZodDto(
+export class MemberRefreshJobResponseDto extends createSchemaClass(
   MemberRefreshJobResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class NullableMemberRefreshJobResponseDto extends createZodDto(
+export class NullableMemberRefreshJobResponseDto extends createSchemaClass(
   MemberRefreshJobResponseSchema.nullable(),
   {
     codec: true,

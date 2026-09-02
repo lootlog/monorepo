@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+
 import {
   and,
   asc,
@@ -55,7 +55,6 @@ const normalizeEventJson = <T extends typeof eventTable.$inferSelect>(
   event: T,
 ) => ({ ...event, scoringRules: event.scoringRules as JsonValue | null });
 
-@Injectable()
 export class EventKillRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

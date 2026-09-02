@@ -5,7 +5,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import type { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 import type {

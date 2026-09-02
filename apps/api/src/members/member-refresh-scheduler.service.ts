@@ -1,8 +1,5 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { InjectQueue } from "@nestjs/bullmq";
 import type { Job, Queue as BullQueue } from "bullmq";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "#src/redis/redis.service";
@@ -32,7 +29,6 @@ type MemberRefreshJobState =
   | "waiting"
   | "waiting-children";
 
-@Injectable()
 export class MemberRefreshSchedulerService {
   private readonly MEMBER_ENDPOINT = "guild-member";
   private readonly USER_LOCK_TTL_SECONDS = 30;
@@ -50,8 +46,8 @@ return 0
 `;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
-    @InjectQueue(MEMBER_REFRESH_QUEUE)
+    private readonly logger: Logger,
+
     private readonly memberRefreshQueue: BullQueue<MemberRefreshJobData>,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redisService: RedisService,

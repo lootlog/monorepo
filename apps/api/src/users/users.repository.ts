@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
@@ -25,7 +24,6 @@ type UserSettingsWrite = {
   readonly theme?: string;
 };
 
-@Injectable()
 export class UsersRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

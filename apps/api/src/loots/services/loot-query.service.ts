@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { Permission } from "@lootlog/schema/permissions";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
@@ -20,7 +19,6 @@ type LootItemWithSnapshot = LootQueryRecord["lootItems"][number];
 type LootPlayerWithSnapshot = LootQueryRecord["lootPlayers"][number];
 type LootNpcWithSnapshot = LootQueryRecord["lootNpcs"][number];
 
-@Injectable()
 export class LootQueryService {
   constructor(private readonly repository: LootQueryRepository) {}
 

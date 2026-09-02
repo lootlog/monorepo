@@ -1,10 +1,5 @@
-import {
-  Inject,
-  Injectable,
-  ServiceUnavailableException,
-} from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger as WinstonLogger } from "winston";
+import { ServiceUnavailableException } from "#src/shared/http/http-errors";
+import type { ApplicationLogger as WinstonLogger } from "#src/shared/logging/application-logger";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
 import { MembersService } from "#src/members/members.service";
@@ -76,12 +71,11 @@ type MutedNpcPreferenceInput = Pick<
 > &
   Partial<Pick<MutedNpcPreference, "prof" | "icon">>;
 
-@Injectable()
 export class UsersService {
   private readonly battlelogServiceUrl: string;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: WinstonLogger,
+    private readonly logger: WinstonLogger,
     private readonly repository: UsersRepository,
     private readonly authService: AuthService,
     private readonly membersService: MembersService,

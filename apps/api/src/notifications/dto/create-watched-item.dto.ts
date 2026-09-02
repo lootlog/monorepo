@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const CreateWatchedItemSchema = z.object({
   itemId: z.number().int(),
@@ -8,6 +8,6 @@ const CreateWatchedItemSchema = z.object({
   guildIds: z.array(z.string().max(50)).min(1).max(20),
 });
 
-export class CreateWatchedItemDto extends createZodDto(
+export class CreateWatchedItemDto extends createSchemaClass(
   CreateWatchedItemSchema,
 ) {}

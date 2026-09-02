@@ -1,9 +1,8 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { ForbiddenException } from "#src/shared/http/http-errors";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { ErrorKey } from "../enum/error-key.enum.js";
 import { LootsRepository } from "../loots.repository.js";
 
-@Injectable()
 export class LootCommentService {
   constructor(private readonly repository: LootsRepository) {}
 

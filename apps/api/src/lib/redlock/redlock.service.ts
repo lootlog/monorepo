@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { RedisService } from "#src/redis/redis.service";
 import Redlock from "redlock";
 
@@ -17,7 +16,6 @@ const DEFAULT_OPTIONS: RedlockOptions = {
   retryJitter: 50,
 };
 
-@Injectable()
 export class RedlockService {
   constructor(private readonly redis: RedisService) {}
 

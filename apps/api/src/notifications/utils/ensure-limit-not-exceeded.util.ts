@@ -1,4 +1,4 @@
-import { ConflictException } from "@nestjs/common";
+import { ConflictException } from "#src/shared/http/http-errors";
 
 export function ensureLimitNotExceeded(params: {
   currentCount: number;

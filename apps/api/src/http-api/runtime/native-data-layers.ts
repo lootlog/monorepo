@@ -9,7 +9,6 @@ import {
   RabbitRoutingKey,
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
-import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
   DiscordGuildChannelDeletedEvent,
@@ -21,7 +20,8 @@ import type {
   LootCreatedNotificationEventV2,
 } from "@lootlog/schema/notifications";
 import { Queue, Worker } from "bullmq";
-import type { Logger } from "winston";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+import { applicationLogger } from "#src/shared/logging/application-logger";
 import { AuthService } from "#src/auth/auth.service";
 import { ChannelsRepository } from "#src/channels/channels.repository";
 import { ChannelsService } from "#src/channels/channels.service";
@@ -265,18 +265,7 @@ const NativeInternalGuildsData = Layer.unwrap(
   ),
 );
 
-const nativeLogger = {
-  log: (entry: unknown) =>
-    Effect.runSync(
-      Effect.log(typeof entry === "string" ? entry : JSON.stringify(entry)),
-    ),
-  warn: (entry: unknown) =>
-    Effect.runSync(
-      Effect.logWarning(
-        typeof entry === "string" ? entry : JSON.stringify(entry),
-      ),
-    ),
-} as Logger;
+const nativeLogger = applicationLogger;
 
 const makeAmqpAdapter = (rabbit: RabbitMessaging["Service"]) =>
   ({
@@ -290,11 +279,11 @@ const makeAmqpAdapter = (rabbit: RabbitMessaging["Service"]) =>
           content: new TextEncoder().encode(JSON.stringify(payload)),
         }),
       ),
-  }) as unknown as AmqpConnection;
+  }) satisfies AmqpPublisher;
 
 const makeReadyRoomService = (
   redis: ApiRedis["Service"],
-  amqp: AmqpConnection,
+  amqp: AmqpPublisher,
 ) =>
   new ReadyRoomService(
     new ReadyRoomRedisRepository(redis),
@@ -1104,21 +1093,15 @@ const NativeEventsServicesLive = Layer.effect(
       ),
       queues.heroKill,
     );
-    const controllers = new Map<unknown, unknown>([
-      [EventsAssignmentController, new EventsAssignmentController(events)],
-      [EventsCatalogController, new EventsCatalogController(events)],
-      [EventsMonitoringController, new EventsMonitoringController(events)],
-      [
-        EventsPinsController,
-        new EventsPinsController(
-          new PinnedEventsService(new PinnedEventsRepository(runtime)),
-        ),
-      ],
-      [EventsRankingController, new EventsRankingController(events)],
-    ]);
     const dispatch = createControllerDispatcher({
-      get: (token: unknown) => controllers.get(token),
-    } as never);
+      EventsAssignmentController: new EventsAssignmentController(events),
+      EventsCatalogController: new EventsCatalogController(events),
+      EventsMonitoringController: new EventsMonitoringController(events),
+      EventsPinsController: new EventsPinsController(
+        new PinnedEventsService(new PinnedEventsRepository(runtime)),
+      ),
+      EventsRankingController: new EventsRankingController(events),
+    });
     return { events, layer: EventsData.layerLegacy(dispatch) };
   }),
 );
@@ -1212,19 +1195,20 @@ const NativeNotificationsServicesLive = Layer.effect(
       jobs,
       matching,
     );
-    const controllers = new Map<unknown, unknown>([
-      [
-        NotificationsGuildController,
-        new NotificationsGuildController(targets, rules, jobs, channels),
-      ],
-      [
-        NotificationsUserController,
-        new NotificationsUserController(targets, rules, jobs, watchedItems),
-      ],
-    ]);
     const dispatch = createControllerDispatcher({
-      get: (token: unknown) => controllers.get(token),
-    } as never);
+      NotificationsGuildController: new NotificationsGuildController(
+        targets,
+        rules,
+        jobs,
+        channels,
+      ),
+      NotificationsUserController: new NotificationsUserController(
+        targets,
+        rules,
+        jobs,
+        watchedItems,
+      ),
+    });
     return {
       jobs,
       matching,

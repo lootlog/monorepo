@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
@@ -12,7 +12,6 @@ import {
 import type { UpdateLootlogConfigNpcDto } from "./dto/update-lootlog-config-npc.dto.js";
 import type { UpdateLootlogConfigDto } from "./dto/update-lootlog-config.dto.js";
 
-@Injectable()
 export class LootlogConfigService {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

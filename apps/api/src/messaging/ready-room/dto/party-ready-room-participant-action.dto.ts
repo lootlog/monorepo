@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const ExpectedRevisionSchema = z.object({
@@ -13,14 +13,14 @@ const PartyReadyRoomParticipantIdentitySchema = z.object({
   participantId: z.string().min(1).max(100),
 });
 
-export class PartyReadyRoomExpectedRevisionDto extends createZodDto(
+export class PartyReadyRoomExpectedRevisionDto extends createSchemaClass(
   ExpectedRevisionSchema,
 ) {}
 
-export class PartyReadyRoomParticipantActionDto extends createZodDto(
+export class PartyReadyRoomParticipantActionDto extends createSchemaClass(
   PartyReadyRoomParticipantActionSchema,
 ) {}
 
-export class PartyReadyRoomParticipantIdentityDto extends createZodDto(
+export class PartyReadyRoomParticipantIdentityDto extends createSchemaClass(
   PartyReadyRoomParticipantIdentitySchema,
 ) {}

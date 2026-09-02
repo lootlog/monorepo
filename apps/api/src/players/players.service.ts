@@ -1,12 +1,11 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Injectable } from "@nestjs/common";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
+
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import type { CreatePlayerDto } from "#src/players/dto/create-player.dto";
 
-@Injectable()
 export class PlayersService {
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(private readonly amqpConnection: AmqpPublisher) {}
 
   bulkIndexPlayers(players: CreatePlayerDto[]) {
     this.amqpConnection.publish(

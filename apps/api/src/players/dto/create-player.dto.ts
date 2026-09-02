@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const CreatePlayerSchema = z.object({
   id: z.string(),
@@ -12,4 +12,4 @@ const CreatePlayerSchema = z.object({
   world: z.string(),
 });
 
-export class CreatePlayerDto extends createZodDto(CreatePlayerSchema) {}
+export class CreatePlayerDto extends createSchemaClass(CreatePlayerSchema) {}

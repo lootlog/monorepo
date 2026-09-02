@@ -5,7 +5,7 @@ import {
   NotificationTriggerType,
 } from "@lootlog/schema/notifications";
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { Error } from "#src/notifications/enum/error.enum";
 
 const UpdateNotificationRuleSchema = z
@@ -63,6 +63,6 @@ const UpdateNotificationRuleSchema = z
     }
   });
 
-export class UpdateNotificationRuleDto extends createZodDto(
+export class UpdateNotificationRuleDto extends createSchemaClass(
   UpdateNotificationRuleSchema,
 ) {}

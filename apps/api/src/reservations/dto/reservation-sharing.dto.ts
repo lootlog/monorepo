@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
 
@@ -19,7 +19,7 @@ const ReservationShareInvitationSchema = z.object({
   createdAt: isoDatetimeCodec,
 });
 
-export class ReservationSharesResponseDto extends createZodDto(
+export class ReservationSharesResponseDto extends createSchemaClass(
   z.object({
     shares: z.array(ReservationShareSchema),
     pendingInvitations: z.array(ReservationShareInvitationSchema),
@@ -27,7 +27,7 @@ export class ReservationSharesResponseDto extends createZodDto(
   { codec: true },
 ) {}
 
-export class CreateReservationShareInvitationResponseDto extends createZodDto(
+export class CreateReservationShareInvitationResponseDto extends createSchemaClass(
   ReservationShareInvitationSchema.extend({
     invitePath: z
       .string()
@@ -39,7 +39,7 @@ export class CreateReservationShareInvitationResponseDto extends createZodDto(
 const EligibleReservationShareOrganizationSchema =
   ReservationShareOrganizationSchema.extend({ id: z.string() });
 
-export class ReservationShareInvitationPreviewResponseDto extends createZodDto(
+export class ReservationShareInvitationPreviewResponseDto extends createSchemaClass(
   z.object({
     sourceOrganization: ReservationShareOrganizationSchema,
     expiresAt: isoDatetimeCodec,
@@ -50,11 +50,11 @@ export class ReservationShareInvitationPreviewResponseDto extends createZodDto(
   { codec: true },
 ) {}
 
-export class AcceptReservationShareInvitationDto extends createZodDto(
+export class AcceptReservationShareInvitationDto extends createSchemaClass(
   z.object({ targetGuildId: z.string().min(1) }),
 ) {}
 
-export class AcceptReservationShareInvitationResponseDto extends createZodDto(
+export class AcceptReservationShareInvitationResponseDto extends createSchemaClass(
   ReservationShareSchema,
   { codec: true },
 ) {}

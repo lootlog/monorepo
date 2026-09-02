@@ -1,11 +1,10 @@
 import {
   BadRequestException,
-  Injectable,
   Logger,
   NotFoundException,
   type OnModuleInit,
-} from "@nestjs/common";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+} from "#src/shared/http/http-errors";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { ExecutionError } from "redlock";
 import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
@@ -23,7 +22,6 @@ const CoverageGapType = {
   UNCOVERED: "UNCOVERED",
 } as const;
 
-@Injectable()
 export class EventTrackingService implements OnModuleInit {
   private readonly logger = new Logger(EventTrackingService.name);
   private redlock: ReturnType<RedlockService["createInstance"]>;
@@ -33,7 +31,7 @@ export class EventTrackingService implements OnModuleInit {
     private readonly repository: EventTrackingRepository,
     private readonly eventEmitter: EventEmitterService,
     private readonly eventReadCache: EventReadCacheService,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly redis: RedisService,
     private readonly redlockService: RedlockService,
     private readonly timersService: TimersService,

@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   canViewLoot,
   type LootVisibilityNpc,
@@ -27,7 +26,6 @@ type MemberRoleInfo = {
   }[];
 };
 
-@Injectable()
 export class NotificationMatchingService {
   constructor(private readonly repository: NotificationsRepository) {}
 

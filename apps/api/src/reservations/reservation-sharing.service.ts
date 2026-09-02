@@ -2,9 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 import {
   ConflictException,
   GoneException,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { Permission } from "@lootlog/schema/permissions";
 import type { guildTable } from "#src/database/drizzle/schema";
 import { GuildsService } from "#src/guilds/guilds.service";
@@ -30,7 +29,6 @@ function orderGuildPair(firstGuildId: string, secondGuildId: string) {
     : ([secondGuildId, firstGuildId] as const);
 }
 
-@Injectable()
 export class ReservationSharingService {
   constructor(
     private readonly repository: ReservationSharingRepository,

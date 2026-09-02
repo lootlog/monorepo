@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import { Effect } from "effect";
 import { RedisService } from "#src/redis/redis.service";
 import { env } from "#src/config/env";
@@ -25,7 +25,6 @@ function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
-@Injectable()
 export class ReservationCatalogService {
   constructor(private readonly redis: RedisService) {}
 

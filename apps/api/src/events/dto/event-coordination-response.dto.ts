@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
@@ -89,7 +89,7 @@ const EventCoordinationResponseSchema = z.object({
   heroes: z.array(EventCoordinationHeroSchema),
 });
 
-export class EventCoordinationResponseDto extends createZodDto(
+export class EventCoordinationResponseDto extends createSchemaClass(
   EventCoordinationResponseSchema,
   {
     codec: true,

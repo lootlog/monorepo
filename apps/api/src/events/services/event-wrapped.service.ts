@@ -1,5 +1,5 @@
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Logger, NotFoundException } from "#src/shared/http/http-errors";
 import type { Permission } from "@lootlog/schema/permissions";
 import type {
   guildTable,
@@ -108,7 +108,6 @@ const countMapStats = (mapStats: unknown): number => {
   return Array.isArray(mapStats) ? mapStats.length : 0;
 };
 
-@Injectable()
 export class EventWrappedService {
   private readonly logger = new Logger(EventWrappedService.name);
 

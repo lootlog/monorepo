@@ -1,11 +1,9 @@
-import { Injectable } from "@nestjs/common";
 import { and, eq, or } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../../database/drizzle/database.js";
 import { DrizzleDatabaseRuntime } from "../../database/drizzle/runtime.js";
 import { guildTable } from "../../database/drizzle/schema.js";
 
-@Injectable()
 export class MemberContextRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

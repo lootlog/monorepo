@@ -7,15 +7,12 @@ import {
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   HttpException,
-  Inject,
-  Injectable,
   ServiceUnavailableException,
   UnauthorizedException,
   type OnModuleInit,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { Routes, type APIGuild } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
 import {
@@ -45,7 +42,6 @@ export interface FreshCompleteUserGuildsResult {
   complete: true;
 }
 
-@Injectable()
 export class DiscordUserGuildsClient implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
@@ -64,7 +60,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
   private readonly isLocal: boolean;
 
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redlockService: RedlockService,

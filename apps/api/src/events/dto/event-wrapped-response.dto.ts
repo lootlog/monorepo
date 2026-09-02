@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const EventWrappedRarityTotalsResponseSchema = z.object({
@@ -103,7 +103,7 @@ const EventWrappedLootResponseSchema = z.object({
   heroBreakdown: z.array(EventWrappedLootHeroResponseSchema),
 });
 
-export class EventWrappedApiResponseDto extends createZodDto(
+export class EventWrappedApiResponseDto extends createSchemaClass(
   z.object({
     generatedAt: z.iso.datetime(),
     event: EventWrappedEventResponseSchema,

@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from "@nestjs/common";
+import { ServiceUnavailableException } from "#src/shared/http/http-errors";
 import {
   buildNotificationRateLimitKey,
   NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS,

@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
 import { GuildDocumentContentSchema } from "./guild-document-content.schema.js";
@@ -72,63 +72,63 @@ const DocsMutationResponseSchema = z.object({
   success: z.boolean(),
 });
 
-export class GuildDocumentListItemResponseDto extends createZodDto(
+export class GuildDocumentListItemResponseDto extends createSchemaClass(
   GuildDocumentListItemSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentTrashItemResponseDto extends createZodDto(
+export class GuildDocumentTrashItemResponseDto extends createSchemaClass(
   GuildDocumentTrashItemSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentListResponseDto extends createZodDto(
+export class GuildDocumentListResponseDto extends createSchemaClass(
   GuildDocumentListResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentTrashResponseDto extends createZodDto(
+export class GuildDocumentTrashResponseDto extends createSchemaClass(
   GuildDocumentTrashResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentResponseDto extends createZodDto(
+export class GuildDocumentResponseDto extends createSchemaClass(
   GuildDocumentResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentHistoryItemResponseDto extends createZodDto(
+export class GuildDocumentHistoryItemResponseDto extends createSchemaClass(
   GuildDocumentHistoryItemSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentHistoryResponseDto extends createZodDto(
+export class GuildDocumentHistoryResponseDto extends createSchemaClass(
   GuildDocumentHistoryResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class GuildDocumentHistorySnapshotResponseDto extends createZodDto(
+export class GuildDocumentHistorySnapshotResponseDto extends createSchemaClass(
   GuildDocumentHistorySnapshotResponseSchema,
   {
     codec: true,
   },
 ) {}
 
-export class DocsMutationResponseDto extends createZodDto(
+export class DocsMutationResponseDto extends createSchemaClass(
   DocsMutationResponseSchema,
   {
     codec: true,

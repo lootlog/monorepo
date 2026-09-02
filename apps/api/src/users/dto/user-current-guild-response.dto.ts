@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const UserCurrentGuildResponseSchema = z.object({
@@ -12,6 +12,6 @@ const UserCurrentGuildResponseSchema = z.object({
   isAccessDataStale: z.boolean(),
 });
 
-export class UserCurrentGuildResponseDto extends createZodDto(
+export class UserCurrentGuildResponseDto extends createSchemaClass(
   UserCurrentGuildResponseSchema,
 ) {}

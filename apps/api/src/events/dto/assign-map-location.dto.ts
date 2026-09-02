@@ -1,10 +1,10 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const AssignMapLocationSchema = z.object({
   locationId: z.string().nullable().optional(),
 });
 
-export class AssignMapLocationDto extends createZodDto(
+export class AssignMapLocationDto extends createSchemaClass(
   AssignMapLocationSchema,
 ) {}

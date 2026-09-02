@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 
 const CreateAutoTimerSubmittedGuildSchema = z.object({
@@ -22,7 +22,7 @@ const CreateAutoTimerResponseSchema = z.object({
   rejectedGuilds: z.array(CreateAutoTimerRejectedGuildSchema),
 });
 
-export class CreateAutoTimerResponseDto extends createZodDto(
+export class CreateAutoTimerResponseDto extends createSchemaClass(
   CreateAutoTimerResponseSchema,
 ) {}
 

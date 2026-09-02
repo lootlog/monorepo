@@ -1,12 +1,5 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  Optional,
-  forwardRef,
-} from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import { NotFoundException, forwardRef } from "#src/shared/http/http-errors";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { Permission } from "@lootlog/schema/permissions";
 import type { MemberDiscordAccessService } from "#src/members/member-discord-access.service";
 import { MembersService } from "#src/members/members.service";
@@ -32,18 +25,17 @@ type GuildLookupResult = {
   cacheHit: boolean;
 };
 
-@Injectable()
 export class MemberContextService {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly repository: MemberContextRepository,
     private readonly redisService: RedisService,
-    @Inject(forwardRef(() => MembersService))
+
     private readonly membersService: Pick<
       MemberDiscordAccessService,
       "getGuildMemberById" | "isMemberSoftStale"
     >,
-    @Optional()
+
     private readonly perfDiagnosticsService?: PerfDiagnosticsService,
   ) {}
 

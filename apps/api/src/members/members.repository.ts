@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   and,
   asc,
@@ -34,7 +33,6 @@ type MemberWrite = {
   readonly lastDiscordStatus: string;
 };
 
-@Injectable()
 export class MembersRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

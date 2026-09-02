@@ -1,22 +1,15 @@
-import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
-import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
 import { EventsService } from "./events.service.js";
 import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface.js";
 import { deserializeKillTimerData } from "./utils/event-hero-kill-job.js";
 
-@Injectable()
-@Processor(EVENT_HERO_KILL_QUEUE)
-export class EventHeroKillProcessor extends WorkerHost {
+export class EventHeroKillProcessor {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly eventsService: EventsService,
-  ) {
-    super();
-  }
+  ) {}
 
   async process(job: Job<EventHeroKillJobData>): Promise<void> {
     const { guildId, world, npcId, npcName, npcIcon, npcLvl, isManualClose } =
@@ -36,7 +29,6 @@ export class EventHeroKillProcessor extends WorkerHost {
     );
   }
 
-  @OnWorkerEvent("failed")
   onFailed(job: Job<EventHeroKillJobData>, error: Error): void {
     this.logger.log({
       level: "error",

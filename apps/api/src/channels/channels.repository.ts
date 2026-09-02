@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import {
@@ -26,7 +25,6 @@ type WriteDatabase = Pick<
   "delete" | "insert" | "update"
 >;
 
-@Injectable()
 export class ChannelsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

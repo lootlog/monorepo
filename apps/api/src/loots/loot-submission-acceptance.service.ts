@@ -1,4 +1,4 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { RedisService } from "#src/redis/redis.service";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
@@ -9,13 +9,10 @@ import type { LootCreatedNotificationEventV2 } from "@lootlog/schema/notificatio
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
-  Injectable,
   ServiceUnavailableException,
   type OnModuleInit,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { ExecutionError } from "redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -46,7 +43,7 @@ import { PlayersService } from "#src/players/players.service";
 import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { LootSubmissionAcceptanceRepository } from "./loot-submission-acceptance.repository.js";
 
 type Guild = typeof guildTable.$inferSelect;
@@ -91,13 +88,12 @@ const LOOT_LOCK_RETRY_OPTIONS = {
   retryJitter: 50,
 } as const;
 
-@Injectable()
 export class LootSubmissionAcceptanceService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
   constructor(
     private readonly allocation: LootAllocationService,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly playersService: PlayersService,
     private readonly npcsService: NpcsService,
     private readonly itemsService: ItemsService,
@@ -107,7 +103,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     private readonly userLootlogConfigService: UserLootlogConfigService,
     private readonly lootStatsService: LootStatsService,
     private readonly redisService: RedisService,
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redlockService: RedlockService,
   ) {}
 

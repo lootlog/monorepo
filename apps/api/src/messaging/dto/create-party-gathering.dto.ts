@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { CharacterSchema } from "#src/messaging/dto/shared-character.dto";
 
 const CreatePartyGatheringSchema = z.object({
@@ -11,6 +11,6 @@ const CreatePartyGatheringSchema = z.object({
   maxLvl: z.number().min(1).max(500).optional(),
 });
 
-export class CreatePartyGatheringDto extends createZodDto(
+export class CreatePartyGatheringDto extends createSchemaClass(
   CreatePartyGatheringSchema,
 ) {}

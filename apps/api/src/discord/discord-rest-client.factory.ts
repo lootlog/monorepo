@@ -1,10 +1,9 @@
 import { REST } from "@discordjs/rest";
 import {
   BadRequestException,
-  Injectable,
   ServiceUnavailableException,
   UnauthorizedException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { AuthService } from "#src/auth/auth.service";
@@ -19,7 +18,6 @@ interface CachedDiscordRestClient {
   rest: REST;
 }
 
-@Injectable()
 export class DiscordRestClientFactory {
   private readonly restTimeout = 5000;
   private readonly restClientCacheTtlMs = 60_000;

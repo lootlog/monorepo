@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -15,7 +14,6 @@ const activeEventCondition = (referenceTime: Date) =>
     or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
   );
 
-@Injectable()
 export class PinnedEventsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

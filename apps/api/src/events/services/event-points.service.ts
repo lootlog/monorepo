@@ -1,8 +1,7 @@
 import {
   BadRequestException,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
+} from "#src/shared/http/http-errors";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
 import { EventEmitterService } from "./event-emitter.service.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -71,7 +70,6 @@ type ExistingRankingSnapshot = {
 };
 type EventKillPoint = typeof eventKillPointTable.$inferSelect;
 
-@Injectable()
 export class EventPointsService {
   constructor(
     private readonly repository: EventPointsRepository,

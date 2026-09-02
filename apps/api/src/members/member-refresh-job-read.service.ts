@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "#src/shared/http/http-errors";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { serviceConfig } from "#src/config/service.config";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant.js";

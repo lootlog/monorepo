@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import { Permission } from "@lootlog/schema/permissions";
 
 const UserGuildPermissionsRoleSchema = z.object({
@@ -9,7 +9,7 @@ const UserGuildPermissionsRoleSchema = z.object({
   permissions: z.array(z.nativeEnum(Permission)),
 });
 
-export class UserGuildPermissionsRole extends createZodDto(
+export class UserGuildPermissionsRole extends createSchemaClass(
   UserGuildPermissionsRoleSchema,
 ) {}
 
@@ -18,7 +18,7 @@ const UserGuildPermissionsGuildSchema = z.object({
   ownerId: z.string(),
 });
 
-export class UserGuildPermissionsGuild extends createZodDto(
+export class UserGuildPermissionsGuild extends createSchemaClass(
   UserGuildPermissionsGuildSchema,
 ) {}
 
@@ -27,6 +27,6 @@ const UserGuildPermissionsSchema = z.object({
   roles: z.array(UserGuildPermissionsRoleSchema),
 });
 
-export class UserGuildPermissionsDto extends createZodDto(
+export class UserGuildPermissionsDto extends createSchemaClass(
   UserGuildPermissionsSchema,
 ) {}

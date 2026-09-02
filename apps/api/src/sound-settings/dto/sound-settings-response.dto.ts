@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import {
   isoDatetimeCodec,
@@ -19,7 +19,7 @@ const SoundSettingsResponseSchema = z.object({
   updatedAt: isoDatetimeCodec,
 });
 
-export class SoundSettingsResponseDto extends createZodDto(
+export class SoundSettingsResponseDto extends createSchemaClass(
   SoundSettingsResponseSchema,
   {
     codec: true,

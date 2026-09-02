@@ -1,8 +1,8 @@
 import * as z from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 
 const UpdateLootSchema = z.object({
   msg: z.string(),
 });
 
-export class UpdateLootDto extends createZodDto(UpdateLootSchema) {}
+export class UpdateLootDto extends createSchemaClass(UpdateLootSchema) {}

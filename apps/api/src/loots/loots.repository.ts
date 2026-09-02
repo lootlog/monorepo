@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -24,7 +23,6 @@ const bindQuery = (
   return sql.join(chunks);
 };
 
-@Injectable()
 export class LootsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

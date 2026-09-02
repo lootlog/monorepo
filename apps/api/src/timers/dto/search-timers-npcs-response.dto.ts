@@ -1,4 +1,4 @@
-import { createZodDto } from "nestjs-zod";
+import { createSchemaClass } from "#src/shared/validation/schema-class";
 import * as z from "zod";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
@@ -16,6 +16,6 @@ const SearchTimersNpcResponseSchema = z.object({
   latestRespawnRandomness: z.number().nullable(),
 });
 
-export class SearchTimersNpcResponseDto extends createZodDto(
+export class SearchTimersNpcResponseDto extends createSchemaClass(
   SearchTimersNpcResponseSchema,
 ) {}

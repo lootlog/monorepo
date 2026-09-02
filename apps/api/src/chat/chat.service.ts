@@ -1,12 +1,9 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import {
   ForbiddenException,
-  Inject,
-  Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+} from "#src/shared/http/http-errors";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import {
   MessageType,
   type SendMessageDto,
@@ -37,13 +34,12 @@ type MessageRouting = {
   npcLevel?: number;
 };
 
-@Injectable()
 export class ChatService {
   constructor(
-    private readonly amqpConnection: AmqpConnection,
+    private readonly amqpConnection: AmqpPublisher,
     private readonly redisService: RedisService,
     private readonly guildsService: GuildsService,
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
   ) {}
 
   private getChatMessagesKey(guildId: string): string {

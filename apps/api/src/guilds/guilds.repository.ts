@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, arrayOverlaps, eq, inArray, isNotNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { Permission } from "@lootlog/schema/permissions";
@@ -22,7 +21,6 @@ import { MEMBER_LAST_DISCORD_STATUS } from "../members/constants/member-discord-
 type GuildWrite = Partial<typeof guildTable.$inferInsert>;
 export type GuildRecord = typeof guildTable.$inferSelect;
 
-@Injectable()
 export class GuildsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

@@ -1,8 +1,7 @@
-import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus } from "#src/shared/http/http-errors";
 import type { APIGuild } from "discord-api-types/v10";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
-import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
-import type { Logger } from "winston";
+import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { DiscordService } from "#src/discord/discord.service";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
 import { MembersService } from "#src/members/members.service";
@@ -17,10 +16,9 @@ export interface GuildRefreshCandidate {
   hasDiscordAdmin: boolean;
 }
 
-@Injectable()
 export class UserGuildAccessResolver {
   constructor(
-    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly guildsRepository: GuildsRepository,
     private readonly discordService: DiscordService,
     private readonly membersService: MembersService,
