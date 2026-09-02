@@ -10,7 +10,6 @@ import { MembersService } from "#src/members/members.service";
 import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import { ReservationsService } from "#src/reservations/reservations.service";
-import { RolesService } from "#src/roles/roles.service";
 import { MemberContextService } from "#src/shared/permissions/member-context.service";
 import { TimersService } from "#src/timers/timers.service";
 import { UsersService } from "#src/users/users.service";
@@ -47,7 +46,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
       ReservationsRolesData.layerServices({
         reservations: service(ReservationsService),
         mutations: service(ReservationMutationsService),
-        roles: service(RolesService),
         sharing: service(ReservationSharingService),
       }),
       TimersData.layerService(service(TimersService)),

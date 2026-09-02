@@ -17,6 +17,7 @@ import {
   ReservationsRolesData,
   ReservationsRolesNotFound,
   ReservationsRolesOperationError,
+  RolesData,
   updateGuildRole,
 } from "./reservations-roles.handlers.js";
 
@@ -93,14 +94,19 @@ const makeData = (overrides: Partial<ReservationsRolesData["Service"]> = {}) =>
     listMine: () => Effect.succeed({ items: [] }),
     deleteOwned: () => Effect.succeed(undefined),
     updateOwned: () => Effect.succeed(reservation),
-    getRoles: () => Effect.succeed([role]),
-    updateRole: () => Effect.succeed(role),
     listShares: () => Effect.succeed({ shares: [], pendingInvitations: [] }),
     createInvitation: () => Effect.succeed({}),
     revokeInvitation: () => Effect.succeed(undefined),
     revokeShare: () => Effect.succeed(undefined),
     previewInvitation: () => Effect.succeed({}),
     acceptInvitation: () => Effect.succeed({}),
+    ...overrides,
+  });
+
+const makeRolesData = (overrides: Partial<RolesData["Service"]> = {}) =>
+  RolesData.of({
+    getRoles: () => Effect.succeed([role]),
+    updateRole: () => Effect.succeed(role),
     ...overrides,
   });
 
@@ -116,10 +122,12 @@ const makeAuthorization = (
 const provideServices = (
   authorization: ReservationsRolesAuthorization["Service"],
   data: ReservationsRolesData["Service"],
+  roles: RolesData["Service"] = makeRolesData(),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
     Layer.succeed(ReservationsRolesAuthorization, authorization),
     Layer.succeed(ReservationsRolesData, data),
+    Layer.succeed(RolesData, roles),
   );
 
 describe("Reservations and Roles HttpApi handlers", () => {
@@ -239,7 +247,8 @@ describe("Reservations and Roles HttpApi handlers", () => {
           return Effect.succeed(guildAccess);
         },
       }),
-      makeData({
+      makeData(),
+      makeRolesData({
         updateRole: (discordId, guildId, roleId) => {
           updateCalls.push({ discordId, guildId, roleId });
           return Effect.succeed(role);
@@ -284,7 +293,8 @@ describe("Reservations and Roles HttpApi handlers", () => {
             discordId: "discord-admin",
           }),
       }),
-      makeData({ updateRole: () => Effect.fail(failure) }),
+      makeData(),
+      makeRolesData({ updateRole: () => Effect.fail(failure) }),
     );
 
     const error = await Effect.runPromise(
