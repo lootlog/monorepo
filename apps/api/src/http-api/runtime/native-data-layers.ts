@@ -28,6 +28,20 @@ import { GuildsService } from "#src/guilds/guilds.service";
 import { GuildConfigurationService } from "#src/guilds/guild-configuration.service";
 import { GuildAccessSummaryService } from "#src/guilds/guild-access-summary.service";
 import { UserGuildAccessResolver } from "#src/guilds/user-guild-access-resolver.service";
+import { ItemsService } from "#src/items/items.service";
+import { KillsRepository } from "#src/kills/kills.repository";
+import { KillsService } from "#src/kills/kills.service";
+import { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
+import { LootAllocationRepository } from "#src/loots/loot-allocation.repository";
+import { LootAllocationService } from "#src/loots/loot-allocation.service";
+import { LootSubmissionAcceptanceRepository } from "#src/loots/loot-submission-acceptance.repository";
+import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acceptance.service";
+import { LootsRepository } from "#src/loots/loots.repository";
+import { LootsService } from "#src/loots/loots.service";
+import { LootCommentService } from "#src/loots/services/loot-comment.service";
+import { LootQueryRepository } from "#src/loots/services/loot-query.repository";
+import { LootQueryService } from "#src/loots/services/loot-query.service";
+import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { MembersRepository } from "#src/members/members.repository";
 import type { MembersService } from "#src/members/members.service";
 import { MemberBulkRefreshService } from "#src/members/member-bulk-refresh.service";
@@ -47,6 +61,8 @@ import {
 import { ChatService } from "#src/chat/chat.service";
 import { MessagingService } from "#src/messaging/messaging.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
+import { NpcsService } from "#src/npcs/npcs.service";
+import { PlayersService } from "#src/players/players.service";
 import { ReadyRoomPublisher } from "#src/messaging/ready-room/ready-room-publisher";
 import { ReadyRoomRedisRepository } from "#src/messaging/ready-room/ready-room-redis.repository";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
@@ -103,6 +119,7 @@ import { PublicSystemData } from "../handlers/public-system/public-system.handle
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
+import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { TimersData } from "../handlers/timers/timers.handlers.js";
 import {
   GuildConfigurationData,
@@ -785,6 +802,71 @@ const NativeTimersData = Layer.effect(
   }),
 );
 
+const NativeKillsLootsData = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const { runtime } = yield* NativeMemberServices;
+    const amqp = makeAmqpAdapter(rabbit);
+    const guildsRepository = new GuildsRepository(runtime);
+    const guilds = {
+      getGuildsForRequiredPermissions: (
+        discordId: string,
+        permissions: Permission[],
+      ) => guildsRepository.findForPermissions(discordId, permissions),
+    } as unknown as GuildsService;
+    const userLootlogConfig = new UserLootlogConfigService(
+      new UserLootlogConfigRepository(runtime),
+      guilds,
+      redis,
+    );
+    const lootsRepository = new LootsRepository(runtime);
+    const lootStats = new LootStatsService(lootsRepository, redis);
+    const allocation = new LootAllocationService(
+      amqp,
+      new LootAllocationRepository(runtime),
+      redis,
+      nativeLogger,
+    );
+    const acceptance = new LootSubmissionAcceptanceService(
+      allocation,
+      amqp,
+      new PlayersService(amqp),
+      new NpcsService(amqp),
+      new ItemsService(amqp),
+      guilds,
+      new LootSubmissionAcceptanceRepository(runtime),
+      new LootlogConfigService(runtime),
+      userLootlogConfig,
+      lootStats,
+      redis,
+      nativeLogger,
+      new RedlockService(redis),
+    );
+    acceptance.onModuleInit();
+    return legacyKillsLootsDataLayer({
+      kills: new KillsService(
+        nativeLogger,
+        new KillsRepository(runtime),
+        redis,
+        userLootlogConfig,
+        guilds,
+      ),
+      loots: new LootsService(
+        lootsRepository,
+        new LootQueryService(new LootQueryRepository(runtime)),
+        new LootCommentService(lootsRepository),
+        lootStats,
+        redis,
+        nativeLogger,
+      ),
+      lootStats,
+      lootSubmissionAcceptance: acceptance,
+      lootAllocation: allocation,
+    });
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -808,6 +890,7 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeReservationMutationsData,
   NativeUsersGuildsData,
   NativeTimersData,
+  NativeKillsLootsData,
 ).pipe(
   Layer.provide(NativeGuildAccessSummaryLive),
   Layer.provide(NativeMemberServicesLive),
