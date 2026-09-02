@@ -322,7 +322,6 @@ export const ActivityHandlers = Layer.merge(
   ),
 ).pipe(Layer.provide(BearerSecurityLive));
 
-// oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.
 const DocumentationRoute = HttpRouter.use((router) =>
   router.add(
     "GET",
