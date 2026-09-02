@@ -9,15 +9,16 @@
   "imports": {
     "#src/*": {
       "types": "./src/*.ts",
+      "development": "./src/*.ts",
       "default": "./dist/src/*.js"
     }
   },
   "scripts": {
-    "dev": "nest start --watch",
-    "prebuild": "bun ./tools/clean-swagger-metadata.mjs",
-    "build": "nest build",
+    "dev": "bun --conditions=development --watch --enable-source-maps src/main.ts",
+    "prebuild": "bun ./tools/clean-build.mjs",
+    "build": "tsc -p tsconfig.build.json",
     "start": "bun --enable-source-maps dist/src/main.js",
-    "start:debug": "nest start --debug --watch",
+    "start:debug": "bun --conditions=development --inspect-wait --watch --enable-source-maps src/main.ts",
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "format": "oxfmt src test",
@@ -73,8 +74,6 @@
     "@effect/openapi-generator": "catalog:",
     "@effect/platform-node": "catalog:",
     "@lootlog/typescript-config": "workspace:*",
-    "@nestjs/cli": "catalog:",
-    "@nestjs/schematics": "catalog:",
     "@nestjs/testing": "catalog:",
     "@testcontainers/postgresql": "^12.1.0",
     "@types/node": "catalog:",
