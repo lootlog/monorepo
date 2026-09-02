@@ -1,7 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
 import { Permission } from "@lootlog/schema/permissions";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MembersService } from "#src/members/members.service";
 import {
   getGuildCacheKey,
@@ -46,7 +46,7 @@ describe("MemberContextService", () => {
       providers: [
         MemberContextService,
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
         {

@@ -7,7 +7,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { RateLimitError } from "@discordjs/rest";
 import { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
@@ -156,7 +156,7 @@ describe("DiscordService", () => {
         DiscordRestClientFactory,
         DiscordUserGuildsClient,
         DiscordGuildMemberClient,
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         { provide: AuthService, useValue: mockAuthService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },

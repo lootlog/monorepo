@@ -9,7 +9,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { LootsService } from "./loots.service.js";
 import { PlayersService } from "../players/players.service.js";
 import { NpcsService } from "../npcs/npcs.service.js";
@@ -667,7 +667,7 @@ describe("Loot modules", () => {
         },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: RedisService, useValue: mockRedisService },
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         {
           provide: RedlockService,
           useValue: {

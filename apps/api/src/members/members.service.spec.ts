@@ -10,7 +10,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MembersService } from "./members.service.js";
 import { DiscordService } from "#src/discord/discord.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
@@ -499,7 +499,7 @@ describe("MembersService", () => {
         MemberReadService,
         MemberRefreshJobEventsService,
         MemberRemovalService,
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         { provide: MemberRefreshJobRepository, useValue: mockRefreshJobs },
         { provide: MembersRepository, useValue: mockMembersRepository },
         { provide: DiscordService, useValue: mockDiscordService },
@@ -528,7 +528,7 @@ describe("MembersService", () => {
     ) as Mocked<DiscordSyncDiagnosticsService>;
     amqpConnection = module.get(AmqpConnection);
     bulkRefreshQueue = module.get(getQueueToken(MEMBER_BULK_REFRESH_QUEUE));
-    logger = module.get(WINSTON_MODULE_PROVIDER);
+    logger = module.get(APPLICATION_LOGGER);
     redisService = module.get(RedisService);
     memberDiscordAccessService = module.get(MemberDiscordAccessService);
   });

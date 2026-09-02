@@ -4,7 +4,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { Permission } from "@lootlog/schema/permissions";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
@@ -38,7 +38,7 @@ export class LootsService {
     private readonly lootCommentService: LootCommentService,
     private readonly lootStatsService: LootStatsService,
     private readonly redisService: RedisService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
   ) {}
 
   async getComments(options: {

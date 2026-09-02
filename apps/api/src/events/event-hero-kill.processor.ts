@@ -1,7 +1,7 @@
 import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
 import { EventsService } from "./events.service.js";
@@ -12,7 +12,7 @@ import { deserializeKillTimerData } from "./utils/event-hero-kill-job.js";
 @Processor(EVENT_HERO_KILL_QUEUE)
 export class EventHeroKillProcessor extends WorkerHost {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly eventsService: EventsService,
   ) {
     super();

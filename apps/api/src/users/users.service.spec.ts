@@ -3,7 +3,7 @@ import { mockFn } from "#src/test/mock-fn";
 import { HttpService } from "@nestjs/axios";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { AuthService } from "#src/auth/auth.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { MembersService } from "#src/members/members.service";
@@ -263,7 +263,7 @@ describe("UsersService", () => {
       providers: [
         UsersService,
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
         {

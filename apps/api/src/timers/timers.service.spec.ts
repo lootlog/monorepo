@@ -9,7 +9,7 @@ import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-
 import { validateAndCalculateSpawnTimes } from "#src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { getSyntheticNpcId } from "#src/events/utils/get-synthetic-npc-id";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
@@ -344,7 +344,7 @@ describe("TimersService", () => {
       providers: [
         TimersService,
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
         {

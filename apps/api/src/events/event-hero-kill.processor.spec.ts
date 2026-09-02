@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import type { Job } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { EventHeroKillProcessor } from "./event-hero-kill.processor.js";
 import { EventsService } from "./events.service.js";
 import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface.js";
@@ -28,7 +28,7 @@ describe("EventHeroKillProcessor", () => {
           useValue: mockEventsService,
         },
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
       ],

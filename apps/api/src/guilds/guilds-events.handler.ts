@@ -3,7 +3,7 @@ import {
   RabbitSubscribe,
 } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
 import { Queue } from "#src/enum/queue.enum";
@@ -27,7 +27,7 @@ export class GuildsEventsHandler {
   constructor(
     private readonly guildsService: GuildsService,
     private readonly retryService: RetryService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
   ) {}
 
   @RabbitSubscribe({

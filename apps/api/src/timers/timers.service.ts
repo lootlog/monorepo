@@ -33,7 +33,7 @@ import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-
 import { validateAndCalculateSpawnTimes } from "#src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { ExecutionError } from "redlock";
 import { getSyntheticNpcId } from "#src/events/utils/get-synthetic-npc-id";
@@ -210,7 +210,7 @@ export class TimersService implements OnModuleInit {
   private readonly lockTtl = 30000;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly timersRepository: TimersRepository,
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,

@@ -8,7 +8,7 @@ import {
   type DiscordGuildChannelsSyncedEvent,
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/schema/notifications";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "#src/config/discord-bot.config";
@@ -29,7 +29,7 @@ export class ChannelsService {
     private readonly repository: ChannelsRepository,
     private readonly discordBotClient: DiscordBotClientService,
     private readonly amqpConnection: AmqpConnection,
-    @Inject(WINSTON_MODULE_PROVIDER)
+    @Inject(APPLICATION_LOGGER)
     private readonly winstonLogger: WinstonLogger,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;

@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MessagingService } from "./messaging.service.js";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -51,7 +51,7 @@ describe("MessagingService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessagingService,
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: RedisService, useValue: mockRedisService },

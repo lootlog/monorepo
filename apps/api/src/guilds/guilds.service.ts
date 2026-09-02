@@ -13,7 +13,7 @@ import {
   type ReservationSettings,
 } from "@lootlog/domain/reservations";
 
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsService } from "#src/channels/channels.service";
@@ -82,7 +82,7 @@ export class GuildsService {
   private readonly staleAfterMs: number;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly channelsService: ChannelsService,
     private readonly rolesService: RolesService,

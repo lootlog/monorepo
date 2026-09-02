@@ -1,6 +1,6 @@
 import { HttpService } from "@nestjs/axios";
 import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { firstValueFrom } from "rxjs";
 import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
@@ -24,7 +24,7 @@ export class AuthService {
   private authServiceUrl: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly httpService: HttpService,
     private readonly redisService: RedisService,
   ) {

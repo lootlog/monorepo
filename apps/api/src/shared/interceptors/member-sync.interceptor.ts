@@ -5,7 +5,7 @@ import {
   type ExecutionContext,
   type CallHandler,
 } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import type { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
@@ -19,7 +19,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
   private readonly SYNC_THROTTLE_TTL = 600;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly repository: MemberSyncRepository,
     private readonly membersService: MembersService,
     private readonly redis: RedisService,

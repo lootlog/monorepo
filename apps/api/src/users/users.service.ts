@@ -4,7 +4,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger as WinstonLogger } from "winston";
 import { firstValueFrom } from "rxjs";
 import { AuthService } from "#src/auth/auth.service";
@@ -83,7 +83,7 @@ export class UsersService {
   private readonly battlelogServiceUrl: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: WinstonLogger,
     private readonly repository: UsersRepository,
     private readonly authService: AuthService,
     private readonly membersService: MembersService,

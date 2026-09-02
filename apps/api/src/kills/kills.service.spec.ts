@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { KillsService } from "./kills.service.js";
 import { KillsRepository } from "./kills.repository.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -377,7 +377,7 @@ describe("KillsService", () => {
           provide: GuildsService,
           useValue: mockGuildsService,
         },
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
       ],
     }).compile();
 
@@ -386,7 +386,7 @@ describe("KillsService", () => {
     redisService = module.get(RedisService);
     userLootlogConfigService = module.get(UserLootlogConfigService);
     guildsService = module.get(GuildsService);
-    logger = module.get(WINSTON_MODULE_PROVIDER);
+    logger = module.get(APPLICATION_LOGGER);
   });
 
   afterEach(() => {

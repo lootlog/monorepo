@@ -2,7 +2,7 @@ import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -87,7 +87,7 @@ describe("MemberRefreshSchedulerService", () => {
           useValue: mockRedisService,
         },
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
         {
@@ -101,7 +101,7 @@ describe("MemberRefreshSchedulerService", () => {
     queue = module.get(getQueueToken(MEMBER_REFRESH_QUEUE));
     rateLimiter = module.get(DiscordRateLimiterService);
     redisService = module.get(RedisService);
-    logger = module.get(WINSTON_MODULE_PROVIDER);
+    logger = module.get(APPLICATION_LOGGER);
     diagnostics = module.get(
       DiscordSyncDiagnosticsService,
     ) as typeof diagnostics;

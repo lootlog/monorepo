@@ -2,7 +2,7 @@ import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Job } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
@@ -107,7 +107,7 @@ describe("MemberBulkRefreshProcessor", () => {
           useValue: mockMemberRefreshJobEventsService,
         },
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
       ],
@@ -119,7 +119,7 @@ describe("MemberBulkRefreshProcessor", () => {
     membersService = module.get(MembersService);
     refreshJobStorage = mockRefreshJobStorage as never;
     memberRefreshJobEventsService = module.get(MemberRefreshJobEventsService);
-    logger = module.get(WINSTON_MODULE_PROVIDER);
+    logger = module.get(APPLICATION_LOGGER);
   });
 
   it("should classify null and queued refreshes as skipped", async () => {

@@ -1,7 +1,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RabbitMqRetryService } from "@lootlog/nest-shared/rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import {
   DEAD_LETTER_EXCHANGE_NAME,
@@ -12,7 +12,7 @@ import {
 @Injectable()
 export class RetryService extends RabbitMqRetryService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
+    @Inject(APPLICATION_LOGGER) logger: Logger,
     amqp: AmqpConnection,
   ) {
     super(

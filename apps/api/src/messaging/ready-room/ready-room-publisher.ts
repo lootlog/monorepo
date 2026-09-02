@@ -1,7 +1,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { PartyReadyRoomUpdateEnvelope } from "@lootlog/schema/party-ready-room";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -12,7 +12,7 @@ import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.ty
 export class ReadyRoomPublisher {
   constructor(
     private readonly amqpConnection: AmqpConnection,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
   ) {}
 
   async publish(

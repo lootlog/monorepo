@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
@@ -28,7 +28,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
   private readonly JOB_UPDATE_INTERVAL = 5;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly refreshJobs: MemberRefreshJobRepository,
     private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,

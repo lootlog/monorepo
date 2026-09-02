@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 
 export const NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS = 5;
@@ -41,7 +41,7 @@ export type NotificationRateLimitOutcome =
 @Injectable()
 export class NotificationRateLimiterService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 

@@ -3,9 +3,9 @@ import { HttpService } from "@nestjs/axios";
 import type { ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import {
-  WINSTON_MODULE_NEST_PROVIDER,
-  WINSTON_MODULE_PROVIDER,
-} from "nest-winston";
+  APPLICATION_LOGGER,
+  APPLICATION_NEST_LOGGER,
+} from "#src/shared/logging/logger-token";
 import { of } from "rxjs";
 import { vi } from "vitest";
 
@@ -46,9 +46,9 @@ export function createTestingModuleWithMocks(metadata: ModuleMetadata) {
     .useValue(createMockAmqpConnection())
     .overrideProvider(HttpService)
     .useValue(createMockHttpService())
-    .overrideProvider(WINSTON_MODULE_PROVIDER)
+    .overrideProvider(APPLICATION_LOGGER)
     .useValue(createMockLogger())
-    .overrideProvider(WINSTON_MODULE_NEST_PROVIDER)
+    .overrideProvider(APPLICATION_NEST_LOGGER)
     .useValue(createMockLogger())
     .compile();
 }

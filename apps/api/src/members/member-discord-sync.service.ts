@@ -8,7 +8,7 @@ import {
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
@@ -32,7 +32,7 @@ export class MemberDiscordSyncService {
   private readonly MEMBER_RATE_LIMIT_ENDPOINT = "guild-member";
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly repository: MembersRepository,
     private readonly discordService: DiscordService,
     private readonly rateLimiter: DiscordRateLimiterService,

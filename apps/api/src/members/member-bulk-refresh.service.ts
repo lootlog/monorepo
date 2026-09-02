@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue as BullQueue } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -26,7 +26,7 @@ export class MemberBulkRefreshService {
   private readonly env: RuntimeEnvironment;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
     private readonly bulkRefreshQueue: BullQueue<MemberBulkRefreshJobData>,
     private readonly refreshJobs: MemberRefreshJobRepository,

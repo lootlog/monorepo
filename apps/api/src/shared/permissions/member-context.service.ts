@@ -5,7 +5,7 @@ import {
   Optional,
   forwardRef,
 } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { Permission } from "@lootlog/schema/permissions";
 import { MembersService } from "#src/members/members.service";
@@ -34,7 +34,7 @@ type GuildLookupResult = {
 @Injectable()
 export class MemberContextService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly repository: MemberContextRepository,
     private readonly redisService: RedisService,
     @Inject(forwardRef(() => MembersService))

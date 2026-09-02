@@ -2,7 +2,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { ChannelsService } from "./channels.service.js";
@@ -100,7 +100,7 @@ describe("ChannelsService", () => {
           useValue: mockAmqpConnection,
         },
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
       ],
