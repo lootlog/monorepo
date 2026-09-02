@@ -2,10 +2,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": [
-        "$TURBO_EXTENDS$",
-        "$TURBO_ROOT$/tools/clean-swagger-metadata.mjs"
-      ]
+      "inputs": ["$TURBO_EXTENDS$", "tools/clean-swagger-metadata.mjs"]
     },
     "test": {
       "dependsOn": ["$TURBO_EXTENDS$"]
