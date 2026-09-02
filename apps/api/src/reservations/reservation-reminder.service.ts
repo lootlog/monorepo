@@ -24,7 +24,10 @@ type ReminderContext = {
 export class ReservationReminderService {
   constructor(
     private readonly repository: ReservationReminderRepository,
-    private readonly notificationJobService: NotificationJobService,
+    private readonly notificationJobService: Pick<
+      NotificationJobService,
+      "createNotificationJob" | "enqueueNotificationJob" | "cancelPendingJobs"
+    >,
   ) {}
 
   async prepare(options: {
