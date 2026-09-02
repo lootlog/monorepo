@@ -5,7 +5,7 @@ import { getQueueToken } from "@nestjs/bullmq";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import {
   type MemberRefreshJobData,

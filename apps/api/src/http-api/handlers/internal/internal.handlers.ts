@@ -5,7 +5,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { GuildsService } from "#src/guilds/guilds.service";
 import type { GuildsRepository } from "#src/guilds/guilds.repository";
 import type { MembersRepository } from "#src/members/members.repository";
-import type { RedisService } from "@lootlog/nest-shared/redis";
+import type { RedisService } from "#src/redis/redis.service";
 import {
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,

@@ -1,5 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
   GuildLootCreatedEventV2,

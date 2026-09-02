@@ -8,7 +8,7 @@ import type { Logger as WinstonLogger } from "winston";
 import { AuthService } from "#src/auth/auth.service";
 import { battlelogConfig } from "#src/config/battlelog.config";
 import { MembersService } from "#src/members/members.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import {

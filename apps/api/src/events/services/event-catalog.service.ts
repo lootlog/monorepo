@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import type { eventTable } from "#src/database/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { EventPointsService } from "#src/events/services/event-points.service";
 import { EventReadCacheService } from "#src/events/services/event-read-cache.service";
 import { EventTrackingService } from "#src/events/services/event-tracking.service";

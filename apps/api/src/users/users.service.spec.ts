@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { AuthService } from "#src/auth/auth.service";
 import { GuildsService } from "#src/guilds/guilds.service";

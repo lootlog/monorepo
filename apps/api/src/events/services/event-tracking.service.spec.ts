@@ -6,7 +6,7 @@ import { EventTrackingService } from "./event-tracking.service.js";
 import { EventTrackingRepository } from "./event-tracking.repository.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { TimersService } from "#src/timers/timers.service";
 

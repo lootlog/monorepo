@@ -4,7 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { KillsService } from "./kills.service.js";
 import { KillsRepository } from "./kills.repository.js";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";

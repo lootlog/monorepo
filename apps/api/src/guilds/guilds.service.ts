@@ -21,8 +21,8 @@ import type { UserGuildPermissionsDto } from "#src/guilds/dto/user-guild-permiss
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
 import { DiscordService } from "#src/discord/discord.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
-import { isDiscordAdministrator } from "@lootlog/nest-shared";
+import { RedisService } from "#src/redis/redis.service";
+import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import {
   getPermissionsCachePattern,
   getGuildCacheKey,

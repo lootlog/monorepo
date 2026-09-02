@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import type { guildTable } from "#src/database/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { LootsService } from "#src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service.js";
 import { EventWrappedRepository } from "./event-wrapped.repository.js";

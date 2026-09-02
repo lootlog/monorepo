@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Effect } from "effect";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { env } from "#src/config/env";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { RedisService, type JsonCodec } from "@lootlog/nest-shared/redis";
+import { RedisService, type JsonCodec } from "#src/redis/redis.service";
 import superjson from "superjson";
 
 const EVENT_READ_CACHE_PREFIX = "event-read:v2";

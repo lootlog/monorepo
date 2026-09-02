@@ -1,5 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";

@@ -9,7 +9,7 @@ import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventPointsService } from "./event-points.service.js";
 import { EventTrackingService } from "./event-tracking.service.js";
 import { EventSummaryService } from "./event-summary.service.js";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
 import type {
   eventHeroNpcTable,

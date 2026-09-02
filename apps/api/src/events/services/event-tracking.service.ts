@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ExecutionError } from "redlock";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 import { EventEmitterService } from "./event-emitter.service.js";

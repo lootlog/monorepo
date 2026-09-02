@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { RedisService } from "@lootlog/nest-shared/redis";
+import type { RedisService } from "#src/redis/redis.service";
 import { ReservationCatalogService } from "./reservation-catalog.service.js";
 
 const makeRedis = () =>

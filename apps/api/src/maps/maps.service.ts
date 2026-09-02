@@ -1,4 +1,4 @@
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { Effect } from "effect";
 
 interface GameMap {

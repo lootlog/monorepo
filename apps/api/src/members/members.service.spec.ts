@@ -15,7 +15,7 @@ import { MembersService } from "./members.service.js";
 import { DiscordService } from "#src/discord/discord.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { APIGuildMember } from "discord-api-types/v10";

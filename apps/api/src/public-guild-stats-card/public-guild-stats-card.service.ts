@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, NotFoundException } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import sharp from "sharp";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";

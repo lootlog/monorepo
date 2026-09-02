@@ -3,7 +3,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { Injectable, Logger } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";

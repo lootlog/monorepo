@@ -1,4 +1,4 @@
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { Context, Effect, Layer, Redacted } from "effect";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 

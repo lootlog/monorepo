@@ -7,7 +7,7 @@ import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
 import { authConfig } from "#src/config/auth.config";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import {
   getAuthTokenCacheKey,
   getAuthTokenCachePattern,

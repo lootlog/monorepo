@@ -14,7 +14,7 @@ import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
 import { DiscordService } from "./discord.service.js";
 import { DiscordUserGuildsClient } from "./discord-user-guilds.client.js";
 import { AuthService } from "#src/auth/auth.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
