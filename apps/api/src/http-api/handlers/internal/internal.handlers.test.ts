@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import type { RedisService } from "@lootlog/nest-shared/redis";
+import type { RedisService } from "#src/redis/redis.service";
 import type { GuildsRepository } from "#src/guilds/guilds.repository";
 import type { MembersRepository } from "#src/members/members.repository";
 import { Permission } from "@lootlog/schema/permissions";

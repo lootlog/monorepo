@@ -11,7 +11,7 @@ import { ChannelsService } from "#src/channels/channels.service";
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
 import { DiscordService } from "#src/discord/discord.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import type { APIGuildMember } from "discord-api-types/v10";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";

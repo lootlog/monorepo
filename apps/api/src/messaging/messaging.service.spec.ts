@@ -4,7 +4,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MessagingService } from "./messaging.service.js";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";

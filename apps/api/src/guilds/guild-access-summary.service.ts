@@ -1,4 +1,4 @@
-import type { RedisService } from "@lootlog/nest-shared/redis";
+import type { RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
 import type { Logger } from "winston";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";

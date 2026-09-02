@@ -2,7 +2,7 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { Permission } from "@lootlog/schema/permissions";

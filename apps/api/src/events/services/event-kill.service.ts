@@ -6,7 +6,7 @@ import type {
   eventMapCoverageGapTable,
   eventTable,
 } from "#src/database/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { EventEmitterService } from "./event-emitter.service.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { EventPointsService } from "./event-points.service.js";

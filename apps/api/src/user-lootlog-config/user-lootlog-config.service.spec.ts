@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { Permission } from "@lootlog/schema/permissions";
 import { mockFn } from "#src/test/mock-fn";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { UserLootlogConfigService } from "./user-lootlog-config.service.js";
 import { UserLootlogConfigRepository } from "./user-lootlog-config.repository.js";
 

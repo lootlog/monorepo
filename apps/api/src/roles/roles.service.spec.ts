@@ -5,7 +5,7 @@ import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { Permission } from "@lootlog/schema/permissions";
 import { RolesService } from "./roles.service.js";
 import { RolesRepository } from "./roles.repository.js";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 
 describe("RolesService", () => {
   let service: RolesService;

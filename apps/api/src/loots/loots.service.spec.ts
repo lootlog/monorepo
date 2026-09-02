@@ -26,7 +26,7 @@ import { LootStatsService } from "./services/loot-stats.service.js";
 import { LootsRepository } from "./loots.repository.js";
 import { LootAllocationRepository } from "./loot-allocation.repository.js";
 import { LootSubmissionAcceptanceRepository } from "./loot-submission-acceptance.repository.js";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { ExecutionError } from "redlock";
 import {

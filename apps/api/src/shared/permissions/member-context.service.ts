@@ -12,7 +12,7 @@ import type { MemberDiscordAccessService } from "#src/members/member-discord-acc
 import { MembersService } from "#src/members/members.service";
 import type { MemberWithRoles, Role } from "#src/members/member.types";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import {
   getPermissionsCacheKey,
   getGuildCacheKey,

@@ -1,4 +1,4 @@
-import type { JsonCodec, RedisService } from "@lootlog/nest-shared/redis";
+import type { JsonCodec, RedisService } from "#src/redis/redis.service";
 import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto.js";
 import { EventReadCacheService } from "./event-read-cache.service.js";
 

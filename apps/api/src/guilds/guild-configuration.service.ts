@@ -3,7 +3,7 @@ import {
   resolveReservationSettings,
   type ReservationSettings,
 } from "@lootlog/domain/reservations";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import type { Logger } from "winston";
 import {
   getGuildCacheKey,

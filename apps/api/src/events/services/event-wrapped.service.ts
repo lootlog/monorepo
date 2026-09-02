@@ -8,7 +8,7 @@ import type {
 } from "#src/database/drizzle/schema";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import { LootsService } from "#src/loots/loots.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { clipToWindowSeconds } from "../utils/tracking-window.util.js";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,

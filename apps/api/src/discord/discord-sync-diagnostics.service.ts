@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,

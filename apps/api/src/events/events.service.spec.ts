@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { EventsService } from "./events.service.js";
 import { EventAccessService } from "./services/event-access.service.js";
 import { EventAccessRepository } from "./services/event-access.repository.js";

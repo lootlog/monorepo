@@ -6,7 +6,7 @@ import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { getStableNpcId } from "#src/shared/utils/get-stable-npc-id";
 import { GuildsService } from "#src/guilds/guilds.service";

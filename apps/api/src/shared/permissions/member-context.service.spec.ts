@@ -1,6 +1,6 @@
 import { NotFoundException } from "@nestjs/common";
 import { Permission } from "@lootlog/schema/permissions";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MembersService } from "#src/members/members.service";
 import {

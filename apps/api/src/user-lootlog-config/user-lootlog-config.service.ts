@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";

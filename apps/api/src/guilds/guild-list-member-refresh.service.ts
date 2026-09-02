@@ -1,5 +1,5 @@
 import type { Logger } from "winston";
-import type { RedisService } from "@lootlog/nest-shared/redis";
+import type { RedisService } from "#src/redis/redis.service";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import type { MembersRepository } from "#src/members/members.repository";
 import type { MembersService } from "#src/members/members.service";

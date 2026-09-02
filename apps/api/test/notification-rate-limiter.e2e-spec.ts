@@ -1,5 +1,5 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import {
   buildNotificationRateLimitKey,
   NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS,

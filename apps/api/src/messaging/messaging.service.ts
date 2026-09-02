@@ -19,7 +19,7 @@ import type { CreateVolunteerDto } from "#src/messaging/dto/create-volunteer.dto
 import { Error } from "#src/messaging/enum/error.enum";
 import { v4 as uuid } from "uuid";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
 

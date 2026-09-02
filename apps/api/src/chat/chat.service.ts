@@ -13,7 +13,7 @@ import {
 } from "#src/chat/dto/send-message.dto";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import { RedisService } from "#src/redis/redis.service";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import type { NpcRoutingTier } from "@lootlog/schema/npc-routing";
