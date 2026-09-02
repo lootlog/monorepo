@@ -1,6 +1,5 @@
 import type { Type } from "@nestjs/common";
 import { Effect, Layer } from "effect";
-import { EventsData } from "../handlers/events/events.handlers.js";
 import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
 import { LegacyNestApplication } from "./legacy-nest-application.js";
 import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
@@ -18,9 +17,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
 
     const dispatch = createControllerDispatcher(app);
 
-    return Layer.mergeAll(
-      EventsData.layerLegacy(dispatch),
-      NotificationsData.layerLegacy(dispatch),
-    );
+    return Layer.mergeAll(NotificationsData.layerLegacy(dispatch));
   }),
 );

@@ -18,8 +18,39 @@ import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-cli
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { DiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
 import { EVENT_HERO_KILL_QUEUE } from "#src/events/constants/event-hero-kill-queue.constant";
+import { RESPAWN_WINDOW_QUEUE } from "#src/events/constants/respawn-queue.constant";
+import { EventsAssignmentController } from "#src/events/events-assignment.controller";
+import { EventsCatalogController } from "#src/events/events-catalog.controller";
+import { EventsMonitoringController } from "#src/events/events-monitoring.controller";
+import { EventsPinsController } from "#src/events/events-pins.controller";
+import { EventsRankingController } from "#src/events/events-ranking.controller";
+import { EventsService } from "#src/events/events.service";
 import { ActiveEventHeroRepository } from "#src/events/services/active-event-hero.repository";
+import { EventAccessRepository } from "#src/events/services/event-access.repository";
+import { EventAccessService } from "#src/events/services/event-access.service";
+import { EventCatalogRepository } from "#src/events/services/event-catalog.repository";
+import { EventCatalogService } from "#src/events/services/event-catalog.service";
+import { EventCoordinationRepository } from "#src/events/services/event-coordination.repository";
+import { EventCoordinationService } from "#src/events/services/event-coordination.service";
+import { EventEmitterService } from "#src/events/services/event-emitter.service";
+import { EventKillRepository } from "#src/events/services/event-kill.repository";
+import { EventKillService } from "#src/events/services/event-kill.service";
+import { EventPointsRepository } from "#src/events/services/event-points.repository";
+import { EventPointsService } from "#src/events/services/event-points.service";
+import { EventQueueDiagnosticsRepository } from "#src/events/services/event-queue-diagnostics.repository";
+import { EventQueueDiagnosticsService } from "#src/events/services/event-queue-diagnostics.service";
+import { EventReadCacheService } from "#src/events/services/event-read-cache.service";
+import { EventRespawnRepository } from "#src/events/services/event-respawn.repository";
+import { EventRespawnService } from "#src/events/services/event-respawn.service";
+import { EventSummaryRepository } from "#src/events/services/event-summary.repository";
+import { EventSummaryService } from "#src/events/services/event-summary.service";
 import { EventTimerHooksService } from "#src/events/services/event-timer-hooks.service";
+import { EventTrackingRepository } from "#src/events/services/event-tracking.repository";
+import { EventTrackingService } from "#src/events/services/event-tracking.service";
+import { EventWrappedRepository } from "#src/events/services/event-wrapped.repository";
+import { EventWrappedService } from "#src/events/services/event-wrapped.service";
+import { PinnedEventsRepository } from "#src/events/services/pinned-events.repository";
+import { PinnedEventsService } from "#src/events/services/pinned-events.service";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
@@ -119,6 +150,7 @@ import { PublicSystemData } from "../handlers/public-system/public-system.handle
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
+import { EventsData } from "../handlers/events/events.handlers.js";
 import { legacyKillsLootsDataLayer } from "../handlers/kills-loots/kills-loots.legacy-layer.js";
 import { TimersData } from "../handlers/timers/timers.handlers.js";
 import {
@@ -127,6 +159,7 @@ import {
 } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
+import { createControllerDispatcher } from "./legacy-controller-dispatcher.js";
 import { OrganizationContextLookup } from "./organization-context.js";
 
 const makeScopedCompatibilityLayer = <I, S>(
@@ -746,8 +779,13 @@ const NativeReservationMutationsData = Layer.effect(
   }),
 );
 
-const NativeTimersData = Layer.effect(
-  TimersData,
+class NativeTimerService extends Context.Service<
+  NativeTimerService,
+  TimersService
+>()("@lootlog/api/http-api/NativeTimerService") {}
+
+const NativeTimerServiceLive = Layer.effect(
+  NativeTimerService,
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
@@ -798,11 +836,27 @@ const NativeTimersData = Layer.effect(
       new RedlockService(redis),
     );
     service.onModuleInit();
-    return TimersData.makeService(service);
+    return service;
   }),
 );
 
-const NativeKillsLootsData = Layer.unwrap(
+const NativeTimersData = Layer.effect(
+  TimersData,
+  Effect.map(NativeTimerService, TimersData.makeService),
+);
+
+interface NativeKillsLootsServicesValue {
+  readonly layer: ReturnType<typeof legacyKillsLootsDataLayer>;
+  readonly loots: LootsService;
+}
+
+class NativeKillsLootsServices extends Context.Service<
+  NativeKillsLootsServices,
+  NativeKillsLootsServicesValue
+>()("@lootlog/api/http-api/NativeKillsLootsServices") {}
+
+const NativeKillsLootsServicesLive = Layer.effect(
+  NativeKillsLootsServices,
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
@@ -844,26 +898,151 @@ const NativeKillsLootsData = Layer.unwrap(
       new RedlockService(redis),
     );
     acceptance.onModuleInit();
-    return legacyKillsLootsDataLayer({
-      kills: new KillsService(
-        nativeLogger,
-        new KillsRepository(runtime),
-        redis,
-        userLootlogConfig,
-        guilds,
-      ),
-      loots: new LootsService(
-        lootsRepository,
-        new LootQueryService(new LootQueryRepository(runtime)),
-        new LootCommentService(lootsRepository),
-        lootStats,
-        redis,
-        nativeLogger,
-      ),
+    const loots = new LootsService(
+      lootsRepository,
+      new LootQueryService(new LootQueryRepository(runtime)),
+      new LootCommentService(lootsRepository),
       lootStats,
-      lootSubmissionAcceptance: acceptance,
-      lootAllocation: allocation,
-    });
+      redis,
+      nativeLogger,
+    );
+    return {
+      loots,
+      layer: legacyKillsLootsDataLayer({
+        kills: new KillsService(
+          nativeLogger,
+          new KillsRepository(runtime),
+          redis,
+          userLootlogConfig,
+          guilds,
+        ),
+        loots,
+        lootStats,
+        lootSubmissionAcceptance: acceptance,
+        lootAllocation: allocation,
+      }),
+    };
+  }),
+);
+
+const NativeKillsLootsData = Layer.unwrap(
+  Effect.map(NativeKillsLootsServices, ({ layer }) => layer),
+);
+
+const NativeEventsData = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const config = yield* ApiRuntimeConfig;
+    const { runtime } = yield* NativeMemberServices;
+    const timers = yield* NativeTimerService;
+    const { loots } = yield* NativeKillsLootsServices;
+    const queueOptions = {
+      connection: {
+        host: config.redis.host,
+        port: config.redis.port,
+        username: config.redis.username,
+        password: Redacted.value(config.redis.password),
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+      },
+      prefix: "{bull}",
+    } as const;
+    const queues = yield* Effect.acquireRelease(
+      Effect.sync(() => ({
+        respawn: new Queue(RESPAWN_WINDOW_QUEUE, queueOptions),
+        heroKill: new Queue(EVENT_HERO_KILL_QUEUE, queueOptions),
+      })),
+      ({ respawn, heroKill }) =>
+        Effect.promise(() => Promise.all([respawn.close(), heroKill.close()])),
+    );
+    const amqp = makeAmqpAdapter(rabbit);
+    const readCache = new EventReadCacheService(redis);
+    const emitter = new EventEmitterService(amqp);
+    const summary = new EventSummaryService(
+      new EventSummaryRepository(runtime),
+    );
+    const tracking = new EventTrackingService(
+      new EventTrackingRepository(runtime),
+      emitter,
+      readCache,
+      amqp,
+      redis,
+      new RedlockService(redis),
+      timers,
+    );
+    tracking.onModuleInit();
+    const points = new EventPointsService(
+      new EventPointsRepository(runtime),
+      emitter,
+      readCache,
+    );
+    const kill = new EventKillService(
+      new EventKillRepository(runtime),
+      new ActiveEventHeroRepository(runtime),
+      redis,
+      emitter,
+      readCache,
+      points,
+      tracking,
+      summary,
+      timers,
+      queues.respawn,
+    );
+    const events = new EventsService(
+      new EventCatalogService(
+        new EventCatalogRepository(runtime),
+        redis,
+        readCache,
+        points,
+        tracking,
+        queues.respawn,
+      ),
+      new EventAccessService(new EventAccessRepository(runtime)),
+      new EventQueueDiagnosticsService(
+        new EventQueueDiagnosticsRepository(runtime),
+        queues.respawn,
+      ),
+      points,
+      tracking,
+      kill,
+      new EventRespawnService(
+        new EventRespawnRepository(runtime),
+        queues.respawn,
+        emitter,
+        kill,
+        readCache,
+        tracking,
+        summary,
+        timers,
+      ),
+      new EventWrappedService(
+        new EventWrappedRepository(runtime),
+        redis,
+        loots,
+      ),
+      new EventCoordinationService(
+        new EventCoordinationRepository(runtime),
+        timers,
+      ),
+      queues.heroKill,
+    );
+    const controllers = new Map<unknown, unknown>([
+      [EventsAssignmentController, new EventsAssignmentController(events)],
+      [EventsCatalogController, new EventsCatalogController(events)],
+      [EventsMonitoringController, new EventsMonitoringController(events)],
+      [
+        EventsPinsController,
+        new EventsPinsController(
+          new PinnedEventsService(new PinnedEventsRepository(runtime)),
+        ),
+      ],
+      [EventsRankingController, new EventsRankingController(events)],
+    ]);
+    const dispatch = createControllerDispatcher({
+      get: (token: unknown) => controllers.get(token),
+    } as never);
+    return EventsData.layerLegacy(dispatch);
   }),
 );
 
@@ -891,7 +1070,10 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeUsersGuildsData,
   NativeTimersData,
   NativeKillsLootsData,
+  NativeEventsData,
 ).pipe(
+  Layer.provide(NativeKillsLootsServicesLive),
+  Layer.provide(NativeTimerServiceLive),
   Layer.provide(NativeGuildAccessSummaryLive),
   Layer.provide(NativeMemberServicesLive),
   Layer.provide(ApiDatabaseLive),
