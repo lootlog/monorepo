@@ -1,4 +1,3 @@
-import { Injectable, type OnApplicationShutdown } from "@nestjs/common";
 import { ManagedRuntime, type Effect } from "effect";
 import { ApiDatabaseLive, type ApiDatabase } from "./database.js";
 
@@ -7,8 +6,7 @@ import { ApiDatabaseLive, type ApiDatabase } from "./database.js";
  * route-by-route rewrite. The owned Effect runtime remains scoped and is
  * disposed by the host shutdown hook.
  */
-@Injectable()
-export class DrizzleDatabaseRuntime implements OnApplicationShutdown {
+export class DrizzleDatabaseRuntime {
   private readonly runtime = ManagedRuntime.make(ApiDatabaseLive);
 
   runPromise<A, E>(effect: Effect.Effect<A, E, ApiDatabase>): Promise<A> {

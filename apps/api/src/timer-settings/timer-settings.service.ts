@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import {
   SettingsDocumentsService,
   type SettingsDocumentsResponse,
@@ -47,7 +46,6 @@ const asStringArray = (value: unknown) =>
     ? value.filter((item): item is string => typeof item === "string")
     : [];
 
-@Injectable()
 export class TimerSettingsService {
   constructor(
     private readonly settingsDocumentsService: SettingsDocumentsService,

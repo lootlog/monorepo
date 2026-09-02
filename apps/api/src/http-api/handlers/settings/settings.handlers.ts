@@ -80,11 +80,11 @@ export class SettingsData extends Context.Service<
     ) => Operation;
   }
 >()("@lootlog/api/http-api/settings/data") {
-  static layerServices(options: {
+  static makeServices(options: {
     readonly timer: TimerSettingsService;
     readonly documents: SettingsDocumentsService;
     readonly sound: SoundSettingsService;
-  }) {
+  }): SettingsData["Service"] {
     const attempt = (operation: () => unknown | PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: () => Promise.resolve(operation()),
@@ -93,48 +93,47 @@ export class SettingsData extends Context.Service<
     const mutable = <A>(value: unknown): A =>
       JSON.parse(JSON.stringify(value)) as A;
 
-    return Layer.succeed(
-      SettingsData,
-      SettingsData.of({
-        getGlobalTimerSettings: (userId) =>
-          attempt(() => options.timer.getGlobalSettings(userId)),
-        updateGlobalTimerSettings: (userId, payload) =>
-          attempt(() =>
-            options.timer.updateGlobalSettings(userId, mutable(payload)),
-          ),
-        getGuildTimerSettings: (userId, guildId) =>
-          attempt(() => options.timer.getGuildSettings(userId, guildId)),
-        updateGuildTimerSettings: (userId, guildId, payload) =>
-          attempt(() =>
-            options.timer.updateGuildSettings(
-              userId,
-              guildId,
-              mutable(payload),
-            ),
-          ),
-        migrateTimerSettings: (userId, payload) =>
-          attempt(() =>
-            options.timer.migrateSettings(userId, mutable(payload)),
-          ),
-        getPreferences: (userId, query) =>
-          attempt(() =>
-            options.documents.getPreferences(userId, {
-              domains: options.documents.parseDomains(query.domains),
-              gameAccountId: query.gameAccountId,
-              characterId: query.characterId,
-              guildId: query.guildId,
-            }),
-          ),
-        patchPreferences: (userId, payload) =>
-          attempt(() =>
-            options.documents.patchPreferences(userId, mutable(payload)),
-          ),
-        getSoundSettings: (userId) =>
-          attempt(() => options.sound.getSettings(userId)),
-        updateSoundSettings: (userId, payload) =>
-          attempt(() => options.sound.updateSettings(userId, mutable(payload))),
-      }),
-    );
+    return SettingsData.of({
+      getGlobalTimerSettings: (userId) =>
+        attempt(() => options.timer.getGlobalSettings(userId)),
+      updateGlobalTimerSettings: (userId, payload) =>
+        attempt(() =>
+          options.timer.updateGlobalSettings(userId, mutable(payload)),
+        ),
+      getGuildTimerSettings: (userId, guildId) =>
+        attempt(() => options.timer.getGuildSettings(userId, guildId)),
+      updateGuildTimerSettings: (userId, guildId, payload) =>
+        attempt(() =>
+          options.timer.updateGuildSettings(userId, guildId, mutable(payload)),
+        ),
+      migrateTimerSettings: (userId, payload) =>
+        attempt(() => options.timer.migrateSettings(userId, mutable(payload))),
+      getPreferences: (userId, query) =>
+        attempt(() =>
+          options.documents.getPreferences(userId, {
+            domains: options.documents.parseDomains(query.domains),
+            gameAccountId: query.gameAccountId,
+            characterId: query.characterId,
+            guildId: query.guildId,
+          }),
+        ),
+      patchPreferences: (userId, payload) =>
+        attempt(() =>
+          options.documents.patchPreferences(userId, mutable(payload)),
+        ),
+      getSoundSettings: (userId) =>
+        attempt(() => options.sound.getSettings(userId)),
+      updateSoundSettings: (userId, payload) =>
+        attempt(() => options.sound.updateSettings(userId, mutable(payload))),
+    });
+  }
+
+  static layerServices(options: {
+    readonly timer: TimerSettingsService;
+    readonly documents: SettingsDocumentsService;
+    readonly sound: SoundSettingsService;
+  }) {
+    return Layer.succeed(SettingsData, SettingsData.makeServices(options));
   }
 }
 

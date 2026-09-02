@@ -9,11 +9,6 @@ import type {
   SettingsScope,
   SettingsScopeType,
 } from "@lootlog/schema/settings-documents";
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from "@nestjs/common";
 import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto.js";
 import {
   InvalidSettingsPatchError,
@@ -38,7 +33,6 @@ export interface SettingsDocumentsResponse {
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-@Injectable()
 export class SettingsDocumentsService {
   constructor(private readonly repository: SettingsDocumentsRepository) {}
 
@@ -102,7 +96,7 @@ export class SettingsDocumentsService {
       await this.repository.applyOperations(userId, sortedOperations);
     } catch (error) {
       if (error instanceof InvalidSettingsPatchError) {
-        throw new BadRequestException(error.message);
+        throw new SettingsRequestError(400, error.message);
       }
       throw error;
     }
@@ -122,7 +116,7 @@ export class SettingsDocumentsService {
       domains.length === 0 ||
       domains.some((domain) => !isSettingsDomain(domain))
     ) {
-      throw new BadRequestException("Unknown settings domain");
+      throw new SettingsRequestError(400, "Unknown settings domain");
     }
 
     return domains as SettingsDomain[];
@@ -135,7 +129,8 @@ export class SettingsDocumentsService {
     let characterScopeId = context.characterScopeId;
     if (!characterScopeId && context.characterId) {
       if (!context.gameAccountId) {
-        throw new BadRequestException(
+        throw new SettingsRequestError(
+          400,
           "Character settings require a game account context",
         );
       }
@@ -190,7 +185,8 @@ export class SettingsDocumentsService {
     for (const operation of operations) {
       const operationKey = this.getOperationKey(operation);
       if (operationKeys.has(operationKey)) {
-        throw new BadRequestException(
+        throw new SettingsRequestError(
+          400,
           `Duplicate settings operation: ${operationKey}`,
         );
       }
@@ -198,7 +194,8 @@ export class SettingsDocumentsService {
 
       const existingScopeId = scopeIds.get(operation.scope.type);
       if (existingScopeId && existingScopeId !== operation.scope.id) {
-        throw new BadRequestException(
+        throw new SettingsRequestError(
+          400,
           `A settings batch cannot contain multiple ${operation.scope.type} scopes`,
         );
       }
@@ -215,7 +212,10 @@ export class SettingsDocumentsService {
   private async validateScopes(userId: string, scopes: SettingsScope[]) {
     for (const scope of scopes) {
       if (scope.type === "USER" && scope.id !== userId) {
-        throw new ForbiddenException("Cannot access another user's settings");
+        throw new SettingsRequestError(
+          403,
+          "Cannot access another user's settings",
+        );
       }
 
       if (scope.type !== "GUILD") {
@@ -223,8 +223,25 @@ export class SettingsDocumentsService {
       }
 
       if (!(await this.repository.hasActiveGuildMembership(userId, scope.id))) {
-        throw new ForbiddenException("Guild settings are not accessible");
+        throw new SettingsRequestError(
+          403,
+          "Guild settings are not accessible",
+        );
       }
     }
+  }
+}
+
+export class SettingsRequestError extends Error {
+  constructor(
+    readonly status: 400 | 403,
+    message: string,
+  ) {
+    super(message);
+    this.name = "SettingsRequestError";
+  }
+
+  getStatus() {
+    return this.status;
   }
 }

@@ -3,7 +3,6 @@ import type {
   SettingsDomain,
   SettingsScope,
 } from "@lootlog/schema/settings-documents";
-import { Injectable } from "@nestjs/common";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
@@ -34,7 +33,6 @@ export class InvalidSettingsPatchError extends Error {
   }
 }
 
-@Injectable()
 export class SettingsDocumentsRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

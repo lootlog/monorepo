@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
@@ -17,7 +16,6 @@ type JsonValue =
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-@Injectable()
 export class SoundSettingsService {
   constructor(
     private readonly settingsDocumentsService: SettingsDocumentsService,
