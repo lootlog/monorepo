@@ -23,7 +23,7 @@
     "test": "bun test src test",
     "test:coverage": "bun test --coverage src test",
     "test:debug": "bun test --inspect-brk src test",
-    "test:e2e": "bun test test",
+    "test:e2e": "bun test ./test/app.e2e-spec.ts",
     "test:watch": "bun test --watch src test",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
     "db:generate": "bunx drizzle-kit generate",
