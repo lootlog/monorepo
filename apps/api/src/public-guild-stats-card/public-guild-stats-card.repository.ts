@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { and, countDistinct, eq, gte, isNull, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -11,7 +10,6 @@ import {
   organizationLootRecordTable,
 } from "#src/database/drizzle/schema";
 
-@Injectable()
 export class PublicGuildStatsCardRepository {
   constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 

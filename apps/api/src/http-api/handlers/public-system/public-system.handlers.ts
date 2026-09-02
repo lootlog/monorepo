@@ -60,26 +60,34 @@ export class PublicSystemData extends Context.Service<
     readonly statsCard: PublicGuildStatsCardService;
     readonly local: boolean;
   }) {
+    return Layer.succeed(
+      PublicSystemData,
+      PublicSystemData.makeServices(options),
+    );
+  }
+
+  static makeServices(options: {
+    readonly maps: MapsService;
+    readonly statsCard: PublicGuildStatsCardService;
+    readonly local: boolean;
+  }): PublicSystemData["Service"] {
     const attempt = <A>(operation: () => A | PromiseLike<A>) =>
       Effect.tryPromise({
         try: () => Promise.resolve(operation()),
         catch: (cause) => new PublicSystemOperationError({ cause }),
       });
 
-    return Layer.succeed(
-      PublicSystemData,
-      PublicSystemData.of({
-        healthCheck: Effect.void,
-        getMaps: attempt(() => options.maps.getMaps()),
-        refreshStatsCard: (guildId) =>
-          attempt(() => options.statsCard.refreshStatsCard(guildId)),
-        getStatsCard: (guildId) =>
-          attempt(() => options.statsCard.getStatsCard(guildId)),
-        statsCardCacheControl: options.local
-          ? LOCAL_CACHE_CONTROL
-          : PUBLIC_CACHE_CONTROL,
-      }),
-    );
+    return PublicSystemData.of({
+      healthCheck: Effect.void,
+      getMaps: attempt(() => options.maps.getMaps()),
+      refreshStatsCard: (guildId) =>
+        attempt(() => options.statsCard.refreshStatsCard(guildId)),
+      getStatsCard: (guildId) =>
+        attempt(() => options.statsCard.getStatsCard(guildId)),
+      statsCardCacheControl: options.local
+        ? LOCAL_CACHE_CONTROL
+        : PUBLIC_CACHE_CONTROL,
+    });
   }
 }
 

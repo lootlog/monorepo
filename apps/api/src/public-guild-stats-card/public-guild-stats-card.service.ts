@@ -1,12 +1,6 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { HttpException, HttpStatus, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import sharp from "sharp";
-import { serviceConfig } from "#src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";
 
@@ -39,11 +33,11 @@ const ICON_FETCH_TIMEOUT_MS = 2_000;
 const MAX_ICON_BYTES = 2_000_000;
 const REFRESH_COOLDOWN_SECONDS = 300;
 
-@Injectable()
 export class PublicGuildStatsCardService {
   constructor(
     private readonly repository: PublicGuildStatsCardRepository,
     private readonly redis: RedisService,
+    private readonly environment: RuntimeEnvironment,
   ) {}
 
   async getStatsCard(guildId: string): Promise<Buffer> {
@@ -118,7 +112,7 @@ export class PublicGuildStatsCardService {
   }
 
   private shouldUseCache() {
-    return serviceConfig.env !== RuntimeEnvironment.LOCAL;
+    return this.environment !== RuntimeEnvironment.LOCAL;
   }
 
   private buildCacheKey(guildId: string) {
