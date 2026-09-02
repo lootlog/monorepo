@@ -1,4 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { Effect, Layer } from "effect";
+import { RabbitMessaging } from "@lootlog/messaging";
+import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { Logger } from "winston";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
 import { DocsRepository } from "#src/docs/docs.repository";
@@ -6,6 +10,12 @@ import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
 import { MembersRepository } from "#src/members/members.repository";
+import type { ChatService } from "#src/chat/chat.service";
+import { MessagingService } from "#src/messaging/messaging.service";
+import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
+import { ReadyRoomPublisher } from "#src/messaging/ready-room/ready-room-publisher";
+import { ReadyRoomRedisRepository } from "#src/messaging/ready-room/ready-room-redis.repository";
+import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { PublicGuildStatsCardRepository } from "#src/public-guild-stats-card/public-guild-stats-card.repository";
 import { PublicGuildStatsCardService } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
@@ -16,6 +26,7 @@ import { MapTemplatesData } from "../handlers/map-templates/map-templates.handle
 import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.handlers.js";
 import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
+import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
 import { PublicSystemData } from "../handlers/public-system/public-system.handlers.js";
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { ApiRedis } from "./api-redis.js";
@@ -84,6 +95,55 @@ const NativeInternalGuildsData = Layer.unwrap(
   ),
 );
 
+const NativeMessagingData = Layer.unwrap(
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const logger = {
+      log: (entry: unknown) => Effect.runSync(Effect.log(String(entry))),
+    } as Logger;
+    const amqp = {
+      publish: (exchange: string, routingKey: string, payload: unknown) =>
+        Effect.runPromise(
+          rabbit.publish({
+            exchange: exchange as "default",
+            routingKey: routingKey as Parameters<
+              typeof rabbit.publish
+            >[0]["routingKey"],
+            content: new TextEncoder().encode(JSON.stringify(payload)),
+          }),
+        ),
+    } as unknown as AmqpConnection;
+
+    return makeScopedCompatibilityLayer(MessagingData, (runtime) => {
+      const guildsRepository = new GuildsRepository(runtime);
+      const guilds = {
+        getGuildsForRequiredPermissions: (
+          discordId: string,
+          permissions: Parameters<GuildsRepository["findForPermissions"]>[1],
+        ) => guildsRepository.findForPermissions(discordId, permissions),
+      };
+      const readyRoom = new ReadyRoomService(
+        new ReadyRoomRedisRepository(redis),
+        {} as ChatService,
+        Date.now,
+        randomUUID,
+        new ReadyRoomPublisher(amqp, logger),
+        randomUUID,
+      );
+      const service = new MessagingService(
+        logger,
+        amqp,
+        guilds as never,
+        redis,
+        readyRoom,
+        new NotificationRateLimiterService(logger, redis),
+      );
+      return MessagingData.makeService(service);
+    });
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -91,4 +151,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeDocsData,
   NativePublicSystemData,
   NativeInternalGuildsData,
+  NativeMessagingData,
 ).pipe(Layer.provide(ApiDatabaseLive));
