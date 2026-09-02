@@ -5,6 +5,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { MembersService } from "#src/members/members.service";
+import type { MemberReadService } from "#src/members/member-read.service";
 import {
   LootlogApi,
   MembersControllerDeactivateMember200,
@@ -76,19 +77,6 @@ export class MembersData extends Context.Service<
       guildId: string,
       discordId: string,
     ) => DataEffect;
-    readonly getLootlogConfigSummary: (
-      guildId: string,
-      discordId: string,
-    ) => DataEffect;
-    readonly getGuildMembers: (
-      guildId: string,
-      includeInactive: boolean,
-    ) => DataEffect;
-    readonly getGuildMemberReferences: (
-      guildId: string,
-      includeInactive: boolean,
-    ) => DataEffect;
-    readonly getGuildMembersSummary: (guildId: string) => DataEffect;
     readonly refreshAllMembers: (
       guildId: string,
       discordId: string,
@@ -124,18 +112,6 @@ export class MembersData extends Context.Service<
           attempt(() => service.refreshMember({ guildId, discordId })),
         deactivateMember: (guildId, discordId) =>
           attempt(() => service.deactivateMember({ guildId, discordId })),
-        getLootlogConfigSummary: (guildId, discordId) =>
-          attempt(() =>
-            service.getMemberLootlogConfigSummary({ guildId, discordId }),
-          ),
-        getGuildMembers: (guildId, includeInactive) =>
-          attempt(() => service.getGuildMembers(guildId, includeInactive)),
-        getGuildMemberReferences: (guildId, includeInactive) =>
-          attempt(() =>
-            service.getGuildMemberReferences(guildId, includeInactive),
-          ),
-        getGuildMembersSummary: (guildId) =>
-          attempt(() => service.getGuildMembersSummary(guildId)),
         refreshAllMembers: (guildId, discordId) =>
           attempt(() => service.createBulkRefreshJob(guildId, discordId)),
         getLatestRefreshJob: (guildId) =>
@@ -144,6 +120,47 @@ export class MembersData extends Context.Service<
           attempt(() => service.getRefreshJobStatus({ guildId, jobId })),
       }),
     );
+  }
+}
+
+export class MemberReadData extends Context.Service<
+  MemberReadData,
+  {
+    readonly getLootlogConfigSummary: (
+      guildId: string,
+      discordId: string,
+    ) => DataEffect;
+    readonly getGuildMembers: (
+      guildId: string,
+      includeInactive: boolean,
+    ) => DataEffect;
+    readonly getGuildMemberReferences: (
+      guildId: string,
+      includeInactive: boolean,
+    ) => DataEffect;
+    readonly getGuildMembersSummary: (guildId: string) => DataEffect;
+  }
+>()("@lootlog/api/http-api/member-read/data") {
+  static makeService(service: MemberReadService): MemberReadData["Service"] {
+    const attempt = (operation: () => PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new MembersOperationError({ cause }),
+      });
+    return MemberReadData.of({
+      getLootlogConfigSummary: (guildId, discordId) =>
+        attempt(() =>
+          service.getMemberLootlogConfigSummary({ guildId, discordId }),
+        ),
+      getGuildMembers: (guildId, includeInactive) =>
+        attempt(() => service.getGuildMembers(guildId, includeInactive)),
+      getGuildMemberReferences: (guildId, includeInactive) =>
+        attempt(() =>
+          service.getGuildMemberReferences(guildId, includeInactive),
+        ),
+      getGuildMembersSummary: (guildId) =>
+        attempt(() => service.getGuildMembersSummary(guildId)),
+    });
   }
 }
 
@@ -162,6 +179,12 @@ const data = <A>(
     service: MembersData["Service"],
   ) => Effect.Effect<A, MembersOperationError>,
 ) => Effect.flatMap(MembersData, operation);
+
+const readData = <A>(
+  operation: (
+    service: MemberReadData["Service"],
+  ) => Effect.Effect<A, MembersOperationError>,
+) => Effect.flatMap(MemberReadData, operation);
 
 const toWire = (value: unknown): unknown => {
   if (value instanceof Date) return value.toISOString();
@@ -293,7 +316,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               Permission.ADMIN,
               Permission.OWNER,
             ]);
-            const value = yield* data((service) =>
+            const value = yield* readData((service) =>
               service.getLootlogConfigSummary(access.guildId, params.discordId),
             );
             return yield* decode(
@@ -317,7 +340,7 @@ export const MembersHandlers = HttpApiBuilder.group(
                 Permission.OWNER,
               ]);
             }
-            const value = yield* data((service) =>
+            const value = yield* readData((service) =>
               service.getGuildMembers(
                 access.guildId,
                 query.includeInactive === true,
@@ -337,7 +360,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               const access = yield* requireGuild(guildId, [
                 Permission.LOOTLOG_ACCESS,
               ]);
-              const value = yield* data((service) =>
+              const value = yield* readData((service) =>
                 service.getGuildMemberReferences(
                   access.guildId,
                   query.includeInactive === true,
@@ -358,7 +381,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const access = yield* requireGuild(guildId, [
               Permission.LOOTLOG_ACCESS,
             ]);
-            const value = yield* data((service) =>
+            const value = yield* readData((service) =>
               service.getGuildMembersSummary(access.guildId),
             );
             return yield* decode(

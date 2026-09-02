@@ -12,6 +12,7 @@ import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
 import { GuildConfigurationService } from "#src/guilds/guild-configuration.service";
 import { MembersRepository } from "#src/members/members.repository";
+import { MemberReadService } from "#src/members/member-read.service";
 import { ChatService } from "#src/chat/chat.service";
 import { MessagingService } from "#src/messaging/messaging.service";
 import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
@@ -39,6 +40,7 @@ import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.han
 import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
+import { MemberReadData } from "../handlers/members/members.handlers.js";
 import { ReadyRoomData } from "../handlers/party-ready-room/party-ready-room.handlers.js";
 import {
   ReservationSharingData,
@@ -333,6 +335,16 @@ const NativeReservationReadData = Layer.unwrap(
   }),
 );
 
+const NativeMemberReadData = Layer.unwrap(
+  Effect.map(ApiRedis, (redis) =>
+    makeScopedCompatibilityLayer(MemberReadData, (runtime) =>
+      MemberReadData.makeService(
+        new MemberReadService(new MembersRepository(runtime), redis),
+      ),
+    ),
+  ),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -348,4 +360,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeGuildConfigurationData,
   NativeReservationSharingData,
   NativeReservationReadData,
+  NativeMemberReadData,
 ).pipe(Layer.provide(ApiDatabaseLive));

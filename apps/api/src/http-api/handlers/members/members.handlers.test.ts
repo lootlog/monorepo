@@ -8,6 +8,7 @@ import {
   MembersAccessDenied,
   MembersAuthorization,
   MembersData,
+  MemberReadData,
   MembersNotFound,
   refreshGuildMember,
 } from "./members.handlers.js";
@@ -52,13 +53,18 @@ const makeData = (overrides: Partial<MembersData["Service"]> = {}) =>
     getMe: () => Effect.succeed(member),
     refreshMember: () => Effect.succeed(member),
     deactivateMember: () => Effect.succeed({ ...member, active: false }),
+    refreshAllMembers: () => Effect.succeed({}),
+    getLatestRefreshJob: () => Effect.succeed(null),
+    getRefreshJobStatus: () => Effect.succeed({}),
+    ...overrides,
+  });
+
+const makeReadData = (overrides: Partial<MemberReadData["Service"]> = {}) =>
+  MemberReadData.of({
     getLootlogConfigSummary: () => Effect.succeed({}),
     getGuildMembers: () => Effect.succeed([]),
     getGuildMemberReferences: () => Effect.succeed([]),
     getGuildMembersSummary: () => Effect.succeed([]),
-    refreshAllMembers: () => Effect.succeed({}),
-    getLatestRefreshJob: () => Effect.succeed(null),
-    getRefreshJobStatus: () => Effect.succeed({}),
     ...overrides,
   });
 
@@ -74,10 +80,12 @@ const makeAuthorization = (
 const provideServices = (
   authorization: MembersAuthorization["Service"],
   data: MembersData["Service"],
+  reads: MemberReadData["Service"] = makeReadData(),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
     Layer.succeed(MembersAuthorization, authorization),
     Layer.succeed(MembersData, data),
+    Layer.succeed(MemberReadData, reads),
   );
 
 describe("Members HttpApi handlers", () => {
