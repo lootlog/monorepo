@@ -1,0 +1,34 @@
+import { BunHttpServer } from "@effect/platform-bun";
+import { Effect, Layer } from "effect";
+import { HttpRouter } from "effect/unstable/http";
+import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { LootlogApiHandlers } from "../handlers/handlers-layer.js";
+import { LootlogApi } from "../lootlog-api.generated.js";
+import { ForwardAuthMiddlewareLive } from "./forward-auth-middleware.js";
+import { ApiRuntimeConfig } from "./api-runtime-config.js";
+import { RequestIdentityLayers } from "./request-identity-layers.js";
+
+/**
+ * Complete API router without infrastructure implementations.
+ *
+ * Its remaining Layer requirements are the explicit Data and Authorization
+ * ports owned by the 26 handler groups. Keeping them visible prevents the Bun
+ * host from starting with a partially wired API.
+ */
+export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
+  openapiPath: "/openapi.json",
+}).pipe(
+  Layer.provide(LootlogApiHandlers),
+  Layer.provide(RequestIdentityLayers),
+  Layer.provide(ForwardAuthMiddlewareLive),
+);
+
+export const LootlogApiHttp = HttpRouter.serve(LootlogApiRoutes);
+
+export const ApiHttpServerLive = Layer.unwrap(
+  Effect.map(ApiRuntimeConfig, ({ port }) =>
+    LootlogApiHttp.pipe(
+      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
+    ),
+  ),
+).pipe(Layer.provide(ApiRuntimeConfig.layer));

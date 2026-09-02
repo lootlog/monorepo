@@ -15,10 +15,12 @@ on the rewrite branch.
   short-lived one-time realtime ticket required by the coordinated WebSocket
   cutover; the other 243 operation IDs remain unchanged.
 - The official Effect OpenAPI generator deterministically renders the API's
-  schema-first `HttpApi` contract as one 1,012,847-byte source file containing
+  schema-first `HttpApi` contract as one 1,017,959-byte source file containing
   exactly the same 199 operation IDs. The guarded generator validates the full
-  identifier set, deduplicates identical generated components, preserves the
-  legacy parameter and model-name representation consumed by Orval, and then
+  identifier set, converts all 544 OpenAPI 3.0 `nullable` schemas without
+  breaking nested references, preserves unconstrained JSON values, deduplicates
+  identical generated components, preserves the legacy parameter and model-name
+  representation consumed by Orval, and then
   atomically replaces the output. The normalized operation parity gate passes
   for all 243 baseline operations plus the allowlisted realtime ticket.
 - Orval uses `mode: "single"` and emits one generated TypeScript file for each

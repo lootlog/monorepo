@@ -5,6 +5,8 @@ import {
   EventKillHistoryResponseDto__schema0,
   GuildDocumentResponseDto__schema0,
   KillDetailResponseDto__schema0,
+  MigrateTimerSettingsDto,
+  PatchSettingsDocumentsDto,
 } from "./lootlog-api.generated.js";
 import { restoreNullableSchemas } from "./restore-nullable-schemas.js";
 
@@ -28,6 +30,23 @@ test("accepts a null reservation reminder", () => {
       startsAt: "2026-09-02T10:00:00Z",
       endsAt: "2026-09-02T11:00:00Z",
       reminderMinutesBefore: null,
+    }),
+  ).toBe(true);
+});
+
+test("preserves unconstrained JSON objects instead of generating never values", () => {
+  expect(
+    Schema.is(MigrateTimerSettingsDto)({ localData: { enabled: true } }),
+  ).toBe(true);
+  expect(
+    Schema.is(PatchSettingsDocumentsDto)({
+      operations: [
+        {
+          domain: "timers",
+          scope: { type: "USER", id: "user-1" },
+          set: { syncEnabled: true },
+        },
+      ],
     }),
   ).toBe(true);
 });

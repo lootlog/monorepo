@@ -17,144 +17,44 @@ export const NULLABLE_JSON_SCHEMA_NAMES = [
   "UpdateGuildDocumentDto__schema0",
 ] as const;
 
-const BONUS_BREAKDOWN_SCHEMA_NAMES = [
-  "KillDetailResponseDto__schema0",
-  "EventMemberKillHistoryResponseDto__schema0",
-  "EventKillHistoryResponseDto__schema0",
+const UNCONSTRAINED_JSON_FIELDS = [
+  "localData",
+  "effective",
+  "overrides",
+  "set",
 ] as const;
 
-const replaceExactCount = (
-  source: string,
-  original: string,
-  replacement: string,
-  expectedCount: number,
-  label: string,
-): string => {
-  const originalCount = source.split(original).length - 1;
-  const replacementCount = source.split(replacement).length - 1;
-
-  if (originalCount + replacementCount !== expectedCount) {
-    throw new Error(
-      `${label}: expected ${expectedCount} source shapes, found ${originalCount} original and ${replacementCount} restored`,
+const restoreUnconstrainedJsonObjects = (source: string): string => {
+  for (const field of UNCONSTRAINED_JSON_FIELDS) {
+    const typePattern = new RegExp(
+      `(readonly ${field}\\??: \\{ readonly \\[x: string\\]: )(never|Schema\\.Json)(;? \\})`,
+      "g",
     );
-  }
+    const typeMatches = source.match(typePattern) ?? [];
+    if (typeMatches.length !== 1) {
+      throw new Error(
+        `${field} JSON object type: expected one source shape, found ${typeMatches.length}`,
+      );
+    }
+    source = source.replace(typePattern, "$1Schema.Json$3");
 
-  return source.replaceAll(original, replacement);
-};
-
-const restoreReservationReminderSchemas = (source: string): string => {
-  const requiredPattern =
-    /^([ \t]*)reminderMinutesBefore: Schema\.(?:Literals\(\[0, 5, 15, 30\]\)|Union\(\[\s*Schema\.Literals\(\[0, 5, 15, 30\]\),\s*Schema\.Null,?\s*\]\)),/gm;
-  const requiredMatches = source.match(requiredPattern) ?? [];
-  if (requiredMatches.length !== 5) {
-    throw new Error(
-      `required reservation reminder schema: expected 5 source shapes, found ${requiredMatches.length}`,
+    const schemaPattern = new RegExp(
+      `(${field}: (?:Schema\\.optionalKey\\(\\s*)?Schema\\.Record\\(\\s*Schema\\.String,\\s*)(Schema\\.Never|Schema\\.Json(?:\\.annotate\\(\\{ expected: "JSON value" \\}\\))?)(,?\\s*\\))`,
+      "g",
     );
-  }
-  source = source.replace(requiredPattern, (_match, indentation: string) => {
-    const itemIndentation = `${indentation}  `;
-    return `${indentation}reminderMinutesBefore: Schema.Union([\n${itemIndentation}Schema.Literals([0, 5, 15, 30]),\n${itemIndentation}Schema.Null,\n${indentation}]),`;
-  });
-
-  const optionalPattern =
-    /^([ \t]*)reminderMinutesBefore: Schema\.optionalKey\(\s*(?:Schema\.Literals\(\[0, 5, 15, 30\]\)|Schema\.Union\(\[\s*Schema\.Literals\(\[0, 5, 15, 30\]\),\s*Schema\.Null,?\s*\]\))[,]?\s*\),/gm;
-  const optionalMatches = source.match(optionalPattern) ?? [];
-  if (optionalMatches.length !== 2) {
-    throw new Error(
-      `optional reservation reminder schema: expected 2 source shapes, found ${optionalMatches.length}`,
+    const schemaMatches = source.match(schemaPattern) ?? [];
+    if (schemaMatches.length !== 1) {
+      throw new Error(
+        `${field} JSON object schema: expected one source shape, found ${schemaMatches.length}`,
+      );
+    }
+    source = source.replace(
+      schemaPattern,
+      '$1Schema.Json.annotate({ expected: "JSON value" })$3',
     );
-  }
-
-  return source.replace(optionalPattern, (_match, indentation: string) => {
-    const itemIndentation = `${indentation}  `;
-    return `${indentation}reminderMinutesBefore: Schema.optionalKey(\n${itemIndentation}Schema.Union([Schema.Literals([0, 5, 15, 30]), Schema.Null]),\n${indentation}),`;
-  });
-};
-
-const restoreNullableJsonSchema = (
-  source: string,
-  schemaName: string,
-): string => {
-  const typePattern = new RegExp(
-    `(export type ${schemaName} =[\\s\\S]*?)(;\\nexport const ${schemaName} =)`,
-  );
-  const typeMatch = typePattern.exec(source);
-  if (typeMatch === null) {
-    throw new Error(`${schemaName}: generated type alias was not found`);
-  }
-  if (!typeMatch[1]?.trimEnd().endsWith("| null")) {
-    source = source.replace(typePattern, "$1\n  | null$2");
-  }
-
-  const recursivePattern = new RegExp(
-    `(const __recursive_${schemaName}\\s*=\\s*Schema\\.Union\\(\\[)([\\s\\S]*?)(\\n[ \\t]*\\]\\)\\.annotate\\(\\{\\s*identifier:\\s*"${schemaName}",?\\s*\\}\\);)`,
-  );
-  const recursiveMatch = recursivePattern.exec(source);
-  if (recursiveMatch === null) {
-    throw new Error(`${schemaName}: generated recursive schema was not found`);
-  }
-  if (!recursiveMatch[2]?.trimEnd().endsWith("Schema.Null,")) {
-    source = source.replace(recursivePattern, "$1$2\n  Schema.Null,$3");
   }
 
   return source;
 };
 
-const restoreNullableBonusBreakdown = (
-  source: string,
-  schemaName: string,
-): string => {
-  const typePattern = new RegExp(
-    `(readonly bonusBreakdown\\?:(?:(?!readonly bonusBreakdown\\?:)[\\s\\S])*?\\|\\s*\\{\\s*readonly \\[x: string\\]: ${schemaName};?\\s*\\})(\\s*\\| null)?;`,
-  );
-  const typeMatch = typePattern.exec(source);
-  if (typeMatch === null) {
-    throw new Error(`${schemaName}: bonusBreakdown type was not found`);
-  }
-  if (typeMatch[2] === undefined) {
-    source = source.replace(typePattern, "$1\n            | null;");
-  }
-
-  const schemaPattern = new RegExp(
-    `(bonusBreakdown: Schema\\.optionalKey\\(\\s*Schema\\.Union\\(\\[(?:(?!bonusBreakdown: Schema\\.optionalKey)[\\s\\S])*?Schema\\.Record\\(\\s*Schema\\.String,\\s*${schemaName},?\\s*\\),)(\\s*Schema\\.Null,)?(\\s*\\]\\),\\s*\\),)`,
-  );
-  const schemaMatch = schemaPattern.exec(source);
-  if (schemaMatch === null) {
-    throw new Error(`${schemaName}: bonusBreakdown schema was not found`);
-  }
-  if (schemaMatch[2] === undefined) {
-    source = source.replace(schemaPattern, "$1\n              Schema.Null,$3");
-  }
-
-  return source;
-};
-
-export const restoreNullableSchemas = (generatedSource: string): string => {
-  let source = generatedSource;
-
-  for (const schemaName of NULLABLE_JSON_SCHEMA_NAMES) {
-    source = restoreNullableJsonSchema(source, schemaName);
-  }
-
-  source = replaceExactCount(
-    source,
-    "readonly reminderMinutesBefore: 0 | 5 | 15 | 30;",
-    "readonly reminderMinutesBefore: 0 | 5 | 15 | 30 | null;",
-    5,
-    "required reservation reminder type",
-  );
-  source = replaceExactCount(
-    source,
-    "readonly reminderMinutesBefore?: 0 | 5 | 15 | 30;",
-    "readonly reminderMinutesBefore?: 0 | 5 | 15 | 30 | null;",
-    2,
-    "optional reservation reminder type",
-  );
-  source = restoreReservationReminderSchemas(source);
-
-  for (const schemaName of BONUS_BREAKDOWN_SCHEMA_NAMES) {
-    source = restoreNullableBonusBreakdown(source, schemaName);
-  }
-
-  return source;
-};
+export const restoreNullableSchemas = restoreUnconstrainedJsonObjects;

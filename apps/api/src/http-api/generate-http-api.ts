@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeOpenApiNullable } from "./normalize-openapi-nullable.js";
 import { restoreNullableSchemas } from "./restore-nullable-schemas.js";
 import { restoreForwardAuthMiddleware } from "./restore-forward-auth-middleware.js";
 
@@ -11,9 +12,14 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(scriptDirectory, "../..");
 const openApiPath = resolve(appRoot, "openapi.yaml");
 const outputPath = resolve(scriptDirectory, "lootlog-api.generated.ts");
+const formatterBin = resolve(appRoot, "../../node_modules/.bin/oxfmt");
+const temporarySpecPath = resolve(
+  scriptDirectory,
+  `lootlog-api.openapi.${process.pid}.tmp.json`,
+);
 const temporaryOutputPath = resolve(
   scriptDirectory,
-  `.lootlog-api.generated.${process.pid}.tmp`,
+  `lootlog-api.generated.${process.pid}.tmp.ts`,
 );
 
 const readOperationIds = (source: string): string[] =>
@@ -24,7 +30,7 @@ const readOperationIds = (source: string): string[] =>
 
 const readGeneratedOperationIds = (source: string): string[] =>
   Array.from(
-    source.matchAll(/\.annotate\(OpenApi\.Identifier, "([^"]+)"\)/g),
+    source.matchAll(/\.annotate\(\s*OpenApi\.Identifier,\s*"([^"]+)",?\s*\)/g),
     (match) => match[1],
   );
 
@@ -74,13 +80,18 @@ const generatorPackageJson = fileURLToPath(
   import.meta.resolve("@effect/openapi-generator/package.json"),
 );
 const generatorBin = resolve(dirname(generatorPackageJson), "dist/bin.js");
+const openApiSource = await readFile(openApiPath, "utf8");
+const normalizedOpenApi = normalizeOpenApiNullable(
+  Bun.YAML.parse(openApiSource),
+);
+await Bun.write(temporarySpecPath, JSON.stringify(normalizedOpenApi));
 const temporaryOutput = await open(temporaryOutputPath, "w");
 const generator = spawn(
   process.execPath,
   [
     generatorBin,
     "--spec",
-    openApiPath,
+    temporarySpecPath,
     "--format",
     "httpapi",
     "--name",
@@ -106,7 +117,29 @@ const exitCode = await new Promise<number>((resolveExit, rejectExit) => {
 }).finally(() => temporaryOutput.close());
 const generatorWarnings = Buffer.concat(warningChunks).toString("utf8");
 
+const formatTemporaryOutput = async (): Promise<void> => {
+  const formatter = spawn(formatterBin, [temporaryOutputPath], {
+    cwd: appRoot,
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  const errorChunks: Buffer[] = [];
+  formatter.stderr?.on("data", (chunk: Buffer) => errorChunks.push(chunk));
+  const formatterExitCode = await new Promise<number>(
+    (resolveExit, rejectExit) => {
+      formatter.once("error", rejectExit);
+      formatter.once("close", (code) => resolveExit(code ?? 1));
+    },
+  );
+
+  if (formatterExitCode !== 0) {
+    throw new Error(
+      `oxfmt exited with ${formatterExitCode}: ${Buffer.concat(errorChunks).toString("utf8").trim()}`,
+    );
+  }
+};
+
 if (exitCode !== 0) {
+  await unlink(temporarySpecPath).catch(() => undefined);
   await unlink(temporaryOutputPath).catch(() => undefined);
   throw new Error(
     `@effect/openapi-generator exited with ${exitCode}: ${generatorWarnings.trim()}`,
@@ -114,11 +147,11 @@ if (exitCode !== 0) {
 }
 
 try {
+  await formatTemporaryOutput();
   const rawGeneratedSource = await readFile(temporaryOutputPath, "utf8");
   const generatedSource = restoreForwardAuthMiddleware(
     restoreNullableSchemas(rawGeneratedSource),
   );
-  const openApiSource = await readFile(openApiPath, "utf8");
   assertCompleteOperationSet(
     readOperationIds(openApiSource),
     readGeneratedOperationIds(generatedSource),
@@ -150,4 +183,6 @@ try {
 } catch (error) {
   await unlink(temporaryOutputPath).catch(() => undefined);
   throw error;
+} finally {
+  await unlink(temporarySpecPath).catch(() => undefined);
 }
