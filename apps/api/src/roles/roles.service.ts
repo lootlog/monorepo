@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Permission } from "@lootlog/schema/permissions";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import type { GuildRoleDto } from "#src/guilds/dto/create-guild.dto";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
@@ -20,7 +20,7 @@ import { RolesRepository } from "./roles.repository.js";
 export class RolesService {
   constructor(
     private readonly repository: RolesRepository,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 

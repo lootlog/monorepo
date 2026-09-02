@@ -1,7 +1,7 @@
 import type { Job } from "bullmq";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { mockFn } from "#src/test/mock-fn";
 import { MemberRefreshProcessor } from "./member-refresh.processor.js";
@@ -60,7 +60,7 @@ describe("MemberRefreshProcessor", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemberRefreshProcessor,
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         { provide: MembersService, useValue: mockMembersService },
         {
           provide: MemberRefreshSchedulerService,

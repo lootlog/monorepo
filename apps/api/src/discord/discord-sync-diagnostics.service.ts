@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import type {
@@ -28,7 +28,7 @@ return 1
 `;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 

@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
@@ -38,7 +38,7 @@ describe("DiscordRateLimiterService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DiscordRateLimiterService,
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();

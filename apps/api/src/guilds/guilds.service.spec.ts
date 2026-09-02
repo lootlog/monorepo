@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { mockFn } from "#src/test/mock-fn";
 import { GuildsService } from "./guilds.service.js";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { ChannelsService } from "#src/channels/channels.service";
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
@@ -145,7 +145,7 @@ describe("GuildsService", () => {
         GuildsService,
         UserGuildAccessResolver,
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
         {

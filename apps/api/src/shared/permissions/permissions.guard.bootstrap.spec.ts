@@ -4,7 +4,7 @@ import { MODULE_METADATA } from "@nestjs/common/constants";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RequiresCapabilities } from "@lootlog/nest-shared";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { Permission } from "@lootlog/schema/permissions";
 import { MembersModule } from "#src/members/members.module";
 import { MembersService } from "#src/members/members.service";
@@ -56,7 +56,7 @@ class GuardedPermissionsController {
       },
     },
     {
-      provide: WINSTON_MODULE_PROVIDER,
+      provide: APPLICATION_LOGGER,
       useValue: mockLogger,
     },
   ],

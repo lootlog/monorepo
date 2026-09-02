@@ -15,7 +15,7 @@ import {
   type OnModuleInit,
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { ExecutionError } from "redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -107,7 +107,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     private readonly userLootlogConfigService: UserLootlogConfigService,
     private readonly lootStatsService: LootStatsService,
     private readonly redisService: RedisService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly redlockService: RedlockService,
   ) {}
 

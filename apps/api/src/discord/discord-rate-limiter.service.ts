@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import type { DiscordEndpoint } from "./discord.types.js";
@@ -26,7 +26,7 @@ export class DiscordRateLimiterService {
   private readonly RATE_LIMIT_KEY_PREFIX = "discord:ratelimit:user:";
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly redis: RedisService,
   ) {}
 

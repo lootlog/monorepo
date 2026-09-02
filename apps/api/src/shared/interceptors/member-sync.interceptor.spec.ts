@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { MemberSyncInterceptor } from "./member-sync.interceptor.js";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -43,7 +43,7 @@ describe("MemberSyncInterceptor", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemberSyncInterceptor,
-        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        { provide: APPLICATION_LOGGER, useValue: mockLogger },
         { provide: MemberSyncRepository, useValue: mockRepository },
         { provide: MembersService, useValue: mockMembersService },
         { provide: RedisService, useValue: mockRedisService },

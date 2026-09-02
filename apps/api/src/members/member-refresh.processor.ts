@@ -2,7 +2,7 @@ import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { setTimeout as sleep } from "node:timers/promises";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
@@ -19,7 +19,7 @@ import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js"
 })
 export class MemberRefreshProcessor extends WorkerHost {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly scheduler: MemberRefreshSchedulerService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,

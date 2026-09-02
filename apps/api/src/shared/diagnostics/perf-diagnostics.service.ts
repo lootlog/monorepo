@@ -1,6 +1,6 @@
 import { performance } from "node:perf_hooks";
 import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { env } from "#src/config/env";
 import { getRequestDiagnosticsContext } from "./request-diagnostics-context.js";
@@ -11,9 +11,7 @@ type PerfMetadata = Record<string, unknown>;
 export class PerfDiagnosticsService {
   private readonly podName = process.env.HOSTNAME;
 
-  constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-  ) {}
+  constructor(@Inject(APPLICATION_LOGGER) private readonly logger: Logger) {}
 
   get enabled() {
     return env.PERF_DIAGNOSTICS_ENABLED;

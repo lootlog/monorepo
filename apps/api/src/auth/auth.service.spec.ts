@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { AuthService } from "./auth.service.js";
 import { HttpService } from "@nestjs/axios";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
 vi.mock("#src/config/auth.config", () => ({
@@ -33,7 +33,7 @@ describe("AuthService", () => {
       providers: [
         AuthService,
         {
-          provide: WINSTON_MODULE_PROVIDER,
+          provide: APPLICATION_LOGGER,
           useValue: mockLogger,
         },
         {

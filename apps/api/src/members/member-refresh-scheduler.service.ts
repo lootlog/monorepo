@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import type { Job, Queue as BullQueue } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
@@ -50,7 +50,7 @@ return 0
 `;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     @InjectQueue(MEMBER_REFRESH_QUEUE)
     private readonly memberRefreshQueue: BullQueue<MemberRefreshJobData>,
     private readonly rateLimiter: DiscordRateLimiterService,

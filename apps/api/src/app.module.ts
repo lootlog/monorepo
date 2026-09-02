@@ -1,11 +1,9 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
 import { APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
 import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
-import { WinstonModule } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
 import { LoggerMiddleware } from "@lootlog/nest-shared";
 import { env } from "#src/config/env";
-import { winstonConfig } from "#src/config/winston.config";
 import { UsersModule } from "./users/users.module.js";
 import { TimersModule } from "./timers/timers.module.js";
 import { TimerSettingsModule } from "./timer-settings/timer-settings.module.js";
@@ -38,13 +36,14 @@ import { PublicGuildStatsCardModule } from "#src/public-guild-stats-card/public-
 import { DocsModule } from "#src/docs/docs.module";
 import { SettingsDocumentsModule } from "#src/settings-documents/settings-documents.module";
 import { DrizzleDatabaseModule } from "#src/database/drizzle/drizzle-database.module";
+import { ApplicationLoggerModule } from "#src/shared/logging/application-logger.module";
 
 const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
 @Module({
   imports: [
     DrizzleDatabaseModule,
-    WinstonModule.forRoot(winstonConfig),
+    ApplicationLoggerModule,
     BullModule.forRoot({
       connection: {
         host: env.REDIS_HOST,

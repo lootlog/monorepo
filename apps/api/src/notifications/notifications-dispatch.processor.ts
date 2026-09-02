@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
@@ -15,7 +15,7 @@ export interface NotificationDispatchJobData {
 export class NotificationsDispatchProcessor extends WorkerHost {
   constructor(
     private readonly jobService: NotificationJobService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
   ) {
     super();
   }

@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { DiscordService } from "#src/discord/discord.service";
@@ -29,7 +29,7 @@ import { MembersRepository } from "./members.repository.js";
 @Injectable()
 export class MemberRemovalService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly repository: MembersRepository,
     private readonly discordService: DiscordService,
     private readonly amqpConnection: AmqpConnection,

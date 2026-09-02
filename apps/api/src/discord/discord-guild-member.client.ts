@@ -9,7 +9,7 @@ import {
   type OnModuleInit,
 } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
@@ -46,7 +46,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
   private readonly isLocal: boolean;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redlockService: RedlockService,

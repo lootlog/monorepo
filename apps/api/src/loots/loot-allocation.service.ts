@@ -14,7 +14,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
@@ -56,7 +56,7 @@ export class LootAllocationService {
     private readonly amqpConnection: AmqpConnection,
     private readonly repository: LootAllocationRepository,
     private readonly redisService: RedisService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
   ) {}
 
   async inferInitial(
