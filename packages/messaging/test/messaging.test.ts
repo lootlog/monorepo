@@ -50,6 +50,9 @@ const makeChannel = () => {
       _options?: unknown,
     ) => true,
   );
+  const cancel = mock((consumerTag: string) =>
+    Promise.resolve({ consumerTag }),
+  );
 
   const channel: RabbitChannel = {
     ack,
@@ -57,7 +60,7 @@ const makeChannel = () => {
     assertQueue: (queue) =>
       Promise.resolve({ queue, messageCount: 0, consumerCount: 0 }),
     bindQueue: () => Promise.resolve({}),
-    cancel: (consumerTag) => Promise.resolve({ consumerTag }),
+    cancel,
     close: () => Promise.resolve(),
     consume: (_queue, callback) => {
       consumer = callback;
@@ -74,6 +77,7 @@ const makeChannel = () => {
     ack,
     nack,
     publish,
+    cancel,
     dispatch: (message: ConsumeMessage) => consumer?.(message),
   };
 };
@@ -83,7 +87,10 @@ const runWithChannel = <A, E>(
   effect: Effect.Effect<A, E, RabbitMessaging>,
 ) =>
   Effect.runPromise(
-    effect.pipe(Effect.provide(RabbitMessaging.layerFromChannel(channel))),
+    effect.pipe(
+      Effect.provide(RabbitMessaging.layerFromChannel(channel)),
+      Effect.scoped,
+    ),
   );
 
 describe("RabbitMessaging", () => {
@@ -208,5 +215,76 @@ describe("RabbitMessaging", () => {
     expect(publish.mock.calls[1]?.[0]).toBe("dlx");
     expect(publish.mock.calls[1]?.[1]).toBe("guilds.loots.create.dlq");
     expect(ack).toHaveBeenCalledTimes(2);
+  });
+
+  test("interrupts in-flight deliveries when the consumer is cancelled", async () => {
+    const { channel, cancel, dispatch } = makeChannel();
+    let interrupted = false;
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        const consumer = yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          () =>
+            Effect.never.pipe(
+              Effect.onInterrupt(() =>
+                Effect.sync(() => {
+                  interrupted = true;
+                }),
+              ),
+            ),
+        );
+
+        dispatch(makeMessage());
+        yield* Effect.yieldNow;
+        yield* consumer.cancel;
+      }),
+    );
+
+    expect(cancel).toHaveBeenCalledWith("consumer-1");
+    expect(interrupted).toBe(true);
+  });
+
+  test("interrupts in-flight deliveries when broker cancellation fails", async () => {
+    const { channel, cancel, dispatch } = makeChannel();
+    let interrupted = false;
+    cancel.mockImplementation(() =>
+      Promise.reject(new Error("broker unavailable")),
+    );
+
+    const result = await Effect.runPromiseExit(
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        const consumer = yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          () =>
+            Effect.never.pipe(
+              Effect.onInterrupt(() =>
+                Effect.sync(() => {
+                  interrupted = true;
+                }),
+              ),
+            ),
+        );
+
+        dispatch(makeMessage());
+        yield* Effect.yieldNow;
+        yield* consumer.cancel;
+      }).pipe(
+        Effect.provide(RabbitMessaging.layerFromChannel(channel)),
+        Effect.scoped,
+      ),
+    );
+
+    expect(result._tag).toBe("Failure");
+    expect(interrupted).toBe(true);
   });
 });

@@ -20,7 +20,7 @@ import type {
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect } from "effect";
+import { Effect, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { PresenceStore } from "#src/realtime/presence-store";
@@ -283,7 +283,7 @@ export class RabbitBridge {
     private readonly coverage: CoveragePublisher,
   ) {}
 
-  start(): Effect.Effect<void, MessagingError> {
+  start(): Effect.Effect<void, MessagingError, Scope.Scope> {
     const { messaging, consumers } = this;
     const handle = this.handle.bind(this);
     return Effect.gen(function* () {

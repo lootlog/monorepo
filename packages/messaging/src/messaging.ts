@@ -9,7 +9,7 @@ import amqp, {
   type ConsumeMessage,
   type Options,
 } from "amqplib";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, FiberSet, Layer, Schema, type Scope } from "effect";
 
 // oxlint-disable-next-line unicorn/throw-new-error -- Effect TaggedError is a class factory.
 export class MessagingError extends Schema.TaggedError<MessagingError>()(
@@ -100,7 +100,7 @@ export interface RabbitMessagingService {
   readonly consume: <E>(
     options: ConsumeOptions,
     handler: (delivery: RabbitDelivery) => Effect.Effect<void, E>,
-  ) => Effect.Effect<RabbitConsumer, MessagingError>;
+  ) => Effect.Effect<RabbitConsumer, MessagingError, Scope.Scope>;
   readonly ack: (
     delivery: RabbitDelivery,
   ) => Effect.Effect<void, MessagingError>;
@@ -233,6 +233,9 @@ const makeService = (channel: RabbitChannel): RabbitMessagingService => {
     options: ConsumeOptions,
     handler: (delivery: RabbitDelivery) => Effect.Effect<void, E>,
   ) {
+    const deliveries = yield* FiberSet.make<void, never>();
+    const runDelivery = yield* FiberSet.runtime(deliveries)<never>();
+
     if (options.prefetch !== undefined) {
       const prefetch = options.prefetch;
       yield* Effect.tryPromise({
@@ -248,7 +251,7 @@ const makeService = (channel: RabbitChannel): RabbitMessagingService => {
           (message) => {
             if (message === null) return;
             const delivery = toDelivery(message);
-            Effect.runFork(
+            runDelivery(
               handler(delivery).pipe(
                 Effect.matchEffect({
                   onFailure: () =>
@@ -271,7 +274,7 @@ const makeService = (channel: RabbitChannel): RabbitMessagingService => {
       cancel: Effect.tryPromise({
         try: () => channel.cancel(result.consumerTag),
         catch: (cause) => error("cancel", cause),
-      }).pipe(Effect.asVoid),
+      }).pipe(Effect.ensuring(FiberSet.clear(deliveries)), Effect.asVoid),
     };
   });
 
