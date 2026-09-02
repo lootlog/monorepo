@@ -114,7 +114,16 @@ import { ReservationReminderService } from "#src/reservations/reservation-remind
 import { ReservationsRepository } from "#src/reservations/reservations.repository";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import { NotificationJobSchedulerService } from "#src/notifications/notification-job-scheduler.service";
+import { NotificationContentService } from "#src/notifications/notification-content.service";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
 import { NotificationJobsRepository } from "#src/notifications/notification-jobs.repository";
+import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
+import { NotificationRuleService } from "#src/notifications/notification-rule.service";
+import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { NotificationsGuildController } from "#src/notifications/notifications-guild.controller";
+import { NotificationsRepository } from "#src/notifications/notifications.repository";
+import { NotificationsUserController } from "#src/notifications/notifications-user.controller";
+import { WatchedItemService } from "#src/notifications/watched-item.service";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import { SoundSettingsService } from "#src/sound-settings/sound-settings.service";
@@ -133,6 +142,7 @@ import { LootlogConfigData } from "../handlers/lootlog-config/lootlog-config.han
 import { DocsData } from "../handlers/docs/docs.handlers.js";
 import { InternalGuildsData } from "../handlers/internal/internal.handlers.js";
 import { MessagingData } from "../handlers/messaging/messaging.handlers.js";
+import { NotificationsData } from "../handlers/notifications/notifications.handlers.js";
 import {
   MembersData,
   MemberReadData,
@@ -659,8 +669,19 @@ const NativeMyReservationsData = Layer.effect(
   }),
 );
 
-const NativeUsersGuildsData = Layer.effect(
-  UsersGuildsData,
+interface NativeUsersGuildsServicesValue {
+  readonly data: UsersGuildsData["Service"];
+  readonly guilds: GuildsService;
+  readonly channels: ChannelsService;
+}
+
+class NativeUsersGuildsServices extends Context.Service<
+  NativeUsersGuildsServices,
+  NativeUsersGuildsServicesValue
+>()("@lootlog/api/http-api/NativeUsersGuildsServices") {}
+
+const NativeUsersGuildsServicesLive = Layer.effect(
+  NativeUsersGuildsServices,
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
@@ -720,8 +741,17 @@ const NativeUsersGuildsData = Layer.effect(
       redis,
       guilds,
     );
-    return UsersGuildsData.makeService(users, guilds);
+    return {
+      data: UsersGuildsData.makeService(users, guilds),
+      guilds,
+      channels,
+    };
   }),
+);
+
+const NativeUsersGuildsData = Layer.effect(
+  UsersGuildsData,
+  Effect.map(NativeUsersGuildsServices, ({ data }) => data),
 );
 
 const NativeReservationMutationsData = Layer.effect(
@@ -1046,6 +1076,94 @@ const NativeEventsData = Layer.unwrap(
   }),
 );
 
+const NativeNotificationsData = Layer.unwrap(
+  Effect.gen(function* () {
+    const rabbit = yield* RabbitMessaging;
+    const config = yield* ApiRuntimeConfig;
+    const { runtime } = yield* NativeMemberServices;
+    const { guilds, channels } = yield* NativeUsersGuildsServices;
+    const queue = yield* Effect.acquireRelease(
+      Effect.sync(
+        () =>
+          new Queue(NOTIFICATIONS_DISPATCH_QUEUE, {
+            connection: {
+              host: config.redis.host,
+              port: config.redis.port,
+              username: config.redis.username,
+              password: Redacted.value(config.redis.password),
+              maxRetriesPerRequest: null,
+              enableReadyCheck: false,
+            },
+            prefix: "{bull}",
+          }),
+      ),
+      (notificationsQueue) => Effect.promise(() => notificationsQueue.close()),
+    );
+    const repository = new NotificationsRepository(runtime);
+    const matching = new NotificationMatchingService(repository);
+    const content = new NotificationContentService(repository, matching);
+    const jobsHolder: { current?: NotificationJobService } = {};
+    const getJobs = () => {
+      if (!jobsHolder.current) {
+        throw new Error("Notification jobs service is not initialized");
+      }
+      return jobsHolder.current;
+    };
+    const jobDelegate = {
+      cancelPendingJobs: (
+        filters: Parameters<NotificationJobService["cancelPendingJobs"]>[0],
+      ) => getJobs().cancelPendingJobs(filters),
+      createNotificationJob: (
+        options: Parameters<NotificationJobService["createNotificationJob"]>[0],
+      ) => getJobs().createNotificationJob(options),
+      enqueueNotificationJob: (jobId: string, delay: number) =>
+        getJobs().enqueueNotificationJob(jobId, delay),
+    } as NotificationJobService;
+    const targets = new NotificationTargetService(
+      repository,
+      channels,
+      jobDelegate,
+    );
+    const jobs = new NotificationJobService(
+      new NotificationJobsRepository(runtime),
+      guilds,
+      content,
+      matching,
+      makeAmqpAdapter(rabbit),
+      queue,
+    );
+    jobsHolder.current = jobs;
+    const rules = new NotificationRuleService(
+      repository,
+      guilds,
+      targets,
+      jobs,
+      content,
+    );
+    const watchedItems = new WatchedItemService(
+      repository,
+      guilds,
+      targets,
+      jobs,
+      matching,
+    );
+    const controllers = new Map<unknown, unknown>([
+      [
+        NotificationsGuildController,
+        new NotificationsGuildController(targets, rules, jobs, channels),
+      ],
+      [
+        NotificationsUserController,
+        new NotificationsUserController(targets, rules, jobs, watchedItems),
+      ],
+    ]);
+    const dispatch = createControllerDispatcher({
+      get: (token: unknown) => controllers.get(token),
+    } as never);
+    return NotificationsData.layerLegacy(dispatch);
+  }),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -1071,7 +1189,9 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeTimersData,
   NativeKillsLootsData,
   NativeEventsData,
+  NativeNotificationsData,
 ).pipe(
+  Layer.provide(NativeUsersGuildsServicesLive),
   Layer.provide(NativeKillsLootsServicesLive),
   Layer.provide(NativeTimerServiceLive),
   Layer.provide(NativeGuildAccessSummaryLive),
