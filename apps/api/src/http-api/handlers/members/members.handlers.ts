@@ -6,6 +6,7 @@ import {
 } from "@lootlog/schema/permissions";
 import type { MembersService } from "#src/members/members.service";
 import type { MemberReadService } from "#src/members/member-read.service";
+import type { MemberRefreshJobReadService } from "#src/members/member-refresh-job-read.service";
 import {
   LootlogApi,
   MembersControllerDeactivateMember200,
@@ -81,11 +82,6 @@ export class MembersData extends Context.Service<
       guildId: string,
       discordId: string,
     ) => DataEffect;
-    readonly getLatestRefreshJob: (guildId: string) => DataEffect;
-    readonly getRefreshJobStatus: (
-      guildId: string,
-      jobId: number,
-    ) => DataEffect;
   }
 >()("@lootlog/api/http-api/members/data") {
   static layerService(service: MembersService) {
@@ -114,12 +110,35 @@ export class MembersData extends Context.Service<
           attempt(() => service.deactivateMember({ guildId, discordId })),
         refreshAllMembers: (guildId, discordId) =>
           attempt(() => service.createBulkRefreshJob(guildId, discordId)),
-        getLatestRefreshJob: (guildId) =>
-          attempt(() => service.getLatestRefreshJob(guildId)),
-        getRefreshJobStatus: (guildId, jobId) =>
-          attempt(() => service.getRefreshJobStatus({ guildId, jobId })),
       }),
     );
+  }
+}
+
+export class MemberRefreshJobData extends Context.Service<
+  MemberRefreshJobData,
+  {
+    readonly getLatestRefreshJob: (guildId: string) => DataEffect;
+    readonly getRefreshJobStatus: (
+      guildId: string,
+      jobId: number,
+    ) => DataEffect;
+  }
+>()("@lootlog/api/http-api/member-refresh-job/data") {
+  static makeService(
+    service: MemberRefreshJobReadService,
+  ): MemberRefreshJobData["Service"] {
+    const attempt = (operation: () => PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new MembersOperationError({ cause }),
+      });
+    return MemberRefreshJobData.of({
+      getLatestRefreshJob: (guildId) =>
+        attempt(() => service.getLatest(guildId)),
+      getRefreshJobStatus: (guildId, jobId) =>
+        attempt(() => service.get(guildId, jobId)),
+    });
   }
 }
 
@@ -185,6 +204,12 @@ const readData = <A>(
     service: MemberReadData["Service"],
   ) => Effect.Effect<A, MembersOperationError>,
 ) => Effect.flatMap(MemberReadData, operation);
+
+const refreshJobData = <A>(
+  operation: (
+    service: MemberRefreshJobData["Service"],
+  ) => Effect.Effect<A, MembersOperationError>,
+) => Effect.flatMap(MemberRefreshJobData, operation);
 
 const toWire = (value: unknown): unknown => {
   if (value instanceof Date) return value.toISOString();
@@ -416,7 +441,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               Permission.ADMIN,
               Permission.OWNER,
             ]);
-            const value = yield* data((service) =>
+            const value = yield* refreshJobData((service) =>
               service.getLatestRefreshJob(access.guildId),
             );
             return yield* decode(
@@ -435,7 +460,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               Permission.ADMIN,
               Permission.OWNER,
             ]);
-            const value = yield* data((service) =>
+            const value = yield* refreshJobData((service) =>
               service.getRefreshJobStatus(access.guildId, params.jobId),
             );
             return yield* decode(

@@ -9,6 +9,7 @@ import {
   MembersAuthorization,
   MembersData,
   MemberReadData,
+  MemberRefreshJobData,
   MembersNotFound,
   refreshGuildMember,
 } from "./members.handlers.js";
@@ -54,6 +55,13 @@ const makeData = (overrides: Partial<MembersData["Service"]> = {}) =>
     refreshMember: () => Effect.succeed(member),
     deactivateMember: () => Effect.succeed({ ...member, active: false }),
     refreshAllMembers: () => Effect.succeed({}),
+    ...overrides,
+  });
+
+const makeRefreshJobData = (
+  overrides: Partial<MemberRefreshJobData["Service"]> = {},
+) =>
+  MemberRefreshJobData.of({
     getLatestRefreshJob: () => Effect.succeed(null),
     getRefreshJobStatus: () => Effect.succeed({}),
     ...overrides,
@@ -81,11 +89,13 @@ const provideServices = (
   authorization: MembersAuthorization["Service"],
   data: MembersData["Service"],
   reads: MemberReadData["Service"] = makeReadData(),
+  refreshJobs: MemberRefreshJobData["Service"] = makeRefreshJobData(),
 ) =>
   Layer.mergeAll(
     Layer.succeed(MembersAuthorization, authorization),
     Layer.succeed(MembersData, data),
     Layer.succeed(MemberReadData, reads),
+    Layer.succeed(MemberRefreshJobData, refreshJobs),
   );
 
 describe("Members HttpApi handlers", () => {
