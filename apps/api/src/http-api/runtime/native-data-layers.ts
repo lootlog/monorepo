@@ -10,6 +10,7 @@ import { DocsRepository } from "#src/docs/docs.repository";
 import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
+import { GuildConfigurationService } from "#src/guilds/guild-configuration.service";
 import { MembersRepository } from "#src/members/members.repository";
 import { ChatService } from "#src/chat/chat.service";
 import { MessagingService } from "#src/messaging/messaging.service";
@@ -38,6 +39,7 @@ import { PublicSystemData } from "../handlers/public-system/public-system.handle
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
+import { GuildConfigurationData } from "../handlers/users-guilds/users-guilds.handlers.js";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 
@@ -108,6 +110,12 @@ const nativeLogger = {
   log: (entry: unknown) =>
     Effect.runSync(
       Effect.log(typeof entry === "string" ? entry : JSON.stringify(entry)),
+    ),
+  warn: (entry: unknown) =>
+    Effect.runSync(
+      Effect.logWarning(
+        typeof entry === "string" ? entry : JSON.stringify(entry),
+      ),
     ),
 } as Logger;
 
@@ -257,6 +265,20 @@ const NativeRolesData = Layer.unwrap(
   ),
 );
 
+const NativeGuildConfigurationData = Layer.unwrap(
+  Effect.map(ApiRedis, (redis) =>
+    makeScopedCompatibilityLayer(GuildConfigurationData, (runtime) =>
+      GuildConfigurationData.makeService(
+        new GuildConfigurationService(
+          new GuildsRepository(runtime),
+          redis,
+          nativeLogger,
+        ),
+      ),
+    ),
+  ),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
@@ -269,4 +291,5 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeChatData,
   NativeUserLootlogConfigData,
   NativeRolesData,
+  NativeGuildConfigurationData,
 ).pipe(Layer.provide(ApiDatabaseLive));
