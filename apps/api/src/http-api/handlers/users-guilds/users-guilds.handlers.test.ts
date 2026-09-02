@@ -6,6 +6,7 @@ import {
   UserPreferencesResponseDto_Output,
 } from "../../lootlog-api.generated.js";
 import {
+  GuildConfigurationData,
   getCurrentUserPreferences,
   updateGuildConfiguration,
   UsersGuildsAccessDenied,
@@ -60,11 +61,18 @@ const makeData = (overrides: Partial<UsersGuildsData["Service"]> = {}) =>
     getUserGuilds: () => Effect.succeed([]),
     getUserGuildsWithPermissions: () => Effect.succeed([]),
     getManageableUserGuilds: () => Effect.succeed([]),
+    getGuildDiscordSyncStatus: () => Effect.succeed({}),
+    refreshGuildDiscordSync: () => Effect.succeed({}),
+    ...overrides,
+  });
+
+const makeGuildConfigurationData = (
+  overrides: Partial<GuildConfigurationData["Service"]> = {},
+) =>
+  GuildConfigurationData.of({
     getGuildById: () => Effect.succeed(guild),
     updateGuildConfig: () => Effect.succeed(guild),
     getWorldsByGuildId: () => Effect.succeed([]),
-    getGuildDiscordSyncStatus: () => Effect.succeed({}),
-    refreshGuildDiscordSync: () => Effect.succeed({}),
     ...overrides,
   });
 
@@ -84,10 +92,12 @@ const makeAuthorization = (
 const provideServices = (
   authorization: UsersGuildsAuthorization["Service"],
   data: UsersGuildsData["Service"],
+  guildConfiguration: GuildConfigurationData["Service"] = makeGuildConfigurationData(),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
     Layer.succeed(UsersGuildsAuthorization, authorization),
     Layer.succeed(UsersGuildsData, data),
+    Layer.succeed(GuildConfigurationData, guildConfiguration),
   );
 
 describe("Users and Guilds HttpApi handlers", () => {
@@ -152,7 +162,8 @@ describe("Users and Guilds HttpApi handlers", () => {
           });
         },
       }),
-      makeData({
+      makeData(),
+      makeGuildConfigurationData({
         updateGuildConfig: (guildId) => {
           updateCalls.push(guildId);
           return Effect.succeed(guild);
@@ -184,7 +195,8 @@ describe("Users and Guilds HttpApi handlers", () => {
     let updateCalled = false;
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
-      makeData({
+      makeData(),
+      makeGuildConfigurationData({
         updateGuildConfig: () => {
           updateCalled = true;
           return Effect.succeed(guild);
@@ -210,7 +222,8 @@ describe("Users and Guilds HttpApi handlers", () => {
     let updateCalled = false;
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(notFound) }),
-      makeData({
+      makeData(),
+      makeGuildConfigurationData({
         updateGuildConfig: () => {
           updateCalled = true;
           return Effect.succeed(guild);

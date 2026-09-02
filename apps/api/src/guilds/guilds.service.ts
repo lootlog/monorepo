@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
@@ -8,10 +7,6 @@ import {
 } from "@nestjs/common";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";
-import {
-  resolveReservationSettings,
-  type ReservationSettings,
-} from "@lootlog/domain/reservations";
 
 import { APPLICATION_LOGGER } from "#src/shared/logging/logger-token";
 import type { Logger } from "winston";
@@ -23,19 +18,14 @@ import type { DeleteGuildDto } from "#src/guilds/dto/delete-guild.dto";
 import type { UpdateGuildDto } from "#src/guilds/dto/update-guild.dto";
 import type { UpdateGuildConfigDto } from "#src/guilds/dto/update-guild-config.dto";
 import type { UserGuildPermissionsDto } from "#src/guilds/dto/user-guild-permissions.dto";
-import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import { MembersService } from "#src/members/members.service";
 import { RolesService } from "#src/roles/roles.service";
-import { generateSlug } from "#src/shared/utils/generate-slug";
-import { hasOwnField } from "#src/shared/utils/has-own-field";
-import { RESTRICTED_VANITY_URLS } from "#src/guilds/constants/restricted-vanity-urls";
 import { DiscordService } from "#src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   getPermissionsCachePattern,
   getGuildCacheKey,
-  GUILD_CACHE_TTL_SECONDS,
 } from "#src/shared/constants/cache.constant";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
 import {
@@ -47,6 +37,7 @@ import {
   type GuildRecord as Guild,
 } from "./guilds.repository.js";
 import { MembersRepository } from "#src/members/members.repository";
+import { GuildConfigurationService } from "./guild-configuration.service.js";
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,
@@ -80,6 +71,7 @@ const CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS = 30;
 @Injectable()
 export class GuildsService {
   private readonly staleAfterMs: number;
+  private readonly guildConfiguration: GuildConfigurationService;
 
   constructor(
     @Inject(APPLICATION_LOGGER) private readonly logger: Logger,
@@ -94,6 +86,11 @@ export class GuildsService {
     private readonly userGuildAccessResolver: UserGuildAccessResolver,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
+    this.guildConfiguration = new GuildConfigurationService(
+      this.guildsRepository,
+      this.redisService,
+      this.logger,
+    );
   }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
@@ -325,58 +322,7 @@ export class GuildsService {
   }
 
   async getGuildById(idOrVanityURL: string) {
-    const cacheKey = getGuildCacheKey(idOrVanityURL);
-    const cached = await this.redisService.get(cacheKey);
-
-    if (cached) {
-      try {
-        return this.withReservationSettingsDefaults(JSON.parse(cached));
-      } catch (error) {
-        this.logger.warn({
-          message: `Failed to parse cached guild data for key ${cacheKey}`,
-          error,
-        });
-        await this.redisService.del(cacheKey);
-      }
-    }
-
-    const guild = await this.guildsRepository.findActive(idOrVanityURL);
-
-    if (!guild) {
-      throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
-    }
-
-    const guildData = JSON.stringify(guild);
-    const cacheOperations = [
-      this.redisService.set(
-        getGuildCacheKey(guild.id),
-        guildData,
-        GUILD_CACHE_TTL_SECONDS,
-      ),
-    ];
-
-    if (guild.vanityUrl) {
-      cacheOperations.push(
-        this.redisService.set(
-          getGuildCacheKey(guild.vanityUrl),
-          guildData,
-          GUILD_CACHE_TTL_SECONDS,
-        ),
-      );
-    }
-
-    await Promise.all(cacheOperations);
-
-    return guild;
-  }
-
-  private withReservationSettingsDefaults<
-    T extends Record<string, unknown> & Partial<ReservationSettings>,
-  >(guild: T) {
-    return {
-      ...guild,
-      ...resolveReservationSettings(guild),
-    };
+    return this.guildConfiguration.getGuildById(idOrVanityURL);
   }
 
   async getGuildDiscordSyncStatus(
@@ -944,110 +890,11 @@ export class GuildsService {
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
-    if (data.vanityUrl && RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
-      throw new BadRequestException({
-        message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
-      });
-    }
-
-    const nextMinDuration = data.reservationMinDurationMinutes;
-    const nextMaxDuration = data.reservationMaxDurationMinutes;
-    if (
-      nextMinDuration !== undefined &&
-      nextMaxDuration !== undefined &&
-      nextMinDuration > nextMaxDuration
-    ) {
-      throw new BadRequestException({
-        message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
-      });
-    }
-
-    const oldGuild = await this.guildsRepository.findById(guildId);
-
-    if (
-      oldGuild &&
-      nextMinDuration !== undefined &&
-      nextMaxDuration === undefined &&
-      nextMinDuration > oldGuild.reservationMaxDurationMinutes
-    ) {
-      throw new BadRequestException({
-        message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
-      });
-    }
-
-    if (
-      oldGuild &&
-      nextMaxDuration !== undefined &&
-      nextMinDuration === undefined &&
-      oldGuild.reservationMinDurationMinutes > nextMaxDuration
-    ) {
-      throw new BadRequestException({
-        message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
-      });
-    }
-
-    const guild = await this.guildsRepository.update(
-      guildId,
-      this.buildGuildConfigUpdateData(data),
-    );
-    if (!guild) {
-      throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
-    }
-
-    const cacheInvalidations = [
-      this.redisService.del(getGuildCacheKey(guildId)),
-    ];
-
-    if (oldGuild?.vanityUrl && oldGuild.vanityUrl !== guild.vanityUrl) {
-      cacheInvalidations.push(
-        this.redisService.del(getGuildCacheKey(oldGuild.vanityUrl)),
-      );
-    }
-
-    await Promise.all(cacheInvalidations);
-
-    return guild;
-  }
-
-  private buildGuildConfigUpdateData(data: UpdateGuildConfigDto) {
-    return {
-      ...(hasOwnField(data, "vanityUrl")
-        ? { vanityUrl: generateSlug(data.vanityUrl ?? undefined) }
-        : {}),
-      ...(data.publicStatsCardEnabled !== undefined
-        ? { publicStatsCardEnabled: data.publicStatsCardEnabled }
-        : {}),
-      ...(data.reservationMaxDurationMinutes !== undefined
-        ? {
-            reservationMaxDurationMinutes: data.reservationMaxDurationMinutes,
-          }
-        : {}),
-      ...(data.reservationMinDurationMinutes !== undefined
-        ? {
-            reservationMinDurationMinutes: data.reservationMinDurationMinutes,
-          }
-        : {}),
-      ...(data.reservationTimeGranularityMinutes !== undefined
-        ? {
-            reservationTimeGranularityMinutes:
-              data.reservationTimeGranularityMinutes,
-          }
-        : {}),
-      ...(data.reservationMaxAdvanceDays !== undefined
-        ? { reservationMaxAdvanceDays: data.reservationMaxAdvanceDays }
-        : {}),
-      ...(data.reservationActiveLimitPerSpot !== undefined
-        ? {
-            reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
-          }
-        : {}),
-    };
+    return this.guildConfiguration.updateGuildConfig(guildId, data);
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.guildsRepository.getWorlds(guildId);
-
-    return worlds.map((world) => world.world);
+    return this.guildConfiguration.getWorldsByGuildId(guildId);
   }
 
   getMultipleGuildsByIds(ids: string[]) {

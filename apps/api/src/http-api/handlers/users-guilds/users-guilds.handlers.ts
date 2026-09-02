@@ -117,12 +117,6 @@ export class UsersGuildsData extends Context.Service<
     readonly getManageableUserGuilds: (
       identity: AuthenticatedIdentity,
     ) => DataEffect;
-    readonly getGuildById: (guildId: string) => DataEffect;
-    readonly updateGuildConfig: (
-      guildId: string,
-      payload: UpdateGuildConfigDto,
-    ) => DataEffect;
-    readonly getWorldsByGuildId: (guildId: string) => DataEffect;
     readonly getGuildDiscordSyncStatus: (guildId: string) => DataEffect;
     readonly refreshGuildDiscordSync: (guildId: string) => DataEffect;
   }
@@ -170,22 +164,50 @@ export class UsersGuildsData extends Context.Service<
           attempt(() => guilds.getUserGuildsWithPermissions(discordId, userId)),
         getManageableUserGuilds: ({ userId, discordId }) =>
           attempt(() => guilds.getManageableUserGuilds(discordId, userId)),
-        getGuildById: (guildId) => attempt(() => guilds.getGuildById(guildId)),
-        updateGuildConfig: (guildId, payload) =>
-          attempt(() =>
-            guilds.updateGuildConfig(
-              guildId,
-              mutableDto<LegacyUpdateGuildConfigDto>(payload),
-            ),
-          ),
-        getWorldsByGuildId: (guildId) =>
-          attempt(() => guilds.getWorldsByGuildId(guildId)),
         getGuildDiscordSyncStatus: (guildId) =>
           attempt(() => guilds.getGuildDiscordSyncStatus(guildId)),
         refreshGuildDiscordSync: (guildId) =>
           attempt(() => guilds.refreshGuildDiscordSync(guildId)),
       }),
     );
+  }
+}
+
+export class GuildConfigurationData extends Context.Service<
+  GuildConfigurationData,
+  {
+    readonly getGuildById: (guildId: string) => DataEffect;
+    readonly updateGuildConfig: (
+      guildId: string,
+      payload: UpdateGuildConfigDto,
+    ) => DataEffect;
+    readonly getWorldsByGuildId: (guildId: string) => DataEffect;
+  }
+>()("@lootlog/api/http-api/guild-configuration/data") {
+  static makeService(
+    service: Pick<
+      GuildsService,
+      "getGuildById" | "updateGuildConfig" | "getWorldsByGuildId"
+    >,
+  ): GuildConfigurationData["Service"] {
+    const attempt = (operation: () => PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: operation,
+        catch: (cause) => new UsersGuildsOperationError({ cause }),
+      });
+
+    return GuildConfigurationData.of({
+      getGuildById: (guildId) => attempt(() => service.getGuildById(guildId)),
+      updateGuildConfig: (guildId, payload) =>
+        attempt(() =>
+          service.updateGuildConfig(
+            guildId,
+            mutableDto<LegacyUpdateGuildConfigDto>(payload),
+          ),
+        ),
+      getWorldsByGuildId: (guildId) =>
+        attempt(() => service.getWorldsByGuildId(guildId)),
+    });
   }
 }
 
@@ -204,6 +226,12 @@ const data = <A>(
     service: UsersGuildsData["Service"],
   ) => Effect.Effect<A, UsersGuildsOperationError>,
 ) => Effect.flatMap(UsersGuildsData, operation);
+
+const guildConfigurationData = <A>(
+  operation: (
+    service: GuildConfigurationData["Service"],
+  ) => Effect.Effect<A, UsersGuildsOperationError>,
+) => Effect.flatMap(GuildConfigurationData, operation);
 
 const authorizeGuild = (
   guildId: string,
@@ -336,7 +364,7 @@ const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
   const authorized = yield* authorizeGuild(guildId, [
     Permission.LOOTLOG_ACCESS,
   ]);
-  const value = yield* data((service) =>
+  const value = yield* guildConfigurationData((service) =>
     service.getGuildById(authorized.guildId),
   );
   return yield* decode(GuildResponseDto_Output, value);
@@ -348,7 +376,7 @@ export const updateGuildConfiguration = Effect.fn("updateGuildConfiguration")(
       Permission.OWNER,
       Permission.ADMIN,
     ]);
-    const value = yield* data((service) =>
+    const value = yield* guildConfigurationData((service) =>
       service.updateGuildConfig(authorized.guildId, payload),
     );
     return yield* decode(GuildResponseDto_Output, value);
@@ -359,7 +387,7 @@ const guildWorlds = Effect.fn("guildWorlds")(function* (guildId: string) {
   const authorized = yield* authorizeGuild(guildId, [
     Permission.LOOTLOG_ACCESS,
   ]);
-  const value = yield* data((service) =>
+  const value = yield* guildConfigurationData((service) =>
     service.getWorldsByGuildId(authorized.guildId),
   );
   return yield* decode(GuildsControllerGetWorldsByGuildId200, value);
