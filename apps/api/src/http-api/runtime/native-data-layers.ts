@@ -6,21 +6,27 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Queue } from "bullmq";
 import type { Logger } from "winston";
 import { AuthService } from "#src/auth/auth.service";
+import { ChannelsRepository } from "#src/channels/channels.repository";
+import { ChannelsService } from "#src/channels/channels.service";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { DrizzleDatabaseRuntime } from "#src/database/drizzle/runtime";
 import { DiscordGuildMemberClient } from "#src/discord/discord-guild-member.client";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordRestClientFactory } from "#src/discord/discord-rest-client.factory";
 import { DiscordService } from "#src/discord/discord.service";
+import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { DiscordUserGuildsClient } from "#src/discord/discord-user-guilds.client";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { DocsService } from "#src/docs/docs.service";
 import { MapsService } from "#src/maps/maps.service";
 import { GuildsRepository } from "#src/guilds/guilds.repository";
+import { GuildsService } from "#src/guilds/guilds.service";
 import { GuildConfigurationService } from "#src/guilds/guild-configuration.service";
 import { GuildAccessSummaryService } from "#src/guilds/guild-access-summary.service";
+import { UserGuildAccessResolver } from "#src/guilds/user-guild-access-resolver.service";
 import { MembersRepository } from "#src/members/members.repository";
+import type { MembersService } from "#src/members/members.service";
 import { MemberBulkRefreshService } from "#src/members/member-bulk-refresh.service";
 import { MemberDiscordAccessService } from "#src/members/member-discord-access.service";
 import { MemberDiscordRefreshService } from "#src/members/member-discord-refresh.service";
@@ -65,6 +71,8 @@ import { SoundSettingsService } from "#src/sound-settings/sound-settings.service
 import { TimerSettingsService } from "#src/timer-settings/timer-settings.service";
 import { UserLootlogConfigRepository } from "#src/user-lootlog-config/user-lootlog-config.repository";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
+import { UsersRepository } from "#src/users/users.repository";
+import { UsersService } from "#src/users/users.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { MemberContextRepository } from "#src/shared/permissions/member-context.repository";
 import { MemberContextService } from "#src/shared/permissions/member-context.service";
@@ -90,7 +98,10 @@ import { PublicSystemData } from "../handlers/public-system/public-system.handle
 import { SettingsData } from "../handlers/settings/settings.handlers.js";
 import { UserLootlogConfigData } from "../handlers/user-lootlog-config/user-lootlog-config.handlers.js";
 import { ChatData } from "../handlers/chat/chat.handlers.js";
-import { GuildConfigurationData } from "../handlers/users-guilds/users-guilds.handlers.js";
+import {
+  GuildConfigurationData,
+  UsersGuildsData,
+} from "../handlers/users-guilds/users-guilds.handlers.js";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 import { OrganizationContextLookup } from "./organization-context.js";
@@ -383,6 +394,7 @@ interface NativeMemberServicesValue {
   readonly read: MemberReadService;
   readonly refreshJobRead: MemberRefreshJobReadService;
   readonly refresh: MemberDiscordRefreshService;
+  readonly discord: DiscordService;
 }
 
 class NativeMemberServices extends Context.Service<
@@ -503,6 +515,7 @@ const NativeMemberServicesLive = Layer.effect(
           read: memberRead,
           refreshJobRead: new MemberRefreshJobReadService(refreshJobs),
           refresh: memberDiscordRefresh,
+          discord,
         };
       }),
       ({ runtime, queues }) =>
@@ -590,6 +603,71 @@ const NativeMyReservationsData = Layer.effect(
   }),
 );
 
+const NativeUsersGuildsData = Layer.effect(
+  UsersGuildsData,
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    const { runtime, access, removal, refresh, discord } =
+      yield* NativeMemberServices;
+    const amqp = makeAmqpAdapter(rabbit);
+    const members = {
+      getGuildMemberById: access.getGuildMemberById.bind(access),
+      refreshMember: access.refreshMember.bind(access),
+      isMemberSoftStale: access.isMemberSoftStale.bind(access),
+      getMemberSoftStaleThreshold:
+        access.getMemberSoftStaleThreshold.bind(access),
+      refreshGuildMemberWithinBudget:
+        refresh.refreshGuildMemberWithinBudget.bind(refresh),
+      queueMemberRefresh: refresh.queueMemberRefresh.bind(refresh),
+      deactivateMember: removal.deactivateMember.bind(removal),
+      deactivateMembersMissingFromDiscordGuilds:
+        removal.deactivateMembersMissingFromDiscordGuilds.bind(removal),
+      deleteMembersByGuildId: removal.deleteMembersByGuildId.bind(removal),
+      notifyMembersRemoved: removal.notifyMembersRemoved.bind(removal),
+      notifyMemberRemoved: removal.notifyMemberRemoved.bind(removal),
+    } as unknown as MembersService;
+    const guildsRepository = new GuildsRepository(runtime);
+    const roles = new RolesService(
+      new RolesRepository(runtime),
+      nativeLogger,
+      redis,
+    );
+    const channels = new ChannelsService(
+      new ChannelsRepository(runtime),
+      new DiscordBotClientService(),
+      amqp,
+      nativeLogger,
+    );
+    const guilds = new GuildsService(
+      nativeLogger,
+      members,
+      channels,
+      roles,
+      guildsRepository,
+      new MembersRepository(runtime),
+      discord,
+      redis,
+      amqp,
+      new UserGuildAccessResolver(
+        nativeLogger,
+        guildsRepository,
+        discord,
+        members,
+      ),
+    );
+    const users = new UsersService(
+      nativeLogger,
+      new UsersRepository(runtime),
+      new AuthService(nativeLogger, redis),
+      members,
+      redis,
+      guilds,
+    );
+    return UsersGuildsData.makeService(users, guilds);
+  }),
+);
+
 const NativeReservationMutationsData = Layer.effect(
   ReservationsRolesData,
   Effect.gen(function* () {
@@ -666,6 +744,7 @@ export const NativeApiDataLayers = Layer.mergeAll(
   NativeOrganizationContextLookup,
   NativeMyReservationsData,
   NativeReservationMutationsData,
+  NativeUsersGuildsData,
 ).pipe(
   Layer.provide(NativeGuildAccessSummaryLive),
   Layer.provide(NativeMemberServicesLive),
