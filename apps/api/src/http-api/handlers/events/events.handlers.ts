@@ -146,7 +146,11 @@ export class EventsData extends Context.Service<
       caller: AuthorizedEventCaller,
     ) => Effect.Effect<
       unknown,
-      EventsBadRequest | EventsConflict | EventsDataError | EventsNotFound
+      | EventsAccessDenied
+      | EventsBadRequest
+      | EventsConflict
+      | EventsDataError
+      | EventsNotFound
     >;
   }
 >()("@lootlog/api/http-api/events/data") {
@@ -161,11 +165,41 @@ export class EventsData extends Context.Service<
       caller: AuthorizedEventCaller,
     ) => PromiseLike<unknown> | unknown,
   ) {
+    const legacyFailure = (
+      cause: unknown,
+    ):
+      | EventsAccessDenied
+      | EventsBadRequest
+      | EventsConflict
+      | EventsDataError
+      | EventsNotFound => {
+      const status =
+        typeof cause === "object" &&
+        cause !== null &&
+        "getStatus" in cause &&
+        typeof cause.getStatus === "function"
+          ? cause.getStatus()
+          : undefined;
+      if (status === 400) {
+        return new EventsBadRequest({ status, code: "BAD_REQUEST" });
+      }
+      if (status === 403) {
+        return new EventsAccessDenied({ status, code: "FORBIDDEN" });
+      }
+      if (status === 404) {
+        return new EventsNotFound({ status, code: "NOT_FOUND" });
+      }
+      if (status === 409) {
+        return new EventsConflict({ status, code: "CONFLICT" });
+      }
+      return new EventsDataError({ cause });
+    };
+
     return EventsData.layer({
       execute: (endpoint, request, caller) =>
         Effect.tryPromise({
           try: () => Promise.resolve(execute(endpoint, request, caller)),
-          catch: (cause) => new EventsDataError({ cause }),
+          catch: legacyFailure,
         }),
     });
   }
