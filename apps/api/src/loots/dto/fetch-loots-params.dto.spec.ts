@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "#test/bun-test";
 import { FetchLootsParamsDto } from "./fetch-loots-params.dto.js";
 
 describe("FetchLootsParamsDto", () => {

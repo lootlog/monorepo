@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "#test/bun-test";
 import { UpdateUserPreferencesDto } from "./update-user-preferences.dto.js";
 
 describe("UpdateUserPreferencesDto", () => {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterEach, vi } from "vitest";
+import { afterEach, vi } from "./bun-test.js";
 
 process.on("unhandledRejection", (reason) => {
   if (reason instanceof Error && reason.message === "Connection is closed.") {

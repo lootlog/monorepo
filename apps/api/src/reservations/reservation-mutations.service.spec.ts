@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { Permission } from "@lootlog/schema/permissions";
 import { ReservationMutationsService } from "./reservation-mutations.service.js";
 import type { ReservationViewerContext } from "./reservation-viewer.js";

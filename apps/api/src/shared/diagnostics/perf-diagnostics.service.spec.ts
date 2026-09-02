@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { env } from "#src/config/env";
 import { mockFn } from "#src/test/mock-fn";

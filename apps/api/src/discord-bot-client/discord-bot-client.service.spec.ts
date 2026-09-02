@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { DiscordBotClientService } from "./discord-bot-client.service.js";
 
 vi.mock("#src/config/discord-bot.config", () => ({

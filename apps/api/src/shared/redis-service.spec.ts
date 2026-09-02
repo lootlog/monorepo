@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { RedisService } from "#src/redis/redis.service";
 
 type RedisCommandMock = ReturnType<

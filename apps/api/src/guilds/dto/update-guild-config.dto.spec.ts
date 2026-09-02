@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "#test/bun-test";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import { UpdateGuildConfigDto } from "./update-guild-config.dto.js";
 

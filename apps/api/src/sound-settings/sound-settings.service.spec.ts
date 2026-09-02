@@ -1,5 +1,5 @@
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "#test/bun-test";
 import { SoundSettingsService } from "./sound-settings.service.js";
 
 const createResolution = (

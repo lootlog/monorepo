@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "#test/bun-test";
 import { ReadyRoomPublisher } from "#src/messaging/ready-room/ready-room-publisher";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 

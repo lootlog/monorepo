@@ -1,4 +1,4 @@
-import type { Mock } from "vitest";
+import type { Mock } from "#test/bun-test";
 import { mockFn } from "#src/test/mock-fn";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";

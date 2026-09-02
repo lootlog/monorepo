@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { Logger } from "#src/shared/http/http-errors";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
