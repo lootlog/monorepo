@@ -1,6 +1,8 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { DiscordGuildSyncStateResponseDto as DiscordGuildSyncStateCodec } from "#src/shared/dto/discord-guild-sync-response.dto";
+import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
 import { and, eq, or } from "drizzle-orm";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
@@ -22,7 +24,7 @@ import { hasOwnField } from "#src/shared/utils/has-own-field";
 import { RESTRICTED_VANITY_URLS } from "#src/guilds/constants/restricted-vanity-urls";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import {
-  DiscordGuildSyncStateResponseDto,
+  DiscordGuildSyncStateResponseDto as DiscordGuildSyncStateSchema,
   GuildResponseDto_Output,
   GuildsControllerGetGuildPermissions200,
   GuildsControllerGetManageableUserGuilds200,
@@ -558,7 +560,11 @@ const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
       ? service.refreshGuildDiscordSync(authorized.guildId)
       : service.getGuildDiscordSyncStatus(authorized.guildId),
   );
-  return yield* decode(DiscordGuildSyncStateResponseDto, value);
+  const encoded = encodeUnknownResponse(
+    DiscordGuildSyncStateCodec.schema,
+    value,
+  );
+  return yield* decode(DiscordGuildSyncStateSchema, encoded);
 });
 
 export const UsersHandlers = HttpApiBuilder.group(

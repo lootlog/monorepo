@@ -2,7 +2,6 @@ import { describe, expect, it, mock } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect } from "effect";
 import {
-  eventEndpointIdentifiers,
   EventsBadRequest,
   EventsData,
   EventsNotFound,
@@ -157,16 +156,25 @@ const execute = (
   );
 
 describe("event data layer", () => {
-  it("directly maps every event operation to one module call", async () => {
+  it("directly maps representative event operations to module calls", async () => {
     const operation = mock(() => Promise.resolve({ ok: true }));
+    const endpoints = [
+      "deleteEvent",
+      "listEventMaps",
+      "EventsAssignmentControllerAssignMember",
+      "acknowledgeExpiredParticipationConfirmations",
+      "EventsRankingControllerUpdateKillPoint",
+      "EventsMonitoringControllerCloseRespawnWindow",
+      "unpinEvent",
+    ] as const;
 
     await Promise.all(
-      eventEndpointIdentifiers.map((endpoint) =>
+      endpoints.map((endpoint) =>
         execute(operationsWith(operation), endpoint, requestFor()),
       ),
     );
 
-    expect(operation).toHaveBeenCalledTimes(eventEndpointIdentifiers.length);
+    expect(operation).toHaveBeenCalledTimes(endpoints.length);
   });
 
   it("rejects a missing path identifier before module work", async () => {
@@ -176,6 +184,37 @@ describe("event data layer", () => {
       execute(operationsWith(operation), "showEvent", { params: {} }),
     ).rejects.toBeInstanceOf(EventsBadRequest);
     expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("encodes event timestamps with the list response codec", async () => {
+    const createdAt = new Date("2026-09-03T10:00:00.000Z");
+    const event = {
+      id: "event-1",
+      guildId: "guild-1",
+      name: "Titan run",
+      world: "Tempest",
+      active: true,
+      startsAt: createdAt,
+      endsAt: null,
+      createdAt,
+      updatedAt: createdAt,
+      heroNpcs: [],
+    };
+
+    const result = await execute(
+      operationsWith(() => Promise.resolve([event])),
+      "listEvents",
+      requestFor(),
+    );
+
+    expect(result).toEqual([
+      {
+        ...event,
+        createdAt: createdAt.toISOString(),
+        startsAt: createdAt.toISOString(),
+        updatedAt: createdAt.toISOString(),
+      },
+    ]);
   });
 
   it("does not require an event identifier for the pinned-event collection", async () => {

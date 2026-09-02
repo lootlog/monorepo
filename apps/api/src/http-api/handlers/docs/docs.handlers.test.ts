@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
+import type { DocsService } from "#src/docs/docs.service";
 import {
   createDocument,
   DocsAccessDenied,
@@ -80,6 +81,30 @@ const services = (
   );
 
 describe("Docs HttpApi handlers", () => {
+  it("encodes service timestamps before generated HTTP validation", async () => {
+    const createdAt = new Date("2026-09-01T10:00:00.000Z");
+    const service = new Proxy(
+      {},
+      {
+        get: () => () =>
+          Effect.succeed({
+            ...document,
+            createdAt,
+            updatedAt: createdAt,
+          }),
+      },
+    ) as DocsService;
+
+    const result = await Effect.runPromise(
+      DocsData.makeService(service).create(caller, { title: "Raid notes" }),
+    );
+
+    expect(result).toMatchObject({
+      createdAt: createdAt.toISOString(),
+      updatedAt: createdAt.toISOString(),
+    });
+  });
+
   it("covers every generated DocsGroup endpoint identifier exactly once", async () => {
     const generated = await Bun.file(
       new URL("../../lootlog-api.generated.ts", import.meta.url),

@@ -9,7 +9,6 @@ import {
   NotificationsBadRequest,
   NotificationsData,
   NotificationsNotFound,
-  notificationEndpointIdentifiers,
   type NotificationEndpointIdentifier,
   type NotificationGuildCaller,
   type NotificationRequest,
@@ -94,19 +93,26 @@ const execute = (
   );
 
 describe("notification data layer", () => {
-  it("directly maps every notification operation to one service call", async () => {
+  it("directly maps success-only notification operations to service calls", async () => {
     const operation = mock(() => Promise.resolve({ ok: true }));
     const services = makeServices(operation);
+    const endpoints = [
+      "NotificationsGuildControllerDeleteGuildTarget",
+      "NotificationsGuildControllerDeleteGuildRule",
+      "NotificationsGuildControllerRebuildGuildRuleJobs",
+      "NotificationsGuildControllerTriggerGuildRuleTest",
+      "NotificationsGuildControllerCancelGuildJob",
+      "NotificationsUserControllerDeleteUserTarget",
+      "NotificationsUserControllerTriggerUserTargetTest",
+      "NotificationsUserControllerDeleteUserRule",
+      "NotificationsUserControllerDeleteWatchedItem",
+    ] as const;
 
     await Promise.all(
-      notificationEndpointIdentifiers.map((endpoint) =>
-        execute(services, endpoint, requestFor()),
-      ),
+      endpoints.map((endpoint) => execute(services, endpoint, requestFor())),
     );
 
-    expect(operation).toHaveBeenCalledTimes(
-      notificationEndpointIdentifiers.length,
-    );
+    expect(operation).toHaveBeenCalledTimes(endpoints.length);
   });
 
   it("rejects malformed numeric identifiers before service work", async () => {
@@ -132,5 +138,50 @@ describe("notification data layer", () => {
     await expect(
       execute(services, "NotificationsUserControllerGetUserTargets", {}),
     ).rejects.toBeInstanceOf(NotificationsNotFound);
+  });
+
+  it("encodes database timestamps with the endpoint response codec", async () => {
+    const createdAt = new Date("2026-09-03T10:00:00.000Z");
+    const target = {
+      id: 1,
+      ownerType: "USER",
+      ownerId: "discord-1",
+      provider: "DISCORD",
+      targetType: "DM",
+      externalId: "discord-1",
+      displayName: null,
+      guildName: null,
+      metadata: null,
+      active: true,
+      canSend: true,
+      lastSyncedAt: null,
+      lastDeliveryAt: createdAt,
+      lastDeliveryError: null,
+      createdAt,
+      updatedAt: createdAt,
+      testTrigger: {
+        limit: 3,
+        used: 0,
+        remaining: 3,
+        windowSeconds: 3600,
+        nextAvailableAt: null,
+      },
+    };
+    const services = makeServices(() => Promise.resolve([target]));
+
+    const result = await execute(
+      services,
+      "NotificationsUserControllerGetUserTargets",
+      {},
+    );
+
+    expect(result).toEqual([
+      {
+        ...target,
+        createdAt: createdAt.toISOString(),
+        lastDeliveryAt: createdAt.toISOString(),
+        updatedAt: createdAt.toISOString(),
+      },
+    ]);
   });
 });

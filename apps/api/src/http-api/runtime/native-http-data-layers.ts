@@ -1,4 +1,5 @@
 import { Context, Effect, Layer, Redacted } from "effect";
+import { PgClient } from "@effect/sql-pg";
 import { HttpClient } from "effect/unstable/http";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
@@ -7,7 +8,6 @@ import {
 } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { ExecutionError } from "redlock";
-import { inArray } from "drizzle-orm";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { applicationLogger } from "#src/shared/logging/application-logger";
 import {
@@ -22,7 +22,6 @@ import {
   ApiDatabase,
   type ApiDatabaseValue,
 } from "#src/database/drizzle/database";
-import { guildTable } from "#src/database/drizzle/schema";
 import { DiscordGuildMemberClient } from "#src/discord/discord-guild-member.client";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordRestClientFactory } from "#src/discord/discord-rest-client.factory";
@@ -1313,7 +1312,8 @@ export const NativeKillsLootsServicesLive = Layer.effect(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
-    const lootStats = new LootStatsService(makeLootStatsQuery(database), redis);
+    const postgres = yield* PgClient.PgClient;
+    const lootStats = new LootStatsService(makeLootStatsQuery(postgres), redis);
     const redlock = new RedlockService(redis).createInstance();
     const acceptance = makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),

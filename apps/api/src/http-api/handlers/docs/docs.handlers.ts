@@ -11,6 +11,15 @@ import { DocsRepository } from "#src/docs/docs.repository";
 import { makeDocsService, type DocsService } from "#src/docs/docs.service";
 import type { CreateGuildDocumentDto as LegacyCreateGuildDocumentDto } from "#src/docs/dto/create-guild-document.dto";
 import type { UpdateGuildDocumentDto as LegacyUpdateGuildDocumentDto } from "#src/docs/dto/update-guild-document.dto";
+import {
+  DocsMutationResponseDto,
+  GuildDocumentHistoryResponseDto,
+  GuildDocumentHistorySnapshotResponseDto,
+  GuildDocumentListResponseDto,
+  GuildDocumentResponseDto,
+  GuildDocumentTrashResponseDto,
+} from "#src/docs/dto/guild-document-response.dto";
+import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
 import type {
   guildTable,
   memberTable,
@@ -175,6 +184,10 @@ export class DocsData extends Context.Service<
     };
     const operation = <A, E>(effect: Effect.Effect<A, E>) =>
       effect.pipe(Effect.mapError(operationFailure));
+    const encode = <A, E, Encoded>(
+      effect: Effect.Effect<A, E>,
+      encoder: (value: A) => Encoded,
+    ) => operation(effect).pipe(Effect.map(encoder));
     const mutableCreatePayload = (
       payload: DocsControllerCreateDocumentRequestJson,
     ): LegacyCreateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
@@ -183,51 +196,76 @@ export class DocsData extends Context.Service<
     ): LegacyUpdateGuildDocumentDto => JSON.parse(JSON.stringify(payload));
 
     return DocsData.of({
-      list: (caller) => operation(service.listDocuments(caller.guild.id)),
+      list: (caller) =>
+        encode(service.listDocuments(caller.guild.id), (value) =>
+          encodeUnknownResponse(GuildDocumentListResponseDto.schema, value),
+        ),
       create: (caller, payload) =>
-        operation(
+        encode(
           service.createDocument(
             caller.guild.id,
             caller.member.userId,
             mutableCreatePayload(payload),
           ),
+          (value) =>
+            encodeUnknownResponse(GuildDocumentResponseDto.schema, value),
         ),
-      trash: (caller) => operation(service.listTrash(caller.guild.id)),
+      trash: (caller) =>
+        encode(service.listTrash(caller.guild.id), (value) =>
+          encodeUnknownResponse(GuildDocumentTrashResponseDto.schema, value),
+        ),
       history: (caller, documentId) =>
-        operation(service.listHistory(caller.guild.id, documentId)),
+        encode(service.listHistory(caller.guild.id, documentId), (value) =>
+          encodeUnknownResponse(GuildDocumentHistoryResponseDto.schema, value),
+        ),
       historySnapshot: (caller, documentId, historyId) =>
-        operation(
+        encode(
           service.getHistorySnapshot(caller.guild.id, documentId, historyId),
+          (value) =>
+            encodeUnknownResponse(
+              GuildDocumentHistorySnapshotResponseDto.schema,
+              value,
+            ),
         ),
       get: (caller, documentId) =>
-        operation(service.getDocument(caller.guild.id, documentId)),
+        encode(service.getDocument(caller.guild.id, documentId), (value) =>
+          encodeUnknownResponse(GuildDocumentResponseDto.schema, value),
+        ),
       update: (caller, documentId, payload) =>
-        operation(
+        encode(
           service.updateDocument(
             caller.guild.id,
             documentId,
             caller.member.userId,
             mutableUpdatePayload(payload),
           ),
+          (value) =>
+            encodeUnknownResponse(GuildDocumentResponseDto.schema, value),
         ),
       moveToTrash: (caller, documentId) =>
-        operation(
+        encode(
           service.moveDocumentToTrash(
             caller.guild.id,
             documentId,
             caller.member.userId,
           ),
+          (value) =>
+            encodeUnknownResponse(DocsMutationResponseDto.schema, value),
         ),
       restore: (caller, documentId) =>
-        operation(
+        encode(
           service.restoreDocument(
             caller.guild.id,
             documentId,
             caller.member.userId,
           ),
+          (value) =>
+            encodeUnknownResponse(DocsMutationResponseDto.schema, value),
         ),
       purge: (caller, documentId) =>
-        operation(service.purgeDocument(caller.guild.id, documentId)),
+        encode(service.purgeDocument(caller.guild.id, documentId), (value) =>
+          encodeUnknownResponse(DocsMutationResponseDto.schema, value),
+        ),
     });
   }
 

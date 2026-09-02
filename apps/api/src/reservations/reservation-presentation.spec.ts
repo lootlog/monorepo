@@ -1,4 +1,7 @@
-import { presentReservation } from "./reservation-presentation.js";
+import {
+  getGuildIconUrl,
+  presentReservation,
+} from "./reservation-presentation.js";
 
 const guild = {
   id: "source-guild",
@@ -28,6 +31,22 @@ const reservation = {
 };
 
 describe("presentReservation", () => {
+  it("preserves an absolute Discord icon URL from the guild projection", () => {
+    const iconUrl =
+      "https://cdn.discordapp.com/icons/source-guild/icon.webp?size=128";
+
+    expect(getGuildIconUrl({ id: guild.id, icon: iconUrl })).toBe(iconUrl);
+  });
+
+  it("rejects an absolute icon URL that does not belong to the guild", () => {
+    expect(
+      getGuildIconUrl({
+        id: guild.id,
+        icon: "https://example.test/icons/source-guild/icon.webp",
+      }),
+    ).toBeNull();
+  });
+
   it("redacts source policy settings from another user's partner reservation", () => {
     const result = presentReservation(reservation as never, {
       guildId: "viewer-guild",

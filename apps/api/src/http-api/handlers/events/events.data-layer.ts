@@ -5,6 +5,31 @@ import type { EventsCatalog } from "#src/events/events-catalog.operations";
 import type { EventsMonitoring } from "#src/events/events-monitoring.operations";
 import type { EventsPins } from "#src/events/events-pins.operations";
 import type { EventsRanking } from "#src/events/events-ranking.operations";
+import {
+  EventMutationResponseDto,
+  EventOverviewResponseDto,
+  EventsListResponseDto,
+  EventRankingResponseDto,
+  EventTimersResponseDto,
+  PendingParticipationConfirmationsResponseDto,
+} from "#src/events/dto/event-response.dto";
+import { PinnedEventResponseDto } from "#src/events/dto/pinned-event-response.dto";
+import {
+  EventHeroStatsResponseDto,
+  EventKillHistoryResponseDto,
+  EventMemberKillHistoryResponseDto,
+  KillDetailResponseDto,
+} from "#src/events/dto/event-kill-response.dto";
+import { EventCoordinationResponseDto } from "#src/events/dto/event-coordination-response.dto";
+import {
+  CoverageGapResponseDto,
+  HeroCoverageGapResponseDto,
+  HeroPresenceStatsResponseDto,
+  HeroRespawnConfigResponseDto,
+  KillTimelineMapResponseDto,
+  NullableCoverageGapResponseDto,
+} from "#src/events/dto/event-monitoring-response.dto";
+import { encodeUnknownResponse } from "#src/shared/validation/schema-class";
 import { LootlogApi } from "../../lootlog-api.generated.js";
 import {
   EventsAccessDenied,
@@ -122,11 +147,19 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 optionalString(request.query, "activeOnly"),
                 [...caller.roles],
               ),
+            ).pipe(
+              Effect.map((events) =>
+                encodeUnknownResponse(EventsListResponseDto.schema, events),
+              ),
             );
           case "createEvent":
             return yield* effectOperation(
               endpoint,
               operations.catalog.createEvent(payload(request), caller.guild),
+            ).pipe(
+              Effect.map((event) =>
+                encodeUnknownResponse(EventMutationResponseDto.schema, event),
+              ),
             );
           case "showEvent":
             return yield* effectOperation(
@@ -136,6 +169,10 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 eventId,
                 [...caller.roles],
                 caller.accessPolicy,
+              ),
+            ).pipe(
+              Effect.map((event) =>
+                encodeUnknownResponse(EventOverviewResponseDto.schema, event),
               ),
             );
           case "deleteEvent":
@@ -151,6 +188,10 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 eventId,
                 payload(request),
               ),
+            ).pipe(
+              Effect.map((event) =>
+                encodeUnknownResponse(EventMutationResponseDto.schema, event),
+              ),
             );
           case "showEventOverview":
             return yield* effectOperation(
@@ -160,6 +201,10 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 eventId,
                 [...caller.roles],
                 caller.accessPolicy,
+              ),
+            ).pipe(
+              Effect.map((event) =>
+                encodeUnknownResponse(EventOverviewResponseDto.schema, event),
               ),
             );
           case "showEventWrapped":
@@ -384,6 +429,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 eventId,
                 caller.member,
               ),
+            ).pipe(
+              Effect.map((value) =>
+                encodeUnknownResponse(
+                  PendingParticipationConfirmationsResponseDto.schema,
+                  value,
+                ),
+              ),
             );
           case "acknowledgeExpiredParticipationConfirmations":
             return yield* effectOperation(
@@ -416,6 +468,10 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 [...caller.roles],
                 caller.accessPolicy,
               ),
+            ).pipe(
+              Effect.map((ranking) =>
+                encodeUnknownResponse(EventRankingResponseDto.schema, ranking),
+              ),
             );
           case "updateRankingPoints": {
             const rankingId = yield* requireStringParameter(
@@ -443,6 +499,10 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 [...caller.roles],
                 caller.accessPolicy,
               ),
+            ).pipe(
+              Effect.map((timers) =>
+                encodeUnknownResponse(EventTimersResponseDto.schema, timers),
+              ),
             );
           case "EventsRankingControllerGetEventHeroStats":
             return yield* effectOperation(
@@ -452,6 +512,12 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 eventId,
                 [...caller.roles],
                 caller.accessPolicy,
+              ),
+            ).pipe(
+              Effect.map((stats) =>
+                stats.map((stat) =>
+                  encodeUnknownResponse(EventHeroStatsResponseDto.schema, stat),
+                ),
               ),
             );
           case "EventsRankingControllerGetEventKillHistory":
@@ -465,6 +531,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 optionalString(request.query, "cursor"),
                 optionalString(request.query, "heroId"),
                 [...caller.roles],
+              ),
+            ).pipe(
+              Effect.map((history) =>
+                encodeUnknownResponse(
+                  EventKillHistoryResponseDto.schema,
+                  history,
+                ),
               ),
             );
           case "EventsRankingControllerGetMemberKillHistory": {
@@ -481,6 +554,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 optionalString(request.query, "heroId"),
                 [...caller.roles],
               ),
+            ).pipe(
+              Effect.map((history) =>
+                encodeUnknownResponse(
+                  EventMemberKillHistoryResponseDto.schema,
+                  history,
+                ),
+              ),
             );
           }
           case "EventsRankingControllerGetHeroKillHistory": {
@@ -496,6 +576,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 optionalString(request.query, "cursor"),
                 [...caller.roles],
               ),
+            ).pipe(
+              Effect.map((history) =>
+                encodeUnknownResponse(
+                  EventKillHistoryResponseDto.schema,
+                  history,
+                ),
+              ),
             );
           }
           case "EventsRankingControllerGetKillDetail": {
@@ -510,6 +597,10 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 killId,
                 [...caller.roles],
                 caller.accessPolicy,
+              ),
+            ).pipe(
+              Effect.map((detail) =>
+                encodeUnknownResponse(KillDetailResponseDto.schema, detail),
               ),
             );
           }
@@ -535,6 +626,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             return yield* effectOperation(
               endpoint,
               operations.monitoring.getCoordination(caller.guild, eventId),
+            ).pipe(
+              Effect.map((coordination) =>
+                encodeUnknownResponse(
+                  EventCoordinationResponseDto.schema,
+                  coordination,
+                ),
+              ),
             );
           case "EventsMonitoringControllerGetKillTimelineData": {
             const heroId = yield* requireStringParameter(request, "heroId");
@@ -549,6 +647,12 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 [...caller.roles],
                 caller.accessPolicy,
               ),
+            ).pipe(
+              Effect.map((maps) =>
+                maps.map((map) =>
+                  encodeUnknownResponse(KillTimelineMapResponseDto.schema, map),
+                ),
+              ),
             );
           }
           case "EventsMonitoringControllerGetHeroCoverageGaps": {
@@ -562,6 +666,12 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 [...caller.roles],
                 caller.accessPolicy,
               ),
+            ).pipe(
+              Effect.map((gaps) =>
+                gaps.map((gap) =>
+                  encodeUnknownResponse(HeroCoverageGapResponseDto.schema, gap),
+                ),
+              ),
             );
           }
           case "EventsMonitoringControllerGetMapCoverageGaps": {
@@ -573,6 +683,12 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 eventId,
                 mapId,
               ),
+            ).pipe(
+              Effect.map((gaps) =>
+                gaps.map((gap) =>
+                  encodeUnknownResponse(CoverageGapResponseDto.schema, gap),
+                ),
+              ),
             );
           }
           case "EventsMonitoringControllerGetActiveGapForMap": {
@@ -583,6 +699,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 caller.guild,
                 eventId,
                 mapId,
+              ),
+            ).pipe(
+              Effect.map((gap) =>
+                encodeUnknownResponse(
+                  NullableCoverageGapResponseDto.schema,
+                  gap,
+                ),
               ),
             );
           }
@@ -597,6 +720,12 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 [...caller.roles],
                 caller.accessPolicy,
               ),
+            ).pipe(
+              Effect.map((gaps) =>
+                gaps.map((gap) =>
+                  encodeUnknownResponse(CoverageGapResponseDto.schema, gap),
+                ),
+              ),
             );
           }
           case "EventsMonitoringControllerGetHeroPresenceStats": {
@@ -610,6 +739,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 [...caller.roles],
                 caller.accessPolicy,
               ),
+            ).pipe(
+              Effect.map((stats) =>
+                encodeUnknownResponse(
+                  HeroPresenceStatsResponseDto.schema,
+                  stats,
+                ),
+              ),
             );
           }
           case "EventsMonitoringControllerGetHeroRespawnConfig": {
@@ -622,6 +758,13 @@ export const eventDataLayer = (operations: EventDataOperations) =>
                 heroId,
                 [...caller.roles],
                 caller.accessPolicy,
+              ),
+            ).pipe(
+              Effect.map((config) =>
+                encodeUnknownResponse(
+                  HeroRespawnConfigResponseDto.schema,
+                  config,
+                ),
               ),
             );
           }
@@ -653,11 +796,21 @@ export const eventDataLayer = (operations: EventDataOperations) =>
             return yield* effectOperation(
               endpoint,
               operations.pins.listPinnedEvents(caller.userId, caller.guild),
+            ).pipe(
+              Effect.map((events) =>
+                events.map((event) =>
+                  encodeUnknownResponse(PinnedEventResponseDto.schema, event),
+                ),
+              ),
             );
           case "pinEvent":
             return yield* effectOperation(
               endpoint,
               operations.pins.pinEvent(caller.userId, caller.guild, eventId),
+            ).pipe(
+              Effect.map((event) =>
+                encodeUnknownResponse(PinnedEventResponseDto.schema, event),
+              ),
             );
           case "unpinEvent":
             return yield* effectOperation(

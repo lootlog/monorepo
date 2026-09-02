@@ -21,6 +21,42 @@ const emptyCache = () => ({
 });
 
 describe("reservation catalog Effect adapter", () => {
+  it("reads the normalized catalog representation written to the cache", async () => {
+    const cachedSpots = [
+      {
+        id: "titan-a",
+        name: "Titan A",
+        level: 120,
+        images: ["a.webp"],
+        maps: ["map-a"],
+      },
+    ];
+    const adapter = makeReservationCatalogAdapter({
+      cache: {
+        getJson: <A>() => Effect.succeed(cachedSpots as A),
+        setJson: vi.fn(() => Effect.succeed(undefined)),
+      },
+      httpClient: makeHttpClient(500, null),
+      url: "http://catalog.test/cards",
+    });
+
+    expect(await Effect.runPromise(adapter.getSpots)).toEqual(cachedSpots);
+  });
+
+  it("rejects an invalid cached catalog instead of trusting its shape", async () => {
+    const adapter = makeReservationCatalogAdapter({
+      cache: {
+        getJson: <A>() =>
+          Effect.succeed([{ id: "titan-a", name: "Titan A", level: -1 }] as A),
+        setJson: vi.fn(() => Effect.succeed(undefined)),
+      },
+      httpClient: makeHttpClient(500, null),
+      url: "http://catalog.test/cards",
+    });
+
+    await expect(Effect.runPromise(adapter.getSpots)).rejects.toThrow();
+  });
+
   it("fetches, normalizes and caches the established payload", async () => {
     const cache = emptyCache();
     const adapter = makeReservationCatalogAdapter({

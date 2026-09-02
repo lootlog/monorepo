@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
 type ReservationCatalogCard = {
@@ -39,11 +40,29 @@ const parseCard = (value: unknown): ReservationCatalogCard => {
   };
 };
 
+const CachedReservationSpot = Schema.Struct({
+  id: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
+  level: Schema.Number.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+  images: Schema.mutable(Schema.Array(Schema.String)),
+  maps: Schema.mutable(Schema.Array(Schema.String)),
+});
+const decodeCachedReservationSpots = Schema.decodeUnknownSync(
+  Schema.mutable(Schema.Array(CachedReservationSpot)),
+);
+
 export const parseReservationCatalogPayload = (
   payload: unknown,
 ): ReservationSpot[] => {
   const decoded =
     typeof payload === "string" ? (JSON.parse(payload) as unknown) : payload;
+  if (Array.isArray(decoded)) {
+    const cachedSpots = decodeCachedReservationSpots(decoded);
+    if (cachedSpots.length === 0) {
+      throw new Error("Reservation catalog contains no valid spots");
+    }
+    return cachedSpots;
+  }
   const record =
     isRecord(decoded) && isRecord(decoded.data) ? decoded.data : decoded;
   if (!isRecord(record)) throw new Error("Invalid reservation catalog payload");
