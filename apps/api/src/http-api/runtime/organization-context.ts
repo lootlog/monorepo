@@ -1,11 +1,16 @@
 import { Context, Effect, Layer, Schema } from "effect";
 import type { Permission } from "@lootlog/schema/permissions";
 import type { MemberContextService } from "#src/shared/permissions/member-context.service";
+import type { GuildRecord } from "#src/guilds/guilds.repository";
+import type { MemberWithRoles, Role } from "#src/members/member.types";
 
 export type OrganizationContext = {
   readonly guildId: string;
   readonly ownerId: string;
   readonly permissions: ReadonlyArray<Permission>;
+  readonly guild: GuildRecord;
+  readonly member: MemberWithRoles;
+  readonly roles: ReadonlyArray<Role>;
 };
 
 // oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
@@ -51,6 +56,9 @@ export class OrganizationContextLookup extends Context.Service<
                     guildId: context.guild.id,
                     ownerId: context.guild.ownerId,
                     permissions: context.permissions,
+                    guild: context.guild,
+                    member: context.member,
+                    roles: context.roles,
                   },
             ),
           ),

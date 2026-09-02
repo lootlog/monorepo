@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
+import type { MemberContextService } from "#src/shared/permissions/member-context.service";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,
@@ -12,31 +13,12 @@ const identity = {
   guildId: "guild-alias",
 } as const;
 
-const runLookup = (
-  getMemberContext: (options: typeof identity) => Promise<{
-    guild: {
-      id: string;
-      name: string;
-      icon: string | null;
-      ownerId: string;
-      vanityUrl: string | null;
-      notificationRuleLimit: number;
-      publicStatsCardEnabled: boolean;
-      reservationMaxDurationMinutes: number;
-      reservationMinDurationMinutes: number;
-      reservationTimeGranularityMinutes: number;
-      reservationMaxAdvanceDays: number;
-      reservationActiveLimitPerSpot: number;
-      documentLimit: number;
-      createdAt: Date;
-      updatedAt: Date;
-      active: boolean;
-    };
-    member: unknown;
-    roles: unknown[];
-    permissions: Permission[];
-  } | null>,
-) =>
+type LegacyLookup = Pick<
+  MemberContextService,
+  "getMemberContext"
+>["getMemberContext"];
+
+const runLookup = (getMemberContext: LegacyLookup) =>
   Effect.flatMap(OrganizationContextLookup, (lookup) =>
     lookup.lookup(identity),
   ).pipe(
@@ -65,14 +47,30 @@ test("preserves the legacy lookup while returning the canonical Organization id"
           updatedAt: new Date("2026-01-01T00:00:00.000Z"),
           active: true,
         },
-        member: {},
+        member: {
+          id: 1,
+          userId: "discord-1",
+          guildId: "guild-canonical",
+          type: "USER",
+          name: "Member",
+          avatar: null,
+          banner: null,
+          active: true,
+          globalUserId: "user-1",
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+          lastDiscordAttemptAt: null,
+          lastDiscordStatus: null,
+          roles: [],
+        },
         roles: [],
         permissions: [Permission.ADMIN],
       }),
     ),
   );
 
-  expect(value).toEqual({
+  expect(value).toMatchObject({
     guildId: "guild-canonical",
     ownerId: "discord-owner",
     permissions: [Permission.ADMIN],

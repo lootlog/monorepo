@@ -100,7 +100,10 @@ export class KillsLootsAuthorization extends Context.Service<
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
-    }) => Effect.Effect<AuthorizedGuildCaller, KillsLootsAccessDenied>;
+    }) => Effect.Effect<
+      AuthorizedGuildCaller,
+      KillsLootsAccessDenied | KillsLootsNotFound
+    >;
   }
 >()("@lootlog/api/http-api/kills-loots/authorization") {}
 

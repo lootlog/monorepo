@@ -124,7 +124,10 @@ export class EventsAuthorization extends Context.Service<
   {
     readonly requireGuild: (
       requirement: EventAuthorizationRequirement,
-    ) => Effect.Effect<AuthorizedEventCaller, EventsAccessDenied>;
+    ) => Effect.Effect<
+      AuthorizedEventCaller,
+      EventsAccessDenied | EventsNotFound
+    >;
   }
 >()("@lootlog/api/http-api/events/authorization") {}
 
