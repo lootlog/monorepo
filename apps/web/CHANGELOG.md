@@ -1,5 +1,25 @@
 # @lootlog/web
 
+## 1.5.2
+
+### Patch Changes
+
+- 622eab1: Remove unused UI components, obsolete feature fragments, and visual-effect dependencies.
+- 6785512: Unify breadcrumbs, parent navigation, document titles, and sidebar state behind one typed navigation module, with consistent nested-route fallbacks and title formatting.
+- d597da5: Centralize capability expansion and authorization decisions behind a shared Access policy while preserving deployed permission-array transport contracts. Refresh Docker runtime base layers during builds so deployed images receive current Alpine security packages.
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+- Updated dependencies [622eab1]
+- Updated dependencies [d597da5]
+- Updated dependencies [0c6ae17]
+  - @lootlog/ui@3.1.1
+  - @lootlog/access-policy@1.1.0
+  - @lootlog/types@3.0.3
+  - @lootlog/api-client@5.0.6
+  - @lootlog/datetime@1.0.2
+  - @lootlog/reservations@1.0.2
+  - @lootlog/scoring@1.0.2
+  - @lootlog/socket-parser@1.0.3
+
 ## 1.5.1
 
 ### Patch Changes

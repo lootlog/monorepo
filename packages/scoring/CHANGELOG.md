@@ -1,5 +1,13 @@
 # @lootlog/scoring
 
+## 1.0.2
+
+### Patch Changes
+
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+- Updated dependencies [0c6ae17]
+  - @lootlog/datetime@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @lootlog/cli
 
+## 1.0.11
+
+### Patch Changes
+
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+- Updated dependencies [d597da5]
+- Updated dependencies [0c6ae17]
+  - @lootlog/types@3.0.3
+  - @lootlog/battle-processor@1.0.4
+
 ## 1.0.10
 
 ### Patch Changes

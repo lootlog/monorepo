@@ -1,5 +1,11 @@
 # @lootlog/instrumentation
 
+## 0.0.5
+
+### Patch Changes
+
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+
 ## 0.0.4
 
 ### Patch Changes

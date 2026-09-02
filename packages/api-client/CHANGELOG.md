@@ -1,5 +1,11 @@
 # @lootlog/api-client
 
+## 5.0.6
+
+### Patch Changes
+
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+
 ## 5.0.5
 
 ### Patch Changes

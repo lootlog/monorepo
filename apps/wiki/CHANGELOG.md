@@ -1,5 +1,15 @@
 # @lootlog/wiki
 
+## 0.1.11
+
+### Patch Changes
+
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+- Updated dependencies [622eab1]
+- Updated dependencies [0c6ae17]
+  - @lootlog/ui@3.1.1
+  - @lootlog/api-client@5.0.6
+
 ## 0.1.10
 
 ### Patch Changes

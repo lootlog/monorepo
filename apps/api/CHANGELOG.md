@@ -1,5 +1,31 @@
 # @lootlog/api
 
+## 5.0.9
+
+### Patch Changes
+
+- d597da5: Centralize capability expansion and authorization decisions behind a shared Access policy while preserving deployed permission-array transport contracts. Refresh Docker runtime base layers during builds so deployed images receive current Alpine security packages.
+- 894dca8: Round-trip the event read cache through superjson instead of a hand-maintained
+  list of date field names. `RedisService.getOrSetJson`/`getOrSetJsonBestEffort`
+  now accept an optional `codec` so callers can bring their own JSON serializer;
+  the default stays `JSON`. The event read cache passes a superjson codec, so any
+  `Date` in an event read model survives the cache without being registered
+  anywhere. The internal cache key prefix is bumped so stale entries expire on
+  their own. No HTTP contract change.
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+- Updated dependencies [d597da5]
+- Updated dependencies [894dca8]
+- Updated dependencies [0c6ae17]
+  - @lootlog/access-policy@1.1.0
+  - @lootlog/nest-shared@1.1.0
+  - @lootlog/types@3.0.3
+  - @lootlog/api-helpers@1.0.4
+  - @lootlog/datetime@1.0.2
+  - @lootlog/instrumentation@0.0.5
+  - @lootlog/loot-visibility@1.0.2
+  - @lootlog/reservations@1.0.2
+  - @lootlog/scoring@1.0.2
+
 ## 5.0.8
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @lootlog/developer
 
+## 0.0.10
+
+### Patch Changes
+
+- d597da5: Centralize capability expansion and authorization decisions behind a shared Access policy while preserving deployed permission-array transport contracts. Refresh Docker runtime base layers during builds so deployed images receive current Alpine security packages.
+- Updated dependencies [622eab1]
+- Updated dependencies [0c6ae17]
+  - @lootlog/ui@3.1.1
+
 ## 0.0.9
 
 ### Patch Changes

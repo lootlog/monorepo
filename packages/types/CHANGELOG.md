@@ -1,5 +1,12 @@
 # @lootlog/types
 
+## 3.0.3
+
+### Patch Changes
+
+- d597da5: Centralize capability expansion and authorization decisions behind a shared Access policy while preserving deployed permission-array transport contracts. Refresh Docker runtime base layers during builds so deployed images receive current Alpine security packages.
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+
 ## 3.0.2
 
 ### Patch Changes

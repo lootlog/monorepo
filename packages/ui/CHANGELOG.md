@@ -1,5 +1,12 @@
 # @lootlog/ui
 
+## 3.1.1
+
+### Patch Changes
+
+- 622eab1: Remove unused UI components, obsolete feature fragments, and visual-effect dependencies.
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+
 ## 3.1.0
 
 ### Minor Changes

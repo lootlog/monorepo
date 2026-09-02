@@ -1,5 +1,15 @@
 # @lootlog/landing
 
+## 1.0.10
+
+### Patch Changes
+
+- 622eab1: Remove unused UI components, obsolete feature fragments, and visual-effect dependencies.
+- 0c6ae17: Correct workspace dependency ownership, standardize quality and database command interfaces, and align package build metadata with production artifacts.
+- Updated dependencies [622eab1]
+- Updated dependencies [0c6ae17]
+  - @lootlog/ui@3.1.1
+
 ## 1.0.9
 
 ### Patch Changes
