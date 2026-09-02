@@ -7,7 +7,6 @@ import { LootSubmissionAcceptanceService } from "#src/loots/loot-submission-acce
 import { LootStatsService } from "#src/loots/services/loot-stats.service";
 import { LootsService } from "#src/loots/loots.service";
 import { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
-import { ReservationsService } from "#src/reservations/reservations.service";
 import { TimersService } from "#src/timers/timers.service";
 import { UsersService } from "#src/users/users.service";
 import { EventsData } from "../handlers/events/events.handlers.js";
@@ -38,7 +37,6 @@ export const LegacyApiDataLayers = Layer.unwrap(
       EventsData.layerLegacy(dispatch),
       UsersGuildsData.layerServices(service(UsersService), guilds),
       ReservationsRolesData.layerServices({
-        reservations: service(ReservationsService),
         mutations: service(ReservationMutationsService),
       }),
       TimersData.layerService(service(TimersService)),

@@ -7,7 +7,7 @@ import {
 import type { ReservationMutationsService } from "#src/reservations/reservation-mutations.service";
 import type { ReservationSharingService } from "#src/reservations/reservation-sharing.service";
 import type { ReservationViewerContext } from "#src/reservations/reservation-viewer";
-import type { ReservationsService } from "#src/reservations/reservations.service";
+import type { MyReservationsService } from "#src/reservations/my-reservations.service";
 import type { ReservationReadService } from "#src/reservations/reservation-read.service";
 import type { RolesService } from "#src/roles/roles.service";
 import type { CreateReservationDto as LegacyCreateReservationDto } from "#src/reservations/dto/create-reservation.dto";
@@ -97,10 +97,6 @@ export class ReservationsRolesData extends Context.Service<
       context: ReservationViewerContext,
       reservationId: number,
     ) => DataEffect;
-    readonly listMine: (
-      identity: ReservationsRolesIdentity,
-      query: ListMyReservationsQuery,
-    ) => DataEffect;
     readonly deleteOwned: (
       identity: ReservationsRolesIdentity,
       reservationId: number,
@@ -113,7 +109,6 @@ export class ReservationsRolesData extends Context.Service<
   }
 >()("@lootlog/api/http-api/reservations-roles/data") {
   static layerServices(options: {
-    readonly reservations: ReservationsService;
     readonly mutations: ReservationMutationsService;
   }) {
     const attempt = (operation: () => PromiseLike<unknown>) =>
@@ -136,14 +131,6 @@ export class ReservationsRolesData extends Context.Service<
           attempt(() =>
             options.mutations.deleteVisible({ context, reservationId }),
           ),
-        listMine: ({ userId, discordId }, query) =>
-          attempt(() =>
-            options.reservations.listMine({
-              userId,
-              discordId,
-              query: mutableDto<LegacyMyReservationsQueryDto>(query),
-            }),
-          ),
         deleteOwned: ({ userId, discordId }, reservationId) =>
           attempt(() =>
             options.mutations.deleteOwned({
@@ -163,6 +150,33 @@ export class ReservationsRolesData extends Context.Service<
           ),
       }),
     );
+  }
+}
+
+export class MyReservationsData extends Context.Service<
+  MyReservationsData,
+  {
+    readonly listMine: (
+      identity: ReservationsRolesIdentity,
+      query: ListMyReservationsQuery,
+    ) => DataEffect;
+  }
+>()("@lootlog/api/http-api/my-reservations/data") {
+  static makeService(
+    service: MyReservationsService,
+  ): MyReservationsData["Service"] {
+    return MyReservationsData.of({
+      listMine: ({ userId, discordId }, query) =>
+        Effect.tryPromise({
+          try: () =>
+            service.listMine({
+              userId,
+              discordId,
+              query: mutableDto<LegacyMyReservationsQueryDto>(query),
+            }),
+          catch: (cause) => new ReservationsRolesOperationError({ cause }),
+        }),
+    });
   }
 }
 
@@ -320,6 +334,12 @@ const data = <A>(
     service: ReservationsRolesData["Service"],
   ) => Effect.Effect<A, ReservationsRolesOperationError>,
 ) => Effect.flatMap(ReservationsRolesData, operation);
+
+const myReservationsData = <A>(
+  operation: (
+    service: MyReservationsData["Service"],
+  ) => Effect.Effect<A, ReservationsRolesOperationError>,
+) => Effect.flatMap(MyReservationsData, operation);
 
 const readData = <A>(
   operation: (
@@ -521,7 +541,7 @@ export const ReservationsHandlers = HttpApiBuilder.group(
         orDieHttpFailure(
           Effect.gen(function* () {
             const current = yield* identity;
-            const value = yield* data((service) =>
+            const value = yield* myReservationsData((service) =>
               service.listMine(current, query),
             );
             return yield* decode(ListMyReservations200, value);

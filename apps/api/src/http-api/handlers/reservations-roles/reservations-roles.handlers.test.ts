@@ -17,6 +17,7 @@ import {
   ReservationsRolesData,
   ReservationsRolesNotFound,
   ReservationsRolesOperationError,
+  MyReservationsData,
   ReservationSharingData,
   ReservationReadData,
   RolesData,
@@ -89,7 +90,6 @@ const makeData = (overrides: Partial<ReservationsRolesData["Service"]> = {}) =>
   ReservationsRolesData.of({
     create: () => Effect.succeed(reservation),
     deleteVisible: () => Effect.succeed(undefined),
-    listMine: () => Effect.succeed({ items: [] }),
     deleteOwned: () => Effect.succeed(undefined),
     updateOwned: () => Effect.succeed(reservation),
     ...overrides,
@@ -141,6 +141,9 @@ const provideServices = (
   roles: RolesData["Service"] = makeRolesData(),
   sharing: ReservationSharingData["Service"] = makeSharingData(),
   reads: ReservationReadData["Service"] = makeReadData(),
+  mine: MyReservationsData["Service"] = MyReservationsData.of({
+    listMine: () => Effect.succeed({ items: [] }),
+  }),
 ) =>
   Layer.mergeAll(
     Layer.succeed(ReservationsRolesAuthorization, authorization),
@@ -148,6 +151,7 @@ const provideServices = (
     Layer.succeed(RolesData, roles),
     Layer.succeed(ReservationSharingData, sharing),
     Layer.succeed(ReservationReadData, reads),
+    Layer.succeed(MyReservationsData, mine),
   );
 
 describe("Reservations and Roles HttpApi handlers", () => {
