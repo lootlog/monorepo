@@ -9,7 +9,6 @@ import { ReservationsRepository } from "./reservations.repository.js";
 import { ReservationsCleanupService } from "./reservations-cleanup.service.js";
 import { ReservationsCleanupRepository } from "./reservations-cleanup.repository.js";
 import { RedisModule } from "#src/lib/redis/redis.module";
-import { HttpModule } from "@nestjs/axios";
 import { GuildsModule } from "#src/guilds/guilds.module";
 import { NotificationsModule } from "#src/notifications/notifications.module";
 import { ReservationCatalogService } from "./reservation-catalog.service.js";
@@ -29,7 +28,6 @@ import { UserReservationsController } from "./user-reservations.controller.js";
     MemberContextModule,
     RabbitMQModule.forRoot(rabbitmqConfig),
     RedisModule,
-    HttpModule,
     GuildsModule,
     NotificationsModule,
   ],

@@ -1,34 +1,17 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Effect } from "effect";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import * as z from "zod";
-import { lastValueFrom } from "rxjs";
 import { env } from "#src/config/env";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
 const RESERVATION_CATALOG_CACHE_KEY = "reservations:catalog:v2";
 const RESERVATION_CATALOG_CACHE_TTL_SECONDS = 60 * 60;
 
-const ReservationCatalogCardSchema = z.object({
-  lvl: z.coerce.number().int().nonnegative().catch(0),
-  images: z.array(z.string()).catch([]),
-  maps: z.array(z.string()).catch([]),
-});
-
-const ReservationCatalogEntrySchema = z.union([
-  ReservationCatalogCardSchema,
-  z.array(ReservationCatalogCardSchema),
-]);
-
-const ReservationCatalogRecordSchema = z.record(
-  z.string(),
-  ReservationCatalogEntrySchema,
-);
-
-const ReservationCatalogPayloadSchema = z.union([
-  ReservationCatalogRecordSchema,
-  z.object({ data: ReservationCatalogRecordSchema }),
-]);
+type ReservationCatalogCard = {
+  readonly lvl: number;
+  readonly images: string[];
+  readonly maps: string[];
+};
 
 export type ReservationSpot = {
   id: string;
@@ -44,19 +27,18 @@ function unique(values: string[]): string[] {
 
 @Injectable()
 export class ReservationCatalogService {
-  private readonly logger = new Logger(ReservationCatalogService.name);
-
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly redis: RedisService,
-  ) {}
+  constructor(private readonly redis: RedisService) {}
 
   getSpots(): Promise<ReservationSpot[]> {
     return this.redis.getOrSetJsonBestEffort({
       key: RESERVATION_CATALOG_CACHE_KEY,
       ttlSeconds: RESERVATION_CATALOG_CACHE_TTL_SECONDS,
       onError: (error) =>
-        this.logger.warn("Reservation catalog cache unavailable", error),
+        Effect.runSync(
+          Effect.logWarning("Reservation catalog cache unavailable").pipe(
+            Effect.annotateLogs({ error }),
+          ),
+        ),
       factory: () => this.fetchSpots(),
     });
   }
@@ -73,13 +55,11 @@ export class ReservationCatalogService {
   }
 
   private async fetchSpots(): Promise<ReservationSpot[]> {
-    const response = await lastValueFrom(
-      this.httpService.get<unknown>(env.RESERVATIONS_CARDS_URL),
-    );
-    const decodedPayload = this.decodePayload(response.data);
-    const parsedPayload = ReservationCatalogPayloadSchema.parse(decodedPayload);
-    const entries =
-      "data" in parsedPayload ? parsedPayload.data : parsedPayload;
+    const response = await fetch(env.RESERVATIONS_CARDS_URL);
+    if (!response.ok) {
+      throw new Error(`Reservation catalog request failed: ${response.status}`);
+    }
+    const entries = this.parsePayload(await response.json());
 
     const spots = Object.entries(entries).map(([name, rawCards]) => {
       const cards = Array.isArray(rawCards) ? rawCards : [rawCards];
@@ -122,5 +102,52 @@ export class ReservationCatalogService {
     }
 
     return JSON.parse(payload) as unknown;
+  }
+
+  private parsePayload(
+    payload: unknown,
+  ): Record<string, ReservationCatalogCard | ReservationCatalogCard[]> {
+    const decoded = this.decodePayload(payload);
+    const record =
+      this.isRecord(decoded) && this.isRecord(decoded.data)
+        ? decoded.data
+        : decoded;
+    if (!this.isRecord(record)) {
+      throw new Error("Invalid reservation catalog payload");
+    }
+
+    return Object.fromEntries(
+      Object.entries(record).map(([name, entry]) => [
+        name,
+        Array.isArray(entry)
+          ? entry.map((card) => this.parseCard(card))
+          : this.parseCard(entry),
+      ]),
+    );
+  }
+
+  private parseCard(value: unknown): ReservationCatalogCard {
+    if (!this.isRecord(value)) {
+      throw new Error("Invalid reservation catalog card");
+    }
+    const coercedLevel = Number(value.lvl);
+    return {
+      lvl:
+        Number.isInteger(coercedLevel) && coercedLevel >= 0 ? coercedLevel : 0,
+      images:
+        Array.isArray(value.images) &&
+        value.images.every((item): item is string => typeof item === "string")
+          ? value.images
+          : [],
+      maps:
+        Array.isArray(value.maps) &&
+        value.maps.every((item): item is string => typeof item === "string")
+          ? value.maps
+          : [],
+    };
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
   }
 }
