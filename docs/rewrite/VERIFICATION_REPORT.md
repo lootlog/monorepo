@@ -53,7 +53,7 @@ the wrong directory.
 - Active application and package code contains no Socket.IO runtime import.
 - Active application, package, tool, and CI code contains no pnpm command or
   workspace reference.
-- `rg MIGRATION_TODO` returns no match outside vendored repositories.
+- The repository-wide migration-marker audit returns no match outside vendored repositories.
 
 ### Messaging and realtime lifecycle
 
@@ -129,6 +129,6 @@ bun run test --filter=@lootlog/api
 rg -n '@nestjs|@golevelup/nestjs|nestjs-zod|@lootlog/nest-shared' apps/api/src
 rg -n '@prisma/client|PrismaClient' apps packages
 rg -n 'socket\.io|socket.io-client' apps packages
-rg -n 'MIGRATION_TODO' . --glob '!repos/**'
+rg -n 'MIGRATION[_]TODO' . --glob '!repos/**'
 git status --short
 ```
