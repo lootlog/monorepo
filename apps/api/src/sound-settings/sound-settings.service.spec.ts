@@ -1,4 +1,4 @@
-import type { SettingsDomainResolution } from "@lootlog/types";
+import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import { describe, expect, it, vi } from "vitest";
 import { SoundSettingsService } from "./sound-settings.service.js";
 

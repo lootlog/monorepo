@@ -6,7 +6,7 @@ import { ROUTES } from "@/config/routes";
 import {
   useAcceptReservationShareInvitation,
   usePreviewReservationShareInvitation,
-} from "@lootlog/api-client/react-query/main/reservation-sharing";
+} from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Avatar,

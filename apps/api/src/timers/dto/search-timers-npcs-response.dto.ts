@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { NpcType } from "#src/generated/prisma/client";
+import * as z from "zod";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 const SearchTimersNpcResponseSchema = z.object({
   npcId: z.number(),

@@ -19,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getActivitiesControllerSuggestWorldsQueryKey,
   getActivitiesControllerSuggestWorldsQueryOptions,
-} from "@lootlog/api-client/react-query/activity/guilds";
+} from "@lootlog/client/activity";
 import { useTranslation } from "react-i18next";
 
 const FILTERS_OPEN_KEY = "activity-logs-filters-open";

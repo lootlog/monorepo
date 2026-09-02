@@ -3,7 +3,7 @@ import { EventRouteLayout } from "@/features/guild/events/event-route-layout";
 import {
   getListEventRankingQueryOptions,
   getShowEventOverviewQueryOptions,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

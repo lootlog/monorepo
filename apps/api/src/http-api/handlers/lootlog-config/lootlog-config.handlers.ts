@@ -1,0 +1,136 @@
+import { Context, Effect, Layer, Schema } from "effect";
+import { HttpApiBuilder } from "effect/unstable/httpapi";
+import {
+  Permission,
+  type Permission as PermissionValue,
+} from "@lootlog/schema/permissions";
+import type { LootlogConfigService } from "#src/lootlog-config/lootlog-config.service";
+import {
+  LootlogApi,
+  LootlogConfigControllerGetLootlogConfig200,
+  LootlogConfigControllerUpdateNpc200,
+  type UpdateLootlogConfigNpcDto,
+} from "../../lootlog-api.generated.js";
+
+// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
+export class LootlogConfigAccessDenied extends Schema.TaggedError<LootlogConfigAccessDenied>()(
+  "LootlogConfigAccessDenied",
+  { status: Schema.Literals([401, 403, 404]), code: Schema.String },
+) {}
+
+// oxlint-disable-next-line unicorn/throw-new-error -- Schema.TaggedError is a class factory.
+export class LootlogConfigOperationError extends Schema.TaggedError<LootlogConfigOperationError>()(
+  "LootlogConfigOperationError",
+  { cause: Schema.Defect() },
+) {}
+
+export class LootlogConfigAuthorization extends Context.Service<
+  LootlogConfigAuthorization,
+  {
+    readonly requireCapability: (options: {
+      readonly guildId: string;
+      readonly capability: PermissionValue;
+    }) => Effect.Effect<
+      { readonly guildId: string },
+      LootlogConfigAccessDenied
+    >;
+  }
+>()("@lootlog/api/http-api/lootlog-config/authorization") {}
+
+export class LootlogConfigData extends Context.Service<
+  LootlogConfigData,
+  {
+    readonly get: (
+      guildId: string,
+    ) => Effect.Effect<unknown, LootlogConfigOperationError>;
+    readonly updateNpc: (
+      guildId: string,
+      npcId: string,
+      payload: UpdateLootlogConfigNpcDto,
+    ) => Effect.Effect<unknown, LootlogConfigOperationError>;
+  }
+>()("@lootlog/api/http-api/lootlog-config/data") {
+  static layerService(service: LootlogConfigService) {
+    const attempt = (operation: () => unknown | PromiseLike<unknown>) =>
+      Effect.tryPromise({
+        try: () => Promise.resolve(operation()),
+        catch: (cause) => new LootlogConfigOperationError({ cause }),
+      });
+    const mutable = <A>(value: unknown): A =>
+      JSON.parse(JSON.stringify(value)) as A;
+
+    return Layer.succeed(
+      LootlogConfigData,
+      LootlogConfigData.of({
+        get: (guildId) => attempt(() => service.getLootlogConfig(guildId)),
+        updateNpc: (guildId, npcId, payload) =>
+          attempt(() => service.updateNpc(guildId, npcId, mutable(payload))),
+      }),
+    );
+  }
+}
+
+const authorize = (guildId: unknown) => {
+  if (typeof guildId !== "string") {
+    return Effect.fail(
+      new LootlogConfigAccessDenied({
+        status: 404,
+        code: "GUILD_NOT_FOUND",
+      }),
+    );
+  }
+  return Effect.flatMap(LootlogConfigAuthorization, (authorization) =>
+    authorization.requireCapability({ guildId, capability: Permission.ADMIN }),
+  );
+};
+
+const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
+  Schema.decodeUnknownEffect(schema)(JSON.parse(JSON.stringify(value))).pipe(
+    Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),
+  );
+
+export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
+  requestedGuildId: unknown,
+) {
+  const { guildId } = yield* authorize(requestedGuildId);
+  const data = yield* LootlogConfigData;
+  return yield* decode(
+    LootlogConfigControllerGetLootlogConfig200,
+    yield* data.get(guildId),
+  );
+});
+
+export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
+  function* (
+    requestedGuildId: unknown,
+    npcId: string,
+    payload: UpdateLootlogConfigNpcDto,
+  ) {
+    const { guildId } = yield* authorize(requestedGuildId);
+    const data = yield* LootlogConfigData;
+    return yield* decode(
+      LootlogConfigControllerUpdateNpc200,
+      yield* data.updateNpc(guildId, npcId, payload),
+    );
+  },
+);
+
+const defectCause = (error: unknown) =>
+  error instanceof LootlogConfigOperationError ? error.cause : error;
+const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+
+export const LootlogConfigHandlers = HttpApiBuilder.group(
+  LootlogApi,
+  "lootlog-config",
+  (handlers) =>
+    handlers
+      .handle("LootlogConfigControllerGetLootlogConfig", ({ params }) =>
+        orDieHttpFailure(getLootlogConfig(params.guildId)),
+      )
+      .handle("LootlogConfigControllerUpdateNpc", ({ params, payload }) =>
+        orDieHttpFailure(
+          updateLootlogConfigNpc(params.guildId, params.npcId, payload),
+        ),
+      ),
+);

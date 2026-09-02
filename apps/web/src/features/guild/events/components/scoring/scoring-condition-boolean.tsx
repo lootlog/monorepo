@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { HelpCircle } from "lucide-react";
-import { EVENT_SCORING_BOOLEAN_FACTORS } from "@lootlog/scoring";
+import { EVENT_SCORING_BOOLEAN_FACTORS } from "@lootlog/domain/scoring";
 import {
   getScoringFactorDescription,
   getScoringFactorLabel,

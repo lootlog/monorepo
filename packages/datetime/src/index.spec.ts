@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
   toUtcDateFromLocal,
-} from "./index";
+} from "./index.js";
 
 describe("@lootlog/datetime", () => {
   it("converts a Warsaw local clock to UTC across winter and summer offsets", () => {

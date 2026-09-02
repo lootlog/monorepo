@@ -16,7 +16,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { PinnedEventResponseDto } from "./dto/pinned-event-response.dto.js";

@@ -10,7 +10,7 @@ import { t } from "@/i18n/messages";
 import {
   getPlayersControllerGetPlayersQueryKey,
   usePlayersControllerGetPlayers,
-} from "@lootlog/api-client/react-query/search/players";
+} from "@lootlog/client/search";
 import {
   areBasicRouteSearchStatesEqual,
   emptyBasicRouteSearch,

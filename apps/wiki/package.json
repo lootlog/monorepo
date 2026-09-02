@@ -22,7 +22,7 @@
     "test": "vitest run --passWithNoTests --config ./vitest.config.ts"
   },
   "dependencies": {
-    "@lootlog/api-client": "workspace:*",
+    "@lootlog/client": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",

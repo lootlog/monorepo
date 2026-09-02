@@ -1,4 +1,10 @@
-import type { Guild, Reservation } from "#src/generated/prisma/client";
+import type {
+  guildTable,
+  reservationTable,
+} from "#src/database/drizzle/schema";
+
+type Guild = typeof guildTable.$inferSelect;
+type Reservation = typeof reservationTable.$inferSelect;
 
 export type ReservationWithGuild = Reservation & {
   guild: Pick<

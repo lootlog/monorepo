@@ -4,9 +4,9 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
   usersControllerUpdateUserPreferences,
-} from "@lootlog/api-client/react-query/main/users";
-import type { UpdateUserPreferencesDto } from "@lootlog/api-client/models/main/update-user-preferences-dto";
-import type { UserPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-preferences-response-dto-output";
+  type UpdateUserPreferencesDto,
+  type UserPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
 
 export const useUserPreferences = (enabled = true) => {
   return useUsersControllerGetUserPreferences({

@@ -29,7 +29,7 @@ import {
   useBattlesControllerGetRatingDeltaByOpponent,
   useBattlesControllerGetRatingGrowth,
   useBattlesControllerGetUserCharacters,
-} from "@lootlog/api-client/react-query/battlelog/battles";
+} from "@lootlog/client/battlelog";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

@@ -3,7 +3,7 @@ import { GatewayEvent } from "@/config/gateway";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
-import type { AirTagUpdateEvent } from "@lootlog/types";
+import type { AirTagUpdateEvent } from "@lootlog/schema/air-tag";
 import { airTagRuntime } from "./air-tag-runtime";
 
 export const useAirTags = (): void => {

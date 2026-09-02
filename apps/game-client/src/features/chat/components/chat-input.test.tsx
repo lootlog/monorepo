@@ -1,12 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
-import type { NullableMemberResponseDto } from "@lootlog/api-client/models/main/nullable-member-response-dto";
-import type { RoleResponseDtoOutput } from "@lootlog/api-client/models/main/role-response-dto-output";
-import { ApiError } from "@lootlog/api-client/transport";
+import type {
+  ChatMessageResponseDtoOutput,
+  MemberSummaryResponseDtoOutput,
+  NullableMemberResponseDto,
+  RoleResponseDtoOutput,
+} from "@lootlog/client/main";
+import { ApiError } from "@lootlog/client/transport";
 import { MessageType } from "@/api/chat.api";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { toast } from "sonner";
@@ -124,7 +126,8 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getChatControllerGetChatMessagesQueryKey: ({
     guildId,
   }: {
@@ -138,9 +141,6 @@ vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
     mutateAsync: mockSendChatMessage,
     isPending: false,
   }),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
   }: {
@@ -156,9 +156,6 @@ vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   ) => ({
     data: options?.query?.enabled === false ? undefined : mockGuildPermissions,
   }),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/members", () => ({
   getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
     "members",
     guildId,
@@ -209,9 +206,6 @@ vi.mock("@lootlog/api-client/react-query/main/members", () => ({
     data: options?.query?.enabled === false ? undefined : mockCurrentMember,
     isFetching: false,
   }),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/roles", () => ({
   getRolesControllerGetGuildRolesQueryKey: ({
     guildId,
   }: {

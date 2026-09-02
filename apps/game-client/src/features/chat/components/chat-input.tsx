@@ -1,5 +1,5 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
-import { Permission } from "@lootlog/types";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { Label } from "@/components/ui/label";
 import type { MessageType } from "@/api/chat.api";
 import { Popover, PopoverContent } from "@/components/ui/popover";
@@ -44,20 +44,15 @@ import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query"
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
-} from "@lootlog/api-client/react-query/main/guilds";
-import {
   useChatControllerClearChatMessages,
   useChatControllerSendChatMessage,
-} from "@lootlog/api-client/react-query/main/chat";
-import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@lootlog/api-client/react-query/main/members";
-import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import {
+  type ChatMessageResponseDtoOutput,
   getRolesControllerGetGuildRolesQueryKey,
   useRolesControllerGetGuildRoles,
-} from "@lootlog/api-client/react-query/main/roles";
+} from "@lootlog/client/main";
+
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
 import { cn } from "@/lib/utils";

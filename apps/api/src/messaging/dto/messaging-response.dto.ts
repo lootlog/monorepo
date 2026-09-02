@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 
 const NotificationResponseSchema = z.object({
   notificationId: z.string().min(1),

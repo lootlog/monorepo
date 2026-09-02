@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SoundSettingsResponseDto } from "@lootlog/api-client/models/main/sound-settings-response-dto";
+import type { SoundSettingsResponseDto } from "@lootlog/client/main";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const { mockUpdateSettings, mockPlaySoundTest, mockSoundSettings, testState } =

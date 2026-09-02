@@ -1,5 +1,5 @@
 import type { Npcs } from "@lootlog/margonem/game-events";
-import type { DetectorTypeSettings } from "@lootlog/types";
+import type { DetectorTypeSettings } from "@lootlog/schema/account-preferences";
 
 export type EventNpc = Npcs[0];
 

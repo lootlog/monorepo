@@ -14,8 +14,8 @@ import {
   invalidateGuildsControllerGetGuildDiscordSyncStatus,
   useGuildsControllerGetGuildDiscordSyncStatus,
   useGuildsControllerRefreshGuildDiscordSync,
-} from "@lootlog/api-client/react-query/main/guilds";
-import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@lootlog/api-client/react-query/main/notifications";
+} from "@lootlog/client/main";
+import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@lootlog/client/main";
 
 type GuildSyncPresentationData = {
   channelCount?: number;

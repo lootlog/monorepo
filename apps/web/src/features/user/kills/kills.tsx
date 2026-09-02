@@ -23,11 +23,11 @@ import {
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
 import type { NpcType } from "@/features/user/kills/npc-types";
-import type { KillsControllerGetUserNpcKillsParams } from "@lootlog/api-client/models/main/kills-controller-get-user-npc-kills-params";
+import type { KillsControllerGetUserNpcKillsParams } from "@lootlog/client/main";
 import {
   getKillsControllerGetUserNpcKillsQueryKey,
   useKillsControllerGetUserNpcKills,
-} from "@lootlog/api-client/react-query/main/kills";
+} from "@lootlog/client/main";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 

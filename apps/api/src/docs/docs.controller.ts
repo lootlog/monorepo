@@ -17,11 +17,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import {
-  type Guild,
-  type Member,
-  Permission,
-} from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "#src/shared/decorators/member.decorator";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
@@ -37,6 +33,11 @@ import {
   GuildDocumentResponseDto,
   GuildDocumentTrashResponseDto,
 } from "./dto/guild-document-response.dto.js";
+
+type GuildDataValue = { readonly id: string };
+type MemberDataValue = { readonly userId: string };
+type Guild = GuildDataValue;
+type Member = MemberDataValue;
 
 const DOCS_READ_PERMISSIONS = [
   Permission.LOOTLOG_DOCS_READ,
@@ -67,7 +68,7 @@ export class DocsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  getDocuments(@GuildData() guild: Guild) {
+  getDocuments(@GuildData() guild: GuildDataValue) {
     return this.docsService.listDocuments(guild.id);
   }
 

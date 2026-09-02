@@ -1,4 +1,4 @@
-import type { Capability } from "@lootlog/types";
+import type { Capability } from "@lootlog/domain/access-policy";
 import { SetMetadata } from "@nestjs/common";
 
 export const REQUIRED_CAPABILITIES_KEY = "requiredCapabilities";

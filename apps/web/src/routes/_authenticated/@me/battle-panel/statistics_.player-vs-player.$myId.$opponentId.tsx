@@ -7,7 +7,7 @@ import {
   loadBattlePanelPlayerVsPlayerSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions } from "@lootlog/api-client/react-query/battlelog/battles";
+import { getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(

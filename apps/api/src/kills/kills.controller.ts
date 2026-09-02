@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Body,
   Controller,
@@ -18,12 +18,9 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import {
-  NpcType,
-  Permission,
-  type Guild,
-  type Role,
-} from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
@@ -49,6 +46,9 @@ import { GetNpcKillersDto } from "./dto/get-npc-killers.dto.js";
 import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto.js";
 import { KillsService } from "./kills.service.js";
 import { normalizeKillStatsPeriod } from "./utils/kill-stats-period.js";
+
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 
 @ApiTags("kills")
 @ApiBearerAuth()

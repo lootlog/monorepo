@@ -1,22 +1,16 @@
-import { z } from "zod";
-
-const indexNpcSchema = z.object({
-  id: z.number(),
-  prof: z
-    .string()
-    .nullish()
-    .transform((prof) => prof ?? ""),
-  icon: z.string(),
-  name: z.string(),
-  lvl: z.number(),
-  wt: z.number(),
-  type: z.string(),
-  margonemType: z.number(),
-  world: z.string(),
+import { Schema } from "effect";
+export const IndexNpc = Schema.Struct({
+  id: Schema.Number,
+  prof: Schema.NullishOr(Schema.String),
+  icon: Schema.String,
+  name: Schema.String,
+  lvl: Schema.Number,
+  wt: Schema.Number,
+  type: Schema.String,
+  margonemType: Schema.Number,
+  world: Schema.String,
 });
-
-export const indexNpcsPayloadSchema = z.array(indexNpcSchema);
-
-export type IndexNpcsDto = {
-  npcs: z.infer<typeof indexNpcsPayloadSchema>;
-};
+export const IndexNpcsPayload = Schema.Array(IndexNpc);
+export type IndexNpcsDto = { readonly npcs: typeof IndexNpcsPayload.Type };
+export const decodeIndexNpcsPayload =
+  Schema.decodeUnknownSync(IndexNpcsPayload);

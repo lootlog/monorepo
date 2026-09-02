@@ -1,11 +1,14 @@
-import { Capability, createAccessPolicy } from "@lootlog/access-policy";
-import type { Permission, Role } from "#src/generated/prisma/client";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import type { Permission } from "@lootlog/schema/permissions";
 
 interface EventHeroWithLevel {
   npcLvl: number | null;
 }
 
-type EventHeroVisibilityRole = Pick<Role, "lvlRangeFrom" | "lvlRangeTo">;
+type EventHeroVisibilityRole = {
+  lvlRangeFrom: number | null;
+  lvlRangeTo: number | null;
+};
 
 /**
  * Check if a user can view an event hero based on level restrictions.

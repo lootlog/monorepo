@@ -2,8 +2,8 @@ import {
   type ApiError,
   type ApiRequestContext,
   configureApiClients,
-} from "@lootlog/api-client/transport";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+} from "@lootlog/client/transport";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import {
   ACTIVITY_API_URL,
   API_URL,

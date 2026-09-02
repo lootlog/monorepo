@@ -8,7 +8,7 @@ import { WorldSwitcher } from "@/components/common/world-switcher";
 import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
+} from "@lootlog/client/main";
 
 type DashboardStatisticsFiltersProps = {
   filters: DashboardFilters;

@@ -3,7 +3,7 @@ import { pl } from "date-fns/locale";
 import { Link } from "@tanstack/react-router";
 import { Bell, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/api-client/models/main/my-reservations-response-dto-items-item";
+import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import {

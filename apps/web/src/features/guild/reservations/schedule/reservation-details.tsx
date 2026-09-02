@@ -9,7 +9,7 @@ import {
   getListReservationSpotsQueryKey,
   getListSpotReservationsQueryKey,
   useDeleteReservation,
-} from "@lootlog/api-client/react-query/main/reservations";
+} from "@lootlog/client/main";
 import {
   Avatar,
   AvatarFallback,

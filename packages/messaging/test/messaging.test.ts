@@ -150,6 +150,29 @@ describe("RabbitMessaging", () => {
     expect(nack).toHaveBeenCalledWith(expect.anything(), false, true);
   });
 
+  test("dead-letters a failed delivery through broker nack", async () => {
+    const { channel, nack, publish, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "nack" },
+          },
+          () => Effect.fail("failed"),
+        );
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(nack).toHaveBeenCalledWith(expect.anything(), false, false);
+    expect(publish).not.toHaveBeenCalled();
+  });
+
   test("routes failures through retry and then the dead-letter exchange", async () => {
     const { channel, ack, publish, dispatch } = makeChannel();
 

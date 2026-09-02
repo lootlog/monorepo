@@ -2,14 +2,17 @@ import { generate } from "random-words";
 import crypto from "node:crypto";
 import { v7 as uuidv7 } from "uuid";
 import { SEED_CONFIG } from "../config.js";
-import { Permission } from "../../../../../../apps/api/src/generated/prisma/client.js";
+import {
+  Permission,
+  type Permission as PermissionValue,
+} from "@lootlog/schema/permissions";
 
 interface GeneratedRole {
   id: string;
   name: string;
   color: number;
   position: number;
-  permissions: Permission[];
+  permissions: PermissionValue[];
   lvlRangeFrom: number;
   lvlRangeTo: number;
 }
@@ -33,7 +36,7 @@ interface GeneratedGuild {
   members: GeneratedMember[];
 }
 
-const AVAILABLE_PERMISSIONS: Permission[] = [
+const AVAILABLE_PERMISSIONS: PermissionValue[] = [
   Permission.ADMIN,
   Permission.LOOTLOG_MANAGE,
   Permission.LOOTLOG_LOOTS_READ,
@@ -61,7 +64,7 @@ export class GuildGenerator {
     const color = ROLE_COLORS[crypto.randomInt(0, ROLE_COLORS.length)];
 
     const permissionCount = crypto.randomInt(1, 6);
-    const permissions: Permission[] = [];
+    const permissions: PermissionValue[] = [];
 
     for (let i = 0; i < permissionCount; i++) {
       const perm =

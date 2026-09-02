@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Body,
   Controller,
@@ -20,11 +20,7 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import {
-  type Guild,
-  Permission,
-  type Role,
-} from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { MemberAccessPolicy } from "#src/shared/decorators/member-access-policy.decorator";
 import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
@@ -39,6 +35,7 @@ import { SearchTimersNpcResponseDto } from "#src/timers/dto/search-timers-npcs-r
 import { SearchTimersNpcsDto } from "#src/timers/dto/search-timers-npcs.dto";
 import { TimerHistoryResponseDto } from "#src/timers/dto/timer-history-response.dto";
 import { TimersService } from "#src/timers/timers.service";
+import type { Guild, Role } from "./timers.types.js";
 
 @ApiTags("timers")
 @ApiBearerAuth()

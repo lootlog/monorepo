@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 import { CharacterSchema } from "#src/messaging/dto/shared-character.dto";
 
 const PartyReadyRoomApplicationSchema = z.object({

@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { AuthService } from "#src/auth/auth.service";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";

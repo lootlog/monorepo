@@ -1,22 +1,19 @@
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
-} from "@lootlog/access-policy";
+} from "@lootlog/domain/access-policy";
 import { Injectable, Logger } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import {
-  NpcType,
-  type ItemRarity,
-  type Permission,
-  type Role,
-} from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import type { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
 import { createHash } from "node:crypto";
-import { createLootAccessFingerprint } from "@lootlog/loot-visibility";
+import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
   buildLootNpcVisibilitySql,
   toLootVisibilityRoles,
-} from "#src/loots/loot-visibility.prisma";
+} from "#src/loots/loot-visibility";
 import type {
   Period,
   LootStatsResponse,
@@ -27,6 +24,9 @@ import type {
   TopContributor,
   TopItem,
 } from "../dto/loot-stats.dto.js";
+import { LootsRepository } from "../loots.repository.js";
+
+type Role = typeof roleTable.$inferSelect;
 
 const CACHE_TTL_SECONDS = 60;
 
@@ -35,7 +35,7 @@ export class LootStatsService {
   private readonly logger = new Logger(LootStatsService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: LootsRepository,
     private readonly redis: RedisService,
   ) {}
 
@@ -302,7 +302,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.repository.queryRaw<
       Array<{
         total_loots: bigint;
         total_items: bigint;
@@ -356,7 +356,7 @@ export class LootStatsService {
         ${dateCondition}
         ${worldCondition}
       `,
-      ...params,
+      params,
     );
 
     const row = result[0];
@@ -388,7 +388,7 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.repository.queryRaw<
       Array<{
         rarity: ItemRarity;
         count: bigint;
@@ -437,7 +437,7 @@ export class LootStatsService {
         ${worldCondition}
         GROUP BY isnap.rarity
       `,
-      ...params,
+      params,
     );
 
     const total = result.reduce((sum, r) => sum + Number(r.count), 0);
@@ -473,7 +473,7 @@ export class LootStatsService {
     const truncUnit = this.getTimelineTruncUnit(period);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.repository.queryRaw<
       Array<{
         date: Date;
         rarity: ItemRarity | null;
@@ -524,7 +524,7 @@ export class LootStatsService {
         GROUP BY date_trunc('${truncUnit}', l."createdAt"), isnap.rarity
         ORDER BY date ASC
       `,
-      ...params,
+      params,
     );
 
     const timelineMap = new Map<
@@ -594,7 +594,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.repository.queryRaw<
       Array<{
         npc_id: number;
         name: string;
@@ -661,7 +661,7 @@ export class LootStatsService {
       ORDER BY legendary DESC, count DESC
       LIMIT $${limitParamIndex}
     `,
-      ...params,
+      params,
     );
 
     return result.map((row) => ({
@@ -699,7 +699,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.repository.queryRaw<
       Array<{
         member_id: number;
         name: string;
@@ -779,7 +779,7 @@ export class LootStatsService {
         ORDER BY count DESC
         LIMIT $${limitParamIndex}
       `,
-      ...params,
+      params,
     );
 
     return result.map((row) => ({
@@ -817,7 +817,7 @@ export class LootStatsService {
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
-    const result = await this.prisma.$queryRawUnsafe<
+    const result = await this.repository.queryRaw<
       Array<{
         item_id: number;
         hid: string;
@@ -878,7 +878,7 @@ export class LootStatsService {
       ORDER BY count DESC
       LIMIT $${limitParamIndex}
     `,
-      ...params,
+      params,
     );
 
     return result.map((row) => ({

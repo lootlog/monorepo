@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/api-client/models/main/my-reservations-response-dto-items-item";
+import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import {
   Dialog,
   DialogContent,

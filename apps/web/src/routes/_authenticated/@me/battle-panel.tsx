@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelLayout } from "@/features/user/battle-panel/battle-panel-layout/battle-panel-layout";
-import { getBattlesControllerGetUserCharactersQueryOptions } from "@lootlog/api-client/react-query/battlelog/battles";
+import { getBattlesControllerGetUserCharactersQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

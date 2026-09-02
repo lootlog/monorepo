@@ -9,16 +9,19 @@ import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import {
   COMBAT_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
-  deriveNpcSurfaceColors,
-  normalizeAppearanceColor,
   type CombatNpcType,
   type NpcTypeColors,
-} from "@lootlog/types";
+} from "@lootlog/schema/npc-appearance";
+import {
+  deriveNpcSurfaceColors,
+  normalizeAppearanceColor,
+} from "@lootlog/domain/npc-appearance";
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
   settingsDocumentsControllerPatchPreferences,
-} from "@lootlog/api-client/react-query/main/preferences";
-import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/api-client/models/main/settings-documents-response-dto-output";
+  type SettingsDocumentsResponseDtoOutput,
+} from "@lootlog/client/main";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";

@@ -5,12 +5,13 @@ import {
 } from "@/components/ui/popover";
 import { normalizeTimerResponse } from "@/api/timers.api";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
-import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
 import {
+  type TimerHistoryResponseDto,
   getTimersControllerGetRecentTimerHistoryQueryKey,
   useTimersControllerGetRecentTimerHistory,
   useTimersControllerRestoreTimerFromHistory,
-} from "@lootlog/api-client/react-query/main/timers";
+} from "@lootlog/client/main";
+
 import { History } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";

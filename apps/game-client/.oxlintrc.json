@@ -8,7 +8,6 @@
     "**/coverage",
     "**/.source",
     "**/*.tsbuildinfo",
-    "**/pnpm-lock.yaml",
     "src/lib/api/generated/**"
   ],
   "env": {

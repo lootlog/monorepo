@@ -5,13 +5,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { SearchX, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { ReservationSpotsResponseDto } from "@lootlog/api-client/models/main/reservation-spots-response-dto";
+import type { ReservationSpotsResponseDto } from "@lootlog/client/main";
 import {
   getListReservationSpotsQueryKey,
   useListReservationSpots,
   usePinReservationSpot,
   useUnpinReservationSpot,
-} from "@lootlog/api-client/react-query/main/reservations";
+} from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import {

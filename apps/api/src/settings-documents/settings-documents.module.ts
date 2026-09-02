@@ -1,12 +1,13 @@
 import { Module } from "@nestjs/common";
-import { PrismaModule } from "#src/db/prisma.module";
+import { DrizzleDatabaseModule } from "#src/database/drizzle/drizzle-database.module";
 import { SettingsDocumentsController } from "./settings-documents.controller.js";
+import { SettingsDocumentsRepository } from "./settings-documents.repository.js";
 import { SettingsDocumentsService } from "./settings-documents.service.js";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [DrizzleDatabaseModule],
   controllers: [SettingsDocumentsController],
-  providers: [SettingsDocumentsService],
+  providers: [SettingsDocumentsRepository, SettingsDocumentsService],
   exports: [SettingsDocumentsService],
 })
 export class SettingsDocumentsModule {}

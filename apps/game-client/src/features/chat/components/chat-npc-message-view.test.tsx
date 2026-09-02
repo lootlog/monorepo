@@ -1,15 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
 
 vi.mock("@/components/npc-tile", () => ({
   NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick} tile</div>,
 }));
 
-vi.mock("@lootlog/types", async (importOriginal) => ({
+vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
   ...(await importOriginal()),
   getNpcTypeByWt: () => "HERO",
 }));

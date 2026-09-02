@@ -1,9 +1,12 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/schema";
 import { MessageType } from "#src/chat/dto/send-message.dto";
 import { ChatService } from "./chat.service.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
+
+type Role = typeof roleTable.$inferSelect;
 
 function createRole(
   permissions: Permission[],

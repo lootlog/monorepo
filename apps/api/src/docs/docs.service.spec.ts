@@ -73,13 +73,205 @@ const createPrismaMock = () => {
   return prisma;
 };
 
+const createRepositoryAdapter = (
+  database: ReturnType<typeof createPrismaMock>,
+) => ({
+  async listDocuments(guildId: string) {
+    const [guild, used, trashed, documents] = await Promise.all([
+      database.guild.findUnique({
+        where: { id: guildId },
+        select: { documentLimit: true },
+      }),
+      database.guildDocument.count({ where: { guildId } }),
+      database.guildDocument.count({
+        where: { guildId, deletedAt: { not: null } },
+      }),
+      database.guildDocument.findMany({
+        where: { guildId, deletedAt: null },
+        orderBy: { updatedAt: "desc" },
+      }),
+    ]);
+    return { guild, used, trashed, documents };
+  },
+  createDocument(options: {
+    guildId: string;
+    memberId: string;
+    title: string;
+    content: unknown;
+    defaultLimit: number;
+  }) {
+    return database.$transaction(async (tx: typeof database) => {
+      const guild = await tx.guild.findUnique({
+        where: { id: options.guildId },
+      });
+      if (!guild) throw new NotFoundException("Guild not found");
+      const used = await tx.guildDocument.count({
+        where: { guildId: options.guildId },
+      });
+      if (used >= Math.max(0, guild.documentLimit ?? options.defaultLimit)) {
+        throw new ConflictException("Guild document limit reached");
+      }
+      const document = await tx.guildDocument.create({
+        data: {
+          guildId: options.guildId,
+          title: options.title,
+          content: options.content,
+          createdByMemberId: options.memberId,
+          updatedByMemberId: options.memberId,
+        },
+      });
+      await tx.guildDocumentHistory.create({
+        data: {
+          documentId: document.id,
+          guildId: options.guildId,
+          version: document.version,
+          title: document.title,
+          content: document.content,
+          action: "SAVE",
+          actorMemberId: options.memberId,
+        },
+      });
+      return document;
+    });
+  },
+  findActive(guildId: string, documentId: string) {
+    return database.guildDocument.findFirst({
+      where: { id: documentId, guildId, deletedAt: null },
+    });
+  },
+  updateDocument(options: {
+    guildId: string;
+    documentId: string;
+    memberId: string;
+    title: string;
+    content: unknown;
+  }) {
+    return database.$transaction(async (tx: typeof database) => {
+      const document = await tx.guildDocument.findFirst({
+        where: {
+          id: options.documentId,
+          guildId: options.guildId,
+          deletedAt: null,
+        },
+      });
+      if (!document) throw new NotFoundException("Document not found");
+      if (
+        document.title === options.title &&
+        JSON.stringify(document.content) === JSON.stringify(options.content)
+      )
+        return document;
+      const updated = await tx.guildDocument.update({
+        where: { id: options.documentId },
+        data: {
+          title: options.title,
+          content: options.content,
+          updatedByMemberId: options.memberId,
+          version: { increment: 1 },
+        },
+      });
+      await tx.guildDocumentHistory.create({
+        data: {
+          documentId: options.documentId,
+          guildId: options.guildId,
+          version: updated.version,
+          title: updated.title,
+          content: updated.content,
+          action: "SAVE",
+          actorMemberId: options.memberId,
+        },
+      });
+      return updated;
+    });
+  },
+  listHistory(guildId: string, documentId: string) {
+    return database.guildDocumentHistory.findMany({
+      where: { documentId, guildId },
+      orderBy: { editedAt: "desc" },
+    });
+  },
+  findHistory(guildId: string, documentId: string, historyId: string) {
+    return database.guildDocumentHistory.findFirst({
+      where: { id: historyId, documentId, guildId },
+    });
+  },
+  listTrash(guildId: string) {
+    return database.guildDocument.findMany({
+      where: { guildId, deletedAt: { not: null } },
+      orderBy: { deletedAt: "desc" },
+    });
+  },
+  changeTrashState(options: {
+    guildId: string;
+    documentId: string;
+    memberId: string;
+    action: "DELETE" | "RESTORE";
+  }) {
+    return database.$transaction(async (tx: typeof database) => {
+      const document = await tx.guildDocument.findFirst({
+        where:
+          options.action === "DELETE"
+            ? {
+                id: options.documentId,
+                guildId: options.guildId,
+                deletedAt: null,
+              }
+            : { id: options.documentId, guildId: options.guildId },
+      });
+      if (!document) throw new NotFoundException("Document not found");
+      if (options.action === "RESTORE" && !document.deletedAt) {
+        throw new ConflictException("Document is not in trash");
+      }
+      const data =
+        options.action === "DELETE"
+          ? {
+              deletedAt: expect.any(Date),
+              deletedByMemberId: options.memberId,
+              updatedByMemberId: options.memberId,
+            }
+          : {
+              deletedAt: null,
+              deletedByMemberId: null,
+              updatedByMemberId: options.memberId,
+            };
+      const updated = await tx.guildDocument.update({
+        where: { id: options.documentId },
+        data,
+      });
+      await tx.guildDocumentHistory.create({
+        data: expect.objectContaining({
+          documentId: options.documentId,
+          guildId: options.guildId,
+          version: updated.version,
+          action: options.action,
+          actorMemberId: options.memberId,
+        }),
+      });
+    });
+  },
+  async purge(guildId: string, documentId: string) {
+    const document = await database.guildDocument.findFirst({
+      where: { id: documentId, guildId },
+    });
+    if (!document) throw new NotFoundException("Document not found");
+    if (!document.deletedAt)
+      throw new ConflictException("Document is not in trash");
+    await database.guildDocument.delete({ where: { id: documentId } });
+  },
+  findEditors(guildId: string, memberIds: string[]) {
+    return database.member.findMany({
+      where: { guildId, userId: { in: memberIds } },
+      select: { userId: true, name: true },
+    });
+  },
+});
+
 describe("DocsService", () => {
   let prisma: ReturnType<typeof createPrismaMock>;
   let service: DocsService;
 
   beforeEach(() => {
     prisma = createPrismaMock();
-    service = new DocsService(prisma as never);
+    service = new DocsService(createRepositoryAdapter(prisma) as never);
     prisma.member.findMany.mockResolvedValue([]);
     vi.clearAllMocks();
   });

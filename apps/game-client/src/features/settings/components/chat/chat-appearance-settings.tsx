@@ -12,13 +12,14 @@ import {
 } from "@/hooks/api/use-settings-documents";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
-import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/api-client/models/main/settings-documents-response-dto-output";
-import type { UserPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-preferences-response-dto-output";
 import {
+  type SettingsDocumentsResponseDtoOutput,
+  type UserPreferencesResponseDtoOutput,
   getSettingsDocumentsControllerGetPreferencesQueryKey,
   settingsDocumentsControllerPatchPreferences,
-} from "@lootlog/api-client/react-query/main/preferences";
-import { getUsersControllerGetUserPreferencesQueryKey } from "@lootlog/api-client/react-query/main/users";
+  getUsersControllerGetUserPreferencesQueryKey,
+} from "@lootlog/client/main";
+
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -26,9 +27,9 @@ import {
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
-  getChatAppearancePreset,
   type ChatAppearanceSettings,
-} from "@lootlog/types";
+} from "@lootlog/schema/chat-appearance";
+import { getChatAppearancePreset } from "@lootlog/domain/chat-appearance";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

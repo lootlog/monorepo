@@ -18,7 +18,8 @@ const mockUpdatePreferences = vi.fn();
 const mockToastSuccess = vi.hoisted(() => vi.fn());
 const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
 
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
     "accessible-guilds",
   ],

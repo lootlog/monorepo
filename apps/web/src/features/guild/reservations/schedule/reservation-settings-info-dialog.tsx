@@ -7,7 +7,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import {
   Dialog,
   DialogContent,

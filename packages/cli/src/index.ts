@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { chalk } from "zx";
 import { env } from "./commands/env/index.js";
@@ -18,7 +18,7 @@ const displayMainHelp = (): void => {
 ${chalk.bold.blue("Lootlog CLI")} ${chalk.gray(`v${CLI_VERSION}`)}
 
 ${chalk.bold("Usage:")}
-  pnpm <command> [subcommand] [options]
+  bun run <command> [subcommand] [options]
 
 ${chalk.bold("Commands:")}
   env         Environment management (generate .env files)
@@ -26,12 +26,12 @@ ${chalk.bold("Commands:")}
   seed        Database seeding (scrape data, generate mocks, populate DB)
 
 ${chalk.bold("Examples:")}
-  pnpm env generate              # Generate all .env files
-  pnpm env generate --help       # Show help for specific command
-  pnpm events publish            # Publish test event to RabbitMQ
-  pnpm events --help             # Show events command help
-  pnpm seed setup                # Complete database setup
-  pnpm seed --help               # Show seed command help
+  bun run env:generate              # Generate all .env files
+  bun run env:generate --help       # Show help for specific command
+  bun run events:publish            # Publish test event to RabbitMQ
+  bun run events -- --help             # Show events command help
+  bun run seed:setup                # Complete database setup
+  bun run seed -- --help               # Show seed command help
 
 ${chalk.bold("Global Options:")}
   -h, --help                     Show this help message
@@ -69,7 +69,9 @@ const main = async (): Promise<void> => {
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${command}\n`));
-    console.log(chalk.gray(`Run 'pnpm --help' to see available commands.\n`));
+    console.log(
+      chalk.gray(`Run 'bun run --help' to see available commands.\n`),
+    );
     process.exit(1);
   }
 

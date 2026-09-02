@@ -1,4 +1,7 @@
-import type { Role, Permission } from "#src/generated/prisma/client";
+import type { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
+
+type Role = typeof roleTable.$inferSelect;
 
 export type ChatMessageViewer = {
   discordId: string;

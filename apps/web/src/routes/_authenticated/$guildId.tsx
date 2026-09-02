@@ -1,4 +1,4 @@
-import { Capability, createAccessPolicy } from "@lootlog/access-policy";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
 import { GuildRouteError } from "@/components/router/guild-route-error";
@@ -8,11 +8,11 @@ import {
   getGuildsControllerGetGuildByIdQueryKey,
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import {
   getMembersControllerGetMeQueryKey,
   getMembersControllerGetMeQueryOptions,
-} from "@lootlog/api-client/react-query/main/members";
+} from "@lootlog/client/main";
 import {
   rethrowNotFoundOrError,
   throwForbiddenRouteError,

@@ -1,6 +1,7 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { ItemRarity, NpcType } from "#src/generated/prisma/client";
+import { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import * as z from "zod";
 
 const LootlogConfigNpcResponseSchema = z.object({
   id: z.number(),

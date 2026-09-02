@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { PrismaService } from "../src/db/prisma.service.js";
-import { Permission } from "../src/generated/prisma/client.js";
+import { TestDatabase } from "./test-database.js";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   closeE2EApp,
   createE2EApp,
@@ -18,24 +18,24 @@ import {
 
 describe("Events Assignment E2E", () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let database: TestDatabase;
   let redis: RedisService;
 
   beforeAll(async () => {
-    ({ app, prisma, redis } = await createE2EApp());
+    ({ app, database, redis } = await createE2EApp());
   });
 
   afterAll(async () => {
-    await closeE2EApp(app, prisma);
+    await closeE2EApp(app, database);
   });
 
   beforeEach(async () => {
-    await resetEventsTimersState(prisma, redis);
+    await resetEventsTimersState(database, redis);
   });
 
   it("covers member assignment and self assignment flows", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { member } = await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { member } = await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_MANAGE,
@@ -43,10 +43,10 @@ describe("Events Assignment E2E", () => {
         Permission.LOOTLOG_EVENTS_READ,
       ],
     });
-    const { event, map } = await createEventFixture(prisma, {
+    const { event, map } = await createEventFixture(database, {
       guildId: guild.id,
     });
-    await createTimerFixture(prisma, {
+    await createTimerFixture(database, {
       guildId: guild.id,
       memberId: member.id,
       minSpawnTime: new Date(Date.now() + 4 * 60_000),
@@ -59,7 +59,7 @@ describe("Events Assignment E2E", () => {
         .send({ memberId: member.id }),
     ).expect(201);
     await expect(
-      prisma.eventMapAssignmentHistory.count({
+      database.eventMapAssignmentHistory.count({
         where: { mapId: map.id, memberId: member.id, unassignedAt: null },
       }),
     ).resolves.toBe(1);
@@ -70,7 +70,7 @@ describe("Events Assignment E2E", () => {
       ),
     ).expect(200);
     await expect(
-      prisma.eventMapAssignmentHistory.count({
+      database.eventMapAssignmentHistory.count({
         where: { mapId: map.id, unassignedAt: null },
       }),
     ).resolves.toBe(0);
@@ -88,18 +88,18 @@ describe("Events Assignment E2E", () => {
   });
 
   it("rejects self assignment before the configured assignment window", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { member } = await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { member } = await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_WRITE,
         Permission.LOOTLOG_EVENTS_READ,
       ],
     });
-    const { event, map } = await createEventFixture(prisma, {
+    const { event, map } = await createEventFixture(database, {
       guildId: guild.id,
     });
-    await createTimerFixture(prisma, {
+    await createTimerFixture(database, {
       guildId: guild.id,
       memberId: member.id,
       minSpawnTime: new Date(Date.now() + 60 * 60_000),
@@ -113,22 +113,22 @@ describe("Events Assignment E2E", () => {
     ).expect(400);
 
     await expect(
-      prisma.eventMapAssignmentHistory.count({
+      database.eventMapAssignmentHistory.count({
         where: { mapId: map.id, memberId: member.id },
       }),
     ).resolves.toBe(0);
   });
 
   it("covers hero, map, location and map-location mutations", async () => {
-    const guild = await createGuildFixture(prisma);
-    await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [
         Permission.LOOTLOG_EVENTS_MANAGE,
         Permission.LOOTLOG_EVENTS_READ,
       ],
     });
-    const { event, hero } = await createEventFixture(prisma, {
+    const { event, hero } = await createEventFixture(database, {
       guildId: guild.id,
     });
 
@@ -221,15 +221,18 @@ describe("Events Assignment E2E", () => {
   });
 
   it("rejects invalid assignment and location requests", async () => {
-    const guild = await createGuildFixture(prisma);
-    await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [Permission.LOOTLOG_EVENTS_MANAGE],
     });
-    const { event, hero, map } = await createEventFixture(prisma, {
+    const { event, hero, map } = await createEventFixture(database, {
       guildId: guild.id,
     });
-    await createLocationFixture(prisma, { heroNpcId: hero.id, name: "Taken" });
+    await createLocationFixture(database, {
+      heroNpcId: hero.id,
+      name: "Taken",
+    });
 
     await withAuth(
       request(app.getHttpServer())
@@ -255,11 +258,11 @@ describe("Events Assignment E2E", () => {
   });
 
   it("enforces assignment permissions", async () => {
-    const guild = await createGuildFixture(prisma);
-    const { event, map } = await createEventFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const { event, map } = await createEventFixture(database, {
       guildId: guild.id,
     });
-    await createMemberFixture(prisma, {
+    await createMemberFixture(database, {
       guildId: guild.id,
       auth: FORBIDDEN_AUTH,
       permissions: [],

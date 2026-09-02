@@ -6,8 +6,8 @@ import {
   type DetectorSettings,
   type NotificationsSettings,
   type UserGameAccountPreferences,
-} from "@lootlog/types";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/schema/account-preferences";
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
 
 const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
   "update-user-game-account-preferences";

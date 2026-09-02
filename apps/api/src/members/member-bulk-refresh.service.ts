@@ -9,9 +9,7 @@ import type { Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { serviceConfig } from "#src/config/service.config";
-import { PrismaService } from "#src/db/prisma.service";
-import type { MemberRefreshJob } from "#src/generated/prisma/client";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant.js";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import { ErrorKey } from "./enum/error-key.enum.js";
@@ -21,6 +19,7 @@ import type {
   MemberBulkRefreshJobData,
   RefreshJobWithCooldown,
 } from "./member.types.js";
+import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
 
 @Injectable()
 export class MemberBulkRefreshService {
@@ -30,7 +29,7 @@ export class MemberBulkRefreshService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
     private readonly bulkRefreshQueue: BullQueue<MemberBulkRefreshJobData>,
-    private readonly prisma: PrismaService,
+    private readonly refreshJobs: MemberRefreshJobRepository,
     private readonly memberReadService: MemberReadService,
     private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,
   ) {
@@ -42,15 +41,10 @@ export class MemberBulkRefreshService {
     requestedBy: string,
   ): Promise<RefreshJobWithCooldown> {
     const rateLimit = getAdminBulkRefreshRateLimit(this.env);
-    const recentJob = await this.prisma.memberRefreshJob.findFirst({
-      where: {
-        guildId,
-        createdAt: {
-          gte: new Date(Date.now() - rateLimit),
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const recentJob = await this.refreshJobs.findRecent(
+      guildId,
+      new Date(Date.now() - rateLimit),
+    );
 
     if (recentJob) {
       throw new BadRequestException({
@@ -60,14 +54,11 @@ export class MemberBulkRefreshService {
     }
 
     const members = await this.memberReadService.getGuildMembers(guildId);
-    const job = await this.prisma.memberRefreshJob.create({
-      data: {
-        guildId,
-        requestedBy,
-        status: "PENDING",
-        totalMembers: members.length,
-      },
-    });
+    const job = await this.refreshJobs.create(
+      guildId,
+      requestedBy,
+      members.length,
+    );
 
     try {
       await this.bulkRefreshQueue.add(
@@ -93,12 +84,9 @@ export class MemberBulkRefreshService {
         stack: (error as Error).stack,
       });
 
-      await this.prisma.memberRefreshJob.update({
-        where: { id: job.id },
-        data: {
-          status: "FAILED",
-          completedAt: new Date(),
-        },
+      await this.refreshJobs.update(job.id, {
+        status: "FAILED",
+        completedAt: new Date(),
       });
       await this.memberRefreshJobEventsService.emitJobUpdate(job.id);
       throw error;
@@ -110,10 +98,7 @@ export class MemberBulkRefreshService {
   async getLatestRefreshJob(
     guildId: string,
   ): Promise<RefreshJobWithCooldown | null> {
-    const job = await this.prisma.memberRefreshJob.findFirst({
-      where: { guildId },
-      orderBy: { createdAt: "desc" },
-    });
+    const job = await this.refreshJobs.findLatest(guildId);
 
     return job ? this.withRefreshJobCooldown(job) : null;
   }
@@ -122,12 +107,7 @@ export class MemberBulkRefreshService {
     guildId: string;
     jobId: number;
   }): Promise<RefreshJobWithCooldown> {
-    const job = await this.prisma.memberRefreshJob.findFirst({
-      where: {
-        id: options.jobId,
-        guildId: options.guildId,
-      },
-    });
+    const job = await this.refreshJobs.findById(options.jobId, options.guildId);
 
     if (!job) {
       throw new NotFoundException({
@@ -139,7 +119,7 @@ export class MemberBulkRefreshService {
   }
 
   private withRefreshJobCooldown(
-    job: MemberRefreshJob,
+    job: Awaited<ReturnType<MemberRefreshJobRepository["findById"]>> & {},
   ): RefreshJobWithCooldown {
     return {
       ...job,

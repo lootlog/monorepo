@@ -1,14 +1,13 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import type { Permission } from "@lootlog/schema/permissions";
 import type {
-  Guild,
-  ItemRarity,
-  Permission,
-  Role,
-} from "#src/generated/prisma/client";
+  guildTable,
+  itemSnapshotTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import { LootsService } from "#src/loots/loots.service";
-import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { clipToWindowSeconds } from "../utils/tracking-window.util.js";
 import {
@@ -24,6 +23,10 @@ import type {
   EventWrappedResponseDto,
 } from "../dto/event-wrapped.dto.js";
 import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader.js";
+import { EventWrappedRepository } from "./event-wrapped.repository.js";
+type Guild = typeof guildTable.$inferSelect;
+type ItemRarity = NonNullable<typeof itemSnapshotTable.$inferSelect.rarity>;
+type Role = typeof roleTable.$inferSelect;
 
 type RankingRow = {
   memberId: number;
@@ -110,7 +113,7 @@ export class EventWrappedService {
   private readonly logger = new Logger(EventWrappedService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: EventWrappedRepository,
     private readonly redis: RedisService,
     private readonly lootsService: LootsService,
   ) {}
@@ -143,30 +146,7 @@ export class EventWrappedService {
     permissions: Permission[],
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId: guild.id },
-      select: {
-        id: true,
-        name: true,
-        world: true,
-        startsAt: true,
-        endsAt: true,
-        createdAt: true,
-        heroNpcs: {
-          select: {
-            id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            maps: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const event = await this.repository.findEvent(guild.id, eventId);
 
     if (!event) {
       throw new NotFoundException("Event not found");
@@ -181,62 +161,10 @@ export class EventWrappedService {
 
     const [rankings, kills, windowSummaries, assignments, loots] =
       await Promise.all([
-        this.prisma.eventRanking.findMany({
-          where: { eventId },
-          select: {
-            memberId: true,
-            heroNpcName: true,
-            totalPoints: true,
-            totalKills: true,
-            totalTimeSeconds: true,
-            avgAfkPercentage: true,
-            member: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
-        }) as Promise<RankingRow[]>,
-        this.prisma.eventHeroKill.findMany({
-          where: { heroNpcId: { in: heroIds } },
-          select: {
-            id: true,
-            heroNpcId: true,
-            killedAt: true,
-            minSpawnTimeAtKill: true,
-          },
-          orderBy: { killedAt: "asc" },
-        }),
-        this.prisma.eventRespawnWindowSummary.findMany({
-          where: { heroNpcId: { in: heroIds } },
-          select: {
-            heroNpcId: true,
-            totalWindowSeconds: true,
-            totalCoverageSeconds: true,
-            totalUncoveredSeconds: true,
-            totalUnassignedSeconds: true,
-            mapStats: true,
-          },
-        }) as Promise<SummaryRow[]>,
-        this.prisma.eventMapAssignmentHistory.findMany({
-          where: { heroNpcId: { in: heroIds } },
-          select: {
-            mapId: true,
-            heroNpcId: true,
-            memberId: true,
-            assignedAt: true,
-            unassignedAt: true,
-            member: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
-        }) as Promise<AssignmentRow[]>,
+        this.repository.findRankings(eventId) as Promise<RankingRow[]>,
+        this.repository.findKills(heroIds),
+        this.repository.findSummaries(heroIds) as Promise<SummaryRow[]>,
+        this.repository.findAssignments(heroIds) as Promise<AssignmentRow[]>,
         this.getEventLoots({
           guild,
           permissions,

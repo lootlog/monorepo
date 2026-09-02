@@ -1,7 +1,7 @@
 import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   captureReadyRoomSyncBaseline,

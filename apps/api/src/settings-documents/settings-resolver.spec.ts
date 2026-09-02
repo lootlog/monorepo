@@ -2,12 +2,12 @@ import {
   applySettingsPatch,
   resolveSettingsDomain,
 } from "./settings-resolver.js";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import {
-  CHAT_APPEARANCE_READABLE_PRESET,
   migrateSettingsDocument,
   SETTINGS_CATALOG,
-  SETTINGS_DOMAINS,
-} from "@lootlog/types";
+} from "@lootlog/domain/settings-documents";
+import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import { describe, expect, it } from "vitest";
 
 describe("settings resolver", () => {

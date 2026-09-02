@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 import {
   NotificationJobKind,
   NotificationJobStatus,
@@ -10,7 +10,7 @@ import {
   NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-} from "#src/generated/prisma/client";
+} from "#src/notifications/notification-enums";
 import {
   isoDatetimeCodec,
   jsonValueSchema,

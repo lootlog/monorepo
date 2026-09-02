@@ -7,10 +7,11 @@ import {
   Inject,
   Injectable,
 } from "@nestjs/common";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { NpcType, Permission } from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { GuildsService } from "#src/guilds/guilds.service";
 import type { CreateNotificationDto } from "#src/messaging/dto/create-notification.dto";

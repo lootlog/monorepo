@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 import { CharacterSchema } from "#src/messaging/dto/shared-character.dto";
 

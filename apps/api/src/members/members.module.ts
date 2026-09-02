@@ -8,7 +8,6 @@ import { MembersController } from "./members.controller.js";
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 import { DiscordModule } from "#src/discord/discord.module";
-import { PrismaModule } from "#src/db/prisma.module";
 import { RedisModule } from "#src/lib/redis/redis.module";
 import {
   MEMBER_BULK_REFRESH_QUEUE,
@@ -21,6 +20,8 @@ import { MemberReadService } from "./member-read.service.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service.js";
 import { MemberRemovalService } from "./member-removal.service.js";
+import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
+import { MembersRepository } from "./members.repository.js";
 
 @Module({
   imports: [
@@ -30,7 +31,6 @@ import { MemberRemovalService } from "./member-removal.service.js";
       { name: MEMBER_BULK_REFRESH_QUEUE },
     ),
     DiscordModule,
-    PrismaModule,
     RedisModule,
   ],
   controllers: [MembersController],
@@ -41,12 +41,14 @@ import { MemberRemovalService } from "./member-removal.service.js";
     MemberDiscordSyncService,
     MemberReadService,
     MemberRemovalService,
+    MemberRefreshJobRepository,
+    MembersRepository,
     MemberBulkRefreshService,
     MemberBulkRefreshProcessor,
     MemberRefreshJobEventsService,
     MemberRefreshProcessor,
     MemberRefreshSchedulerService,
   ],
-  exports: [MembersService, MemberRefreshSchedulerService],
+  exports: [MembersService, MembersRepository, MemberRefreshSchedulerService],
 })
 export class MembersModule {}

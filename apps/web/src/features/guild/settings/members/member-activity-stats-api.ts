@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { createApiClient } from "@lootlog/api-client/transport";
+import { createApiClient } from "@lootlog/client/transport";
 
 export type MemberActivityStats = {
   guildId: string;

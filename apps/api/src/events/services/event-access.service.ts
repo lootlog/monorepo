@@ -1,15 +1,17 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import type { Permission } from "@lootlog/schema/permissions";
 import type {
-  EventHeroNpc,
-  Permission,
-  Role,
-} from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+  eventHeroNpcTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
+import { EventAccessRepository } from "./event-access.repository.js";
+type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 
 @Injectable()
 export class EventAccessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: EventAccessRepository) {}
 
   filterEventHeroesByLevel<
     T extends { heroNpcs: Array<{ npcLvl: number | null }> },
@@ -43,13 +45,7 @@ export class EventAccessService {
     roles: Role[],
     permissions: Permission[],
   ): Promise<EventHeroNpc> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: {
-        id: heroId,
-        eventId,
-        event: { guildId },
-      },
-    });
+    const hero = await this.repository.findHero(guildId, eventId, heroId);
 
     if (!hero || !this.isHeroVisibleToUser(hero, roles, permissions)) {
       throw new NotFoundException("Hero not found");
@@ -65,18 +61,7 @@ export class EventAccessService {
     roles: Role[],
     permissions: Permission[],
   ) {
-    const map = await this.prisma.eventMap.findFirst({
-      where: {
-        id: mapId,
-        heroNpc: {
-          eventId,
-          event: { guildId },
-        },
-      },
-      include: {
-        heroNpc: true,
-      },
-    });
+    const map = await this.repository.findMap(guildId, eventId, mapId);
 
     if (!map || !this.isHeroVisibleToUser(map.heroNpc, roles, permissions)) {
       throw new NotFoundException("Map not found");

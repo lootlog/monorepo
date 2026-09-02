@@ -4,7 +4,7 @@ import {
   CircleDashed,
   Clock3,
 } from "lucide-react";
-import type { EventCoordinationResponseDtoHeroesItemPriority } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item-priority";
+import type { EventCoordinationResponseDtoHeroesItemPriority } from "@lootlog/client/main";
 
 type EventCoordinationPriorityIconProps = {
   priority: EventCoordinationResponseDtoHeroesItemPriority;

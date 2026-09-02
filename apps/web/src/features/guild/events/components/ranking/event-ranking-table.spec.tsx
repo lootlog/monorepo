@@ -10,7 +10,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { configureApiClients } from "@lootlog/api-client/transport";
+import { configureApiClients } from "@lootlog/client/transport";
 import type { EventRanking } from "../../types/api";
 import { EventRankingTable } from "./event-ranking-table";
 

@@ -1,6 +1,6 @@
 import { UnprocessableEntityException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NotificationTargetType } from "#src/generated/prisma/client";
+import { NotificationTargetType } from "#src/notifications/notification-enums";
 import { ReservationReminderService } from "./reservation-reminder.service.js";
 
 describe("ReservationReminderService", () => {
@@ -11,15 +11,9 @@ describe("ReservationReminderService", () => {
     active: true,
     canSend: true,
   };
-  const prisma = {
-    notificationTarget: {
-      findFirst: vi.fn(),
-      findFirstOrThrow: vi.fn(),
-    },
-    notificationRule: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
+  const repository = {
+    findActiveDiscordDmTarget: vi.fn(),
+    getOrCreateRule: vi.fn(),
   };
   const jobs = {
     createNotificationJob: vi.fn(),
@@ -30,8 +24,11 @@ describe("ReservationReminderService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    prisma.notificationTarget.findFirst.mockResolvedValue(target);
-    service = new ReservationReminderService(prisma as never, jobs as never);
+    repository.findActiveDiscordDmTarget.mockResolvedValue(target);
+    service = new ReservationReminderService(
+      repository as never,
+      jobs as never,
+    );
   });
 
   it("does not resolve a DM target when no reminder was requested", async () => {
@@ -42,7 +39,7 @@ describe("ReservationReminderService", () => {
         reminderMinutesBefore: null,
       }),
     ).resolves.toBeNull();
-    expect(prisma.notificationTarget.findFirst).not.toHaveBeenCalled();
+    expect(repository.findActiveDiscordDmTarget).not.toHaveBeenCalled();
   });
 
   it.each([0, 5, 15, 30])(
@@ -62,7 +59,7 @@ describe("ReservationReminderService", () => {
   );
 
   it("rejects reminders without an active DM target", async () => {
-    prisma.notificationTarget.findFirst.mockResolvedValue(null);
+    repository.findActiveDiscordDmTarget.mockResolvedValue(null);
     await expect(
       service.prepare({
         discordId: "discord",
@@ -80,11 +77,11 @@ describe("ReservationReminderService", () => {
         reminderMinutesBefore: 5,
       }),
     ).rejects.toBeInstanceOf(UnprocessableEntityException);
-    expect(prisma.notificationTarget.findFirst).not.toHaveBeenCalled();
+    expect(repository.findActiveDiscordDmTarget).not.toHaveBeenCalled();
   });
 
   it("does not enqueue a duplicate job rejected by the idempotency key", async () => {
-    prisma.notificationRule.findFirst.mockResolvedValue({
+    repository.getOrCreateRule.mockResolvedValue({
       id: 3,
       ownerType: "USER",
       ownerId: "discord",
@@ -113,7 +110,7 @@ describe("ReservationReminderService", () => {
   });
 
   it("formats the reservation start as a Discord relative timestamp", async () => {
-    prisma.notificationRule.findFirst.mockResolvedValue({
+    repository.getOrCreateRule.mockResolvedValue({
       id: 3,
       ownerType: "USER",
       ownerId: "discord",

@@ -30,13 +30,13 @@ import { SingleNotificationNpc } from "@/features/notifications/components/singl
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
 import { useTranslation } from "react-i18next";
 import { getNotificationSettingsKey } from "@/features/notifications/utils/get-notification-settings-key";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 import type {
   NotificationMutes,
   NotificationMutesPatch,
-  NotificationSettings,
-  NpcTypeColors,
-} from "@lootlog/types";
+} from "@lootlog/schema/user-preferences";
+import type { NotificationSettings } from "@lootlog/schema/account-preferences";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";

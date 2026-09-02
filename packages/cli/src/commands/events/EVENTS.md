@@ -7,7 +7,7 @@ Quick reference for publishing test events to RabbitMQ.
 ### Interactive Mode (Recommended)
 
 ```bash
-pnpm events:publish
+bun run events:publish
 ```
 
 This launches an interactive menu where you can:
@@ -20,13 +20,13 @@ This launches an interactive menu where you can:
 
 ```bash
 # Publish a predefined event
-pnpm events:publish --event loot-created
-pnpm events:publish --event timer-expired
-pnpm events:publish --event member-joined
-pnpm events:publish --event battle-completed
+bun run events:publish --event loot-created
+bun run events:publish --event timer-expired
+bun run events:publish --event member-joined
+bun run events:publish --event battle-completed
 
 # Publish a custom event
-pnpm events:publish \
+bun run events:publish \
   --exchange lootlog.events \
   --routing-key custom.test \
   --payload '{"foo": "bar"}'
@@ -127,21 +127,21 @@ Event Subscribers (API, Discord Bot, Search, etc.)
 ### Test loot indexing in Meilisearch
 
 ```bash
-pnpm events:publish --event loot-created
+bun run events:publish --event loot-created
 # → Search service indexes loot in Meilisearch
 ```
 
 ### Test Discord bot timer notifications
 
 ```bash
-pnpm events:publish --event timer-expired
+bun run events:publish --event timer-expired
 # → Discord bot posts timer notification to Discord
 ```
 
 ### Test battle statistics processing
 
 ```bash
-pnpm events:publish --event battle-completed
+bun run events:publish --event battle-completed
 # → Battlelog service processes stats
 ```
 

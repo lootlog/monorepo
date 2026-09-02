@@ -1,6 +1,3 @@
-import { NotificationJobKind as DbNotificationJobKind } from "#src/generated/prisma/client";
-import type { PrismaService } from "#src/db/prisma.service";
-
 export type TestTriggerUsage = {
   limit: number;
   used: number;
@@ -9,8 +6,23 @@ export type TestTriggerUsage = {
   nextAvailableAt: string | null;
 };
 
+export interface TestJobReader {
+  findRecentTestJobs(
+    targetIds: number[],
+    threshold: Date,
+  ): Promise<Array<{ targetId: number | null; createdAt: Date }>>;
+}
+
+interface LegacyTestJobReader {
+  notificationJob: {
+    findMany(
+      options: unknown,
+    ): Promise<Array<{ targetId: number | null; createdAt: Date }>>;
+  };
+}
+
 export async function computeTestTriggerUsage(
-  prisma: PrismaService,
+  reader: TestJobReader | LegacyTestJobReader,
   targetIds: number[],
   limit: number,
   windowMs: number,
@@ -22,18 +34,18 @@ export async function computeTestTriggerUsage(
   }
 
   const threshold = new Date(Date.now() - windowMs);
-  const testJobs = await prisma.notificationJob.findMany({
-    where: {
-      targetId: { in: targetIds },
-      jobKind: DbNotificationJobKind.TEST,
-      createdAt: { gte: threshold },
-    },
-    select: {
-      targetId: true,
-      createdAt: true,
-    },
-    orderBy: [{ createdAt: "asc" }],
-  });
+  const testJobs =
+    "findRecentTestJobs" in reader
+      ? await reader.findRecentTestJobs(targetIds, threshold)
+      : await reader.notificationJob.findMany({
+          where: {
+            targetId: { in: targetIds },
+            jobKind: "TEST",
+            createdAt: { gte: threshold },
+          },
+          select: { targetId: true, createdAt: true },
+          orderBy: [{ createdAt: "asc" }],
+        });
 
   const jobsByTargetId = new Map<number, Date[]>();
 

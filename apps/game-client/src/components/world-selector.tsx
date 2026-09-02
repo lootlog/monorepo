@@ -2,7 +2,7 @@ import { Combobox, type ComboboxGroup } from "@/components/ui/combobox";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";

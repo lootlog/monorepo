@@ -1,13 +1,13 @@
 import { Module } from "@nestjs/common";
-import { PrismaModule } from "#src/db/prisma.module";
 import { MemberContextModule } from "#src/shared/permissions/member-context.module";
 import { DocsController } from "./docs.controller.js";
 import { DocsService } from "./docs.service.js";
+import { DocsRepository } from "./docs.repository.js";
 
 @Module({
-  imports: [PrismaModule, MemberContextModule],
+  imports: [MemberContextModule],
   controllers: [DocsController],
-  providers: [DocsService],
+  providers: [DocsRepository, DocsService],
   exports: [DocsService],
 })
 export class DocsModule {}

@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import type { NpcType } from "#src/generated/prisma/client";
+import * as z from "zod";
+import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 const KillsByTypeResponseSchema = z.object({
   COMMON: z.number().optional(),

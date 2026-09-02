@@ -1,11 +1,11 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import {
-  getNpcTypeByWt,
-  type GuildLootCreatedEventV2,
-  type GuildLootEventNpc,
-  type LootCreatedNotificationEventV2,
-} from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type {
+  GuildLootCreatedEventV2,
+  GuildLootEventNpc,
+} from "@lootlog/schema/loot-events";
+import type { LootCreatedNotificationEventV2 } from "@lootlog/schema/notifications";
 import {
   BadRequestException,
   ForbiddenException,
@@ -18,17 +18,15 @@ import { createHash } from "node:crypto";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { ExecutionError } from "redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import {
-  NpcType,
-  Permission,
-  Profession,
-  type Guild,
-  type ItemRarity,
-  type LootlogConfigNpc,
-  type Prisma,
-} from "#src/generated/prisma/client";
+import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
+import type {
+  guildTable,
+  lootlogConfigNpcTable,
+} from "#src/database/drizzle/schema";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { ItemsService } from "#src/items/items.service";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
@@ -49,6 +47,10 @@ import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import type { Logger } from "winston";
+import { LootSubmissionAcceptanceRepository } from "./loot-submission-acceptance.repository.js";
+
+type Guild = typeof guildTable.$inferSelect;
+type LootlogConfigNpc = typeof lootlogConfigNpcTable.$inferSelect;
 
 type LootSubmissionData = {
   guildId: string;
@@ -100,7 +102,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     private readonly npcsService: NpcsService,
     private readonly itemsService: ItemsService,
     private readonly guildsService: GuildsService,
-    private readonly prisma: PrismaService,
+    private readonly repository: LootSubmissionAcceptanceRepository,
     private readonly lootlogConfigService: LootlogConfigService,
     private readonly userLootlogConfigService: UserLootlogConfigService,
     private readonly lootStatsService: LootStatsService,
@@ -150,10 +152,9 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     submission: CreateLootDto;
     uniqueId: string;
   }): Promise<CreateLootResponse> {
-    const existingLoot = await this.prisma.loot.findUnique({
-      where: { uniqueId: options.uniqueId },
-      select: { id: true },
-    });
+    const existingLootId = await this.repository.findLootIdByUniqueId(
+      options.uniqueId,
+    );
     const [guilds, characterConfig] = await Promise.all([
       this.guildsService.getGuildsForRequiredPermissions(options.discordId, [
         Permission.LOOTLOG_LOOTS_WRITE,
@@ -185,13 +186,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
 
     const [lootlogConfigs, members] = await Promise.all([
       this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
-      this.prisma.member.findMany({
-        where: {
-          guildId: { in: filteredGuildIds },
-          userId: options.discordId,
-        },
-        select: { id: true, guildId: true },
-      }),
+      this.repository.findMembers(options.discordId, filteredGuildIds),
     ]);
     const npcData = this.processNpcs(options.submission.npcs);
     if (npcData.primary.wt < 10) {
@@ -225,13 +220,13 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       type: npc.type,
       wt: npc.wt,
     }));
-    if (existingLoot) {
+    if (existingLootId !== null) {
       await this.acceptExistingLoot(
-        existingLoot.id,
+        existingLootId,
         outcome.submissionData,
         socketNpcs,
       );
-      return this.createResponse(existingLoot.id, outcome);
+      return this.createResponse(existingLootId, outcome);
     }
 
     const lootId = await this.createNewLoot({
@@ -322,17 +317,10 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
     submissions: LootSubmissionData[],
     socketNpcs: LootEventNpc[],
   ): Promise<void> {
-    const existingRecords = await this.prisma.organizationLootRecord.findMany({
-      where: {
-        lootId,
-        guildId: { in: submissions.map((submission) => submission.guildId) },
-      },
-      select: {
-        guildId: true,
-        archivedAt: true,
-        submissions: { select: { memberId: true } },
-      },
-    });
+    const existingRecords = await this.repository.findExistingRecords(
+      lootId,
+      submissions.map(({ guildId }) => guildId),
+    );
     const existingSubmissions = existingRecords.flatMap((record) =>
       record.submissions.map((submission) => ({
         guildId: record.guildId,
@@ -347,44 +335,10 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       return;
     }
 
-    const organizationRecords = await this.prisma.$transaction(async (tx) => {
-      await tx.organizationLootRecord.createMany({
-        data: this.getUniqueOrganizationIds(newSubmissions).map((guildId) => ({
-          guildId,
-          lootId,
-        })),
-        skipDuplicates: true,
-      });
-      const records = await tx.organizationLootRecord.findMany({
-        where: {
-          lootId,
-          guildId: { in: newSubmissions.map(({ guildId }) => guildId) },
-        },
-        select: { id: true, guildId: true, archivedAt: true },
-      });
-      const recordIdByGuildId = new Map(
-        records.map((record) => [record.guildId, record.id]),
-      );
-      const submissionRows = newSubmissions.map((submission) => {
-        const organizationLootRecordId = recordIdByGuildId.get(
-          submission.guildId,
-        );
-        if (organizationLootRecordId === undefined) {
-          throw new ServiceUnavailableException(
-            "Failed to resolve Organization Loot record",
-          );
-        }
-        return {
-          organizationLootRecordId,
-          memberId: submission.memberId,
-        };
-      });
-      await tx.lootSubmission.createMany({
-        data: submissionRows,
-        skipDuplicates: true,
-      });
-      return records;
-    });
+    const organizationRecords = await this.repository.appendSubmissions(
+      lootId,
+      newSubmissions,
+    );
 
     const archivedOrganizationIds = new Set(
       organizationRecords
@@ -413,35 +367,21 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       options.npcData.primary,
       options.primaryNpcType,
     );
-    const loot = await this.prisma.loot.create({
-      data: {
-        uniqueId: options.uniqueId,
-        world: options.submission.world,
-        source: options.submission.source,
-        location: options.submission.location,
-        lootShare: initialAllocation.share,
-        lootShareSource: initialAllocation.source,
-        lootItems: {
-          create: this.mapLootItemsToPersistence(options.submission.loots),
-        },
-        lootPlayers: {
-          create: this.mapLootPlayersToPersistence(
-            options.submission.players,
-            options.submission.world,
-          ),
-        },
-        lootNpcs: {
-          create: this.mapLootNpcsToPersistence(options.submission.npcs),
-        },
-        organizationLootRecords: {
-          create: options.outcome.submissionData.map((submission) => ({
-            guildId: submission.guildId,
-            submissions: { create: { memberId: submission.memberId } },
-          })),
-        },
-      },
+    return this.repository.createNewLoot({
+      uniqueId: options.uniqueId,
+      world: options.submission.world,
+      source: options.submission.source,
+      location: options.submission.location,
+      lootShare: initialAllocation.share,
+      lootShareSource: initialAllocation.source,
+      items: this.mapLootItemsToPersistence(options.submission.loots),
+      players: this.mapLootPlayersToPersistence(
+        options.submission.players,
+        options.submission.world,
+      ),
+      npcs: this.mapLootNpcsToPersistence(options.submission.npcs),
+      submissions: options.outcome.submissionData,
     });
-    return loot.id;
   }
 
   private async publishNewLootEffects(options: {
@@ -606,22 +546,15 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
       const { lvl, rarity, type } = this.getItemStats(item);
       const statsHash = this.generateStatsHash(item.stat);
       return {
-        itemSnapshot: {
-          connectOrCreate: {
-            where: { itemId_statsHash: { itemId: item.id, statsHash } },
-            create: {
-              itemId: item.id,
-              statsHash,
-              name: item.name,
-              icon: item.icon,
-              lvl,
-              rarity,
-              itemType: type,
-              statRaw: item.stat,
-              statsSnapshot: this.parseItemStats(item.stat),
-            },
-          },
-        },
+        itemId: item.id,
+        statsHash,
+        name: item.name,
+        icon: item.icon,
+        lvl,
+        rarity,
+        itemType: type,
+        statRaw: item.stat,
+        statsSnapshot: this.parseItemStats(item.stat),
         hid: item.hid,
       };
     });
@@ -630,7 +563,7 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
   private mapLootPlayersToPersistence(
     players: CreateLootDto["players"],
     world: string,
-  ): Prisma.LootPlayerCreateWithoutLootInput[] {
+  ) {
     return players.map((player) => {
       const prof = getProfByShortname(player.prof);
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
@@ -642,27 +575,13 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
         .digest("hex");
       return {
         lvl: player.lvl,
-        playerSnapshot: {
-          connectOrCreate: {
-            where: {
-              world_accountId_characterId_snapshotHash: {
-                world,
-                accountId,
-                characterId,
-                snapshotHash,
-              },
-            },
-            create: {
-              world,
-              accountId,
-              characterId,
-              snapshotHash,
-              name: player.name,
-              prof,
-              icon: player.icon,
-            },
-          },
-        },
+        world,
+        accountId,
+        characterId,
+        snapshotHash,
+        name: player.name,
+        prof,
+        icon: player.icon,
       };
     });
   }
@@ -688,21 +607,14 @@ export class LootSubmissionAcceptanceService implements OnModuleInit {
 
   private mapLootNpcsToPersistence(npcs: CreateLootDto["npcs"]) {
     return npcs.map((npc) => ({
-      npcSnapshot: {
-        connectOrCreate: {
-          where: { npcId_name: { npcId: npc.id, name: npc.name } },
-          create: {
-            npcId: npc.id,
-            name: npc.name,
-            type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
-            lvl: npc.lvl,
-            icon: npc.icon,
-            wt: npc.wt,
-            margonemType: npc.type,
-            prof: npc.prof ? getProfByShortname(npc.prof) : null,
-          },
-        },
-      },
+      npcId: npc.id,
+      name: npc.name,
+      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+      lvl: npc.lvl,
+      icon: npc.icon,
+      wt: npc.wt,
+      margonemType: npc.type,
+      prof: npc.prof ? getProfByShortname(npc.prof) : null,
     }));
   }
 

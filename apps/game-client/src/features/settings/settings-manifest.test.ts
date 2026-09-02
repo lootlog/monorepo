@@ -2,7 +2,7 @@ import {
   DEVICE_SETTINGS_CATALOG,
   SETTINGS_CATALOG,
   type SettingsCatalogKey,
-} from "@lootlog/types";
+} from "@lootlog/domain/settings-documents";
 import { describe, expect, it } from "vitest";
 import { SETTINGS_MANIFEST } from "./settings-manifest";
 

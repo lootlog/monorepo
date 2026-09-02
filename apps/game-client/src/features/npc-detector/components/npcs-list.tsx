@@ -6,7 +6,8 @@ import {
 } from "@/store/npc-detector.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { DetectorSettings, NpcTypeColors } from "@lootlog/types";
+import type { DetectorSettings } from "@lootlog/schema/account-preferences";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import {
   selectOwnedReadyRoom,

@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UpdateTimerSettingsPayload } from "@lootlog/types";
+import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
 import {
   getTimerSettingsControllerGetGlobalSettingsQueryKey,
   timerSettingsControllerMigrateSettings,
   timerSettingsControllerUpdateGlobalSettings,
   useTimerSettingsControllerGetGlobalSettings,
-} from "@lootlog/api-client/react-query/main/timer-settings";
-import type { MigrateTimerSettingsDto } from "@lootlog/api-client/models/main/migrate-timer-settings-dto";
-import type { UpdateTimerSettingsDto } from "@lootlog/api-client/models/main/update-timer-settings-dto";
+  type MigrateTimerSettingsDto,
+  type UpdateTimerSettingsDto,
+} from "@lootlog/client/main";
 
 const TIMER_SETTINGS_QUERY_KEY =
   getTimerSettingsControllerGetGlobalSettingsQueryKey();

@@ -5,12 +5,10 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
-import type { Member } from "#src/generated/prisma/client";
 import { serviceConfig } from "#src/config/service.config";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import {
   getMemberCacheSoftTtl,
   getRefreshPermissionsTtl,
@@ -23,7 +21,9 @@ import type {
   MemberRefreshAttempt,
   MemberWithRoles,
   StoredMemberWithRoles,
+  Member,
 } from "./member.types.js";
+import { MembersRepository } from "./members.repository.js";
 
 @Injectable()
 export class MemberDiscordAccessService {
@@ -31,7 +31,7 @@ export class MemberDiscordAccessService {
   private readonly staleAccessGraceMs = 6 * 60 * 60 * 1000;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: MembersRepository,
     private readonly memberDiscordRefreshService: MemberDiscordRefreshService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
   ) {
@@ -111,12 +111,14 @@ export class MemberDiscordAccessService {
     return this.resolveStaleMember(storedMember, refreshAttempt, now);
   }
 
-  private async resolveDesiredGuildId(
+  private resolveDesiredGuildId(
     guildId: string,
     refresh: boolean,
     standalone: boolean,
   ): Promise<string> {
-    return refresh || standalone ? this.resolveActiveGuildId(guildId) : guildId;
+    return refresh || standalone
+      ? this.resolveActiveGuildId(guildId)
+      : Promise.resolve(guildId);
   }
 
   private getMemberCacheTtl(refresh: boolean): number {
@@ -178,11 +180,10 @@ export class MemberDiscordAccessService {
     guildId: string;
     skipTtlCheck?: boolean;
   }): Promise<MemberWithRoles | null> {
-    const member = await this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: options.discordId, guildId: options.guildId },
-      },
-    });
+    const member = await this.repository.findMember(
+      options.discordId,
+      options.guildId,
+    );
 
     if (!member || !member.globalUserId) {
       throw new NotFoundException(
@@ -225,35 +226,21 @@ export class MemberDiscordAccessService {
   }
 
   private async resolveActiveGuildId(guildId: string): Promise<string> {
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        active: true,
-        OR: [{ id: guildId }, { vanityUrl: guildId }],
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!guild) {
+    const resolvedGuildId = await this.repository.resolveActiveGuildId(guildId);
+    if (!resolvedGuildId) {
       throw new NotFoundException({
         message: GuildErrorKey.GUILD_NOT_FOUND,
       });
     }
 
-    return guild.id;
+    return resolvedGuildId;
   }
 
   private getStoredMember(
     discordId: string,
     guildId: string,
   ): Promise<StoredMemberWithRoles | null> {
-    return this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-      include: { roles: true },
-    });
+    return this.repository.findMemberWithRoles(discordId, guildId);
   }
 
   private decorateMember(

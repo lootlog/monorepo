@@ -1,4 +1,5 @@
-import type { ItemRarity, Profession } from "#src/generated/prisma/client";
+import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import type { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 
 export type LootItemDto = {
   id: number;

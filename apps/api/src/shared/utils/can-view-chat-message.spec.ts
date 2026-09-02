@@ -1,7 +1,9 @@
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { MessageType } from "#src/chat/dto/send-message.dto";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 import { canViewChatMessage } from "./can-view-chat-message.js";
+
+type Role = Parameters<typeof canViewChatMessage>[1][number];
 
 function createRole(
   permissions: Permission[],
@@ -9,16 +11,9 @@ function createRole(
   lvlRangeTo = 500,
 ): Role {
   return {
-    id: "role-id",
-    guildId: "guild-1",
-    name: "role",
-    color: null,
-    position: null,
     permissions,
     lvlRangeFrom,
     lvlRangeTo,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 }
 

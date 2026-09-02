@@ -13,13 +13,13 @@ import { useGameStore } from "@/store/game.store";
 import { NpcType } from "@/api/npcs.api";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
-import {
-  getNpcTypeByWt,
-  type DetectorNpcType,
-  type DetectorSettings,
-  type DetectorTypeSettings,
-  type UserGameAccountPreferences,
-} from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type {
+  DetectorNpcType,
+  DetectorSettings,
+  DetectorTypeSettings,
+  UserGameAccountPreferences,
+} from "@lootlog/schema/account-preferences";
 import { sendChatMessage, createNotification, MessageType } from "@/api";
 import {
   buildNpcChatMessagePayload,

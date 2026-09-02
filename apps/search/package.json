@@ -5,55 +5,34 @@
   "license": "MIT",
   "type": "module",
   "imports": {
-    "#src/*": {
-      "types": "./src/*.ts",
-      "default": "./dist/src/*.js"
-    }
+    "#src/*": "./src/*.ts"
   },
   "scripts": {
-    "dev": "nest start --watch",
-    "prebuild": "bun ../../tools/clean-swagger-metadata.mjs",
-    "build": "nest build",
-    "start": "bun --preload ./dist/src/instrumentation.js dist/src/main.js",
-    "lint": "oxlint src",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json",
-    "test": "vitest run --config ./vitest.config.ts",
-    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
-    "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
-    "test:watch": "vitest --config ./vitest.config.ts",
-    "openapi:generate": "OPENAPI_GENERATION=true bun run build && OPENAPI_GENERATION=true bun --preload ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
+    "dev": "bun --watch src/main.ts",
+    "build": "bun build src/main.ts --target=bun --packages=external --outdir=dist/src --sourcemap=linked",
+    "start": "bun --enable-source-maps dist/src/main.js",
+    "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "test:watch": "bun test --watch",
+    "openapi:generate": "bun src/openapi/generate-openapi.ts",
     "seed": "bun src/scripts/seed.ts"
   },
   "dependencies": {
-    "@golevelup/nestjs-rabbitmq": "^9.0.2",
-    "@lootlog/instrumentation": "workspace:*",
-    "@lootlog/nest-shared": "workspace:*",
-    "@lootlog/types": "workspace:*",
-    "@nestjs/common": "catalog:",
-    "@nestjs/core": "catalog:",
-    "@nestjs/platform-fastify": "catalog:",
-    "@nestjs/swagger": "catalog:",
-    "@prisma/adapter-pg": "catalog:",
-    "@prisma/client": "catalog:",
+    "@effect/platform-bun": "catalog:",
+    "@lootlog/messaging": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
+    "@lootlog/schema": "workspace:*",
     "dotenv": "^17.4.2",
-    "fastify": "5.12.1",
+    "effect": "catalog:",
     "meilisearch": "^0.60.0",
-    "nest-winston": "catalog:",
-    "nestjs-zod": "catalog:",
-    "reflect-metadata": "catalog:",
-    "rxjs": "catalog:",
-    "winston": "^3.19.0",
-    "zod": "catalog:"
+    "yaml": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@nestjs/cli": "catalog:",
-    "@nestjs/schematics": "catalog:",
-    "@nestjs/testing": "catalog:",
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "catalog:",
-    "tsx": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   }
 }

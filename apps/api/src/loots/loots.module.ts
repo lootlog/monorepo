@@ -10,14 +10,17 @@ import { ItemsModule } from "#src/items/items.module";
 import { GuildsModule } from "#src/guilds/guilds.module";
 import { LootlogConfigModule } from "#src/lootlog-config/lootlog-config.module";
 import { UserLootlogConfigModule } from "#src/user-lootlog-config/user-lootlog-config.module";
-import { PrismaModule } from "#src/db/prisma.module";
 import { RedisModule } from "#src/lib/redis/redis.module";
 import { RedlockModule } from "#src/lib/redlock/redlock.module";
 import { LootAllocationService } from "./loot-allocation.service.js";
 import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service.js";
 import { LootQueryService } from "./services/loot-query.service.js";
+import { LootQueryRepository } from "./services/loot-query.repository.js";
 import { LootCommentService } from "./services/loot-comment.service.js";
 import { LootStatsService } from "./services/loot-stats.service.js";
+import { LootsRepository } from "./loots.repository.js";
+import { LootAllocationRepository } from "./loot-allocation.repository.js";
+import { LootSubmissionAcceptanceRepository } from "./loot-submission-acceptance.repository.js";
 
 @Module({
   imports: [
@@ -28,7 +31,6 @@ import { LootStatsService } from "./services/loot-stats.service.js";
     GuildsModule,
     LootlogConfigModule,
     UserLootlogConfigModule,
-    PrismaModule,
     RedisModule,
     RedlockModule,
     RabbitMQModule.forRoot(rabbitmqConfig),
@@ -36,11 +38,15 @@ import { LootStatsService } from "./services/loot-stats.service.js";
   controllers: [LootsController],
   providers: [
     LootAllocationService,
+    LootAllocationRepository,
     LootSubmissionAcceptanceService,
+    LootSubmissionAcceptanceRepository,
     LootsService,
     LootQueryService,
+    LootQueryRepository,
     LootCommentService,
     LootStatsService,
+    LootsRepository,
   ],
   exports: [LootsService],
 })

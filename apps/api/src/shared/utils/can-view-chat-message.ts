@@ -1,10 +1,16 @@
-import { hasRolePermissionInLevelRange } from "@lootlog/api-helpers/permissions";
-import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { hasRolePermissionInLevelRange } from "@lootlog/domain/npc-permissions";
+import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
+import type { NpcRoutingTier } from "@lootlog/schema/npc-routing";
+import { Permission } from "@lootlog/schema/permissions";
 import { MessageType } from "#src/chat/dto/send-message.dto";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
 
 type NpcData = NonNullable<ChatStoredMessage["npc"]>;
+type Role = {
+  permissions: Permission[];
+  lvlRangeFrom: number;
+  lvlRangeTo: number;
+};
 
 const NPC_TIER_PERMISSIONS: Record<NpcRoutingTier, Permission> = {
   base: Permission.LOOTLOG_CHAT_READ,

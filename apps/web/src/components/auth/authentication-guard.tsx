@@ -1,6 +1,6 @@
 import { useAuthScopes } from "@/hooks/api/use-auth-scopes";
 import { authClient } from "@/lib/auth-client";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,

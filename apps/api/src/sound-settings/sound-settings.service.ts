@@ -1,14 +1,18 @@
 import { Injectable } from "@nestjs/common";
-import type {
-  NpcTypeSoundConfig,
-  SettingsDomainResolution,
-} from "@lootlog/types";
-import type { Prisma } from "#src/generated/prisma/client";
+import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
+import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import { SettingsDocumentsService } from "#src/settings-documents/settings-documents.service";
 import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto.js";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -113,15 +117,15 @@ export class SoundSettingsService {
       notificationsConfig: this.mergeSoundConfigMap(
         effective.notificationsConfig,
         defaults.notificationsConfig,
-      ) as unknown as Prisma.JsonValue,
+      ) as unknown as JsonValue,
       detectorConfig: this.mergeSoundConfigMap(
         effective.detectorConfig,
         defaults.detectorConfig,
-      ) as unknown as Prisma.JsonValue,
+      ) as unknown as JsonValue,
       timersConfig: this.mergeSoundConfigMap(
         effective.timersConfig,
         defaults.timersConfig,
-      ) as unknown as Prisma.JsonValue,
+      ) as unknown as JsonValue,
       createdAt: updatedAt,
       updatedAt,
     };

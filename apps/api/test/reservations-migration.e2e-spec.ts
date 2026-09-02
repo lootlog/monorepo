@@ -1,10 +1,17 @@
 import { readFile } from "node:fs/promises";
+import { readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-const migrationsRoot = path.resolve(dirname, "../prisma/migrations");
+const migrationArchive = readdirSync(path.resolve(dirname, "../drizzle")).find(
+  (entry) => entry.startsWith("legacy-") && !entry.endsWith(".sql"),
+);
+if (migrationArchive === undefined) {
+  throw new Error("Legacy migration archive is missing");
+}
+const migrationsRoot = path.resolve(dirname, "../drizzle", migrationArchive);
 const reservationMigrations = [
   "20260826120000_reservations_v2",
   "20260826120500_reservations_v2_rollout_bridge",

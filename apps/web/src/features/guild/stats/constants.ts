@@ -1,4 +1,4 @@
-import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
+import type { NpcType } from "@lootlog/client/main";
 
 export const TRACKABLE_NPC_TYPES: NpcType[] = [
   "TITAN",

@@ -1,14 +1,16 @@
-import type { Event, EventHeroNpc } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
-import { buildActiveEventWhere } from "./event-activity.util.js";
+import type {
+  eventHeroNpcTable,
+  eventTable,
+} from "#src/database/drizzle/schema";
+import { ActiveEventHeroRepository } from "../services/active-event-hero.repository.js";
 
 export type ActiveEventHeroMatch = {
-  eventHero: EventHeroNpc;
-  event: Event;
+  eventHero: typeof eventHeroNpcTable.$inferSelect;
+  event: typeof eventTable.$inferSelect;
 };
 
 export async function findActiveEventHeroesByNpc(
-  prisma: PrismaService,
+  repository: ActiveEventHeroRepository,
   guildId: string,
   world: string,
   npcId: number,
@@ -16,41 +18,14 @@ export async function findActiveEventHeroesByNpc(
 ): Promise<ActiveEventHeroMatch[]> {
   const now = new Date();
 
-  const directIdMatches = await prisma.eventHeroNpc.findMany({
-    where: {
-      npcId,
-      event: {
-        guildId,
-        world,
-        ...buildActiveEventWhere(now),
-      },
-    },
-    include: {
-      event: true,
-    },
-  });
-
-  const nameMatches = await prisma.eventHeroNpc.findMany({
-    where: {
-      npcName,
-      event: {
-        guildId,
-        world,
-        ...buildActiveEventWhere(now),
-      },
-    },
-    include: {
-      event: true,
-    },
-  });
-
-  const uniqueMatches = new Map<string, ActiveEventHeroMatch>();
-
-  for (const hero of [...directIdMatches, ...nameMatches]) {
-    uniqueMatches.set(hero.id, { eventHero: hero, event: hero.event });
-  }
-
-  return Array.from(uniqueMatches.values()).sort((leftHero, rightHero) => {
+  const matches = await repository.findMatches(
+    guildId,
+    world,
+    npcId,
+    npcName,
+    now,
+  );
+  return matches.sort((leftHero, rightHero) => {
     const leftStart =
       leftHero.event.startsAt?.getTime() ??
       leftHero.event.createdAt?.getTime?.() ??

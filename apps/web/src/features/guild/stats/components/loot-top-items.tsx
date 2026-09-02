@@ -3,7 +3,7 @@ import { ItemImage } from "@lootlog/ui/components/item-image";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import type { ItemRarity } from "@/lib/loots/loot-types";
-import type { LootStatsResponseDtoOutputTopItemsItem } from "@lootlog/api-client/models/main/loot-stats-response-dto-output-top-items-item";
+import type { LootStatsResponseDtoOutputTopItemsItem } from "@lootlog/client/main";
 
 type LootTopItemsProps = {
   data?: LootStatsResponseDtoOutputTopItemsItem[];

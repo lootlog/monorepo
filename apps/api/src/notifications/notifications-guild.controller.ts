@@ -17,7 +17,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Guild } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { ChannelsService } from "#src/channels/channels.service";
 import { CreateNotificationRuleDto } from "#src/notifications/dto/create-notification-rule.dto";
 import {
@@ -37,6 +37,9 @@ import { NotificationTargetService } from "#src/notifications/notification-targe
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+
+type GuildDataValue = { readonly id: string };
+type Guild = GuildDataValue;
 
 @ApiTags("notifications")
 @ApiBearerAuth()
@@ -62,7 +65,7 @@ export class NotificationsGuildController {
     description: "List of guild notification targets",
     type: [NotificationTargetResponseDto],
   })
-  getGuildTargets(@GuildData() guild: Guild) {
+  getGuildTargets(@GuildData() guild: GuildDataValue) {
     return this.targetService.listGuildTargets(guild.id);
   }
 

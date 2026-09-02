@@ -1,6 +1,6 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 
 const UpdateRolePermissionsSchema = z.object({
   permissions: z.array(z.nativeEnum(Permission)),

@@ -1,6 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { RefreshJobStatus } from "#src/generated/prisma/client";
+import * as z from "zod";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
@@ -9,7 +8,7 @@ import {
 const MemberRefreshJobResponseSchema = z.object({
   id: z.number(),
   guildId: z.string(),
-  status: z.nativeEnum(RefreshJobStatus),
+  status: z.enum(["PENDING", "PROCESSING", "COMPLETED", "FAILED"]),
   totalMembers: z.number(),
   processedMembers: z.number(),
   failedMembers: z.number(),

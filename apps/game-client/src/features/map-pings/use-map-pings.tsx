@@ -5,13 +5,16 @@ import { useGameStore } from "@/store/game.store";
 import { queryClient } from "@/lib/query-client";
 import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/api-client/react-query/main/users";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-game-account-preferences-response-dto-output";
+import {
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  type UserGameAccountPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
+
 import {
   isMapPingType,
   type MapPingAck,
   type MapPingEvent,
-} from "@lootlog/types";
+} from "@lootlog/schema/map-ping";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {

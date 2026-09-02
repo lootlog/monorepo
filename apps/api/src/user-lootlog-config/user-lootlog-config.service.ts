@@ -1,8 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { PrismaService } from "#src/db/prisma.service";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildsService } from "#src/guilds/guilds.service";
-import { Permission } from "#src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "#src/user-lootlog-config/dto/create-user-account-config.dto";
 import {
@@ -10,6 +9,7 @@ import {
   type UserLootlogPlayersCatchingGuildsRequest,
   type UserLootlogPlayersCatchingGuildsResponse,
 } from "#src/shared/dto/user-lootlog-config-response.dto";
+import { UserLootlogConfigRepository } from "./user-lootlog-config.repository.js";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
 
@@ -18,7 +18,7 @@ export class UserLootlogConfigService {
   private readonly logger = new Logger(UserLootlogConfigService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: UserLootlogConfigRepository,
     private readonly guildsService: GuildsService,
     private readonly redis: RedisService,
   ) {}
@@ -75,15 +75,7 @@ export class UserLootlogConfigService {
     accountId: string,
   ) {
     const [accountConfig, writableGuildIds] = await Promise.all([
-      this.prisma.userCharactersLootlogSettings.findMany({
-        where: {
-          userId: discordId,
-          accountId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      }),
+      this.repository.findAccountConfig(discordId, accountId),
       this.getWritableLootlogGuildIds(discordId),
     ]);
 
@@ -114,16 +106,7 @@ export class UserLootlogConfigService {
       onError: (error) =>
         this.logger.warn("User lootlog character cache unavailable", error),
       factory: () =>
-        this.prisma.userCharactersLootlogSettings.findFirst({
-          where: {
-            userId: discordId,
-            accountId,
-            characterId,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        }),
+        this.repository.findCharacterConfig(discordId, accountId, characterId),
     });
   }
 
@@ -146,27 +129,10 @@ export class UserLootlogConfigService {
       };
     }
 
-    const configs = await this.prisma.userCharactersLootlogSettings.findMany({
-      where: {
-        OR: players.map((player) => ({
-          userId: player.userId,
-          accountId: player.accountId,
-          characterId: player.characterId,
-        })),
-        catchingGuildIds: {
-          hasSome: accessibleGuildIds,
-        },
-      },
-      select: {
-        userId: true,
-        accountId: true,
-        characterId: true,
-        catchingGuildIds: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const configs = await this.repository.findPlayers(
+      players,
+      accessibleGuildIds,
+    );
 
     const visibleGuildIdsByPlayerKey = new Map<string, Set<string>>();
     for (const config of configs) {
@@ -234,24 +200,12 @@ export class UserLootlogConfigService {
       ...new Set(data.catchingGuildIds),
     ].filter((guildId) => writableGuildIds.has(guildId));
 
-    const config = await this.prisma.userCharactersLootlogSettings.upsert({
-      where: {
-        userId_accountId_characterId: {
-          userId: discordId,
-          accountId,
-          characterId: data.characterId,
-        },
-      },
-      update: {
-        catchingGuildIds: normalizedCatchingGuildIds,
-      },
-      create: {
-        userId: discordId,
-        accountId,
-        characterId: data.characterId,
-        catchingGuildIds: normalizedCatchingGuildIds,
-      },
-    });
+    const config = await this.repository.upsertCharacterConfig(
+      discordId,
+      accountId,
+      data.characterId,
+      normalizedCatchingGuildIds,
+    );
 
     await this.invalidateUserLootlogConfig(discordId);
 

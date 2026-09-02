@@ -12,20 +12,15 @@ import {
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MembersService } from "./members.service.js";
-import { PrismaService } from "#src/db/prisma.service";
 import { DiscordService } from "#src/discord/discord.service";
 import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { ErrorKey } from "./enum/error-key.enum.js";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { APIGuildMember } from "discord-api-types/v10";
-import {
-  Permission,
-  type Member,
-  type Guild,
-  MemberType,
-} from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, memberTable } from "#src/database/drizzle/schema";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -40,13 +35,18 @@ import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
 import { MemberReadService } from "./member-read.service.js";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
+import { MemberRefreshJobRepository } from "./member-refresh-job.repository.js";
+import { MembersRepository } from "./members.repository.js";
 import { MemberRemovalService } from "./member-removal.service.js";
+
+type Guild = typeof guildTable.$inferSelect;
+type Member = typeof memberTable.$inferSelect;
 
 vi.mock("#src/config/service.config", () => ({
   serviceConfig: { env: "local" },
 }));
 
-type MockPrismaService = {
+type MockDatabase = {
   member: {
     findUnique: Mock;
     findMany: Mock;
@@ -80,7 +80,7 @@ type MemberDiscordAccessServiceInternals = {
 
 describe("MembersService", () => {
   let service: MembersService;
-  let prismaService: MockPrismaService;
+  let database: MockDatabase;
   let discordService: Mocked<DiscordService>;
   let _rateLimiter: Mocked<DiscordRateLimiterService>;
   let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
@@ -123,7 +123,7 @@ describe("MembersService", () => {
     id: 123,
     userId: "discord-123",
     guildId: "guild-123",
-    type: MemberType.USER,
+    type: "USER",
     name: "Test User",
     avatar: "avatar.png",
     banner: null,
@@ -154,7 +154,7 @@ describe("MembersService", () => {
   } as APIGuildMember;
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockDatabase = {
       member: {
         findUnique: mockFn(),
         findMany: mockFn(),
@@ -235,6 +235,259 @@ describe("MembersService", () => {
       recordMemberRefreshMetric: mockFn().mockResolvedValue(undefined),
       recordMemberRefreshLatency: mockFn().mockResolvedValue(undefined),
     };
+    const mockRefreshJobs = {
+      findRecent: (guildId: string, createdAt: Date) =>
+        mockDatabase.memberRefreshJob.findFirst({
+          where: { guildId, createdAt: { gte: createdAt } },
+          orderBy: { createdAt: "desc" },
+        }),
+      findLatest: (guildId: string) =>
+        mockDatabase.memberRefreshJob.findFirst({
+          where: { guildId },
+          orderBy: { createdAt: "desc" },
+        }),
+      findById: (id: number, guildId?: string) =>
+        guildId === undefined
+          ? mockDatabase.memberRefreshJob.findUnique({ where: { id } })
+          : mockDatabase.memberRefreshJob.findFirst({
+              where: { id, guildId },
+            }),
+      create: (guildId: string, requestedBy: string, totalMembers: number) =>
+        mockDatabase.memberRefreshJob.create({
+          data: { guildId, requestedBy, status: "PENDING", totalMembers },
+        }),
+      update: (id: number, data: unknown) =>
+        mockDatabase.memberRefreshJob.update({ where: { id }, data }),
+      incrementFailed: (id: number) =>
+        mockDatabase.memberRefreshJob.update({
+          where: { id },
+          data: { failedMembers: { increment: 1 } },
+        }),
+    };
+    const mockMembersRepository = {
+      findMember: (userId: string, guildId: string) =>
+        mockDatabase.member.findUnique({
+          where: { memberId: { userId, guildId } },
+        }),
+      findMemberWithRoles: (userId: string, guildId: string) =>
+        mockDatabase.member.findUnique({
+          where: { memberId: { userId, guildId } },
+          include: { roles: true },
+        }),
+      findGuildMembers: (guildId: string, includeInactive = false) =>
+        mockDatabase.member.findMany({
+          where: {
+            guildId,
+            ...(includeInactive ? {} : { active: true }),
+            globalUserId: { not: null },
+          },
+          include: { roles: { orderBy: { position: "desc" } } },
+          orderBy: { name: "asc" },
+        }),
+      findActiveGuildOwner: (guildId: string) =>
+        mockDatabase.guild
+          .findFirst({
+            where: { id: guildId, active: true },
+            select: { ownerId: true },
+          })
+          .then((guild: { ownerId: string } | null) => guild?.ownerId ?? null),
+      findGuildMembersSummary: (guildId: string, ownerId: string) =>
+        mockDatabase.member.findMany({
+          where: {
+            guildId,
+            active: true,
+            globalUserId: { not: null },
+            OR: [
+              { userId: ownerId },
+              {
+                roles: {
+                  some: {
+                    permissions: {
+                      hasSome: [
+                        Permission.OWNER,
+                        Permission.ADMIN,
+                        Permission.LOOTLOG_ACCESS,
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+          select: {
+            id: true,
+            userId: true,
+            name: true,
+            avatar: true,
+            roles: {
+              select: { color: true },
+              orderBy: { position: "desc" },
+              take: 1,
+            },
+          },
+          orderBy: { name: "asc" },
+        }),
+      resolveActiveGuildId: (guildId: string) =>
+        mockDatabase.guild
+          .findFirst({
+            where: {
+              active: true,
+              OR: [{ id: guildId }, { vanityUrl: guildId }],
+            },
+            select: { id: true },
+          })
+          .then((guild: { id: string } | null) => guild?.id ?? null),
+      findLootlogConfigs: (userId: string) =>
+        mockDatabase.userCharactersLootlogSettings.findMany({
+          where: { userId },
+          orderBy: [{ accountId: "asc" }, { characterId: "asc" }],
+        }),
+      findPlayerSnapshots: (references: Array<Record<string, number>>) =>
+        mockDatabase.playerSnapshot.findMany({
+          where: { OR: references },
+          select: {
+            accountId: true,
+            characterId: true,
+            name: true,
+            world: true,
+            icon: true,
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+      findExistingRoleIds: (roleIds: string[], guildId: string) =>
+        mockDatabase.role
+          .findMany({
+            where: { id: { in: roleIds }, guildId },
+            select: { id: true },
+          })
+          .then((roles: Array<{ id: string }>) => roles.map(({ id }) => id)),
+      upsertMemberWithRoles: (
+        userId: string,
+        guildId: string,
+        values: Record<string, unknown>,
+        roleIds: string[],
+      ) =>
+        mockDatabase.member.upsert({
+          where: { memberId: { userId, guildId } },
+          update: {
+            ...values,
+            roles: { set: roleIds.map((id) => ({ id })) },
+          },
+          create: {
+            userId,
+            guild: { connect: { id: guildId } },
+            ...values,
+            roles: { connect: roleIds.map((id) => ({ id })) },
+          },
+          include: { roles: true },
+        }),
+      markSyncAttempt: (options: {
+        userId: string;
+        guildId: string;
+        status: string;
+        deactivate: boolean;
+        markSynced: boolean;
+        attemptedAt: Date;
+      }) =>
+        mockDatabase.member.update({
+          where: {
+            memberId: { userId: options.userId, guildId: options.guildId },
+          },
+          data: {
+            lastDiscordAttemptAt: options.attemptedAt,
+            lastDiscordStatus: options.status,
+            ...(options.markSynced
+              ? { lastDiscordSyncAt: options.attemptedAt }
+              : {}),
+            ...(options.deactivate
+              ? { active: false, roles: { set: [] } }
+              : {}),
+          },
+          include: { roles: true },
+        }),
+      deactivateMember: async (
+        userId: string,
+        guildId: string,
+        attemptedAt: Date,
+        status: string,
+      ) => {
+        const previous = await mockDatabase.member.findUnique({
+          where: { memberId: { userId, guildId } },
+          include: { roles: true },
+        });
+        if (!previous) return null;
+        const updated = await mockDatabase.member.update({
+          where: { memberId: { userId, guildId } },
+          data: {
+            active: false,
+            lastDiscordAttemptAt: attemptedAt,
+            lastDiscordStatus: status,
+            roles: { set: [] },
+          },
+          include: { roles: true },
+        });
+        return { previous, updated };
+      },
+      findMissingActiveMembers: (
+        userId: string,
+        globalUserId: string,
+        activeGuildIds: string[],
+      ) =>
+        mockDatabase.member.findMany({
+          where: {
+            userId,
+            globalUserId,
+            active: true,
+            guildId: { notIn: activeGuildIds },
+            guild: { active: true },
+          },
+          select: { userId: true, guildId: true, globalUserId: true },
+        }),
+      deactivateMembers: (
+        members: Array<{ userId: string; guildId: string }>,
+        attemptedAt: Date,
+        status: string,
+        markSynced: boolean,
+      ) =>
+        Promise.all(
+          members.map((member) =>
+            mockDatabase.member.update({
+              where: {
+                memberId: {
+                  userId: member.userId,
+                  guildId: member.guildId,
+                },
+              },
+              data: {
+                active: false,
+                lastDiscordAttemptAt: attemptedAt,
+                ...(markSynced ? { lastDiscordSyncAt: attemptedAt } : {}),
+                lastDiscordStatus: status,
+                roles: { set: [] },
+              },
+            }),
+          ),
+        ),
+      deactivateGuildMembers: async (
+        guildId: string,
+        attemptedAt: Date,
+        status: string,
+      ) => {
+        const members = await mockDatabase.member.findMany({
+          where: { guildId, active: true },
+          select: { userId: true, guildId: true, globalUserId: true },
+        });
+        const result = await mockDatabase.member.updateMany({
+          where: { guildId, active: true },
+          data: {
+            active: false,
+            lastDiscordAttemptAt: attemptedAt,
+            lastDiscordStatus: status,
+          },
+        });
+        return { count: result.count, members };
+      },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -247,7 +500,8 @@ describe("MembersService", () => {
         MemberRefreshJobEventsService,
         MemberRemovalService,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: MemberRefreshJobRepository, useValue: mockRefreshJobs },
+        { provide: MembersRepository, useValue: mockMembersRepository },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
         {
@@ -265,7 +519,7 @@ describe("MembersService", () => {
     }).compile();
 
     service = module.get<MembersService>(MembersService);
-    prismaService = module.get<MockPrismaService>(PrismaService);
+    database = mockDatabase;
     discordService = module.get(DiscordService);
     _rateLimiter = module.get(DiscordRateLimiterService);
     _refreshScheduler = module.get(MemberRefreshSchedulerService);
@@ -348,7 +602,7 @@ describe("MembersService", () => {
     it("should return cached member when valid and not expired", async () => {
       const futureDate = new Date(Date.now() + 10000);
       const cachedMember = { ...mockMember, updatedAt: futureDate };
-      prismaService.member.findUnique.mockResolvedValue(cachedMember);
+      database.member.findUnique.mockResolvedValue(cachedMember);
 
       const result = await service.getGuildMemberById(options);
 
@@ -357,10 +611,10 @@ describe("MembersService", () => {
     });
 
     it("should fetch from Discord when member not in cache", async () => {
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       const result = await service.getGuildMemberById(options);
 
@@ -369,15 +623,15 @@ describe("MembersService", () => {
         userId: options.userId,
         discordId: options.discordId,
       });
-      expect(prismaService.member.upsert).toHaveBeenCalled();
+      expect(database.member.upsert).toHaveBeenCalled();
       expect(result).toEqual(mockMember);
     });
 
     it("should throw BadRequestException when refresh=true and TTL active", async () => {
       const futureDate = new Date(Date.now() + 10000);
       const cachedMember = { ...mockMember, updatedAt: futureDate };
-      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
-      prismaService.member.findUnique.mockResolvedValue(cachedMember);
+      database.guild.findFirst.mockResolvedValue(mockGuild);
+      database.member.findUnique.mockResolvedValue(cachedMember);
 
       await expect(
         service.getGuildMemberById({ ...options, refresh: true }),
@@ -394,7 +648,7 @@ describe("MembersService", () => {
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
       };
-      prismaService.member.findUnique.mockResolvedValue(staleMember);
+      database.member.findUnique.mockResolvedValue(staleMember);
       _rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);
 
       const result = await service.getGuildMemberById(options);
@@ -425,7 +679,7 @@ describe("MembersService", () => {
         updatedAt: new Date(Date.now() - 7 * 60 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 7 * 60 * 60 * 1000),
       };
-      prismaService.member.findUnique.mockResolvedValue(staleMember);
+      database.member.findUnique.mockResolvedValue(staleMember);
       _rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);
 
       const result = await service.getGuildMemberById(options);
@@ -453,13 +707,13 @@ describe("MembersService", () => {
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
       };
-      prismaService.member.findUnique
+      database.member.findUnique
         .mockResolvedValueOnce(staleMember)
         .mockResolvedValueOnce(staleMember);
       discordService.getGuildMember.mockRejectedValue(
         new NotFoundException("Member not found"),
       );
-      prismaService.member.update.mockResolvedValue({
+      database.member.update.mockResolvedValue({
         ...mockMember,
         active: false,
       });
@@ -467,7 +721,7 @@ describe("MembersService", () => {
       const result = await service.getGuildMemberById(options);
 
       expect(result).toBeNull();
-      expect(prismaService.member.update).toHaveBeenCalledWith({
+      expect(database.member.update).toHaveBeenCalledWith({
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
@@ -481,13 +735,13 @@ describe("MembersService", () => {
     });
 
     it("should deactivate member and return null when Discord returns NotFoundException", async () => {
-      prismaService.member.findUnique
+      database.member.findUnique
         .mockResolvedValueOnce(null) // First call in getGuildMemberById
         .mockResolvedValueOnce(mockMember); // Second call in deactivateMember
       discordService.getGuildMember.mockRejectedValue(
         new NotFoundException("Member not found"),
       );
-      prismaService.member.update.mockResolvedValue({
+      database.member.update.mockResolvedValue({
         ...mockMember,
         active: false,
       });
@@ -495,7 +749,7 @@ describe("MembersService", () => {
       const result = await service.getGuildMemberById(options);
 
       expect(result).toBeNull();
-      expect(prismaService.member.update).toHaveBeenCalledWith({
+      expect(database.member.update).toHaveBeenCalledWith({
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
@@ -525,7 +779,7 @@ describe("MembersService", () => {
     });
 
     it("should keep member active when authentication fails (401)", async () => {
-      prismaService.member.findUnique
+      database.member.findUnique
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockMember);
       const unauthorizedError = new HttpException(
@@ -533,7 +787,7 @@ describe("MembersService", () => {
         HttpStatus.UNAUTHORIZED,
       );
       discordService.getGuildMember.mockRejectedValue(unauthorizedError);
-      prismaService.member.update.mockResolvedValue({
+      database.member.update.mockResolvedValue({
         ...mockMember,
         lastDiscordStatus: "UNAUTHORIZED",
       });
@@ -549,7 +803,7 @@ describe("MembersService", () => {
             "User authentication failed (token expired/invalid), keeping cached member state",
         }),
       );
-      expect(prismaService.member.update).toHaveBeenCalledWith({
+      expect(database.member.update).toHaveBeenCalledWith({
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
@@ -566,11 +820,11 @@ describe("MembersService", () => {
     });
 
     it("should not publish member removal when Discord deactivates an already inactive member", async () => {
-      prismaService.member.findUnique.mockResolvedValue({
+      database.member.findUnique.mockResolvedValue({
         ...mockMember,
         active: false,
       });
-      prismaService.member.update.mockResolvedValue({
+      database.member.update.mockResolvedValue({
         ...mockMember,
         active: false,
       });
@@ -598,7 +852,7 @@ describe("MembersService", () => {
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
       };
-      prismaService.member.findUnique.mockResolvedValue(staleMember);
+      database.member.findUnique.mockResolvedValue(staleMember);
       _refreshScheduler.enqueueRefresh.mockResolvedValue({
         queued: true,
         nextRefreshAt,
@@ -635,7 +889,7 @@ describe("MembersService", () => {
         updatedAt: new Date(Date.now() - 7 * 60 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 7 * 60 * 60 * 1000),
       };
-      prismaService.member.findUnique.mockResolvedValue(staleMember);
+      database.member.findUnique.mockResolvedValue(staleMember);
       _refreshScheduler.enqueueRefresh.mockResolvedValue({
         queued: true,
         nextRefreshAt,
@@ -670,8 +924,8 @@ describe("MembersService", () => {
     });
 
     it("should throw error when refresh=true and general error occurs", async () => {
-      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.guild.findFirst.mockResolvedValue(mockGuild);
+      database.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockRejectedValue(
         new Error("Network error"),
       );
@@ -691,7 +945,7 @@ describe("MembersService", () => {
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
       };
-      prismaService.member.findUnique.mockResolvedValue(staleMember);
+      database.member.findUnique.mockResolvedValue(staleMember);
       _refreshScheduler.enqueueRefresh.mockResolvedValue({
         queued: true,
         nextRefreshAt,
@@ -722,37 +976,37 @@ describe("MembersService", () => {
     });
 
     it("should call getGuildById when refresh=true", async () => {
-      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.guild.findFirst.mockResolvedValue(mockGuild);
+      database.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       await service.getGuildMemberById({ ...options, refresh: true });
 
-      expect(prismaService.guild.findFirst).toHaveBeenCalled();
+      expect(database.guild.findFirst).toHaveBeenCalled();
     });
 
     it("should call getGuildById when standalone=true", async () => {
-      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.guild.findFirst.mockResolvedValue(mockGuild);
+      database.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       await service.getGuildMemberById({ ...options, standalone: true });
 
-      expect(prismaService.guild.findFirst).toHaveBeenCalled();
+      expect(database.guild.findFirst).toHaveBeenCalled();
     });
   });
 
   describe("getMemberLootlogConfigSummary", () => {
     it("should return guild-scoped character summary with latest player snapshots", async () => {
-      prismaService.member.findUnique.mockResolvedValue({
+      database.member.findUnique.mockResolvedValue({
         userId: "discord-123",
         active: true,
       });
-      prismaService.userCharactersLootlogSettings.findMany.mockResolvedValue([
+      database.userCharactersLootlogSettings.findMany.mockResolvedValue([
         {
           userId: "discord-123",
           accountId: "10",
@@ -766,7 +1020,7 @@ describe("MembersService", () => {
           catchingGuildIds: [],
         },
       ]);
-      prismaService.playerSnapshot.findMany.mockResolvedValue([
+      database.playerSnapshot.findMany.mockResolvedValue([
         {
           accountId: 10,
           characterId: 20,
@@ -818,11 +1072,11 @@ describe("MembersService", () => {
     });
 
     it("should return fallback metadata states for invalid character refs", async () => {
-      prismaService.member.findUnique.mockResolvedValue({
+      database.member.findUnique.mockResolvedValue({
         userId: "discord-123",
         active: false,
       });
-      prismaService.userCharactersLootlogSettings.findMany.mockResolvedValue([
+      database.userCharactersLootlogSettings.findMany.mockResolvedValue([
         {
           userId: "discord-123",
           accountId: "abc",
@@ -830,7 +1084,7 @@ describe("MembersService", () => {
           catchingGuildIds: ["guild-123"],
         },
       ]);
-      prismaService.playerSnapshot.findMany.mockResolvedValue([]);
+      database.playerSnapshot.findMany.mockResolvedValue([]);
 
       const result = await service.getMemberLootlogConfigSummary({
         discordId: "discord-123",
@@ -851,7 +1105,7 @@ describe("MembersService", () => {
     });
 
     it("should throw when member is missing", async () => {
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.member.findUnique.mockResolvedValue(null);
 
       await expect(
         service.getMemberLootlogConfigSummary({
@@ -866,7 +1120,7 @@ describe("MembersService", () => {
     const options = { discordId: "discord-123", guildId: "guild-123" };
 
     it("should throw NotFoundException when member not found", async () => {
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.member.findUnique.mockResolvedValue(null);
 
       await expect(service.refreshMember(options)).rejects.toThrow(
         NotFoundException,
@@ -878,7 +1132,7 @@ describe("MembersService", () => {
 
     it("should throw NotFoundException when globalUserId is missing", async () => {
       const memberWithoutGlobalId = { ...mockMember, globalUserId: null };
-      prismaService.member.findUnique.mockResolvedValue(memberWithoutGlobalId);
+      database.member.findUnique.mockResolvedValue(memberWithoutGlobalId);
 
       await expect(service.refreshMember(options)).rejects.toThrow(
         NotFoundException,
@@ -886,14 +1140,14 @@ describe("MembersService", () => {
     });
 
     it("should successfully refresh member", async () => {
-      prismaService.member.findUnique.mockResolvedValue(mockMember);
-      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
-      prismaService.member.findUnique
+      database.member.findUnique.mockResolvedValue(mockMember);
+      database.guild.findFirst.mockResolvedValue(mockGuild);
+      database.member.findUnique
         .mockResolvedValueOnce(mockMember)
         .mockResolvedValueOnce(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       const result = await service.refreshMember({
         ...options,
@@ -908,15 +1162,15 @@ describe("MembersService", () => {
         ...mockMember,
         lastDiscordStatus: "UNAUTHORIZED",
       };
-      prismaService.member.findUnique
+      database.member.findUnique
         .mockResolvedValueOnce(mockMember)
         .mockResolvedValueOnce(mockMember)
         .mockResolvedValueOnce(mockMember);
-      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
+      database.guild.findFirst.mockResolvedValue(mockGuild);
       discordService.getGuildMember.mockRejectedValue(
         new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED),
       );
-      prismaService.member.update.mockResolvedValue(unauthorizedMember);
+      database.member.update.mockResolvedValue(unauthorizedMember);
 
       const result = await service.refreshMember({
         ...options,
@@ -924,7 +1178,7 @@ describe("MembersService", () => {
       });
 
       expect(result).toEqual(unauthorizedMember);
-      expect(prismaService.member.update).toHaveBeenCalledWith({
+      expect(database.member.update).toHaveBeenCalledWith({
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
@@ -939,12 +1193,12 @@ describe("MembersService", () => {
   describe("getGuildMembers", () => {
     it("should return active members for a guild", async () => {
       const members = [mockMember, { ...mockMember, id: "member-456" }];
-      prismaService.member.findMany.mockResolvedValue(members);
+      database.member.findMany.mockResolvedValue(members);
 
       const result = await service.getGuildMembers("guild-123");
 
       expect(result).toEqual(members);
-      expect(prismaService.member.findMany).toHaveBeenCalledWith({
+      expect(database.member.findMany).toHaveBeenCalledWith({
         where: {
           guildId: "guild-123",
           active: true,
@@ -960,7 +1214,7 @@ describe("MembersService", () => {
     });
 
     it("should return empty array when no members found", async () => {
-      prismaService.member.findMany.mockResolvedValue([]);
+      database.member.findMany.mockResolvedValue([]);
 
       const result = await service.getGuildMembers("guild-123");
 
@@ -968,8 +1222,35 @@ describe("MembersService", () => {
     });
   });
 
+  describe("getGuildMemberReferences", () => {
+    it("returns only the public reference fields", async () => {
+      database.member.findMany.mockResolvedValue([
+        {
+          ...mockMember,
+          roles: [{ color: 123456, position: 1 }],
+        },
+      ]);
+
+      const result = await service.getGuildMemberReferences("guild-123");
+
+      expect(result).toEqual([
+        {
+          id: 123,
+          userId: "discord-123",
+          name: "Test User",
+          avatar: "avatar.png",
+          active: true,
+          color: 123456,
+        },
+      ]);
+      expect(result[0]).not.toHaveProperty("guildId");
+      expect(result[0]).not.toHaveProperty("globalUserId");
+      expect(result[0]).not.toHaveProperty("lastDiscordStatus");
+    });
+  });
+
   describe("getGuildMembersSummary", () => {
-    it("should return cached lightweight members without querying Prisma", async () => {
+    it("should return cached lightweight members without querying the database", async () => {
       const cachedMembers = [
         {
           id: 123,
@@ -984,24 +1265,23 @@ describe("MembersService", () => {
       const result = await service.getGuildMembersSummary("guild-123");
 
       expect(result).toEqual(cachedMembers);
-      expect(prismaService.guild.findFirst).not.toHaveBeenCalled();
-      expect(prismaService.member.findMany).not.toHaveBeenCalled();
+      expect(database.guild.findFirst).not.toHaveBeenCalled();
+      expect(database.member.findMany).not.toHaveBeenCalled();
       expect(redisService.getOrSetJson).not.toHaveBeenCalled();
     });
 
     it("should return lightweight active members for a guild", async () => {
-      prismaService.guild.findFirst.mockResolvedValue({
+      database.guild.findFirst.mockResolvedValue({
         ownerId: "owner-123",
       });
-      prismaService.member.findMany.mockResolvedValue([
+      database.member.findMany.mockResolvedValue([
         {
-          id: 123,
-          userId: "discord-123",
+          ...mockMember,
           name: "Alpha",
-          avatar: "avatar.png",
           roles: [{ color: 123456 }],
         },
         {
+          ...mockMember,
           id: 456,
           userId: "discord-456",
           name: "Beta",
@@ -1028,7 +1308,7 @@ describe("MembersService", () => {
           color: null,
         },
       ]);
-      expect(prismaService.member.findMany).toHaveBeenCalledWith({
+      expect(database.member.findMany).toHaveBeenCalledWith({
         where: {
           guildId: "guild-123",
           active: true,
@@ -1081,19 +1361,19 @@ describe("MembersService", () => {
     });
 
     it("should return empty array when guild does not exist", async () => {
-      prismaService.guild.findFirst.mockResolvedValue(null);
+      database.guild.findFirst.mockResolvedValue(null);
 
       const result = await service.getGuildMembersSummary("guild-123");
 
       expect(result).toEqual([]);
-      expect(prismaService.member.findMany).not.toHaveBeenCalled();
+      expect(database.member.findMany).not.toHaveBeenCalled();
     });
 
     it("should return empty array when no lightweight members found", async () => {
-      prismaService.guild.findFirst.mockResolvedValue({
+      database.guild.findFirst.mockResolvedValue({
         ownerId: "owner-123",
       });
-      prismaService.member.findMany.mockResolvedValue([]);
+      database.member.findMany.mockResolvedValue([]);
 
       const result = await service.getGuildMembersSummary("guild-123");
 
@@ -1109,19 +1389,19 @@ describe("MembersService", () => {
     };
 
     it("should create new member when not exists", async () => {
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       const result = await service.createOrUpdateMember(memberData);
 
       expect(result).toEqual(mockMember);
-      expect(prismaService.member.upsert).toHaveBeenCalled();
+      expect(database.member.upsert).toHaveBeenCalled();
     });
 
     it("should update existing member", async () => {
       const updatedMember = { ...mockMember, name: "Updated Name" };
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(updatedMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(updatedMember);
 
       const result = await service.createOrUpdateMember(memberData);
 
@@ -1130,23 +1410,23 @@ describe("MembersService", () => {
 
     it("should use nick as member name if present", async () => {
       const memberWithNick = { ...memberData, nick: "Custom Nick" };
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       await service.createOrUpdateMember(memberWithNick);
 
-      const upsertCall = prismaService.member.upsert.mock.calls[0][0];
+      const upsertCall = database.member.upsert.mock.calls[0][0];
       expect(upsertCall.update.name).toBe("Custom Nick");
       expect(upsertCall.create.name).toBe("Custom Nick");
     });
 
     it("should use global_name if nick not present", async () => {
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       await service.createOrUpdateMember(memberData);
 
-      const upsertCall = prismaService.member.upsert.mock.calls[0][0];
+      const upsertCall = database.member.upsert.mock.calls[0][0];
       expect(upsertCall.update.name).toBe("Test User");
       expect(upsertCall.create.name).toBe("Test User");
     });
@@ -1156,15 +1436,22 @@ describe("MembersService", () => {
         ...memberData,
         roles: ["role-1", "role-2", "role-3"],
       };
-      prismaService.role.findMany.mockResolvedValue([
+      database.role.findMany.mockResolvedValue([
         { id: "role-1" },
         { id: "role-2" },
       ]);
-      prismaService.member.upsert.mockResolvedValue(mockMember);
+      database.member.upsert.mockResolvedValue(mockMember);
 
       await service.createOrUpdateMember(memberWithRoles);
 
-      const upsertCall = prismaService.member.upsert.mock.calls[0][0];
+      expect(database.role.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: ["role-1", "role-2", "role-3"] },
+          guildId: "guild-123",
+        },
+        select: { id: true },
+      });
+      const upsertCall = database.member.upsert.mock.calls[0][0];
       expect(upsertCall.update.roles.set).toEqual([
         { id: "role-1" },
         { id: "role-2" },
@@ -1177,8 +1464,8 @@ describe("MembersService", () => {
 
     it("should log error and rethrow on failure", async () => {
       const error = new Error("Database error");
-      prismaService.role.findMany.mockResolvedValue([]);
-      prismaService.member.upsert.mockRejectedValue(error);
+      database.role.findMany.mockResolvedValue([]);
+      database.member.upsert.mockRejectedValue(error);
 
       await expect(service.createOrUpdateMember(memberData)).rejects.toThrow(
         error,
@@ -1196,7 +1483,7 @@ describe("MembersService", () => {
     const options = { discordId: "discord-123", guildId: "guild-123" };
 
     it("should throw NotFoundException when member not found", async () => {
-      prismaService.member.findUnique.mockResolvedValue(null);
+      database.member.findUnique.mockResolvedValue(null);
 
       await expect(service.deactivateMember(options)).rejects.toThrow(
         NotFoundException,
@@ -1208,7 +1495,7 @@ describe("MembersService", () => {
 
     it("should throw BadRequestException when member already deactivated", async () => {
       const inactiveMember = { ...mockMember, active: false };
-      prismaService.member.findUnique.mockResolvedValue(inactiveMember);
+      database.member.findUnique.mockResolvedValue(inactiveMember);
 
       await expect(service.deactivateMember(options)).rejects.toThrow(
         BadRequestException,
@@ -1220,13 +1507,13 @@ describe("MembersService", () => {
 
     it("should successfully deactivate active member", async () => {
       const deactivatedMember = { ...mockMember, active: false };
-      prismaService.member.findUnique.mockResolvedValue(mockMember);
-      prismaService.member.update.mockResolvedValue(deactivatedMember);
+      database.member.findUnique.mockResolvedValue(mockMember);
+      database.member.update.mockResolvedValue(deactivatedMember);
 
       const result = await service.deactivateMember(options);
 
       expect(result).toEqual(deactivatedMember);
-      expect(prismaService.member.update).toHaveBeenCalledWith({
+      expect(database.member.update).toHaveBeenCalledWith({
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
@@ -1252,14 +1539,14 @@ describe("MembersService", () => {
 
   describe("deactivateMembersMissingFromDiscordGuilds", () => {
     it("deactivates active user members missing from a successful Discord guild list", async () => {
-      prismaService.member.findMany.mockResolvedValue([
+      database.member.findMany.mockResolvedValue([
         {
           userId: "discord-123",
           guildId: "guild-missing",
           globalUserId: "user-123",
         },
       ]);
-      prismaService.member.update.mockResolvedValue({
+      database.member.update.mockResolvedValue({
         ...mockMember,
         active: false,
       });
@@ -1272,7 +1559,7 @@ describe("MembersService", () => {
       });
 
       expect(result).toBe(1);
-      expect(prismaService.member.findMany).toHaveBeenCalledWith({
+      expect(database.member.findMany).toHaveBeenCalledWith({
         where: {
           userId: "discord-123",
           globalUserId: "user-123",
@@ -1286,7 +1573,7 @@ describe("MembersService", () => {
           globalUserId: true,
         },
       });
-      expect(prismaService.member.update).toHaveBeenCalledWith({
+      expect(database.member.update).toHaveBeenCalledWith({
         where: {
           memberId: { userId: "discord-123", guildId: "guild-missing" },
         },
@@ -1316,7 +1603,7 @@ describe("MembersService", () => {
 
   describe("deleteMembersByGuildId", () => {
     it("should deactivate all members for a guild", async () => {
-      prismaService.member.findMany.mockResolvedValue([
+      database.member.findMany.mockResolvedValue([
         {
           userId: "discord-123",
           guildId: "guild-123",
@@ -1328,7 +1615,7 @@ describe("MembersService", () => {
           globalUserId: null,
         },
       ]);
-      prismaService.member.updateMany.mockResolvedValue({ count: 5 });
+      database.member.updateMany.mockResolvedValue({ count: 5 });
 
       const result = await service.deleteMembersByGuildId("guild-123");
 
@@ -1347,7 +1634,7 @@ describe("MembersService", () => {
           },
         ],
       });
-      expect(prismaService.member.findMany).toHaveBeenCalledWith({
+      expect(database.member.findMany).toHaveBeenCalledWith({
         where: {
           guildId: "guild-123",
           active: true,
@@ -1358,7 +1645,7 @@ describe("MembersService", () => {
           globalUserId: true,
         },
       });
-      expect(prismaService.member.updateMany).toHaveBeenCalledWith({
+      expect(database.member.updateMany).toHaveBeenCalledWith({
         where: {
           guildId: "guild-123",
           active: true,
@@ -1376,7 +1663,7 @@ describe("MembersService", () => {
 
     it("should log error and rethrow on failure", async () => {
       const error = new Error("Database error");
-      prismaService.member.updateMany.mockRejectedValue(error);
+      database.member.updateMany.mockRejectedValue(error);
 
       await expect(service.deleteMembersByGuildId("guild-123")).rejects.toThrow(
         error,
@@ -1395,8 +1682,8 @@ describe("MembersService", () => {
     const requestedBy = "discord-123";
 
     it("should create bulk refresh job successfully", async () => {
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(null);
-      prismaService.member.findMany.mockResolvedValue([
+      database.memberRefreshJob.findFirst.mockResolvedValue(null);
+      database.member.findMany.mockResolvedValue([
         mockMember,
         { ...mockMember, id: "member-456", userId: "discord-456" },
       ]);
@@ -1410,7 +1697,7 @@ describe("MembersService", () => {
         failedMembers: 0,
         createdAt: new Date(),
       };
-      prismaService.memberRefreshJob.create.mockResolvedValue(mockJob);
+      database.memberRefreshJob.create.mockResolvedValue(mockJob);
 
       const result = await service.createBulkRefreshJob(guildId, requestedBy);
 
@@ -1453,15 +1740,15 @@ describe("MembersService", () => {
         failedMembers: 0,
         createdAt: new Date(),
       };
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(null);
-      prismaService.member.findMany.mockResolvedValue([mockMember]);
-      prismaService.memberRefreshJob.create.mockResolvedValue(mockJob);
-      prismaService.memberRefreshJob.update.mockResolvedValue({
+      database.memberRefreshJob.findFirst.mockResolvedValue(null);
+      database.member.findMany.mockResolvedValue([mockMember]);
+      database.memberRefreshJob.create.mockResolvedValue(mockJob);
+      database.memberRefreshJob.update.mockResolvedValue({
         ...mockJob,
         status: "FAILED",
         completedAt: new Date(),
       });
-      prismaService.memberRefreshJob.findUnique.mockResolvedValue({
+      database.memberRefreshJob.findUnique.mockResolvedValue({
         ...mockJob,
         status: "FAILED",
         completedAt: new Date(),
@@ -1472,7 +1759,7 @@ describe("MembersService", () => {
         service.createBulkRefreshJob(guildId, requestedBy),
       ).rejects.toThrow(queueError);
 
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
+      expect(database.memberRefreshJob.update).toHaveBeenCalledWith({
         where: { id: mockJob.id },
         data: {
           status: "FAILED",
@@ -1495,7 +1782,7 @@ describe("MembersService", () => {
         id: 1,
         createdAt: new Date(),
       };
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(recentJob);
+      database.memberRefreshJob.findFirst.mockResolvedValue(recentJob);
 
       await expect(
         service.createBulkRefreshJob(guildId, requestedBy),
@@ -1519,7 +1806,7 @@ describe("MembersService", () => {
         status: "COMPLETED",
         createdAt: new Date(),
       };
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
+      database.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
 
       const result = await service.getLatestRefreshJob("guild-123");
 
@@ -1527,14 +1814,14 @@ describe("MembersService", () => {
         ...mockJob,
         nextAvailableAt: expect.any(Date),
       });
-      expect(prismaService.memberRefreshJob.findFirst).toHaveBeenCalledWith({
+      expect(database.memberRefreshJob.findFirst).toHaveBeenCalledWith({
         where: { guildId: "guild-123" },
         orderBy: { createdAt: "desc" },
       });
     });
 
     it("should return null when no jobs found", async () => {
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(null);
+      database.memberRefreshJob.findFirst.mockResolvedValue(null);
 
       const result = await service.getLatestRefreshJob("guild-123");
 
@@ -1552,7 +1839,7 @@ describe("MembersService", () => {
         totalMembers: 10,
         createdAt: new Date(),
       };
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
+      database.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
 
       const result = await service.getRefreshJobStatus({
         guildId: "guild-123",
@@ -1563,7 +1850,7 @@ describe("MembersService", () => {
         ...mockJob,
         nextAvailableAt: expect.any(Date),
       });
-      expect(prismaService.memberRefreshJob.findFirst).toHaveBeenCalledWith({
+      expect(database.memberRefreshJob.findFirst).toHaveBeenCalledWith({
         where: {
           id: 1,
           guildId: "guild-123",
@@ -1572,7 +1859,7 @@ describe("MembersService", () => {
     });
 
     it("should throw NotFoundException when job not found", async () => {
-      prismaService.memberRefreshJob.findFirst.mockResolvedValue(null);
+      database.memberRefreshJob.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getRefreshJobStatus({

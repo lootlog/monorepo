@@ -34,6 +34,11 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.pull_request.base.sha }}
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+
       - name: Generate and commit changeset without executing pull request code
         id: changeset
         env:
@@ -42,7 +47,7 @@ jobs:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
-        run: node tools/release/create-dependabot-changeset.mjs
+        run: bun tools/release/create-dependabot-changeset.mjs
 
       - name: Dispatch CI for the bot-authored commit
         if: steps.changeset.outputs.changed == 'true'
@@ -52,4 +57,4 @@ jobs:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           HEAD_SHA: ${{ steps.changeset.outputs.commit_sha }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
-        run: node tools/ci/dispatch-automated-pr-ci.mjs
+        run: bun tools/ci/dispatch-automated-pr-ci.mjs

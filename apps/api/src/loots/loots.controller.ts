@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Body,
   Controller,
@@ -20,11 +20,8 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import {
-  type Guild,
-  Permission,
-  type Role,
-} from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
@@ -52,6 +49,9 @@ import {
 } from "#src/shared/dto/loot-response.dto";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+
+type Guild = typeof guildTable.$inferSelect;
+type Role = typeof roleTable.$inferSelect;
 
 @ApiTags("loots")
 @ApiBearerAuth()

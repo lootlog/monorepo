@@ -1,6 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Mock } from "vitest";
-import { Permission, NpcType, type Role } from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { mockFn } from "#src/test/mock-fn";
@@ -11,7 +13,9 @@ import {
 } from "./dto/get-kill-stats.dto.js";
 import { KillsController } from "./kills.controller.js";
 import { KillsService } from "./kills.service.js";
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+
+type Role = typeof roleTable.$inferSelect;
 
 describe("KillsController", () => {
   let controller: KillsController;

@@ -1,11 +1,11 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 import {
   commaSeparatedArray,
   intFromString,
   optionalFromQuery,
 } from "@lootlog/nest-shared/validators/query-helpers";
-import { NpcType } from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { KillStatsPeriodSchema } from "../utils/kill-stats-period.js";
 
 const GetMemberKillsSchema = z.object({

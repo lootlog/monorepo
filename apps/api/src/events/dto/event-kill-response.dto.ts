@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { EVENT_SCORING_MODES } from "@lootlog/scoring";
+import * as z from "zod";
+import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 import {
   flexibleIsoDatetimeCodec,
   isoDatetimeCodec,

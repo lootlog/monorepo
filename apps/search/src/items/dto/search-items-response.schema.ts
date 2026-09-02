@@ -1,29 +1,15 @@
-import { createZodDto, type ZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { itemHitSchema } from "./item-hit.schema.js";
-
-const facetDistributionSchema = z.record(
-  z.string(),
-  z.record(z.string(), z.number()),
-);
-
-const facetStatSchema = z.object({
-  min: z.number(),
-  max: z.number(),
+import { Schema } from "effect";
+import { ItemHit } from "./item-hit.schema.js";
+export const SearchItemsResponse = Schema.Struct({
+  hits: Schema.Array(ItemHit),
+  estimatedTotalHits: Schema.Number,
+  facetDistribution: Schema.Record(
+    Schema.String,
+    Schema.Record(Schema.String, Schema.Number),
+  ),
+  facetStats: Schema.Record(
+    Schema.String,
+    Schema.Struct({ min: Schema.Number, max: Schema.Number }),
+  ),
 });
-
-export const searchItemsResponseSchema = z
-  .object({
-    hits: z.array(itemHitSchema),
-    estimatedTotalHits: z.number(),
-    facetDistribution: facetDistributionSchema.default({}),
-    facetStats: z.record(z.string(), facetStatSchema).default({}),
-  })
-  .describe("Item search results");
-
-const SearchItemsResponseDtoBase: ZodDto<
-  typeof searchItemsResponseSchema,
-  false
-> = createZodDto(searchItemsResponseSchema);
-
-export class SearchItemsResponseDto extends SearchItemsResponseDtoBase {}
+export type SearchItemsResponse = typeof SearchItemsResponse.Type;

@@ -9,10 +9,10 @@ import { GuildsModule } from "#src/guilds/guilds.module";
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 import { UserLootlogConfigModule } from "#src/user-lootlog-config/user-lootlog-config.module";
-import { PrismaModule } from "#src/db/prisma.module";
 import { RedisModule } from "#src/lib/redis/redis.module";
 import { RedlockModule } from "#src/lib/redlock/redlock.module";
 import { EventTimerHooksModule } from "#src/events/event-timer-hooks.module";
+import { TimersRepository } from "./timers.repository.js";
 
 @Module({
   imports: [
@@ -22,12 +22,11 @@ import { EventTimerHooksModule } from "#src/events/event-timer-hooks.module";
     GuildsModule,
     RabbitMQModule.forRoot(rabbitmqConfig),
     UserLootlogConfigModule,
-    PrismaModule,
     RedisModule,
     RedlockModule,
     EventTimerHooksModule,
   ],
-  providers: [TimersService, TimersCleanupService],
+  providers: [TimersService, TimersCleanupService, TimersRepository],
   controllers: [TimersController],
   exports: [TimersService],
 })

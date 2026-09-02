@@ -17,7 +17,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import {
@@ -28,6 +28,8 @@ import {
   ReservationSharesResponseDto,
 } from "./dto/reservation-sharing.dto.js";
 import { ReservationSharingService } from "./reservation-sharing.service.js";
+
+type Guild = { readonly id: string };
 
 @ApiTags("reservation-sharing")
 @ApiBearerAuth()

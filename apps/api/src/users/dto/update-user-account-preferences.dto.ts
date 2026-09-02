@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import * as z from "zod";
 
 const PartialNotificationSettingsSchema = z.object({
   show: z.boolean().optional(),

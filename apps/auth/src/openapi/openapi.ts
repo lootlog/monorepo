@@ -1,0 +1,167 @@
+export const openApiDocument = {
+  openapi: "3.0.0",
+  paths: {
+    "/healthz": {
+      get: {
+        operationId: "HealthzController_healthCheck",
+        parameters: [],
+        responses: {
+          "200": { description: "Auth service is healthy" },
+        },
+        summary: "Health check",
+        tags: ["health"],
+      },
+    },
+    "/auth/verify": {
+      get: {
+        operationId: "AuthController_verify",
+        parameters: [
+          {
+            name: "x-auth-user-id",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+          },
+          {
+            name: "x-auth-discord-id",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+          },
+          {
+            name: "authorization",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+          },
+          {
+            name: "x-lootlog-credential-purpose",
+            in: "header",
+            required: false,
+            schema: { type: "string", enum: ["websocket-ticket"] },
+          },
+          {
+            name: "x-lootlog-websocket-origin",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: { type: "string", enum: ["OK"] },
+                  },
+                  required: ["status"],
+                },
+              },
+            },
+          },
+        },
+        summary: "Verify request identity",
+        tags: ["auth"],
+      },
+    },
+    "/auth/realtime-ticket": {
+      post: {
+        operationId: "AuthController_issueRealtimeTicket",
+        parameters: [],
+        responses: {
+          "201": {
+            description: "Short-lived single-use websocket ticket",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    ticket: { type: "string" },
+                    expiresAt: { type: "number" },
+                  },
+                  required: ["ticket", "expiresAt"],
+                },
+              },
+            },
+          },
+        },
+        summary: "Issue a single-use realtime ticket",
+        tags: ["auth"],
+      },
+    },
+    "/auth/@me/scopes": {
+      get: {
+        operationId: "AuthController_getScopes",
+        parameters: [],
+        responses: {
+          "200": {
+            description: "",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+        },
+        summary: "Get scopes for the current user",
+        tags: ["auth"],
+      },
+    },
+    "/auth/idp-token": {
+      post: {
+        operationId: "AuthController_getIdpToken",
+        parameters: [],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  userId: { type: "string" },
+                  discordId: { type: "string" },
+                },
+                required: ["userId", "discordId"],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    accessToken: { type: "string" },
+                    expiresIn: { type: "number" },
+                    scopes: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                  },
+                  required: ["accessToken", "expiresIn", "scopes"],
+                },
+              },
+            },
+          },
+        },
+        summary: "Issue an IDP token for a user account",
+        tags: ["auth"],
+      },
+    },
+  },
+  info: {
+    title: "Auth API",
+    description: "Authentication and identity service documentation",
+    version: "1.0",
+    contact: {},
+  },
+  tags: [],
+  servers: [],
+  components: { schemas: {} },
+} as const;

@@ -1,8 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import {
-  CHAT_APPEARANCE_READABLE_PRESET,
-  DEFAULT_NPC_TYPE_COLORS,
-} from "@lootlog/types";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { describe, expect, it, vi } from "vitest";
 import { ChatAppearancePresetCard } from "./chat-appearance-preset-card";
 

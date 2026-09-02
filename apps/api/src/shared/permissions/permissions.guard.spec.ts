@@ -1,7 +1,7 @@
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { Permission } from "#src/generated/prisma/client";
-import { Capability, type AccessPolicy } from "@lootlog/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import { PermissionsGuard } from "./permissions.guard.js";
 
 describe("PermissionsGuard", () => {

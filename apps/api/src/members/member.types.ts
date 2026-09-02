@@ -1,14 +1,17 @@
 import type {
-  Member,
-  MemberRefreshJob,
-  Prisma,
-  Role,
-} from "#src/generated/prisma/client";
+  memberRefreshJobTable,
+  memberTable,
+  roleTable,
+} from "../database/drizzle/schema.js";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,
 } from "./member-discord-sync-status.js";
 import type { MemberLastDiscordStatus } from "./constants/member-discord-status.constant.js";
+
+export type Member = typeof memberTable.$inferSelect;
+export type Role = typeof roleTable.$inferSelect;
+export type MemberRefreshJob = typeof memberRefreshJobTable.$inferSelect;
 
 export type MemberWithRoles = Member & {
   roles: Role[];
@@ -86,10 +89,6 @@ export type MemberBulkRefreshJobData = {
 export type DeleteMembersByGuildIdResult = {
   count: number;
   affectedMembers: MemberRemovalNotificationTarget[];
-};
-
-export type DeleteMembersByGuildIdOptions = {
-  tx?: Prisma.TransactionClient;
 };
 
 export type DeactivateMembersMissingFromDiscordGuildsOptions = {

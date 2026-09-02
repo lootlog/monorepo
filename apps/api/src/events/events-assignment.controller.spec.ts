@@ -1,6 +1,6 @@
 import { ForbiddenException } from "@nestjs/common";
-import { Permission } from "#src/generated/prisma/client";
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { EventsAssignmentController } from "./events-assignment.controller.js";
 

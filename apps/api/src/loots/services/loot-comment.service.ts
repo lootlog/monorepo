@@ -1,44 +1,16 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
 import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
 import { ErrorKey } from "../enum/error-key.enum.js";
+import { LootsRepository } from "../loots.repository.js";
 
 @Injectable()
 export class LootCommentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: LootsRepository) {}
 
   async getComments(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
-    const comments = await this.prisma.lootComment.findMany({
-      where: {
-        organizationLootRecord: {
-          guildId,
-          lootId,
-          archivedAt: null,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        member: {
-          select: {
-            name: true,
-            avatar: true,
-            userId: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-            },
-          },
-        },
-      },
-    });
+    const comments = await this.repository.findComments(guildId, lootId);
 
     return comments.map((comment) => ({
       id: comment.id,
@@ -58,53 +30,19 @@ export class LootCommentService {
     body: CreateCommentDto;
   }) {
     const { discordId, lootId, body, guildId } = options;
-    const organizationLootRecord =
-      await this.prisma.organizationLootRecord.findFirst({
-        where: {
-          lootId,
-          guildId,
-          archivedAt: null,
-        },
-        select: { id: true },
-      });
-
-    if (!organizationLootRecord) {
+    const result = await this.repository.createComment({
+      discordId,
+      guildId,
+      lootId,
+      content: body.content,
+    });
+    if (result.kind === "loot-missing") {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
-
-    const comment = await this.prisma.lootComment.create({
-      data: {
-        content: body.content,
-        organizationLootRecord: {
-          connect: { id: organizationLootRecord.id },
-        },
-        member: {
-          connect: {
-            memberId: {
-              userId: discordId,
-              guildId: guildId,
-            },
-          },
-        },
-      },
-      include: {
-        member: {
-          select: {
-            name: true,
-            avatar: true,
-            userId: true,
-            roles: {
-              select: {
-                color: true,
-              },
-              orderBy: {
-                position: "desc",
-              },
-            },
-          },
-        },
-      },
-    });
+    if (result.kind !== "created") {
+      throw new Error(`Loot comment creation failed: ${result.kind}`);
+    }
+    const comment = result.value;
 
     return {
       id: comment.id,

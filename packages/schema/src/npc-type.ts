@@ -1,16 +1,18 @@
 import { Schema } from "effect";
 
-export enum NpcTypeEnum {
-  COMMON = "COMMON",
-  ELITE = "ELITE",
-  ELITE2 = "ELITE2",
-  ELITE3 = "ELITE3",
-  HERO = "HERO",
-  EVENT_HERO = "EVENT_HERO",
-  COLOSSUS = "COLOSSUS",
-  TITAN = "TITAN",
-  NPC = "NPC",
-}
+export const NpcTypeEnum = {
+  COMMON: "COMMON",
+  ELITE: "ELITE",
+  ELITE2: "ELITE2",
+  ELITE3: "ELITE3",
+  HERO: "HERO",
+  EVENT_HERO: "EVENT_HERO",
+  COLOSSUS: "COLOSSUS",
+  TITAN: "TITAN",
+  NPC: "NPC",
+} as const;
+
+export type NpcTypeEnum = (typeof NpcTypeEnum)[keyof typeof NpcTypeEnum];
 
 export const NpcTypeSchema = Schema.Literals([
   NpcTypeEnum.COMMON,

@@ -3,17 +3,15 @@ import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberSyncInterceptor } from "./member-sync.interceptor.js";
-import { PrismaService } from "#src/db/prisma.service";
 import { MembersService } from "#src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
+import { MemberSyncRepository } from "./member-sync.repository.js";
 
 describe("MemberSyncInterceptor", () => {
   let interceptor: MemberSyncInterceptor;
-  let prismaService: {
-    member: {
-      findMany: Mock;
-    };
+  let repository: {
+    findStaleMembers: Mock;
   };
   let membersService: {
     getMemberSoftStaleThreshold: Mock;
@@ -25,10 +23,8 @@ describe("MemberSyncInterceptor", () => {
   };
 
   beforeEach(async () => {
-    const mockPrismaService = {
-      member: {
-        findMany: mockFn(),
-      },
+    const mockRepository = {
+      findStaleMembers: mockFn(),
     };
 
     const mockMembersService = {
@@ -44,19 +40,18 @@ describe("MemberSyncInterceptor", () => {
     const mockLogger = {
       log: mockFn(),
     };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemberSyncInterceptor,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: MemberSyncRepository, useValue: mockRepository },
         { provide: MembersService, useValue: mockMembersService },
         { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
     interceptor = module.get(MemberSyncInterceptor);
-    prismaService = module.get(PrismaService);
+    repository = mockRepository;
     membersService = module.get(MembersService);
     redisService = module.get(RedisService);
   });
@@ -77,7 +72,7 @@ describe("MemberSyncInterceptor", () => {
       const threshold = new Date("2026-03-10T10:00:00.000Z");
       redisService.get.mockResolvedValue(null);
       membersService.getMemberSoftStaleThreshold.mockReturnValue(threshold);
-      prismaService.member.findMany.mockResolvedValue([]);
+      repository.findStaleMembers.mockResolvedValue([]);
 
       await testInterceptor.queueStaleMemberRefreshes(
         "discord-123",
@@ -86,23 +81,11 @@ describe("MemberSyncInterceptor", () => {
       );
 
       expect(membersService.getMemberSoftStaleThreshold).toHaveBeenCalled();
-      expect(prismaService.member.findMany).toHaveBeenCalledWith({
-        where: {
-          userId: "discord-123",
-          guildId: { in: ["guild-123"] },
-          globalUserId: { not: null },
-          active: true,
-          OR: [
-            { lastDiscordSyncAt: null },
-            { lastDiscordSyncAt: { lt: threshold } },
-          ],
-        },
-        select: {
-          userId: true,
-          guildId: true,
-          globalUserId: true,
-        },
-      });
+      expect(repository.findStaleMembers).toHaveBeenCalledWith(
+        "discord-123",
+        ["guild-123"],
+        threshold,
+      );
     });
 
     it("should skip querying and queueing when throttled", async () => {
@@ -121,7 +104,7 @@ describe("MemberSyncInterceptor", () => {
         [{ id: "guild-123" }],
       );
 
-      expect(prismaService.member.findMany).not.toHaveBeenCalled();
+      expect(repository.findStaleMembers).not.toHaveBeenCalled();
       expect(membersService.getMemberSoftStaleThreshold).not.toHaveBeenCalled();
       expect(membersService.queueMemberRefresh).not.toHaveBeenCalled();
     });
@@ -138,7 +121,7 @@ describe("MemberSyncInterceptor", () => {
       membersService.getMemberSoftStaleThreshold.mockReturnValue(
         new Date("2026-03-10T10:00:00.000Z"),
       );
-      prismaService.member.findMany.mockResolvedValue([
+      repository.findStaleMembers.mockResolvedValue([
         {
           userId: "discord-123",
           guildId: "guild-123",

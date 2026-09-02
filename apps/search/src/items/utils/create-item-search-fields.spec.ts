@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { createItemSearchFields } from "./create-item-search-fields.js";
 
 describe("createItemSearchFields", () => {

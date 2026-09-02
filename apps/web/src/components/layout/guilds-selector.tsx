@@ -9,7 +9,7 @@ import { useState, useEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
-import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 import {
   useUpdateUserPreferences,
   useUserPreferences,

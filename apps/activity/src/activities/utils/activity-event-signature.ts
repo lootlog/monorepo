@@ -1,5 +1,15 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { stableStringify } from "@lootlog/nest-shared/utils/stable-stringify";
+const stableStringify = (value: unknown): string =>
+  JSON.stringify(value, (_key, entry) =>
+    entry && typeof entry === "object" && !Array.isArray(entry)
+      ? Object.keys(entry)
+          .sort()
+          .reduce<Record<string, unknown>>((result, key) => {
+            result[key] = entry[key];
+            return result;
+          }, {})
+      : entry,
+  );
 
 export const ACTIVITY_EVENT_SIGNATURE_HEADER = "x-lootlog-activity-signature";
 

@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { PrismaService } from "../src/db/prisma.service.js";
-import { Permission } from "../src/generated/prisma/client.js";
+import { TestDatabase } from "./test-database.js";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   closeE2EApp,
   createE2EApp,
@@ -15,32 +15,32 @@ import {
 
 describe("Event pins E2E", () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let database: TestDatabase;
   let redis: RedisService;
 
   beforeAll(async () => {
-    ({ app, prisma, redis } = await createE2EApp());
+    ({ app, database, redis } = await createE2EApp());
   });
 
   afterAll(async () => {
-    await closeE2EApp(app, prisma);
+    await closeE2EApp(app, database);
   });
 
   beforeEach(async () => {
-    await resetEventsTimersState(prisma, redis);
+    await resetEventsTimersState(database, redis);
   });
 
   it("pins and lists events through a vanity URL for an administrator", async () => {
-    const guild = await createGuildFixture(prisma, {
+    const guild = await createGuildFixture(database, {
       id: "guild-with-vanity",
       vanityUrl: "eventowa",
     });
-    await createMemberFixture(prisma, {
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [Permission.ADMIN],
       type: "ADMIN",
     });
-    const { event } = await createEventFixture(prisma, { guildId: guild.id });
+    const { event } = await createEventFixture(database, { guildId: guild.id });
 
     await withAuth(
       request(app.getHttpServer()).put(
@@ -69,14 +69,14 @@ describe("Event pins E2E", () => {
   });
 
   it("preserves concurrent pins and keeps repeated operations idempotent", async () => {
-    const guild = await createGuildFixture(prisma);
-    await createMemberFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [Permission.LOOTLOG_EVENTS_READ],
     });
     const [{ event: firstEvent }, { event: secondEvent }] = await Promise.all([
-      createEventFixture(prisma, { guildId: guild.id, name: "First" }),
-      createEventFixture(prisma, {
+      createEventFixture(database, { guildId: guild.id, name: "First" }),
+      createEventFixture(database, {
         guildId: guild.id,
         name: "Second",
         mapId: 5002,
@@ -103,7 +103,7 @@ describe("Event pins E2E", () => {
     ).expect(200);
 
     expect(
-      await prisma.userPinnedEvent.count({
+      await database.userPinnedEvent.count({
         where: { userId: "e2e-user" },
       }),
     ).toBe(2);
@@ -120,14 +120,14 @@ describe("Event pins E2E", () => {
     ).expect(204);
 
     expect(
-      await prisma.userPinnedEvent.count({
+      await database.userPinnedEvent.count({
         where: { userId: "e2e-user" },
       }),
     ).toBe(1);
 
-    await prisma.event.delete({ where: { id: secondEvent.id } });
+    await database.event.delete({ where: { id: secondEvent.id } });
     expect(
-      await prisma.userPinnedEvent.count({
+      await database.userPinnedEvent.count({
         where: { userId: "e2e-user" },
       }),
     ).toBe(0);
@@ -135,27 +135,27 @@ describe("Event pins E2E", () => {
 
   it("rejects inactive, missing, and cross-guild events", async () => {
     const now = new Date();
-    const guild = await createGuildFixture(prisma);
-    const otherGuild = await createGuildFixture(prisma, {
+    const guild = await createGuildFixture(database);
+    const otherGuild = await createGuildFixture(database, {
       id: "other-guild",
       name: "Other Guild",
     });
-    await createMemberFixture(prisma, {
+    await createMemberFixture(database, {
       guildId: guild.id,
       permissions: [Permission.LOOTLOG_EVENTS_READ],
     });
-    const { event: upcomingEvent } = await createEventFixture(prisma, {
+    const { event: upcomingEvent } = await createEventFixture(database, {
       guildId: guild.id,
       startsAt: new Date(now.getTime() + 60_000),
     });
-    const { event: endedEvent } = await createEventFixture(prisma, {
+    const { event: endedEvent } = await createEventFixture(database, {
       guildId: guild.id,
       name: "Ended",
       mapId: 5002,
       startsAt: new Date(now.getTime() - 120_000),
       endsAt: new Date(now.getTime() - 60_000),
     });
-    const { event: otherEvent } = await createEventFixture(prisma, {
+    const { event: otherEvent } = await createEventFixture(database, {
       guildId: otherGuild.id,
       mapId: 5003,
     });
@@ -178,9 +178,9 @@ describe("Event pins E2E", () => {
   });
 
   it("requires event read permission", async () => {
-    const guild = await createGuildFixture(prisma);
-    await createMemberFixture(prisma, { guildId: guild.id });
-    const { event } = await createEventFixture(prisma, { guildId: guild.id });
+    const guild = await createGuildFixture(database);
+    await createMemberFixture(database, { guildId: guild.id });
+    const { event } = await createEventFixture(database, { guildId: guild.id });
 
     await withAuth(
       request(app.getHttpServer()).put(

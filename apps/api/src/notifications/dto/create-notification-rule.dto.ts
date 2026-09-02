@@ -3,8 +3,8 @@ import {
   NotificationScheduleIntervalType,
   NotificationScheduleStrategy,
   NotificationTriggerType,
-} from "@lootlog/types";
-import { z } from "zod";
+} from "@lootlog/schema/notifications";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 import { Error } from "#src/notifications/enum/error.enum";
 

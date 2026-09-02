@@ -1,15 +1,21 @@
 import { useGameStore } from "@/store/game.store";
-import type { CreatePartyGatheringDtoCharacter } from "@lootlog/api-client/models/main/create-party-gathering-dto-character";
-import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
-import type { MemberResponseDto } from "@lootlog/api-client/models/main/member-response-dto";
-import type { MemberResponseDtoRolesItem } from "@lootlog/api-client/models/main/member-response-dto-roles-item";
-import type { SoundSettingsResponseDto } from "@lootlog/api-client/models/main/sound-settings-response-dto";
-import type { TimerResponseDto } from "@lootlog/api-client/models/main/timer-response-dto";
+import type {
+  CreatePartyGatheringDtoCharacter,
+  GuildResponseDtoOutput,
+  MemberSummaryResponseDtoOutput,
+  MemberResponseDto,
+  MemberResponseDtoRolesItem,
+  SoundSettingsResponseDto,
+  TimerResponseDto,
+} from "@lootlog/client/main";
+
 import type { Guild } from "@/api/guilds.api";
 import type { Npc } from "@/api/npcs.api";
 import type { GuildMember } from "@/types/guild-member";
-import type { NpcTypeSoundConfig, UserSoundSettings } from "@lootlog/types";
+import type {
+  NpcTypeSoundConfig,
+  UserSoundSettings,
+} from "@lootlog/schema/sound-settings";
 
 export type GuildIdentity = Pick<
   GuildResponseDtoOutput,

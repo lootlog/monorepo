@@ -17,7 +17,7 @@ import {
 import {
   EVENT_SCORING_ACTION_TYPES,
   type EventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import { getScoringActionTypeLabel } from "../../utils/scoring-rule-labels";
 
 type ScoringRulesFormValues = {

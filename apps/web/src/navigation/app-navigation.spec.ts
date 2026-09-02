@@ -2,7 +2,7 @@ import {
   Capability,
   createAccessPolicy,
   type Capability as CapabilityName,
-} from "@lootlog/access-policy";
+} from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "vitest";
 import {
   resolveAppNavigation,

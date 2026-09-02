@@ -1,4 +1,4 @@
-import type { PartyReadyRoomCharacter } from "@lootlog/types";
+import type { PartyReadyRoomCharacter } from "@lootlog/schema/party-ready-room";
 import { ConflictException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {

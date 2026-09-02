@@ -1,5 +1,7 @@
-import { getTimersControllerGetAllTimersQueryKey } from "@lootlog/api-client/react-query/main/timers";
-import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/api-client/react-query/main/users";
+import {
+  getTimersControllerGetAllTimersQueryKey,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+} from "@lootlog/client/main";
 
 export const queryKeys = {
   guilds: () => getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),

@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
+import type { TimerHistoryResponseDto } from "@lootlog/client/main";
 import { cn } from "@/lib/utils";
 import { format } from "@/utils/local-date";
 import { Plus, RotateCcw, Trash2, Undo2 } from "lucide-react";

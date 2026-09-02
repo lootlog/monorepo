@@ -1,13 +1,10 @@
-import { createZodDto, type ZodDto } from "nestjs-zod";
-import { z } from "zod";
-
-export const searchAllQuerySchema = z.object({
-  limit: z.coerce.number().optional().default(10),
-  search: z.string().optional(),
-  world: z.string().optional(),
+export interface SearchAllDto {
+  readonly limit: number;
+  readonly search?: string;
+  readonly world?: string;
+}
+export const parseSearchAllQuery = (url: URL): SearchAllDto => ({
+  limit: Number(url.searchParams.get("limit") ?? 10),
+  search: url.searchParams.get("search") ?? undefined,
+  world: url.searchParams.get("world") ?? undefined,
 });
-
-const SearchAllDtoBase: ZodDto<typeof searchAllQuerySchema> =
-  createZodDto(searchAllQuerySchema);
-
-export class SearchAllDto extends SearchAllDtoBase {}

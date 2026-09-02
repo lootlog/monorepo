@@ -1,29 +1,14 @@
-import { NpcTypeEnum } from "@lootlog/types";
-import { createZodDto, type ZodDto } from "nestjs-zod";
-import { z } from "zod";
-
-export const npcHitSchema = z
-  .object({
-    id: z.number(),
-    prof: z.string(),
-    icon: z.string(),
-    name: z.string(),
-    lvl: z.number(),
-    wt: z.number(),
-    type: z.nativeEnum(NpcTypeEnum),
-    margonemType: z.number(),
-    world: z.string(),
-  })
-  .describe("NPC search hit");
-
-const NpcHitDtoBase: ZodDto<typeof npcHitSchema, false> =
-  createZodDto(npcHitSchema);
-
-export class NpcHitDto extends NpcHitDtoBase {}
-
-const GetNpcsResponseSchema = z.array(npcHitSchema);
-
-const GetNpcsResponseDtoBase: ZodDto<typeof GetNpcsResponseSchema, false> =
-  createZodDto(GetNpcsResponseSchema);
-
-export class GetNpcsResponseDto extends GetNpcsResponseDtoBase {}
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { Schema } from "effect";
+export const NpcHit = Schema.Struct({
+  id: Schema.Number,
+  prof: Schema.String,
+  icon: Schema.String,
+  name: Schema.String,
+  lvl: Schema.Number,
+  wt: Schema.Number,
+  type: NpcTypeSchema,
+  margonemType: Schema.Number,
+  world: Schema.String,
+});
+export type NpcHit = typeof NpcHit.Type;

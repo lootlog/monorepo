@@ -11,7 +11,7 @@ import { t } from "@/i18n/messages";
 import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
-} from "@lootlog/api-client/react-query/search/npcs";
+} from "@lootlog/client/search";
 import {
   areBasicRouteSearchStatesEqual,
   emptyBasicRouteSearch,

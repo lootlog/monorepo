@@ -1,10 +1,10 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import {
-  getNpcTypeByWt,
-  type GuildLootEventNpc,
-  type GuildLootShareUpdatedEventV2,
-} from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type {
+  GuildLootEventNpc,
+  GuildLootShareUpdatedEventV2,
+} from "@lootlog/schema/loot-events";
 import {
   BadRequestException,
   ConflictException,
@@ -16,13 +16,9 @@ import {
 import { createHash } from "node:crypto";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import {
-  LootShareSource,
-  NpcType,
-  type Prisma,
-} from "#src/generated/prisma/client";
+import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
@@ -31,6 +27,7 @@ import type { CreateLootDto } from "#src/loots/dto/create-loot.dto";
 import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import type { LootShare } from "#src/shared/dto/loot-response.dto";
 import type { Logger } from "winston";
+import { LootAllocationRepository } from "./loot-allocation.repository.js";
 
 type LootNpcWithSocketSnapshot = {
   npcSnapshot: {
@@ -57,7 +54,7 @@ const LOOT_SHARE_SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 export class LootAllocationService {
   constructor(
     private readonly amqpConnection: AmqpConnection,
-    private readonly prisma: PrismaService,
+    private readonly repository: LootAllocationRepository,
     private readonly redisService: RedisService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
@@ -71,13 +68,9 @@ export class LootAllocationService {
       return { share: {}, source: LootShareSource.NONE };
     }
 
-    const ambiguousNpcVariant = await this.prisma.npcSnapshot.findFirst({
-      where: {
-        name: primaryNpc.name,
-        OR: [{ type: { not: NpcType.COLOSSUS } }, { type: null }],
-      },
-      select: { id: true },
-    });
+    const ambiguousNpcVariant = await this.repository.hasAmbiguousNpcVariant(
+      primaryNpc.name,
+    );
     if (ambiguousNpcVariant) {
       return { share: {}, source: LootShareSource.NONE };
     }
@@ -104,37 +97,10 @@ export class LootAllocationService {
     const submissionCutoff = new Date(
       Date.now() - LOOT_SHARE_SUBMISSION_WINDOW_MS,
     );
-    const authorizedLootWhere = this.getAuthorizedLootUpdateWhere(
-      options.actorUserId,
-      options.lootId,
+    const loot = await this.repository.findAuthorizedLoot({
+      actorUserId: options.actorUserId,
+      lootId: options.lootId,
       submissionCutoff,
-    );
-    const loot = await this.prisma.loot.findFirst({
-      where: authorizedLootWhere,
-      include: {
-        lootItems: {
-          include: {
-            itemSnapshot: true,
-          },
-        },
-        lootPlayers: {
-          include: {
-            playerSnapshot: true,
-          },
-        },
-        lootNpcs: {
-          include: {
-            npcSnapshot: true,
-          },
-          orderBy: { id: "asc" },
-        },
-        organizationLootRecords: {
-          where: { archivedAt: null },
-          select: {
-            guildId: true,
-          },
-        },
-      },
     });
     if (!loot) {
       throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
@@ -194,17 +160,13 @@ export class LootAllocationService {
       });
     }
 
-    const updateResult = await this.prisma.loot.updateMany({
-      where: {
-        ...authorizedLootWhere,
-        lootShareSource: { not: LootShareSource.CHAT_MESSAGE },
-      },
-      data: {
-        lootShare: mappedLootShare,
-        lootShareSource: LootShareSource.CHAT_MESSAGE,
-      },
+    const updated = await this.repository.compareAndSetChatAllocation({
+      actorUserId: options.actorUserId,
+      lootId: options.lootId,
+      submissionCutoff,
+      lootShare: mappedLootShare,
     });
-    if (updateResult.count === 0) {
+    if (!updated) {
       return this.acknowledgeConcurrentUpdate({
         actorUserId: options.actorUserId,
         expectedLootShare: mappedLootShare,
@@ -344,39 +306,16 @@ export class LootAllocationService {
     return allocation;
   }
 
-  private getAuthorizedLootUpdateWhere(
-    actorUserId: string,
-    lootId: number,
-    submissionCutoff: Date,
-  ): Prisma.LootWhereInput {
-    return {
-      id: lootId,
-      organizationLootRecords: {
-        some: {
-          submissions: {
-            some: {
-              member: { globalUserId: actorUserId },
-              createdAt: { gte: submissionCutoff },
-            },
-          },
-        },
-      },
-    };
-  }
-
   private async acknowledgeConcurrentUpdate(options: {
     actorUserId: string;
     expectedLootShare: LootShare;
     lootId: number;
     submissionCutoff: Date;
   }): Promise<LootShare> {
-    const loot = await this.prisma.loot.findFirst({
-      where: this.getAuthorizedLootUpdateWhere(
-        options.actorUserId,
-        options.lootId,
-        options.submissionCutoff,
-      ),
-      select: { lootShare: true, lootShareSource: true },
+    const loot = await this.repository.findAuthorizedAllocationState({
+      actorUserId: options.actorUserId,
+      lootId: options.lootId,
+      submissionCutoff: options.submissionCutoff,
     });
     if (!loot) {
       throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);

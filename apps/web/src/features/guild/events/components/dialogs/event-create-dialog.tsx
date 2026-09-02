@@ -19,20 +19,17 @@ import { toast } from "sonner";
 import { Trophy, Settings, BookOpenText } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getListEventsQueryKey,
-  useCreateEvent,
-} from "@lootlog/api-client/react-query/main/events";
-import type { EventListItemResponseDto } from "@lootlog/api-client/models/main/event-list-item-response-dto";
+import { getListEventsQueryKey, useCreateEvent } from "@lootlog/client/main";
+import type { EventListItemResponseDto } from "@lootlog/client/main";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import { getApiErrorMessage } from "../../utils/get-api-error-message";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "../scoring/scoring-mode-selector";

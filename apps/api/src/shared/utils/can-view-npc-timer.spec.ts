@@ -1,9 +1,9 @@
-import { Permission } from "#src/generated/prisma/client";
 import {
   canViewNpcTimer,
   type NpcPermissionData,
   type RolePermissionData,
-} from "@lootlog/api-helpers/permissions";
+} from "@lootlog/domain/npc-permissions";
+import { Permission } from "@lootlog/schema/permissions";
 
 function createRole(
   permissions: string[],

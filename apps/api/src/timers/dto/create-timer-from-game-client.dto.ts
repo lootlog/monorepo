@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
 import { TimerActorCharacterSchema } from "#src/timers/dto/timer-actor-character.schema";

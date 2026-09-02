@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type pg from "pg";
-import type { db, drizzlePool } from "./drizzle.js";
+import type { AuthDatabaseConnection } from "./drizzle.js";
 
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
@@ -22,14 +22,65 @@ type LocalMigration = {
   hash: string;
 };
 
-type AuthDatabaseConnection = {
-  db: typeof db;
-  drizzlePool: typeof drizzlePool;
+type SchemaColumn = {
+  tableName: string;
+  columnName: string;
+  dataType: string;
+  isNullable: "NO" | "YES";
 };
 
-function getAuthDatabaseConnection(): Promise<AuthDatabaseConnection> {
-  return import("./drizzle.js");
-}
+export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> = [
+  ["account", "accessToken", "text", "YES"],
+  ["account", "accessTokenExpiresAt", "timestamp with time zone", "YES"],
+  ["account", "accountId", "text", "NO"],
+  ["account", "createdAt", "timestamp with time zone", "NO"],
+  ["account", "id", "text", "NO"],
+  ["account", "idToken", "text", "YES"],
+  ["account", "password", "text", "YES"],
+  ["account", "providerId", "text", "NO"],
+  ["account", "refreshToken", "text", "YES"],
+  ["account", "refreshTokenExpiresAt", "timestamp with time zone", "YES"],
+  ["account", "scope", "text", "YES"],
+  ["account", "updatedAt", "timestamp with time zone", "NO"],
+  ["account", "userId", "text", "NO"],
+  ["jwks", "createdAt", "timestamp with time zone", "NO"],
+  ["jwks", "expiresAt", "timestamp with time zone", "YES"],
+  ["jwks", "id", "text", "NO"],
+  ["jwks", "privateKey", "text", "NO"],
+  ["jwks", "publicKey", "text", "NO"],
+  ["session", "createdAt", "timestamp with time zone", "NO"],
+  ["session", "expiresAt", "timestamp with time zone", "NO"],
+  ["session", "id", "text", "NO"],
+  ["session", "impersonatedBy", "text", "YES"],
+  ["session", "ipAddress", "text", "YES"],
+  ["session", "token", "text", "NO"],
+  ["session", "updatedAt", "timestamp with time zone", "NO"],
+  ["session", "userAgent", "text", "YES"],
+  ["session", "userId", "text", "NO"],
+  ["user", "banExpires", "timestamp with time zone", "YES"],
+  ["user", "banReason", "text", "YES"],
+  ["user", "banned", "boolean", "YES"],
+  ["user", "createdAt", "timestamp with time zone", "NO"],
+  ["user", "discordId", "text", "NO"],
+  ["user", "email", "text", "NO"],
+  ["user", "emailVerified", "boolean", "NO"],
+  ["user", "id", "text", "NO"],
+  ["user", "image", "text", "YES"],
+  ["user", "name", "text", "NO"],
+  ["user", "role", "text", "YES"],
+  ["user", "updatedAt", "timestamp with time zone", "NO"],
+  ["verification", "createdAt", "timestamp with time zone", "NO"],
+  ["verification", "expiresAt", "timestamp with time zone", "NO"],
+  ["verification", "id", "text", "NO"],
+  ["verification", "identifier", "text", "NO"],
+  ["verification", "updatedAt", "timestamp with time zone", "NO"],
+  ["verification", "value", "text", "NO"],
+].map(([tableName, columnName, dataType, isNullable]) => ({
+  tableName,
+  columnName,
+  dataType,
+  isNullable,
+})) as ReadonlyArray<SchemaColumn>;
 
 function getMigrationJournalPath() {
   return path.join(migrationsFolder, "meta", "_journal.json");
@@ -107,6 +158,34 @@ async function repairLegacyJwtSchema(pool: pg.Pool) {
   `);
 }
 
+export async function assertAuthSchemaFingerprint(pool: pg.Pool) {
+  const result = await pool.query<{
+    tableName: string;
+    columnName: string;
+    dataType: string;
+    isNullable: "NO" | "YES";
+  }>(
+    `
+      SELECT
+        table_name AS "tableName",
+        column_name AS "columnName",
+        data_type AS "dataType",
+        is_nullable AS "isNullable"
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1::text[])
+      ORDER BY table_name, column_name
+    `,
+    [authTableNames],
+  );
+
+  if (JSON.stringify(result.rows) !== JSON.stringify(AUTH_SCHEMA_FINGERPRINT)) {
+    throw new Error(
+      "Auth database schema does not match the adopted Drizzle baseline; refusing to mark migrations as applied.",
+    );
+  }
+}
+
 async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
   const localMigrations = readLocalMigrations();
 
@@ -124,32 +203,29 @@ async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
   );
 }
 
-export async function initializeAuthMigrations(pool?: pg.Pool) {
-  const migrationPool = pool ?? (await getAuthDatabaseConnection()).drizzlePool;
+export async function initializeAuthMigrations(pool: pg.Pool) {
+  await ensureMigrationTracking(pool);
 
-  await ensureMigrationTracking(migrationPool);
-
-  const trackedMigrationCount = await getTrackedMigrationCount(migrationPool);
+  const trackedMigrationCount = await getTrackedMigrationCount(pool);
 
   if (trackedMigrationCount > 0) {
     return;
   }
 
-  const existingAuthTableCount = await getExistingAuthTableCount(migrationPool);
+  const existingAuthTableCount = await getExistingAuthTableCount(pool);
 
   if (existingAuthTableCount === 0) {
     return;
   }
 
-  await repairLegacyJwtSchema(migrationPool);
-  await markBaselineMigrationsAsApplied(migrationPool);
+  await repairLegacyJwtSchema(pool);
+  await assertAuthSchemaFingerprint(pool);
+  await markBaselineMigrationsAsApplied(pool);
 }
 
-export async function runAuthMigrations(pool?: pg.Pool) {
-  const authDatabaseConnection = await getAuthDatabaseConnection();
-
-  await initializeAuthMigrations(pool ?? authDatabaseConnection.drizzlePool);
-  await migrate(authDatabaseConnection.db, {
+export async function runAuthMigrations(connection: AuthDatabaseConnection) {
+  await initializeAuthMigrations(connection.pool);
+  await migrate(connection.db, {
     migrationsFolder,
     migrationsSchema,
     migrationsTable,

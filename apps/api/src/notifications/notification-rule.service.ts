@@ -12,9 +12,7 @@ import {
   NotificationScheduleIntervalType as DbNotificationScheduleIntervalType,
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTriggerType as DbNotificationTriggerType,
-  Prisma,
-} from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
+} from "#src/notifications/notification-enums";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/constants/notification-schedule-timezone.constant";
 import { NotificationContentService } from "#src/notifications/notification-content.service";
@@ -37,6 +35,8 @@ import {
   getDefaultTestTriggerUsage,
   getWorstTestTriggerUsage,
 } from "#src/notifications/utils/test-trigger-usage.util";
+import type { JsonObject, JsonValue } from "./notification-database.types.js";
+import { NotificationsRepository } from "./notifications.repository.js";
 
 const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
@@ -56,7 +56,7 @@ const firstNonNullish = <T>(
 @Injectable()
 export class NotificationRuleService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: NotificationsRepository,
     private readonly guildsService: GuildsService,
     private readonly targetService: NotificationTargetService,
     private readonly jobService: NotificationJobService,
@@ -66,25 +66,9 @@ export class NotificationRuleService {
   // ── Guild Rules ──────────────────────────────────────────────────────
 
   async listGuildRules(guildId: string) {
-    const [guildSettings, rules] = await Promise.all([
-      this.prisma.guild.findUnique({
-        where: { id: guildId },
-        select: { notificationRuleLimit: true },
-      }),
-      this.prisma.notificationRule.findMany({
-        where: {
-          ownerType: DbNotificationOwnerType.GUILD,
-          ownerId: guildId,
-        },
-        include: {
-          targets: {
-            include: {
-              target: true,
-            },
-          },
-        },
-        orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
-      }),
+    const [{ guild: guildSettings }, rules] = await Promise.all([
+      this.repository.getRuleLimit(DbNotificationOwnerType.GUILD, guildId),
+      this.repository.listRules(DbNotificationOwnerType.GUILD, guildId),
     ]);
 
     const allTargetIds = [
@@ -170,20 +154,11 @@ export class NotificationRuleService {
   async triggerGuildRuleTest(guildId: string, ruleId: number) {
     await this.ensureGuildNotificationPermissions(guildId);
 
-    const notificationRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        id: ruleId,
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-      include: {
-        targets: {
-          include: {
-            target: true,
-          },
-        },
-      },
-    });
+    const notificationRule = await this.repository.findRuleWithTargets(
+      DbNotificationOwnerType.GUILD,
+      guildId,
+      ruleId,
+    );
 
     if (!notificationRule) {
       throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
@@ -277,21 +252,8 @@ export class NotificationRuleService {
   // ── User Rules ───────────────────────────────────────────────────────
 
   listUserRules(discordId: string) {
-    return this.prisma.notificationRule
-      .findMany({
-        where: {
-          ownerType: DbNotificationOwnerType.USER,
-          ownerId: discordId,
-        },
-        include: {
-          targets: {
-            include: {
-              target: true,
-            },
-          },
-        },
-        orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
-      })
+    return this.repository
+      .listRules(DbNotificationOwnerType.USER, discordId)
       .then((rules) => rules.map((rule) => this.mapRuleResponse(rule)));
   }
 
@@ -348,15 +310,15 @@ export class NotificationRuleService {
       targetIds: data.targetIds,
     });
 
-    return this.prisma.notificationRule.create({
-      data: {
+    return this.repository.createRule(
+      {
         ownerType,
         ownerId,
         triggerType,
         guildId: options?.guildId ?? null,
         world: ruleWorld,
         name: data.name ?? null,
-        filters: isScheduledMessage ? Prisma.DbNull : this.buildFilters(data),
+        filters: isScheduledMessage ? null : this.buildFilters(data),
         contentTemplate: this.normalizeContentTemplate(data.contentTemplate),
         ...this.resolveScheduleConfig({
           triggerType,
@@ -368,13 +330,9 @@ export class NotificationRuleService {
         }),
         enabled: data.enabled ?? true,
         dedupeWindowSeconds: 0,
-        targets: {
-          createMany: {
-            data: targetIds.map((targetId) => ({ targetId })),
-          },
-        },
       },
-    });
+      targetIds,
+    );
   }
 
   private async updateRule(
@@ -413,63 +371,50 @@ export class NotificationRuleService {
       nextWorld = data.world ?? null;
     }
 
-    let nextFilters:
-      | Prisma.InputJsonObject
-      | Prisma.JsonValue
-      | typeof Prisma.DbNull = existingRule.filters;
+    let nextFilters: JsonValue | null =
+      existingRule.filters as JsonValue | null;
 
     if (isScheduledMessage) {
-      nextFilters = Prisma.DbNull;
+      nextFilters = null;
     } else if (hasFilterSelectionUpdate) {
       nextFilters = this.buildFilters(data);
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.notificationRule.update({
-        where: { id: ruleId },
-        data: {
+    await this.repository.updateRule(
+      ruleId,
+      {
+        triggerType: nextTriggerType,
+        world: nextWorld,
+        name: hasName ? (data.name ?? null) : existingRule.name,
+        contentTemplate: hasContentTemplate
+          ? this.normalizeContentTemplate(data.contentTemplate)
+          : existingRule.contentTemplate,
+        filters: nextFilters,
+        ...this.resolveScheduleConfig({
           triggerType: nextTriggerType,
-          world: nextWorld,
-          name: hasName ? (data.name ?? null) : existingRule.name,
-          contentTemplate: hasContentTemplate
-            ? this.normalizeContentTemplate(data.contentTemplate)
-            : existingRule.contentTemplate,
-          filters: nextFilters,
-          ...this.resolveScheduleConfig({
-            triggerType: nextTriggerType,
-            data,
-            existingRule,
-          }),
-          ...this.resolveScheduledMessageFields({
-            ownerType,
-            data: isScheduledMessage ? data : null,
-            existingRule: isScheduledMessage
-              ? {
-                  scheduledAt: existingRule.scheduledAt,
-                  scheduleIntervalType: existingRule.scheduleIntervalType,
-                  scheduleIntervalValue: existingRule.scheduleIntervalValue,
-                  scheduleWeekday: existingRule.scheduleWeekday,
-                  scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
-                  scheduledUntil: existingRule.scheduledUntil,
-                  scheduleTimezone: existingRule.scheduleTimezone,
-                }
-              : undefined,
-          }),
-          enabled: data.enabled ?? existingRule.enabled,
-          dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
-        },
-      });
-
-      if (targetIds) {
-        await tx.notificationRuleTarget.deleteMany({
-          where: { ruleId },
-        });
-        await tx.notificationRuleTarget.createMany({
-          data: targetIds.map((targetId) => ({ ruleId, targetId })),
-          skipDuplicates: true,
-        });
-      }
-    });
+          data,
+          existingRule,
+        }),
+        ...this.resolveScheduledMessageFields({
+          ownerType,
+          data: isScheduledMessage ? data : null,
+          existingRule: isScheduledMessage
+            ? {
+                scheduledAt: existingRule.scheduledAt,
+                scheduleIntervalType: existingRule.scheduleIntervalType,
+                scheduleIntervalValue: existingRule.scheduleIntervalValue,
+                scheduleWeekday: existingRule.scheduleWeekday,
+                scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
+                scheduledUntil: existingRule.scheduledUntil,
+                scheduleTimezone: existingRule.scheduleTimezone,
+              }
+            : undefined,
+        }),
+        enabled: data.enabled ?? existingRule.enabled,
+        dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
+      },
+      targetIds,
+    );
   }
 
   private async deleteRule(
@@ -479,7 +424,7 @@ export class NotificationRuleService {
   ) {
     await this.ensureRule({ ownerType, ownerId, ruleId });
     await this.jobService.cancelPendingJobs({ ruleId });
-    await this.prisma.notificationRule.delete({ where: { id: ruleId } });
+    await this.repository.deleteRule(ruleId);
     return { success: true };
   }
 
@@ -505,21 +450,15 @@ export class NotificationRuleService {
   }
 
   private async ensureGuildRuleLimitNotExceeded(guildId: string) {
-    const guild = await this.prisma.guild.findUnique({
-      where: { id: guildId },
-      select: { notificationRuleLimit: true },
-    });
+    const { guild, count: currentRuleCount } =
+      await this.repository.getRuleLimit(
+        DbNotificationOwnerType.GUILD,
+        guildId,
+      );
 
     if (!guild) {
       throw new NotFoundException(Error.GUILD_NOT_FOUND);
     }
-
-    const currentRuleCount = await this.prisma.notificationRule.count({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-    });
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -533,12 +472,10 @@ export class NotificationRuleService {
   }
 
   private async ensureUserRuleLimitNotExceeded(discordId: string) {
-    const currentRuleCount = await this.prisma.notificationRule.count({
-      where: {
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
-      },
-    });
+    const { count: currentRuleCount } = await this.repository.getRuleLimit(
+      DbNotificationOwnerType.USER,
+      discordId,
+    );
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -556,13 +493,11 @@ export class NotificationRuleService {
     ownerId: string;
     ruleId: number;
   }) {
-    const notificationRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        id: params.ruleId,
-        ownerType: params.ownerType,
-        ownerId: params.ownerId,
-      },
-    });
+    const notificationRule = await this.repository.findRule(
+      params.ownerType,
+      params.ownerId,
+      params.ruleId,
+    );
 
     if (!notificationRule) {
       throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
@@ -604,8 +539,8 @@ export class NotificationRuleService {
     > & {
       guildIds?: string[];
     },
-  ): Prisma.InputJsonObject {
-    const filters: Record<string, Prisma.InputJsonValue> = {};
+  ): JsonObject {
+    const filters: JsonObject = {};
 
     if (data.guildIds !== undefined) {
       filters.guildIds = data.guildIds;
@@ -627,7 +562,7 @@ export class NotificationRuleService {
       filters.itemIds = data.itemIds;
     }
 
-    return filters as Prisma.InputJsonObject;
+    return filters;
   }
 
   private normalizeContentTemplate(contentTemplate?: string | null) {
@@ -907,7 +842,7 @@ export class NotificationRuleService {
 
   private getTargetTestTriggerUsage(targetIds: number[]) {
     return computeTestTriggerUsage(
-      this.prisma,
+      this.repository,
       targetIds,
       GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
       GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS,
@@ -932,7 +867,7 @@ export class NotificationRuleService {
 
   private mapRuleResponse<
     T extends {
-      filters: Prisma.JsonValue | null;
+      filters: JsonValue | null;
     },
   >(rule: T) {
     return {
@@ -941,7 +876,7 @@ export class NotificationRuleService {
     };
   }
 
-  private parseNotificationFilters(filters: Prisma.JsonValue | null) {
+  private parseNotificationFilters(filters: JsonValue | null) {
     if (filters === null) {
       return null;
     }

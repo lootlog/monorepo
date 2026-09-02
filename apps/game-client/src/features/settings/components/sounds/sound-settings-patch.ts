@@ -1,5 +1,5 @@
-import type { UpdateSoundSettingsDto } from "@lootlog/api-client/models/main/update-sound-settings-dto";
-import type { NpcTypeSoundConfig } from "@lootlog/types";
+import type { UpdateSoundSettingsDto } from "@lootlog/client/main";
+import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
 
 type SoundConfigKey = "notificationsConfig" | "detectorConfig" | "timersConfig";
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;

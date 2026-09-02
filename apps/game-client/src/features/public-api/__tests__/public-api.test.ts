@@ -3,9 +3,12 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapPublicApi } from "../index";
 import { useGlobalStore } from "@/store/global.store";
 import { queryKeys } from "../query-keys";
-import type { NpcTypeEnum } from "@lootlog/types";
-import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@lootlog/api-client/react-query/main/members";
-import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
+import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  type GuildResponseDtoOutput,
+} from "@lootlog/client/main";
+
 import type { Timer } from "@/api";
 
 const socketMocks = vi.hoisted(() => {

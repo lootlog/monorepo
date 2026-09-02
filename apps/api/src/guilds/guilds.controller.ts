@@ -18,7 +18,7 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { UpdateGuildConfigDto } from "#src/guilds/dto/update-guild-config.dto";
 import { UserGuildListResponseDto } from "#src/guilds/dto/user-guild-list-response.dto";
 import { UserGuildPermissionsDto } from "#src/guilds/dto/user-guild-permissions.dto";
@@ -30,6 +30,7 @@ import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 import { MemberSyncInterceptor } from "#src/shared/interceptors/member-sync.interceptor";
 import { GuildResponseDto } from "#src/shared/dto/guild-response.dto";
+import type { GuildRecord as Guild } from "./guilds.repository.js";
 
 @ApiTags("guilds")
 @ApiBearerAuth()
@@ -114,7 +115,7 @@ export class GuildsController {
     description: "Guild information",
     type: GuildResponseDto,
   })
-  async getGuildById(@GuildData() guild: Guild) {
+  getGuildById(@GuildData() guild: Guild) {
     return this.guildsService.getGuildById(guild.id);
   }
 
@@ -145,7 +146,7 @@ export class GuildsController {
     description: "Guild config",
     type: GuildResponseDto,
   })
-  async getGuildConfig(@GuildData() guild: Guild) {
+  getGuildConfig(@GuildData() guild: Guild) {
     return this.guildsService.getGuildById(guild.id);
   }
 

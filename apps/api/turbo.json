@@ -8,10 +8,10 @@
       ]
     },
     "test": {
-      "dependsOn": ["$TURBO_EXTENDS$", "db:generate"]
+      "dependsOn": ["$TURBO_EXTENDS$"]
     },
     "test:e2e": {
-      "dependsOn": ["$TURBO_EXTENDS$", "db:generate"]
+      "dependsOn": ["$TURBO_EXTENDS$"]
     }
   }
 }

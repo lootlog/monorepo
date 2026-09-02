@@ -1,12 +1,15 @@
 import { createZodDto } from "nestjs-zod";
-import { CoverageGapType } from "#src/generated/prisma/client";
-import { z } from "zod";
+import * as z from "zod";
 import {
   flexibleIsoDatetimeCodec,
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
   nullableFlexibleIsoDatetimeCodec,
 } from "#src/shared/dto/zod-response-codecs";
+const CoverageGapType = {
+  UNASSIGNED: "UNASSIGNED",
+  UNCOVERED: "UNCOVERED",
+} as const;
 
 const CoverageGapResponseSchema = z.object({
   id: z.string(),

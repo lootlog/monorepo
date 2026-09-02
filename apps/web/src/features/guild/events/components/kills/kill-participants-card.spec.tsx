@@ -11,7 +11,8 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/events", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   useEventsRankingControllerUpdateKillPoint: () => ({
     isPending: false,
     mutateAsync: vi.fn(),

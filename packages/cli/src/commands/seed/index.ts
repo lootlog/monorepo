@@ -12,7 +12,7 @@ const displaySeedHelp = (): void => {
 ${chalk.bold.blue("Seed Command")}
 
 ${chalk.bold("Usage:")}
-  pnpm seed <subcommand> [options]
+  bun run seed <subcommand> [options]
 
 ${chalk.bold("Subcommands:")}
   scrape:items              Scrape items from margoworld.pl
@@ -39,12 +39,12 @@ ${chalk.bold("Environment Variables:")}
   SEEDING_USER_ID                 User ID for battles seeding (required for battles)
 
 ${chalk.bold("Examples:")}
-  pnpm seed scrape:all                      # Scrape items and NPCs
-  pnpm seed scrape:all --force              # Force re-scrape
-  pnpm seed generate:players                # Generate 1000 players
-  pnpm seed run --guilds 10 --loots 500     # Seed with custom counts
-  pnpm seed setup                           # Complete setup
-  pnpm seed setup --skip-scrape             # Setup without scraping
+  bun run seed:scrape                      # Scrape items and NPCs
+  bun run seed:scrape --force              # Force re-scrape
+  bun run seed:generate:players                # Generate 1000 players
+  bun run seed run --guilds 10 --loots 500     # Seed with custom counts
+  bun run seed:setup                           # Complete setup
+  bun run seed:setup --skip-scrape             # Setup without scraping
 
 ${chalk.bold("Development Guild Setup:")}
   When DISCORD_DEVELOPMENT_GUILD_ID and DISCORD_DEVELOPMENT_USER_ID are set in .env:
@@ -277,7 +277,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
   if (!handler) {
     console.error(chalk.red(`\n❌ Unknown subcommand: ${subcommand}\n`));
     console.log(
-      chalk.gray(`Run 'pnpm seed --help' to see available subcommands.\n`),
+      chalk.gray(
+        `Run 'bun run seed -- --help' to see available subcommands.\n`,
+      ),
     );
     process.exit(1);
   }

@@ -1,28 +1,25 @@
 import {
-  SETTINGS_CATALOG,
   getCharacterSettingsScopeId,
   isSettingsDomain,
-  type SettingsDocumentLayer,
-  type SettingsDomain,
-  type SettingsDomainResolution,
-  type SettingsScope,
-  type SettingsScopeType,
-} from "@lootlog/types";
+} from "@lootlog/domain/settings-documents";
+import type {
+  SettingsDocumentLayer,
+  SettingsDomain,
+  SettingsDomainResolution,
+  SettingsScope,
+  SettingsScopeType,
+} from "@lootlog/schema/settings-documents";
 import {
   BadRequestException,
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
-import {
-  Prisma,
-  type SettingsScopeType as PrismaSettingsScopeType,
-} from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
 import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto.js";
 import {
-  applySettingsPatch,
-  resolveSettingsDomain,
-} from "./settings-resolver.js";
+  InvalidSettingsPatchError,
+  SettingsDocumentsRepository,
+} from "./settings-documents.repository.js";
+import { resolveSettingsDomain } from "./settings-resolver.js";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -41,12 +38,9 @@ export interface SettingsDocumentsResponse {
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const isRetryableTransactionError = (error: unknown) =>
-  isRecord(error) && (error.code === "P2034" || error.code === "P2002");
-
 @Injectable()
 export class SettingsDocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: SettingsDocumentsRepository) {}
 
   async getPreferences(
     userId: string,
@@ -55,17 +49,11 @@ export class SettingsDocumentsService {
     const scopes = this.getContextScopes(userId, context);
     await this.validateScopes(userId, scopes);
 
-    const documents = await this.prisma.userSettingDocument.findMany({
-      where: {
-        userId,
-        domain: { in: context.domains },
-        OR: scopes.map((scope) => ({
-          scopeType: scope.type as PrismaSettingsScopeType,
-          scopeId: scope.id,
-        })),
-      },
-      orderBy: [{ scopeType: "asc" }, { scopeId: "asc" }],
-    });
+    const documents = await this.repository.findDocuments(
+      userId,
+      context.domains,
+      scopes,
+    );
 
     const domains: SettingsDocumentsResponse["domains"] = {};
 
@@ -110,98 +98,13 @@ export class SettingsDocumentsService {
       this.getOperationKey(left).localeCompare(this.getOperationKey(right)),
     );
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        await this.prisma.$transaction(
-          async (transaction) => {
-            for (const operation of sortedOperations) {
-              await transaction.$queryRaw(
-                Prisma.sql`
-                  SELECT "id"
-                  FROM "UserSettingDocument"
-                  WHERE "userId" = ${userId}
-                    AND "domain" = ${operation.domain}
-                    AND "scopeType" = ${operation.scope.type}::"SettingsScopeType"
-                    AND "scopeId" = ${operation.scope.id}
-                  FOR UPDATE
-                `,
-              );
-            }
-
-            for (const operation of sortedOperations) {
-              const where = {
-                userId_domain_scopeType_scopeId: {
-                  userId,
-                  domain: operation.domain,
-                  scopeType: operation.scope.type as PrismaSettingsScopeType,
-                  scopeId: operation.scope.id,
-                },
-              };
-              const currentDocument =
-                await transaction.userSettingDocument.findUnique({ where });
-              const currentOverrides = isRecord(currentDocument?.overrides)
-                ? currentDocument.overrides
-                : {};
-              let nextOverrides: JsonRecord;
-              try {
-                nextOverrides = applySettingsPatch({
-                  domain: operation.domain,
-                  scope: operation.scope,
-                  currentOverrides,
-                  set: operation.set,
-                  unset: operation.unset,
-                });
-              } catch (error) {
-                throw new BadRequestException(
-                  error instanceof Error
-                    ? error.message
-                    : "Invalid settings operation",
-                );
-              }
-
-              if (Object.keys(nextOverrides).length === 0) {
-                if (currentDocument) {
-                  await transaction.userSettingDocument.delete({ where });
-                }
-                continue;
-              }
-
-              const data = {
-                overrides: nextOverrides as Prisma.InputJsonValue,
-                schemaVersion: SETTINGS_CATALOG[operation.domain].schemaVersion,
-              };
-
-              if (currentDocument) {
-                await transaction.userSettingDocument.update({
-                  where,
-                  data,
-                });
-                continue;
-              }
-
-              await transaction.userSettingDocument.upsert({
-                where,
-                create: {
-                  userId,
-                  domain: operation.domain,
-                  scopeType: operation.scope.type as PrismaSettingsScopeType,
-                  scopeId: operation.scope.id,
-                  ...data,
-                },
-                update: data,
-              });
-            }
-          },
-          {
-            isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-          },
-        );
-        break;
-      } catch (error) {
-        if (attempt === 2 || !isRetryableTransactionError(error)) {
-          throw error;
-        }
+    try {
+      await this.repository.applyOperations(userId, sortedOperations);
+    } catch (error) {
+      if (error instanceof InvalidSettingsPatchError) {
+        throw new BadRequestException(error.message);
       }
+      throw error;
     }
 
     return this.getPreferences(
@@ -319,16 +222,7 @@ export class SettingsDocumentsService {
         continue;
       }
 
-      const member = await this.prisma.member.findFirst({
-        where: {
-          globalUserId: userId,
-          guildId: scope.id,
-          active: true,
-        },
-        select: { id: true },
-      });
-
-      if (!member) {
+      if (!(await this.repository.hasActiveGuildMembership(userId, scope.id))) {
         throw new ForbiddenException("Guild settings are not accessible");
       }
     }

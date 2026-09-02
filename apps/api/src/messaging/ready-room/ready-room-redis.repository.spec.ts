@@ -1,4 +1,4 @@
-import type { PartyReadyRoomParticipant } from "@lootlog/types";
+import type { PartyReadyRoomParticipant } from "@lootlog/schema/party-ready-room";
 import { describe, expect, it, vi } from "vitest";
 import { ReadyRoomRedisRepository } from "#src/messaging/ready-room/ready-room-redis.repository";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";

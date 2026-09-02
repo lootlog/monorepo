@@ -1,107 +1,153 @@
-import { Injectable } from "@nestjs/common";
-import { ItemRarity, NpcType } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
-import type { UpdateLootlogConfigNpcDto } from "#src/lootlog-config/dto/update-lootlog-config-npc.dto";
-import type { UpdateLootlogConfigDto } from "#src/lootlog-config/dto/update-lootlog-config.dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { Effect } from "effect";
+import { ApiDatabase } from "../database/drizzle/database.js";
+import { DrizzleDatabaseRuntime } from "../database/drizzle/runtime.js";
+import {
+  itemRarityEnum,
+  lootlogConfigNpcTable,
+  lootlogConfigTable,
+  npcTypeEnum,
+} from "../database/drizzle/schema.js";
+import type { UpdateLootlogConfigNpcDto } from "./dto/update-lootlog-config-npc.dto.js";
+import type { UpdateLootlogConfigDto } from "./dto/update-lootlog-config.dto.js";
 
 @Injectable()
 export class LootlogConfigService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly databaseRuntime: DrizzleDatabaseRuntime) {}
 
-  getLootlogConfig(guildId: string) {
-    return this.prisma.lootlogConfig.findUnique({
-      where: {
-        id: guildId,
-      },
-      include: {
-        npcs: {
-          orderBy: {
-            id: "desc",
-          },
-        },
-      },
-    });
+  async getLootlogConfig(guildId: string) {
+    const configs = await this.getMultipleLootlogConfigs([guildId]);
+    return configs[0] ?? null;
   }
 
   getMultipleLootlogConfigs(guildIds: string[]) {
-    return this.prisma.lootlogConfig.findMany({
-      where: {
-        id: {
-          in: guildIds,
-        },
-      },
-      include: {
-        npcs: {
-          orderBy: {
-            id: "desc",
-          },
-        },
-      },
-    });
+    if (guildIds.length === 0) return Promise.resolve([]);
+
+    return this.databaseRuntime.runPromise(
+      Effect.flatMap(ApiDatabase, (database) =>
+        Effect.gen(function* () {
+          const configs = yield* database
+            .select()
+            .from(lootlogConfigTable)
+            .where(inArray(lootlogConfigTable.id, guildIds));
+          if (configs.length === 0) return [];
+
+          const npcs = yield* database
+            .select()
+            .from(lootlogConfigNpcTable)
+            .where(
+              inArray(
+                lootlogConfigNpcTable.lootlogConfigId,
+                configs.map(({ id }) => id),
+              ),
+            )
+            .orderBy(desc(lootlogConfigNpcTable.id));
+
+          return configs.map((config) => ({
+            ...config,
+            npcs: npcs.filter(
+              ({ lootlogConfigId }) => lootlogConfigId === config.id,
+            ),
+          }));
+        }),
+      ),
+    );
   }
 
   async createLootlogConfig(guildId: string) {
-    const lootlogConfigExists = await this.prisma.lootlogConfig.findUnique({
-      where: {
-        id: guildId,
-      },
-    });
+    if (await this.getLootlogConfig(guildId)) return;
 
-    if (lootlogConfigExists) {
-      return;
+    const now = new Date();
+    await this.databaseRuntime.runPromise(
+      Effect.flatMap(ApiDatabase, (database) =>
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            yield* transaction.insert(lootlogConfigTable).values({
+              id: guildId,
+              createdAt: now,
+              updatedAt: now,
+            });
+            yield* transaction.insert(lootlogConfigNpcTable).values(
+              npcTypeEnum.enumValues.map((npcType) => ({
+                lootlogConfigId: guildId,
+                npcType,
+                allowedRarities: [...itemRarityEnum.enumValues],
+                createdAt: now,
+                updatedAt: now,
+              })),
+            );
+          }),
+        ),
+      ),
+    );
+    return this.getLootlogConfig(guildId);
+  }
+
+  async updateLootlogConfig(guildId: string, { npcs }: UpdateLootlogConfigDto) {
+    await this.databaseRuntime.runPromise(
+      Effect.flatMap(ApiDatabase, (database) =>
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            const existing = yield* transaction
+              .select({ id: lootlogConfigTable.id })
+              .from(lootlogConfigTable)
+              .where(eq(lootlogConfigTable.id, guildId))
+              .limit(1);
+            if (!existing[0]) {
+              return yield* Effect.fail(
+                new NotFoundException("Lootlog configuration not found"),
+              );
+            }
+
+            for (const npc of npcs) {
+              yield* transaction
+                .update(lootlogConfigNpcTable)
+                .set({
+                  allowedRarities: npc.allowedRarities,
+                  updatedAt: new Date(),
+                })
+                .where(
+                  and(
+                    eq(lootlogConfigNpcTable.lootlogConfigId, guildId),
+                    eq(lootlogConfigNpcTable.npcType, npc.npcType),
+                  ),
+                );
+            }
+          }),
+        ),
+      ),
+    );
+    return this.getLootlogConfig(guildId);
+  }
+
+  async updateNpc(
+    guildId: string,
+    npcId: string,
+    data: UpdateLootlogConfigNpcDto,
+  ) {
+    const parsedNpcId = Number(npcId);
+    if (!Number.isInteger(parsedNpcId)) {
+      throw new NotFoundException("NPC configuration not found");
     }
 
-    const data: UpdateLootlogConfigDto = {
-      npcs: Object.values(NpcType).map((npcType) => ({
-        npcType,
-        allowedRarities: Object.values(ItemRarity),
-      })),
-    };
-
-    return this.prisma.lootlogConfig.create({
-      data: {
-        id: guildId,
-        npcs: {
-          createMany: {
-            data: data.npcs,
-            skipDuplicates: true,
-          },
-        },
-      },
-      include: {
-        npcs: true,
-      },
-    });
-  }
-
-  updateLootlogConfig(guildId: string, { npcs }: UpdateLootlogConfigDto) {
-    return this.prisma.lootlogConfig.update({
-      where: {
-        id: guildId,
-      },
-      data: {
-        npcs: {
-          updateMany: npcs.map((npc) => ({
-            where: {
-              npcType: npc.npcType,
-            },
-            data: npc,
-          })),
-        },
-      },
-      include: {
-        npcs: true,
-      },
-    });
-  }
-
-  updateNpc(guildId: string, npcId: string, data: UpdateLootlogConfigNpcDto) {
-    return this.prisma.lootlogConfigNpc.update({
-      where: {
-        lootlogConfigId: guildId,
-        id: +npcId,
-      },
-      data,
-    });
+    const updated = await this.databaseRuntime.runPromise(
+      Effect.flatMap(ApiDatabase, (database) =>
+        database
+          .update(lootlogConfigNpcTable)
+          .set({ allowedRarities: data.allowedRarities, updatedAt: new Date() })
+          .where(
+            and(
+              eq(lootlogConfigNpcTable.lootlogConfigId, guildId),
+              eq(lootlogConfigNpcTable.id, parsedNpcId),
+            ),
+          )
+          .returning(),
+      ),
+    );
+    if (!updated[0]) {
+      throw new NotFoundException("NPC configuration not found");
+    }
+    return updated[0];
   }
 }

@@ -1,5 +1,23 @@
-import type { Prisma } from "#src/generated/prisma/client";
-import { jsonValueSchema } from "#src/shared/dto/zod-response-codecs";
+import * as z from "zod";
+
+export type JsonValue =
+  | boolean
+  | number
+  | string
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(z.string(), jsonValueSchema),
+  ]),
+);
 
 export const GuildDocumentContentSchema = jsonValueSchema.refine(
   (value) => {
@@ -15,4 +33,4 @@ export const GuildDocumentContentSchema = jsonValueSchema.refine(
   },
 );
 
-export type GuildDocumentContent = Prisma.JsonValue;
+export type GuildDocumentContent = JsonValue;

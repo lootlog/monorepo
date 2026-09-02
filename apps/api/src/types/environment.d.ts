@@ -1,5 +1,5 @@
 import type { RESTOptions } from "@discordjs/rest";
-import type { RuntimeEnvironment } from "@lootlog/types";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 
 declare global {
   namespace NodeJS {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import { CHAT_MESSAGE_LIMIT } from "@lootlog/types";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import {
   deduplicateChatMessages,
   filterChatMessages,

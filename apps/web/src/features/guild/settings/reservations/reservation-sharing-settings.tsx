@@ -11,7 +11,7 @@ import {
   useListReservationShares,
   useRevokeReservationShare,
   useRevokeReservationShareInvitation,
-} from "@lootlog/api-client/react-query/main/reservation-sharing";
+} from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";

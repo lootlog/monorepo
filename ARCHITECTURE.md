@@ -28,22 +28,22 @@ organization operations.
 
 ## Deployable applications
 
-| Workspace                    | Responsibility                                                                                                       | Primary state or dependency           |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `@lootlog/api`               | Organizations, members, loot, kills, timers, reservations, chat, notifications, events, documents, and configuration | Lootlog PostgreSQL, Redis, RabbitMQ   |
-| `@lootlog/auth`              | Discord sign-in, sessions, JWT/JWKS, provider tokens                                                                 | Users PostgreSQL, Redis, Better Auth  |
-| `@lootlog/gateway`           | Socket.IO authentication, rooms, presence, and real-time fan-out                                                     | Redis adapter, RabbitMQ               |
-| `@lootlog/battlelog-service` | Battle ingestion, storage, retrieval, and statistics                                                                 | Battle PostgreSQL, R2                 |
-| `@lootlog/activity`          | Durable organization activity and audit records                                                                      | TimescaleDB                           |
-| `@lootlog/search`            | Public item, NPC, and player search projections                                                                      | Meilisearch                           |
-| `@lootlog/discord-bot`       | Discord membership synchronization, notifications, and commands                                                      | Discord, API, RabbitMQ                |
-| `@lootlog/game-client`       | Margonem runtime integration and in-game UI                                                                          | Browser runtime, APIs, gateway        |
-| `@lootlog/web`               | Authenticated personal and organization web app                                                                      | Generated API client, gateway         |
-| `@lootlog/landing`           | Product introduction and legal pages                                                                                 | Static TanStack Start client output   |
-| `@lootlog/docs`              | User documentation                                                                                                   | Static TanStack Start client output   |
-| `@lootlog/traffic-splitter`  | Shared edge routing for `dev.lootlog.pl` and `lootlog.pl`                                                            | Cloudflare Workers and static origins |
-| `@lootlog/wiki`              | Public Margonem knowledge and search                                                                                 | Search API                            |
-| `@lootlog/developer`         | Future developer surface; currently not a supported product                                                          | Static frontend                       |
+| Workspace                   | Responsibility                                                                                                       | Primary state or dependency           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `@lootlog/api`              | Organizations, members, loot, kills, timers, reservations, chat, notifications, events, documents, and configuration | Lootlog PostgreSQL, Redis, RabbitMQ   |
+| `@lootlog/auth`             | Discord sign-in, sessions, JWT/JWKS, provider tokens                                                                 | Users PostgreSQL, Redis, Better Auth  |
+| `@lootlog/gateway`          | Socket.IO authentication, rooms, presence, and real-time fan-out                                                     | Redis adapter, RabbitMQ               |
+| `@lootlog/battlelog`        | Battle ingestion, storage, retrieval, and statistics                                                                 | Battle PostgreSQL, R2                 |
+| `@lootlog/activity`         | Durable organization activity and audit records                                                                      | TimescaleDB                           |
+| `@lootlog/search`           | Public item, NPC, and player search projections                                                                      | Meilisearch                           |
+| `@lootlog/discord-bot`      | Discord membership synchronization, notifications, and commands                                                      | Discord, API, RabbitMQ                |
+| `@lootlog/game-client`      | Margonem runtime integration and in-game UI                                                                          | Browser runtime, APIs, gateway        |
+| `@lootlog/web`              | Authenticated personal and organization web app                                                                      | Generated API client, gateway         |
+| `@lootlog/landing`          | Product introduction and legal pages                                                                                 | Static TanStack Start client output   |
+| `@lootlog/docs`             | User documentation                                                                                                   | Static TanStack Start client output   |
+| `@lootlog/traffic-splitter` | Shared edge routing for `dev.lootlog.pl` and `lootlog.pl`                                                            | Cloudflare Workers and static origins |
+| `@lootlog/wiki`             | Public Margonem knowledge and search                                                                                 | Search API                            |
+| `@lootlog/developer`        | Future developer surface; currently not a supported product                                                          | Static frontend                       |
 
 Packages contain generated clients, shared API helpers, battle processing,
 Margonem models, scoring, instrumentation, UI, socket parsing, configuration,

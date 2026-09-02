@@ -1,11 +1,3 @@
 {
-  "extends": ["//"],
-  "tasks": {
-    "build": {
-      "inputs": [
-        "$TURBO_EXTENDS$",
-        "$TURBO_ROOT$/tools/clean-swagger-metadata.mjs"
-      ]
-    }
-  }
+  "extends": ["//"]
 }

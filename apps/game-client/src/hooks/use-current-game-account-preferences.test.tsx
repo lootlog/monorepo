@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultDetectorSettings,
   defaultNotificationsSettings,
-} from "@lootlog/types";
+} from "@lootlog/schema/account-preferences";
 import {
   createDetectorSettings,
   createNotificationsSettings,

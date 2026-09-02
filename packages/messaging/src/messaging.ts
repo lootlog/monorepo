@@ -50,6 +50,7 @@ export interface PublishOptions {
 }
 
 export type FailurePolicy =
+  | { readonly strategy: "nack" }
   | { readonly strategy: "requeue" }
   | {
       readonly strategy: "retry";
@@ -185,6 +186,10 @@ const makeService = (channel: RabbitChannel): RabbitMessagingService => {
     delivery: RabbitDelivery,
     policy: FailurePolicy,
   ): Effect.Effect<void, MessagingError> => {
+    if (policy.strategy === "nack") {
+      return nack(delivery, { requeue: false });
+    }
+
     if (policy.strategy === "requeue") {
       return nack(delivery, { requeue: true });
     }

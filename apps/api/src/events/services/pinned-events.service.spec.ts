@@ -1,19 +1,17 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
 import { mockFn } from "#src/test/mock-fn";
 import { PinnedEventsService } from "./pinned-events.service.js";
+import { PinnedEventsRepository } from "./pinned-events.repository.js";
 
 describe("PinnedEventsService", () => {
   const referenceTime = new Date("2026-08-16T12:00:00.000Z");
-  const prisma = {
-    event: {
-      findFirst: mockFn(),
-    },
-    userPinnedEvent: {
-      deleteMany: mockFn(),
-      findMany: mockFn(),
-      upsert: mockFn(),
-    },
+  const repository = {
+    removeInactive: mockFn(),
+    findActive: mockFn(),
+    findEvent: mockFn(),
+    remove: mockFn(),
+    pin: mockFn(),
+    removeFromGuild: mockFn(),
   };
   let service: PinnedEventsService;
 
@@ -21,8 +19,12 @@ describe("PinnedEventsService", () => {
     vi.useFakeTimers();
     vi.setSystemTime(referenceTime);
     vi.clearAllMocks();
-    service = new PinnedEventsService(prisma as unknown as PrismaService);
-    prisma.userPinnedEvent.deleteMany.mockResolvedValue({ count: 0 });
+    service = new PinnedEventsService(
+      repository as unknown as PinnedEventsRepository,
+    );
+    repository.removeInactive.mockResolvedValue(undefined);
+    repository.remove.mockResolvedValue(undefined);
+    repository.removeFromGuild.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -30,7 +32,7 @@ describe("PinnedEventsService", () => {
   });
 
   it("removes inactive pins and returns active pins in database order", async () => {
-    prisma.userPinnedEvent.findMany.mockResolvedValue([
+    repository.findActive.mockResolvedValue([
       {
         pinnedAt: new Date("2026-08-16T11:00:00.000Z"),
         event: createEvent({ id: "event-2", name: "Second" }),
@@ -43,73 +45,54 @@ describe("PinnedEventsService", () => {
 
     const result = await service.listPinnedEvents("user-1", "guild-1");
 
-    expect(prisma.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
-      where: {
-        userId: "user-1",
-        event: {
-          guildId: "guild-1",
-          OR: [
-            { startsAt: { gt: referenceTime } },
-            { endsAt: { lte: referenceTime } },
-          ],
-        },
-      },
-    });
+    expect(repository.removeInactive).toHaveBeenCalledWith(
+      "user-1",
+      "guild-1",
+      referenceTime,
+    );
     expect(result.map(({ event }) => event.id)).toEqual(["event-2", "event-1"]);
     expect(result.every(({ event }) => event.active)).toBe(true);
   });
 
   it("pins an active event idempotently without changing pinnedAt", async () => {
     const event = createEvent();
-    prisma.event.findFirst.mockResolvedValue(event);
-    prisma.userPinnedEvent.upsert.mockResolvedValue({
+    repository.findEvent.mockResolvedValue(event);
+    repository.pin.mockResolvedValue({
       pinnedAt: new Date("2026-08-16T10:00:00.000Z"),
     });
 
     const result = await service.pinEvent("user-1", "guild-1", "event-1");
 
-    expect(prisma.userPinnedEvent.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          userId_eventId: { userId: "user-1", eventId: "event-1" },
-        },
-        create: { userId: "user-1", eventId: "event-1" },
-        update: {},
-      }),
-    );
+    expect(repository.pin).toHaveBeenCalledWith("user-1", "event-1");
     expect(result.event).toMatchObject({ id: "event-1", active: true });
   });
 
   it("rejects missing and inactive events", async () => {
-    prisma.event.findFirst.mockResolvedValueOnce(null);
+    repository.findEvent.mockResolvedValueOnce(null);
 
     await expect(
       service.pinEvent("user-1", "guild-1", "missing"),
     ).rejects.toBeInstanceOf(NotFoundException);
 
-    prisma.event.findFirst.mockResolvedValueOnce(
+    repository.findEvent.mockResolvedValueOnce(
       createEvent({ endsAt: new Date("2026-08-16T11:00:00.000Z") }),
     );
 
     await expect(
       service.pinEvent("user-1", "guild-1", "event-1"),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(prisma.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
-      where: { userId: "user-1", eventId: "event-1" },
-    });
-    expect(prisma.userPinnedEvent.upsert).not.toHaveBeenCalled();
+    expect(repository.remove).toHaveBeenCalledWith("user-1", "event-1");
+    expect(repository.pin).not.toHaveBeenCalled();
   });
 
   it("unpins only the current user's event from the resolved guild", async () => {
     await service.unpinEvent("user-1", "guild-1", "event-1");
 
-    expect(prisma.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
-      where: {
-        userId: "user-1",
-        eventId: "event-1",
-        event: { guildId: "guild-1" },
-      },
-    });
+    expect(repository.removeFromGuild).toHaveBeenCalledWith(
+      "user-1",
+      "guild-1",
+      "event-1",
+    );
   });
 });
 

@@ -1,5 +1,5 @@
-import { Permission } from "#src/generated/prisma/client";
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import { mockFn } from "#src/test/mock-fn";
 import { EventsMonitoringController } from "./events-monitoring.controller.js";

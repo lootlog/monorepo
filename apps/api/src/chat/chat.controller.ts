@@ -24,10 +24,13 @@ import {
 } from "#src/chat/dto/chat-message-response.dto";
 import { SendMessageDto } from "#src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "#src/chat/dto/update-message.dto";
-import { type Guild, Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { guildTable } from "#src/database/drizzle/schema";
 import { GuildData } from "#src/shared/decorators/guild-data.decorator";
 import { AuthGuard, RequiresCapabilities } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+
+type Guild = typeof guildTable.$inferSelect;
 
 @ApiTags("chat")
 @ApiBearerAuth()

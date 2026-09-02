@@ -3,7 +3,7 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
   type Capability,
-} from "@lootlog/access-policy";
+} from "@lootlog/domain/access-policy";
 import { REQUIRED_CAPABILITIES_KEY } from "@lootlog/nest-shared";
 import {
   Injectable,

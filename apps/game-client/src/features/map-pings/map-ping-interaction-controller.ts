@@ -1,4 +1,4 @@
-import type { MapPingType } from "@lootlog/types";
+import type { MapPingType } from "@lootlog/schema/map-ping";
 import type { MapTile } from "./map-ping-controller";
 
 export const MAP_PING_HOLD_DELAY_MS = 300;

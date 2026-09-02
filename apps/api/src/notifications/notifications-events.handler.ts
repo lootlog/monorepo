@@ -4,14 +4,8 @@ import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
   LootCreatedNotificationEventV2,
-} from "@lootlog/types";
-import {
-  NotificationJobKind as DbNotificationJobKind,
-  NotificationOwnerType as DbNotificationOwnerType,
-  NotificationTriggerType as DbNotificationTriggerType,
-} from "#src/generated/prisma/client";
+} from "@lootlog/schema/notifications";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { NotificationJobService } from "#src/notifications/notification-job.service";
 import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
@@ -21,13 +15,17 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "#src/notifications/constants/notification-messages.constant";
+import { NotificationsRepository } from "./notifications.repository.js";
+import type { JsonValue } from "./notification-database.types.js";
+
+const DbNotificationJobKind = { INSTANT: "INSTANT" } as const;
 
 @Injectable()
 export class NotificationsEventsHandler {
   private readonly logger = new Logger(NotificationsEventsHandler.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: NotificationsRepository,
     private readonly jobService: NotificationJobService,
     private readonly matchingService: NotificationMatchingService,
     private readonly targetService: NotificationTargetService,
@@ -51,23 +49,17 @@ export class NotificationsEventsHandler {
     maxSpawnTime: string;
     npc?: { name?: string } | null;
   }) {
-    const notificationRules = await this.prisma.notificationRule.findMany({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: event.guildId,
-        guildId: event.guildId,
-        enabled: true,
-        triggerType: DbNotificationTriggerType.TIMER_BEFORE_SPAWN,
-        OR: [{ world: null }, { world: event.world }],
-      },
-    });
+    const notificationRules = await this.repository.findTimerRules(
+      event.guildId,
+      event.world,
+    );
 
     await Promise.all(
       notificationRules.map(async (notificationRule) => {
         try {
           if (
             !this.matchingService.matchesTimerRule(
-              notificationRule.filters,
+              notificationRule.filters as JsonValue,
               event.npcId,
             )
           ) {
@@ -122,36 +114,10 @@ export class NotificationsEventsHandler {
     },
   })
   async handleLootCreated(event: LootCreatedNotificationEventV2) {
-    const watchedItems = await this.prisma.watchedItem.findMany({
-      where: {
-        enabled: true,
-        itemId: {
-          in: event.itemIds,
-        },
-        world: event.world,
-        notificationRule: {
-          is: {
-            enabled: true,
-            triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-            world: event.world,
-            targets: {
-              some: {},
-            },
-          },
-        },
-      },
-      include: {
-        notificationRule: {
-          include: {
-            targets: {
-              include: {
-                target: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const watchedItems = await this.repository.findWatchedItemsForLoot(
+      event.itemIds,
+      event.world,
+    );
 
     const guilds = await this.guildsService.getMultipleGuildsByIds(
       event.guildIds,
@@ -180,14 +146,14 @@ export class NotificationsEventsHandler {
 
           if (
             !this.matchingService.matchesLootRule(
-              notificationRule.filters,
+              notificationRule.filters as JsonValue,
               event,
             )
           ) {
             return;
           }
           const matchedGuildIds = this.matchingService.getMatchingLootGuildIds(
-            notificationRule.filters,
+            notificationRule.filters as JsonValue,
             event.guildIds,
           );
           if (matchedGuildIds.length === 0) {

@@ -1,19 +1,24 @@
-import { serviceConfig } from "#src/config/service.config";
-import { createApp } from "#src/app.factory";
+import "dotenv/config";
+import { BunRuntime } from "@effect/platform-bun";
+import { Layer } from "effect";
+import { FetchHttpClient } from "effect/unstable/http";
 import {
-  createOpenApiDocument,
-  setupOpenApi,
-} from "#src/openapi/openapi-document";
+  OtlpLogger,
+  OtlpSerialization,
+  OtlpTracer,
+} from "effect/unstable/observability";
+import { ActivityApplication } from "./activity-application.js";
 
-async function bootstrap() {
-  const app = await createApp();
-  const { port } = serviceConfig;
-  const document = createOpenApiDocument(app);
-
-  setupOpenApi(app, document);
-
-  await app.startAllMicroservices();
-  await app.listen(port, "0.0.0.0");
-}
-
-bootstrap();
+const ObservabilityLive = Layer.merge(
+  OtlpTracer.layerFromConfig({ resource: { serviceName: "activity" } }),
+  OtlpLogger.layerFromConfig({
+    resource: { serviceName: "activity" },
+    mergeWithExisting: true,
+  }),
+).pipe(
+  Layer.provide(OtlpSerialization.layerJson),
+  Layer.provide(FetchHttpClient.layer),
+);
+BunRuntime.runMain(
+  Layer.launch(ActivityApplication.pipe(Layer.provide(ObservabilityLive))),
+);

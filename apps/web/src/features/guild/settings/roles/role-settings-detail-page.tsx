@@ -1,9 +1,9 @@
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
-import { useRolesControllerGetGuildRoles } from "@lootlog/api-client/react-query/main/roles";
+import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

@@ -28,8 +28,8 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   useDocsControllerDeleteDocument,
   useDocsControllerGetDocuments,
-} from "@lootlog/api-client/react-query/main/docs";
-import type { GuildDocumentListResponseDtoItemsItem } from "@lootlog/api-client/models/main/guild-document-list-response-dto-items-item";
+} from "@lootlog/client/main";
+import type { GuildDocumentListResponseDtoItemsItem } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {

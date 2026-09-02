@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
-import { Permission } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import * as z from "zod";
 
 const RoleResponseSchema = z.object({
   id: z.string(),

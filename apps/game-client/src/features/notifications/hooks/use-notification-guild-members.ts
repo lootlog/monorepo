@@ -5,7 +5,7 @@ import {
   getGuildMembersSummaryQueryOptions,
 } from "@/hooks/api/guild-members-summary-query";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 import type { StoredNotification } from "@/store/notifications.store";
 
 export type NotificationGuildMembersByGuildId = Record<

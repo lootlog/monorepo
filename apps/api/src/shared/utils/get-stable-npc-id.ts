@@ -1,4 +1,6 @@
-import { NpcType } from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcTypeValues } from "@lootlog/schema/npc-type";
+
+type NpcType = (typeof NpcTypeValues)[keyof typeof NpcTypeValues];
 
 /**
  * For COLOSSUS type monsters, generates a stable ID from the name
@@ -10,7 +12,7 @@ export const getStableNpcId = (
   npcName: string,
   npcType: NpcType,
 ): number => {
-  if (npcType === NpcType.COLOSSUS) {
+  if (npcType === NpcTypeValues.COLOSSUS) {
     // Generate a deterministic hash from the name
     // Use a simple string hash that produces a stable negative number
     // (negative to avoid collision with real NPC IDs)

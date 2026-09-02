@@ -1,4 +1,7 @@
-import type { NotificationMutes, UserPreferences } from "@lootlog/types";
+import type {
+  NotificationMutes,
+  UserPreferences,
+} from "@lootlog/schema/user-preferences";
 
 export const cloneNotificationMutes = (
   mutes: NotificationMutes = { players: [], npcs: [] },

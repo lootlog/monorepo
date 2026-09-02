@@ -1,9 +1,9 @@
 import { createZodDto } from "nestjs-zod";
-import { z } from "zod";
+import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
+import * as z from "zod";
 import { MemberResponseDto } from "./member-response.dto.js";
 import { TimerNpcResponseDto } from "./timer-npc-response.dto.js";
 import { isoDatetimeCodec } from "./zod-response-codecs.js";
-import { Profession } from "#src/generated/prisma/client";
 
 const TimerActorCharacterResponseSchema = z
   .object({

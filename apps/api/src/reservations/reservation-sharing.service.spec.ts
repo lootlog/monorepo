@@ -9,24 +9,16 @@ import { ReservationSharingService } from "./reservation-sharing.service.js";
 const future = () => new Date(Date.now() + 60_000);
 
 describe("ReservationSharingService", () => {
-  const prisma = {
-    $transaction: vi.fn(),
-    reservationShare: {
-      findMany: vi.fn(),
-    },
-    reservationShareInvitation: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-    },
-  };
-  const transaction = {
-    reservationShare: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-    },
-    reservationShareInvitation: {
-      updateMany: vi.fn(),
-    },
+  const repository = {
+    findActiveShares: vi.fn(),
+    listActiveSharesWithGuilds: vi.fn(),
+    findPendingInvitations: vi.fn(),
+    createInvitation: vi.fn(),
+    findInvitation: vi.fn(),
+    acceptInvitation: vi.fn(),
+    revokeInvitation: vi.fn(),
+    findActiveShare: vi.fn(),
+    revokeShare: vi.fn(),
   };
   const guildsService = {
     getGuildsForRequiredPermissions: vi.fn(),
@@ -36,12 +28,9 @@ describe("ReservationSharingService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    prisma.$transaction.mockImplementation(
-      (callback: (value: typeof transaction) => unknown) =>
-        Promise.resolve(callback(transaction)),
-    );
+    repository.findActiveShares.mockResolvedValue([]);
     service = new ReservationSharingService(
-      prisma as never,
+      repository as never,
       guildsService as never,
       eventsPublisher as never,
     );
@@ -50,7 +39,7 @@ describe("ReservationSharingService", () => {
   it("creates an origin-independent invitation path", async () => {
     const createdAt = new Date();
     const expiresAt = future();
-    prisma.reservationShareInvitation.create.mockResolvedValue({
+    repository.createInvitation.mockResolvedValue({
       id: "invite",
       createdAt,
       expiresAt,
@@ -69,7 +58,7 @@ describe("ReservationSharingService", () => {
   });
 
   it("returns only the current organization and its direct partners", async () => {
-    prisma.reservationShare.findMany.mockResolvedValue([
+    repository.findActiveShares.mockResolvedValue([
       { firstGuildId: "a", secondGuildId: "b" },
       { firstGuildId: "c", secondGuildId: "a" },
     ]);
@@ -79,15 +68,11 @@ describe("ReservationSharingService", () => {
       "b",
       "c",
     ]);
-    expect(prisma.reservationShare.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ revokedAt: null }),
-      }),
-    );
+    expect(repository.findActiveShares).toHaveBeenCalledWith("a");
   });
 
   it("does not offer the source or an existing direct partner as a target", async () => {
-    prisma.reservationShareInvitation.findUnique.mockResolvedValue({
+    repository.findInvitation.mockResolvedValue({
       id: "invite",
       sourceGuildId: "a",
       sourceGuild: { id: "a", name: "A", icon: null },
@@ -100,7 +85,7 @@ describe("ReservationSharingService", () => {
       { id: "b", name: "B", icon: null },
       { id: "c", name: "C", icon: null },
     ]);
-    prisma.reservationShare.findMany.mockResolvedValue([
+    repository.findActiveShares.mockResolvedValue([
       { firstGuildId: "a", secondGuildId: "b" },
     ]);
 
@@ -112,7 +97,7 @@ describe("ReservationSharingService", () => {
   });
 
   it("rejects a self-share before creating a relationship", async () => {
-    prisma.reservationShareInvitation.findUnique.mockResolvedValue({
+    repository.findInvitation.mockResolvedValue({
       id: "invite",
       sourceGuildId: "a",
       sourceGuild: { id: "a", name: "A", icon: null },
@@ -144,18 +129,11 @@ describe("ReservationSharingService", () => {
       revokedAt: null,
       expiresAt: future(),
     };
-    prisma.reservationShareInvitation.findUnique.mockResolvedValue(invitation);
+    repository.findInvitation.mockResolvedValue(invitation);
     guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
       { id: "b", name: "B", icon: null },
     ]);
-    transaction.reservationShareInvitation.updateMany.mockResolvedValue({
-      count: 0,
-    });
-    transaction.reservationShare.findUnique.mockResolvedValue(null);
-    transaction.reservationShare.upsert.mockResolvedValue({
-      id: "share",
-      createdAt: new Date(),
-    });
+    repository.acceptInvitation.mockResolvedValue({ kind: "expired" });
 
     await expect(
       service.acceptInvitation({
@@ -166,22 +144,13 @@ describe("ReservationSharingService", () => {
       }),
     ).rejects.toBeInstanceOf(GoneException);
 
-    expect(
-      transaction.reservationShareInvitation.updateMany,
-    ).toHaveBeenCalledWith({
-      where: {
-        id: invitation.id,
-        acceptedAt: null,
-        revokedAt: null,
-        expiresAt: { gt: expect.any(Date) },
-      },
-      data: {
-        acceptedAt: expect.any(Date),
+    expect(repository.acceptInvitation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        invitationId: invitation.id,
         acceptedByUserId: "user",
         targetGuildId: "b",
-      },
-    });
-    expect(transaction.reservationShare.upsert).not.toHaveBeenCalled();
+      }),
+    );
   });
 
   it.each([
@@ -201,7 +170,7 @@ describe("ReservationSharingService", () => {
       ConflictException,
     ],
   ])("rejects a %s invitation", async (_name, state, errorType) => {
-    prisma.reservationShareInvitation.findUnique.mockResolvedValue({
+    repository.findInvitation.mockResolvedValue({
       id: "invite",
       sourceGuildId: "a",
       sourceGuild: { id: "a", name: "A", icon: null },
@@ -214,7 +183,7 @@ describe("ReservationSharingService", () => {
   });
 
   it("hides unknown tokens behind a not-found response", async () => {
-    prisma.reservationShareInvitation.findUnique.mockResolvedValue(null);
+    repository.findInvitation.mockResolvedValue(null);
     await expect(
       service.previewInvitation("missing", "discord"),
     ).rejects.toBeInstanceOf(NotFoundException);

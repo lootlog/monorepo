@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Users } from "lucide-react";
-import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/api-client/react-query/main/events";
+import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/client/main";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 import { KillParticipantRow } from "./kill-participant-row";

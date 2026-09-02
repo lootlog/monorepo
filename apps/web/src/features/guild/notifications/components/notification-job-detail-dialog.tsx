@@ -9,7 +9,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
-import type { NotificationJobsResponseDto } from "@lootlog/api-client/models/main/notification-jobs-response-dto";
+import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import {
   getJobKindLabel,
   getJobStatusBadgeProps,

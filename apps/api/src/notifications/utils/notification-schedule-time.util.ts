@@ -1,4 +1,7 @@
-import { NotificationScheduleIntervalType } from "#src/generated/prisma/client";
+import {
+  NotificationScheduleIntervalType,
+  type NotificationScheduleIntervalType as NotificationScheduleIntervalTypeValue,
+} from "#src/notifications/notification-enums";
 import {
   type LocalDate,
   addDays,
@@ -22,7 +25,7 @@ export function isValidTimeZone(timeZone: string): boolean {
 }
 
 export function isRecurringScheduleInterval(
-  intervalType: NotificationScheduleIntervalType,
+  intervalType: NotificationScheduleIntervalTypeValue,
 ): boolean {
   return (
     intervalType === NotificationScheduleIntervalType.DAILY ||
@@ -48,7 +51,7 @@ function toUtcDateFromLocalTimeOfDay(
 }
 
 export function calculateFirstOccurrenceInTimeZone(params: {
-  intervalType: NotificationScheduleIntervalType;
+  intervalType: NotificationScheduleIntervalTypeValue;
   timeOfDay: string;
   timeZone: string;
   weekday?: number | null;
@@ -114,7 +117,7 @@ export function calculateFirstOccurrenceInTimeZone(params: {
 
 export function calculateNextOccurrenceInTimeZone(params: {
   currentScheduledAt: Date;
-  intervalType: NotificationScheduleIntervalType;
+  intervalType: NotificationScheduleIntervalTypeValue;
   intervalValue: number | null;
   weekday: number | null;
   timeOfDay: string | null;

@@ -1,8 +1,8 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
@@ -99,7 +99,8 @@ vi.mock("./timer-live-tile", () => ({
   },
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
   }: {

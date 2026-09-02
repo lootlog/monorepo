@@ -1,39 +1,33 @@
-import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "#src/test/mock-fn";
+import { describe, expect, it, vi } from "vitest";
+import type { DrizzleDatabaseRuntime } from "../database/drizzle/runtime.js";
 import { LootlogConfigService } from "./lootlog-config.service.js";
-import { PrismaService } from "#src/db/prisma.service";
 
 describe("LootlogConfigService", () => {
-  let service: LootlogConfigService;
+  it("does not touch the database for an empty multi-config lookup", async () => {
+    const databaseRuntime = {
+      runPromise: vi.fn<DrizzleDatabaseRuntime["runPromise"]>(),
+    };
+    const service = new LootlogConfigService(
+      databaseRuntime as unknown as DrizzleDatabaseRuntime,
+    );
 
-  const mockPrismaService = {
-    lootlogConfig: {
-      findUnique: mockFn(),
-      findMany: mockFn(),
-      create: mockFn(),
-      update: mockFn(),
-    },
-    lootlogConfigNpc: {
-      upsert: mockFn(),
-      delete: mockFn(),
-    },
-  };
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        LootlogConfigService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<LootlogConfigService>(LootlogConfigService);
+    await expect(service.getMultipleLootlogConfigs([])).resolves.toEqual([]);
+    expect(databaseRuntime.runPromise).not.toHaveBeenCalled();
   });
 
-  it("should be defined", () => {
-    expect(service).toBeDefined();
+  it("rejects a non-numeric NPC configuration id before querying", async () => {
+    const databaseRuntime = {
+      runPromise: vi.fn<DrizzleDatabaseRuntime["runPromise"]>(),
+    };
+    const service = new LootlogConfigService(
+      databaseRuntime as unknown as DrizzleDatabaseRuntime,
+    );
+
+    await expect(
+      service.updateNpc("guild-1", "not-a-number", {
+        allowedRarities: [],
+      }),
+    ).rejects.toThrow("NPC configuration not found");
+    expect(databaseRuntime.runPromise).not.toHaveBeenCalled();
   });
 });

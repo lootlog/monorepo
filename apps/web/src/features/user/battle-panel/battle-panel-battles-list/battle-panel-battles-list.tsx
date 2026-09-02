@@ -20,7 +20,7 @@ import {
   useBattlesControllerGetDashboardBattles,
   useBattlesControllerGetUserCharacters,
   useBattlesControllerGetUserWorlds,
-} from "@lootlog/api-client/react-query/battlelog/battles";
+} from "@lootlog/client/battlelog";
 import { useState } from "react";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";

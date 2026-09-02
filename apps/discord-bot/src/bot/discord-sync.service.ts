@@ -1,6 +1,3 @@
-// oxlint-disable-next-line consistent-type-imports
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   DiscordGuildSyncStatus,
   type DiscordGuildChannelDeletedEvent,
@@ -10,14 +7,9 @@ import {
   type DiscordGuildChannelsSyncedEvent,
   type DiscordGuildSyncState,
   type DiscordGuildSyncStateUpdatedEvent,
-} from "@lootlog/types";
-import { isDiscordAdministrator } from "@lootlog/nest-shared";
-import {
-  ChannelType,
-  Client as DiscordClient,
-  DiscordAPIError,
-  PermissionsBitField,
-} from "discord.js";
+} from "@lootlog/schema/notifications";
+import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
+import { ChannelType, DiscordAPIError, PermissionsBitField } from "discord.js";
 import type {
   Client,
   Collection,
@@ -25,9 +17,10 @@ import type {
   GuildBasedChannel,
   GuildMember,
   Role,
-} from "discord.js" with { "resolution-mode": "require" };
-import { RoutingKey } from "#src/bot/enums/routing-key.enum";
+} from "discord.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { AppLogger } from "#src/shared/logger";
+import type { RabbitPublisher } from "./rabbit-publisher.js";
 import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant.js";
 
 type ChannelPermissionsState = {
@@ -67,17 +60,18 @@ type ResolveGuildResult =
       lastError: string;
     };
 
-@Injectable()
 export class DiscordSyncService {
-  private readonly logger = new Logger(DiscordSyncService.name);
+  private readonly logger = new AppLogger(DiscordSyncService.name);
 
   constructor(
-    private readonly amqpConnection: AmqpConnection,
-    @Inject(DiscordClient) private readonly client: Client,
+    private readonly amqpConnection: RabbitPublisher,
+    private readonly client: Client,
   ) {}
 
   async handleClientReady(client: Client) {
-    this.logger.log(`Bot is ready and logged in as ${client.user.username}`);
+    this.logger.log(
+      `Bot is ready and logged in as ${client.user?.username ?? "unknown"}`,
+    );
   }
 
   async handleGuildCreate(guild: Guild) {
@@ -665,7 +659,7 @@ export class DiscordSyncService {
           id: role.id,
           name: role.name,
           color: role.color,
-          admin: isDiscordAdministrator(role.permissions.bitfield),
+          admin: (role.permissions.bitfield & 0x8n) === 0x8n,
           position: role.position,
         })),
       },
@@ -705,7 +699,7 @@ export class DiscordSyncService {
         name: role.name,
         color: role.color,
         position: role.position,
-        admin: isDiscordAdministrator(role.permissions.bitfield),
+        admin: (role.permissions.bitfield & 0x8n) === 0x8n,
       },
     );
   }
@@ -720,7 +714,7 @@ export class DiscordSyncService {
         name: role.name,
         color: role.color,
         position: role.position,
-        admin: isDiscordAdministrator(role.permissions.bitfield),
+        admin: (role.permissions.bitfield & 0x8n) === 0x8n,
       },
     );
   }

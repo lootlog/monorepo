@@ -1,17 +1,16 @@
+import { Effect } from "effect";
+import { AppConfig } from "../src/config/env.js";
+import { AuthDatabase } from "../src/database/drizzle.js";
 import { initializeAuthMigrations } from "../src/database/migrations.js";
 
-async function main() {
-  const { drizzlePool } = await import("../src/database/drizzle.js");
+const program = Effect.gen(function* () {
+  const connection = yield* AuthDatabase;
+  yield* Effect.promise(() => initializeAuthMigrations(connection.pool));
+  yield* Effect.logInfo("Auth migrations initialized");
+}).pipe(
+  Effect.provide(AuthDatabase.layer),
+  Effect.provide(AppConfig.layer),
+  Effect.scoped,
+);
 
-  try {
-    await initializeAuthMigrations();
-    console.log("Auth migrations initialized.");
-  } finally {
-    await drizzlePool.end();
-  }
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+await Effect.runPromise(program);

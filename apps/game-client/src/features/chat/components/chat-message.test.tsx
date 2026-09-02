@@ -1,8 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@lootlog/client/main";
+
 import { ChatMessage } from "./chat-message";
 
 const mocks = vi.hoisted(() => ({
@@ -74,7 +77,7 @@ vi.mock("@/api/npcs.api", () => ({
   },
 }));
 
-vi.mock("@lootlog/types", async (importOriginal) => ({
+vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
   ...(await importOriginal()),
   getNpcTypeByWt: () => "HERO",
 }));
@@ -107,7 +110,8 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getChatControllerGetChatMessagesQueryKey: ({
     guildId,
   }: {

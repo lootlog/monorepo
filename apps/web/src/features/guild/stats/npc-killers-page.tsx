@@ -28,7 +28,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import {
   getKillsControllerGetNpcKillersQueryKey,
   useKillsControllerGetNpcKillers,
-} from "@lootlog/api-client/react-query/main/kills";
+} from "@lootlog/client/main";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
@@ -36,8 +36,8 @@ import { buildNpcKillersParams } from "./utils/build-stats-query-params";
 import {
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/api-client/react-query/main/members";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
+} from "@lootlog/client/main";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,

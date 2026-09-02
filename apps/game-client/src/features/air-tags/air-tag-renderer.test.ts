@@ -1,4 +1,4 @@
-import type { AirTagTarget } from "@lootlog/types";
+import type { AirTagTarget } from "@lootlog/schema/air-tag";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import {
   AIR_TAG_FADE_START_MS,

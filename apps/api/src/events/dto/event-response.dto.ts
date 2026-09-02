@@ -1,12 +1,15 @@
 import { createZodDto } from "nestjs-zod";
-import { PointsEditType } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
   nullableIsoDatetimeCodec,
 } from "#src/shared/dto/zod-response-codecs";
-import { z } from "zod";
-import { EVENT_SCORING_MODES } from "@lootlog/scoring";
+import * as z from "zod";
+import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
+const PointsEditType = {
+  KILL_POINT: "KILL_POINT",
+  RANKING: "RANKING",
+} as const;
 
 const EventHeroNpcResponseSchema = z.object({
   id: z.string(),

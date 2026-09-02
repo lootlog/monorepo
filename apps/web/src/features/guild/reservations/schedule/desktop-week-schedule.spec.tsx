@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { HEADER_HEIGHT, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { DesktopWeekSchedule } from "./desktop-week-schedule";
 import type { ReservationSegment } from "./types";

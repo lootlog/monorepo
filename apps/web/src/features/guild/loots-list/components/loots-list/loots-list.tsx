@@ -15,10 +15,10 @@ import {
   getLootsControllerFetchLootByIdQueryKey,
   lootsControllerFetchLootById,
   lootsControllerFetchLootsByGuildId,
-} from "@lootlog/api-client/react-query/main/loots";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
-import type { LootShareResponseDto } from "@lootlog/api-client/models/main/loot-share-response-dto";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/api-client/models/main/loots-controller-fetch-loots-by-guild-id-params";
+} from "@lootlog/client/main";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import type { LootShareResponseDto } from "@lootlog/client/main";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/client/main";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -47,7 +47,7 @@ import { WorldSwitcher } from "@/components/common/world-switcher";
 import type {
   GuildLootCreatedEventV2,
   GuildLootShareUpdatedEventV2,
-} from "@lootlog/types";
+} from "@lootlog/schema/loot-events";
 
 const LOOTS_PAGE_LIMIT = 20;
 const LOOTS_QUERY_STALE_TIME_MS = 30_000;

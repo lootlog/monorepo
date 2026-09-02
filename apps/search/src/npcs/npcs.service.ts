@@ -1,28 +1,23 @@
-import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import type { AppLogger } from "#src/shared/logger";
+import { getNpcTypeByWt } from "./npc-type.js";
 import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
 import { NPCS_INDEX } from "./constants/meilisearch.js";
 import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
-import type { npcHitSchema } from "./dto/npc-hit.schema.js";
+import type { NpcHit } from "./dto/npc-hit.schema.js";
 
-type NpcHit = z.infer<typeof npcHitSchema>;
 type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
   margonemType?: number | null;
   prof?: string | null;
   type?: NpcHit["type"] | number | string | null;
 };
 
-@Injectable()
 export class NpcsService {
   constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly meilisearch: Meilisearch,
+    private readonly logger: AppLogger,
   ) {}
 
   async getNpcs({ ids, limit, search, world }: GetNpcsDto) {
@@ -95,7 +90,7 @@ export class NpcsService {
       return {
         ...npc,
         prof,
-        type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
+        type: getNpcTypeByWt(npc.wt, prof, npc.margonemType),
         uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
       };
     });
@@ -143,7 +138,7 @@ export class NpcsService {
       return npc.type as NpcTypeEnum;
     }
 
-    return getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, margonemType);
+    return getNpcTypeByWt(npc.wt, prof, margonemType);
   }
 
   private getUniqueNpcsByNameAndType(npcs: NpcHit[]) {

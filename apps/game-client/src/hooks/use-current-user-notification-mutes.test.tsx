@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { defaultNotificationMutes } from "@lootlog/types";
+import { defaultNotificationMutes } from "@lootlog/schema/user-preferences";
 import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
 
 const mockUseUserPreferences = vi.fn();

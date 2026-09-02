@@ -6,7 +6,7 @@ import type {
   DiscordGuildChannelsSyncFailedEvent,
   DiscordGuildChannelsSyncedEvent,
   DiscordGuildSyncStateUpdatedEvent,
-} from "@lootlog/types";
+} from "@lootlog/schema/notifications";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { ChannelsService } from "#src/channels/channels.service";

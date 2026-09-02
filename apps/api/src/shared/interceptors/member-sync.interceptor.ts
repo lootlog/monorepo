@@ -9,10 +9,10 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
-import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MembersService } from "#src/members/members.service";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
+import { MemberSyncRepository } from "./member-sync.repository.js";
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {
@@ -20,7 +20,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService,
+    private readonly repository: MemberSyncRepository,
     private readonly membersService: MembersService,
     private readonly redis: RedisService,
   ) {}
@@ -82,23 +82,11 @@ export class MemberSyncInterceptor implements NestInterceptor {
     const guildIds = guilds.map((g) => g.id);
     const staleThreshold = this.membersService.getMemberSoftStaleThreshold();
 
-    const staleMembers = await this.prisma.member.findMany({
-      where: {
-        userId: discordId,
-        guildId: { in: guildIds },
-        globalUserId: { not: null },
-        active: true,
-        OR: [
-          { lastDiscordSyncAt: null },
-          { lastDiscordSyncAt: { lt: staleThreshold } },
-        ],
-      },
-      select: {
-        userId: true,
-        guildId: true,
-        globalUserId: true,
-      },
-    });
+    const staleMembers = await this.repository.findStaleMembers(
+      discordId,
+      guildIds,
+      staleThreshold,
+    );
 
     if (staleMembers.length === 0) {
       this.logger.log({
@@ -117,6 +105,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
 
     await Promise.all(
       staleMembers.map(async (member) => {
+        if (!member.globalUserId) return;
         try {
           await this.membersService.queueMemberRefresh({
             discordId: member.userId,

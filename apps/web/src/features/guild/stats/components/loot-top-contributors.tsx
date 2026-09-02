@@ -10,13 +10,13 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/api-client/models/main/loot-stats-response-dto-output-top-contributors-item";
+import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/api-client/react-query/main/members";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
+} from "@lootlog/client/main";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
 
 type PodiumSlotProps = {
   contributor?: LootStatsResponseDtoOutputTopContributorsItem;

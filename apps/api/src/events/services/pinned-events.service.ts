@@ -3,68 +3,22 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "#src/db/prisma.service";
-import {
-  attachComputedEventActive,
-  buildActiveEventWhere,
-} from "../utils/event-activity.util.js";
-
-const pinnedEventSelect = {
-  id: true,
-  guildId: true,
-  name: true,
-  world: true,
-  startsAt: true,
-  endsAt: true,
-  createdAt: true,
-  updatedAt: true,
-  heroNpcs: {
-    select: {
-      id: true,
-      npcId: true,
-      npcName: true,
-      npcIcon: true,
-      npcLvl: true,
-    },
-  },
-} as const;
+import { attachComputedEventActive } from "../utils/event-activity.util.js";
+import { PinnedEventsRepository } from "./pinned-events.repository.js";
 
 @Injectable()
 export class PinnedEventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: PinnedEventsRepository) {}
 
   async listPinnedEvents(userId: string, guildId: string) {
     const referenceTime = new Date();
 
-    await this.prisma.userPinnedEvent.deleteMany({
-      where: {
-        userId,
-        event: {
-          guildId,
-          OR: [
-            { startsAt: { gt: referenceTime } },
-            { endsAt: { lte: referenceTime } },
-          ],
-        },
-      },
-    });
-
-    const pinnedEvents = await this.prisma.userPinnedEvent.findMany({
-      where: {
-        userId,
-        event: {
-          guildId,
-          ...buildActiveEventWhere(referenceTime),
-        },
-      },
-      select: {
-        pinnedAt: true,
-        event: {
-          select: pinnedEventSelect,
-        },
-      },
-      orderBy: { pinnedAt: "desc" },
-    });
+    await this.repository.removeInactive(userId, guildId, referenceTime);
+    const pinnedEvents = await this.repository.findActive(
+      userId,
+      guildId,
+      referenceTime,
+    );
 
     return pinnedEvents.map(({ event, pinnedAt }) => ({
       pinnedAt,
@@ -74,10 +28,7 @@ export class PinnedEventsService {
 
   async pinEvent(userId: string, guildId: string, eventId: string) {
     const referenceTime = new Date();
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-      select: pinnedEventSelect,
-    });
+    const event = await this.repository.findEvent(eventId, guildId);
 
     if (!event) {
       throw new NotFoundException("Event not found");
@@ -85,18 +36,12 @@ export class PinnedEventsService {
 
     const activeEvent = attachComputedEventActive(event, referenceTime);
     if (!activeEvent.active) {
-      await this.prisma.userPinnedEvent.deleteMany({
-        where: { userId, eventId },
-      });
+      await this.repository.remove(userId, eventId);
       throw new ConflictException("Only active events can be pinned");
     }
 
-    const pinnedEvent = await this.prisma.userPinnedEvent.upsert({
-      where: { userId_eventId: { userId, eventId } },
-      create: { userId, eventId },
-      update: {},
-      select: { pinnedAt: true },
-    });
+    const pinnedEvent = await this.repository.pin(userId, eventId);
+    if (!pinnedEvent) throw new NotFoundException("Event pin not found");
 
     return {
       pinnedAt: pinnedEvent.pinnedAt,
@@ -105,12 +50,6 @@ export class PinnedEventsService {
   }
 
   async unpinEvent(userId: string, guildId: string, eventId: string) {
-    await this.prisma.userPinnedEvent.deleteMany({
-      where: {
-        userId,
-        eventId,
-        event: { guildId },
-      },
-    });
+    await this.repository.removeFromGuild(userId, guildId, eventId);
   }
 }

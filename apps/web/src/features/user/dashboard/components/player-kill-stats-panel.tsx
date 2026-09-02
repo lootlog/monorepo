@@ -5,7 +5,7 @@ import { Empty, EmptyHeader, EmptyTitle } from "@lootlog/ui/components/empty";
 import { CircleAlert, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import type { UserKillStatsResponseDtoOutput } from "@lootlog/api-client/models/main/user-kill-stats-response-dto-output";
+import type { UserKillStatsResponseDtoOutput } from "@lootlog/client/main";
 
 const NPC_TYPE_ORDER = [
   "TITAN",

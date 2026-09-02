@@ -1,4 +1,4 @@
-import type { PinnedEventResponseDto } from "@lootlog/api-client/models/main/pinned-event-response-dto";
+import type { PinnedEventResponseDto } from "@lootlog/client/main";
 
 export const addPinnedEvent = (
   pinnedEvents: PinnedEventResponseDto[],

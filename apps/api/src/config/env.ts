@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { z } from "zod";
+import * as z from "zod";
 import { createEnv } from "@lootlog/nest-shared/config";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 
 const booleanEnv = z
   .string()

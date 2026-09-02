@@ -1,4 +1,4 @@
-import { DISCORD_ADMINISTRATOR_PERMISSION } from "@lootlog/types";
+import { DISCORD_ADMINISTRATOR_PERMISSION } from "@lootlog/schema/discord";
 
 export function isDiscordAdministrator(permissionsBitfield: bigint): boolean {
   return (

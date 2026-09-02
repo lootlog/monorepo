@@ -1,4 +1,4 @@
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 
 export function getMemberCacheTtl(env: RuntimeEnvironment): number {
   return env === RuntimeEnvironment.LOCAL

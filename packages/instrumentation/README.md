@@ -17,7 +17,7 @@ Shared OpenTelemetry bootstrap helpers for Lootlog services.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/instrumentation build
+bun run --filter=@lootlog/instrumentation build
 ```
 
 ## Notes

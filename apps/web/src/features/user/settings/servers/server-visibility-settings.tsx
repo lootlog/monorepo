@@ -16,7 +16,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
-import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 import { EyeOff, RotateCcw, Server } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";

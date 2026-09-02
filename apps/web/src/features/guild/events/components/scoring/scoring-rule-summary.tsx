@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { EventScoringRule } from "@lootlog/scoring";
+import type { EventScoringRule } from "@lootlog/domain/scoring";
 import {
   formatScoringAction,
   formatScoringCondition,

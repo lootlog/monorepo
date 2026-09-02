@@ -1,7 +1,5 @@
-import {
-  CHAT_APPEARANCE_READABLE_PRESET,
-  normalizeChatAppearanceSettings,
-} from "@lootlog/types";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import { normalizeChatAppearanceSettings } from "@lootlog/domain/chat-appearance";
 import { describe, expect, it } from "vitest";
 
 describe("chat appearance location metadata", () => {

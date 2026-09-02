@@ -1,12 +1,8 @@
-import { writeOpenApiDocumentToYamlFile } from "@lootlog/nest-shared/openapi";
-import { createApp } from "#src/app.factory";
-import { createOpenApiDocument } from "./openapi-document.js";
+import { writeFile } from "node:fs/promises";
+import { stringify } from "yaml";
+import { openApiDocument } from "./openapi.js";
 
-async function generateOpenApi() {
-  const app = await createApp();
-  const document = createOpenApiDocument(app);
-  writeOpenApiDocumentToYamlFile(document, "openapi.yaml");
-  process.exit(0);
-}
-
-void generateOpenApi();
+await writeFile(
+  new URL("../../openapi.yaml", import.meta.url),
+  stringify(openApiDocument, { lineWidth: 0 }),
+);

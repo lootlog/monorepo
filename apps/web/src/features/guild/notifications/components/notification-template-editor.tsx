@@ -19,9 +19,9 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTranslation } from "react-i18next";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
+import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import {
   TIMER_PRESET_SIMPLE,
   TIMER_PRESET_DETAILED,

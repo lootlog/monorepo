@@ -1,11 +1,8 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { Prisma } from "#src/generated/prisma/client";
-import { PrismaService } from "#src/db/prisma.service";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,
@@ -13,7 +10,11 @@ import {
 } from "./constants/docs-limits.js";
 import type { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
 import type { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto.js";
-import type { GuildDocumentContent } from "./dto/guild-document-content.schema.js";
+import type {
+  GuildDocumentContent,
+  JsonValue,
+} from "./dto/guild-document-content.schema.js";
+import { DocsRepository } from "./docs.repository.js";
 
 const EMPTY_DOCUMENT_CONTENT = {
   root: {
@@ -33,13 +34,13 @@ const EMPTY_DOCUMENT_CONTENT = {
     type: "root",
     version: 1,
   },
-} satisfies Prisma.InputJsonValue;
+} satisfies GuildDocumentContent;
 
 type DocumentRecord = {
   id: string;
   guildId: string;
   title: string;
-  content?: Prisma.JsonValue;
+  content?: JsonValue;
   version: number;
   createdByMemberId: string;
   updatedByMemberId: string;
@@ -55,7 +56,7 @@ type HistoryRecord = {
   guildId: string;
   version: number;
   title: string;
-  content?: Prisma.JsonValue;
+  content?: JsonValue;
   action: "SAVE" | "DELETE" | "RESTORE";
   actorMemberId: string;
   editedAt: Date;
@@ -63,35 +64,11 @@ type HistoryRecord = {
 
 @Injectable()
 export class DocsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: DocsRepository) {}
 
   async listDocuments(guildId: string) {
-    const [guild, used, trashed, documents] = await Promise.all([
-      this.prisma.guild.findUnique({
-        where: { id: guildId },
-        select: { documentLimit: true },
-      }),
-      this.prisma.guildDocument.count({
-        where: { guildId },
-      }),
-      this.prisma.guildDocument.count({
-        where: { guildId, deletedAt: { not: null } },
-      }),
-      this.prisma.guildDocument.findMany({
-        where: { guildId, deletedAt: null },
-        orderBy: { updatedAt: "desc" },
-        select: {
-          id: true,
-          guildId: true,
-          title: true,
-          version: true,
-          createdByMemberId: true,
-          updatedByMemberId: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-    ]);
+    const { guild, used, trashed, documents } =
+      await this.repository.listDocuments(guildId);
 
     if (!guild) {
       throw new NotFoundException("Guild not found");
@@ -117,51 +94,15 @@ export class DocsService {
   ) {
     const title = this.normalizeTitle(data.title);
 
-    const document = await this.prisma.$transaction(async (tx) => {
-      const guild = await tx.guild.findUnique({
-        where: { id: guildId },
-        select: { documentLimit: true },
-      });
-
-      if (!guild) {
-        throw new NotFoundException("Guild not found");
-      }
-
-      const max = this.resolveDocumentLimit(guild.documentLimit);
-      const used = await tx.guildDocument.count({
-        where: { guildId },
-      });
-
-      if (used >= max) {
-        throw new ConflictException("Guild document limit reached");
-      }
-
-      const createdDocument = await tx.guildDocument.create({
-        data: {
-          guildId,
-          title,
-          content: EMPTY_DOCUMENT_CONTENT,
-          createdByMemberId: memberId,
-          updatedByMemberId: memberId,
-        },
-      });
-
-      await tx.guildDocumentHistory.create({
-        data: {
-          documentId: createdDocument.id,
-          guildId,
-          version: createdDocument.version,
-          title: createdDocument.title,
-          content: createdDocument.content as Prisma.InputJsonValue,
-          action: "SAVE",
-          actorMemberId: memberId,
-        },
-      });
-
-      return createdDocument;
+    const document = await this.repository.createDocument({
+      guildId,
+      memberId,
+      title,
+      content: EMPTY_DOCUMENT_CONTENT,
+      defaultLimit: GUILD_DOCUMENT_DEFAULT_LIMIT,
     });
 
-    return this.mapDocumentRecord(guildId, document, {
+    return this.mapDocumentRecord(guildId, document as DocumentRecord, {
       includeContent: true,
     });
   }
@@ -169,7 +110,7 @@ export class DocsService {
   async getDocument(guildId: string, documentId: string) {
     const document = await this.findDocumentOrThrow(guildId, documentId);
 
-    return this.mapDocumentRecord(guildId, document, {
+    return this.mapDocumentRecord(guildId, document as DocumentRecord, {
       includeContent: true,
     });
   }
@@ -183,49 +124,15 @@ export class DocsService {
     const title = this.normalizeTitle(data.title);
     const content = this.normalizeContent(data.content);
 
-    const updatedDocument = await this.prisma.$transaction(async (tx) => {
-      const document = await tx.guildDocument.findFirst({
-        where: { id: documentId, guildId, deletedAt: null },
-      });
-
-      if (!document) {
-        throw new NotFoundException("Document not found");
-      }
-
-      if (
-        document.title === title &&
-        this.stringifyContent(document.content) ===
-          this.stringifyContent(content)
-      ) {
-        return document;
-      }
-
-      const updated = await tx.guildDocument.update({
-        where: { id: documentId },
-        data: {
-          title,
-          content: content as Prisma.InputJsonValue,
-          updatedByMemberId: memberId,
-          version: { increment: 1 },
-        },
-      });
-
-      await tx.guildDocumentHistory.create({
-        data: {
-          documentId,
-          guildId,
-          version: updated.version,
-          title: updated.title,
-          content: updated.content as Prisma.InputJsonValue,
-          action: "SAVE",
-          actorMemberId: memberId,
-        },
-      });
-
-      return updated;
+    const updatedDocument = await this.repository.updateDocument({
+      guildId,
+      documentId,
+      memberId,
+      title,
+      content,
     });
 
-    return this.mapDocumentRecord(guildId, updatedDocument, {
+    return this.mapDocumentRecord(guildId, updatedDocument as DocumentRecord, {
       includeContent: true,
     });
   }
@@ -233,20 +140,7 @@ export class DocsService {
   async listHistory(guildId: string, documentId: string) {
     await this.findDocumentOrThrow(guildId, documentId);
 
-    const history = await this.prisma.guildDocumentHistory.findMany({
-      where: { documentId, guildId },
-      orderBy: { editedAt: "desc" },
-      select: {
-        id: true,
-        documentId: true,
-        guildId: true,
-        version: true,
-        title: true,
-        action: true,
-        actorMemberId: true,
-        editedAt: true,
-      },
-    });
+    const history = await this.repository.listHistory(guildId, documentId);
 
     return {
       items: await this.mapHistoryRecords(guildId, history),
@@ -260,43 +154,29 @@ export class DocsService {
   ) {
     await this.findDocumentOrThrow(guildId, documentId);
 
-    const history = await this.prisma.guildDocumentHistory.findFirst({
-      where: {
-        id: historyId,
-        documentId,
-        guildId,
-      },
-    });
+    const history = await this.repository.findHistory(
+      guildId,
+      documentId,
+      historyId,
+    );
 
     if (!history) {
       throw new NotFoundException("Document history not found");
     }
 
-    return this.mapHistoryRecord(guildId, history, {
+    return this.mapHistoryRecord(guildId, history as HistoryRecord, {
       includeContent: true,
     });
   }
 
   async listTrash(guildId: string) {
-    const documents = await this.prisma.guildDocument.findMany({
-      where: { guildId, deletedAt: { not: null } },
-      orderBy: { deletedAt: "desc" },
-      select: {
-        id: true,
-        guildId: true,
-        title: true,
-        version: true,
-        createdByMemberId: true,
-        updatedByMemberId: true,
-        deletedAt: true,
-        deletedByMemberId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const documents = await this.repository.listTrash(guildId);
 
     return {
-      items: await this.mapTrashDocumentRecords(guildId, documents),
+      items: await this.mapTrashDocumentRecords(
+        guildId,
+        documents as DocumentRecord[],
+      ),
     };
   }
 
@@ -305,107 +185,35 @@ export class DocsService {
     documentId: string,
     memberId: string,
   ) {
-    await this.prisma.$transaction(async (tx) => {
-      const document = await tx.guildDocument.findFirst({
-        where: { id: documentId, guildId, deletedAt: null },
-      });
-
-      if (!document) {
-        throw new NotFoundException("Document not found");
-      }
-
-      const deletedDocument = await tx.guildDocument.update({
-        where: { id: documentId },
-        data: {
-          deletedAt: new Date(),
-          deletedByMemberId: memberId,
-          updatedByMemberId: memberId,
-        },
-      });
-
-      await tx.guildDocumentHistory.create({
-        data: {
-          documentId,
-          guildId,
-          version: deletedDocument.version,
-          title: deletedDocument.title,
-          content: deletedDocument.content as Prisma.InputJsonValue,
-          action: "DELETE",
-          actorMemberId: memberId,
-        },
-      });
+    await this.repository.changeTrashState({
+      guildId,
+      documentId,
+      memberId,
+      action: "DELETE",
     });
 
     return { success: true };
   }
 
   async restoreDocument(guildId: string, documentId: string, memberId: string) {
-    await this.prisma.$transaction(async (tx) => {
-      const document = await tx.guildDocument.findFirst({
-        where: { id: documentId, guildId },
-      });
-
-      if (!document) {
-        throw new NotFoundException("Document not found");
-      }
-
-      if (!document.deletedAt) {
-        throw new ConflictException("Document is not in trash");
-      }
-
-      const restoredDocument = await tx.guildDocument.update({
-        where: { id: documentId },
-        data: {
-          deletedAt: null,
-          deletedByMemberId: null,
-          updatedByMemberId: memberId,
-        },
-      });
-
-      await tx.guildDocumentHistory.create({
-        data: {
-          documentId,
-          guildId,
-          version: restoredDocument.version,
-          title: restoredDocument.title,
-          content: restoredDocument.content as Prisma.InputJsonValue,
-          action: "RESTORE",
-          actorMemberId: memberId,
-        },
-      });
+    await this.repository.changeTrashState({
+      guildId,
+      documentId,
+      memberId,
+      action: "RESTORE",
     });
 
     return { success: true };
   }
 
   async purgeDocument(guildId: string, documentId: string) {
-    const document = await this.prisma.guildDocument.findFirst({
-      where: { id: documentId, guildId },
-      select: {
-        id: true,
-        deletedAt: true,
-      },
-    });
-
-    if (!document) {
-      throw new NotFoundException("Document not found");
-    }
-
-    if (!document.deletedAt) {
-      throw new ConflictException("Document is not in trash");
-    }
-
-    await this.prisma.guildDocument.delete({
-      where: { id: documentId },
-    });
+    await this.repository.purge(guildId, documentId);
 
     return { success: true };
   }
 
   private async findDocumentOrThrow(guildId: string, documentId: string) {
-    const document = await this.prisma.guildDocument.findFirst({
-      where: { id: documentId, guildId, deletedAt: null },
-    });
+    const document = await this.repository.findActive(guildId, documentId);
 
     if (!document) {
       throw new NotFoundException("Document not found");
@@ -442,7 +250,7 @@ export class DocsService {
     return content;
   }
 
-  private stringifyContent(content: Prisma.JsonValue) {
+  private stringifyContent(content: unknown) {
     try {
       return JSON.stringify(content);
     } catch {
@@ -584,18 +392,7 @@ export class DocsService {
       return new Map<string, string>();
     }
 
-    const editors = await this.prisma.member.findMany({
-      where: {
-        guildId,
-        userId: {
-          in: uniqueMemberIds,
-        },
-      },
-      select: {
-        userId: true,
-        name: true,
-      },
-    });
+    const editors = await this.repository.findEditors(guildId, uniqueMemberIds);
 
     return new Map(editors.map((editor) => [editor.userId, editor.name]));
   }

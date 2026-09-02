@@ -7,9 +7,9 @@ import {
 import {
   AIR_TAG_CLAN_ENEMY_RELATION,
   AIR_TAG_ENEMY_RELATION,
-  getAirTagEffectiveRelation,
   type AirTagTarget,
-} from "@lootlog/types";
+} from "@lootlog/schema/air-tag";
+import { getAirTagEffectiveRelation } from "@lootlog/domain/air-tag";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 
 export const AIR_TAG_TARGET_TTL_MS = 10_000;

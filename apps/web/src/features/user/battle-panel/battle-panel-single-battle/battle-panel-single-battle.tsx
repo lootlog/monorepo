@@ -7,7 +7,7 @@ import {
   useBattlesControllerGetBattle,
   useBattlesControllerGetBattleRawData,
   useBattlesControllerGetBattleTimeline,
-} from "@lootlog/api-client/react-query/battlelog/battles";
+} from "@lootlog/client/battlelog";
 import { useParams } from "@tanstack/react-router";
 
 export const BattlePanelSingleBattle = () => {

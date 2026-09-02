@@ -5,7 +5,7 @@ import {
   getNotificationNpcMuteKey,
   isNotificationMuted,
 } from "@/features/notifications/utils/notification-mutes";
-import type { NotificationMutes } from "@lootlog/types";
+import type { NotificationMutes } from "@lootlog/schema/user-preferences";
 
 describe("notification mutes", () => {
   const baseMutes: NotificationMutes = {

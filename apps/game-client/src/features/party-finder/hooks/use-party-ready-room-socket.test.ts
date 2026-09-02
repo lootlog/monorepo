@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import type { PartyReadyRoomClientUpdate } from "@lootlog/types";
+import type { PartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party-ready-room-socket";

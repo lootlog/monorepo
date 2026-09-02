@@ -8,7 +8,7 @@ import {
   $isTextNode,
   type LexicalNode,
 } from "lexical";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import {
   $createNotificationTemplateRoleNode,

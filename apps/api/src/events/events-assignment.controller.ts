@@ -1,4 +1,4 @@
-import type { AccessPolicy } from "@lootlog/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Body,
   Controller,
@@ -21,7 +21,9 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
+type Role = typeof roleTable.$inferSelect;
 import { AssignMemberDto } from "./dto/assign-member.dto.js";
 import { AssignMapLocationDto } from "./dto/assign-map-location.dto.js";
 import { CreateHeroDto } from "./dto/create-hero.dto.js";

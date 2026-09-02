@@ -10,7 +10,7 @@ import {
 } from "@lootlog/ui/components/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
-import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/api-client/models/main/loot-stats-response-dto-output-top-npcs-item";
+import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
 
 const RARITY_COLORS = {
   LEGENDARY: "#ef4444",

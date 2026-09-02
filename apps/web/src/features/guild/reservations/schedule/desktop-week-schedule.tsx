@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
 import { pl } from "date-fns/locale";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
 import {

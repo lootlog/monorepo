@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "#src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { TimersService } from "./timers.service.js";
-import { PrismaService } from "#src/db/prisma.service";
+import { TimersRepository } from "./timers.repository.js";
 import { GuildsService } from "#src/guilds/guilds.service";
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import type { CreateTimerFromGameClientDto } from "#src/timers/dto/create-timer-from-game-client.dto";
@@ -18,18 +18,15 @@ import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "#src/user-lootlog-config/user-lootlog-config.service";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import {
-  NpcType,
-  Permission,
-  Profession,
-  TimerHistoryAction,
-} from "#src/generated/prisma/client";
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
+import { Profession, TimerHistoryAction } from "./timers.types.js";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 
 describe("TimersService", () => {
   let service: TimersService;
 
-  const mockPrismaService = {
+  const legacyDatabaseMock = {
     timer: {
       upsert: mockFn(),
       create: mockFn(),
@@ -45,6 +42,7 @@ describe("TimersService", () => {
     timerHistoryEntry: {
       create: mockFn(),
       findMany: mockFn(),
+      findUnique: mockFn(),
       deleteMany: mockFn(),
     },
     userSettingDocument: {
@@ -52,6 +50,243 @@ describe("TimersService", () => {
     },
     $transaction: mockFn(),
     $queryRaw: mockFn(),
+  };
+
+  const withRelations = { member: true, actorCharacter: true };
+  const mockTimersRepository = {
+    upsertPlayerSnapshot: mockFn().mockImplementation((snapshot) =>
+      legacyDatabaseMock.playerSnapshot.upsert({
+        where: {
+          world_accountId_characterId_snapshotHash: {
+            world: snapshot.world,
+            accountId: snapshot.accountId,
+            characterId: snapshot.characterId,
+            snapshotHash: snapshot.snapshotHash,
+          },
+        },
+        create: snapshot,
+        update: {},
+      }),
+    ),
+    createHistoryEntry: mockFn().mockImplementation((data, retainedEntries) =>
+      legacyDatabaseMock.$transaction(async (transaction) => {
+        const actorMember = data.actorMemberId
+          ? { connect: { id: data.actorMemberId } }
+          : {
+              connect: {
+                memberId: {
+                  userId: data.actorMemberUserId ?? "",
+                  guildId: data.guildId,
+                },
+              },
+            };
+        const entry = await transaction.timerHistoryEntry.create({
+          data: {
+            guild: { connect: { id: data.guildId } },
+            world: data.world,
+            timerKey: data.timerKey,
+            npcId: data.npcId,
+            npc: data.npc,
+            action: data.action,
+            actorMember,
+            actorCharacter: data.actorCharacterSnapshotId
+              ? { connect: { id: data.actorCharacterSnapshotId } }
+              : undefined,
+            actorCharacterLvl: data.actorCharacterLvl ?? null,
+            minSpawnTime: data.minSpawnTime ?? null,
+            maxSpawnTime: data.maxSpawnTime ?? null,
+            latestRespBaseSeconds: data.latestRespBaseSeconds ?? null,
+            latestRespawnRandomness: data.latestRespawnRandomness ?? null,
+            wasReset: data.wasReset ?? null,
+            windowOpenedAt: data.windowOpenedAt ?? null,
+            timerCreatedBy: data.timerCreatedById
+              ? { connect: { id: data.timerCreatedById } }
+              : undefined,
+            timerActorCharacter: data.timerActorCharacterSnapshotId
+              ? { connect: { id: data.timerActorCharacterSnapshotId } }
+              : undefined,
+            timerActorCharacterLvl: data.timerActorCharacterLvl ?? null,
+          },
+        });
+        const staleEntries = await transaction.timerHistoryEntry.findMany({
+          where: {
+            guildId: data.guildId,
+            world: data.world,
+            timerKey: data.timerKey,
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          skip: retainedEntries,
+          select: { id: true },
+        });
+        if (staleEntries.length > 0) {
+          await transaction.timerHistoryEntry.deleteMany({
+            where: { id: { in: staleEntries.map(({ id }) => id) } },
+          });
+        }
+        return entry;
+      }),
+    ),
+    findTimerSettingsOverrides: mockFn().mockImplementation(async (userId) => {
+      const document = await legacyDatabaseMock.userSettingDocument.findUnique({
+        where: {
+          userId_domain_scopeType_scopeId: {
+            userId,
+            domain: "timers",
+            scopeType: "USER",
+            scopeId: userId,
+          },
+        },
+        select: { overrides: true },
+      });
+      return document?.overrides ?? null;
+    }),
+    findTimer: mockFn().mockImplementation((guildId, world, timerKey) =>
+      legacyDatabaseMock.timer.findUnique({
+        where: { timerId: { guildId, world, timerKey } },
+        include: withRelations,
+      }),
+    ),
+    findTimersByNpcId: mockFn().mockImplementation((guildId, world, npcId) =>
+      legacyDatabaseMock.timer.findMany({
+        where: { guildId, world, npcId },
+        include: withRelations,
+      }),
+    ),
+    upsertTimer: mockFn().mockImplementation((create, update) =>
+      legacyDatabaseMock.timer.upsert({
+        where: {
+          timerId: {
+            guildId: create.guildId,
+            world: create.world,
+            timerKey: create.timerKey,
+          },
+        },
+        create,
+        update,
+        include: withRelations,
+      }),
+    ),
+    upsertTimerForMember: mockFn().mockImplementation(
+      (userId, create, update) =>
+        legacyDatabaseMock.timer.upsert({
+          where: {
+            timerId: {
+              guildId: create.guildId,
+              world: create.world,
+              timerKey: create.timerKey,
+            },
+          },
+          create: {
+            ...create,
+            guild: { connect: { id: create.guildId } },
+            member: {
+              connect: { memberId: { userId, guildId: create.guildId } },
+            },
+          },
+          update: {
+            ...update,
+            member: {
+              connect: { memberId: { userId, guildId: create.guildId } },
+            },
+          },
+          include: withRelations,
+        }),
+    ),
+    createTimerForMember: mockFn().mockImplementation((userId, timer) =>
+      legacyDatabaseMock.timer.create({
+        data: {
+          ...timer,
+          guild: { connect: { id: timer.guildId } },
+          member: {
+            connect: { memberId: { userId, guildId: timer.guildId } },
+          },
+        },
+        include: withRelations,
+      }),
+    ),
+    updateTimerForMember: mockFn().mockImplementation(
+      (userId, guildId, world, timerKey, patch) =>
+        legacyDatabaseMock.timer.update({
+          where: { timerId: { guildId, world, timerKey } },
+          data: {
+            ...patch,
+            member: { connect: { memberId: { userId, guildId } } },
+          },
+          include: withRelations,
+        }),
+    ),
+    updateTimer: mockFn().mockImplementation(
+      (guildId, world, timerKey, patch) =>
+        legacyDatabaseMock.timer.update({
+          where: { timerId: { guildId, world, timerKey } },
+          data: patch,
+        }),
+    ),
+    deleteTimer: mockFn().mockImplementation((guildId, world, timerKey) =>
+      legacyDatabaseMock.timer.delete({
+        where: { timerId: { guildId, world, timerKey } },
+      }),
+    ),
+    findActiveTimerKeys: mockFn().mockImplementation((lookups) =>
+      legacyDatabaseMock.timer.findMany({
+        where: { OR: lookups },
+        select: { guildId: true, world: true, timerKey: true },
+      }),
+    ),
+    findEventHeroTimersByKeys: mockFn().mockImplementation(
+      (guildId, world, timerKeys) =>
+        legacyDatabaseMock.timer.findMany({
+          where: { guildId, world, timerKey: { in: timerKeys } },
+          select: {
+            npcId: true,
+            timerKey: true,
+            world: true,
+            minSpawnTime: true,
+            maxSpawnTime: true,
+            npc: true,
+          },
+        }),
+    ),
+    findEventHeroTimersByNames: mockFn().mockImplementation(() =>
+      legacyDatabaseMock.$queryRaw(),
+    ),
+    findWorlds: mockFn().mockImplementation(async (guildId) => {
+      const rows = await legacyDatabaseMock.timer.findMany({
+        where: { guildId },
+        select: { world: true },
+        distinct: ["world"],
+      });
+      return rows.map(({ world }) => world);
+    }),
+    findVisibleTimers: mockFn().mockImplementation((_options) =>
+      legacyDatabaseMock.timer.findMany({
+        where: expect.anything(),
+        orderBy: { maxSpawnTime: "desc" },
+        include: withRelations,
+      }),
+    ),
+    findHistory: mockFn().mockImplementation(
+      (guildId, world, timerKey, limit) =>
+        legacyDatabaseMock.timerHistoryEntry.findMany({
+          where: {
+            guildId,
+            world,
+            ...(timerKey === null ? {} : { timerKey }),
+          },
+          orderBy: { createdAt: "desc" },
+          take: limit,
+          include: expect.anything(),
+        }),
+    ),
+    findHistoryById: mockFn().mockImplementation((guildId, id) =>
+      legacyDatabaseMock.timerHistoryEntry.findUnique({
+        where: { id, guildId },
+        include: expect.anything(),
+      }),
+    ),
+    searchNpcs: mockFn().mockImplementation(() =>
+      legacyDatabaseMock.$queryRaw(),
+    ),
   };
 
   const mockAmqpConnection = {
@@ -113,8 +348,8 @@ describe("TimersService", () => {
           useValue: mockLogger,
         },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: TimersRepository,
+          useValue: mockTimersRepository,
         },
         {
           provide: AmqpConnection,
@@ -158,16 +393,16 @@ describe("TimersService", () => {
     );
     mockRedisService.setNX.mockResolvedValue(true);
     mockRedisService.eval.mockResolvedValue(1);
-    mockPrismaService.timer.findUnique.mockResolvedValue(null);
-    mockPrismaService.playerSnapshot.upsert.mockResolvedValue(null);
-    mockPrismaService.timerHistoryEntry.create.mockResolvedValue({});
-    mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([]);
-    mockPrismaService.timerHistoryEntry.deleteMany.mockResolvedValue({
+    legacyDatabaseMock.timer.findUnique.mockResolvedValue(null);
+    legacyDatabaseMock.playerSnapshot.upsert.mockResolvedValue(null);
+    legacyDatabaseMock.timerHistoryEntry.create.mockResolvedValue({});
+    legacyDatabaseMock.timerHistoryEntry.findMany.mockResolvedValue([]);
+    legacyDatabaseMock.timerHistoryEntry.deleteMany.mockResolvedValue({
       count: 0,
     });
-    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
-    mockPrismaService.$transaction.mockImplementation((callback) =>
-      callback(mockPrismaService),
+    legacyDatabaseMock.userSettingDocument.findUnique.mockResolvedValue(null);
+    legacyDatabaseMock.$transaction.mockImplementation((callback) =>
+      callback(legacyDatabaseMock),
     );
   });
 
@@ -216,7 +451,7 @@ describe("TimersService", () => {
 
     it("should create timer with calculated spawn times", async () => {
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       const result = await service.createTimerForGuild(
         "discord123",
@@ -227,7 +462,7 @@ describe("TimersService", () => {
 
       expect(result).toBeDefined();
       expect(mockRedlock.acquire).toHaveBeenCalled();
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalledWith(
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             timerId: {
@@ -254,7 +489,7 @@ describe("TimersService", () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.del.mockResolvedValue(1);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       await service.createTimerForGuild(
         "discord123",
@@ -263,7 +498,7 @@ describe("TimersService", () => {
         dtoWithCustomTimes,
       );
 
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalledWith(
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({
             minSpawnTime: customMin,
@@ -292,7 +527,7 @@ describe("TimersService", () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.del.mockResolvedValue(1);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       await service.createTimerForGuild(
         "discord123",
@@ -326,7 +561,7 @@ describe("TimersService", () => {
         service.createTimerForGuild("discord123", userId, "guild1", mockDto),
       ).rejects.toThrow(ConflictException);
 
-      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.upsert).not.toHaveBeenCalled();
     });
 
     it("should return existing timer when lock cannot be acquired but timer was created concurrently", async () => {
@@ -336,7 +571,7 @@ describe("TimersService", () => {
         ...mockTimer,
         updatedAt: new Date(Date.now() + 1000),
       };
-      mockPrismaService.timer.findUnique.mockResolvedValue(
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue(
         concurrentlyCreatedTimer,
       );
 
@@ -352,7 +587,7 @@ describe("TimersService", () => {
         npcId: concurrentlyCreatedTimer.npcId,
         world: concurrentlyCreatedTimer.world,
       });
-      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.upsert).not.toHaveBeenCalled();
     });
 
     it("should return cached timer on deduplication hit", async () => {
@@ -372,14 +607,14 @@ describe("TimersService", () => {
         world: mockTimer.world,
       });
       expect(mockRedisService.setNX).not.toHaveBeenCalled();
-      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.upsert).not.toHaveBeenCalled();
     });
 
     it("should cache timer result after creation", async () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.del.mockResolvedValue(1);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       await service.createTimerForGuild(
         "discord123",
@@ -424,7 +659,7 @@ describe("TimersService", () => {
           return 0;
         },
       );
-      mockPrismaService.timer.upsert.mockImplementation(async () => {
+      legacyDatabaseMock.timer.upsert.mockImplementation(async () => {
         currentLockToken = "new-owner-token";
         return mockTimer;
       });
@@ -450,7 +685,7 @@ describe("TimersService", () => {
       vi.useFakeTimers();
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.setNX.mockResolvedValue(false);
-      mockPrismaService.timer.findUnique.mockResolvedValue({
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue({
         ...mockTimer,
         updatedAt: new Date(Date.now() + 1000),
       });
@@ -471,7 +706,7 @@ describe("TimersService", () => {
         npcId: mockTimer.npcId,
         world: mockTimer.world,
       });
-      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.upsert).not.toHaveBeenCalled();
       expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
     });
 
@@ -481,8 +716,8 @@ describe("TimersService", () => {
       mockRedisService.setNX
         .mockResolvedValueOnce(false)
         .mockResolvedValueOnce(true);
-      mockPrismaService.timer.findUnique.mockResolvedValue(null);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue(null);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       const resultPromise = service.createTimerForGuild(
         "discord123",
@@ -501,7 +736,7 @@ describe("TimersService", () => {
         world: mockTimer.world,
       });
       expect(mockRedisService.setNX).toHaveBeenCalledTimes(2);
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenCalledTimes(1);
       expect(
         mockAmqpConnection.publish.mock.calls.filter(
           (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
@@ -516,7 +751,7 @@ describe("TimersService", () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValue(cachedTimer);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       const firstResult = await service.createTimerForGuild(
         "discord-1",
@@ -533,7 +768,7 @@ describe("TimersService", () => {
 
       expect(firstResult.npcId).toBe(mockDto.npc.id);
       expect(secondResult.npcId).toBe(mockDto.npc.id);
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenCalledTimes(1);
       expect(
         mockAmqpConnection.publish.mock.calls.filter(
           (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
@@ -549,7 +784,7 @@ describe("TimersService", () => {
 
     it("should release lock even if upsert fails", async () => {
       mockRedisService.get.mockResolvedValue(null);
-      mockPrismaService.timer.upsert.mockRejectedValue(
+      legacyDatabaseMock.timer.upsert.mockRejectedValue(
         new Error("Database error"),
       );
 
@@ -570,8 +805,8 @@ describe("TimersService", () => {
 
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.findUnique.mockResolvedValue(existingTimer);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue(existingTimer);
+      legacyDatabaseMock.timer.upsert.mockResolvedValue(mockTimer);
 
       const result = await service.createTimerForGuild(
         "discord123",
@@ -581,7 +816,7 @@ describe("TimersService", () => {
       );
 
       expect(result).toBeDefined();
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenCalled();
       expect(mockAmqpConnection.publish).toHaveBeenCalled();
       expect(
         mockEventTimerHooksService.enqueueEventHeroKillCheck,
@@ -615,7 +850,7 @@ describe("TimersService", () => {
 
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.findUnique.mockImplementation(
+      legacyDatabaseMock.timer.findUnique.mockImplementation(
         (args: { where?: { timerId?: { timerKey?: string } } }) => {
           if (args?.where?.timerId?.timerKey === syntheticTimer.timerKey) {
             return syntheticTimer;
@@ -623,10 +858,10 @@ describe("TimersService", () => {
           return null;
         },
       );
-      mockPrismaService.timer.upsert
+      legacyDatabaseMock.timer.upsert
         .mockResolvedValueOnce({ ...syntheticTimer, npcId: mockDto.npc.id })
         .mockResolvedValueOnce(mockTimer);
-      mockPrismaService.timer.delete.mockResolvedValue(syntheticTimer);
+      legacyDatabaseMock.timer.delete.mockResolvedValue(syntheticTimer);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: null },
         event: { id: "event-1" },
@@ -639,7 +874,7 @@ describe("TimersService", () => {
         mockDto,
       );
 
-      expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
+      expect(legacyDatabaseMock.timer.delete).toHaveBeenCalledWith({
         where: {
           timerId: {
             guildId: "guild1",
@@ -732,7 +967,7 @@ describe("TimersService", () => {
         null,
       );
 
-      mockPrismaService.timer.findUnique.mockImplementation(
+      legacyDatabaseMock.timer.findUnique.mockImplementation(
         (args: { where?: { timerId?: { timerKey?: string } } }) => {
           const queriedTimerKey = args?.where?.timerId?.timerKey;
           if (
@@ -744,7 +979,7 @@ describe("TimersService", () => {
         },
       );
 
-      mockPrismaService.timer.upsert.mockImplementation(async () => {
+      legacyDatabaseMock.timer.upsert.mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 40));
         createdTimer = {
           ...mockTimer,
@@ -788,7 +1023,7 @@ describe("TimersService", () => {
       expect(results.every((timer) => timer.npcId === mockDto.npc.id)).toBe(
         true,
       );
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenCalledTimes(1);
     });
 
     it("should create separate timers for the same npcId when normalized names differ", async () => {
@@ -807,8 +1042,8 @@ describe("TimersService", () => {
 
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.findUnique.mockResolvedValue(null);
-      mockPrismaService.timer.upsert
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue(null);
+      legacyDatabaseMock.timer.upsert
         .mockResolvedValueOnce(mockTimer)
         .mockResolvedValueOnce(secondTimer);
 
@@ -831,7 +1066,7 @@ describe("TimersService", () => {
       expect((secondResult as { timerKey: string }).timerKey).toBe(
         buildTimerKey(123, secondDto.npc.name),
       );
-      expect(mockPrismaService.timer.upsert).toHaveBeenNthCalledWith(
+      expect(legacyDatabaseMock.timer.upsert).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
           where: {
@@ -1014,7 +1249,7 @@ describe("TimersService", () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.deleteByPattern.mockResolvedValue(2);
-      mockPrismaService.timer.upsert.mockResolvedValue({
+      legacyDatabaseMock.timer.upsert.mockResolvedValue({
         ...mockTimer,
         guildId: "guild1",
       });
@@ -1034,11 +1269,11 @@ describe("TimersService", () => {
     it("should prune timer history to five newest entries after creating history", async () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.upsert.mockResolvedValue({
+      legacyDatabaseMock.timer.upsert.mockResolvedValue({
         ...mockTimer,
         guildId: "guild1",
       });
-      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+      legacyDatabaseMock.timerHistoryEntry.findMany.mockResolvedValue([
         { id: 11 },
         { id: 10 },
       ]);
@@ -1050,7 +1285,9 @@ describe("TimersService", () => {
         mockDto,
       );
 
-      expect(mockPrismaService.timerHistoryEntry.findMany).toHaveBeenCalledWith(
+      expect(
+        legacyDatabaseMock.timerHistoryEntry.findMany,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             guildId: "guild1",
@@ -1063,7 +1300,7 @@ describe("TimersService", () => {
         }),
       );
       expect(
-        mockPrismaService.timerHistoryEntry.deleteMany,
+        legacyDatabaseMock.timerHistoryEntry.deleteMany,
       ).toHaveBeenCalledWith({
         where: { id: { in: [11, 10] } },
       });
@@ -1074,19 +1311,19 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findUnique.mockResolvedValue({
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue({
         ...mockTimer,
         latestRespBaseSeconds: 3600,
         latestRespawnRandomness: 10,
       });
-      mockPrismaService.timer.findMany.mockResolvedValue([
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([
         {
           ...mockTimer,
           latestRespBaseSeconds: 3600,
           latestRespawnRandomness: 10,
         },
       ]);
-      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.update.mockResolvedValue(mockTimer);
 
       await service.resetTimer("discord123", "guild1", "123", {
         world: "test-world",
@@ -1113,20 +1350,22 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findUnique.mockResolvedValue({
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue({
         ...mockTimer,
         latestRespBaseSeconds: 3600,
         latestRespawnRandomness: 10,
       });
-      mockPrismaService.timer.findMany.mockResolvedValue([
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([
         {
           ...mockTimer,
           latestRespBaseSeconds: 3600,
           latestRespawnRandomness: 10,
         },
       ]);
-      mockPrismaService.playerSnapshot.upsert.mockResolvedValue(actorCharacter);
-      mockPrismaService.timer.update.mockResolvedValue({
+      legacyDatabaseMock.playerSnapshot.upsert.mockResolvedValue(
+        actorCharacter,
+      );
+      legacyDatabaseMock.timer.update.mockResolvedValue({
         ...mockTimer,
         actorCharacter,
         actorCharacterLvl: 300,
@@ -1144,12 +1383,14 @@ describe("TimersService", () => {
         },
       });
 
-      expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
+      expect(mockTimersRepository.updateTimerForMember).toHaveBeenCalledWith(
+        "discord123",
+        "guild1",
+        "test-world",
+        mockTimer.timerKey,
         expect.objectContaining({
-          data: expect.objectContaining({
-            actorCharacter: { connect: { id: actorCharacter.id } },
-            actorCharacterLvl: 300,
-          }),
+          actorCharacterSnapshotId: actorCharacter.id,
+          actorCharacterLvl: 300,
         }),
       );
     });
@@ -1158,32 +1399,32 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findUnique.mockResolvedValue({
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue({
         ...mockTimer,
         latestRespBaseSeconds: 3600,
         latestRespawnRandomness: 10,
       });
-      mockPrismaService.timer.findMany.mockResolvedValue([
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([
         {
           ...mockTimer,
           latestRespBaseSeconds: 3600,
           latestRespawnRandomness: 10,
         },
       ]);
-      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.update.mockResolvedValue(mockTimer);
 
       await service.resetTimer("discord123", "guild1", "123", {
         world: "test-world",
       });
 
-      expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
+      expect(legacyDatabaseMock.timer.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.not.objectContaining({
             actorCharacterLvl: null,
           }),
         }),
       );
-      expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
+      expect(legacyDatabaseMock.timer.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.not.objectContaining({
             actorCharacter: expect.anything(),
@@ -1204,19 +1445,21 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findMany.mockResolvedValue([manualTimer]);
-      mockPrismaService.timer.findUnique.mockResolvedValue(manualTimer);
-      mockPrismaService.timer.update.mockResolvedValue(manualTimer);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([manualTimer]);
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue(manualTimer);
+      legacyDatabaseMock.timer.update.mockResolvedValue(manualTimer);
 
       await service.resetTimer("discord123", "guild1", "123", {
         world: "test-world",
       });
 
-      expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
+      expect(
+        legacyDatabaseMock.timerHistoryEntry.create,
+      ).not.toHaveBeenCalled();
     });
 
     it("should block resetting event timers through generic reset flow", async () => {
-      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([mockTimer]);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: mockTimer.npcId },
         event: { id: "event-1" },
@@ -1231,12 +1474,12 @@ describe("TimersService", () => {
       });
 
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
-      expect(mockPrismaService.timer.update).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.update).not.toHaveBeenCalled();
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
     });
 
     it("should block resetting event timers found by name when hero stores wrong npcId", async () => {
-      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([mockTimer]);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: 999 },
         event: { id: "event-1" },
@@ -1251,7 +1494,7 @@ describe("TimersService", () => {
       });
 
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
-      expect(mockPrismaService.timer.update).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.update).not.toHaveBeenCalled();
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
     });
 
@@ -1260,8 +1503,8 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
-      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([mockTimer]);
+      legacyDatabaseMock.timer.update.mockResolvedValue(mockTimer);
 
       await service.deleteTimer("guild1", "123", "test-world");
 
@@ -1274,12 +1517,12 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
-      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([mockTimer]);
+      legacyDatabaseMock.timer.update.mockResolvedValue(mockTimer);
 
       await service.deleteTimer("guild1", "123", "test-world");
 
-      expect(mockPrismaService.timer.update).toHaveBeenCalledWith({
+      expect(legacyDatabaseMock.timer.update).toHaveBeenCalledWith({
         where: {
           timerId: {
             guildId: "guild1",
@@ -1289,7 +1532,7 @@ describe("TimersService", () => {
         },
         data: { deletedAt: expect.any(Date) },
       });
-      expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.delete).not.toHaveBeenCalled();
     });
 
     it("should not create history when a manual timer is deleted", async () => {
@@ -1304,13 +1547,15 @@ describe("TimersService", () => {
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
-      mockPrismaService.timer.findMany.mockResolvedValue([manualTimer]);
-      mockPrismaService.timer.delete.mockResolvedValue(manualTimer);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([manualTimer]);
+      legacyDatabaseMock.timer.delete.mockResolvedValue(manualTimer);
 
       await service.deleteTimer("guild1", "123", "test-world");
 
-      expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
-      expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
+      expect(
+        legacyDatabaseMock.timerHistoryEntry.create,
+      ).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.delete).toHaveBeenCalledWith({
         where: {
           timerId: {
             guildId: "guild1",
@@ -1322,7 +1567,7 @@ describe("TimersService", () => {
     });
 
     it("should block deleting event timers through generic delete flow", async () => {
-      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([mockTimer]);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: mockTimer.npcId },
         event: { id: "event-1" },
@@ -1334,12 +1579,12 @@ describe("TimersService", () => {
         response: { message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE },
       });
 
-      expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.delete).not.toHaveBeenCalled();
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
     });
 
     it("should block deleting event timers found by name when hero stores wrong npcId", async () => {
-      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([mockTimer]);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: 999 },
         event: { id: "event-1" },
@@ -1351,7 +1596,7 @@ describe("TimersService", () => {
         response: { message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE },
       });
 
-      expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.delete).not.toHaveBeenCalled();
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
     });
   });
@@ -1420,7 +1665,7 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
-      mockPrismaService.timer.findMany.mockResolvedValue([timer]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([timer]);
 
       const result = await service.getAllTimers("discord123", "user123", {
         world: "test-world",
@@ -1452,20 +1697,18 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
-      mockPrismaService.timer.findMany.mockResolvedValue([]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([]);
 
       await service.getAllTimers("discord123", "user123", {
         world: "test-world",
       });
 
-      expect(mockPrismaService.timer.findMany).toHaveBeenCalledWith(
+      expect(mockTimersRepository.findVisibleTimers).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
-            guildId: { in: ["guild1"] },
-            deletedAt: null,
-            maxSpawnTime: { gt: expect.any(Date) },
-            world: "test-world",
-          }),
+          guildIds: ["guild1"],
+          alwaysVisibleExpiredTimerKeys: [],
+          now: expect.any(Date),
+          world: "test-world",
         }),
       );
     });
@@ -1481,67 +1724,25 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
-      mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+      legacyDatabaseMock.userSettingDocument.findUnique.mockResolvedValue({
         overrides: {
           alwaysVisibleExpiredTimers: {
             "test-world": ["123:test-boss"],
           },
         },
       });
-      mockPrismaService.timer.findMany.mockResolvedValue([]);
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([]);
 
       await service.getAllTimers("discord123", "user123", {
         world: "test-world",
       });
 
-      expect(mockPrismaService.timer.findMany).toHaveBeenCalledWith(
+      expect(mockTimersRepository.findVisibleTimers).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
-            guildId: { in: ["guild1"] },
-            world: "test-world",
-            OR: [
-              {
-                deletedAt: null,
-                maxSpawnTime: { gt: expect.any(Date) },
-              },
-              {
-                timerKey: { in: ["123:test-boss"] },
-                maxSpawnTime: { lte: expect.any(Date) },
-                NOT: [
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: 999,
-                    },
-                  },
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: "999",
-                    },
-                  },
-                ],
-              },
-              {
-                timerKey: { in: ["123:test-boss"] },
-                deletedAt: { not: null },
-                NOT: [
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: 999,
-                    },
-                  },
-                  {
-                    npc: {
-                      path: ["margonemType"],
-                      equals: "999",
-                    },
-                  },
-                ],
-              },
-            ],
-          }),
+          guildIds: ["guild1"],
+          world: "test-world",
+          alwaysVisibleExpiredTimerKeys: ["123:test-boss"],
+          now: expect.any(Date),
         }),
       );
     });
@@ -1559,14 +1760,14 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
-      mockPrismaService.timer.findMany.mockResolvedValue([
+      legacyDatabaseMock.timer.findMany.mockResolvedValue([
         {
           ...timer,
           deletedAt,
         },
       ]);
 
-      mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+      legacyDatabaseMock.userSettingDocument.findUnique.mockResolvedValue({
         overrides: {
           alwaysVisibleExpiredTimers: {
             "test-world": [timer.timerKey],
@@ -1605,13 +1806,13 @@ describe("TimersService", () => {
           lvl: 300,
         },
       });
-      expect(mockPrismaService.timer.findMany).not.toHaveBeenCalled();
+      expect(legacyDatabaseMock.timer.findMany).not.toHaveBeenCalled();
       expect(mockRedisService.getOrSetJson).not.toHaveBeenCalled();
     });
 
     it("returns guild name in timer history responses", async () => {
-      mockPrismaService.timer.findUnique.mockResolvedValue(timer);
-      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+      legacyDatabaseMock.timer.findUnique.mockResolvedValue(timer);
+      legacyDatabaseMock.timerHistoryEntry.findMany.mockResolvedValue([
         {
           id: 1,
           guildId: "guild1",
@@ -1667,7 +1868,7 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
-      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+      legacyDatabaseMock.timerHistoryEntry.findMany.mockResolvedValue([
         {
           id: 1,
           guildId: "guild1",
@@ -1700,7 +1901,9 @@ describe("TimersService", () => {
         { limit: 5 },
       );
 
-      expect(mockPrismaService.timerHistoryEntry.findMany).toHaveBeenCalledWith(
+      expect(
+        legacyDatabaseMock.timerHistoryEntry.findMany,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             guildId: "guild1",
@@ -1730,14 +1933,14 @@ describe("TimersService", () => {
       ).rejects.toThrow("Forbidden");
 
       expect(
-        mockPrismaService.timerHistoryEntry.findMany,
+        legacyDatabaseMock.timerHistoryEntry.findMany,
       ).not.toHaveBeenCalled();
     });
   });
 
   describe("createManualTimer", () => {
     it("should persist provided NPC level and profession", async () => {
-      mockPrismaService.timer.create.mockResolvedValue({
+      legacyDatabaseMock.timer.create.mockResolvedValue({
         guildId: "guild1",
         world: "test-world",
         npcId: 123,
@@ -1774,7 +1977,7 @@ describe("TimersService", () => {
         world: "test-world",
       });
 
-      expect(mockPrismaService.timer.create).toHaveBeenCalledWith(
+      expect(legacyDatabaseMock.timer.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             npc: expect.objectContaining({
@@ -1803,11 +2006,13 @@ describe("TimersService", () => {
           margonemType: "999",
         },
       });
-      expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
+      expect(
+        legacyDatabaseMock.timerHistoryEntry.create,
+      ).not.toHaveBeenCalled();
     });
 
     it("should fall back to empty manual timer NPC metadata", async () => {
-      mockPrismaService.timer.create.mockResolvedValue({
+      legacyDatabaseMock.timer.create.mockResolvedValue({
         guildId: "guild1",
         world: "test-world",
         npcId: 123,
@@ -1841,7 +2046,7 @@ describe("TimersService", () => {
         world: "test-world",
       });
 
-      expect(mockPrismaService.timer.create).toHaveBeenCalledWith(
+      expect(legacyDatabaseMock.timer.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             npc: expect.objectContaining({
@@ -1890,7 +2095,7 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      legacyDatabaseMock.$queryRaw = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
@@ -1901,7 +2106,7 @@ describe("TimersService", () => {
         10,
       );
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(legacyDatabaseMock.$queryRaw).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         npcId: 123,
@@ -1919,7 +2124,7 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = mockFn().mockResolvedValue([]);
+      legacyDatabaseMock.$queryRaw = mockFn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -1941,7 +2146,7 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw =
+      legacyDatabaseMock.$queryRaw =
         mockFn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
@@ -1955,13 +2160,13 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      legacyDatabaseMock.$queryRaw = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
       await service.searchNpcsWithTimerData("guild1", "test-world", "Test");
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(legacyDatabaseMock.$queryRaw).toHaveBeenCalled();
     });
   });
 });

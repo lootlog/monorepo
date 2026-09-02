@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 
 export const REQUIRED_DELETE_PERMISSIONS = [
   Permission.LOOTLOG_MANAGE,

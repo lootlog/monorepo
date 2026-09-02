@@ -1,30 +1,34 @@
 # @lootlog/gateway
 
-Real-time NestJS gateway for WebSocket subscriptions and event fan-out.
+Schema-first Bun WebSocket gateway for realtime subscriptions and event fan-out.
 
 ## Overview
 
-- Hosts the Socket.IO gateway used by Lootlog clients for live updates.
-- Manages presence, subscriptions, activity propagation, retries, and queue-driven broadcasts.
-- Integrates with RabbitMQ, Redis, and scheduled jobs through the `gateway` module.
+- Hosts the MessagePack v1 protocol from `@lootlog/protocol/realtime`.
+- Keeps logical subscriptions server-side; clients never submit transport room names.
+- Federates live sessions and ephemeral presence through Redis and consumes RabbitMQ through `@lootlog/messaging`.
+- Expires presence after 60 seconds and expects heartbeats every 25 seconds.
 
 ## Development
 
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/gateway dev
+bun run --filter @lootlog/gateway dev
 ```
 
 ## Key Scripts
 
-- `pnpm --filter @lootlog/gateway build`
-- `pnpm --filter @lootlog/gateway start`
-- `pnpm --filter @lootlog/gateway lint`
-- `pnpm --filter @lootlog/gateway test`
-- `pnpm --filter @lootlog/gateway test:e2e`
+- `bun run --filter @lootlog/gateway build`
+- `bun run --filter @lootlog/gateway start`
+- `bun run --filter @lootlog/gateway lint`
+- `bun run --filter @lootlog/gateway test`
+- `bun run --filter @lootlog/gateway test:e2e`
 
 ## Notes
 
-- Runtime wiring lives in `src/gateway/gateway.module.ts`.
-- Production start imports the generated observability bootstrap from `dist/instrumentation.js`.
+- Runtime wiring lives in `src/app.ts` and is acquired as scoped Effect layers.
+- Authentication uses the first-party session cookie. Cross-origin game clients
+  send a short-lived, one-time ticket in `Sec-WebSocket-Protocol`; the Gateway
+  echoes only `lootlog.realtime.v1`. Node clients may use the authorization
+  upgrade header. Credentials are never accepted from the query string.

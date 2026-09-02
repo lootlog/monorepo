@@ -1,16 +1,16 @@
 import { NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { serviceConfig } from "#src/config/service.config";
-import { PrismaService } from "#src/db/prisma.service";
 import { mockFn } from "#src/test/mock-fn";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { PublicGuildStatsCardRepository } from "./public-guild-stats-card.repository.js";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 
 describe("PublicGuildStatsCardService", () => {
   let service: PublicGuildStatsCardService;
-  let prisma: {
-    guild: { findFirst: ReturnType<typeof mockFn> };
-    $queryRaw: ReturnType<typeof mockFn>;
+  let repository: {
+    findActiveGuild: ReturnType<typeof mockFn>;
+    getLootStats: ReturnType<typeof mockFn>;
   };
   let redis: {
     get: ReturnType<typeof mockFn>;
@@ -21,11 +21,9 @@ describe("PublicGuildStatsCardService", () => {
 
   beforeEach(() => {
     serviceConfig.env = RuntimeEnvironment.PROD;
-    prisma = {
-      guild: {
-        findFirst: mockFn(),
-      },
-      $queryRaw: mockFn(),
+    repository = {
+      findActiveGuild: mockFn(),
+      getLootStats: mockFn(),
     };
     redis = {
       get: mockFn(),
@@ -34,7 +32,7 @@ describe("PublicGuildStatsCardService", () => {
       del: mockFn(),
     };
     service = new PublicGuildStatsCardService(
-      prisma as unknown as PrismaService,
+      repository as unknown as PublicGuildStatsCardRepository,
       redis as unknown as RedisService,
     );
 
@@ -50,7 +48,7 @@ describe("PublicGuildStatsCardService", () => {
   it("returns cached png for enabled guild without querying stats", async () => {
     const cachedImage = Buffer.from("cached-png");
     redis.get.mockResolvedValue(cachedImage.toString("base64"));
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
@@ -60,36 +58,25 @@ describe("PublicGuildStatsCardService", () => {
     const result = await service.getStatsCard("guild-1");
 
     expect(result).toEqual(cachedImage);
-    expect(prisma.guild.findFirst).toHaveBeenCalledTimes(1);
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(repository.findActiveGuild).toHaveBeenCalledTimes(1);
+    expect(repository.getLootStats).not.toHaveBeenCalled();
     expect(redis.set).not.toHaveBeenCalled();
   });
 
   it("throws not found for missing or inactive guild", async () => {
     redis.get.mockResolvedValue(null);
-    prisma.guild.findFirst.mockResolvedValue(null);
+    repository.findActiveGuild.mockResolvedValue(null);
 
     await expect(service.getStatsCard("guild-1")).rejects.toBeInstanceOf(
       NotFoundException,
     );
 
-    expect(prisma.guild.findFirst).toHaveBeenCalledWith({
-      where: {
-        id: "guild-1",
-        active: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        icon: true,
-        publicStatsCardEnabled: true,
-      },
-    });
+    expect(repository.findActiveGuild).toHaveBeenCalledWith("guild-1");
   });
 
   it("throws not found and skips cache for disabled guild", async () => {
     redis.get.mockResolvedValue(Buffer.from("cached-png").toString("base64"));
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
@@ -101,24 +88,22 @@ describe("PublicGuildStatsCardService", () => {
     );
 
     expect(redis.get).not.toHaveBeenCalled();
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(repository.getLootStats).not.toHaveBeenCalled();
   });
 
   it("renders and caches a png with zero stats", async () => {
     redis.get.mockResolvedValue(null);
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild <One>",
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        total_loots: 0n,
-        legendary_items: 0n,
-        heroic_items: 0n,
-      },
-    ]);
+    repository.getLootStats.mockResolvedValue({
+      totalLoots: 0,
+      legendaryItems: 0,
+      heroicItems: 0,
+    });
 
     const result = await service.getStatsCard("guild-1");
 
@@ -133,47 +118,43 @@ describe("PublicGuildStatsCardService", () => {
   it("bypasses cache in local environment", async () => {
     serviceConfig.env = RuntimeEnvironment.LOCAL;
     redis.get.mockResolvedValue(Buffer.from("cached-png").toString("base64"));
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        total_loots: 7n,
-        legendary_items: 1n,
-        heroic_items: 2n,
-      },
-    ]);
+    repository.getLootStats.mockResolvedValue({
+      totalLoots: 7,
+      legendaryItems: 1,
+      heroicItems: 2,
+    });
 
     const result = await service.getStatsCard("guild-1");
 
     expect(result.subarray(1, 4).toString()).toBe("PNG");
     expect(redis.get).not.toHaveBeenCalled();
     expect(redis.set).not.toHaveBeenCalled();
-    expect(prisma.guild.findFirst).toHaveBeenCalledTimes(1);
+    expect(repository.findActiveGuild).toHaveBeenCalledTimes(1);
   });
 
   it("uses last 30 days aggregation values", async () => {
     redis.get.mockResolvedValue(null);
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        total_loots: 42n,
-        legendary_items: 3n,
-        heroic_items: 12n,
-      },
-    ]);
+    repository.getLootStats.mockResolvedValue({
+      totalLoots: 42,
+      legendaryItems: 3,
+      heroicItems: 12,
+    });
 
     await service.getStatsCard("guild-1");
 
-    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(repository.getLootStats).toHaveBeenCalledTimes(1);
     expect(redis.set).toHaveBeenCalledWith(
       "guild-stats-card:guild-1:v2",
       expect.any(String),
@@ -183,19 +164,17 @@ describe("PublicGuildStatsCardService", () => {
 
   it("refreshes and caches a png when cooldown is available", async () => {
     redis.setNX.mockResolvedValue(true);
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        total_loots: 42n,
-        legendary_items: 3n,
-        heroic_items: 12n,
-      },
-    ]);
+    repository.getLootStats.mockResolvedValue({
+      totalLoots: 42,
+      legendaryItems: 3,
+      heroicItems: 12,
+    });
 
     const result = await service.refreshStatsCard("guild-1");
 
@@ -215,7 +194,7 @@ describe("PublicGuildStatsCardService", () => {
   it("rate limits refreshes for five minutes", async () => {
     redis.setNX.mockResolvedValue(false);
     redis.get.mockResolvedValue("2026-05-03T23:05:00.000Z");
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
@@ -230,19 +209,19 @@ describe("PublicGuildStatsCardService", () => {
     });
 
     expect(redis.set).not.toHaveBeenCalled();
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(repository.getLootStats).not.toHaveBeenCalled();
   });
 
   it("releases refresh cooldown when regeneration fails", async () => {
     const error = new Error("stats unavailable");
     redis.setNX.mockResolvedValue(true);
-    prisma.guild.findFirst.mockResolvedValue({
+    repository.findActiveGuild.mockResolvedValue({
       id: "guild-1",
       name: "Guild One",
       icon: null,
       publicStatsCardEnabled: true,
     });
-    prisma.$queryRaw.mockRejectedValue(error);
+    repository.getLootStats.mockRejectedValue(error);
 
     await expect(service.refreshStatsCard("guild-1")).rejects.toThrow(error);
 

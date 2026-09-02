@@ -1,0 +1,15 @@
+{
+  "extends": "@lootlog/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": false,
+    "declarationMap": false,
+    "rootDir": ".",
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "noUncheckedIndexedAccess": false,
+    "sourceMap": true,
+    "types": ["bun"]
+  },
+  "include": ["src"]
+}

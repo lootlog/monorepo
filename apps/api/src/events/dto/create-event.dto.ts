@@ -1,7 +1,7 @@
-import { z } from "zod";
+import * as z from "zod";
 import { createZodDto } from "nestjs-zod";
 import { EventScoringRulesSchema } from "./event-scoring-rules.dto.js";
-import { EVENT_SCORING_MODES } from "@lootlog/scoring";
+import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 
 export const HeroMapSchema = z.object({
   mapId: z.number().int(),

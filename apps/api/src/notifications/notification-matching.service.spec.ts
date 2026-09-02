@@ -1,4 +1,5 @@
-import { NpcType, Permission } from "#src/generated/prisma/client";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Permission } from "@lootlog/schema/permissions";
 import { NotificationMatchingService } from "./notification-matching.service.js";
 
 describe("NotificationMatchingService", () => {

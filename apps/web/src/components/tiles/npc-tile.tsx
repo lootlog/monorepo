@@ -1,5 +1,5 @@
 import { NpcTile as SharedNpcTile } from "@lootlog/ui/components/npc-tile";
-import type { NpcHitDtoOutput } from "@lootlog/api-client/models/search/npc-hit-dto-output";
+import type { NpcHitDtoOutput } from "@lootlog/client/search";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 

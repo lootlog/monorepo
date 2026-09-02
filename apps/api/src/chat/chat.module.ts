@@ -6,7 +6,6 @@ import { rabbitmqConfig } from "#src/config/rabbitmq.config";
 import { ChatService } from "#src/chat/chat.service";
 import { ChatController } from "#src/chat/chat.controller";
 import { RedisModule } from "#src/lib/redis/redis.module";
-import { PrismaModule } from "#src/db/prisma.module";
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { PrismaModule } from "#src/db/prisma.module";
     GuildsModule,
     RabbitMQModule.forRoot(rabbitmqConfig),
     RedisModule,
-    PrismaModule,
   ],
   controllers: [ChatController],
   providers: [ChatService],

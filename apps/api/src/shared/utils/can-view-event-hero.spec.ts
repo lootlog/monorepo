@@ -1,22 +1,16 @@
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
 import { filterHeroesByLevel } from "./can-view-event-hero.js";
 
+type Role = Parameters<typeof filterHeroesByLevel>[1][number];
+
 function createRole(
-  permissions: Permission[],
+  _permissions: Permission[],
   lvlRangeFrom = 1,
   lvlRangeTo = 500,
 ): Role {
   return {
-    id: crypto.randomUUID(),
-    guildId: "guild-1",
-    name: "role",
-    color: null,
-    position: 1,
-    permissions,
     lvlRangeFrom,
     lvlRangeTo,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 }
 

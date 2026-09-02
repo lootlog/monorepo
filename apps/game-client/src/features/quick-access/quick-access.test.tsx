@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { QuickAccessButtonProps } from "@/features/quick-access/components/quick-access-button";
 import { usePartyFinderStore } from "@/store/party-finder.store";

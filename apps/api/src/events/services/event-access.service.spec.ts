@@ -1,6 +1,10 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "#src/generated/prisma/client";
+import { Permission } from "@lootlog/schema/permissions";
+import type { roleTable } from "#src/database/drizzle/schema";
 import { EventAccessService } from "./event-access.service.js";
+import { EventAccessRepository } from "./event-access.repository.js";
+
+type Role = typeof roleTable.$inferSelect;
 
 function createRole(
   permissions: Permission[],
@@ -22,20 +26,18 @@ function createRole(
 }
 
 describe("EventAccessService", () => {
-  const mockPrisma = {
-    eventHeroNpc: {
-      findFirst: vi.fn(),
-    },
-    eventMap: {
-      findFirst: vi.fn(),
-    },
+  const repository = {
+    findHero: vi.fn(),
+    findMap: vi.fn(),
   };
 
   let service: EventAccessService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new EventAccessService(mockPrisma as never);
+    service = new EventAccessService(
+      repository as unknown as EventAccessRepository,
+    );
   });
 
   it("filters event heroes by visible level ranges", () => {
@@ -68,7 +70,7 @@ describe("EventAccessService", () => {
 
   it("returns the hero when access check passes", async () => {
     const hero = { id: "hero-1", npcLvl: 150 };
-    mockPrisma.eventHeroNpc.findFirst.mockResolvedValue(hero);
+    repository.findHero.mockResolvedValue(hero);
 
     await expect(
       service.getHeroWithAccessCheck(
@@ -82,7 +84,7 @@ describe("EventAccessService", () => {
   });
 
   it("throws when the hero is not visible to the caller", async () => {
-    mockPrisma.eventHeroNpc.findFirst.mockResolvedValue({
+    repository.findHero.mockResolvedValue({
       id: "hero-1",
       npcLvl: 320,
     });
@@ -99,7 +101,7 @@ describe("EventAccessService", () => {
   });
 
   it("throws when the map hero is not visible to the caller", async () => {
-    mockPrisma.eventMap.findFirst.mockResolvedValue({
+    repository.findMap.mockResolvedValue({
       id: "map-1",
       heroNpc: {
         id: "hero-1",

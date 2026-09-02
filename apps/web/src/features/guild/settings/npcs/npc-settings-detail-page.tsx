@@ -1,6 +1,6 @@
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
 import { NpcsForm } from "@/features/guild/settings/npcs/npcs-form";
-import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/api-client/react-query/main/lootlog-config";
+import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/client/main";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
