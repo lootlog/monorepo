@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { NotFoundException } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import { mockFn } from "#src/test/mock-fn";

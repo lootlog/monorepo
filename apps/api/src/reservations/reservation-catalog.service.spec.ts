@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import type { RedisService } from "#src/redis/redis.service";
 import { ReservationCatalogService } from "./reservation-catalog.service.js";
 

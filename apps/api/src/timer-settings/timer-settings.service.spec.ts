@@ -1,5 +1,5 @@
 import type { SettingsDocumentsResponse } from "#src/settings-documents/settings-documents.service";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "#test/bun-test";
 import { TimerSettingsService } from "./timer-settings.service.js";
 
 const createResponse = (

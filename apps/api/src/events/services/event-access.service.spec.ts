@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { NotFoundException } from "#src/shared/http/http-errors";
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";

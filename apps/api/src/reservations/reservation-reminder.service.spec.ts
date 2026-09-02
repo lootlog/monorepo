@@ -1,5 +1,5 @@
 import { UnprocessableEntityException } from "#src/shared/http/http-errors";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "#test/bun-test";
 import { NotificationTargetType } from "#src/notifications/notification-enums";
 import { ReservationReminderService } from "./reservation-reminder.service.js";
 

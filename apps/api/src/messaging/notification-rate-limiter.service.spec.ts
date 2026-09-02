@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { ServiceUnavailableException } from "#src/shared/http/http-errors";
 import {
   buildNotificationRateLimitKey,

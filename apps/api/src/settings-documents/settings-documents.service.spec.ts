@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "#test/bun-test";
 import type { SettingsDocumentsRepository } from "./settings-documents.repository.js";
 import { SettingsDocumentsService } from "./settings-documents.service.js";
 

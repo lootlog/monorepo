@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { NotificationMatchingService } from "./notification-matching.service.js";

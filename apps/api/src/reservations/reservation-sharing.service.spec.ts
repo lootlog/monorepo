@@ -3,7 +3,7 @@ import {
   GoneException,
   NotFoundException,
 } from "#src/shared/http/http-errors";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "#test/bun-test";
 import { ReservationSharingService } from "./reservation-sharing.service.js";
 
 const future = () => new Date(Date.now() + 60_000);

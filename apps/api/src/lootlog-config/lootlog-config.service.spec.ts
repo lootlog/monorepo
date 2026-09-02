@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "#test/bun-test";
 import type { DrizzleDatabaseRuntime } from "../database/drizzle/runtime.js";
 import { LootlogConfigService } from "./lootlog-config.service.js";
 

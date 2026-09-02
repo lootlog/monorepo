@@ -9,9 +9,6 @@
     "dist",
     "**/*spec.ts",
     "scripts",
-    "generated",
-    "vitest.config.ts",
-    "vitest.config.e2e.ts",
-    "vitest.d.ts"
+    "generated"
   ]
 }

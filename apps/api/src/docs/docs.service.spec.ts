@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import {
   BadRequestException,
   ConflictException,
@@ -221,10 +222,11 @@ const createRepositoryAdapter = (
       if (options.action === "RESTORE" && !document.deletedAt) {
         throw new ConflictException("Document is not in trash");
       }
+      const now = new Date();
       const data =
         options.action === "DELETE"
           ? {
-              deletedAt: expect.any(Date),
+              deletedAt: now,
               deletedByMemberId: options.memberId,
               updatedByMemberId: options.memberId,
             }
@@ -238,13 +240,16 @@ const createRepositoryAdapter = (
         data,
       });
       await tx.guildDocumentHistory.create({
-        data: expect.objectContaining({
+        data: {
           documentId: options.documentId,
           guildId: options.guildId,
           version: updated.version,
+          title: updated.title,
+          content: updated.content,
           action: options.action,
           actorMemberId: options.memberId,
-        }),
+          editedAt: now,
+        },
       });
     });
   },
@@ -545,23 +550,18 @@ describe("DocsService", () => {
     expect(prisma.guildDocument.findFirst).toHaveBeenCalledWith({
       where: { id: "doc-1", guildId: "guild-1", deletedAt: null },
     });
-    expect(prisma.guildDocument.update).toHaveBeenCalledWith({
-      where: { id: "doc-1" },
-      data: expect.objectContaining({
-        deletedAt: expect.any(Date),
-        deletedByMemberId: "discord-2",
-        updatedByMemberId: "discord-2",
-      }),
-    });
-    expect(prisma.guildDocumentHistory.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        documentId: "doc-1",
-        guildId: "guild-1",
-        version: 1,
-        action: "DELETE",
-        actorMemberId: "discord-2",
-      }),
-    });
+    const updateInput = prisma.guildDocument.update.mock.calls[0]?.[0];
+    expect(updateInput?.where).toEqual({ id: "doc-1" });
+    expect(updateInput?.data.deletedAt).toBeInstanceOf(Date);
+    expect(updateInput?.data.deletedByMemberId).toBe("discord-2");
+    expect(updateInput?.data.updatedByMemberId).toBe("discord-2");
+
+    const historyInput = prisma.guildDocumentHistory.create.mock.calls[0]?.[0];
+    expect(historyInput?.data.documentId).toBe("doc-1");
+    expect(historyInput?.data.guildId).toBe("guild-1");
+    expect(historyInput?.data.version).toBe(1);
+    expect(historyInput?.data.action).toBe("DELETE");
+    expect(historyInput?.data.actorMemberId).toBe("discord-2");
     expect(result).toEqual({ success: true });
   });
 
@@ -591,15 +591,12 @@ describe("DocsService", () => {
         updatedByMemberId: "discord-admin",
       },
     });
-    expect(prisma.guildDocumentHistory.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        documentId: "doc-1",
-        guildId: "guild-1",
-        version: 1,
-        action: "RESTORE",
-        actorMemberId: "discord-admin",
-      }),
-    });
+    const historyInput = prisma.guildDocumentHistory.create.mock.calls[0]?.[0];
+    expect(historyInput?.data.documentId).toBe("doc-1");
+    expect(historyInput?.data.guildId).toBe("guild-1");
+    expect(historyInput?.data.version).toBe(1);
+    expect(historyInput?.data.action).toBe("RESTORE");
+    expect(historyInput?.data.actorMemberId).toBe("discord-admin");
     expect(result).toEqual({ success: true });
   });
 

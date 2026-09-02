@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import {
   ConflictException,
   NotFoundException,

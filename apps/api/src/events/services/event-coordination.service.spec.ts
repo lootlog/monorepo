@@ -1,3 +1,4 @@
+import { vi } from "#test/bun-test";
 import { NotFoundException } from "#src/shared/http/http-errors";
 import { TimersService } from "#src/timers/timers.service";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
