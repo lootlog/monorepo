@@ -121,54 +121,59 @@ export class UsersGuildsData extends Context.Service<
     readonly refreshGuildDiscordSync: (guildId: string) => DataEffect;
   }
 >()("@lootlog/api/http-api/users-guilds/data") {
-  static layerServices(users: UsersService, guilds: GuildsService) {
+  static makeService(
+    users: UsersService,
+    guilds: GuildsService,
+  ): UsersGuildsData["Service"] {
     const attempt = (operation: () => PromiseLike<unknown>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new UsersGuildsOperationError({ cause }),
       });
 
+    return UsersGuildsData.of({
+      deleteAccount: ({ userId, discordId }) =>
+        attempt(() => users.deleteAccount({ authUserId: userId, discordId })),
+      getUserPreferences: (userId) =>
+        attempt(() => users.getUserPreferences(userId)),
+      updateUserPreferences: (userId, payload) =>
+        attempt(() =>
+          users.updateUserPreferences(
+            userId,
+            mutableDto<LegacyUpdateUserPreferencesDto>(payload),
+          ),
+        ),
+      getCurrentUserGuilds: ({ userId, discordId }) =>
+        attempt(() => users.getCurrentUserGuilds(discordId, userId)),
+      getCurrentUserAccessibleGuilds: ({ userId, discordId }) =>
+        attempt(() => users.getCurrentUserAccessibleGuilds(discordId, userId)),
+      getUserGameAccountPreferences: (userId, accountId) =>
+        attempt(() => users.getUserGameAccountPreferences(userId, accountId)),
+      updateUserGameAccountPreferences: (userId, accountId, payload) =>
+        attempt(() =>
+          users.updateUserGameAccountPreferences(
+            userId,
+            accountId,
+            mutableDto<LegacyUpdateUserGameAccountPreferencesDto>(payload),
+          ),
+        ),
+      getUserGuilds: ({ userId, discordId }, source) =>
+        attempt(() => guilds.getUserGuilds(discordId, userId, source)),
+      getUserGuildsWithPermissions: ({ userId, discordId }) =>
+        attempt(() => guilds.getUserGuildsWithPermissions(discordId, userId)),
+      getManageableUserGuilds: ({ userId, discordId }) =>
+        attempt(() => guilds.getManageableUserGuilds(discordId, userId)),
+      getGuildDiscordSyncStatus: (guildId) =>
+        attempt(() => guilds.getGuildDiscordSyncStatus(guildId)),
+      refreshGuildDiscordSync: (guildId) =>
+        attempt(() => guilds.refreshGuildDiscordSync(guildId)),
+    });
+  }
+
+  static layerServices(users: UsersService, guilds: GuildsService) {
     return Layer.succeed(
       UsersGuildsData,
-      UsersGuildsData.of({
-        deleteAccount: ({ userId, discordId }) =>
-          attempt(() => users.deleteAccount({ authUserId: userId, discordId })),
-        getUserPreferences: (userId) =>
-          attempt(() => users.getUserPreferences(userId)),
-        updateUserPreferences: (userId, payload) =>
-          attempt(() =>
-            users.updateUserPreferences(
-              userId,
-              mutableDto<LegacyUpdateUserPreferencesDto>(payload),
-            ),
-          ),
-        getCurrentUserGuilds: ({ userId, discordId }) =>
-          attempt(() => users.getCurrentUserGuilds(discordId, userId)),
-        getCurrentUserAccessibleGuilds: ({ userId, discordId }) =>
-          attempt(() =>
-            users.getCurrentUserAccessibleGuilds(discordId, userId),
-          ),
-        getUserGameAccountPreferences: (userId, accountId) =>
-          attempt(() => users.getUserGameAccountPreferences(userId, accountId)),
-        updateUserGameAccountPreferences: (userId, accountId, payload) =>
-          attempt(() =>
-            users.updateUserGameAccountPreferences(
-              userId,
-              accountId,
-              mutableDto<LegacyUpdateUserGameAccountPreferencesDto>(payload),
-            ),
-          ),
-        getUserGuilds: ({ userId, discordId }, source) =>
-          attempt(() => guilds.getUserGuilds(discordId, userId, source)),
-        getUserGuildsWithPermissions: ({ userId, discordId }) =>
-          attempt(() => guilds.getUserGuildsWithPermissions(discordId, userId)),
-        getManageableUserGuilds: ({ userId, discordId }) =>
-          attempt(() => guilds.getManageableUserGuilds(discordId, userId)),
-        getGuildDiscordSyncStatus: (guildId) =>
-          attempt(() => guilds.getGuildDiscordSyncStatus(guildId)),
-        refreshGuildDiscordSync: (guildId) =>
-          attempt(() => guilds.refreshGuildDiscordSync(guildId)),
-      }),
+      UsersGuildsData.makeService(users, guilds),
     );
   }
 }
