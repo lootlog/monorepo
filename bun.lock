@@ -473,12 +473,12 @@
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
         "@tanstack/react-query": "catalog:",
+        "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "orval": "^8.26.0",
         "react": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
-        "vitest": "catalog:",
         "yaml": "catalog:",
       },
       "peerDependencies": {

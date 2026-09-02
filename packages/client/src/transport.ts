@@ -1,6 +1,9 @@
 export type ApiService = "activity" | "auth" | "battlelog" | "main" | "search";
 
-type FetchImplementation = typeof globalThis.fetch;
+type FetchImplementation = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
 
 export type ApiRequestContext = {
   method: string;

@@ -1,14 +1,19 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "#test/bun-test";
 import {
   getHealthzControllerHealthCheckQueryOptions,
   getHealthzControllerHealthCheckQueryKey,
   healthzControllerHealthCheck,
 } from "./generated/main";
 
+type TestFetch = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
+
 describe("generated API clients", () => {
   it("executes a core client without browser globals", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+    const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(
       new Response("null", {
         headers: {
           "content-type": "application/json",
@@ -33,7 +38,7 @@ describe("generated API clients", () => {
   });
 
   it("builds executable React Query options with an isolated request override", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+    const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(
       new Response("null", {
         headers: {
           "content-type": "application/json",
@@ -59,8 +64,8 @@ describe("generated API clients", () => {
 
     await queryClient.fetchQuery(queryOptions);
 
-    expect(queryOptions.queryKey).toEqual(
-      getHealthzControllerHealthCheckQueryKey(),
+    expect(Array.from(queryOptions.queryKey)).toEqual(
+      Array.from(getHealthzControllerHealthCheckQueryKey()),
     );
     expect(fetchImplementation).toHaveBeenCalledWith(
       new URL("https://wiki-request.example.test/healthz"),
