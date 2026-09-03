@@ -22,7 +22,6 @@ Read the documents relevant to the change:
 - [`PRODUCT.md`](PRODUCT.md) — target product, priorities, and non-goals.
 - [`CONTEXT.md`](CONTEXT.md) — canonical domain terms.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — current system, target contracts, and known gaps.
-- [`docs/adr/README.md`](docs/adr/README.md) — accepted architecture decisions and their lifecycle.
 - [`SECURITY.md`](SECURITY.md) — mandatory for auth, authorization, API, gateway,
   user content, data, public endpoints, and external integrations.
 - [`DESIGN.md`](DESIGN.md) — canonical visual system for public and product surfaces.
@@ -140,12 +139,11 @@ Do not try to start the application; assume it is already running.
 ## Git, pull requests, and releases
 
 - Follow Conventional Commits and `commitlint.config.js`.
-- Write pull request titles, descriptions, ADRs, and technical
+- Write pull request titles, descriptions, and technical
   documentation in English.
 - Never bypass hooks with `--no-verify`.
 - Pull requests do not carry release metadata. Production workflows select an
   immutable commit from `main`.
-- Never edit package versions or generated changelogs manually.
 - Production promotions and rollbacks reuse immutable image references and
   Cloudflare deployments. Never rebuild a revision during rollback.
 
@@ -153,9 +151,6 @@ Do not try to start the application; assume it is already running.
 
 - Update the canonical source first, then app-specific deltas and public guides.
 - Keep `CONTEXT.md` free of implementation detail.
-- Create ADRs only for decisions that are hard to reverse, surprising without
-  context, and based on a real trade-off.
-- Claims require an approved entry in `docs/product-evidence.md`.
 - Do not publish testimonials.
 - Do not create source files that only re-export symbols; update imports to the
   real module.

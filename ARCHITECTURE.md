@@ -6,8 +6,7 @@ gaps are listed explicitly.
 
 Read [`PRODUCT.md`](PRODUCT.md) for product direction, [`CONTEXT.md`](CONTEXT.md)
 for domain language, and [`SECURITY.md`](SECURITY.md) for mandatory security
-rules. Accepted cross-cutting decisions are indexed in
-[`docs/adr/README.md`](docs/adr/README.md).
+rules.
 
 ## System flow
 
@@ -133,9 +132,7 @@ scheduled cleanup rather than a read-side mutation or full-calendar cache.
 
 An active calendar partnership extends visibility to one direct partner while
 keeping each Organization's availability, collision checks, source ownership,
-and moderation independent. It is reciprocal and non-transitive. The detailed
-disclosure and revocation contract is recorded in
-[ADR 0001](docs/adr/0001-direct-reciprocal-reservation-sharing.md).
+and moderation independent. It is reciprocal and non-transitive.
 
 Reservation reminders reuse the notification domain. A reservation stores an
 offset, not a Discord identifier. The notification boundary resolves an active
