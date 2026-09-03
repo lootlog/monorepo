@@ -1,10 +1,11 @@
+import { BunRedis } from "@effect/platform-bun";
 import {
   Permission,
   UserGuildPermissionsDtoSchema,
   type UserGuildPermissionsDto,
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
-import { Redis } from "ioredis";
+import { Redis } from "effect/unstable/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
 
@@ -27,41 +28,45 @@ export class Permissions extends Context.Service<
       const config = yield* ActivityConfig;
       const apiHttpClient = yield* ApiHttpClient;
       const memory = new Map<string, { expiresAt: number; value: unknown }>();
-      const redis = config.redisUrl
-        ? yield* Effect.acquireRelease(
-            Effect.sync(
-              () =>
-                new Redis(Redacted.value(config.redisUrl!), {
-                  lazyConnect: true,
-                }),
+      const redis = yield* Redis.Redis;
+      if (config.redisUrl) {
+        yield* redis
+          .send("PING")
+          .pipe(
+            Effect.mapError(
+              (cause) => new Error("Redis connection failed", { cause }),
             ),
-            (client) =>
-              Effect.tryPromise(() => client.quit()).pipe(Effect.ignore),
-          )
-        : undefined;
-      if (redis)
-        yield* Effect.tryPromise({
-          try: () => redis.connect(),
-          catch: (cause) => new Error("Redis connection failed", { cause }),
-        });
-      const get = async <A>(
+          );
+      }
+      const get = <A>(
         key: string,
         decodeValue: (value: unknown) => A,
         decodeJson: (value: string) => A,
-      ): Promise<A | undefined> => {
-        if (redis) {
-          const value = await redis.get(key);
-          return value ? decodeJson(value) : undefined;
+      ): Effect.Effect<A | undefined, Redis.RedisError> => {
+        if (config.redisUrl) {
+          return redis
+            .send<string | null>("GET", key)
+            .pipe(
+              Effect.map((value) => (value ? decodeJson(value) : undefined)),
+            );
         }
         const entry = memory.get(key);
-        return entry ? decodeValue(entry.value) : undefined;
+        return Effect.sync(() =>
+          entry ? decodeValue(entry.value) : undefined,
+        );
       };
-      const set = async (key: string, value: unknown): Promise<void> => {
-        if (redis) {
-          await redis.set(key, JSON.stringify(value), "PX", 300_000);
-          return;
+      const set = (
+        key: string,
+        value: unknown,
+      ): Effect.Effect<void, Redis.RedisError> => {
+        if (config.redisUrl) {
+          return redis
+            .send("SET", key, JSON.stringify(value), "PX", "300000")
+            .pipe(Effect.asVoid);
         }
-        memory.set(key, { value, expiresAt: Number.POSITIVE_INFINITY });
+        return Effect.sync(() => {
+          memory.set(key, { value, expiresAt: Number.POSITIVE_INFINITY });
+        });
       };
       const decodeGuild = Schema.decodeUnknownSync(
         Schema.Struct({ id: Schema.NonEmptyString }),
@@ -80,10 +85,11 @@ export class Permissions extends Context.Service<
         id: string,
       ) {
         const key = `guild-id:${id}`;
-        const cached = yield* Effect.tryPromise({
-          try: () => get(key, decodeString, decodeStringJson),
-          catch: (cause) => new Error("Guild cache read failed", { cause }),
-        });
+        const cached = yield* get(key, decodeString, decodeStringJson).pipe(
+          Effect.mapError(
+            (cause) => new Error("Guild cache read failed", { cause }),
+          ),
+        );
         if (cached) return cached;
         const response = yield* apiHttpClient.get(
           "Permissions.resolveGuildId",
@@ -103,20 +109,21 @@ export class Permissions extends Context.Service<
             ),
           catch: (cause) => new Error("Guild response was invalid", { cause }),
         });
-        yield* Effect.tryPromise({
-          try: () => set(key, guild.id),
-          catch: (cause) => new Error("Guild cache write failed", { cause }),
-        });
+        yield* set(key, guild.id).pipe(
+          Effect.mapError(
+            (cause) => new Error("Guild cache write failed", { cause }),
+          ),
+        );
         return guild.id;
       });
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
           const key = `permissions:${userId}:${discordId}`;
-          const cached = yield* Effect.tryPromise({
-            try: () => get(key, decodePermissions, decodePermissionsJson),
-            catch: (cause) =>
-              new Error("Permissions cache read failed", { cause }),
-          }).pipe(Effect.catch(() => Effect.succeed(undefined)));
+          const cached = yield* get(
+            key,
+            decodePermissions,
+            decodePermissionsJson,
+          ).pipe(Effect.catch(() => Effect.succeed(undefined)));
           if (cached) return cached;
           const url = new URL(
             "/internal/guilds/user-permissions",
@@ -152,11 +159,7 @@ export class Permissions extends Context.Service<
                 Effect.succeed([] as UserGuildPermissionsDto[]),
               ),
             );
-          yield* Effect.tryPromise({
-            try: () => set(key, permissions),
-            catch: (cause) =>
-              new Error("Permissions cache write failed", { cause }),
-          }).pipe(Effect.ignore);
+          yield* set(key, permissions).pipe(Effect.ignore);
           return permissions;
         },
       );
@@ -171,5 +174,19 @@ export class Permissions extends Context.Service<
       });
       return Permissions.of({ resolveGuildId, getUserGuildPermissions });
     }),
+  );
+
+  static readonly live = Layer.unwrap(
+    Effect.map(ActivityConfig, (config) =>
+      Permissions.layer.pipe(
+        Layer.provide(
+          BunRedis.layer({
+            url: config.redisUrl
+              ? Redacted.value(config.redisUrl)
+              : "redis://localhost:6379",
+          }),
+        ),
+      ),
+    ),
   );
 }

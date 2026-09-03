@@ -18,6 +18,8 @@ const runtimeBoundaryAllowlist = new Set([
   "apps/api/src/events/event-hero-kill.processor.ts",
   "apps/api/src/events/event-presence-tracking.ts",
   "apps/api/src/http-api/runtime/native-background-layers.ts",
+  "apps/api/src/http-api/runtime/api-redis.ts",
+  "apps/auth/src/auth/auth-redis-storage.ts",
   "apps/battlelog/src/app.factory.ts",
   "apps/gateway/src/app.ts",
 ]);

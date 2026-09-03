@@ -11,8 +11,10 @@ import {
   type RabbitMessagingService,
 } from "@lootlog/messaging";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Layer } from "effect";
+import { BunRedis } from "@effect/platform-bun";
+import { Effect, Layer, ManagedRuntime } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
+import { Redis } from "effect/unstable/persistence";
 import { RedisService } from "#src/redis/redis.service";
 import { ApiRedis } from "../src/http-api/runtime/api-redis.js";
 import { ApiRuntimeConfig } from "../src/http-api/runtime/api-runtime-config.js";
@@ -64,20 +66,26 @@ const request = (path: string, init?: RequestInit) =>
 describe("native API HTTP boundary", () => {
   let database: TestDatabase;
   let redis: RedisService;
+  let redisRuntime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
 
   beforeAll(async () => {
     database = await new TestDatabase().initialize();
-    redis = new RedisService({
-      host: process.env.REDIS_HOST ?? "127.0.0.1",
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      username: process.env.REDIS_USERNAME || undefined,
-      password: process.env.REDIS_PASSWORD || undefined,
-    });
-    redis.initialize();
+    const username = encodeURIComponent(process.env.REDIS_USERNAME ?? "");
+    const password = encodeURIComponent(process.env.REDIS_PASSWORD ?? "");
+    redisRuntime = ManagedRuntime.make(
+      BunRedis.layer({
+        url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
+      }),
+    );
+    redis = new RedisService(
+      await redisRuntime.runPromise(Redis.Redis),
+      {},
+      (effect) => redisRuntime.runPromise(effect),
+    );
   });
 
   beforeEach(async () => {
-    await redis.getClient().flushall();
+    await redis.flushall();
     await database.truncate("Guild");
 
     const updatedAt = new Date();
@@ -134,7 +142,7 @@ describe("native API HTTP boundary", () => {
   });
 
   afterAll(async () => {
-    redis.shutdown();
+    await redisRuntime.dispose();
     await database.dispose();
     await boundary.dispose();
   });

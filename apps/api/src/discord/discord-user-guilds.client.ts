@@ -13,7 +13,10 @@ import {
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { Routes, type APIGuild } from "discord-api-types/v10";
-import { ExecutionError } from "redlock";
+import {
+  ExecutionError,
+  RedlockService,
+} from "#src/lib/redlock/redlock.service";
 import { Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
@@ -35,7 +38,6 @@ import {
   getUserGuildsLockKey,
   isApiGuildArray,
 } from "./discord-cache.util.js";
-import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {

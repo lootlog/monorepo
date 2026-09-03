@@ -30,8 +30,9 @@ const HealthLive = ActivityHealth.layer.pipe(
   Layer.provide(ApiHttpClient.layer),
   Layer.provide(PgClientLive),
 );
-const PermissionsLive = Permissions.layer.pipe(
+const PermissionsLive = Permissions.live.pipe(
   Layer.provide(ApiHttpClient.layer),
+  Layer.provide(ActivityConfig.layer),
 );
 const DatabaseAdoption = Layer.effectDiscard(verifyAndAdoptDatabase()).pipe(
   Layer.provide(PgClientLive),

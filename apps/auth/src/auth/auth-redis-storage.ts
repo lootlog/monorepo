@@ -1,7 +1,6 @@
-import { redisStorage } from "@better-auth/redis-storage";
+import type { SecondaryStorage } from "better-auth";
 import { Context, Effect, Layer } from "effect";
-import { Redis } from "ioredis";
-import { AppConfig, reveal } from "#src/config/env";
+import { Redis } from "effect/unstable/persistence";
 import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js";
 
 const AUTH_REDIS_KEY_PREFIX = "auth:better-auth:";
@@ -19,7 +18,7 @@ const logRedisWarning = (message: string, error: unknown) => {
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
-    readonly client: Redis;
+    readonly client: RealtimeTicketRedis;
     readonly secondaryStorage: ReturnType<
       typeof createFailOpenSecondaryStorage
     >;
@@ -28,38 +27,47 @@ export class AuthRedisStorage extends Context.Service<
   static readonly layer = Layer.effect(
     AuthRedisStorage,
     Effect.gen(function* () {
-      const config = yield* AppConfig;
-      const client = yield* Effect.acquireRelease(
-        Effect.sync(() => {
-          const redisClient = new Redis({
-            host: config.redis.host,
-            port: config.redis.port,
-            username: config.redis.username,
-            password: reveal(config.redis.password),
-            connectTimeout: 1_000,
-            enableOfflineQueue: false,
-            maxRetriesPerRequest: 1,
-          });
-
-          redisClient.on("error", (error) => {
-            logRedisWarning("Redis client error", error);
-          });
-
-          return redisClient;
-        }),
-        (redisClient) =>
-          Effect.sync(() => {
-            if (
-              redisClient.status !== "end" &&
-              redisClient.status !== "close"
-            ) {
-              redisClient.disconnect(false);
-            }
-          }),
-      );
+      const redis = yield* Redis.Redis;
+      const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
+        Effect.runPromise(effect);
+      const client: RealtimeTicketRedis = {
+        set: (key, value, mode, ttl, condition) =>
+          run(redis.send("SET", key, value, mode, String(ttl), condition)),
+        getdel: (key) => run(redis.send("GETDEL", key)),
+      };
+      const storage: SecondaryStorage = {
+        get: (key) => run(redis.send("GET", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
+        getAndDelete: (key) =>
+          run(redis.send("GETDEL", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
+        increment: (key, ttl) =>
+          run(
+            redis.eval(incrementScript)(
+              `${AUTH_REDIS_KEY_PREFIX}${key}`,
+              String(ttl),
+            ),
+          ),
+        set: (key, value, ttl) =>
+          ttl !== undefined && ttl > 0
+            ? run(
+                redis.send(
+                  "SET",
+                  `${AUTH_REDIS_KEY_PREFIX}${key}`,
+                  value,
+                  "EX",
+                  String(ttl),
+                ),
+              ).then(() => undefined)
+            : run(
+                redis.send("SET", `${AUTH_REDIS_KEY_PREFIX}${key}`, value),
+              ).then(() => undefined),
+        delete: (key) =>
+          run(redis.send("DEL", `${AUTH_REDIS_KEY_PREFIX}${key}`)).then(
+            () => undefined,
+          ),
+      };
 
       const secondaryStorage = createFailOpenSecondaryStorage(
-        redisStorage({ client, keyPrefix: AUTH_REDIS_KEY_PREFIX }),
+        storage,
         (operation, error) => {
           logRedisWarning(`Redis secondary storage ${operation} failed`, error);
         },
@@ -69,3 +77,25 @@ export class AuthRedisStorage extends Context.Service<
     }),
   );
 }
+
+interface RealtimeTicketRedis {
+  readonly set: (
+    key: string,
+    value: string,
+    mode: "EX",
+    ttl: number,
+    condition: "NX",
+  ) => Promise<unknown>;
+  readonly getdel: (key: string) => Promise<string | null>;
+}
+
+const INCREMENT_SCRIPT = `
+local value = redis.call("INCR", KEYS[1])
+if value == 1 then redis.call("EXPIRE", KEYS[1], ARGV[1]) end
+return value
+`;
+
+const incrementScript = Redis.script((key: string, ttl: string) => [key, ttl], {
+  lua: INCREMENT_SCRIPT,
+  numberOfKeys: 1,
+}).withReturnType<number>();

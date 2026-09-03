@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { ExecutionError } from "redlock";
+import {
+  ExecutionError,
+  type RedlockService,
+} from "#src/lib/redlock/redlock.service";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -13,7 +16,6 @@ import {
   memberTable,
 } from "#src/database/drizzle/schema";
 import { RoutingKey } from "#src/enum/routing-key.enum";
-import type { RedlockService } from "#src/lib/redlock/redlock.service";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { EventEmitter } from "./services/event-emitter.service.js";
 import type { EventTimersPort } from "./services/event-timers.port.js";

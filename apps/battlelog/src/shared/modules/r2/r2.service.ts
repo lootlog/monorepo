@@ -160,13 +160,12 @@ export const makeBattleObjectStorage = (
         );
       }
 
-      const redis = redisStore.getClient();
-      const pipeline = redis.pipeline();
-      for (const battleId of battleIds) {
-        pipeline.del(`${CACHE_PREFIX}:${battleId}`);
-        pipeline.zrem(LRU_KEY, battleId);
-      }
-      await pipeline.exec();
+      await Promise.all(
+        battleIds.flatMap((battleId) => [
+          redisStore.del(`${CACHE_PREFIX}:${battleId}`),
+          redisStore.zrem(LRU_KEY, battleId),
+        ]),
+      );
 
       logger.log(
         `Batch deleted ${battleIds.length - failed.length}/${battleIds.length} battle files from R2`,
@@ -178,13 +177,10 @@ export const makeBattleObjectStorage = (
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
         const timestamp = Date.now();
 
-        const redis = redisStore.getClient();
-        const pipeline = redis.pipeline();
-
-        pipeline.set(cacheKey, data, "EX", CACHE_TTL);
-        pipeline.zadd(LRU_KEY, timestamp, battleId);
-
-        await pipeline.exec();
+        await Promise.all([
+          redisStore.set(cacheKey, data, CACHE_TTL),
+          redisStore.zadd(LRU_KEY, timestamp, battleId),
+        ]);
 
         await objectStorage.enforceLRULimit();
       } catch (error) {
@@ -195,8 +191,7 @@ export const makeBattleObjectStorage = (
     async updateLRU(battleId: string): Promise<void> {
       try {
         const timestamp = Date.now();
-        const redis = redisStore.getClient();
-        await redis.zadd(LRU_KEY, timestamp, battleId);
+        await redisStore.zadd(LRU_KEY, timestamp, battleId);
       } catch (error) {
         logger.warn(`Failed to update LRU for battle ${battleId}:`, error);
       }
@@ -204,23 +199,23 @@ export const makeBattleObjectStorage = (
 
     async enforceLRULimit(): Promise<void> {
       try {
-        const redis = redisStore.getClient();
-        const count = await redis.zcard(LRU_KEY);
+        const count = await redisStore.zcard(LRU_KEY);
 
         if (count > MAX_CACHE_SIZE) {
           const toRemove = count - MAX_CACHE_SIZE;
-          const oldestBattles = await redis.zrange(LRU_KEY, 0, toRemove - 1);
+          const oldestBattles = await redisStore.zrange(
+            LRU_KEY,
+            0,
+            toRemove - 1,
+          );
 
           if (oldestBattles.length > 0) {
-            const pipeline = redis.pipeline();
-
-            for (const battleId of oldestBattles) {
-              const cacheKey = `${CACHE_PREFIX}:${battleId}`;
-              pipeline.del(cacheKey);
-            }
-
-            pipeline.zremrangebyrank(LRU_KEY, 0, toRemove - 1);
-            await pipeline.exec();
+            await Promise.all([
+              ...oldestBattles.map((battleId) =>
+                redisStore.del(`${CACHE_PREFIX}:${battleId}`),
+              ),
+              redisStore.zremrangebyrank(LRU_KEY, 0, toRemove - 1),
+            ]);
 
             logger.log(
               `Evicted ${oldestBattles.length} battles from cache (LRU limit: ${MAX_CACHE_SIZE})`,
@@ -235,13 +230,10 @@ export const makeBattleObjectStorage = (
     async deleteCachedData(battleId: string): Promise<void> {
       try {
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
-        const redis = redisStore.getClient();
-        const pipeline = redis.pipeline();
-
-        pipeline.del(cacheKey);
-        pipeline.zrem(LRU_KEY, battleId);
-
-        await pipeline.exec();
+        await Promise.all([
+          redisStore.del(cacheKey),
+          redisStore.zrem(LRU_KEY, battleId),
+        ]);
         logger.debug(`Removed battle ${battleId} from cache`);
       } catch (error) {
         logger.warn(

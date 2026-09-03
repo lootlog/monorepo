@@ -14,8 +14,10 @@ export default async function setup() {
     .withUsername("lootlog")
     .withPassword("lootlog")
     .start();
-  const redis = await new GenericContainer("redis:7-alpine")
-    .withCommand(["redis-server", "--requirepass", "test"])
+  const redis = await new GenericContainer(
+    "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
+  )
+    .withCommand(["--requirepass=test"])
     .withExposedPorts(6379)
     .start();
 

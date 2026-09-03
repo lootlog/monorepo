@@ -82,7 +82,7 @@ export const parseTimerNpc = (
   let value = npc;
   if (typeof value === "string") {
     try {
-      value = JSON.parse(value) as unknown;
+      value = JSON.parse(value);
     } catch {
       return null;
     }

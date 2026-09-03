@@ -1,5 +1,5 @@
-import { BunRuntime } from "@effect/platform-bun";
-import { Effect, Layer } from "effect";
+import { BunRedis, BunRuntime } from "@effect/platform-bun";
+import { Effect, Layer, Redacted } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import {
   OtlpLogger,
@@ -39,7 +39,21 @@ const ObservabilityLive = Layer.unwrap(
 const InfrastructureLive = Layer.merge(
   AuthDatabase.layer,
   AuthRedisStorage.layer,
-).pipe(Layer.provide(AppConfig.layer));
+).pipe(
+  Layer.provide(
+    Layer.unwrap(
+      Effect.map(AppConfig, (config) =>
+        BunRedis.layer({
+          url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
+          connectionTimeout: 1_000,
+          enableOfflineQueue: false,
+          maxRetries: 1,
+        }),
+      ),
+    ),
+  ),
+  Layer.provide(AppConfig.layer),
+);
 
 const BetterAuthLive = BetterAuthRuntime.layer.pipe(
   Layer.provide(InfrastructureLive),

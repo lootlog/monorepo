@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
-import { Redis } from "ioredis";
+import { BunRedis } from "@effect/platform-bun";
+import { ManagedRuntime } from "effect";
+import { Redis } from "effect/unstable/persistence";
 import {
   consumeRealtimeTicket,
   issueRealtimeTicket,
@@ -12,16 +14,25 @@ const keyPattern = "auth:realtime-ticket:*";
 integrationTest(
   "real Redis enforces realtime ticket reuse, origin and expiry",
   async () => {
-    const redis = new Redis({
-      host: "127.0.0.1",
-      port: redisPort,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-    });
-    await redis.connect();
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}`, maxRetries: 1 }),
+    );
+    const service = await runtime.runPromise(Redis.Redis);
+    const command = <A>(name: string, ...args: string[]) =>
+      runtime.runPromise(service.send<A>(name, ...args));
+    const redis = {
+      set: (
+        key: string,
+        value: string,
+        mode: "EX",
+        ttl: number,
+        condition: "NX",
+      ) => command("SET", key, value, mode, String(ttl), condition),
+      getdel: (key: string) => command<string | null>("GETDEL", key),
+    };
     try {
-      const existingKeys = await redis.keys(keyPattern);
-      if (existingKeys.length > 0) await redis.del(...existingKeys);
+      const existingKeys = await command<string[]>("KEYS", keyPattern);
+      if (existingKeys.length > 0) await command("DEL", ...existingKeys);
 
       const first = await issueRealtimeTicket(
         redis,
@@ -68,9 +79,9 @@ integrationTest(
         { userId: "user-1", discordId: "discord-1" },
         "https://classic.margonem.pl",
       );
-      const [expiringKey] = await redis.keys(keyPattern);
+      const [expiringKey] = await command<string[]>("KEYS", keyPattern);
       if (!expiringKey) throw new Error("Expected persisted realtime ticket");
-      await redis.pexpire(expiringKey, 50);
+      await command("PEXPIRE", expiringKey, "50");
       await Bun.sleep(80);
       await expect(
         consumeRealtimeTicket(
@@ -80,9 +91,9 @@ integrationTest(
         ),
       ).resolves.toBeNull();
     } finally {
-      const keys = await redis.keys(keyPattern);
-      if (keys.length > 0) await redis.del(...keys);
-      await redis.quit();
+      const keys = await command<string[]>("KEYS", keyPattern);
+      if (keys.length > 0) await command("DEL", ...keys);
+      await runtime.dispose();
     }
   },
 );

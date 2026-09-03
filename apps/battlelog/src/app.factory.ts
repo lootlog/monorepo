@@ -1,6 +1,8 @@
+import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
 import { Queue, Worker } from "bullmq";
 import { Context, Effect, Layer, Redacted } from "effect";
+import { Redis } from "effect/unstable/persistence";
 import {
   makeBattlelogOperations,
   type BattlelogOperations,
@@ -48,7 +50,15 @@ export class BattlelogApplication extends Context.Service<
     Effect.gen(function* () {
       const config = yield* BattlelogConfig;
       const drizzle = yield* makeDrizzleDatabase;
-      const redis = yield* acquireRedis(config);
+      const redisClient = yield* Redis.Redis;
+      yield* redisClient
+        .send("PING")
+        .pipe(
+          Effect.mapError(
+            (cause) => new Error("Failed to initialize Redis", { cause }),
+          ),
+        );
+      const redis = makeRedisStore(redisClient, Effect.runPromise);
 
       const cacheService = makeBattleAnalyticsCache(redis);
       const domain = battleAnalyticsDomain;
@@ -113,21 +123,18 @@ export class BattlelogApplication extends Context.Service<
       ),
     ),
     Layer.provide(BattlelogConfig.layer),
+    Layer.provide(
+      Layer.unwrap(
+        Effect.map(BattlelogConfig, (config) =>
+          BunRedis.layer({ url: redisUrl(config) }),
+        ),
+      ).pipe(Layer.provide(BattlelogConfig.layer)),
+    ),
   );
 }
 
-const acquireRedis = (config: BattlelogConfiguration) =>
-  Effect.acquireRelease(
-    Effect.tryPromise({
-      try: async () => {
-        const redis = makeRedisStore(redisConnectionOptions(config));
-        await redis.connect();
-        return redis;
-      },
-      catch: (cause) => new Error("Failed to initialize Redis", { cause }),
-    }),
-    (redis) => Effect.sync(() => redis.close()),
-  );
+const redisUrl = (config: BattlelogConfiguration): string =>
+  `redis://${encodeURIComponent(config.redis.username ?? "")}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`;
 
 const acquireDeleteQueue = (config: BattlelogConfiguration) =>
   Effect.acquireRelease(
