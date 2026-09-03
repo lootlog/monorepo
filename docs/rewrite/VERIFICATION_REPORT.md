@@ -25,9 +25,8 @@ The 2026-09-03 follow-up audit also verifies implementation shape: active
 Rabbit payload schemas are enforced at ingress, Battlelog database operations
 remain in the Effect error/context model, Gateway recurring work is scoped,
 known external JSON and cache contracts are schema-decoded, and semantic
-application errors are translated to HTTP only at the boundary. CI now runs
-`architecture:effect` so removed NestJS and anti-Effect patterns cannot
-silently return. API Redis reads require explicit typed codecs, Auth consumes
+application errors are translated to HTTP only at the boundary. API Redis
+reads require explicit typed codecs, Auth consumes
 realtime tickets through an Effect Schema decoder, API IDP-token acquisition
 stays in Effect until the Discord SDK adapter, and rejectable Promises cannot
 bypass the typed error channel through `Effect.promise`. Battlelog normalizes

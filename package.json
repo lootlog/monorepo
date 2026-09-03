@@ -84,7 +84,6 @@
     "knip": "knip",
     "knip:fix": "knip --fix",
     "deps:check": "POSTGRESQL_CONNECTION_URI=postgresql://knip:knip@127.0.0.1:1/knip knip --dependencies --no-config-hints",
-    "architecture:effect": "bun tools/check-effect-architecture.ts",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
     "perf:gateway": "bun tools/k6/gateway.mjs",
@@ -130,7 +129,6 @@
     "prepare": "bun -e 'if (process.env.NODE_ENV !== \"production\" && process.env.HUSKY !== \"0\") { const { default: husky } = await import(\"husky\"); const message = husky(); if (message.length > 0) console.log(message); }'"
   },
   "devDependencies": {
-    "@babel/parser": "7.29.8",
     "@changesets/cli": "^3.0.1",
     "@lootlog/client": "workspace:*",
     "husky": "^9.1.7",

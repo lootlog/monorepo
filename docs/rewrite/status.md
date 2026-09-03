@@ -35,11 +35,7 @@ The follow-up migration audit is complete in the repository:
   were removed because they could not detect incorrect routing; retained tests
   assert independent contracts, authorization decisions, errors, or effects;
 - API runtime composition is split into focused core, member, timer, and
-  event/notification modules; and
-- CI runs `architecture:effect` to reject Nest imports, Nest-style exception
-  names, `ManagedRuntime`, synchronous or unapproved nested Effect runtimes,
-  unchecked JSON assertions, untyped Promise rejection, unmanaged forks, and
-  production console logging.
+  event/notification modules;
 - Battlelog OpenAPI path items are normalized before serialization, preventing
   hash-collection iteration order from making generated clients flap in CI.
 
