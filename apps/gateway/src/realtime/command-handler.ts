@@ -7,7 +7,6 @@ import {
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import { Effect } from "effect";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
@@ -20,7 +19,6 @@ import {
   commandFailureDetails,
   GameCharacterRequired,
   isCommandFailure,
-  MargonemProofRequired,
   NoAuthorizedOrganizations,
   OrganizationAccessDenied,
   RealtimeDependencyError,
@@ -83,7 +81,6 @@ const invalidLegacyPayloadResponse = (
 
 export class CommandHandler {
   constructor(
-    private readonly config: GatewayConfiguration,
     private readonly guilds: GuildStore,
     private readonly proofVerifier: MargonemProofVerifier,
     private readonly presence: PresenceStore,
@@ -304,7 +301,7 @@ export class CommandHandler {
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
   ): Effect.Effect<unknown, CommandFailure> {
-    const { activity, config, guilds, hub, proofVerifier } = this;
+    const { activity, guilds, hub, proofVerifier } = this;
     return Effect.gen(function* () {
       const wasJoined = socket.data.joined;
       if (socket.data.platform === "game" && !data.character)
@@ -320,9 +317,6 @@ export class CommandHandler {
           clanId: data.character.clan?.id,
         });
         if (verification.valid) socket.data.confidence = "verified";
-        if (!verification.valid && config.margonemAccountProofRequired) {
-          return yield* Effect.fail(new MargonemProofRequired());
-        }
       }
       const authorizedGuilds = yield* guilds.getUserGuilds(socket.data);
       if (authorizedGuilds.length === 0)

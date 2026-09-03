@@ -3,7 +3,6 @@ import { encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { CommandHandler } from "./command-handler.js";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
@@ -124,7 +123,6 @@ const setup = () => {
   const activity = new FakeActivity();
   const presence = new FakePresence();
   const handler = new CommandHandler(
-    { margonemAccountProofRequired: false } as GatewayConfiguration,
     guilds as unknown as GuildStore,
     {
       verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
@@ -139,6 +137,38 @@ const setup = () => {
 };
 
 describe("CommandHandler session lifecycle", () => {
+  test("keeps game sessions available when Margonem proof is unavailable", async () => {
+    const { handler, hub } = setup();
+    const { socket } = makeSocket();
+    socket.data.platform = "game";
+    const command = encode({
+      v: 1,
+      type: "session.join",
+      requestId: "request-1",
+      data: {
+        world: "alpha",
+        character: {
+          world: "alpha",
+          name: "Hero",
+          lvl: 100,
+          icon: "hero.gif",
+          characterId: "10",
+          accountId: "20",
+          prof: "w",
+          clan: { id: 30, name: "Clan", rank: 1 },
+        },
+      },
+    });
+
+    await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
+
+    expect(socket.data.joined).toBe(true);
+    expect(socket.data.confidence).toBe("reported");
+    expect(hub.responses).toContainEqual(
+      expect.objectContaining({ requestId: "request-1", status: "success" }),
+    );
+  });
+
   test("supports deterministic rejoin and emits request/response plus joined events", async () => {
     const { handler, hub, activity } = setup();
     const { socket } = makeSocket();

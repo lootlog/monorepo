@@ -89,7 +89,6 @@ export class GatewayApplication extends Context.Service<
       const mapPings = new MapPingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
       const commands = new CommandHandler(
-        config,
         makeGuildStore(config, redis, httpClient),
         makeMargonemProofVerifier(config, httpClient),
         presence,
@@ -263,11 +262,6 @@ export const GatewayServer = Layer.effectDiscard(
             idleTimeout: 70,
             open(socket) {
               application.hub.register(socket);
-              application.hub.sendEvent(socket, {
-                v: 1,
-                type: "connection.ready",
-                data: { connectionId: socket.data.connectionId },
-              });
             },
             message(socket, message) {
               application.runBackground(

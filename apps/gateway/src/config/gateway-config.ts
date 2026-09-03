@@ -8,7 +8,6 @@ export interface GatewayConfiguration {
   readonly apiUrl: string;
   readonly authUrl: string;
   readonly margonemSigningKeyUrl: string;
-  readonly margonemAccountProofRequired: boolean;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly activityEventSignatureSecret: Redacted.Redacted<string>;
   readonly redis: {
@@ -55,9 +54,6 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
         new URL("https://staticinfo.margonem.pl/.well-known/signing-key.pem"),
       ),
     )).toString(),
-    margonemAccountProofRequired: yield* Config.boolean(
-      "MARGONEM_ACCOUNT_PROOF_REQUIRED",
-    ).pipe(Config.withDefault(false)),
     rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
     activityEventSignatureSecret: yield* Config.redacted(
       "ACTIVITY_EVENT_SIGNATURE_SECRET",

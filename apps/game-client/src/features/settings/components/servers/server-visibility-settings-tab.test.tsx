@@ -145,6 +145,7 @@ describe("ServerVisibilitySettingsTab", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: { "10": "guild-1" },
+      presenceDefaultOrganizationIdByClanKey: { "alpha:30": "guild-1" },
     });
 
     render(<ServerVisibilitySettingsTab />);

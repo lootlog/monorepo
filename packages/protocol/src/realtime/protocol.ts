@@ -283,10 +283,6 @@ const OrganizationEvent = Schema.Struct({
 
 export const ServerEvent = Schema.Union([
   serverEvent(
-    "connection.ready",
-    Schema.Struct({ connectionId: NonEmptyString }),
-  ),
-  serverEvent(
     "session.joined",
     Schema.Struct({
       connectionId: NonEmptyString,

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
+import { getPresenceClanKey } from "@/lib/presence-organization-selection";
 import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
@@ -26,6 +27,12 @@ export function useSelectedLootlogGuildInitialization(): void {
     (state) => state.gameState.gameInitialized,
   );
   const characterId = useCurrentCharacterId();
+  const currentClanKey = useGameStore((state) => {
+    const game = state.game;
+    return game?.hero.clan
+      ? getPresenceClanKey(game.world, game.hero.clan.id)
+      : undefined;
+  });
   const queryEnabled = gameInitialized && Boolean(characterId);
   const { data: guilds, isFetched: areGuildsFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds({
@@ -54,11 +61,12 @@ export function useSelectedLootlogGuildInitialization(): void {
       userPreferences?.guildsOrder,
       userPreferences?.hiddenGuildIds,
     ).map((guild) => guild.id);
-    ensureGuildId(characterId, orderedGuildIds);
+    ensureGuildId(characterId, orderedGuildIds, currentClanKey);
   }, [
     areGuildsFetched,
     areUserPreferencesFetched,
     characterId,
+    currentClanKey,
     ensureGuildId,
     guilds,
     queryEnabled,

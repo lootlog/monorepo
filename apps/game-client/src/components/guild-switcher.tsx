@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
+import { getPresenceClanKey } from "@/lib/presence-organization-selection";
 import {
   Tooltip,
   TooltipContent,
@@ -108,6 +110,12 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   } = resolveGuildSwitcherProps(props);
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
+  const currentClanKey = useGameStore((state) => {
+    const game = state.game;
+    return game?.hero.clan
+      ? getPresenceClanKey(game.world, game.hero.clan.id)
+      : undefined;
+  });
   const { guildsQuery, preferencesQuery, visibleGuilds } =
     useVisibleLootlogGuilds();
   const { data: guilds, error, isFetched, isLoading, refetch } = guildsQuery;
@@ -180,7 +188,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     }
 
     if (characterId) {
-      setGuildId(characterId, newGuildId);
+      setGuildId(characterId, newGuildId, currentClanKey);
     }
   };
 

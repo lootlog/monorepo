@@ -117,11 +117,46 @@ describe("useSettingsStore", () => {
   it("uses the first accessible guild when the current selection is missing", () => {
     useSettingsStore
       .getState()
-      .ensureGuildId("character-1", ["guild-2", "guild-1"]);
+      .ensureGuildId("character-1", ["guild-2", "guild-1"], "alpha:20");
 
-    expect(useSettingsStore.getState().guildIdByCharId).toEqual({
-      "character-1": "guild-2",
+    expect(useSettingsStore.getState()).toMatchObject({
+      guildIdByCharId: { "character-1": "guild-2" },
+      presenceDefaultOrganizationIdByClanKey: {},
     });
+  });
+
+  it("maps the only accessible organization to the active clan", () => {
+    useSettingsStore
+      .getState()
+      .ensureGuildId("character-1", ["guild-1"], "alpha:20");
+
+    expect(
+      useSettingsStore.getState().presenceDefaultOrganizationIdByClanKey,
+    ).toEqual({ "alpha:20": "guild-1" });
+  });
+
+  it("maps an existing character preference to the active clan during migration", () => {
+    useSettingsStore.setState({
+      guildIdByCharId: { "character-1": "guild-2" },
+    });
+
+    useSettingsStore
+      .getState()
+      .ensureGuildId("character-1", ["guild-1", "guild-2"], "alpha:20");
+
+    expect(
+      useSettingsStore.getState().presenceDefaultOrganizationIdByClanKey,
+    ).toEqual({ "alpha:20": "guild-2" });
+  });
+
+  it("keeps presence defaults isolated between Margonem clans", () => {
+    const settings = useSettingsStore.getState();
+    settings.setGuildId("character-1", "guild-1", "alpha:10");
+    settings.setGuildId("character-1", "guild-2", "beta:10");
+
+    expect(
+      useSettingsStore.getState().presenceDefaultOrganizationIdByClanKey,
+    ).toEqual({ "alpha:10": "guild-1", "beta:10": "guild-2" });
   });
 
   it("replaces an inaccessible guild without changing other characters", () => {

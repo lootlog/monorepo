@@ -70,15 +70,8 @@ describe("game realtime verification and presence selection", () => {
     });
   });
 
-  it("waits for connection.ready and joins once with a connection-bound proof", async () => {
+  it("joins as reported before upgrading the session with a connection-bound proof", async () => {
     const socket = new AppSocket();
-    for (const listener of mocks.serverListeners) {
-      listener({
-        v: 1,
-        type: "connection.ready",
-        data: { connectionId: "connection-1" },
-      });
-    }
     await socket.join(joinData);
 
     expect(mocks.requestProof).toHaveBeenCalledWith({
@@ -87,9 +80,27 @@ describe("game realtime verification and presence selection", () => {
       characterId: "10",
       clanId: 30,
     });
+    expect(mocks.join).toHaveBeenCalledTimes(2);
+    expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
+      margonemAccountProof: undefined,
+    });
+    expect(mocks.join.mock.calls[1]?.[0]).toMatchObject({
+      margonemAccountProof: { signatureBase64: "signature" },
+    });
+  });
+
+  it("keeps the reported session when an account proof is unavailable", async () => {
+    mocks.requestProof.mockRejectedValueOnce(new Error("Proof unavailable"));
+    const socket = new AppSocket();
+
+    await expect(socket.join(joinData)).resolves.toMatchObject({
+      connectionId: "connection-1",
+      organizationIds: ["organization-1"],
+    });
+
     expect(mocks.join).toHaveBeenCalledTimes(1);
     expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
-      margonemAccountProof: { signatureBase64: "signature" },
+      margonemAccountProof: undefined,
     });
   });
 
@@ -114,15 +125,11 @@ describe("game realtime verification and presence selection", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: { "10": "organization-1" },
+      presenceDefaultOrganizationIdByClanKey: {
+        "alpha:30": "organization-1",
+      },
     });
     const socket = new AppSocket();
-    for (const listener of mocks.serverListeners) {
-      listener({
-        v: 1,
-        type: "connection.ready",
-        data: { connectionId: "connection-1" },
-      });
-    }
     await socket.join(joinData);
     socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
     await Promise.resolve();
@@ -155,13 +162,6 @@ describe("game realtime verification and presence selection", () => {
       presenceOrganizationIdsByCharId: { "10": [] },
     });
     const socket = new AppSocket();
-    for (const listener of mocks.serverListeners) {
-      listener({
-        v: 1,
-        type: "connection.ready",
-        data: { connectionId: "connection-1" },
-      });
-    }
     const { clan: _clan, ...clanlessJoinData } = joinData;
     await socket.join(clanlessJoinData);
     socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });

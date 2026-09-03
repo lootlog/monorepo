@@ -16,11 +16,6 @@ export class GameCharacterRequired extends TaggedErrorClass<GameCharacterRequire
   {},
 ) {}
 
-export class MargonemProofRequired extends TaggedErrorClass<MargonemProofRequired>()(
-  "MargonemProofRequired",
-  {},
-) {}
-
 export class NoAuthorizedOrganizations extends TaggedErrorClass<NoAuthorizedOrganizations>()(
   "NoAuthorizedOrganizations",
   {},
@@ -50,7 +45,6 @@ export type CommandRejection =
   | SessionNotJoined
   | OrganizationAccessDenied
   | GameCharacterRequired
-  | MargonemProofRequired
   | NoAuthorizedOrganizations
   | PresenceSessionMismatch
   | PresenceNotPublished;
@@ -64,7 +58,6 @@ export const isCommandFailure = (error: unknown): error is CommandFailure =>
   error instanceof SessionNotJoined ||
   error instanceof OrganizationAccessDenied ||
   error instanceof GameCharacterRequired ||
-  error instanceof MargonemProofRequired ||
   error instanceof NoAuthorizedOrganizations ||
   error instanceof PresenceSessionMismatch ||
   error instanceof PresenceNotPublished ||
@@ -81,11 +74,6 @@ export const commandFailureDetails = (
       return { message: "organization access denied", retryable: false };
     case "GameCharacterRequired":
       return { message: "game sessions require a character", retryable: false };
-    case "MargonemProofRequired":
-      return {
-        message: "Margonem account proof is required",
-        retryable: false,
-      };
     case "NoAuthorizedOrganizations":
       return { message: "no authorized organizations", retryable: false };
     case "PresenceSessionMismatch":
