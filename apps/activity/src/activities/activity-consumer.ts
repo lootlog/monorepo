@@ -6,7 +6,7 @@ import {
   makeRetryQueue,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer, Redacted } from "effect";
+import { Effect, Layer, Redacted, Result } from "effect";
 import { ActivityRepository } from "./activity-repository.js";
 import {
   decodeCreateActivity,
@@ -61,8 +61,12 @@ export const activityQueues = [
   }),
 ] as const;
 
-const decodeJson = (delivery: RabbitDelivery): unknown =>
-  JSON.parse(new TextDecoder().decode(delivery.content));
+const decodeJson = (delivery: RabbitDelivery) =>
+  Result.try({
+    try: () =>
+      JSON.parse(new TextDecoder().decode(delivery.content)) as unknown,
+    catch: (cause) => cause,
+  });
 const retryCount = (delivery: RabbitDelivery): number => {
   const death = delivery.properties.headers?.["x-death"];
   if (!Array.isArray(death) || death.length === 0) return 0;
@@ -112,7 +116,19 @@ export const ActivityConsumers = Layer.effectDiscard(
       },
       (delivery) =>
         Effect.gen(function* () {
-          const input = decodeJson(delivery);
+          const decoded = decodeJson(delivery);
+          if (decoded._tag === "Failure") {
+            yield* publishDlq(
+              delivery,
+              RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+              {
+                "x-validation-error": "Malformed JSON",
+                "x-error-type": "permanent",
+              },
+            );
+            return;
+          }
+          const input = decoded.success;
           if (
             !verifyActivityEventSignature({
               payload: input,
@@ -163,7 +179,19 @@ export const ActivityConsumers = Layer.effectDiscard(
       },
       (delivery) =>
         Effect.gen(function* () {
-          const input = decodeJson(delivery);
+          const decoded = decodeJson(delivery);
+          if (decoded._tag === "Failure") {
+            yield* publishDlq(
+              delivery,
+              RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
+              {
+                "x-validation-error": "Malformed JSON",
+                "x-error-type": "permanent",
+              },
+            );
+            return;
+          }
+          const input = decoded.success;
           let dto;
           try {
             dto = decodeGuildMemberRemoved(input);

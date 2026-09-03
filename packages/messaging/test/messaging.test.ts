@@ -157,6 +157,52 @@ describe("RabbitMessaging", () => {
     expect(nack).toHaveBeenCalledWith(expect.anything(), false, true);
   });
 
+  test("requeues synchronous handler throws", async () => {
+    const { channel, nack, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          () => {
+            throw new Error("malformed delivery");
+          },
+        );
+        expect(() => dispatch(makeMessage())).not.toThrow();
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(nack).toHaveBeenCalledWith(expect.anything(), false, true);
+  });
+
+  test("requeues handler defects", async () => {
+    const { channel, nack, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          () => Effect.die("malformed delivery"),
+        );
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(nack).toHaveBeenCalledWith(expect.anything(), false, true);
+  });
+
   test("dead-letters a failed delivery through broker nack", async () => {
     const { channel, nack, publish, dispatch } = makeChannel();
 

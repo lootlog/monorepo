@@ -78,12 +78,6 @@ const mapDetails = (details: unknown): Record<string, unknown> | undefined =>
   details !== null && typeof details === "object" && !Array.isArray(details)
     ? (details as Record<string, unknown>)
     : undefined;
-const isUniqueViolation = (error: unknown): boolean => {
-  if (typeof error !== "object" || error === null) return false;
-  if ("code" in error && error.code === "23505") return true;
-  return "cause" in error && isUniqueViolation(error.cause);
-};
-
 export class ActivityRepository extends Context.Service<
   ActivityRepository,
   ActivityRepositoryValue
@@ -155,8 +149,30 @@ export class ActivityRepository extends Context.Service<
         dto: CreateActivity,
       ) {
         const actorSnapshotId = yield* snapshotId(dto);
-        const persist = db.transaction((tx) =>
+        return yield* db.transaction((tx) =>
           Effect.gen(function* () {
+            yield* tx.execute(
+              drizzleSql`select pg_advisory_xact_lock(hashtextextended(${dto.idempotencyKey}, 0))`,
+            );
+            const existing = yield* tx
+              .select({
+                activity: activities,
+                actorSnapshot: activityActorSnapshots,
+              })
+              .from(activities)
+              .leftJoin(
+                activityActorSnapshots,
+                eq(activities.actorSnapshotId, activityActorSnapshots.id),
+              )
+              .where(eq(activities.idempotencyKey, dto.idempotencyKey))
+              .limit(1);
+            if (existing[0]) {
+              return {
+                ...existing[0].activity,
+                details: mapDetails(existing[0].activity.details),
+                actorSnapshot: existing[0].actorSnapshot ?? undefined,
+              };
+            }
             const createdRows = yield* tx
               .insert(activities)
               .values({
@@ -276,35 +292,6 @@ export class ActivityRepository extends Context.Service<
             }
             return created;
           }),
-        );
-        return yield* persist.pipe(
-          Effect.catchIf(isUniqueViolation, () =>
-            Effect.gen(function* () {
-              const existing = yield* db
-                .select({
-                  activity: activities,
-                  actorSnapshot: activityActorSnapshots,
-                })
-                .from(activities)
-                .leftJoin(
-                  activityActorSnapshots,
-                  eq(activities.actorSnapshotId, activityActorSnapshots.id),
-                )
-                .where(eq(activities.idempotencyKey, dto.idempotencyKey))
-                .limit(1);
-              if (!existing[0])
-                return yield* Effect.fail(
-                  new Error(
-                    "Idempotency conflict did not resolve to an activity",
-                  ),
-                );
-              return {
-                ...existing[0].activity,
-                details: mapDetails(existing[0].activity.details),
-                actorSnapshot: existing[0].actorSnapshot ?? undefined,
-              };
-            }),
-          ),
         );
       });
       const clearActiveSessionsForMember = Effect.fn(

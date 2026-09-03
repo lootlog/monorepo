@@ -1,4 +1,5 @@
 import { BunRedis, BunRuntime } from "@effect/platform-bun";
+import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer, Redacted } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp, OtlpSerialization } from "effect/unstable/observability";
@@ -62,9 +63,11 @@ const AuthServicesLive = AuthService.layer.pipe(
   Layer.provideMerge(AppConfig.layer),
 );
 
-const ApplicationLive = AuthHttpServer.pipe(
-  Layer.provide(AuthServicesLive),
-  Layer.provide(ObservabilityLive),
-);
+const ApplicationLive = AuthHttpServer.pipe(Layer.provide(AuthServicesLive));
 
-BunRuntime.runMain(Layer.launch(ApplicationLive));
+BunRuntime.runMain(
+  Effect.gen(function* () {
+    yield* installScopedLogRunner;
+    yield* Layer.launch(ApplicationLive);
+  }).pipe(Effect.scoped, Effect.provide(ObservabilityLive)),
+);

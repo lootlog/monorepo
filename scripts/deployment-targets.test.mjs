@@ -57,11 +57,14 @@ describe("deployment targets", () => {
   test("CI rebuilds images only when packaging inputs change", async () => {
     const sourcePlan = await createDeploymentPlan({
       mode: "ci",
-      affectedPackages: ["@lootlog/api", "@lootlog/web"],
+      affectedPackages: ["@lootlog/activity", "@lootlog/api", "@lootlog/web"],
       changedFiles: ["apps/api/src/main.ts"],
     });
     expect(sourcePlan.dockerTargets).toEqual([]);
-    expect(sourcePlan.integrationPackages).toEqual(["@lootlog/api"]);
+    expect(sourcePlan.integrationPackages).toEqual([
+      "@lootlog/activity",
+      "@lootlog/api",
+    ]);
 
     const manifestPlan = await createDeploymentPlan({
       mode: "ci",

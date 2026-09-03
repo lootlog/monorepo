@@ -1,3 +1,4 @@
+import { runLogEffect } from "@lootlog/instrumentation";
 import type { ApiConfiguration } from "#src/config/api.config";
 import { Effect } from "effect";
 
@@ -17,7 +18,7 @@ export function registerNodeWarningDiagnostics(
       return;
     }
 
-    Effect.runFork(
+    runLogEffect(
       Effect.logWarning("Node MaxListeners warning").pipe(
         Effect.annotateLogs({
           event: "node.warning",

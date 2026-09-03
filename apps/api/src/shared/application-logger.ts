@@ -1,3 +1,6 @@
+import { runLogEffect } from "@lootlog/instrumentation";
+import { Effect } from "effect";
+
 export interface ApplicationLogger {
   log(entry: unknown, ...context: unknown[]): void;
   info(entry: unknown, ...context: unknown[]): void;
@@ -7,15 +10,14 @@ export interface ApplicationLogger {
 }
 
 export const applicationLogger: ApplicationLogger = {
-  log: (entry, ...context) => Effect.runFork(Effect.logInfo(entry, ...context)),
-  info: (entry, ...context) =>
-    Effect.runFork(Effect.logInfo(entry, ...context)),
+  log: (entry, ...context) => runLogEffect(Effect.logInfo(entry, ...context)),
+  info: (entry, ...context) => runLogEffect(Effect.logInfo(entry, ...context)),
   warn: (entry, ...context) =>
-    Effect.runFork(Effect.logWarning(entry, ...context)),
+    runLogEffect(Effect.logWarning(entry, ...context)),
   error: (entry, ...context) =>
-    Effect.runFork(Effect.logError(entry, ...context)),
+    runLogEffect(Effect.logError(entry, ...context)),
   debug: (entry, ...context) =>
-    Effect.runFork(Effect.logDebug(entry, ...context)),
+    runLogEffect(Effect.logDebug(entry, ...context)),
 };
 
 export class Logger {
@@ -41,4 +43,3 @@ export class Logger {
     applicationLogger.warn(message, { context: this.context }, ...details);
   }
 }
-import { Effect } from "effect";

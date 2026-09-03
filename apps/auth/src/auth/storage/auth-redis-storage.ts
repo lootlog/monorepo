@@ -5,16 +5,6 @@ import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js
 
 const AUTH_REDIS_KEY_PREFIX = "auth:better-auth:";
 
-const logRedisWarning = (message: string, error: unknown) => {
-  Effect.runFork(
-    Effect.logWarning(message).pipe(
-      Effect.annotateLogs({
-        error: error instanceof Error ? error.message : String(error),
-      }),
-    ),
-  );
-};
-
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
@@ -32,6 +22,15 @@ export class AuthRedisStorage extends Context.Service<
       const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
       const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
         runPromise(effect);
+      const logRedisWarning = (message: string, error: unknown) => {
+        void runPromise(
+          Effect.logWarning(message).pipe(
+            Effect.annotateLogs({
+              error: error instanceof Error ? error.message : String(error),
+            }),
+          ),
+        );
+      };
       const client: RealtimeTicketRedis = {
         set: (key, value, mode, ttl, condition) =>
           run(redis.send("SET", key, value, mode, String(ttl), condition)),
