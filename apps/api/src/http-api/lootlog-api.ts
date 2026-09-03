@@ -23780,6 +23780,7 @@ class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get("GuildsControllerGetGuildById", "/guilds/:guildId", {
     params: GuildsControllerGetGuildByIdPathParams,
     success: GuildsControllerGetGuildById200,
+    error: HttpApiSchema.Empty(403),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getGuildById")
@@ -23827,6 +23828,7 @@ class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: GuildsControllerGetGuildPermissionsPathParams,
       success: GuildsControllerGetGuildPermissions200,
+      error: HttpApiSchema.Empty(403),
     },
   )
     .middleware(BearerSecurityMiddleware)

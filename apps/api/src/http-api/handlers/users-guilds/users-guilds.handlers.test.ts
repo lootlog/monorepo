@@ -1,12 +1,18 @@
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer, Schema } from "effect";
+import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
+import { Etag, HttpPlatform } from "effect/unstable/http";
+import { HttpApiTest } from "effect/unstable/httpapi";
 import {
+  BearerSecurityMiddleware,
   GuildResponseDto_Output,
+  LootlogApi,
   UserPreferencesResponseDto_Output,
 } from "../../lootlog-api.js";
+import { ForwardAuthIdentity } from "../../runtime/forward-auth-identity.js";
 import {
   GuildConfigurationData,
+  GuildsHandlers,
   getCurrentUserPreferences,
   updateGuildConfiguration,
   UsersGuildsAccessDenied,
@@ -16,6 +22,12 @@ import {
 } from "./users-guilds.handlers.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
+
+const httpApiTestServices = Layer.mergeAll(
+  Path.layer,
+  Etag.layerWeak,
+  HttpPlatform.layer,
+).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
 
 const userPreferences = {
   userId: identity.userId,
@@ -101,6 +113,50 @@ const provideServices = (
   );
 
 describe("Users and Guilds HttpApi handlers", () => {
+  it("returns forbidden for Organization metadata without access", async () => {
+    const denied = new UsersGuildsAccessDenied({
+      status: 403,
+      code: "FORBIDDEN",
+    });
+    const services = provideServices(
+      makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
+      makeData(),
+    );
+    const bearer = BearerSecurityMiddleware.of({
+      bearer: (httpEffect) =>
+        Effect.provideService(httpEffect, ForwardAuthIdentity, identity),
+    });
+
+    const responsesEffect = Effect.scoped(
+      Effect.gen(function* () {
+        const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
+          Effect.provide(GuildsHandlers),
+          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+        );
+
+        return yield* Effect.all([
+          client.guilds.GuildsControllerGetGuildById({
+            params: { guildId: "guild-forbidden" },
+            responseMode: "response-only",
+          }),
+          client.guilds.GuildsControllerGetGuildPermissions({
+            params: { guildId: "guild-forbidden" },
+            responseMode: "response-only",
+          }),
+        ]);
+      }),
+    ).pipe(Effect.provide(services), Effect.provide(httpApiTestServices));
+    // HttpApiBuilder retains phantom handler requirements after their concrete
+    // layers are provided. These in-memory requests prove the wiring.
+    const runnableResponsesEffect = responsesEffect as unknown as Effect.Effect<
+      ReadonlyArray<{ readonly status: number }>,
+      unknown
+    >;
+    const responses = await Effect.runPromise(runnableResponsesEffect);
+
+    expect(responses.map(({ status }) => status)).toEqual([403, 403]);
+  });
+
   it("returns current user preferences through the generated response schema", async () => {
     const userIds: string[] = [];
     const layer = provideServices(

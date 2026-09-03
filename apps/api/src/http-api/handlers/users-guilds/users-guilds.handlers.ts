@@ -394,8 +394,24 @@ const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
 
 const isStatus = (error: unknown, status: number) => {
   const cause = defectCause(error);
+  if (
+    cause instanceof UsersGuildsAccessDenied ||
+    cause instanceof UsersGuildsNotFound
+  ) {
+    return cause.status === status;
+  }
   return applicationErrorStatusOrUndefined(cause) === status;
 };
+
+const declaredEmptyError = <A, E, R>(
+  effect: Effect.Effect<A, E, R>,
+  statuses: ReadonlyArray<number>,
+) =>
+  Effect.catch(effect, (error) =>
+    statuses.some((status) => isStatus(error, status))
+      ? Effect.fail(undefined)
+      : Effect.die(defectCause(error)),
+  );
 
 export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
   function* () {
@@ -614,12 +630,13 @@ export const GuildsHandlers = HttpApiBuilder.group(
         orDieHttpFailure(manageableCurrentGuildList()),
       )
       .handle("GuildsControllerGetGuildById", ({ params }) =>
-        orDieHttpFailure(
+        declaredEmptyError(
           guildRead(params.guildId).pipe(
             Effect.withSpan("GuildsControllerGetGuildById", {
               attributes: { operationId: "GuildsControllerGetGuildById" },
             }),
           ),
+          [403],
         ),
       )
       .handle("GuildsControllerGetGuildConfig", ({ params }) =>
@@ -638,7 +655,7 @@ export const GuildsHandlers = HttpApiBuilder.group(
         orDieHttpFailure(guildWorlds(params.guildId)),
       )
       .handle("GuildsControllerGetGuildPermissions", ({ params }) =>
-        orDieHttpFailure(guildPermissions(params.guildId)),
+        declaredEmptyError(guildPermissions(params.guildId), [403]),
       )
       .handle("GuildsControllerGetGuildDiscordSyncStatus", ({ params }) =>
         orDieHttpFailure(guildDiscordSync(params.guildId, false)),
