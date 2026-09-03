@@ -11,14 +11,10 @@ import {
   useUserPreferences,
   useUpdateUserPreferences,
 } from "@/hooks/api/use-user-preferences";
-import {
-  getPresenceClanKey,
-  resolvePresenceOrganizationIds,
-} from "@/lib/presence-organization-selection";
+import { resolvePresenceOrganizationIds } from "@/lib/presence-organization-selection";
 import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
 import { useSettingsStore } from "@/store/settings.store";
-import { useGameStore } from "@/store/game.store";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,15 +35,6 @@ export const ServerVisibilitySettingsTab = () => {
       ? state.presenceOrganizationIdsByCharId[characterId]
       : undefined,
   );
-  const defaultOrganizationIdByClanKey = useSettingsStore(
-    (state) => state.presenceDefaultOrganizationIdByClanKey,
-  );
-  const currentClanKey = useGameStore((state) => {
-    const game = state.game;
-    return game?.hero.clan
-      ? getPresenceClanKey(game.world, game.hero.clan.id)
-      : undefined;
-  });
   const setPresenceOrganizationIds = useSettingsStore(
     (state) => state.setPresenceOrganizationIds,
   );
@@ -77,8 +64,6 @@ export const ServerVisibilitySettingsTab = () => {
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
   const effectivePresenceOrganizationIds = resolvePresenceOrganizationIds({
     accessibleOrganizations: orderedGuilds,
-    currentClanKey,
-    defaultOrganizationIdByClanKey,
     explicitlySelectedIds: selectedPresenceOrganizationIds,
   });
   const effectivePresenceOrganizationIdSet = new Set(

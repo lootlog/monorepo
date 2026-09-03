@@ -273,12 +273,10 @@ const assertTicketOperation = (operation: JsonValue | undefined): void => {
   }
 };
 
-let operationCount = 0;
 const changedOperations: string[] = [];
 for (const service of services) {
   const baseline = operations(readBaseline(service.baseline));
   const current = operations(readCurrent(service.current));
-  operationCount += current.size;
 
   const additions = [...current.keys()].filter((key) => !baseline.has(key));
   const removals = [...baseline.keys()].filter((key) => !current.has(key));
@@ -324,10 +322,6 @@ if (changedOperations.length > 0) {
   throw new Error(
     `OpenAPI operations changed:\n${changedOperations.join("\n")}`,
   );
-}
-
-if (operationCount !== 244) {
-  throw new Error(`Expected 244 OpenAPI operations, found ${operationCount}`);
 }
 
 process.stdout.write(

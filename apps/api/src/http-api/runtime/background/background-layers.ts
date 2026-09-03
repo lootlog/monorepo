@@ -1,4 +1,4 @@
-import { Clock, Effect, Layer, Redacted, Schema } from "effect";
+import { Clock, Effect, FiberSet, Layer, Redacted, Schema } from "effect";
 import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import {
   RabbitMessaging,
@@ -355,6 +355,7 @@ export const BullWorkers = Layer.effectDiscard(
     const { kills } = yield* EventsServices;
     const { dispatch } = yield* NotificationsServices;
     const database = yield* ApiDatabase;
+    const runWorker = yield* FiberSet.makeRuntimePromise();
     const diagnostic = <A>(operation: () => Promise<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
     const processMemberRefresh = (job: {
@@ -580,7 +581,11 @@ export const BullWorkers = Layer.effectDiscard(
           attributes: { adapter: "bullmq", retryCount: 0 },
         }),
       );
-    const eventHeroKill = makeEventHeroKillProcessor(applicationLogger, kills);
+    const eventHeroKill = makeEventHeroKillProcessor(
+      applicationLogger,
+      kills,
+      runWorker,
+    );
     const notifications = makeNotificationDispatchProcessor(
       { dispatch },
       applicationLogger,
@@ -598,12 +603,12 @@ export const BullWorkers = Layer.effectDiscard(
         const workers = [
           new Worker(
             MEMBER_REFRESH_QUEUE,
-            (job) => Effect.runPromise(processMemberRefresh(job)),
+            (job) => runWorker(processMemberRefresh(job)),
             { connection, prefix: "{bull}", concurrency: 10 },
           ),
           new Worker(
             MEMBER_BULK_REFRESH_QUEUE,
-            (job) => Effect.runPromise(processBulkRefresh(job)),
+            (job) => runWorker(processBulkRefresh(job)),
             {
               connection,
               prefix: "{bull}",
@@ -618,7 +623,7 @@ export const BullWorkers = Layer.effectDiscard(
           ),
           new Worker(
             NOTIFICATIONS_DISPATCH_QUEUE,
-            (job) => Effect.runPromise(notifications(job)),
+            (job) => runWorker(notifications(job)),
             { connection, prefix: "{bull}" },
           ),
         ];

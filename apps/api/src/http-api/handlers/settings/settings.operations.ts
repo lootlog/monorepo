@@ -4,6 +4,7 @@ import {
   type SettingsDocumentsResponse,
 } from "@lootlog/schema/settings-documents";
 import { Context, Effect, Layer, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
@@ -229,4 +230,9 @@ const defectCause = (error: unknown) =>
 
 export const toSettingsHttpResponse = <A, E, R>(
   effect: Effect.Effect<A, E, R>,
-) => Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+) =>
+  Effect.catch(effect, (error) =>
+    error instanceof SettingsAccessDenied
+      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
+      : Effect.die(defectCause(error)),
+  );

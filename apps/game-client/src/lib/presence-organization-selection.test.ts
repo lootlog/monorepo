@@ -1,46 +1,31 @@
 import { describe, expect, it } from "vitest";
-import {
-  getPresenceClanKey,
-  resolvePresenceOrganizationIds,
-} from "./presence-organization-selection";
+import { resolvePresenceOrganizationIds } from "./presence-organization-selection";
 
 describe("presence organization selection", () => {
-  it("publishes nowhere when the current clan has no organization match", () => {
+  it("uses the only accessible organization as the safe default", () => {
     expect(
       resolvePresenceOrganizationIds({
         accessibleOrganizations: [{ id: "organization-1" }],
-        currentClanKey: getPresenceClanKey("alpha", 20),
-        defaultOrganizationIdByClanKey: {
-          [getPresenceClanKey("alpha", 10)]: "organization-1",
-        },
       }),
-    ).toEqual([]);
+    ).toEqual(["organization-1"]);
   });
 
-  it("uses the accessible organization mapped to the current clan as the safe default", () => {
+  it("does not infer a clan default from a UI organization selection", () => {
     expect(
       resolvePresenceOrganizationIds({
         accessibleOrganizations: [
           { id: "organization-1" },
           { id: "organization-2" },
         ],
-        currentClanKey: getPresenceClanKey("beta", 20),
-        defaultOrganizationIdByClanKey: {
-          [getPresenceClanKey("alpha", 20)]: "organization-1",
-          [getPresenceClanKey("beta", 20)]: "organization-2",
-        },
       }),
-    ).toEqual(["organization-2"]);
+    ).toEqual([]);
   });
 
-  it("does not use an inaccessible organization mapped to the current clan", () => {
+  it("does not publish an explicitly selected inaccessible organization", () => {
     expect(
       resolvePresenceOrganizationIds({
         accessibleOrganizations: [{ id: "organization-1" }],
-        currentClanKey: getPresenceClanKey("alpha", 20),
-        defaultOrganizationIdByClanKey: {
-          [getPresenceClanKey("alpha", 20)]: "removed-organization",
-        },
+        explicitlySelectedIds: ["removed-organization"],
       }),
     ).toEqual([]);
   });
@@ -52,7 +37,6 @@ describe("presence organization selection", () => {
           { id: "organization-1" },
           { id: "organization-2" },
         ],
-        currentClanKey: getPresenceClanKey("alpha", 20),
         explicitlySelectedIds: [
           "organization-2",
           "removed-organization",

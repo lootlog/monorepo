@@ -8,12 +8,13 @@ import { deserializeKillTimerData } from "#src/events/kills/event-hero-kill-job"
 export const makeEventHeroKillProcessor = (
   logger: Logger,
   kills: Pick<EventKills, "checkAndRecordEventHeroKill">,
+  runPromise: <A, E>(effect: Effect.Effect<A, E>) => Promise<A>,
 ) => ({
   async process(job: Job<EventHeroKillJobData>): Promise<void> {
     const { guildId, world, npcId, npcName, npcIcon, npcLvl, isManualClose } =
       job.data;
 
-    await Effect.runPromise(
+    await runPromise(
       kills.checkAndRecordEventHeroKill(
         guildId,
         world,

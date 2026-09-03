@@ -3,10 +3,7 @@ import {
   GATEWAY_URL,
   GatewayEvent,
 } from "@/config/gateway";
-import {
-  getPresenceClanKey,
-  resolvePresenceOrganizationIds,
-} from "@/lib/presence-organization-selection";
+import { resolvePresenceOrganizationIds } from "@/lib/presence-organization-selection";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import {
@@ -275,11 +272,6 @@ export class AppSocket {
       settings.presenceOrganizationIdsByCharId[game.hero.characterId];
     const organizationIds = resolvePresenceOrganizationIds({
       accessibleOrganizations: this.joinedOrganizationIds.map((id) => ({ id })),
-      currentClanKey: game.hero.clan
-        ? getPresenceClanKey(game.world, game.hero.clan.id)
-        : undefined,
-      defaultOrganizationIdByClanKey:
-        settings.presenceDefaultOrganizationIdByClanKey,
       explicitlySelectedIds: configured,
     });
     await this.realtime.request("presence.publish", {

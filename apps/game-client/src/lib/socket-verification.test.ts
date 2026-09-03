@@ -125,9 +125,6 @@ describe("game realtime verification and presence selection", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: { "10": "organization-1" },
-      presenceDefaultOrganizationIdByClanKey: {
-        "alpha:30": "organization-1",
-      },
     });
     const socket = new AppSocket();
     await socket.join(joinData);

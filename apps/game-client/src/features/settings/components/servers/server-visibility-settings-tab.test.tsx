@@ -124,7 +124,7 @@ describe("ServerVisibilitySettingsTab", () => {
     });
   });
 
-  it("shows the active character's default presence organization as enabled", () => {
+  it("shows the active character's explicit presence organization as enabled", () => {
     useGameStore.getState().replaceGame({
       hero: {
         accountId: "20",
@@ -145,7 +145,7 @@ describe("ServerVisibilitySettingsTab", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: { "10": "guild-1" },
-      presenceDefaultOrganizationIdByClanKey: { "alpha:30": "guild-1" },
+      presenceOrganizationIdsByCharId: { "10": ["guild-1"] },
     });
 
     render(<ServerVisibilitySettingsTab />);

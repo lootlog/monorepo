@@ -1,7 +1,7 @@
 import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
 import { Queue, Worker } from "bullmq";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import {
   makeBattlelogOperations,
@@ -152,14 +152,17 @@ const acquireDeleteWorker = (
   config: BattlelogConfiguration,
   battlesService: Battles,
 ) =>
-  Effect.acquireRelease(
-    Effect.sync(() => {
-      const processor = makeDeleteUserBattlesProcessor(battlesService);
-      return new Worker<DeleteUserBattlesJobData>(
-        DELETE_USER_BATTLES_QUEUE,
-        (job) => Effect.runPromise(processor.process(job)),
-        { connection: redisConnectionOptions(config), prefix: "{bull}" },
-      );
-    }),
-    (worker) => Effect.tryPromise(() => worker.close()),
-  );
+  Effect.gen(function* () {
+    const runWorker = yield* FiberSet.makeRuntimePromise();
+    return yield* Effect.acquireRelease(
+      Effect.sync(() => {
+        const processor = makeDeleteUserBattlesProcessor(battlesService);
+        return new Worker<DeleteUserBattlesJobData>(
+          DELETE_USER_BATTLES_QUEUE,
+          (job) => runWorker(processor.process(job)),
+          { connection: redisConnectionOptions(config), prefix: "{bull}" },
+        );
+      }),
+      (worker) => Effect.tryPromise(() => worker.close()),
+    );
+  });

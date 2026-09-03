@@ -218,4 +218,23 @@ describe("API HTTP boundary", () => {
     expect(response.status).toBe(403);
     expect(await database.timer.count()).toBe(0);
   });
+
+  it("preserves expected 4xx statuses at the HTTP boundary", async () => {
+    const missingTemplate = await request(
+      `/guilds/${authorizedGuildId}/map-templates/missing-template`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          name: "Missing route",
+          maps: [{ id: 1, name: "Ithan" }],
+        }),
+      },
+    );
+    const forbiddenHistory = await request(
+      `/guilds/${forbiddenGuildId}/timers/missing-timer/history?world=${world}`,
+    );
+
+    expect(missingTemplate.status).toBe(404);
+    expect(forbiddenHistory.status).toBe(403);
+  });
 });
