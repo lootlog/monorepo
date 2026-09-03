@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Predicate, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
@@ -394,7 +395,17 @@ const defectCause = (error: unknown) =>
 
 export const toAccountOrganizationHttpResponse = <A, E, R>(
   effect: Effect.Effect<A, E, R>,
-) => Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+) =>
+  Effect.catch(effect, (error) => {
+    const cause = defectCause(error);
+    if (
+      cause instanceof AccountOrganizationAccessDenied ||
+      cause instanceof AccountOrganizationNotFound
+    ) {
+      return Effect.succeed(HttpServerResponse.empty({ status: cause.status }));
+    }
+    return Effect.die(cause);
+  });
 
 const isStatus = (error: unknown, status: number) => {
   const cause = defectCause(error);

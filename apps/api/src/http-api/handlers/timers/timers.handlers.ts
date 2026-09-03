@@ -188,15 +188,9 @@ const errorStatus = (error: unknown): number | undefined =>
 const defectCause = (error: unknown) =>
   error instanceof TimersInfrastructureError ? error.cause : error;
 
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => Effect.die(defectCause(error)));
-
-const declaredEmptyError = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
-  statuses: ReadonlyArray<number>,
-) =>
+const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   Effect.catch(effect, (error) =>
-    statuses.includes(errorStatus(error) ?? 0)
+    errorStatus(error) !== undefined
       ? Effect.succeed(
           HttpServerResponse.empty({ status: errorStatus(error) ?? 500 }),
         )
@@ -325,10 +319,10 @@ export const TimersHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("TimersControllerGetAllTimers", ({ query }) =>
-        orDieHttpFailure(getAllTimers(query.world)),
+        toHttpResponse(getAllTimers(query.world)),
       )
       .handle("TimersControllerGetRecentTimerHistory", ({ query }) =>
-        orDieHttpFailure(
+        toHttpResponse(
           getRecentTimerHistory(
             query.guildId,
             query.world,
@@ -337,41 +331,37 @@ export const TimersHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("TimersControllerGetTimers", ({ params, query }) =>
-        declaredEmptyError(
+        toHttpResponse(
           Effect.flatMap(pathString(params.guildId, "guildId"), (guildId) =>
             getGuildTimers(guildId, query.world),
           ),
-          [403],
         ),
       )
       .handle("TimersControllerSearchNpcsWithTimerData", ({ params, query }) =>
-        declaredEmptyError(
+        toHttpResponse(
           searchTimerNpcs(
             params.guildId,
             query.world,
             query.search,
             query.limit,
           ),
-          [403],
         ),
       )
       .handle("TimersControllerCreateAutoTimer", ({ payload }) =>
-        declaredEmptyError(createAutoTimer(payload), [400, 403]),
+        toHttpResponse(createAutoTimer(payload)),
       )
       .handle("TimersControllerResetTimer", ({ params, payload }) =>
-        declaredEmptyError(
+        toHttpResponse(
           resetGuildTimer(params.guildId, params.timerIdentifier, payload),
-          [403, 404],
         ),
       )
       .handle("TimersControllerDeleteTimer", ({ params, query }) =>
-        declaredEmptyError(
+        toHttpResponse(
           deleteGuildTimer(params.guildId, params.timerIdentifier, query.world),
-          [403, 404],
         ),
       )
       .handle("TimersControllerGetTimerHistory", ({ params, query }) =>
-        orDieHttpFailure(
+        toHttpResponse(
           getGuildTimerHistory(
             params.guildId,
             query.world,
@@ -381,7 +371,7 @@ export const TimersHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("TimersControllerRestoreTimerFromHistory", ({ params }) =>
-        orDieHttpFailure(
+        toHttpResponse(
           restoreGuildTimer(
             params.guildId,
             Number.parseInt(params.historyEntryId, 10),
@@ -389,9 +379,6 @@ export const TimersHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("TimersControllerCreateManualTimer", ({ params, payload }) =>
-        declaredEmptyError(
-          createManualGuildTimer(params.guildId, payload),
-          [403],
-        ),
+        toHttpResponse(createManualGuildTimer(params.guildId, payload)),
       ),
 );

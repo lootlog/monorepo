@@ -46,7 +46,7 @@ import {
   timersData,
 } from "#src/http-api/runtime/composition/timer-data-layers";
 
-export const apiRequestDataLayers = Layer.mergeAll(
+const coreDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
   SettingsData.layerDatabase,
@@ -72,7 +72,9 @@ export const apiRequestDataLayers = Layer.mergeAll(
   recordsData,
   eventsData,
   notificationsData,
-).pipe(
+);
+
+export const apiRequestDataLayers = coreDataLayers.pipe(
   Layer.provide(notificationsServicesLive),
   Layer.provide(eventsServicesLive),
   Layer.provide(accountOrganizationOperationsLive),
@@ -84,31 +86,7 @@ export const apiRequestDataLayers = Layer.mergeAll(
 );
 
 export const apiDataLayers = Layer.mergeAll(
-  MapTemplatesData.layerDatabase,
-  LootlogConfigData.layerDatabase,
-  SettingsData.layerDatabase,
-  DocsData.layerDatabase,
-  publicSystemData,
-  internalGuildsData,
-  messagingData,
-  readyRoomData,
-  chatData,
-  userLootlogConfigData,
-  rolesData,
-  guildConfigurationData,
-  reservationSharingData,
-  reservationReadData,
-  memberReadData,
-  memberRefreshJobData,
-  membersData,
-  organizationContextLookup,
-  myReservationsData,
-  reservationMutationsData,
-  accountOrganizationData,
-  timersData,
-  recordsData,
-  eventsData,
-  notificationsData,
+  coreDataLayers,
   BullWorkers,
   RabbitConsumers,
   ScheduledJobs,

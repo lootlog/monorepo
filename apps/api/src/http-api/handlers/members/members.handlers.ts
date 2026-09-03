@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { encodeDomainJson } from "../../domain-json.schema.js";
@@ -163,7 +164,13 @@ const errorStatus = (error: unknown): number | undefined => {
 };
 
 const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+  Effect.catch(effect, (error) =>
+    errorStatus(error) !== undefined
+      ? Effect.succeed(
+          HttpServerResponse.empty({ status: errorStatus(error) ?? 500 }),
+        )
+      : Effect.die(defectCause(error)),
+  );
 
 const declaredEmptyError = <A, E, R>(
   effect: Effect.Effect<A, E, R>,

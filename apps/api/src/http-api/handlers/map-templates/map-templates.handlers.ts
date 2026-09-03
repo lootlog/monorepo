@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { and, asc, eq } from "drizzle-orm";
 import {
@@ -216,8 +217,13 @@ export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
   return { status: "OK" as const };
 });
 
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => Effect.die(error));
+const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  Effect.catch(effect, (error) =>
+    error instanceof MapTemplatesAccessDenied ||
+    error instanceof MapTemplateNotFound
+      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
+      : Effect.die(error),
+  );
 
 export const MapTemplatesHandlers = HttpApiBuilder.group(
   LootlogApi,
@@ -225,18 +231,18 @@ export const MapTemplatesHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("MapTemplatesControllerGetTemplates", ({ params }) =>
-        orDieHttpFailure(getMapTemplates(params.guildId)),
+        toHttpResponse(getMapTemplates(params.guildId)),
       )
       .handle("MapTemplatesControllerCreateTemplate", ({ params, payload }) =>
-        orDieHttpFailure(createMapTemplate(params.guildId, payload)),
+        toHttpResponse(createMapTemplate(params.guildId, payload)),
       )
       .handle("MapTemplatesControllerUpdateTemplate", ({ params, payload }) =>
-        orDieHttpFailure(
+        toHttpResponse(
           updateMapTemplate(params.guildId, params.templateId, payload),
         ),
       )
       .handle("MapTemplatesControllerDeleteTemplate", ({ params }) =>
-        orDieHttpFailure(deleteMapTemplate(params.guildId, params.templateId)),
+        toHttpResponse(deleteMapTemplate(params.guildId, params.templateId)),
       ),
 );
 

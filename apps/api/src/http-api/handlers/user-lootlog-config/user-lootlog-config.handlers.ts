@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { and, arrayOverlaps, desc, eq, isNotNull, or } from "drizzle-orm";
@@ -380,7 +381,11 @@ export const getPlayersCatchingGuilds = (
 const defectCause = (error: unknown) =>
   error instanceof UserLootlogConfigOperationError ? error.cause : error;
 const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+  Effect.catch(effect, (error) =>
+    error instanceof UserLootlogConfigAccessDenied
+      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
+      : Effect.die(defectCause(error)),
+  );
 
 export const UserLootlogConfigHandlers = HttpApiBuilder.group(
   LootlogApi,
