@@ -1,6 +1,6 @@
 services:
   rabbitmq:
-    image: rabbitmq:4-management-alpine
+    image: rabbitmq:3.13-management
     container_name: "rabbitmq-lootlog"
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
@@ -45,9 +45,9 @@ services:
       - "5433:5432"
 
   meilisearch:
-    image: "getmeili/meilisearch:v1.10.0"
+    image: "getmeili/meilisearch:v1.22.2"
     environment:
-      - MEILISEARCH_MASTER_KEY=${MEILISEARCH_MASTER_KEY}
+      - MEILI_MASTER_KEY=${MEILISEARCH_MASTER_KEY}
     ports:
       - 7700:7700
     volumes:
@@ -58,7 +58,7 @@ services:
       timeout: 5s
 
   traefik:
-    image: "traefik:v3.3"
+    image: "traefik:v3.6.10"
     container_name: "traefik"
     # network_mode: "host"
     command:
