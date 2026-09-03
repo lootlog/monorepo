@@ -1,6 +1,6 @@
 import pg from "pg";
 import { Config, Effect, Redacted } from "effect";
-import { BATTLE_WARRIOR_STATS_KEYS } from "../src/battles/battle-warrior-stats.types.js";
+import { BATTLE_WARRIOR_STATS_KEYS } from "../src/battles/statistics/battle-warrior-stats.types.js";
 
 const scriptConfig = await Effect.runPromise(
   Config.all({

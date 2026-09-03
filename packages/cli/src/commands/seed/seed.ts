@@ -1,4 +1,4 @@
-import { buildTimerKey } from "../../../../../apps/api/src/timers/utils/timer-key.js";
+import { buildTimerKey } from "../../../../../apps/api/src/timers/timer-key.js";
 import {
   guildTable,
   itemSnapshotTable,
@@ -24,7 +24,7 @@ import {
 import {
   battles as battlesTable,
   battleWarriors as battleWarriorsTable,
-} from "../../../../../apps/battlelog/src/shared/modules/drizzle/schema.js";
+} from "../../../../../apps/battlelog/src/database/schema.js";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
