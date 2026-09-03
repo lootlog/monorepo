@@ -24,7 +24,6 @@
     "test": "bun --conditions=development test src test",
     "test:coverage": "bun --conditions=development test --coverage src test",
     "test:debug": "bun --conditions=development test --inspect-brk src test",
-    "test:e2e": "bun --conditions=development test ./test/app.e2e-spec.ts",
     "test:watch": "bun --conditions=development test --watch src test",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
     "db:generate": "bunx drizzle-kit generate",

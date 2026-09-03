@@ -15,14 +15,24 @@ export default async function setup() {
     .withPassword("lootlog")
     .start();
   const redis = await new GenericContainer("redis:7-alpine")
+    .withCommand(["redis-server", "--requirepass", "test"])
     .withExposedPorts(6379)
     .start();
 
   process.env.POSTGRESQL_CONNECTION_URI = postgres.getConnectionUri();
+  process.env.PORT = "4000";
+  process.env.SERVICE_NAME = "api-e2e";
+  process.env.SERVICE_NAMESPACE = "test";
+  process.env.RABBITMQ_URI = "amqp://unused.test:5672";
   process.env.REDIS_HOST = redis.getHost();
   process.env.REDIS_PORT = String(redis.getMappedPort(6379));
-  process.env.REDIS_USERNAME = "";
-  process.env.REDIS_PASSWORD = "";
+  process.env.REDIS_USERNAME = "default";
+  process.env.REDIS_PASSWORD = "test";
+  process.env.AUTH_SERVICE_URL = "http://auth.test";
+  process.env.BATTLELOG_SERVICE_URL = "http://battlelog.test";
+  process.env.DISCORD_BOT_SERVICE_URL = "http://discord-bot.test";
+  process.env.RESERVATIONS_CARDS_URL = "http://cards.test";
+  process.env.MAPS_API_URL = "http://maps.test";
 
   const migrationsRoot = path.join(apiRoot, "drizzle/migrations");
   const baselineDirectories = await readdir(migrationsRoot);

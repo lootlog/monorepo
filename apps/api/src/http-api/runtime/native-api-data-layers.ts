@@ -46,6 +46,43 @@ import {
   NativeTimersData,
 } from "./native-timer-data-layers.js";
 
+export const NativeApiRequestDataLayers = Layer.mergeAll(
+  MapTemplatesData.layerDatabase,
+  LootlogConfigData.layerDatabase,
+  SettingsData.layerDatabase,
+  DocsData.layerDatabase,
+  NativePublicSystemData,
+  NativeInternalGuildsData,
+  NativeMessagingData,
+  NativeReadyRoomData,
+  NativeChatData,
+  NativeUserLootlogConfigData,
+  NativeRolesData,
+  NativeGuildConfigurationData,
+  NativeReservationSharingData,
+  NativeReservationReadData,
+  NativeMemberReadData,
+  NativeMemberRefreshJobData,
+  NativeMembersData,
+  NativeOrganizationContextLookup,
+  NativeMyReservationsData,
+  NativeReservationMutationsData,
+  NativeUsersGuildsData,
+  NativeTimersData,
+  NativeKillsLootsData,
+  NativeEventsData,
+  NativeNotificationsData,
+).pipe(
+  Layer.provide(NativeNotificationsServicesLive),
+  Layer.provide(NativeEventsServicesLive),
+  Layer.provide(NativeUsersGuildsOperationsLive),
+  Layer.provide(NativeGuildDiscordSyncLive),
+  Layer.provide(NativeKillsLootsServicesLive),
+  Layer.provide(NativeEventTimersLive),
+  Layer.provide(NativeMemberServicesLive),
+  Layer.provide(ApiDatabaseLive),
+);
+
 export const NativeApiDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,

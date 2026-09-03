@@ -1,112 +1,213 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "bun:test";
+import {
+  RabbitMessaging,
+  type RabbitMessagingService,
+} from "@lootlog/messaging";
+import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
-import { HttpApi, HttpApiBuilder } from "effect/unstable/httpapi";
-import {
-  HealthGroup,
-  UserLootlogConfigGroup,
-} from "../src/http-api/lootlog-api.js";
-import {
-  UserLootlogConfigData,
-  UserLootlogConfigHandlers,
-} from "../src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers.js";
-import {
-  HealthHandlers,
-  PublicSystemData,
-} from "../src/http-api/handlers/public-system/public-system.handlers.js";
-import { ForwardAuthMiddlewareLive } from "../src/http-api/runtime/forward-auth-middleware.js";
-import { RequestIdentityLayers } from "../src/http-api/runtime/request-identity-layers.js";
+import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
+import { RedisService } from "#src/redis/redis.service";
+import { ApiRedis } from "../src/http-api/runtime/api-redis.js";
+import { ApiRuntimeConfig } from "../src/http-api/runtime/api-runtime-config.js";
+import { LootlogApiRouter } from "../src/http-api/runtime/http-routes.js";
+import { TestDatabase } from "./test-database.js";
 
-class NativeBoundaryApi extends HttpApi.make("NativeBoundaryApi").add(
-  HealthGroup,
-  UserLootlogConfigGroup,
-) {}
+const caller = {
+  userId: "user-1",
+  discordId: "discord-1",
+} as const;
+const authorizedGuildId = "guild-authorized";
+const forbiddenGuildId = "guild-forbidden";
+const world = "Aldous";
 
-const accountResponse = {
-  character: {
-    userId: "user-1",
-    accountId: "account-1",
-    characterId: "character-1",
-    catchingGuildIds: ["guild-1"],
-  },
+const rabbitBoundary: RabbitMessagingService = {
+  publish: () => Effect.void,
+  consume: () => Effect.never,
+  ack: () => Effect.void,
+  nack: () => Effect.void,
 };
 
-const BoundaryData = Layer.merge(
-  Layer.succeed(
-    PublicSystemData,
-    PublicSystemData.of({
-      healthCheck: Effect.void,
-      getMaps: Effect.succeed([]),
-      refreshStatsCard: () => Effect.succeed({}),
-      getStatsCard: () => Effect.succeed(new Uint8Array()),
-      statsCardCacheControl: "no-store",
-    }),
-  ),
-  Layer.succeed(
-    UserLootlogConfigData,
-    UserLootlogConfigData.of({
-      getAccount: (_discordId, _accountId) => Effect.succeed(accountResponse),
-      upsertCharacter: (_discordId, accountId, payload) =>
-        Effect.succeed({
-          userId: "user-1",
-          accountId,
-          characterId: payload.characterId,
-          catchingGuildIds: payload.catchingGuildIds,
-        }),
-      getPlayersCatchingGuilds: () => Effect.succeed({ players: [] }),
-    }),
-  ),
+const RuntimeBoundaries = Layer.mergeAll(
+  ApiRuntimeConfig.layer,
+  ApiRedis.layer.pipe(Layer.provide(ApiRuntimeConfig.layer)),
+  Layer.succeed(RabbitMessaging, RabbitMessaging.of(rabbitBoundary)),
+  FetchHttpClient.layer,
 );
 
-const BoundaryRoutes = HttpApiBuilder.layer(NativeBoundaryApi).pipe(
-  Layer.provide(Layer.mergeAll(HealthHandlers, UserLootlogConfigHandlers)),
-  Layer.provide(ForwardAuthMiddlewareLive),
-  Layer.provide(RequestIdentityLayers),
-  Layer.provide(BoundaryData),
-  Layer.provide(HttpServer.layerServices),
+const boundary = HttpRouter.toWebHandler(
+  LootlogApiRouter.pipe(Layer.provide(RuntimeBoundaries)),
+  { disableLogger: true },
 );
+
+const headers = {
+  authorization: "Bearer validated-by-forward-auth",
+  "content-type": "application/json",
+  "x-auth-user-id": caller.userId,
+  "x-auth-discord-id": caller.discordId,
+};
+
+const request = (path: string, init?: RequestInit) =>
+  boundary.handler(
+    new Request(`http://api.test${path}`, {
+      ...init,
+      headers: { ...headers, ...init?.headers },
+    }),
+  );
 
 describe("native API HTTP boundary", () => {
-  const boundary = HttpRouter.toWebHandler(BoundaryRoutes, {
-    disableLogger: true,
+  let database: TestDatabase;
+  let redis: RedisService;
+
+  beforeAll(async () => {
+    database = await new TestDatabase().initialize();
+    redis = new RedisService({
+      host: process.env.REDIS_HOST ?? "127.0.0.1",
+      port: Number(process.env.REDIS_PORT ?? 6379),
+      username: process.env.REDIS_USERNAME || undefined,
+      password: process.env.REDIS_PASSWORD || undefined,
+    });
+    redis.initialize();
   });
 
-  afterAll(() => boundary.dispose());
+  beforeEach(async () => {
+    await redis.getClient().flushall();
+    await database.truncate("Guild");
 
-  it("serves health without initializing legacy controllers", async () => {
-    const response = await boundary.handler(
-      new Request("http://api.test/healthz"),
-    );
-
-    expect(response.status).toBe(200);
-    expect(await response.text()).toBe("");
+    const updatedAt = new Date();
+    await database.guild.create({
+      data: {
+        id: authorizedGuildId,
+        name: "Authorized Organization",
+        ownerId: "different-owner",
+        updatedAt,
+      },
+    });
+    await database.guild.create({
+      data: {
+        id: forbiddenGuildId,
+        name: "Forbidden Organization",
+        ownerId: "different-owner",
+        updatedAt,
+      },
+    });
+    await database.role.create({
+      data: {
+        id: "timer-maintainer",
+        guildId: authorizedGuildId,
+        name: "Timer maintainer",
+        permissions: [
+          Permission.LOOTLOG_TIMERS_READ,
+          Permission.LOOTLOG_TIMERS_WRITE,
+          Permission.LOOTLOG_MANAGE,
+        ],
+        updatedAt,
+      },
+    });
+    await database.member.create({
+      data: {
+        userId: caller.discordId,
+        globalUserId: caller.userId,
+        guildId: authorizedGuildId,
+        name: "Authorized member",
+        lastDiscordSyncAt: updatedAt,
+        updatedAt,
+        roles: { connect: { id: "timer-maintainer" } },
+      },
+    });
+    await database.member.create({
+      data: {
+        userId: caller.discordId,
+        globalUserId: caller.userId,
+        guildId: forbiddenGuildId,
+        name: "Member without timer permissions",
+        lastDiscordSyncAt: updatedAt,
+        updatedAt,
+      },
+    });
   });
 
-  it("rejects a bearer when Traefik forward-auth identity is absent", async () => {
-    const response = await boundary.handler(
-      new Request(
-        "http://api.test/users/@me/lootlog-config/accounts/account-1",
-        { headers: { authorization: "Bearer untrusted" } },
-      ),
-    );
-
-    expect(response.status).toBe(401);
+  afterAll(async () => {
+    redis.shutdown();
+    await database.dispose();
+    await boundary.dispose();
   });
 
-  it("accepts the complete identity pair forwarded by auth service", async () => {
-    const response = await boundary.handler(
-      new Request(
-        "http://api.test/users/@me/lootlog-config/accounts/account-1",
-        {
-          headers: {
-            authorization: "Bearer already-validated-by-forward-auth",
-            "x-auth-user-id": "user-1",
-            "x-auth-discord-id": "discord-1",
-          },
-        },
-      ),
+  it("creates, reads and deletes a timer through the real router and database", async () => {
+    const createdResponse = await request(
+      `/guilds/${authorizedGuildId}/timers/manual`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Test boss",
+          minSeconds: 60,
+          maxSeconds: 120,
+          world,
+        }),
+      },
     );
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(accountResponse);
+    const createdBody = await createdResponse.text();
+    expect({ status: createdResponse.status, body: createdBody }).toMatchObject(
+      {
+        status: 201,
+      },
+    );
+    const created = JSON.parse(createdBody) as {
+      timerKey: string;
+      guildId: string;
+      world: string;
+      npc: { name: string };
+    };
+    expect(created).toMatchObject({
+      guildId: authorizedGuildId,
+      world,
+      npc: { name: "Test boss" },
+    });
+    expect(await database.timer.count()).toBe(1);
+
+    const listedResponse = await request(
+      `/guilds/${authorizedGuildId}/timers?world=${world}`,
+    );
+    expect(listedResponse.status).toBe(200);
+    expect(await listedResponse.json()).toEqual([
+      expect.objectContaining({ timerKey: created.timerKey }),
+    ]);
+
+    const deletedResponse = await request(
+      `/guilds/${authorizedGuildId}/timers/${encodeURIComponent(created.timerKey)}?world=${world}`,
+      { method: "DELETE" },
+    );
+    expect(deletedResponse.status).toBe(200);
+    expect(await database.timer.count()).toBe(0);
+
+    const afterDeleteResponse = await request(
+      `/guilds/${authorizedGuildId}/timers?world=${world}`,
+    );
+    expect(await afterDeleteResponse.json()).toEqual([]);
+  });
+
+  it("rejects a cross-Organization mutation and leaves persistence unchanged", async () => {
+    const response = await request(
+      `/guilds/${forbiddenGuildId}/timers/manual`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Hidden boss",
+          minSeconds: 60,
+          maxSeconds: 120,
+          world,
+        }),
+      },
+    );
+
+    expect(response.status).toBe(403);
+    expect(await database.timer.count()).toBe(0);
   });
 });
