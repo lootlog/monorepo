@@ -85,6 +85,17 @@ If `.codegraph/` does not exist, skip CodeGraph. Indexing is the user's decision
 - Never publish secrets, credentials, private reports, or private product
   evidence.
 
+## Vendored Repositories
+
+This project vendors external repositories under @repos/
+
+- Use vendored repositories as read-only reference material when working with related libraries
+- Prefer examples and patterns from the vendored source code over generated guesses or web search results
+- Do not edit files under @repos/ unless explicitly asked
+- Do not import from @repos/ - application code should continue importing from normal package dependencies
+
+When writing Effect code, inspect @repos/effect/ for examples of idiomatic usage, tests, module structure, and API design. Treat it as the source of truth for Effect patterns.
+
 ## Protected contracts
 
 Do not assume backward compatibility for internal, unreleased code. Preserve
@@ -154,5 +165,7 @@ Do not try to start the application; assume it is already running.
 - Do not publish testimonials.
 - Do not create source files that only re-export symbols; update imports to the
   real module.
+
+## Tests
 
 IMPORTANT: Tautological tests are considered harmful.

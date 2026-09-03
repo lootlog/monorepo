@@ -145,41 +145,44 @@ export class MyReservationsData extends Context.Service<
       MyReservationsData.of({
         listMine: ({ userId, discordId }, query) =>
           Effect.gen(function* () {
-            const [guildRows, preferenceRows] = yield* Effect.all([
-              database
-                .selectDistinct({ id: guildTable.id })
-                .from(guildTable)
-                .leftJoin(
-                  memberTable,
-                  and(
-                    eq(memberTable.guildId, guildTable.id),
-                    eq(memberTable.userId, discordId),
-                    eq(memberTable.active, true),
-                    isNotNull(memberTable.globalUserId),
-                  ),
-                )
-                .leftJoin(
-                  memberToRoleTable,
-                  eq(memberToRoleTable.A, memberTable.id),
-                )
-                .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-                .where(
-                  and(
-                    eq(guildTable.active, true),
-                    or(
-                      eq(guildTable.ownerId, discordId),
-                      arrayOverlaps(roleTable.permissions, [
-                        Permission.LOOTLOG_ACCESS,
-                      ]),
+            const [guildRows, preferenceRows] = yield* Effect.all(
+              [
+                database
+                  .selectDistinct({ id: guildTable.id })
+                  .from(guildTable)
+                  .leftJoin(
+                    memberTable,
+                    and(
+                      eq(memberTable.guildId, guildTable.id),
+                      eq(memberTable.userId, discordId),
+                      eq(memberTable.active, true),
+                      isNotNull(memberTable.globalUserId),
+                    ),
+                  )
+                  .leftJoin(
+                    memberToRoleTable,
+                    eq(memberToRoleTable.A, memberTable.id),
+                  )
+                  .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
+                  .where(
+                    and(
+                      eq(guildTable.active, true),
+                      or(
+                        eq(guildTable.ownerId, discordId),
+                        arrayOverlaps(roleTable.permissions, [
+                          Permission.LOOTLOG_ACCESS,
+                        ]),
+                      ),
                     ),
                   ),
-                ),
-              database
-                .select({ guildsOrder: userSettingsTable.guildsOrder })
-                .from(userSettingsTable)
-                .where(eq(userSettingsTable.userId, userId))
-                .limit(1),
-            ]);
+                database
+                  .select({ guildsOrder: userSettingsTable.guildsOrder })
+                  .from(userSettingsTable)
+                  .where(eq(userSettingsTable.userId, userId))
+                  .limit(1),
+              ],
+              { concurrency: "unbounded" },
+            );
             if (guildRows.length === 0) return { items: [] };
             const guildOrder = new Map(
               (preferenceRows[0]?.guildsOrder ?? []).map((id, index) => [
@@ -470,33 +473,38 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     ),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof OrganizationWorkspaceOperationError ? error.cause : error;
+type OrganizationWorkspaceFailure =
+  | OrganizationWorkspaceAccessDenied
+  | OrganizationWorkspaceNotFound
+  | OrganizationWorkspaceOperationError;
 
-export const toOrganizationWorkspaceHttpResponse = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
-) => Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+export const toOrganizationWorkspaceHttpResponse = <A, R>(
+  effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    OrganizationWorkspaceAccessDenied: Effect.die,
+    OrganizationWorkspaceNotFound: Effect.die,
+    OrganizationWorkspaceOperationError: (error) => Effect.die(error.cause),
+  });
 
-const errorStatus = (error: unknown): number | undefined => {
-  if (
-    error instanceof OrganizationWorkspaceAccessDenied ||
-    error instanceof OrganizationWorkspaceNotFound
-  ) {
-    return error.status;
-  }
-  const cause = defectCause(error);
-  return applicationErrorStatusOrUndefined(cause);
-};
-
-export const toDeclaredOrganizationWorkspaceError = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
+export const toDeclaredOrganizationWorkspaceError = <A, R>(
+  effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
   statuses: ReadonlyArray<number>,
 ) =>
-  Effect.catch(effect, (error) =>
-    statuses.includes(errorStatus(error) ?? 0)
-      ? Effect.fail(undefined)
-      : Effect.die(defectCause(error)),
-  );
+  Effect.catchTags(effect, {
+    OrganizationWorkspaceAccessDenied: (error) =>
+      statuses.includes(error.status)
+        ? Effect.fail(undefined)
+        : Effect.die(error),
+    OrganizationWorkspaceNotFound: (error) =>
+      statuses.includes(error.status)
+        ? Effect.fail(undefined)
+        : Effect.die(error),
+    OrganizationWorkspaceOperationError: (error) =>
+      statuses.includes(applicationErrorStatusOrUndefined(error.cause) ?? 0)
+        ? Effect.fail(undefined)
+        : Effect.die(error.cause),
+  });
 
 const pathString = (value: unknown, name: string) =>
   typeof value === "string"

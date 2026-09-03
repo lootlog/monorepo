@@ -85,6 +85,13 @@ export class NotificationsDataError extends TaggedErrorClass<NotificationsDataEr
   { cause: Schema.Defect() },
 ) {}
 
+type NotificationsHttpFailure =
+  | NotificationsAccessDenied
+  | NotificationsBadRequest
+  | NotificationsConflict
+  | NotificationsDataError
+  | NotificationsNotFound;
+
 export class NotificationsAuthorization extends Context.Service<
   NotificationsAuthorization,
   {
@@ -177,17 +184,18 @@ export const executeNotificationEndpoint = Effect.fn("notifications.execute")(
   },
 );
 
-const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => {
-    if (
-      error instanceof NotificationsAccessDenied ||
-      error instanceof NotificationsBadRequest ||
-      error instanceof NotificationsConflict ||
-      error instanceof NotificationsNotFound
-    ) {
-      return Effect.succeed(HttpServerResponse.empty({ status: error.status }));
-    }
-    return Effect.die(error);
+const statusResponse = (error: { readonly status: number }) =>
+  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+
+const toHttpResponse = <A, R>(
+  effect: Effect.Effect<A, NotificationsHttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    NotificationsAccessDenied: statusResponse,
+    NotificationsBadRequest: statusResponse,
+    NotificationsConflict: statusResponse,
+    NotificationsDataError: (error) => Effect.die(error.cause),
+    NotificationsNotFound: statusResponse,
   });
 
 const handle = (

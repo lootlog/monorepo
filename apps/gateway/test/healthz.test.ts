@@ -7,6 +7,7 @@ import {
 
 const application = {
   config: { websocketPath: "/ws" },
+  runPromise: Effect.runPromise,
   auth: {
     isAllowedOrigin: () => false,
     readCredential: () => null,
@@ -37,6 +38,7 @@ describe("gateway HTTP boundary", () => {
     let upgradeOptions: { readonly headers?: HeadersInit } | undefined;
     const authenticated = {
       config: { websocketPath: "/ws" },
+      runPromise: Effect.runPromise,
       auth: {
         isAllowedOrigin: () => true,
         readCredential: () => ({

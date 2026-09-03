@@ -1,6 +1,6 @@
 import { BunRedis } from "@effect/platform-bun";
 import { RedisService } from "#src/redis/redis.service";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
 
@@ -11,7 +11,9 @@ export class ApiRedis extends Context.Service<ApiRedis, RedisService>()(
     ApiRedis,
     Effect.gen(function* () {
       const redis = yield* Redis.Redis;
-      return new RedisService(redis, {}, Effect.runPromise);
+      const fibers = yield* FiberSet.make<unknown, unknown>();
+      const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
+      return new RedisService(redis, {}, runPromise);
     }),
   );
 

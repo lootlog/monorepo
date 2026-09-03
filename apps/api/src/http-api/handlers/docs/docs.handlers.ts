@@ -113,6 +113,7 @@ type DocsFailure =
   | DocsDataError
   | DocsInvalidInput
   | DocsNotFound;
+type DocsHttpFailure = DocsAccessDenied | DocsFailure;
 type DocsEffect<A> = Effect.Effect<A, DocsFailure>;
 
 export class DocsData extends Context.Service<
@@ -408,17 +409,16 @@ export const purgeDocument = (guildId: string, documentId: string) =>
     Schema.decodeUnknownSync(DocsControllerPurgeDocument200),
   );
 
-const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => {
-    if (
-      error instanceof DocsAccessDenied ||
-      error instanceof DocsConflict ||
-      error instanceof DocsInvalidInput ||
-      error instanceof DocsNotFound
-    ) {
-      return Effect.succeed(HttpServerResponse.empty({ status: error.status }));
-    }
-    return Effect.die(error);
+const statusResponse = (error: { readonly status: number }) =>
+  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+
+const toHttpResponse = <A, R>(effect: Effect.Effect<A, DocsHttpFailure, R>) =>
+  Effect.catchTags(effect, {
+    DocsAccessDenied: statusResponse,
+    DocsConflict: statusResponse,
+    DocsDataError: (error) => Effect.die(error.cause),
+    DocsInvalidInput: statusResponse,
+    DocsNotFound: statusResponse,
   });
 
 export const DocsHandlers = HttpApiBuilder.group(

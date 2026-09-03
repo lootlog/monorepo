@@ -89,22 +89,28 @@ export const makeReservationReadDataLayer = (
           operation(
             Effect.gen(function* () {
               const now = new Date(yield* Clock.currentTimeMillis);
-              const [spots, guildIds, pinnedSpots] = yield* Effect.all([
-                catalog.getSpots,
-                visibleGuildIds(context.guildId),
-                database
-                  .select({ spotId: userPinnedReservationSpotTable.spotId })
-                  .from(userPinnedReservationSpotTable)
-                  .where(
-                    and(
-                      eq(userPinnedReservationSpotTable.userId, context.userId),
-                      eq(
-                        userPinnedReservationSpotTable.guildId,
-                        context.guildId,
+              const [spots, guildIds, pinnedSpots] = yield* Effect.all(
+                [
+                  catalog.getSpots,
+                  visibleGuildIds(context.guildId),
+                  database
+                    .select({ spotId: userPinnedReservationSpotTable.spotId })
+                    .from(userPinnedReservationSpotTable)
+                    .where(
+                      and(
+                        eq(
+                          userPinnedReservationSpotTable.userId,
+                          context.userId,
+                        ),
+                        eq(
+                          userPinnedReservationSpotTable.guildId,
+                          context.guildId,
+                        ),
                       ),
                     ),
-                  ),
-              ]);
+                ],
+                { concurrency: "unbounded" },
+              );
               const reservations = yield* findReservations(
                 guildIds,
                 gt(reservationTable.endsAt, now),

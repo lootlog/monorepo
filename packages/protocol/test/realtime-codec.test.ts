@@ -4,6 +4,7 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
   RealtimeCodecError,
+  tryDecodeRealtimeFrame,
 } from "../src/realtime/codec.ts";
 import {
   PRESENCE_EXPIRY_MS,
@@ -101,6 +102,15 @@ describe("realtime MessagePack codec", () => {
     expect(() => decodeRealtimeFrame(encode(unknownType))).toThrow(
       RealtimeCodecError,
     );
+  });
+
+  test("returns typed failures for untrusted frames", () => {
+    const result = tryDecodeRealtimeFrame(new Uint8Array([0xc1]));
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(result.failure).toBeInstanceOf(RealtimeCodecError);
+      expect(result.failure.operation).toBe("decode");
+    }
   });
 
   test("keeps heartbeat safely below expiry", () => {

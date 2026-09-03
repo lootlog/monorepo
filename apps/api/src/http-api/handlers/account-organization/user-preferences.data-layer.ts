@@ -380,41 +380,44 @@ const readPreferences = (
   database: typeof ApiDatabase.Service,
   userId: string,
 ) =>
-  Effect.all({
-    settings: database
-      .select()
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, userId))
-      .limit(1)
-      .pipe(Effect.map((rows) => rows[0] ?? null)),
-    mutes: database
-      .select({ settings: userGameAccountSettingsTable.settings })
-      .from(userGameAccountSettingsTable)
-      .where(
-        and(
-          eq(userGameAccountSettingsTable.userId, userId),
-          eq(
-            userGameAccountSettingsTable.accountId,
-            GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+  Effect.all(
+    {
+      settings: database
+        .select()
+        .from(userSettingsTable)
+        .where(eq(userSettingsTable.userId, userId))
+        .limit(1)
+        .pipe(Effect.map((rows) => rows[0] ?? null)),
+      mutes: database
+        .select({ settings: userGameAccountSettingsTable.settings })
+        .from(userGameAccountSettingsTable)
+        .where(
+          and(
+            eq(userGameAccountSettingsTable.userId, userId),
+            eq(
+              userGameAccountSettingsTable.accountId,
+              GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+            ),
           ),
-        ),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => storedMutes(rows[0]?.settings))),
-    appearance: database
-      .select({ overrides: userSettingDocumentTable.overrides })
-      .from(userSettingDocumentTable)
-      .where(
-        and(
-          eq(userSettingDocumentTable.userId, userId),
-          eq(userSettingDocumentTable.domain, "appearance"),
-          eq(userSettingDocumentTable.scopeType, "USER"),
-          eq(userSettingDocumentTable.scopeId, userId),
-        ),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => rows[0]?.overrides)),
-  });
+        )
+        .limit(1)
+        .pipe(Effect.map((rows) => storedMutes(rows[0]?.settings))),
+      appearance: database
+        .select({ overrides: userSettingDocumentTable.overrides })
+        .from(userSettingDocumentTable)
+        .where(
+          and(
+            eq(userSettingDocumentTable.userId, userId),
+            eq(userSettingDocumentTable.domain, "appearance"),
+            eq(userSettingDocumentTable.scopeType, "USER"),
+            eq(userSettingDocumentTable.scopeId, userId),
+          ),
+        )
+        .limit(1)
+        .pipe(Effect.map((rows) => rows[0]?.overrides)),
+    },
+    { concurrency: "unbounded" },
+  );
 
 export const makeUserPreferencesData = (
   database: typeof ApiDatabase.Service,

@@ -24,15 +24,21 @@ export class DiscordRestClientFactory {
   private readonly restClientCacheTtlMs = 60_000;
   private readonly restClients = new Map<string, CachedDiscordRestClient>();
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly runPromise = Effect.runPromise,
+  ) {}
 
   async getRestClient(userId: string, discordId: string): Promise<REST> {
     try {
-      const { now, token } = await Effect.runPromise(
-        Effect.all({
-          now: Clock.currentTimeMillis,
-          token: this.authService.getIdpToken(userId, discordId),
-        }),
+      const { now, token } = await this.runPromise(
+        Effect.all(
+          {
+            now: Clock.currentTimeMillis,
+            token: this.authService.getIdpToken(userId, discordId),
+          },
+          { concurrency: "unbounded" },
+        ),
       );
 
       if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {

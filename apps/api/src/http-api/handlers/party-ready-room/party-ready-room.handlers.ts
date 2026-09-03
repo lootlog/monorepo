@@ -249,15 +249,16 @@ export const cancelReadyRoom = Effect.fn("cancelReadyRoom")(function* (
   return yield* decode(PartyReadyRoomControllerCancel201, value);
 });
 
-const defectCause = (error: unknown) =>
-  error instanceof ReadyRoomOperationError ? error.cause : error;
+type ReadyRoomHttpFailure = ReadyRoomAccessDenied | ReadyRoomOperationError;
 
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    error instanceof ReadyRoomAccessDenied
-      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-      : Effect.die(defectCause(error)),
-  );
+const orDieHttpFailure = <A, R>(
+  effect: Effect.Effect<A, ReadyRoomHttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    ReadyRoomAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    ReadyRoomOperationError: (error) => Effect.die(error.cause),
+  });
 
 export const PartyReadyRoomHandlers = HttpApiBuilder.group(
   LootlogApi,

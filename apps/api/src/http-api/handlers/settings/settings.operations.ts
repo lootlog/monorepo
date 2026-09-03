@@ -225,14 +225,13 @@ export const updateSoundSettings = (payload: UpdateSoundSettingsDto) =>
     ),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof SettingsOperationError ? error.cause : error;
+type SettingsHttpFailure = SettingsAccessDenied | SettingsOperationError;
 
-export const toSettingsHttpResponse = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
+export const toSettingsHttpResponse = <A, R>(
+  effect: Effect.Effect<A, SettingsHttpFailure, R>,
 ) =>
-  Effect.catch(effect, (error) =>
-    error instanceof SettingsAccessDenied
-      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-      : Effect.die(defectCause(error)),
-  );
+  Effect.catchTags(effect, {
+    SettingsAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    SettingsOperationError: (error) => Effect.die(error.cause),
+  });

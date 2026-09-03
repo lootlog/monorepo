@@ -217,13 +217,22 @@ export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
   return { status: "OK" as const };
 });
 
-const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    error instanceof MapTemplatesAccessDenied ||
-    error instanceof MapTemplateNotFound
-      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-      : Effect.die(error),
-  );
+type MapTemplatesHttpFailure =
+  | MapTemplateNotFound
+  | MapTemplatesAccessDenied
+  | MapTemplatesPersistenceError;
+
+const statusResponse = (error: { readonly status: number }) =>
+  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+
+const toHttpResponse = <A, R>(
+  effect: Effect.Effect<A, MapTemplatesHttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    MapTemplateNotFound: statusResponse,
+    MapTemplatesAccessDenied: statusResponse,
+    MapTemplatesPersistenceError: (error) => Effect.die(error.cause),
+  });
 
 export const MapTemplatesHandlers = HttpApiBuilder.group(
   LootlogApi,

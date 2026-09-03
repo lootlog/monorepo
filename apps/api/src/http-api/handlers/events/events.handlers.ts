@@ -109,6 +109,13 @@ export class EventsDataError extends TaggedErrorClass<EventsDataError>()(
   { cause: Schema.Defect() },
 ) {}
 
+type EventsHttpFailure =
+  | EventsAccessDenied
+  | EventsBadRequest
+  | EventsConflict
+  | EventsDataError
+  | EventsNotFound;
+
 export interface EventAuthorizationRequirement {
   readonly guildId: string;
   readonly capabilities: ReadonlyArray<PermissionValue>;
@@ -234,17 +241,16 @@ export const executeEventEndpoint = Effect.fn("events.execute")(function* (
   );
 });
 
-const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) => {
-    if (
-      error instanceof EventsAccessDenied ||
-      error instanceof EventsBadRequest ||
-      error instanceof EventsConflict ||
-      error instanceof EventsNotFound
-    ) {
-      return Effect.succeed(HttpServerResponse.empty({ status: error.status }));
-    }
-    return Effect.die(error);
+const statusResponse = (error: { readonly status: number }) =>
+  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+
+const toHttpResponse = <A, R>(effect: Effect.Effect<A, EventsHttpFailure, R>) =>
+  Effect.catchTags(effect, {
+    EventsAccessDenied: statusResponse,
+    EventsBadRequest: statusResponse,
+    EventsConflict: statusResponse,
+    EventsDataError: (error) => Effect.die(error.cause),
+    EventsNotFound: statusResponse,
   });
 
 // The generated group supplies the concrete success type at every call site.

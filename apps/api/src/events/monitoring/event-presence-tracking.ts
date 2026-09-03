@@ -312,15 +312,18 @@ export const makeEventPresenceTracking = (
       isAfk = false,
     ) {
       const lockKey = `presence:lock:${guildId}:${mapName}:${discordId}`;
-      return Effect.tryPromise({
-        try: () =>
-          redlock.using([lockKey], 5_000, () =>
-            Effect.runPromise(
-              handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
-            ),
-          ),
-        catch: (cause) => cause,
-      }).pipe(
+      return Effect.context<never>().pipe(
+        Effect.flatMap((context) =>
+          Effect.tryPromise({
+            try: () =>
+              redlock.using([lockKey], 5_000, () =>
+                Effect.runPromiseWith(context)(
+                  handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
+                ),
+              ),
+            catch: (cause) => cause,
+          }),
+        ),
         Effect.catch((error) => {
           if (!(error instanceof ExecutionError)) return Effect.fail(error);
           return Effect.sync(() =>

@@ -24,6 +24,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/domain": "workspace:*",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
@@ -49,6 +50,7 @@
         "@effect/sql-pg": "catalog:",
         "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
@@ -77,6 +79,7 @@
       "version": "1.0.11",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "better-auth": "1.7.2",
         "drizzle-orm": "catalog:",
@@ -105,6 +108,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/battle-processor": "workspace:*",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "@paralleldrive/cuid2": "^3.3.0",
         "bullmq": "^5.81.4",
@@ -148,6 +152,7 @@
       "version": "1.0.10",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
@@ -251,6 +256,7 @@
       "version": "1.1.0",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
@@ -301,6 +307,7 @@
       "version": "1.0.11",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
@@ -489,6 +496,18 @@
       "dependencies": {
         "@lootlog/datetime": "workspace:*",
         "@lootlog/schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/instrumentation": {
+      "name": "@lootlog/instrumentation",
+      "version": "0.0.0",
+      "dependencies": {
+        "effect": "4.0.0-rc.112",
       },
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
@@ -1130,6 +1149,8 @@
     "@lootlog/game-client": ["@lootlog/game-client@workspace:apps/game-client"],
 
     "@lootlog/gateway": ["@lootlog/gateway@workspace:apps/gateway"],
+
+    "@lootlog/instrumentation": ["@lootlog/instrumentation@workspace:packages/instrumentation"],
 
     "@lootlog/landing": ["@lootlog/landing@workspace:apps/landing"],
 

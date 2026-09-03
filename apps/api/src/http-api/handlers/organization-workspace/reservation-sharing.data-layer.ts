@@ -171,24 +171,27 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const now = new Date(yield* Clock.currentTimeMillis);
-              const [shares, pendingInvitations] = yield* Effect.all([
-                findActiveShares(guildId),
-                database
-                  .select()
-                  .from(reservationShareInvitationTable)
-                  .where(
-                    and(
-                      eq(
-                        reservationShareInvitationTable.sourceGuildId,
-                        guildId,
+              const [shares, pendingInvitations] = yield* Effect.all(
+                [
+                  findActiveShares(guildId),
+                  database
+                    .select()
+                    .from(reservationShareInvitationTable)
+                    .where(
+                      and(
+                        eq(
+                          reservationShareInvitationTable.sourceGuildId,
+                          guildId,
+                        ),
+                        isNull(reservationShareInvitationTable.acceptedAt),
+                        isNull(reservationShareInvitationTable.revokedAt),
+                        gt(reservationShareInvitationTable.expiresAt, now),
                       ),
-                      isNull(reservationShareInvitationTable.acceptedAt),
-                      isNull(reservationShareInvitationTable.revokedAt),
-                      gt(reservationShareInvitationTable.expiresAt, now),
-                    ),
-                  )
-                  .orderBy(desc(reservationShareInvitationTable.createdAt)),
-              ]);
+                    )
+                    .orderBy(desc(reservationShareInvitationTable.createdAt)),
+                ],
+                { concurrency: "unbounded" },
+              );
               const guildIds = [
                 ...new Set(
                   shares.flatMap((share) => [
@@ -342,12 +345,15 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const invitation = yield* findUsableInvitation(token);
-              const [guilds, existingPartnerIds] = yield* Effect.all([
-                administrativeGuilds(discordId),
-                visibleGuildIds(invitation.sourceGuildId).pipe(
-                  Effect.map((ids) => new Set(ids)),
-                ),
-              ]);
+              const [guilds, existingPartnerIds] = yield* Effect.all(
+                [
+                  administrativeGuilds(discordId),
+                  visibleGuildIds(invitation.sourceGuildId).pipe(
+                    Effect.map((ids) => new Set(ids)),
+                  ),
+                ],
+                { concurrency: "unbounded" },
+              );
               return {
                 sourceOrganization: {
                   name: invitation.sourceGuild.name,

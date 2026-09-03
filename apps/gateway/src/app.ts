@@ -1,4 +1,5 @@
 import { BunRedis } from "@effect/platform-bun";
+import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { HttpClient } from "effect/unstable/http";
@@ -37,6 +38,7 @@ export interface GatewayApplicationService {
   readonly commands: CommandHandler;
   readonly activity: ActivityPublisher;
   readonly runBackground: BackgroundTaskRunner;
+  readonly runPromise: <A, E>(effect: Effect.Effect<A, E>) => Promise<A>;
 }
 
 export class GatewayApplication extends Context.Service<
@@ -49,9 +51,11 @@ export class GatewayApplication extends Context.Service<
       const config = yield* GatewayConfig;
       const messaging = yield* RabbitMessaging;
       const httpClient = yield* HttpClient.HttpClient;
-      const backgroundFibers = yield* FiberSet.make<void, never>();
+      const backgroundFibers = yield* FiberSet.make<unknown, unknown>();
       const runBackgroundEffect =
         yield* FiberSet.runtime(backgroundFibers)<never>();
+      const runPromise =
+        yield* FiberSet.runtimePromise(backgroundFibers)<never>();
       const runBackground = makeBackgroundTaskRunner(runBackgroundEffect);
       const redisClient = yield* Redis.Redis;
       const redis = yield* Effect.acquireRelease(
@@ -63,7 +67,7 @@ export class GatewayApplication extends Context.Service<
                 ...config.redis,
                 password: Redacted.value(config.redis.password),
               },
-              Effect.runPromise,
+              runPromise,
               runBackground,
             );
             await store.connect();
@@ -122,6 +126,7 @@ export class GatewayApplication extends Context.Service<
         commands,
         activity,
         runBackground,
+        runPromise,
       });
     }),
   );
@@ -199,27 +204,56 @@ export const createGatewayFetch =
     activeServer: UpgradeServer,
   ): Promise<Response | undefined> => {
     const url = new URL(request.url);
+    const complete = async (
+      response: Response | undefined,
+      route?: string,
+    ): Promise<Response | undefined> => {
+      await application.runPromise(
+        recordHttpServerMetrics({
+          method: request.method,
+          route,
+          status: response?.status ?? 101,
+          durationMilliseconds: performance.now() - startedAt,
+        }),
+      );
+      return response;
+    };
+    const startedAt = performance.now();
     if (url.pathname === "/healthz") {
-      return httpHandler(request);
+      return complete(await httpHandler(request), "/healthz");
     }
     if (url.pathname !== application.config.websocketPath) {
-      return new Response("Not found", { status: 404 });
+      return complete(new Response("Not found", { status: 404 }));
     }
     if (hasCredentialQuery(url)) {
-      return new Response("Credentials are not accepted in the URL", {
-        status: 400,
-      });
+      return complete(
+        new Response("Credentials are not accepted in the URL", {
+          status: 400,
+        }),
+        application.config.websocketPath,
+      );
     }
     const origin = request.headers.get("origin");
     if (!application.auth.isAllowedOrigin(origin)) {
-      return new Response("Origin not allowed", { status: 403 });
+      return complete(
+        new Response("Origin not allowed", { status: 403 }),
+        application.config.websocketPath,
+      );
     }
     const credential = application.auth.readCredential(request);
-    if (!credential) return new Response("Unauthorized", { status: 401 });
-    const identity = await Effect.runPromise(
+    if (!credential)
+      return complete(
+        new Response("Unauthorized", { status: 401 }),
+        application.config.websocketPath,
+      );
+    const identity = await application.runPromise(
       application.auth.verify(credential),
     );
-    if (!identity) return new Response("Unauthorized", { status: 401 });
+    if (!identity)
+      return complete(
+        new Response("Unauthorized", { status: 401 }),
+        application.config.websocketPath,
+      );
 
     const connectionId = crypto.randomUUID();
     const upgraded = activeServer.upgrade(request, {
@@ -237,9 +271,12 @@ export const createGatewayFetch =
       },
       headers: websocketResponseHeaders(request),
     });
-    return upgraded
-      ? undefined
-      : new Response("WebSocket upgrade failed", { status: 400 });
+    return complete(
+      upgraded
+        ? undefined
+        : new Response("WebSocket upgrade failed", { status: 400 }),
+      application.config.websocketPath,
+    );
   };
 
 export const GatewayServer = Layer.effectDiscard(

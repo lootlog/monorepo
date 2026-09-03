@@ -78,11 +78,11 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
-      - name: Lint, typecheck, test and build
+      - name: Lint, typecheck, test, end-to-end test and build
         env:
           TURBO_SCM_BASE: ${{ needs.plan.outputs.base-sha }}
           TURBO_SCM_HEAD: ${{ github.sha }}
-        run: bunx turbo run lint typecheck test build --affected
+        run: bunx turbo run lint typecheck test test:e2e build --affected
 
   integration:
     name: Affected integration tests

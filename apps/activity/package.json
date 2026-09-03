@@ -29,6 +29,7 @@
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/domain": "workspace:*",
+    "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",

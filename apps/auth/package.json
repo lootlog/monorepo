@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
+    "@lootlog/instrumentation": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "better-auth": "1.7.2",
     "drizzle-orm": "catalog:",

@@ -1,4 +1,5 @@
 import { BunHttpServer } from "@effect/platform-bun";
+import { httpServerMetrics } from "@lootlog/instrumentation";
 import { Effect, Layer, Schema, SchemaIssue } from "effect";
 import {
   HttpRouter,
@@ -447,15 +448,17 @@ export const BattlelogHttpServer = Layer.unwrap(
       ),
       {
         middleware: (effect) =>
-          Effect.catchCause(effect, (cause) => {
-            logger.error("Unhandled Battlelog HTTP failure", cause);
-            return Effect.succeed(
-              HttpServerResponse.jsonUnsafe(
-                { message: "Internal server error", statusCode: 500 },
-                { status: 500 },
-              ),
-            );
-          }),
+          httpServerMetrics(
+            Effect.catchCause(effect, (cause) => {
+              logger.error("Unhandled Battlelog HTTP failure", cause);
+              return Effect.succeed(
+                HttpServerResponse.jsonUnsafe(
+                  { message: "Internal server error", statusCode: 500 },
+                  { status: 500 },
+                ),
+              );
+            }),
+          ),
       },
     ).pipe(
       Layer.provide(

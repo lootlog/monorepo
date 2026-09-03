@@ -128,27 +128,30 @@ export class UserLootlogConfigData extends Context.Service<
                 );
                 if (cached !== null) return cached;
 
-                const [configs, guilds] = yield* Effect.all([
-                  database
-                    .select()
-                    .from(userCharactersLootlogSettingsTable)
-                    .where(
-                      and(
-                        eq(
-                          userCharactersLootlogSettingsTable.userId,
-                          discordId,
+                const [configs, guilds] = yield* Effect.all(
+                  [
+                    database
+                      .select()
+                      .from(userCharactersLootlogSettingsTable)
+                      .where(
+                        and(
+                          eq(
+                            userCharactersLootlogSettingsTable.userId,
+                            discordId,
+                          ),
+                          eq(
+                            userCharactersLootlogSettingsTable.accountId,
+                            accountId,
+                          ),
                         ),
-                        eq(
-                          userCharactersLootlogSettingsTable.accountId,
-                          accountId,
-                        ),
+                      )
+                      .orderBy(
+                        desc(userCharactersLootlogSettingsTable.createdAt),
                       ),
-                    )
-                    .orderBy(
-                      desc(userCharactersLootlogSettingsTable.createdAt),
-                    ),
-                  findGuilds(discordId, Permission.LOOTLOG_LOOTS_WRITE),
-                ]);
+                    findGuilds(discordId, Permission.LOOTLOG_LOOTS_WRITE),
+                  ],
+                  { concurrency: "unbounded" },
+                );
                 const writableGuildIds = new Set(guilds.map(({ id }) => id));
                 const result = Object.fromEntries(
                   configs.map((config) => [
@@ -378,14 +381,18 @@ export const getPlayersCatchingGuilds = (
     }),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof UserLootlogConfigOperationError ? error.cause : error;
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    error instanceof UserLootlogConfigAccessDenied
-      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-      : Effect.die(defectCause(error)),
-  );
+type UserLootlogConfigHttpFailure =
+  | UserLootlogConfigAccessDenied
+  | UserLootlogConfigOperationError;
+
+const orDieHttpFailure = <A, R>(
+  effect: Effect.Effect<A, UserLootlogConfigHttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    UserLootlogConfigAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    UserLootlogConfigOperationError: (error) => Effect.die(error.cause),
+  });
 
 export const UserLootlogConfigHandlers = HttpApiBuilder.group(
   LootlogApi,

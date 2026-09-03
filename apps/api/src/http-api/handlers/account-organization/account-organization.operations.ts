@@ -390,43 +390,51 @@ const authorizeGuild = (
     authorization.requireGuild({ guildId, anyOf }),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof AccountOrganizationOperationError ? error.cause : error;
+type AccountOrganizationFailure =
+  | AccountOrganizationAccessDenied
+  | AccountOrganizationNotFound
+  | AccountOrganizationOperationError;
 
-export const toAccountOrganizationHttpResponse = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
-) =>
-  Effect.catch(effect, (error) => {
-    const cause = defectCause(error);
-    if (
-      cause instanceof AccountOrganizationAccessDenied ||
-      cause instanceof AccountOrganizationNotFound
-    ) {
-      return Effect.succeed(HttpServerResponse.empty({ status: cause.status }));
-    }
-    return Effect.die(cause);
-  });
-
-const isStatus = (error: unknown, status: number) => {
-  const cause = defectCause(error);
-  if (
-    cause instanceof AccountOrganizationAccessDenied ||
-    cause instanceof AccountOrganizationNotFound
-  ) {
-    return cause.status === status;
-  }
-  return applicationErrorStatusOrUndefined(cause) === status;
+const taggedHttpStatus = (error: unknown): number | undefined => {
+  if (Schema.is(AccountOrganizationAccessDenied)(error)) return error.status;
+  if (Schema.is(AccountOrganizationNotFound)(error)) return error.status;
+  return applicationErrorStatusOrUndefined(error);
 };
 
-export const toDeclaredAccountOrganizationError = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
+export const toAccountOrganizationHttpResponse = <A, R>(
+  effect: Effect.Effect<A, AccountOrganizationFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    AccountOrganizationAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    AccountOrganizationNotFound: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    AccountOrganizationOperationError: (error) => {
+      const status = taggedHttpStatus(error.cause);
+      return status === undefined
+        ? Effect.die(error.cause)
+        : Effect.succeed(HttpServerResponse.empty({ status }));
+    },
+  });
+
+export const toDeclaredAccountOrganizationError = <A, R>(
+  effect: Effect.Effect<A, AccountOrganizationFailure, R>,
   statuses: ReadonlyArray<number>,
 ) =>
-  Effect.catch(effect, (error) =>
-    statuses.some((status) => isStatus(error, status))
-      ? Effect.fail(undefined)
-      : Effect.die(defectCause(error)),
-  );
+  Effect.catchTags(effect, {
+    AccountOrganizationAccessDenied: (error) =>
+      statuses.includes(error.status)
+        ? Effect.fail(undefined)
+        : Effect.die(error),
+    AccountOrganizationNotFound: (error) =>
+      statuses.includes(error.status)
+        ? Effect.fail(undefined)
+        : Effect.die(error),
+    AccountOrganizationOperationError: (error) =>
+      statuses.includes(taggedHttpStatus(error.cause) ?? 0)
+        ? Effect.fail(undefined)
+        : Effect.die(error.cause),
+  });
 
 export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
   function* () {
@@ -592,8 +600,4 @@ export const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
 });
 
 export const deleteCurrentAccountHttpResponse = () =>
-  Effect.catch(deleteCurrentAccount(), (error) =>
-    isStatus(error, 503)
-      ? Effect.fail(undefined)
-      : Effect.die(defectCause(error)),
-  );
+  toDeclaredAccountOrganizationError(deleteCurrentAccount(), [503]);

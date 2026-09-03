@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { BunHttpServer } from "@effect/platform-bun";
+import { httpServerMetrics } from "@lootlog/instrumentation";
 import { PgClient } from "@effect/sql-pg";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -340,7 +341,7 @@ export const ActivityRoutes = Layer.merge(
 
 export const ActivityHttpServer = Layer.unwrap(
   Effect.map(ActivityConfig, ({ port }) =>
-    HttpRouter.serve(ActivityRoutes).pipe(
+    HttpRouter.serve(ActivityRoutes, { middleware: httpServerMetrics }).pipe(
       Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
     ),
   ),

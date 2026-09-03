@@ -432,20 +432,21 @@ export const updateLoot = Effect.fn("loots.updateLoot")(function* (
   return loot;
 });
 
-type HttpFailure = RecordsAccessDenied | RecordsBadRequest | RecordsNotFound;
+type HttpFailure =
+  | RecordsAccessDenied
+  | RecordsBadRequest
+  | RecordsNotFound
+  | RecordsDataError;
 
-export const toRecordsHttpResponse = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
+export const toRecordsHttpResponse = <A, R>(
+  effect: Effect.Effect<A, HttpFailure, R>,
 ) =>
-  Effect.catch(effect, (error) => {
-    if (
-      error instanceof RecordsAccessDenied ||
-      error instanceof RecordsBadRequest ||
-      error instanceof RecordsNotFound
-    ) {
-      return Effect.succeed(
-        HttpServerResponse.empty({ status: (error as HttpFailure).status }),
-      );
-    }
-    return Effect.die(error);
+  Effect.catchTags(effect, {
+    RecordsAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    RecordsBadRequest: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    RecordsNotFound: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    RecordsDataError: (error) => Effect.die(error.cause),
   });

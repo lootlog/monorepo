@@ -1,20 +1,25 @@
 import { BunRuntime } from "@effect/platform-bun";
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
-import {
-  OtlpLogger,
-  OtlpSerialization,
-  OtlpTracer,
-} from "effect/unstable/observability";
+import { Otlp, OtlpSerialization } from "effect/unstable/observability";
+import { BotConfig } from "#src/config/bot-config";
 import { BotApplication } from "./bot-application.js";
 
-const ObservabilityLive = Layer.merge(
-  OtlpTracer.layerFromConfig({ resource: { serviceName: "discord-bot" } }),
-  OtlpLogger.layerFromConfig({
-    resource: { serviceName: "discord-bot" },
-    mergeWithExisting: true,
-  }),
+const ObservabilityLive = Layer.unwrap(
+  Effect.map(BotConfig, (config) =>
+    Otlp.layerFromConfig({
+      resource: {
+        serviceName: config.serviceName,
+        attributes: {
+          "deployment.environment.name": config.environment,
+          "service.namespace": config.serviceNamespace,
+        },
+      },
+      loggerMergeWithExisting: true,
+    }),
+  ),
 ).pipe(
+  Layer.provide(BotConfig.layer),
   Layer.provide(OtlpSerialization.layerJson),
   Layer.provide(FetchHttpClient.layer),
 );

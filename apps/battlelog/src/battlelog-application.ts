@@ -51,6 +51,8 @@ export class BattlelogApplication extends Context.Service<
       const config = yield* BattlelogConfig;
       const drizzle = yield* makeDrizzleDatabase;
       const redisClient = yield* Redis.Redis;
+      const redisFibers = yield* FiberSet.make<unknown, unknown>();
+      const runRedis = yield* FiberSet.runtimePromise(redisFibers)<never>();
       yield* redisClient
         .send("PING")
         .pipe(
@@ -58,7 +60,7 @@ export class BattlelogApplication extends Context.Service<
             (cause) => new Error("Failed to initialize Redis", { cause }),
           ),
         );
-      const redis = makeRedisStore(redisClient, Effect.runPromise);
+      const redis = makeRedisStore(redisClient, runRedis);
 
       const cacheService = makeBattleAnalyticsCache(redis);
       const domain = battleAnalyticsDomain;

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
+    "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",

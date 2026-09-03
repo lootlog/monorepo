@@ -1,5 +1,6 @@
 import { RabbitMessaging } from "@lootlog/messaging";
 import { BunHttpServer } from "@effect/platform-bun";
+import { httpServerMetrics } from "@lootlog/instrumentation";
 import {
   RabbitExchange,
   RabbitRoutingKey,
@@ -199,11 +200,13 @@ export const BotHttpServer = Layer.unwrap(
   Effect.map(BotConfig, ({ port }) =>
     HttpRouter.serve(BotHttpRoutes, {
       middleware: (effect) =>
-        Effect.catchCause(effect, () =>
-          Effect.succeed(
-            HttpServerResponse.jsonUnsafe(
-              { message: "Internal server error" },
-              { status: 500 },
+        httpServerMetrics(
+          Effect.catchCause(effect, () =>
+            Effect.succeed(
+              HttpServerResponse.jsonUnsafe(
+                { message: "Internal server error" },
+                { status: 500 },
+              ),
             ),
           ),
         ),

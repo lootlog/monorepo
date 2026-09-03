@@ -168,4 +168,6 @@ export const applicationErrorStatus = (error: ApplicationError): number => {
 export const applicationErrorStatusOrUndefined = (
   error: unknown,
 ): number | undefined =>
-  error instanceof ApplicationError ? applicationErrorStatus(error) : undefined;
+  Schema.is(ApplicationError)(error)
+    ? applicationErrorStatus(error)
+    : undefined;

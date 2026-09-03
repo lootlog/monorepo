@@ -60,15 +60,18 @@ export const makeEventsRanking = (
     accessPolicy: AccessPolicy,
   ) {
     return Effect.gen(function* () {
-      const { filteredOverview, rankings } = yield* Effect.all({
-        filteredOverview: catalogRead.getEventOverview(
-          guildData,
-          eventId,
-          roles,
-          accessPolicy,
-        ),
-        rankings: rankingRead.getRanking(guildData.id, eventId),
-      });
+      const { filteredOverview, rankings } = yield* Effect.all(
+        {
+          filteredOverview: catalogRead.getEventOverview(
+            guildData,
+            eventId,
+            roles,
+            accessPolicy,
+          ),
+          rankings: rankingRead.getRanking(guildData.id, eventId),
+        },
+        { concurrency: "unbounded" },
+      );
       const visibleHeroNames = new Set(
         filteredOverview.heroNpcs.map((hero) => hero.npcName),
       );

@@ -1,11 +1,7 @@
 import { BunRuntime } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
-import {
-  OtlpLogger,
-  OtlpSerialization,
-  OtlpTracer,
-} from "effect/unstable/observability";
+import { Otlp, OtlpSerialization } from "effect/unstable/observability";
 import { BattlelogApplication } from "#src/battlelog-application";
 import { BattlelogConfig } from "#src/config/env";
 import { BattlelogHttpServer } from "#src/http/battlelog-http";
@@ -21,10 +17,10 @@ const ObservabilityLive = Layer.unwrap(
       },
     };
 
-    return Layer.merge(
-      OtlpTracer.layerFromConfig({ resource }),
-      OtlpLogger.layerFromConfig({ resource, mergeWithExisting: true }),
-    );
+    return Otlp.layerFromConfig({
+      resource,
+      loggerMergeWithExisting: true,
+    });
   }),
 ).pipe(
   Layer.provide(BattlelogConfig.layer),
