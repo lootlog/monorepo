@@ -37,12 +37,12 @@ jobs:
         run: |
           affected="$(bunx turbo@2.10.12 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
           affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
-          changed_files="$(git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" | jq -Rs 'split("\u0000") | map(select(length > 0))')"
-          input="$(jq -cn \
-            --argjson affectedPackages "$affected_packages" \
-            --argjson changedFiles "$changed_files" \
-            '{mode: "ci", affectedPackages: $affectedPackages, changedFiles: $changedFiles}')"
-          plan="$(bun scripts/deployment-targets.mjs "$input")"
+          plan="$(
+            git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
+              jq -Rsc --argjson affectedPackages "$affected_packages" \
+                '{mode: "ci", affectedPackages: $affectedPackages, changedFiles: (split("\u0000") | map(select(length > 0)))}' |
+              bun scripts/deployment-targets.mjs
+          )"
           {
             echo "base_sha=$BASE_SHA"
             echo "packages=$(jq -c '.packages' <<< "$plan")"
