@@ -13,7 +13,8 @@ import {
   MapTemplateResponseSchema,
   type MapTemplateResponse,
 } from "#src/map-templates/map-template.schema";
-import { LootlogApi, type CreateMapTemplateDto } from "../../lootlog-api.js";
+import { LootlogApi } from "../../lootlog-api.js";
+import type { CreateMapTemplateDto } from "../../contracts/map-templates/schemas.js";
 
 type StoredMapTemplate = {
   readonly id: string;

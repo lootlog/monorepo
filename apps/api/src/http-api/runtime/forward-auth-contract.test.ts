@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { BearerSecurityMiddleware, LootlogApi } from "../lootlog-api.js";
+import { BearerSecurityMiddleware } from "../contracts/shared.js";
+import { LootlogApi } from "../lootlog-api.js";
 
 const PUBLIC_ENDPOINTS = [
   "internal.GuildsInternalControllerGetUserPermissions",

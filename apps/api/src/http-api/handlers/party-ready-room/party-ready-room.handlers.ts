@@ -2,8 +2,8 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   PartyReadyRoomControllerApply201,
   PartyReadyRoomControllerCancel201,
   PartyReadyRoomControllerCreate201,
@@ -20,7 +20,7 @@ import {
   type PartyReadyRoomParticipantActionDto,
   type PartyReadyRoomParticipantIdentityDto,
   type PartyReadyRoomResolveInvitationTargetsDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/party-ready-room/schemas.js";
 
 export type ReadyRoomIdentity = {
   readonly userId: string;

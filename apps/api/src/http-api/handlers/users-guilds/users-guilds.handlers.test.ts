@@ -6,9 +6,9 @@ import { HttpApiTest } from "effect/unstable/httpapi";
 import {
   BearerSecurityMiddleware,
   GuildResponseDto_Output,
-  LootlogApi,
-  UserPreferencesResponseDto_Output,
-} from "../../lootlog-api.js";
+} from "../../contracts/shared.js";
+import { LootlogApi } from "../../lootlog-api.js";
+import { UserPreferencesResponseDto_Output } from "../../contracts/users/schemas.js";
 import { ForwardAuthIdentity } from "../../runtime/forward-auth-identity.js";
 import {
   GuildConfigurationData,

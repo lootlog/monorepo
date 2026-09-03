@@ -10,7 +10,7 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import type { CreateCommentDto } from "#src/http-api/lootlog-api";
+import type { CreateCommentDto } from "#src/http-api/contracts/loots/schemas";
 import { ErrorKey } from "./enum/error-key.enum.js";
 
 export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(

@@ -1,4 +1,4 @@
-import type { SendMessageDto } from "#src/http-api/lootlog-api";
+import type { SendMessageDto } from "#src/http-api/contracts/chat/schemas";
 
 export type ChatStoredMessage = SendMessageDto & {
   id: string;

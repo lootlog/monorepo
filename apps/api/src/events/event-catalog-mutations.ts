@@ -42,7 +42,7 @@ import type {
   ReorderLocationsDto,
   UpdateHeroDto,
   UpdateLocationDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/events/schemas";
 
 export class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",

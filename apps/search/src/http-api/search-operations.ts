@@ -15,14 +15,20 @@ import type { IndexNpcsDto } from "#src/npcs/dto/index-npcs.dto";
 import type { IndexPlayersDto } from "#src/players/dto/index-players.dto";
 import type {
   AllControllerSearchAllQuery,
-  ItemsControllerGetItemsQuery,
-  NpcsControllerGetNpcsQuery,
-  PlayersControllerGetPlayersQuery,
   SearchAllResponseDto_Output,
+} from "./contracts/all/schemas.js";
+import type {
+  ItemsControllerGetItemsQuery,
   SearchItemsResponseDto_Output,
+} from "./contracts/items/schemas.js";
+import type {
+  NpcsControllerGetNpcsQuery,
   NpcHitDto_Output,
+} from "./contracts/npcs/schemas.js";
+import type {
+  PlayersControllerGetPlayersQuery,
   PlayerHitDto_Output,
-} from "./search-api.js";
+} from "./contracts/players/schemas.js";
 
 export { SearchOperationFailure };
 

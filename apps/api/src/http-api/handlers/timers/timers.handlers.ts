@@ -9,8 +9,8 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { Guild, Role } from "#src/timers/timers.types";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   TimersControllerCreateAutoTimer201,
   type CreateManualTimerDto,
   type CreateTimerFromGameClientDto,
@@ -23,7 +23,7 @@ import {
   TimersControllerRestoreTimerFromHistory201,
   TimersControllerSearchNpcsWithTimerData200,
   type ResetTimerDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/timers/schemas.js";
 import {
   type TimersDataFailure,
   TimersConflict,

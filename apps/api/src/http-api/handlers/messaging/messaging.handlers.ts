@@ -2,12 +2,12 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   MessagingControllerSendNotification201,
   type CreateNotificationDto,
   type CreateVolunteerDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/messaging/schemas.js";
 
 export type MessagingCaller = {
   readonly userId: string;

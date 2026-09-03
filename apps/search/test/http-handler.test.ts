@@ -49,7 +49,7 @@ describe("Search HttpApi contract", () => {
     await dispose();
   });
 
-  test("decodes the item query through the generated contract", async () => {
+  test("decodes the item query through the HTTP contract", async () => {
     const { dispose, handler, readItemQuery } = makeBoundary();
     const response = await handler(
       new Request(

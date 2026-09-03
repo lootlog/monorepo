@@ -1,20 +1,6 @@
-import { Schema } from "effect";
-import {
-  HttpApi,
-  HttpApiEndpoint,
-  HttpApiGroup,
-  OpenApi,
-} from "effect/unstable/httpapi";
-
-export const GatewayHealth = Schema.Struct({
-  status: Schema.Literal("ok"),
-}).annotate({ identifier: "GatewayHealth" });
-
-class HealthGroup extends HttpApiGroup.make("health").add(
-  HttpApiEndpoint.get("GatewayHealth", "/healthz", {
-    success: GatewayHealth,
-  }).annotate(OpenApi.Summary, "Health check"),
-) {}
+/** Authoritative composition root for the gateway HTTP contract. */
+import { HttpApi, OpenApi } from "effect/unstable/httpapi";
+import { HealthGroup } from "./contracts/health/api.js";
 
 export class GatewayApi extends HttpApi.make("GatewayApi")
   .annotate(OpenApi.Title, "Realtime Gateway API")

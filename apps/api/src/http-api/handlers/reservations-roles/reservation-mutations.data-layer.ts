@@ -42,7 +42,7 @@ import {
 import type {
   CreateReservationDto,
   UpdateReservationDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/reservations/schemas";
 import {
   getDiscordAvatarUrl,
   presentReservation,

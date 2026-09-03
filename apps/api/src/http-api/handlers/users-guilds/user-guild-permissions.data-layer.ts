@@ -20,7 +20,7 @@ import {
   type AuthenticatedIdentity,
   UsersGuildsOperationError,
 } from "./users-guilds.handlers.js";
-import { GuildsControllerGetUserGuildsWithPermissions200 } from "../../lootlog-api.js";
+import { GuildsControllerGetUserGuildsWithPermissions200 } from "../../contracts/guilds/schemas.js";
 
 const CACHE_TTL_SECONDS = 60;
 

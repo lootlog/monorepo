@@ -1,10 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import {
-  SettingsDocumentsControllerGetPreferences200,
-  SoundSettingsControllerGetSettings200,
-  TimerSettingsControllerGetGlobalSettings200,
-} from "../../lootlog-api.js";
+import { SettingsDocumentsControllerGetPreferences200 } from "../../contracts/preferences/schemas.js";
+import { SoundSettingsControllerGetSettings200 } from "../../contracts/sound-settings/schemas.js";
+import { TimerSettingsControllerGetGlobalSettings200 } from "../../contracts/timer-settings/schemas.js";
 import {
   getGlobalTimerSettings,
   getPreferences,
@@ -74,7 +72,7 @@ const provideServices = (
   );
 
 describe("settings HttpApi handlers", () => {
-  it("decodes timer and sound responses with the generated contracts", async () => {
+  it("decodes timer and sound responses with the HTTP contracts", async () => {
     const layer = provideServices(makeData());
     const [timers, sounds] = await Effect.runPromise(
       Effect.all([getGlobalTimerSettings(), getSoundSettings()]).pipe(

@@ -5,11 +5,9 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import {
-  ReservationResponseDto,
-  ReservationSharesResponseDto,
-  RoleResponseDto_Output,
-} from "../../lootlog-api.js";
+import { ReservationResponseDto } from "../../contracts/reservations/schemas.js";
+import { ReservationSharesResponseDto } from "../../contracts/reservation-sharing/schemas.js";
+import { RoleResponseDto_Output } from "../../contracts/roles/schemas.js";
 import {
   acceptReservationShareInvitation,
   createReservation,

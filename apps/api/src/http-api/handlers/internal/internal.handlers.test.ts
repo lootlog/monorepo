@@ -4,7 +4,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,
-} from "../../lootlog-api.js";
+} from "../../contracts/internal/schemas.js";
 import {
   getInternalGuild,
   getInternalUserPermissions,

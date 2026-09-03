@@ -31,7 +31,7 @@ import {
 import type {
   CreateNotificationTargetDto,
   UpdateNotificationTargetDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/notifications/schemas";
 import { Error as NotificationError } from "./enum/error.enum.js";
 import type { JsonObject, JsonValue } from "./notification-database.types.js";
 import {

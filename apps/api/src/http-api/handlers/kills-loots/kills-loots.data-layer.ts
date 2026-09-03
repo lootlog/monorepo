@@ -14,13 +14,13 @@ import {
 import { LootCommentResponse } from "#src/shared/schema/loot-comment";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { normalizeKillStatsPeriod } from "#src/kills/utils/kill-stats-period";
+import type { KillsControllerCreateKill201 } from "../../contracts/kills/schemas.js";
 import {
-  type KillsControllerCreateKill201,
   LootsControllerCreateComment201,
   LootsControllerFetchLootById200,
   LootsControllerFetchLootsByGuildId200,
   LootsControllerGetComments200,
-} from "../../lootlog-api.js";
+} from "../../contracts/loots/schemas.js";
 import { KillsLootsData, KillsLootsDataError } from "./kills-loots.handlers.js";
 
 export interface KillsLootsServices {

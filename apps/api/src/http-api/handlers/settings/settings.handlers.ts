@@ -10,21 +10,25 @@ import { SettingsDocumentsRepository } from "#src/settings-documents/settings-do
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   SoundSettingsControllerGetSettings200,
   SoundSettingsControllerUpdateSettings200,
+  type UpdateSoundSettingsDto,
+} from "../../contracts/sound-settings/schemas.js";
+import {
   TimerSettingsControllerGetGlobalSettings200,
   TimerSettingsControllerGetGuildSettings200,
   TimerSettingsControllerUpdateGlobalSettings200,
   TimerSettingsControllerUpdateGuildSettings200,
   type MigrateTimerSettingsDto,
-  type PatchSettingsDocumentsDto,
-  type SettingsDocumentsControllerGetPreferencesQuery,
   type UpdateGuildTimerSettingsDto,
-  type UpdateSoundSettingsDto,
   type UpdateTimerSettingsDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/timer-settings/schemas.js";
+import type {
+  PatchSettingsDocumentsDto,
+  SettingsDocumentsControllerGetPreferencesQuery,
+} from "../../contracts/preferences/schemas.js";
 
 export class SettingsAccessDenied extends TaggedErrorClass<SettingsAccessDenied>()(
   "SettingsAccessDenied",

@@ -38,23 +38,27 @@ import {
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
 import {
   AcceptReservationShareInvitation201,
-  CreateReservation201,
   CreateReservationShareInvitation201,
+  ListReservationShares200,
+  PreviewReservationShareInvitation200,
+  type AcceptReservationShareInvitationDto,
+} from "../../contracts/reservation-sharing/schemas.js";
+import {
+  CreateReservation201,
   ListMyReservations200,
   ListReservationSpots200,
-  ListReservationShares200,
   ListSpotReservations200,
-  LootlogApi,
-  PreviewReservationShareInvitation200,
-  RolesControllerGetGuildRoles200,
-  RolesControllerUpdateGuildRole200,
   UpdateMyReservation200,
-  type AcceptReservationShareInvitationDto,
   type CreateReservationDto,
   type ListMyReservationsQuery,
   type UpdateReservationDto,
+} from "../../contracts/reservations/schemas.js";
+import { LootlogApi } from "../../lootlog-api.js";
+import {
+  RolesControllerGetGuildRoles200,
+  RolesControllerUpdateGuildRole200,
   type UpdateRolePermissionsDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/roles/schemas.js";
 
 export type ReservationsRolesIdentity = {
   readonly userId: string;

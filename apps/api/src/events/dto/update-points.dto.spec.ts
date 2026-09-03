@@ -1,7 +1,7 @@
 import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/events/schemas";
 import { Schema } from "effect";
 
 describe("Update points DTO validation", () => {

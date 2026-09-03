@@ -14,14 +14,14 @@ import {
 } from "#src/database/drizzle/schema";
 import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
 import { toUserLootlogConfigResponse } from "#src/user-lootlog-config/user-lootlog-config.schema";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
   UserLootlogConfigControllerGetPlayersCatchingGuilds200,
   UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
   type CreateOrUpdateLootlogCharacterConfigDto,
   type UserLootlogPlayersCatchingGuildsRequestDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/user-lootlog-config/schemas.js";
 
 export class UserLootlogConfigAccessDenied extends TaggedErrorClass<UserLootlogConfigAccessDenied>()(
   "UserLootlogConfigAccessDenied",

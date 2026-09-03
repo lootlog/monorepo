@@ -5,7 +5,7 @@ type Role = typeof roleTable.$inferSelect;
 import {
   CloseRespawnWindowDto,
   OpenRespawnWindowDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/events/schemas";
 import type { EventCoordination } from "./services/event-coordination.service.js";
 import type { EventKills } from "./services/event-kill.service.js";
 import type { EventRespawn } from "./services/event-respawn.service.js";
