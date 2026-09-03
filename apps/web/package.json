@@ -45,7 +45,7 @@
     "i18next": "^26.4.0",
     "lexical": "catalog:",
     "lodash": "^4.18.1",
-    "lottie-react": "^2.4.2",
+    "lottie-react": "^3.1.1",
     "lucide-react": "^1.35.0",
     "nuqs": "^2.10.1",
     "react": "catalog:",
