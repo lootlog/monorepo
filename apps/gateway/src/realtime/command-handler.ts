@@ -17,6 +17,17 @@ import type { PresenceStore } from "#src/realtime/presence-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import {
+  commandFailureDetails,
+  GameCharacterRequired,
+  isCommandFailure,
+  MargonemProofRequired,
+  NoAuthorizedOrganizations,
+  OrganizationAccessDenied,
+  RealtimeDependencyError,
+  type CommandFailure,
+  SessionNotJoined,
+} from "#src/realtime/realtime-errors";
+import {
   canSubscribe,
   defaultScopes,
   organizationIds,
@@ -124,13 +135,17 @@ export class CommandHandler {
       ),
       Effect.catch((error) =>
         Effect.sync(() => {
+          const failure = isCommandFailure(error)
+            ? commandFailureDetails(error)
+            : { message: "command temporarily unavailable", retryable: true };
           if (command.requestId)
             this.hub.sendResponse(
               socket,
               errorResponse(
                 command.requestId,
                 "COMMAND_REJECTED",
-                error instanceof Error ? error.message : "command rejected",
+                failure.message,
+                failure.retryable,
               ),
             );
         }),
@@ -143,7 +158,7 @@ export class CommandHandler {
     discordId: string,
     userId: string,
   ): Effect.Effect<void, unknown> {
-    const { activity, airTags, guilds, hub } = this;
+    const { activity, airTags, guilds, hub, presence } = this;
     return Effect.gen(function* () {
       yield* guilds.invalidate({ discordId, userId });
       const updatedGuilds = yield* guilds.getUserGuilds({
@@ -160,6 +175,7 @@ export class CommandHandler {
           yield* activity.publish("DISCONNECT_EVENT", socket.data, removedIds);
         }
         socket.data.guilds = updatedGuilds;
+        yield* presence.reconcileAccess(socket);
         airTags.clearSubscription(socket);
         const scopes = defaultScopes(socket.data);
         hub.replaceSubscriptions(socket, scopes);
@@ -190,9 +206,13 @@ export class CommandHandler {
   private dispatch(
     socket: GatewaySocket,
     command: Command,
-  ): Effect.Effect<unknown, unknown> {
+  ): Effect.Effect<unknown, CommandFailure> {
     const fromPromise = <A>(evaluate: () => Promise<A>) =>
-      Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
+      Effect.tryPromise({
+        try: evaluate,
+        catch: (cause) =>
+          new RealtimeDependencyError({ operation: command.type, cause }),
+      });
     const requireJoined = this.requireJoined(socket);
     switch (command.type) {
       case "session.join":
@@ -214,7 +234,7 @@ export class CommandHandler {
           organizationId: command.data.organizationId,
         } satisfies Scope;
         if (!canSubscribe(socket.data, scope))
-          return Effect.fail(new Error("presence access denied"));
+          return Effect.fail(new OrganizationAccessDenied());
         return requireJoined.pipe(
           Effect.andThen(
             this.presence.snapshot(
@@ -237,7 +257,7 @@ export class CommandHandler {
       }
       case "subscription.subscribe":
         if (!canSubscribe(socket.data, command.data))
-          return Effect.fail(new Error("subscription access denied"));
+          return Effect.fail(new OrganizationAccessDenied());
         return requireJoined.pipe(
           Effect.andThen(
             Effect.sync(() => {
@@ -283,14 +303,12 @@ export class CommandHandler {
   private join(
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
-  ): Effect.Effect<unknown, unknown> {
+  ): Effect.Effect<unknown, CommandFailure> {
     const { activity, config, guilds, hub, proofVerifier } = this;
     return Effect.gen(function* () {
       const wasJoined = socket.data.joined;
       if (socket.data.platform === "game" && !data.character)
-        return yield* Effect.fail(
-          new Error("game sessions require a character"),
-        );
+        return yield* Effect.fail(new GameCharacterRequired());
       socket.data.character = data.character;
       socket.data.confidence = "reported";
       if (data.character) {
@@ -303,14 +321,12 @@ export class CommandHandler {
         });
         if (verification.valid) socket.data.confidence = "verified";
         if (!verification.valid && config.margonemAccountProofRequired) {
-          return yield* Effect.fail(
-            new Error("Margonem account proof is required"),
-          );
+          return yield* Effect.fail(new MargonemProofRequired());
         }
       }
       const authorizedGuilds = yield* guilds.getUserGuilds(socket.data);
       if (authorizedGuilds.length === 0)
-        return yield* Effect.fail(new Error("no authorized organizations"));
+        return yield* Effect.fail(new NoAuthorizedOrganizations());
       socket.data.guilds = authorizedGuilds;
       socket.data.joined = true;
       const scopes = defaultScopes(socket.data);
@@ -327,12 +343,20 @@ export class CommandHandler {
       hub.sendEvent(socket, event);
       if (!wasJoined) yield* activity.publish("CONNECT_EVENT", socket.data);
       return event.data;
-    });
+    }).pipe(
+      Effect.mapError((cause) =>
+        isCommandFailure(cause)
+          ? cause
+          : new RealtimeDependencyError({ operation: "session.join", cause }),
+      ),
+    );
   }
 
-  private requireJoined(socket: GatewaySocket): Effect.Effect<void, Error> {
+  private requireJoined(
+    socket: GatewaySocket,
+  ): Effect.Effect<void, SessionNotJoined> {
     return socket.data.joined
       ? Effect.void
-      : Effect.fail(new Error("session.join is required"));
+      : Effect.fail(new SessionNotJoined());
   }
 }

@@ -52,8 +52,8 @@ import {
 import {
   TimersAccessDenied,
   TimersAuthorization,
-  TimersNotFound,
 } from "../handlers/timers/timers.handlers.js";
+import { TimersNotFound } from "../handlers/timers/timer-errors.js";
 import {
   UsersGuildsAccessDenied,
   UsersGuildsAuthorization,

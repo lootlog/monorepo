@@ -11,9 +11,11 @@ import {
   useUserPreferences,
   useUpdateUserPreferences,
 } from "@/hooks/api/use-user-preferences";
+import { resolvePresenceOrganizationIds } from "@/lib/presence-organization-selection";
 import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,6 +36,10 @@ export const ServerVisibilitySettingsTab = () => {
       ? state.presenceOrganizationIdsByCharId[characterId]
       : undefined,
   );
+  const preferredOrganizationId = useSettingsStore((state) =>
+    characterId ? state.guildIdByCharId[characterId] : undefined,
+  );
+  const currentClanId = useGameStore((state) => state.game?.hero.clan?.id);
   const setPresenceOrganizationIds = useSettingsStore(
     (state) => state.setPresenceOrganizationIds,
   );
@@ -61,6 +67,15 @@ export const ServerVisibilitySettingsTab = () => {
     return guild.name.toLocaleLowerCase().includes(normalizedQuery);
   });
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
+  const effectivePresenceOrganizationIds = resolvePresenceOrganizationIds({
+    accessibleOrganizations: orderedGuilds,
+    currentClanId,
+    explicitlySelectedIds: selectedPresenceOrganizationIds,
+    preferredOrganizationId,
+  });
+  const effectivePresenceOrganizationIdSet = new Set(
+    effectivePresenceOrganizationIds,
+  );
 
   const updateGuildVisibility = (guildId: string, isVisible: boolean) => {
     const nextHiddenGuildIds = isVisible
@@ -72,7 +87,7 @@ export const ServerVisibilitySettingsTab = () => {
 
   const updatePresencePublication = (guildId: string, enabled: boolean) => {
     if (!characterId) return;
-    const current = selectedPresenceOrganizationIds ?? [];
+    const current = effectivePresenceOrganizationIds;
     const next = enabled
       ? [...new Set([...current, guildId])]
       : current.filter((id) => id !== guildId);
@@ -246,10 +261,7 @@ export const ServerVisibilitySettingsTab = () => {
                   })}
                 >
                   <Switch
-                    checked={
-                      selectedPresenceOrganizationIds?.includes(guild.id) ??
-                      false
-                    }
+                    checked={effectivePresenceOrganizationIdSet.has(guild.id)}
                     disabled={!characterId}
                     aria-label={t("settings.servers.presenceSwitchLabel", {
                       name: guild.name,

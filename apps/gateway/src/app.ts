@@ -263,6 +263,11 @@ export const GatewayServer = Layer.effectDiscard(
             idleTimeout: 70,
             open(socket) {
               application.hub.register(socket);
+              application.hub.sendEvent(socket, {
+                v: 1,
+                type: "connection.ready",
+                data: { connectionId: socket.data.connectionId },
+              });
             },
             message(socket, message) {
               application.runBackground(

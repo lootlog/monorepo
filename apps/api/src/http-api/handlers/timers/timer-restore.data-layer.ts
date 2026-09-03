@@ -15,10 +15,11 @@ import {
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
+import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
-  type TimersGuildAccess,
-  TimersOperationError,
-} from "./timers.handlers.js";
+  TimersInvariantViolation,
+  toTimersDataFailure,
+} from "./timer-errors.js";
 import { mapTimerResponse } from "./timer-response.js";
 
 export interface RestoreTimerPorts {
@@ -132,7 +133,9 @@ export const makeRestoreTimer = (
           .returning();
         const restored = restoredRows[0];
         if (!restored)
-          return yield* Effect.fail(new Error("Timer restore returned no row"));
+          return yield* Effect.die(
+            new TimersInvariantViolation({ code: "RESTORE_NO_ROW" }),
+          );
         const actors = yield* transaction
           .select()
           .from(memberTable)
@@ -145,8 +148,8 @@ export const makeRestoreTimer = (
           .limit(1);
         const actor = actors[0];
         if (!actor)
-          return yield* Effect.fail(
-            new Error("Timer history actor member was not found"),
+          return yield* Effect.die(
+            new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
           );
         yield* transaction.insert(timerHistoryEntryTable).values({
           guildId: access.guild.id,
@@ -221,6 +224,6 @@ export const makeRestoreTimer = (
   });
   return (access: TimersGuildAccess, historyEntryId: number) =>
     operation(access, historyEntryId).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
+      Effect.mapError(toTimersDataFailure),
     );
 };

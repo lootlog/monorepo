@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   subscribe: vi.fn(),
   subscribeState: vi.fn(),
   setReconnectHandler: vi.fn(),
+  serverListeners: [] as Array<(event: unknown) => void>,
 }));
 
 vi.mock("@lootlog/client/realtime", () => ({
@@ -47,6 +48,10 @@ describe("game realtime verification and presence selection", () => {
     mocks.subscribeState.mockImplementation((listener) =>
       listener("disconnected"),
     );
+    mocks.subscribe.mockImplementation((listener) => {
+      mocks.serverListeners.push(listener);
+    });
+    mocks.serverListeners.length = 0;
     mocks.join.mockResolvedValue({
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
@@ -59,11 +64,21 @@ describe("game realtime verification and presence selection", () => {
       validatedString: "20+token+1700000000",
       signatureBase64: "signature",
     });
-    useSettingsStore.setState({ presenceOrganizationIdsByCharId: {} });
+    useSettingsStore.setState({
+      guildIdByCharId: {},
+      presenceOrganizationIdsByCharId: {},
+    });
   });
 
-  it("joins reported to obtain connectionId and immediately rejoins with proof", async () => {
+  it("waits for connection.ready and joins once with a connection-bound proof", async () => {
     const socket = new AppSocket();
+    for (const listener of mocks.serverListeners) {
+      listener({
+        v: 1,
+        type: "connection.ready",
+        data: { connectionId: "connection-1" },
+      });
+    }
     await socket.join(joinData);
 
     expect(mocks.requestProof).toHaveBeenCalledWith({
@@ -72,13 +87,13 @@ describe("game realtime verification and presence selection", () => {
       characterId: "10",
       clanId: 30,
     });
-    expect(mocks.join).toHaveBeenCalledTimes(2);
-    expect(mocks.join.mock.calls[1]?.[0]).toMatchObject({
+    expect(mocks.join).toHaveBeenCalledTimes(1);
+    expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
       margonemAccountProof: { signatureBase64: "signature" },
     });
   });
 
-  it("does not publish when there is no explicit or clan-matched organization", async () => {
+  it("publishes by default to the active character's preferred organization", async () => {
     useGameStore.getState().replaceGame({
       hero: {
         accountId: "20",
@@ -97,14 +112,64 @@ describe("game realtime verification and presence selection", () => {
       map: { id: 100, name: "Karka-han", visibility: 0 },
       world: "alpha",
     });
+    useSettingsStore.setState({
+      guildIdByCharId: { "10": "organization-1" },
+    });
     const socket = new AppSocket();
+    for (const listener of mocks.serverListeners) {
+      listener({
+        v: 1,
+        type: "connection.ready",
+        data: { connectionId: "connection-1" },
+      });
+    }
     await socket.join(joinData);
     socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
     await Promise.resolve();
 
-    expect(mocks.request).not.toHaveBeenCalledWith(
+    expect(mocks.request).toHaveBeenCalledWith(
       "presence.publish",
-      expect.anything(),
+      expect.objectContaining({ organizationIds: ["organization-1"] }),
+    );
+  });
+
+  it("publishes an empty organization selection to clear server presence", async () => {
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "20",
+        characterId: "10",
+        currentHp: 100,
+        icon: "hero.gif",
+        level: 100,
+        maxHp: 100,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 100, name: "Karka-han", visibility: 0 },
+      world: "alpha",
+    });
+    useSettingsStore.setState({
+      presenceOrganizationIdsByCharId: { "10": [] },
+    });
+    const socket = new AppSocket();
+    for (const listener of mocks.serverListeners) {
+      listener({
+        v: 1,
+        type: "connection.ready",
+        data: { connectionId: "connection-1" },
+      });
+    }
+    const { clan: _clan, ...clanlessJoinData } = joinData;
+    await socket.join(clanlessJoinData);
+    socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
+    await Promise.resolve();
+
+    expect(mocks.request).toHaveBeenCalledWith(
+      "presence.publish",
+      expect.objectContaining({ organizationIds: [] }),
     );
   });
 

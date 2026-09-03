@@ -12,6 +12,26 @@ import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import { Effect, Schema } from "effect";
+import {
+  PresenceNotPublished,
+  PresenceSessionMismatch,
+  RealtimeStoreError,
+} from "#src/realtime/realtime-errors";
+
+type PresenceFailure =
+  | PresenceNotPublished
+  | PresenceSessionMismatch
+  | RealtimeStoreError;
+
+const asPresenceFailure = (
+  operation: string,
+  cause: unknown,
+): PresenceFailure =>
+  cause instanceof PresenceNotPublished ||
+  cause instanceof PresenceSessionMismatch ||
+  cause instanceof RealtimeStoreError
+    ? cause
+    : new RealtimeStoreError({ operation, cause });
 
 type Basic = typeof BasicPresence.Type;
 type Precise = typeof PresenceWithLocation.Type;
@@ -30,9 +50,13 @@ const PresenceMetadataJson = Schema.fromJsonString(
 const decodePresence = Schema.decodeUnknownSync(PresenceJson);
 const decodePresenceMetadata = Schema.decodeUnknownSync(PresenceMetadataJson);
 const fromPromise = <A>(
+  operation: string,
   evaluate: () => Promise<A>,
-): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
+): Effect.Effect<A, RealtimeStoreError> =>
+  Effect.tryPromise({
+    try: evaluate,
+    catch: (cause) => new RealtimeStoreError({ operation, cause }),
+  });
 
 const withoutLocation = (presence: Basic | Precise): Basic => {
   const { location: _location, ...basic } = presence as Precise;
@@ -52,7 +76,7 @@ export class PresenceStore {
   publish(
     socket: GatewaySocket,
     data: Published,
-  ): Effect.Effect<Basic | Precise, unknown> {
+  ): Effect.Effect<Basic | Precise | undefined, PresenceFailure> {
     const self = this;
     return Effect.gen(function* () {
       const allowedOrganizationIds = new Set(
@@ -63,17 +87,19 @@ export class PresenceStore {
           data.organizationIds.filter((id) => allowedOrganizationIds.has(id)),
         ),
       ];
+      const previousPresence = socket.data.presence;
+      if (selectedOrganizationIds.length === 0) {
+        socket.data.presence = undefined;
+      }
       yield* self.removeFromUnselectedOrganizations(
         socket,
         selectedOrganizationIds,
+        previousPresence,
       );
       if (selectedOrganizationIds.length === 0) {
-        return yield* Effect.fail(
-          new Error("presence publication has no authorized organization"),
-        );
+        return undefined;
       }
 
-      const previousPresence = socket.data.presence;
       const presence: Basic | Precise = {
         userId: socket.data.userId,
         sessionId: socket.data.connectionId,
@@ -99,19 +125,23 @@ export class PresenceStore {
         );
       }
       return presence;
-    });
+    }).pipe(
+      Effect.mapError((cause) => asPresenceFailure("presence.publish", cause)),
+    );
   }
 
   heartbeat(
     socket: GatewaySocket,
     sessionId: string,
-  ): Effect.Effect<number, unknown> {
+  ): Effect.Effect<number, PresenceFailure> {
     const self = this;
     return Effect.gen(function* () {
       if (sessionId !== socket.data.connectionId || !socket.data.presence) {
-        return yield* Effect.fail(
-          new Error("heartbeat session does not match the connection"),
-        );
+        return yield* Effect.fail(new PresenceSessionMismatch());
+      }
+      yield* self.reconcileAccess(socket);
+      if (!socket.data.presence) {
+        return yield* Effect.fail(new PresenceNotPublished());
       }
       const presence = { ...socket.data.presence, lastSeen: self.now() };
       socket.data.presence = presence;
@@ -119,9 +149,15 @@ export class PresenceStore {
         yield* self.write(organizationId, presence, socket.data.discordId);
         yield* self.broadcastUpsert(organizationId, presence);
       }
-      yield* fromPromise(() => self.hub.refreshRegistry(socket.data));
+      yield* fromPromise("presence.refresh-registry", () =>
+        self.hub.refreshRegistry(socket.data),
+      );
       return presence.lastSeen;
-    });
+    }).pipe(
+      Effect.mapError((cause) =>
+        asPresenceFailure("presence.heartbeat", cause),
+      ),
+    );
   }
 
   disconnect(session: SessionData): Effect.Effect<void, unknown> {
@@ -145,11 +181,34 @@ export class PresenceStore {
     });
   }
 
+  reconcileAccess(socket: GatewaySocket): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const previous = socket.data.presence;
+      if (!previous) return;
+      const allowedOrganizationIds = new Set(
+        socket.data.guilds.map(({ guild }) => guild.id),
+      );
+      const retainedOrganizationIds = previous.organizationIds.filter((id) =>
+        allowedOrganizationIds.has(id),
+      );
+      socket.data.presence =
+        retainedOrganizationIds.length === 0
+          ? undefined
+          : { ...previous, organizationIds: retainedOrganizationIds };
+      yield* self.removeFromUnselectedOrganizations(
+        socket,
+        retainedOrganizationIds,
+        previous,
+      );
+    });
+  }
+
   snapshot(
     viewer: SessionData,
     organizationId: string,
     world?: string,
-  ): Effect.Effect<Snapshot, unknown> {
+  ): Effect.Effect<Snapshot, PresenceFailure> {
     const self = this;
     return Effect.gen(function* () {
       const presences = yield* self.readOrganization(organizationId);
@@ -168,17 +227,20 @@ export class PresenceStore {
         revision: yield* self.getRevision(organizationId),
         presences: filtered,
       };
-    });
+    }).pipe(
+      Effect.mapError((cause) => asPresenceFailure("presence.snapshot", cause)),
+    );
   }
 
   sweepExpired(): Effect.Effect<void, unknown> {
     const self = this;
     return Effect.gen(function* () {
-      const organizations = yield* fromPromise(() =>
-        self.redis.command.smembers("presence:organizations"),
+      const organizations = yield* fromPromise(
+        "presence.list-organizations",
+        () => self.redis.command.smembers("presence:organizations"),
       );
       for (const organizationId of organizations) {
-        const lock = yield* fromPromise(() =>
+        const lock = yield* fromPromise("presence.acquire-sweep-lock", () =>
           self.redis.command.set(
             `presence:sweep-lock:${organizationId}`,
             self.hub.instanceId,
@@ -188,11 +250,13 @@ export class PresenceStore {
           ),
         );
         if (lock !== "OK") continue;
-        const keys = yield* fromPromise(() =>
+        const keys = yield* fromPromise("presence.list-organization", () =>
           self.redis.command.smembers(self.indexKey(organizationId)),
         );
         if (keys.length === 0) continue;
-        const values = yield* fromPromise(() => self.redis.command.mget(keys));
+        const values = yield* fromPromise("presence.read-organization", () =>
+          self.redis.command.mget(keys),
+        );
         for (const [index, value] of values.entries()) {
           const key = keys[index];
           if (!key) continue;
@@ -211,7 +275,7 @@ export class PresenceStore {
           const userId = metadata?.userId;
           if (userId) yield* self.remove(organizationId, userId, sessionId);
           else
-            yield* fromPromise(() =>
+            yield* fromPromise("presence.remove-stale-index", () =>
               self.redis.command.srem(self.indexKey(organizationId), key),
             );
         }
@@ -250,18 +314,41 @@ export class PresenceStore {
   private removeFromUnselectedOrganizations(
     socket: GatewaySocket,
     selected: ReadonlyArray<string>,
+    previousPresence = socket.data.presence,
   ): Effect.Effect<void, unknown> {
     const self = this;
     return Effect.gen(function* () {
-      const previous = socket.data.presence?.organizationIds ?? [];
+      const previous = previousPresence?.organizationIds ?? [];
       const selectedSet = new Set(selected);
       for (const organizationId of previous) {
         if (!selectedSet.has(organizationId)) {
-          yield* self.remove(
-            organizationId,
-            socket.data.userId,
-            socket.data.connectionId,
-          );
+          const cleanup = [
+            self.remove(
+              organizationId,
+              socket.data.userId,
+              socket.data.connectionId,
+            ),
+          ];
+          if (
+            previousPresence &&
+            "location" in previousPresence &&
+            previousPresence.location?.map &&
+            self.coverage
+          ) {
+            cleanup.push(
+              self.coverage.publish({
+                guildId: organizationId,
+                mapName: previousPresence.location.map,
+                discordId: socket.data.discordId,
+                hasPlayer: false,
+                isAfk: previousPresence.isAfk,
+              }),
+            );
+          }
+          yield* Effect.all(cleanup, {
+            concurrency: "unbounded",
+            discard: true,
+          });
         }
       }
     });
@@ -275,7 +362,7 @@ export class PresenceStore {
     const key = this.presenceKey(organizationId, presence.sessionId);
     return Effect.all(
       [
-        fromPromise(() =>
+        fromPromise("presence.write", () =>
           this.redis.command.set(
             key,
             JSON.stringify(presence),
@@ -283,13 +370,13 @@ export class PresenceStore {
             REDIS_TTL_SECONDS,
           ),
         ),
-        fromPromise(() =>
+        fromPromise("presence.index", () =>
           this.redis.command.sadd(this.indexKey(organizationId), key),
         ),
-        fromPromise(() =>
+        fromPromise("presence.register-organization", () =>
           this.redis.command.sadd("presence:organizations", organizationId),
         ),
-        fromPromise(() =>
+        fromPromise("presence.write-metadata", () =>
           this.redis.command.set(
             this.metadataKey(organizationId, presence.sessionId),
             JSON.stringify({
@@ -315,11 +402,11 @@ export class PresenceStore {
       const key = self.presenceKey(organizationId, sessionId);
       yield* Effect.all(
         [
-          fromPromise(() => self.redis.command.del(key)),
-          fromPromise(() =>
+          fromPromise("presence.remove", () => self.redis.command.del(key)),
+          fromPromise("presence.remove-metadata", () =>
             self.redis.command.del(self.metadataKey(organizationId, sessionId)),
           ),
-          fromPromise(() =>
+          fromPromise("presence.remove-index", () =>
             self.redis.command.srem(self.indexKey(organizationId), key),
           ),
         ],
@@ -336,7 +423,7 @@ export class PresenceStore {
           changes: [{ action: "remove", userId, sessionId }],
         },
       } satisfies Event;
-      yield* fromPromise(() =>
+      yield* fromPromise("presence.publish-remove", () =>
         self.hub.publishToScope(
           { topic: "organization.presence", organizationId },
           event,
@@ -363,7 +450,7 @@ export class PresenceStore {
             changes: [{ action: "upsert", presence: value }],
           },
         }) satisfies Event;
-      yield* fromPromise(() =>
+      yield* fromPromise("presence.publish-upsert", () =>
         self.hub.publishPresence(
           { topic: "organization.presence", organizationId },
           makeEvent(withoutLocation(presence)),
@@ -378,11 +465,13 @@ export class PresenceStore {
   ): Effect.Effect<Array<Basic | Precise>, unknown> {
     const self = this;
     return Effect.gen(function* () {
-      const keys = yield* fromPromise(() =>
+      const keys = yield* fromPromise("presence.list-organization", () =>
         self.redis.command.smembers(self.indexKey(organizationId)),
       );
       if (keys.length === 0) return [];
-      const values = yield* fromPromise(() => self.redis.command.mget(keys));
+      const values = yield* fromPromise("presence.read-organization", () =>
+        self.redis.command.mget(keys),
+      );
       const presences: Array<Basic | Precise> = [];
       for (const value of values) {
         if (!value) {
@@ -404,13 +493,13 @@ export class PresenceStore {
   }
 
   private nextRevision(organizationId: string): Effect.Effect<number, unknown> {
-    return fromPromise(() =>
+    return fromPromise("presence.next-revision", () =>
       this.redis.command.incr(`presence:revision:${organizationId}`),
     );
   }
 
   private getRevision(organizationId: string): Effect.Effect<number, unknown> {
-    return fromPromise(() =>
+    return fromPromise("presence.get-revision", () =>
       this.redis.command.get(`presence:revision:${organizationId}`),
     ).pipe(Effect.map((value) => Number(value ?? 0)));
   }
@@ -434,7 +523,7 @@ export class PresenceStore {
     { readonly userId: string; readonly discordId: string } | null,
     unknown
   > {
-    return fromPromise(() =>
+    return fromPromise("presence.read-metadata", () =>
       this.redis.command.get(this.metadataKey(organizationId, sessionId)),
     ).pipe(
       Effect.map((value) => {

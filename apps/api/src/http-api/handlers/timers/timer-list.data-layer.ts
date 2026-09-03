@@ -27,10 +27,8 @@ import {
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import {
-  type TimersGuildAccess,
-  TimersOperationError,
-} from "./timers.handlers.js";
+import type { TimersGuildAccess } from "./timers.handlers.js";
+import { toTimersDataFailure } from "./timer-errors.js";
 import {
   type CachedTimerProjection,
   mapTimerResponse,
@@ -184,9 +182,7 @@ export const makeGuildTimerList = (
       .map(mapTimerResponse);
   });
   return (access: TimersGuildAccess, world?: string) =>
-    operation(access, world).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
-    );
+    operation(access, world).pipe(Effect.mapError(toTimersDataFailure));
 };
 
 export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
@@ -275,8 +271,5 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
   return (
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,
-  ) =>
-    operation(identity, world).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
-    );
+  ) => operation(identity, world).pipe(Effect.mapError(toTimersDataFailure));
 };

@@ -53,15 +53,11 @@ describe("realtime MessagePack codec", () => {
     expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   });
 
-  test("exposes the connection challenge identifier after session join", () => {
+  test("exposes the connection challenge identifier before session join", () => {
     const frame = {
       v: 1,
-      type: "session.joined",
-      data: {
-        connectionId: "connection-1",
-        organizationIds: ["organization-1"],
-        subscriptionScopes: [],
-      },
+      type: "connection.ready",
+      data: { connectionId: "connection-1" },
     } satisfies RealtimeFrame;
 
     expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);

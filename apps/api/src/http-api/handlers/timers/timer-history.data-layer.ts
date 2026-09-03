@@ -14,10 +14,8 @@ import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
-import {
-  type TimersGuildAccess,
-  TimersOperationError,
-} from "./timers.handlers.js";
+import type { TimersGuildAccess } from "./timers.handlers.js";
+import { toTimersDataFailure } from "./timer-errors.js";
 import {
   mapTimerCharacter,
   mapTimerMember,
@@ -124,13 +122,7 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
           ];
         },
       );
-    }).pipe(
-      Effect.mapError((cause) =>
-        cause instanceof TimersOperationError
-          ? cause
-          : new TimersOperationError({ cause }),
-      ),
-    );
+    }).pipe(Effect.mapError(toTimersDataFailure));
 
   return {
     getHistory: (

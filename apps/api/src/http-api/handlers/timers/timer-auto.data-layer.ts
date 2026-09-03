@@ -45,10 +45,13 @@ import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import type { CreateTimerFromGameClientDto } from "../../lootlog-api.js";
+import type { TimersIdentity } from "./timers.handlers.js";
 import {
-  type TimersIdentity,
-  TimersOperationError,
-} from "./timers.handlers.js";
+  TimersInfrastructureError,
+  TimersInvariantViolation,
+  TimersMemberNotFound,
+  toTimersDataFailure,
+} from "./timer-errors.js";
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
@@ -276,7 +279,7 @@ const projectionFromCache = (value: string) =>
           decodeJsonUnknown(value),
         ),
       ),
-    catch: (cause) => new Error("Invalid cached timer projection", { cause }),
+    catch: (cause) => new TimersInfrastructureError({ cause }),
   });
 
 const badRequest = (message: ErrorKey, rejectedGuilds: unknown[]) =>
@@ -326,7 +329,12 @@ export const makeAutoTimer = (
             .limit(1);
           const member = members[0];
           if (!member)
-            return yield* Effect.fail(new Error("Timer member was not found"));
+            return yield* Effect.die(
+              new TimersMemberNotFound({
+                guildId,
+                discordId: identity.discordId,
+              }),
+            );
           const actorCharacter = yield* upsertActor(transaction, payload);
           const existingRows = yield* transaction
             .select()
@@ -401,8 +409,8 @@ export const makeAutoTimer = (
             .returning();
           const timer = timerRows[0];
           if (!timer)
-            return yield* Effect.fail(
-              new Error("Automatic timer upsert returned no row"),
+            return yield* Effect.die(
+              new TimersInvariantViolation({ code: "AUTO_UPSERT_NO_ROW" }),
             );
           yield* transaction.insert(timerHistoryEntryTable).values({
             guildId,
@@ -674,7 +682,5 @@ export const makeAutoTimer = (
     return { submittedGuilds, rejectedGuilds };
   });
   return (identity: TimersIdentity, payload: CreateTimerFromGameClientDto) =>
-    operation(identity, payload).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
-    );
+    operation(identity, payload).pipe(Effect.mapError(toTimersDataFailure));
 };
