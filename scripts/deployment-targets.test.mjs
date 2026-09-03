@@ -23,6 +23,27 @@ describe("deployment targets", () => {
       "docs",
       "wiki",
     ]);
+
+    const dockerTargets = targets.filter(({ kind }) => kind === "docker");
+    expect(
+      dockerTargets
+        .filter(({ dockerfile }) => dockerfile === "docker/backend.Dockerfile")
+        .map(({ id }) => id),
+    ).toEqual([
+      "activity",
+      "api",
+      "auth",
+      "battlelog-service",
+      "discord-bot",
+      "gateway",
+      "search",
+    ]);
+    expect(dockerTargets.find(({ id }) => id === "developer")?.dockerfile).toBe(
+      "docker/developer.Dockerfile",
+    );
+    expect(dockerTargets.find(({ id }) => id === "api")?.installFonts).toBe(
+      true,
+    );
   });
 
   test("development selects only affected targets enabled for dev", async () => {
@@ -55,6 +76,73 @@ describe("deployment targets", () => {
       changedFiles: [".github/deployment-targets.json"],
     });
     expect(rootPlan.dockerTargets).toHaveLength(8);
+  });
+
+  test("CI maps shared and target-specific Docker inputs", async () => {
+    const backendPlan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: [],
+      changedFiles: ["docker/backend.Dockerfile"],
+    });
+    expect(backendPlan.dockerTargets.map(({ id }) => id)).toEqual([
+      "activity",
+      "api",
+      "auth",
+      "battlelog-service",
+      "discord-bot",
+      "gateway",
+      "search",
+    ]);
+
+    const developerPlan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: [],
+      changedFiles: ["docker/developer.Dockerfile"],
+    });
+    expect(developerPlan.dockerTargets.map(({ id }) => id)).toEqual([
+      "developer",
+    ]);
+
+    const patchPlan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: [],
+      changedFiles: ["patches/drizzle-orm.patch"],
+    });
+    expect(patchPlan.dockerTargets).toHaveLength(8);
+  });
+
+  test("CI rebuilds affected images for workspace manifest changes", async () => {
+    const plan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: ["@lootlog/api", "@lootlog/auth", "@lootlog/schema"],
+      changedFiles: ["packages/schema/package.json"],
+    });
+
+    expect(plan.dockerTargets.map(({ id }) => id)).toEqual(["api", "auth"]);
+  });
+
+  test("development deploys images after shared Dockerfile changes", async () => {
+    const backendPlan = await createDeploymentPlan({
+      mode: "dev",
+      affectedPackages: [],
+      changedFiles: ["docker/backend.Dockerfile"],
+    });
+    expect(backendPlan.targets.map(({ id }) => id)).toEqual([
+      "activity",
+      "api",
+      "auth",
+      "battlelog-service",
+      "discord-bot",
+      "gateway",
+      "search",
+    ]);
+
+    const developerPlan = await createDeploymentPlan({
+      mode: "dev",
+      affectedPackages: [],
+      changedFiles: ["docker/developer.Dockerfile"],
+    });
+    expect(developerPlan.targets.map(({ id }) => id)).toEqual(["developer"]);
   });
 
   test("release selection fails closed", async () => {

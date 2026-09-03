@@ -142,8 +142,8 @@ rebuilding code.
 See [CI and deployment](docs/ci-cd.md) for workflow inputs, required environment
 configuration, rollback, and the post-merge GitHub settings change.
 
-Do not use `docker-compose.prod.yml` as production documentation. Self-hosting
-is community-supported until the project ships a tested distribution.
+Docker Compose is limited to local infrastructure. Self-hosting is
+community-supported until the project ships a tested distribution.
 
 ## Contributing and security
 

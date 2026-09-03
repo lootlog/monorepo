@@ -4,8 +4,10 @@
     "package": "@lootlog/activity",
     "directory": "apps/activity",
     "kind": "docker",
-    "dockerTarget": "activity",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-activity",
+    "imageTitle": "Lootlog Activity Service",
+    "imageDescription": "Activity and audit service with TimescaleDB",
     "development": true
   },
   {
@@ -13,8 +15,11 @@
     "package": "@lootlog/api",
     "directory": "apps/api",
     "kind": "docker",
-    "dockerTarget": "api",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-api",
+    "imageTitle": "Lootlog API Service",
+    "imageDescription": "Main API service for organizations, loot, timers, and NPCs",
+    "installFonts": true,
     "development": true
   },
   {
@@ -22,8 +27,10 @@
     "package": "@lootlog/auth",
     "directory": "apps/auth",
     "kind": "docker",
-    "dockerTarget": "auth",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-auth",
+    "imageTitle": "Lootlog Auth Service",
+    "imageDescription": "Authentication service with Discord OAuth and JWT",
     "development": true
   },
   {
@@ -31,8 +38,10 @@
     "package": "@lootlog/battlelog",
     "directory": "apps/battlelog",
     "kind": "docker",
-    "dockerTarget": "battlelog-service",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-battlelog-service",
+    "imageTitle": "Lootlog Battlelog Service",
+    "imageDescription": "Battle statistics and warrior tracking service",
     "development": true
   },
   {
@@ -40,8 +49,10 @@
     "package": "@lootlog/developer",
     "directory": "apps/developer",
     "kind": "docker",
-    "dockerTarget": "developer",
+    "dockerfile": "docker/developer.Dockerfile",
     "image": "kamilwronka7/lootlog-developer",
+    "imageTitle": "Lootlog Developer Portal",
+    "imageDescription": "Developer documentation portal with SSR",
     "development": true
   },
   {
@@ -49,8 +60,10 @@
     "package": "@lootlog/discord-bot",
     "directory": "apps/discord-bot",
     "kind": "docker",
-    "dockerTarget": "discord-bot",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-discord-bot",
+    "imageTitle": "Lootlog Discord Bot",
+    "imageDescription": "Discord bot for organization notifications and commands",
     "development": true
   },
   {
@@ -58,8 +71,10 @@
     "package": "@lootlog/gateway",
     "directory": "apps/gateway",
     "kind": "docker",
-    "dockerTarget": "gateway",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-gateway",
+    "imageTitle": "Lootlog Gateway Service",
+    "imageDescription": "Versioned WebSocket gateway for realtime events",
     "development": true
   },
   {
@@ -67,8 +82,10 @@
     "package": "@lootlog/search",
     "directory": "apps/search",
     "kind": "docker",
-    "dockerTarget": "search",
+    "dockerfile": "docker/backend.Dockerfile",
     "image": "kamilwronka7/lootlog-search",
+    "imageTitle": "Lootlog Search Service",
+    "imageDescription": "Meilisearch indexing service",
     "development": true
   },
   {

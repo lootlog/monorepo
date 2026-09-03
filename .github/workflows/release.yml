@@ -131,14 +131,25 @@ jobs:
           while IFS= read -r target; do
             id="$(jq -r '.id' <<< "$target")"
             image="$(jq -r '.image' <<< "$target")"
-            docker_target="$(jq -r '.dockerTarget' <<< "$target")"
+            dockerfile="$(jq -r '.dockerfile' <<< "$target")"
+            package_name="$(jq -r '.package' <<< "$target")"
+            app_directory="$(jq -r '.directory' <<< "$target")"
+            install_fonts="$(jq -r 'if .installFonts == true then "1" else "0" end' <<< "$target")"
+            image_title="$(jq -r '.imageTitle' <<< "$target")"
+            image_description="$(jq -r '.imageDescription' <<< "$target")"
             reference="$image:sha-$SOURCE_SHA"
             if docker buildx imagetools inspect "$reference" >/dev/null 2>&1; then
               echo "::error::Immutable image already exists: $reference"
               exit 1
             fi
-            docker buildx build . --target "$docker_target" --load --tag "$reference" \
-              --build-arg "GITHUB_SHA=$SOURCE_SHA" --build-arg "GITHUB_REF=refs/heads/main" \
+            docker buildx build . --file "$dockerfile" --load --tag "$reference" \
+              --build-arg "PACKAGE=$package_name" --build-arg "APP_DIR=$app_directory" \
+              --build-arg "INSTALL_FONTS=$install_fonts" --build-arg "GITHUB_SHA=$SOURCE_SHA" \
+              --label "org.opencontainers.image.title=$image_title" \
+              --label "org.opencontainers.image.description=$image_description" \
+              --label "org.opencontainers.image.vendor=Lootlog" \
+              --label "org.opencontainers.image.revision=$SOURCE_SHA" \
+              --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
               --cache-from "type=gha,scope=docker-$id" --cache-to "type=gha,mode=min,scope=docker-$id"
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.74.0 \
               image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL "$reference"

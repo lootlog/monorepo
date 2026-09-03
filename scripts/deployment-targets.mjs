@@ -25,11 +25,43 @@ const integrationPackages = new Set([
 const globalDockerInputs = new Set([
   ".github/deployment-targets.json",
   ".dockerignore",
-  "Dockerfile",
   "bun.lock",
   "package.json",
   "turbo.json",
 ]);
+
+const isWorkspaceManifest = (file) =>
+  /^(?:apps|packages)\/[^/]+\/package\.json$/u.test(file);
+
+function validateDockerTarget(target) {
+  if (
+    !target.dockerfile ||
+    !target.image ||
+    !target.imageTitle ||
+    !target.imageDescription
+  ) {
+    throw new Error(
+      `Docker target ${target.id} needs dockerfile, image and image metadata`,
+    );
+  }
+  if (
+    target.installFonts !== undefined &&
+    typeof target.installFonts !== "boolean"
+  ) {
+    throw new Error(`Docker target ${target.id} has invalid installFonts`);
+  }
+}
+
+function validateCloudflareTarget(target) {
+  if (!target.artifactPath || !target.production?.project) {
+    throw new Error(
+      `Cloudflare target ${target.id} needs artifactPath and production.project`,
+    );
+  }
+  if (target.kind === "worker" && !target.configPath) {
+    throw new Error(`Worker target ${target.id} needs configPath`);
+  }
+}
 
 export async function loadDeploymentTargets() {
   const targets = JSON.parse(await readFile(catalogPath, "utf8"));
@@ -47,25 +79,11 @@ export async function loadDeploymentTargets() {
     if (packages.has(target.package)) {
       throw new Error(`Duplicate target package: ${target.package}`);
     }
-    if (target.kind === "docker" && (!target.dockerTarget || !target.image)) {
-      throw new Error(
-        `Docker target ${target.id} needs dockerTarget and image`,
-      );
-    }
-    if (
-      target.kind !== "docker" &&
-      (!target.artifactPath || !target.production?.project)
-    ) {
-      throw new Error(
-        `Cloudflare target ${target.id} needs artifactPath and production.project`,
-      );
-    }
-    if (target.kind === "worker" && !target.configPath) {
-      throw new Error(`Worker target ${target.id} needs configPath`);
-    }
     if (!new Set(["docker", "pages", "worker"]).has(target.kind)) {
       throw new Error(`Unsupported target kind: ${target.kind}`);
     }
+    if (target.kind === "docker") validateDockerTarget(target);
+    else validateCloudflareTarget(target);
     ids.add(target.id);
     packages.add(target.package);
   }
@@ -73,14 +91,20 @@ export async function loadDeploymentTargets() {
   return targets;
 }
 
-function isDockerPackagingChange(target, changedFiles) {
-  return changedFiles.some(
+function isDockerPackagingChange(target, changedFiles, affectedPackages) {
+  const targetInputChanged = changedFiles.some(
     (file) =>
       globalDockerInputs.has(file) ||
+      file.startsWith("patches/") ||
+      file === target.dockerfile ||
       file === `${target.directory}/package.json` ||
       file.startsWith(`${target.directory}/scripts/`) ||
       file.startsWith(`${target.directory}/tools/`),
   );
+  if (targetInputChanged) return true;
+
+  const workspaceManifestChanged = changedFiles.some(isWorkspaceManifest);
+  return workspaceManifestChanged && affectedPackages.has(target.package);
 }
 
 function validateProductionState(state, label, targetsById) {
@@ -168,10 +192,14 @@ export async function createDeploymentPlan(input) {
 
   const affectedPackages = new Set(input.affectedPackages ?? []);
   if (input.mode === "dev") {
+    const changedFiles = input.changedFiles ?? [];
     return {
       targets: targets.filter(
         (target) =>
-          affectedPackages.has(target.package) && target.development !== false,
+          target.development !== false &&
+          (affectedPackages.has(target.package) ||
+            (target.kind === "docker" &&
+              isDockerPackagingChange(target, changedFiles, affectedPackages))),
       ),
     };
   }
@@ -192,7 +220,7 @@ export async function createDeploymentPlan(input) {
       dockerTargets: targets.filter(
         (target) =>
           target.kind === "docker" &&
-          isDockerPackagingChange(target, changedFiles),
+          isDockerPackagingChange(target, changedFiles, affectedPackages),
       ),
     };
   }
