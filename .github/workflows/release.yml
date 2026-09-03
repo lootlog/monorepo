@@ -79,7 +79,7 @@ jobs:
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    environment: production
+    environment: prod
     env:
       VITE_ACTIVITY_API_URL: ${{ vars.VITE_ACTIVITY_API_URL }}
       VITE_ADDON_INSTALL_URL: ${{ vars.VITE_ADDON_INSTALL_URL }}
