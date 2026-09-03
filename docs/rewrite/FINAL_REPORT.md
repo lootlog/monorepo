@@ -57,9 +57,7 @@ debt rather than treating the absence of NestJS imports as sufficient:
   uncaught throws from returning inside generators;
 - tautological endpoint-dispatch tests that shared one mock across unrelated
   operations were removed rather than preserved as misleading coverage;
-- API native composition is split into focused responsibility modules; and
-- the CI `architecture:effect` gate prevents the removed NestJS and
-  anti-Effect patterns from returning.
+- API native composition is split into focused responsibility modules.
 
 ## Preserved contracts
 
