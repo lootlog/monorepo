@@ -130,12 +130,20 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          target: ${{ matrix.dockerTarget }}
+          file: ${{ matrix.dockerfile }}
           push: false
           tags: lootlog-${{ matrix.id }}:ci
+          labels: |
+            org.opencontainers.image.title=${{ matrix.imageTitle }}
+            org.opencontainers.image.description=${{ matrix.imageDescription }}
+            org.opencontainers.image.vendor=Lootlog
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           build-args: |
+            PACKAGE=${{ matrix.package }}
+            APP_DIR=${{ matrix.directory }}
+            INSTALL_FONTS=${{ matrix.installFonts && '1' || '0' }}
             GITHUB_SHA=${{ github.sha }}
-            GITHUB_REF=${{ github.ref }}
           cache-from: type=gha,scope=docker-${{ matrix.id }}
           cache-to: type=gha,mode=min,scope=docker-${{ matrix.id }}
           provenance: false

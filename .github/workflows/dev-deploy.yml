@@ -40,7 +40,11 @@ jobs:
           if [[ "$BASE_SHA" =~ ^0+$ ]]; then BASE_SHA="$(git rev-parse "$HEAD_SHA^")"; fi
           affected="$(bunx turbo@2.10.12 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
           packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
-          input="$(jq -cn --argjson affectedPackages "$packages" '{mode: "dev", affectedPackages: $affectedPackages}')"
+          changed_files="$(git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" | jq -Rs 'split("\u0000") | map(select(length > 0))')"
+          input="$(jq -cn \
+            --argjson affectedPackages "$packages" \
+            --argjson changedFiles "$changed_files" \
+            '{mode: "dev", affectedPackages: $affectedPackages, changedFiles: $changedFiles}')"
           plan="$(bun scripts/deployment-targets.mjs "$input")"
           {
             echo "targets=$(jq -c '.targets' <<< "$plan")"
@@ -113,15 +117,20 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
-          target: ${{ matrix.dockerTarget }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ matrix.image }}:dev-${{ github.sha }}
           labels: |
+            org.opencontainers.image.title=${{ matrix.imageTitle }}
+            org.opencontainers.image.description=${{ matrix.imageDescription }}
+            org.opencontainers.image.vendor=Lootlog
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           build-args: |
+            PACKAGE=${{ matrix.package }}
+            APP_DIR=${{ matrix.directory }}
+            INSTALL_FONTS=${{ matrix.installFonts && '1' || '0' }}
             GITHUB_SHA=${{ github.sha }}
-            GITHUB_REF=${{ github.ref }}
           cache-from: type=gha,scope=docker-${{ matrix.id }}
           cache-to: type=gha,mode=min,scope=docker-${{ matrix.id }}
           provenance: false

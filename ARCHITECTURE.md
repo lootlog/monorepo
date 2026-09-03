@@ -214,9 +214,8 @@ partial failure rolls applications back in reverse order. Both Workers'
 Wrangler configuration in this repository remains the source of truth for
 their custom domains.
 
-Docker Compose supports local infrastructure. `docker-compose.prod.yml` is not
-a supported production model and should be retired or clearly marked legacy.
-Self-hosting remains community-supported until a tested distribution exists.
+Docker Compose supports local infrastructure only. Self-hosting remains
+community-supported until a tested distribution exists.
 
 ## Service-boundary rule
 
@@ -267,7 +266,6 @@ The target contracts above expose current work rather than hiding it:
 - Discord proof is optional and availability is not represented as product
   state;
 - web tests exist but the workspace does not declare a `test` script;
-- `docker-compose.prod.yml` does not represent managed production;
 - developer portal is a placeholder rather than a supported API product.
 
 Treat each gap as migration work. Do not document a target behavior as already
