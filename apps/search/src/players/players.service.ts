@@ -1,26 +1,26 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
+import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
-import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
-import type { GetPlayersDto } from "./dto/get-players.dto.js";
-import { PLAYERS_INDEX } from "./constants/meilisearch.js";
-import type { IndexPlayersDto } from "./dto/index-players.dto.js";
-import type { playerHitSchema } from "./dto/player-hit.schema.js";
+import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
+import {
+  attemptMeilisearch,
+  type SearchOperationFailure,
+} from "#src/meilisearch/search-operation-failure";
+import type { AppLogger } from "#src/shared/logger";
+import type { PlayerSearchQuery } from "./player-search-query.js";
+import { PLAYERS_INDEX } from "./search-index.js";
+import type { IndexPlayersCommand } from "./index-players-command.js";
+import type { PlayerHit } from "./player-hit.js";
 
-type PlayerHit = z.infer<typeof playerHitSchema>;
-
-@Injectable()
-export class PlayersService {
-  constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-  ) {}
-
-  async getPlayers({ limit, search, world }: GetPlayersDto) {
-    const index = this.meilisearch.index<PlayerHit>(PLAYERS_INDEX);
+export const makePlayersModule = (
+  meilisearch: Meilisearch,
+  logger: AppLogger,
+) => {
+  const getPlayers = Effect.fn("SearchPlayers.get")(function* ({
+    limit,
+    search,
+    world,
+  }: PlayerSearchQuery) {
+    const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
 
@@ -40,25 +40,28 @@ export class PlayersService {
       ...(filters.length > 0 && { filter: filters.join(" AND ") }),
     };
 
-    try {
-      const data = await index.search(searchTerm, query);
+    return yield* attemptMeilisearch("search.players", () =>
+      index.search(searchTerm, query),
+    ).pipe(
+      Effect.map((response) => response.hits),
+      Effect.catch((error) => {
+        logger.error("Players search error", { error });
+        return Effect.succeed([] as PlayerHit[]);
+      }),
+    );
+  });
 
-      return data.hits;
-    } catch (error) {
-      this.logger.error("Players search error", { error });
-      return [];
-    }
-  }
-
-  async indexPlayers(data: IndexPlayersDto) {
-    const index = this.meilisearch.index(PLAYERS_INDEX);
+  const indexPlayers = Effect.fn("SearchPlayers.index")(function* (
+    data: IndexPlayersCommand,
+  ) {
+    const index = meilisearch.index(PLAYERS_INDEX);
 
     const validPlayers = data.players.filter(
       (player) => player.world && player.id && player.name,
     );
 
     if (validPlayers.length === 0) {
-      this.logger.warn("No valid players to index (missing required fields)", {
+      logger.warn("No valid players to index (missing required fields)", {
         players: data.players,
       });
       return;
@@ -68,7 +71,7 @@ export class PlayersService {
       const invalidPlayers = data.players.filter(
         (player) => !player.world || !player.id || !player.name,
       );
-      this.logger.warn(
+      logger.warn(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },
       );
@@ -79,10 +82,17 @@ export class PlayersService {
       uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
-    try {
-      return await index.addDocuments(playersWithUid, { primaryKey: "uid" });
-    } catch (error) {
-      this.logger.error("Error indexing players", { error });
-    }
-  }
-}
+    yield* attemptMeilisearch("search.players.index", () =>
+      index.addDocuments(playersWithUid, { primaryKey: "uid" }),
+    );
+  });
+
+  return { getPlayers, indexPlayers } satisfies {
+    readonly getPlayers: (
+      input: PlayerSearchQuery,
+    ) => Effect.Effect<ReadonlyArray<PlayerHit>>;
+    readonly indexPlayers: (
+      data: IndexPlayersCommand,
+    ) => Effect.Effect<void, SearchOperationFailure>;
+  };
+};

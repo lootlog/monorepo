@@ -1,4 +1,4 @@
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useReadyRoomWithdrawal } from "@/features/party-finder/hooks/use-ready-room-withdrawal";

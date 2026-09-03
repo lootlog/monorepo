@@ -8,8 +8,9 @@ import {
   getTimersControllerGetTimerHistoryQueryKey,
   useTimersControllerGetTimerHistory,
   useTimersControllerRestoreTimerFromHistory,
-} from "@lootlog/api-client/react-query/main/timers";
-import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
+  type TimerHistoryResponseDto,
+} from "@lootlog/client/main";
+
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { History } from "lucide-react";
 import { useState, type FC } from "react";

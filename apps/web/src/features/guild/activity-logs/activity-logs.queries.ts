@@ -2,12 +2,12 @@ import { infiniteQueryOptions } from "@tanstack/react-query";
 import {
   activitiesControllerFindByGuild,
   getActivitiesControllerFindByGuildQueryKey,
-} from "@lootlog/api-client/react-query/activity/guilds";
-import { ActivitiesControllerFindByGuildSourceItem } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-source-item";
-import { ActivitiesControllerFindByGuildTypeItem } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-type-item";
-import type { ActivitiesControllerFindByGuildParams } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-params";
-import type { ActivitiesControllerFindByGuildSourceItem as ActivitySource } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-source-item";
-import type { ActivitiesControllerFindByGuildTypeItem as ActivityType } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-type-item";
+} from "@lootlog/client/activity";
+import { ActivitiesControllerFindByGuildSourceItem } from "@lootlog/client/activity";
+import { ActivitiesControllerFindByGuildTypeItem } from "@lootlog/client/activity";
+import type { ActivitiesControllerFindByGuildParams } from "@lootlog/client/activity";
+import type { ActivitiesControllerFindByGuildSourceItem as ActivitySource } from "@lootlog/client/activity";
+import type { ActivitiesControllerFindByGuildTypeItem as ActivityType } from "@lootlog/client/activity";
 
 export type ActivityLogsQueryOptions = {
   guildId?: string;

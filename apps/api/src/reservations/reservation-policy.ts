@@ -1,11 +1,11 @@
 import {
-  BadRequestException,
-  UnprocessableEntityException,
-} from "@nestjs/common";
+  InvalidRequestError,
+  InvalidEntityError,
+} from "#src/shared/http/http-errors";
 import {
   validateReservationTime as getReservationTimeValidationIssue,
   type ReservationSettings,
-} from "@lootlog/reservations";
+} from "@lootlog/domain/reservations";
 
 const MAX_WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
 export function parseReservationWindow(fromValue: string, toValue: string) {
@@ -18,10 +18,10 @@ export function parseReservationWindow(fromValue: string, toValue: string) {
     Number.isNaN(to.getTime()) ||
     durationMs <= 0
   ) {
-    throw new BadRequestException({ code: "INVALID_TIME_RANGE" });
+    throw new InvalidRequestError({ code: "INVALID_TIME_RANGE" });
   }
   if (durationMs > MAX_WINDOW_MS) {
-    throw new BadRequestException({ code: "RESERVATION_WINDOW_TOO_LARGE" });
+    throw new InvalidRequestError({ code: "RESERVATION_WINDOW_TOO_LARGE" });
   }
 
   return { from, to };
@@ -36,6 +36,6 @@ export function validateReservationTime(options: {
 }): void {
   const issue = getReservationTimeValidationIssue(options);
   if (issue) {
-    throw new UnprocessableEntityException(issue);
+    throw new InvalidEntityError(issue);
   }
 }

@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 import {
   getGuildsControllerGetManageableUserGuildsQueryKey,
   useGuildsControllerGetManageableUserGuilds,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");

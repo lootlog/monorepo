@@ -1,10 +1,10 @@
 import type {
   PartyReadyRoomClientUpdate,
   PartyReadyRoomProjection,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 import { useState } from "react";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
-import { partyReadyRoomControllerWithdraw } from "@lootlog/api-client/react-query/main/party-ready-room";
+import { partyReadyRoomControllerWithdraw } from "@lootlog/client/main";
 import {
   selectReadyRoomParticipantForCharacter,
   usePartyFinderStore,

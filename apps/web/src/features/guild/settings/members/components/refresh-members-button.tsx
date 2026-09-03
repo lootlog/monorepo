@@ -10,7 +10,7 @@ import {
   getMembersControllerGetLatestRefreshJobQueryKey,
   useMembersControllerGetLatestRefreshJob,
   useMembersControllerRefreshAllMembers,
-} from "@lootlog/api-client/react-query/main/members";
+} from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshMembersStatus } from "./refresh-members-status";
 

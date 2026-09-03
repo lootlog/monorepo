@@ -3,7 +3,7 @@ import {
   getEventsMonitoringControllerGetActiveGapForMapQueryKey,
   getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
   getListEventMapsQueryKey,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 
 const getEventHeroPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;

@@ -3,7 +3,7 @@ import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
 
 export const useVisibleLootlogGuilds = () => {
   const guildsQuery = useUsersControllerGetCurrentUserAccessibleGuilds({

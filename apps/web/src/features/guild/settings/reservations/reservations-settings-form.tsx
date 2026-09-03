@@ -26,19 +26,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   RESERVATION_TIME_GRANULARITY_OPTIONS,
   resolveReservationSettings,
-} from "@lootlog/reservations";
+} from "@lootlog/domain/reservations";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import {
   reservationsSettingsFormSchema,
   type ReservationsSettingsFormValues,
 } from "./reservations-form.schema";
-import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
+import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 
 type ReservationsSettingsFormProps = {
   guild: GuildResponseDtoOutput;

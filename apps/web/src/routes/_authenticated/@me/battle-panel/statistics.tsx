@@ -14,7 +14,7 @@ import {
   getBattlesControllerGetHeadToHeadQueryOptions,
   getBattlesControllerGetPhGrowthQueryOptions,
   getBattlesControllerGetProfessionWinRateQueryOptions,
-} from "@lootlog/api-client/react-query/battlelog/battles";
+} from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 

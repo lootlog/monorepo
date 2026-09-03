@@ -2,7 +2,7 @@ import { PinnedEventsBanner } from "./pinned-events-banner";
 import {
   getListPinnedEventsQueryKey,
   useListPinnedEvents,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const GuildPinnedEventsSection = ({

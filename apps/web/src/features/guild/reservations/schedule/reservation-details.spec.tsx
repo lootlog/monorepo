@@ -10,7 +10,8 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/reservations", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getListReservationSpotsQueryKey: () => [],
   getListSpotReservationsQueryKey: () => [],
   useDeleteReservation: () => ({ isPending: false, mutate: vi.fn() }),

@@ -7,7 +7,7 @@ import {
   createNotificationsSettings,
 } from "@/lib/game-account-preferences";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
-import * as UsersApi from "@lootlog/api-client/react-query/main/users";
+import * as UsersApi from "@lootlog/client/main";
 import { useGameStore } from "@/store/game.store";
 
 const mockUseAccessibleGuilds = vi.fn();
@@ -19,10 +19,8 @@ const { mockGetAccountId } = vi.hoisted(() => ({
   mockGetAccountId: vi.fn((): string | null => "202"),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/users", async () => {
-  const actual = await vi.importActual<typeof UsersApi>(
-    "@lootlog/api-client/react-query/main/users",
-  );
+vi.mock("@lootlog/client/main", async () => {
+  const actual = await vi.importActual<typeof UsersApi>("@lootlog/client/main");
 
   return {
     ...actual,

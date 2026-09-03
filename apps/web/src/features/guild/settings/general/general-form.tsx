@@ -25,11 +25,11 @@ import {
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import {
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
   invalidateUsersControllerGetCurrentUserGuilds,
-} from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
 import {
   generalFormSchema,
   type GeneralFormValues,

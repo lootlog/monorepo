@@ -12,7 +12,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
+import type { NpcType } from "@lootlog/client/main";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,

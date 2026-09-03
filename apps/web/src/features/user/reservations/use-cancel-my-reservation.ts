@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   getListMyReservationsQueryKey,
   useDeleteMyReservation,
-} from "@lootlog/api-client/react-query/main/reservations";
+} from "@lootlog/client/main";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
 
 export const useCancelMyReservation = () => {

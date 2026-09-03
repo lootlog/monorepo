@@ -1,5 +1,5 @@
-import { useMessagingControllerSendNotification } from "@lootlog/api-client/react-query/main/messaging";
-import { isApiError } from "@lootlog/api-client/transport";
+import { useMessagingControllerSendNotification } from "@lootlog/client/main";
+import { isApiError } from "@lootlog/client/transport";
 import { useState } from "react";
 
 type StartNotificationMessageOptions<TResult> = {

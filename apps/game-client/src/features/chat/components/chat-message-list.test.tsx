@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode, Ref } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ChatAppearanceSettings } from "@lootlog/types";
+import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import { dispatchChatScrollToMessage } from "../chat-scroll-to-message";
 import type { ChatRenderableMessage } from "../chat.helpers";
 import { ChatMessageList } from "./chat-message-list";

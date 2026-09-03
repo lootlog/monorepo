@@ -3,7 +3,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/api-client/models/main/my-reservations-response-dto-items-item";
+import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { EditMyReservationForm } from "./edit-my-reservation-form";
 
 const mocks = vi.hoisted(() => ({
@@ -15,15 +15,13 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/reservations", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getListMyReservationsQueryKey: () => ["my-reservations"],
   useUpdateMyReservation: () => ({
     isPending: false,
     mutate: mocks.mutate,
   }),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/notifications", () => ({
   useNotificationsUserControllerGetUserTargets: () => ({
     data: [
       {

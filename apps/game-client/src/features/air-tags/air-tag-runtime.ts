@@ -6,7 +6,7 @@ import type {
   AirTagSubscriptionAck,
   AirTagSubscriptionPayload,
   AirTagUpdateEvent,
-} from "@lootlog/types";
+} from "@lootlog/schema/air-tag";
 import { airTagObservationController } from "./air-tag-observation-controller";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { airTagRenderer } from "./air-tag-renderer";

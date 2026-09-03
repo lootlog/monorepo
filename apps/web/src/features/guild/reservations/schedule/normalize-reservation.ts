@@ -1,4 +1,4 @@
-import type { ReservationWindowResponseDtoItemsItem } from "@lootlog/api-client/models/main/reservation-window-response-dto-items-item";
+import type { ReservationWindowResponseDtoItemsItem } from "@lootlog/client/main";
 
 export type NormalizedReservation = Omit<
   ReservationWindowResponseDtoItemsItem,

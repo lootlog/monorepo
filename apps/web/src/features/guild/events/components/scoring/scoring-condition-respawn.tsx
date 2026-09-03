@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { ArrowRight } from "lucide-react";
-import { EVENT_SCORING_NUMERIC_OPERATORS } from "@lootlog/scoring";
+import { EVENT_SCORING_NUMERIC_OPERATORS } from "@lootlog/domain/scoring";
 
 type ScoringRulesFormValues = {
   scoringRules: { rules: { conditions: unknown[] }[] };

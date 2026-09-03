@@ -22,6 +22,5 @@
 
 ## Checklist
 
-- [ ] A changeset is included, or this change does not require one
 - [ ] Relevant tests were added or run, or testing is not applicable
 - [ ] Migrations, environment variables, documentation, and breaking changes are covered when applicable

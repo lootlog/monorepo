@@ -1,19 +1,19 @@
-import type { EventListItemResponseDto } from "@lootlog/api-client/models/main/event-list-item-response-dto";
-import type { EventMapsResponseDtoOutput } from "@lootlog/api-client/models/main/event-maps-response-dto-output";
-import type { EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem } from "@lootlog/api-client/models/main/event-maps-response-dto-output-hero-npcs-item-maps-item-assigned-members-item-roles-item";
-import type { EventTimerResponseDto } from "@lootlog/api-client/models/main/event-timer-response-dto";
-import type { EventOverviewResponseDtoHeroNpcsItem } from "@lootlog/api-client/models/main/event-overview-response-dto-hero-npcs-item";
-import type { EventRankingEntryResponseDto } from "@lootlog/api-client/models/main/event-ranking-entry-response-dto";
-import type { EventWrappedApiResponseDtoOutput } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output";
-import type { EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-coverage-best-hero-coverage";
-import type { EventWrappedApiResponseDtoOutputHeroesItem } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-heroes-item";
-import type { EventWrappedApiResponseDtoOutputLootHeroBreakdownItem } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-loot-hero-breakdown-item";
-import type { EventWrappedApiResponseDtoOutputOverviewRarityTotals } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-overview-rarity-totals";
-import type { HeroRespawnConfigResponseDto } from "@lootlog/api-client/models/main/hero-respawn-config-response-dto";
-import type { HeroRespawnConfigResponseDtoWindowStatus } from "@lootlog/api-client/models/main/hero-respawn-config-response-dto-window-status";
-import type { KillTimelineMapResponseDto } from "@lootlog/api-client/models/main/kill-timeline-map-response-dto";
-import type { KillTimelineMapResponseDtoAssignmentsItem } from "@lootlog/api-client/models/main/kill-timeline-map-response-dto-assignments-item";
-import type { KillTimelineMapResponseDtoGapsItem } from "@lootlog/api-client/models/main/kill-timeline-map-response-dto-gaps-item";
+import type { EventListItemResponseDto } from "@lootlog/client/main";
+import type { EventMapsResponseDtoOutput } from "@lootlog/client/main";
+import type { EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem } from "@lootlog/client/main";
+import type { EventTimerResponseDto } from "@lootlog/client/main";
+import type { EventOverviewResponseDtoHeroNpcsItem } from "@lootlog/client/main";
+import type { EventRankingEntryResponseDto } from "@lootlog/client/main";
+import type { EventWrappedApiResponseDtoOutput } from "@lootlog/client/main";
+import type { EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage } from "@lootlog/client/main";
+import type { EventWrappedApiResponseDtoOutputHeroesItem } from "@lootlog/client/main";
+import type { EventWrappedApiResponseDtoOutputLootHeroBreakdownItem } from "@lootlog/client/main";
+import type { EventWrappedApiResponseDtoOutputOverviewRarityTotals } from "@lootlog/client/main";
+import type { HeroRespawnConfigResponseDto } from "@lootlog/client/main";
+import type { HeroRespawnConfigResponseDtoWindowStatus } from "@lootlog/client/main";
+import type { KillTimelineMapResponseDto } from "@lootlog/client/main";
+import type { KillTimelineMapResponseDtoAssignmentsItem } from "@lootlog/client/main";
+import type { KillTimelineMapResponseDtoGapsItem } from "@lootlog/client/main";
 
 export type MemberRole =
   EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem;

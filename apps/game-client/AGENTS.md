@@ -34,7 +34,7 @@ processors, projections, or runtime/domain stores, read
   same replay benchmark before and after. A throughput regression above 10% or
   an algorithmic regression blocks completion. Also run targeted
   runtime/processor tests, the complete app test suite, TypeScript typecheck,
-  and `pnpm --filter @lootlog/game-client lint`.
+  and `bun run --filter @lootlog/game-client lint`.
 - For isolated UI or copy changes, run focused tests, TypeScript typecheck, and
   lint. CI remains responsible for the complete suite before merge.
 - Measure rendering work when a UI change can affect game performance even if

@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/api-client/react-query/main/users";
+import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 
 const ACCESSIBLE_GUILDS_CACHE_TIME = 1000 * 60 * 5;
 const DEFAULT_QUERY_STALE_TIME = 30 * 1000;

@@ -11,7 +11,7 @@ import type {
   LootlogGameClientApi,
   PublicSocketState,
 } from "./types";
-import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
+import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import type { Timer } from "@/api";
 
 declare global {

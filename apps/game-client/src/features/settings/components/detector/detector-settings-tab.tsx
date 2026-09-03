@@ -11,7 +11,7 @@ import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/d
 import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
 import { NpcType } from "@/api/npcs.api";
 import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
-import type { DetectorNpcType } from "@lootlog/types";
+import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 

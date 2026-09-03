@@ -1,5 +1,5 @@
 import { LanguageVersion } from "@/store/global.store";
-import { createApiClient } from "@lootlog/api-client/transport";
+import { createApiClient } from "@lootlog/client/transport";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const MARGONEM_CHARACTER_LIST_URL =

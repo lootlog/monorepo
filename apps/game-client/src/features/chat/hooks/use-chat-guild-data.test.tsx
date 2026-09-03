@@ -5,14 +5,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { useChatGuildData } from "./use-chat-guild-data";
 
 const mocks = vi.hoisted(() => ({
   getChatMessages: vi.fn(),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   chatControllerGetChatMessages: (...arguments_: unknown[]) =>
     mocks.getChatMessages(...arguments_),
   getChatControllerGetChatMessagesQueryKey: ({
@@ -20,6 +21,17 @@ vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
   }: {
     guildId: string;
   }) => [`/guilds/${guildId}/chat-messages`] as const,
+  getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
+    "current-member",
+    guildId,
+  ],
+  membersControllerGetMe: vi.fn(),
+  getRolesControllerGetGuildRolesQueryKey: ({
+    guildId,
+  }: {
+    guildId: string;
+  }) => ["guild-roles", guildId],
+  rolesControllerGetGuildRoles: vi.fn(),
 }));
 
 vi.mock("@/hooks/api/guild-members-summary-query", () => ({
@@ -27,23 +39,6 @@ vi.mock("@/hooks/api/guild-members-summary-query", () => ({
     queryKey: ["guild-members", guildId],
     queryFn: () => Promise.resolve([]),
   }),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/members", () => ({
-  getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
-    "current-member",
-    guildId,
-  ],
-  membersControllerGetMe: vi.fn(),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/roles", () => ({
-  getRolesControllerGetGuildRolesQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["guild-roles", guildId],
-  rolesControllerGetGuildRoles: vi.fn(),
 }));
 
 const createMessage = (

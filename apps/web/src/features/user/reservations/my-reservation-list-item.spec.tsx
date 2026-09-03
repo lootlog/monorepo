@@ -3,13 +3,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/api-client/models/main/my-reservations-response-dto-items-item";
+import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { MyReservationListItem } from "./my-reservation-list-item";
 
 const guildIconUrl =
   "https://cdn.discordapp.com/icons/guild-1/current-guild-icon.webp";
 
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   useUsersControllerGetCurrentUserGuilds: () => ({
     data: [
       {

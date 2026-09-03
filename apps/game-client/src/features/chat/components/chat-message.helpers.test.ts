@@ -20,7 +20,7 @@ vi.mock("@/api/npcs.api", () => ({
   },
 }));
 
-vi.mock("@lootlog/types", async (importOriginal) => ({
+vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
   ...(await importOriginal()),
   getNpcTypeByWt: () => "HERO",
 }));

@@ -1,11 +1,11 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { ReservationsSettings } from "@/features/guild/settings/reservations/reservations-settings";
 import { ReservationsSettingsSkeleton } from "@/features/guild/settings/reservations/reservations-skeleton";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import { canManageGuild } from "@/lib/guild-permissions";
 import {
   throwForbiddenRouteError,

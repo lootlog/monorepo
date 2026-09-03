@@ -1,7 +1,5 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { RedisService } from "#src/redis/redis.service";
 import type {
   DiscordEndpoint,
   DiscordInvalidRequestStatus,
@@ -16,7 +14,6 @@ export type DiscordMemberRefreshMetricOutcome =
   | "stale_used"
   | "verification_unavailable";
 
-@Injectable()
 export class DiscordSyncDiagnosticsService {
   private readonly windowMs = 10 * 60 * 1000;
   private readonly windowTtlSeconds = 20 * 60;
@@ -28,7 +25,7 @@ return 1
 `;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
   ) {}
 

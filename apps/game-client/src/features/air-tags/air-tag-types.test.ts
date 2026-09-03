@@ -1,11 +1,11 @@
 import {
   AIR_TAG_CLAN_ENEMY_RELATION,
   AIR_TAG_ENEMY_RELATION,
-  getAirTagEffectiveRelation,
   isAirTagScopeSnapshot,
   isAirTagUpdateEvent,
   type AirTagTarget,
-} from "@lootlog/types";
+} from "@lootlog/schema/air-tag";
+import { getAirTagEffectiveRelation } from "@lootlog/domain/air-tag";
 
 const target: AirTagTarget = {
   targetId: "42",

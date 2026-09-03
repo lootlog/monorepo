@@ -1,4 +1,4 @@
-import type { PartyReadyRoomOrganizerProjection } from "@lootlog/types";
+import type { PartyReadyRoomOrganizerProjection } from "@lootlog/schema/party-ready-room";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantItem } from "@/features/party-finder/components/ready-room-participant-item";
 

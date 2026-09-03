@@ -7,7 +7,7 @@ import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
   useEventsRankingControllerGetEventHeroStats,
   useShowEventOverview,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { EventKillsHistoryContent } from "./event-kills-history-content";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 
@@ -17,7 +17,8 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/events", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getEventsRankingControllerGetEventHeroStatsQueryKey: vi.fn(() => [
     "hero-stats",
   ]),

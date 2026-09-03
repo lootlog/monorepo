@@ -13,15 +13,15 @@ export const events = async (args: string[]): Promise<void> => {
 ${chalk.bold("events - RabbitMQ event management")}
 
 ${chalk.bold("Usage:")}
-  pnpm events <command> [options]
+  bun run events <command> [options]
 
 ${chalk.bold("Commands:")}
   publish     Publish test events to RabbitMQ
 
 ${chalk.bold("Examples:")}
-  pnpm events publish              # Interactive event selection
-  pnpm events publish --help       # Show publish command help
-  pnpm events publish --event loot-created
+  bun run events:publish              # Interactive event selection
+  bun run events:publish --help       # Show publish command help
+  bun run events:publish --event loot-created
 
 ${chalk.bold("Global Options:")}
   -h, --help                       Show this help message
@@ -39,7 +39,7 @@ ${chalk.bold("Requirements:")}
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));
     console.log(
-      chalk.gray(`Run 'pnpm events --help' to see available commands.\n`),
+      chalk.gray(`Run 'bun run events -- --help' to see available commands.\n`),
     );
     process.exit(1);
   }

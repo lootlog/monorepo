@@ -5,7 +5,7 @@ import {
   isAirTagObservation,
   type AirTagObservation,
   type AirTagObservationBatch,
-} from "@lootlog/types";
+} from "@lootlog/schema/air-tag";
 import type { Other, OtherCreate } from "@lootlog/margonem/game-events";
 
 export const AIR_TAG_BATCH_INTERVAL_MS = 250;

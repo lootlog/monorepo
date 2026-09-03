@@ -30,7 +30,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getTimersControllerGetTimersQueryKey,
   useTimersControllerGetTimers,
-} from "@lootlog/api-client/react-query/main/timers";
+} from "@lootlog/client/main";
 import { ThemeEmptyStateIcon } from "@/themes";
 
 const getTimerListState = <Timer extends { npc?: { name: string } | null }>(

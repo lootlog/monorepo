@@ -1,11 +1,11 @@
 import type { BadgeProps } from "@lootlog/ui/components/badge";
-import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-anchor";
-import type { CreateNotificationRuleDtoScheduleAnchor } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-anchor";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/api-client/models/main/guild-notification-rules-response-dto";
-import type { NotificationJobsResponseDto } from "@lootlog/api-client/models/main/notification-jobs-response-dto";
-import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
+import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
+import type { CreateNotificationRuleDtoScheduleAnchor } from "@lootlog/client/main";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
+import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
+import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
+import type { NotificationJobsResponseDto } from "@lootlog/client/main";
+import type { NotificationTargetResponseDto } from "@lootlog/client/main";
 
 type GuildNotificationTarget = NotificationTargetResponseDto;
 type GuildNotificationRule = GuildNotificationRulesResponseDto["items"][number];

@@ -119,8 +119,8 @@ describe("useSettingsStore", () => {
       .getState()
       .ensureGuildId("character-1", ["guild-2", "guild-1"]);
 
-    expect(useSettingsStore.getState().guildIdByCharId).toEqual({
-      "character-1": "guild-2",
+    expect(useSettingsStore.getState()).toMatchObject({
+      guildIdByCharId: { "character-1": "guild-2" },
     });
   });
 

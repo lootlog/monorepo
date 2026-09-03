@@ -1,4 +1,4 @@
-import { createApiClient } from "@lootlog/api-client/transport";
+import { createApiClient } from "@lootlog/client/transport";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import type {

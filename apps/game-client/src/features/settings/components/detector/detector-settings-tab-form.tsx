@@ -6,11 +6,14 @@ import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
+import type {
+  DetectorNpcType,
+  DetectorTypeSettings,
+} from "@lootlog/schema/account-preferences";
 import { type FC, useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import * as z from "zod";
 
 type DetectorSettingsTabFormProps = {
   categoryKey: DetectorNpcType;

@@ -1,7 +1,7 @@
 import type {
   UpdateTimerSettingsPayload,
   UpdateGuildTimerSettingsPayload,
-} from "@lootlog/types";
+} from "@lootlog/schema/timer-settings";
 import { useTimersStore } from "./timers.store";
 
 let syncTimeoutId: NodeJS.Timeout | null = null;

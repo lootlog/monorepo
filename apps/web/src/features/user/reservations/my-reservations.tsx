@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useListMyReservations } from "@lootlog/api-client/react-query/main/reservations";
-import type { ListMyReservationsStatus } from "@lootlog/api-client/models/main/list-my-reservations-status";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/api-client/models/main/my-reservations-response-dto-items-item";
+import { useListMyReservations } from "@lootlog/client/main";
+import type { ListMyReservationsStatus } from "@lootlog/client/main";
+import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { Card } from "@lootlog/ui/components/card";
 import {
   Empty,

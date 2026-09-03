@@ -2,6 +2,15 @@
 **/node_modules
 node_modules
 
+# Local agent indexes, vendored references, and benchmark artifacts
+.agents
+.claude
+.codegraph
+.codex
+perf
+playground
+repos
+
 # Git
 **/.git
 .git
@@ -51,7 +60,6 @@ Thumbs.db
 logs
 *.log
 npm-debug.log*
-pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 

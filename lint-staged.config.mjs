@@ -1,6 +1,6 @@
 const generatedSourcePattern =
-  /(?:^|\/)apps\/(?:(?:web|game-client)\/src\/lib\/api\/generated|(?:api|activity)\/src\/generated\/prisma)\//;
-const ignoredFilePattern = /(?:^|\/)pnpm-lock\.yaml$/;
+  /(?:^|\/)apps\/(?:web|game-client)\/src\/lib\/api\/generated\//;
+const ignoredFilePattern = /(?:^|\/)bun\.lock$/;
 
 const quote = (file) => JSON.stringify(file);
 

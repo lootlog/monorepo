@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -20,7 +20,8 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   partyReadyRoomControllerWithdraw: (...args: unknown[]) => withdraw(...args),
 }));
 

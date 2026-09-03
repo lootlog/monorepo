@@ -12,12 +12,12 @@ import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
-import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
+import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import {
   getShowEventOverviewQueryKey,
   useShowEventOverview,
   useUpdateEvent,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 interface EventRulebookFormData {

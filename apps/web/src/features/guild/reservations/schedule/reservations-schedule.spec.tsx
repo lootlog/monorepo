@@ -43,7 +43,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/reservations", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getListReservationSpotsQueryKey: vi.fn(() => ["reservation-spots"]),
   getListSpotReservationsQueryKey: vi.fn(() => ["spot-reservations"]),
   getListSpotReservationsQueryOptions: (
@@ -66,9 +67,6 @@ vi.mock("@lootlog/api-client/react-query/main/reservations", () => ({
       isPending: false,
     };
   },
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   useGuildsControllerGetGuildById: () => ({
     data: {
       reservationActiveLimitPerSpot: 3,

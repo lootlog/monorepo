@@ -3,9 +3,9 @@ import { useGameStore } from "@/store/game.store";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
-} from "@lootlog/api-client/react-query/main/user-lootlog-config";
-import type { CreateOrUpdateLootlogCharacterConfigDto } from "@lootlog/api-client/models/main/create-or-update-lootlog-character-config-dto";
-import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
+  type CreateOrUpdateLootlogCharacterConfigDto,
+  type UserLootlogConfigAccountResponseDtoOutput,
+} from "@lootlog/client/main";
 
 export type UseUpdateLootlogCharacterSettings =
   CreateOrUpdateLootlogCharacterConfigDto;

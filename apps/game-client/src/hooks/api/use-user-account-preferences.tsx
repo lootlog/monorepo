@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cloneDetectorSettings } from "@/lib/game-account-preferences";
-import { DETECTOR_NPC_TYPES, type NotificationType } from "@lootlog/types";
+import {
+  DETECTOR_NPC_TYPES,
+  type NotificationType,
+} from "@lootlog/schema/account-preferences";
 import {
   getUsersControllerGetUserGameAccountPreferencesQueryKey,
   useUsersControllerGetUserGameAccountPreferences,
   usersControllerUpdateUserGameAccountPreferences,
-} from "@lootlog/api-client/react-query/main/users";
-import type { UpdateUserGameAccountPreferencesDto } from "@lootlog/api-client/models/main/update-user-game-account-preferences-dto";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-game-account-preferences-response-dto-output";
+  type UpdateUserGameAccountPreferencesDto,
+  type UserGameAccountPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
 
 export const useUserGameAccountPreferences = (
   accountId: string | null,

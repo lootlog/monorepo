@@ -11,7 +11,7 @@ import {
 import { resolveDetectorGuildIds } from "@/lib/game-account-preferences";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import { useGameStore } from "@/store/game.store";
-import type { DetectorRoutingRule } from "@lootlog/types";
+import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 
 type ResolveNpcNotificationRoutingOptions = {
   routingRules: DetectorRoutingRule[];

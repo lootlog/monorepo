@@ -1,17 +1,17 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
+import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
-import { getMeilisearchErrorCode } from "#src/meilisearch/meilisearch.utils";
-import type { GetItemsDto } from "./dto/get-items.dto.js";
-import { ITEMS_INDEX } from "./constants/meilisearch.js";
-import type { IndexItemsDto } from "./dto/index-items.dto.js";
-import type { itemHitSchema } from "./dto/item-hit.schema.js";
-import { createItemSearchFields } from "./utils/create-item-search-fields.js";
+import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
+import {
+  attemptMeilisearch,
+  type SearchOperationFailure,
+} from "#src/meilisearch/search-operation-failure";
+import type { AppLogger } from "#src/shared/logger";
+import type { ItemSearchQuery } from "./item-search-query.js";
+import { ITEMS_INDEX } from "./search-index.js";
+import type { IndexItemsCommand } from "./index-items-command.js";
+import type { ItemHit } from "./item-hit.js";
+import { createItemSearchFields } from "./item-search-fields.js";
 
-type ItemHit = z.infer<typeof itemHitSchema>;
 type SearchItemsResponse = {
   estimatedTotalHits: number;
   facetDistribution: Record<string, Record<string, number>>;
@@ -19,7 +19,7 @@ type SearchItemsResponse = {
   hits: ItemHit[];
 };
 
-type IndexItem = IndexItemsDto["items"][number];
+type IndexItem = IndexItemsCommand["items"][number];
 type IndexedItem = IndexItem & {
   uid: string;
   worlds: string[];
@@ -43,14 +43,57 @@ const buildItemWorldFilter = (world: string) => {
   return `(worlds = ${formattedWorld} OR world = ${formattedWorld})`;
 };
 
-@Injectable()
-export class ItemsService {
-  constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-  ) {}
+const emptySearchResponse = (): SearchItemsResponse => ({
+  hits: [],
+  estimatedTotalHits: 0,
+  facetDistribution: {},
+  facetStats: {},
+});
 
-  async searchItems({
+const mapSearchResponse = (data: {
+  estimatedTotalHits?: number;
+  facetDistribution?: Record<string, Record<string, number>>;
+  facetStats?: Record<string, { max: number; min: number }>;
+  hits: ItemHit[];
+  totalHits?: number;
+}): SearchItemsResponse => ({
+  hits: data.hits,
+  estimatedTotalHits:
+    data.estimatedTotalHits ?? data.totalHits ?? data.hits.length,
+  facetDistribution: data.facetDistribution ?? {},
+  facetStats: data.facetStats ?? {},
+});
+
+const uniqueWorlds = (worlds: ReadonlyArray<string>) =>
+  [...new Set(worlds.filter(Boolean))].sort((first, second) =>
+    first.localeCompare(second),
+  );
+
+const itemWorlds = (item: IndexItem) =>
+  uniqueWorlds([...(item.worlds ?? []), ...(item.world ? [item.world] : [])]);
+
+const mergeItemsById = (items: ReadonlyArray<IndexItem>): IndexedItem[] => {
+  const itemsById = new Map<number, IndexedItem>();
+
+  for (const item of items) {
+    const worlds = itemWorlds(item);
+    const existingItem = itemsById.get(item.id);
+    itemsById.set(item.id, {
+      ...existingItem,
+      ...item,
+      uid: String(item.id),
+      worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
+    });
+  }
+
+  return [...itemsById.values()];
+};
+
+export const makeItemsModule = (
+  meilisearch: Meilisearch,
+  logger: AppLogger,
+) => {
+  const searchItems = Effect.fn("SearchItems.search")(function* ({
     facets,
     filter,
     limit,
@@ -58,8 +101,8 @@ export class ItemsService {
     search,
     sort,
     world,
-  }: GetItemsDto) {
-    const index = this.meilisearch.index<ItemHit>(ITEMS_INDEX);
+  }: ItemSearchQuery) {
+    const index = meilisearch.index<ItemHit>(ITEMS_INDEX);
     const searchTerm = search ?? "";
     let incomingFilters: string[] = [];
 
@@ -84,80 +127,99 @@ export class ItemsService {
       ...(sort && sort.length > 0 ? { sort } : {}),
     };
 
-    try {
-      const data = await index.search(searchTerm, query);
-      return this.mapSearchResponse(data);
-    } catch (error) {
-      if (
-        getMeilisearchErrorCode(error) ===
-        "invalid_search_attributes_to_search_on"
-      ) {
-        this.logger.warn(
-          "Items index settings are stale, retrying search without stat attribute",
-          { error },
-        );
-
-        try {
-          const fallbackData = await index.search(searchTerm, {
-            ...query,
-            attributesToSearchOn: ["name"],
-          });
-
-          return this.mapSearchResponse(fallbackData);
-        } catch (fallbackError) {
-          this.logger.error("Items search error", { error: fallbackError });
-          return this.getEmptySearchResponse();
+    return yield* attemptMeilisearch("search.items", () =>
+      index.search(searchTerm, query),
+    ).pipe(
+      Effect.map(mapSearchResponse),
+      Effect.catch((error) => {
+        if (
+          getMeilisearchErrorCode(error.cause) ===
+          "invalid_search_attributes_to_search_on"
+        ) {
+          logger.warn(
+            "Items index settings are stale, retrying search without stat attribute",
+            { error },
+          );
+          return attemptMeilisearch("search.items.fallback", () =>
+            index.search(searchTerm, {
+              ...query,
+              attributesToSearchOn: ["name"],
+            }),
+          ).pipe(
+            Effect.map(mapSearchResponse),
+            Effect.catch((fallbackError) => {
+              logger.error("Items search error", { error: fallbackError });
+              return Effect.succeed(emptySearchResponse());
+            }),
+          );
         }
-      }
+        logger.error("Items search error", { error });
+        return Effect.succeed(emptySearchResponse());
+      }),
+    );
+  });
 
-      this.logger.error("Items search error", { error });
-      return this.getEmptySearchResponse();
-    }
-  }
-
-  async getItems({
+  const getItems = Effect.fn("SearchItems.get")(function* ({
     limit,
     search,
     world,
-  }: Pick<GetItemsDto, "limit" | "search" | "world">) {
-    const response = await this.searchItems({
+  }: Pick<ItemSearchQuery, "limit" | "search" | "world">) {
+    const response = yield* searchItems({
       limit,
       offset: 0,
       search,
       world,
     });
-
     return response.hits;
-  }
+  });
 
-  async indexItems(data: IndexItemsDto) {
-    const index = this.meilisearch.index<IndexedItem>(ITEMS_INDEX);
+  const existingWorlds = (uid: string) => {
+    const index = meilisearch.index<IndexedItem>(ITEMS_INDEX);
+    return attemptMeilisearch("search.items.existing-worlds", () =>
+      index.getDocument(uid),
+    ).pipe(
+      Effect.map((document) => document.worlds ?? []),
+      Effect.catch((error) => {
+        if (getMeilisearchErrorCode(error.cause) !== "document_not_found") {
+          logger.warn("Could not read existing item worlds", { error, uid });
+        }
+        return Effect.succeed([] as string[]);
+      }),
+    );
+  };
+
+  const indexItems = Effect.fn("SearchItems.index")(function* (
+    data: IndexItemsCommand,
+  ) {
+    const index = meilisearch.index<IndexedItem>(ITEMS_INDEX);
 
     const validItems = data.items.filter((item) => {
-      const worlds = this.getItemWorlds(item);
+      const worlds = itemWorlds(item);
       return item.id && item.name && worlds.length > 0;
     });
 
     if (validItems.length === 0) {
-      this.logger.warn("No valid items to index (missing required fields)");
+      logger.warn("No valid items to index (missing required fields)");
       return;
     }
 
     if (validItems.length !== data.items.length) {
-      this.logger.warn(
+      logger.warn(
         `Skipped ${data.items.length - validItems.length} items due to missing required fields`,
       );
     }
 
-    const itemsById = this.mergeItemsById(validItems);
-    const itemsWithExistingWorlds = await Promise.all(
-      itemsById.map(async (item) => {
-        const existingWorlds = await this.getExistingWorlds(item.uid);
-        return {
-          ...item,
-          worlds: this.getUniqueWorlds([...item.worlds, ...existingWorlds]),
-        };
-      }),
+    const itemsById = mergeItemsById(validItems);
+    const itemsWithExistingWorlds = yield* Effect.all(
+      itemsById.map((item) =>
+        Effect.map(existingWorlds(item.uid), (storedWorlds) => {
+          return {
+            ...item,
+            worlds: uniqueWorlds([...item.worlds, ...storedWorlds]),
+          };
+        }),
+      ),
+      { concurrency: "unbounded" },
     );
     const itemsWithSearchFields = itemsWithExistingWorlds.map(
       ({ world: _world, ...item }) => ({
@@ -166,95 +228,22 @@ export class ItemsService {
       }),
     );
 
-    try {
-      return await index.addDocuments(itemsWithSearchFields, {
+    yield* attemptMeilisearch("search.items.index", () =>
+      index.addDocuments(itemsWithSearchFields, {
         primaryKey: "uid",
-      });
-    } catch (error) {
-      this.logger.error("Error indexing items", { error });
-    }
-  }
-
-  private getEmptySearchResponse(): SearchItemsResponse {
-    return {
-      hits: [],
-      estimatedTotalHits: 0,
-      facetDistribution: {},
-      facetStats: {},
-    };
-  }
-
-  private mapSearchResponse(data: {
-    estimatedTotalHits?: number;
-    facetDistribution?: Record<string, Record<string, number>>;
-    facetStats?: Record<string, { max: number; min: number }>;
-    hits: ItemHit[];
-    totalHits?: number;
-  }): SearchItemsResponse {
-    return {
-      hits: data.hits,
-      estimatedTotalHits:
-        data.estimatedTotalHits ?? data.totalHits ?? data.hits.length,
-      facetDistribution: data.facetDistribution ?? {},
-      facetStats: data.facetStats ?? {},
-    };
-  }
-
-  private mergeItemsById(items: IndexItem[]): IndexedItem[] {
-    const itemsById = new Map<number, IndexedItem>();
-
-    for (const item of items) {
-      const worlds = this.getItemWorlds(item);
-      const existingItem = itemsById.get(item.id);
-
-      if (!existingItem) {
-        itemsById.set(item.id, {
-          ...item,
-          uid: String(item.id),
-          worlds,
-        });
-        continue;
-      }
-
-      itemsById.set(item.id, {
-        ...existingItem,
-        ...item,
-        uid: String(item.id),
-        worlds: this.getUniqueWorlds([...existingItem.worlds, ...worlds]),
-      });
-    }
-
-    return [...itemsById.values()];
-  }
-
-  private getItemWorlds(item: IndexItem) {
-    return this.getUniqueWorlds([
-      ...(item.worlds ?? []),
-      ...(item.world ? [item.world] : []),
-    ]);
-  }
-
-  private getUniqueWorlds(worlds: string[]) {
-    return [...new Set(worlds.filter(Boolean))].sort((first, second) =>
-      first.localeCompare(second),
+      }),
     );
-  }
+  });
 
-  private async getExistingWorlds(uid: string) {
-    const index = this.meilisearch.index<IndexedItem>(ITEMS_INDEX);
-
-    try {
-      const document = await index.getDocument(uid);
-      return document.worlds ?? [];
-    } catch (error) {
-      if (getMeilisearchErrorCode(error) !== "document_not_found") {
-        this.logger.warn("Could not read existing item worlds", {
-          error,
-          uid,
-        });
-      }
-
-      return [];
-    }
-  }
-}
+  return { getItems, indexItems, searchItems } satisfies {
+    readonly getItems: (
+      input: Pick<ItemSearchQuery, "limit" | "search" | "world">,
+    ) => Effect.Effect<ReadonlyArray<ItemHit>>;
+    readonly indexItems: (
+      data: IndexItemsCommand,
+    ) => Effect.Effect<void, SearchOperationFailure>;
+    readonly searchItems: (
+      input: ItemSearchQuery,
+    ) => Effect.Effect<SearchItemsResponse>;
+  };
+};

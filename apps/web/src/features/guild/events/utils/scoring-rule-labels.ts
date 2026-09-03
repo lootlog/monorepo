@@ -4,7 +4,7 @@ import type {
   EventScoringBooleanFactor,
   EventScoringCondition,
   EventScoringNumericFactor,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 
 export const getScoringConditionTypeLabel = (
   type: EventScoringCondition["type"],

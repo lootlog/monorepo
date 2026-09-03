@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import {
   useEventsAssignmentControllerAddHero,
   useEventsAssignmentControllerUpdateHero,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { invalidateEventDetailQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { getApiErrorMessage } from "../../utils/get-api-error-message";
 

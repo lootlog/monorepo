@@ -8,7 +8,8 @@ const mocks = vi.hoisted(() => ({
   useKillStats: vi.fn(),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/kills", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getKillsControllerGetUserKillStatsQueryKey: () => ["kill-stats"],
   useKillsControllerGetUserKillStats: mocks.useKillStats,
 }));

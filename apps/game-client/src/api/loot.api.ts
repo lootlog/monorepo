@@ -1,4 +1,4 @@
-import { createApiClient } from "@lootlog/api-client/transport";
+import { createApiClient } from "@lootlog/client/transport";
 import {
   logLootCreateDebug,
   type LootCreateDebugContext,

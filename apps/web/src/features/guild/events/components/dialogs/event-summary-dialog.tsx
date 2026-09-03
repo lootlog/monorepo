@@ -12,7 +12,7 @@ import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import {
   getShowEventWrappedQueryKey,
   useShowEventWrapped,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { buildWrappedDeck } from "./event-summary/build-wrapped-slides";
 import { buildWrappedQualityModel } from "./event-summary/wrapped-data-quality";
 import { LoadingState } from "./event-summary/loading-state";

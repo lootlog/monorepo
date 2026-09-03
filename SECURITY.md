@@ -161,7 +161,7 @@ metrics labels.
   paths for real-time changes.
 - Do not bypass hooks or reduce security expectations to make CI pass.
 
-Use `pnpm audit` as one signal, not proof that the application is secure.
+Use `bun audit` as one signal, not proof that the application is secure.
 
 ## Disclosure
 

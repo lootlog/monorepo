@@ -1,18 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { DetectorRoutingRule } from "@lootlog/types";
+import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import * as UsersModule from "@lootlog/api-client/react-query/main/users";
+import * as UsersModule from "@lootlog/client/main";
 
 const mockMutate = vi.fn();
 
-vi.mock("@lootlog/api-client/react-query/main/users", async () => {
+vi.mock("@lootlog/client/main", async () => {
   const actual = await vi.importActual<typeof UsersModule>(
-    "@lootlog/api-client/react-query/main/users",
+    "@lootlog/client/main",
   );
 
   return {

@@ -1,14 +1,19 @@
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
+  ApplicationError,
+  ApplicationErrorKind,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
+import { Clock, Effect, Schema } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import sharp from "sharp";
-import { serviceConfig } from "#src/config/service.config";
-import { PrismaService } from "#src/db/prisma.service";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import type {
+  GuildStatsCardGuild,
+  PublicGuildStatsCardPersistenceError,
+  PublicGuildStatsCardRepositoryService,
+} from "./public-guild-stats-card.repository.js";
 
 type GuildStatsCardData = {
   guild: {
@@ -24,14 +29,6 @@ type GuildStatsCardData = {
   };
 };
 
-type LootStatsRow = {
-  total_loots: bigint | number | null;
-  legendary_items: bigint | number | null;
-  heroic_items: bigint | number | null;
-};
-
-type GuildStatsCardGuild = GuildStatsCardData["guild"];
-
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
 const CARD_RADIUS = 8;
@@ -45,176 +42,170 @@ const ICON_FETCH_TIMEOUT_MS = 2_000;
 const MAX_ICON_BYTES = 2_000_000;
 const REFRESH_COOLDOWN_SECONDS = 300;
 
-@Injectable()
-export class PublicGuildStatsCardService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
-  ) {}
+export class PublicGuildStatsCardAdapterError extends TaggedErrorClass<PublicGuildStatsCardAdapterError>()(
+  "PublicGuildStatsCardAdapterError",
+  { cause: Schema.Defect() },
+) {}
 
-  async getStatsCard(guildId: string): Promise<Buffer> {
-    const guild = await this.getCardGuild(guildId);
-    const cacheKey = this.buildCacheKey(guildId);
-    const shouldUseCache = this.shouldUseCache();
-    const cached = shouldUseCache ? await this.redis.get(cacheKey) : null;
+export interface PublicGuildStatsCardCache {
+  readonly get: (
+    key: string,
+  ) => Effect.Effect<string | null, PublicGuildStatsCardAdapterError>;
+  readonly set: (
+    key: string,
+    value: string,
+    ttl: number,
+  ) => Effect.Effect<void, PublicGuildStatsCardAdapterError>;
+  readonly setNX: (
+    key: string,
+    value: string,
+    ttl: number,
+  ) => Effect.Effect<boolean, PublicGuildStatsCardAdapterError>;
+  readonly del: (
+    key: string,
+  ) => Effect.Effect<void, PublicGuildStatsCardAdapterError>;
+}
 
-    if (cached) {
-      return Buffer.from(cached, "base64");
-    }
-
-    const image = await this.renderCard({
-      guild,
-      stats: await this.getLootStats(guildId),
-    });
-
-    if (shouldUseCache) {
-      await this.redis.set(
-        cacheKey,
-        image.toString("base64"),
-        CACHE_TTL_SECONDS,
-      );
-    }
-
-    return image;
-  }
-
-  async refreshStatsCard(guildId: string): Promise<{ nextRefreshAt: string }> {
-    const guild = await this.getCardGuild(guildId);
-    const nextRefreshAt = new Date(
-      Date.now() + REFRESH_COOLDOWN_SECONDS * 1000,
-    ).toISOString();
-    const cooldownKey = this.buildRefreshCooldownKey(guildId);
-    const acquired = await this.redis.setNX(
-      cooldownKey,
-      nextRefreshAt,
-      REFRESH_COOLDOWN_SECONDS,
-    );
-
-    if (!acquired) {
-      const activeNextRefreshAt = await this.redis.get(cooldownKey);
-
-      throw new HttpException(
-        {
-          message: "Stats card refresh is rate limited",
-          nextRefreshAt: activeNextRefreshAt ?? nextRefreshAt,
-        },
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    try {
-      const image = await this.renderCard({
-        guild,
-        stats: await this.getLootStats(guildId),
-      });
-
-      if (this.shouldUseCache()) {
-        await this.redis.set(
-          this.buildCacheKey(guildId),
-          image.toString("base64"),
-          CACHE_TTL_SECONDS,
-        );
-      }
-    } catch (error) {
-      await this.redis.del(cooldownKey);
-      throw error;
-    }
-
-    return { nextRefreshAt };
-  }
-
-  private shouldUseCache() {
-    return serviceConfig.env !== RuntimeEnvironment.LOCAL;
-  }
-
-  private buildCacheKey(guildId: string) {
-    return `guild-stats-card:${guildId}:${CACHE_VERSION}`;
-  }
-
-  private buildRefreshCooldownKey(guildId: string) {
-    return `guild-stats-card-refresh:${guildId}`;
-  }
-
-  private async getCardGuild(guildId: string): Promise<GuildStatsCardGuild> {
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        id: guildId,
-        active: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        icon: true,
-        publicStatsCardEnabled: true,
-      },
-    });
-
-    if (!guild || !guild.publicStatsCardEnabled) {
-      throw new NotFoundException("Guild not found");
-    }
-
-    return guild;
-  }
-
-  private async getLootStats(
+export interface PublicGuildStatsCard {
+  readonly getStatsCard: (
     guildId: string,
-  ): Promise<GuildStatsCardData["stats"]> {
-    const dateFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const rows = await this.prisma.$queryRaw<LootStatsRow[]>`
-      WITH valid_loots AS (
-        SELECT DISTINCT l.id
-        FROM "OrganizationLootRecord" olr
-        INNER JOIN "Loot" l ON l.id = olr."lootId"
-        WHERE olr."guildId" = ${guildId}
-          AND olr."archivedAt" IS NULL
-          AND l."createdAt" >= ${dateFrom}
-      )
-      SELECT
-        COUNT(DISTINCT l.id) AS total_loots,
-        COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') AS legendary_items,
-        COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') AS heroic_items
-      FROM valid_loots vl
-      INNER JOIN "Loot" l ON l.id = vl.id
-      LEFT JOIN "LootItem" li ON li."lootId" = l.id
-      LEFT JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-    `;
-    const row = rows[0];
+  ) => Effect.Effect<Buffer, PublicGuildStatsCardFailure>;
+  readonly refreshStatsCard: (
+    guildId: string,
+  ) => Effect.Effect<{ nextRefreshAt: string }, PublicGuildStatsCardFailure>;
+}
 
-    return {
-      totalLoots: this.toNumber(row?.total_loots),
-      legendaryItems: this.toNumber(row?.legendary_items),
-      heroicItems: this.toNumber(row?.heroic_items),
-    };
-  }
+type PublicGuildStatsCardFailure =
+  | ApplicationError
+  | ResourceNotFoundError
+  | PublicGuildStatsCardAdapterError
+  | PublicGuildStatsCardPersistenceError;
 
-  private toNumber(value: bigint | number | null | undefined) {
-    if (typeof value === "bigint") {
-      return Number(value);
-    }
+const buildCacheKey = (guildId: string) =>
+  `guild-stats-card:${guildId}:${CACHE_VERSION}`;
+const buildRefreshCooldownKey = (guildId: string) =>
+  `guild-stats-card-refresh:${guildId}`;
 
-    return value ?? 0;
-  }
+export const makePublicGuildStatsCard = (options: {
+  readonly repository: PublicGuildStatsCardRepositoryService;
+  readonly cache: PublicGuildStatsCardCache;
+  readonly environment: RuntimeEnvironment;
+  readonly image: PublicGuildStatsCardImageAdapter;
+}): PublicGuildStatsCard => {
+  const useCache = options.environment !== RuntimeEnvironment.LOCAL;
+  const getCardGuild = (guildId: string) =>
+    options.repository
+      .findActiveGuild(guildId)
+      .pipe(
+        Effect.flatMap((guild) =>
+          guild?.publicStatsCardEnabled
+            ? Effect.succeed(guild)
+            : Effect.fail(new ResourceNotFoundError("Guild not found")),
+        ),
+      );
+  const render = (guild: GuildStatsCardGuild, guildId: string) =>
+    Effect.gen(function* () {
+      const stats = yield* options.repository.getLootStats(
+        guildId,
+        new Date((yield* Clock.currentTimeMillis) - 30 * 24 * 60 * 60 * 1000),
+      );
+      return yield* options.image
+        .renderCard({ guild, stats })
+        .pipe(
+          Effect.mapError(
+            (cause) => new PublicGuildStatsCardAdapterError({ cause }),
+          ),
+        );
+    });
 
-  private async renderCard(data: GuildStatsCardData): Promise<Buffer> {
-    const icon = await this.fetchGuildIcon(data.guild.id, data.guild.icon);
-    const base = await sharp(Buffer.from(this.buildSvg(data, !icon)))
-      .png()
-      .toBuffer();
+  return {
+    getStatsCard: (guildId) =>
+      Effect.gen(function* () {
+        const guild = yield* getCardGuild(guildId);
+        const cacheKey = buildCacheKey(guildId);
+        const cached = useCache ? yield* options.cache.get(cacheKey) : null;
+        if (cached) return Buffer.from(cached, "base64");
+        const image = yield* render(guild, guildId);
+        if (useCache) {
+          yield* options.cache.set(
+            cacheKey,
+            image.toString("base64"),
+            CACHE_TTL_SECONDS,
+          );
+        }
+        return image;
+      }),
+    refreshStatsCard: (guildId) =>
+      Effect.gen(function* () {
+        const guild = yield* getCardGuild(guildId);
+        const now = yield* Clock.currentTimeMillis;
+        const nextRefreshAt = new Date(
+          now + REFRESH_COOLDOWN_SECONDS * 1000,
+        ).toISOString();
+        const cooldownKey = buildRefreshCooldownKey(guildId);
+        const acquired = yield* options.cache.setNX(
+          cooldownKey,
+          nextRefreshAt,
+          REFRESH_COOLDOWN_SECONDS,
+        );
+        if (!acquired) {
+          const activeNextRefreshAt = yield* options.cache.get(cooldownKey);
+          return yield* Effect.fail(
+            new ApplicationError(
+              ApplicationErrorKind.RATE_LIMITED,
+              {
+                message: "Stats card refresh is rate limited",
+                nextRefreshAt: activeNextRefreshAt ?? nextRefreshAt,
+              },
+              "Stats card refresh is rate limited",
+            ),
+          );
+        }
+        yield* render(guild, guildId).pipe(
+          Effect.tap((image) =>
+            useCache
+              ? options.cache.set(
+                  buildCacheKey(guildId),
+                  image.toString("base64"),
+                  CACHE_TTL_SECONDS,
+                )
+              : Effect.void,
+          ),
+          Effect.catch((error) =>
+            options.cache
+              .del(cooldownKey)
+              .pipe(
+                Effect.andThen(
+                  Effect.fail(error as PublicGuildStatsCardFailure),
+                ),
+              ),
+          ),
+        );
+        return { nextRefreshAt };
+      }),
+  };
+};
 
-    if (!icon) {
-      return base;
-    }
+export class PublicGuildStatsCardImageAdapter {
+  constructor(private readonly httpClient: HttpClientValue) {}
 
-    return sharp(base)
-      .composite([
-        {
-          input: icon,
-          left: ICON_LEFT,
-          top: ICON_TOP,
-        },
-      ])
-      .png()
-      .toBuffer();
+  renderCard(data: GuildStatsCardData): Effect.Effect<Buffer, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const icon = yield* self.fetchGuildIcon(data.guild.id, data.guild.icon);
+      const base = yield* Effect.tryPromise(() =>
+        sharp(Buffer.from(self.buildSvg(data, !icon)))
+          .png()
+          .toBuffer(),
+      );
+      if (!icon) return base;
+      return yield* Effect.tryPromise(() =>
+        sharp(base)
+          .composite([{ input: icon, left: ICON_LEFT, top: ICON_TOP }])
+          .png()
+          .toBuffer(),
+      );
+    });
   }
 
   private buildSvg(data: GuildStatsCardData, showInitials: boolean) {
@@ -289,43 +280,43 @@ export class PublicGuildStatsCardService {
     `;
   }
 
-  private async fetchGuildIcon(guildId: string, icon: string | null) {
+  private fetchGuildIcon(
+    guildId: string,
+    icon: string | null,
+  ): Effect.Effect<Buffer | null> {
     const iconUrl = this.resolveGuildIconUrl(guildId, icon);
 
     if (!iconUrl) {
-      return null;
+      return Effect.succeed(null);
     }
+    return outboundHttpRequest(this.httpClient, {
+      adapter: "discord-guild-icon",
+      method: "GET",
+      responseLimitBytes: MAX_ICON_BYTES,
+      retryTimes: 1,
+      timeout: `${ICON_FETCH_TIMEOUT_MS} millis`,
+      url: iconUrl,
+    }).pipe(
+      Effect.flatMap((response) => {
+        if (response.status < 200 || response.status >= 300) {
+          return Effect.succeed(null);
+        }
 
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(
-        () => controller.abort(),
-        ICON_FETCH_TIMEOUT_MS,
-      );
-      const response = await fetch(iconUrl, { signal: controller.signal });
-      clearTimeout(timeout);
+        const contentType = response.headers["content-type"] ?? "";
+        const contentLength = Number(response.headers["content-length"] ?? 0);
 
-      if (!response.ok) {
-        return null;
-      }
-
-      const contentType = response.headers.get("content-type") ?? "";
-      const contentLength = Number(response.headers.get("content-length") ?? 0);
-
-      if (!contentType.startsWith("image/") || contentLength > MAX_ICON_BYTES) {
-        return null;
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-
-      if (arrayBuffer.byteLength > MAX_ICON_BYTES) {
-        return null;
-      }
-
-      return this.prepareIcon(Buffer.from(arrayBuffer));
-    } catch {
-      return null;
-    }
+        if (
+          !contentType.startsWith("image/") ||
+          contentLength > MAX_ICON_BYTES
+        ) {
+          return Effect.succeed(null);
+        }
+        return Effect.tryPromise(() =>
+          this.prepareIcon(Buffer.from(response.body)),
+        );
+      }),
+      Effect.catch(() => Effect.succeed(null)),
+    );
   }
 
   private resolveGuildIconUrl(guildId: string, icon: string | null) {

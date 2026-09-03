@@ -3,7 +3,7 @@ import {
   validateReservationTime,
   type ReservationSettings,
   type ReservationTimeValidationIssue,
-} from "@lootlog/reservations";
+} from "@lootlog/domain/reservations";
 
 export type ReservationRangeValidationError =
   | "timeRangeRequired"

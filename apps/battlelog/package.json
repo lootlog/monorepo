@@ -1,0 +1,59 @@
+{
+  "name": "@lootlog/battlelog",
+  "version": "0.0.13",
+  "private": true,
+  "description": "",
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "imports": {
+    "#src/*": {
+      "development": "./src/*.ts",
+      "types": "./src/*.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
+  "scripts": {
+    "dev": "bun --env-file=.env --watch src/main.ts",
+    "build": "tsc -p tsconfig.build.json && cp openapi.yaml dist/openapi.yaml",
+    "start": "bun dist/src/main.js",
+    "start:debug": "bun --env-file=.env --inspect --watch src/main.ts",
+    "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format": "oxfmt src test",
+    "test": "bun --conditions=development test src test",
+    "test:debug": "bun --conditions=development test --inspect-brk src test",
+    "test:watch": "bun --conditions=development test --watch src test",
+    "openapi:generate": "bun src/openapi/generate-openapi.ts",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate:deploy": "bunx drizzle-kit migrate",
+    "db:migrate:init": "bun --env-file=.env scripts/migrate-init.ts",
+    "db:pull": "bunx drizzle-kit pull",
+    "db:push": "bunx drizzle-kit push --force",
+    "db:studio": "bunx drizzle-kit studio",
+    "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
+    "maintenance:backfill-warrior-stats": "bun --env-file=.env scripts/backfill-battle-warrior-stats.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1120.0",
+    "@effect/platform-bun": "catalog:",
+    "@effect/sql-pg": "catalog:",
+    "@lootlog/battle-processor": "workspace:*",
+    "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/schema": "workspace:*",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "bullmq": "^5.81.4",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
+    "pg": "^8.23.0",
+    "yaml": "catalog:"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "catalog:",
+    "typescript": "catalog:"
+  }
+}

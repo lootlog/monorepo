@@ -1,4 +1,4 @@
-import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
+import type { TimerHistoryResponseDto } from "@lootlog/client/main";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

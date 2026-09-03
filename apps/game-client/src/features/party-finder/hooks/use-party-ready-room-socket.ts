@@ -1,4 +1,4 @@
-import type { PartyReadyRoomClientUpdate } from "@lootlog/types";
+import type { PartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
 import { useEffect } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";

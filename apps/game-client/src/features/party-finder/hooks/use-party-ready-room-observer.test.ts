@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import type { PartyReadyRoomOrganizerProjection } from "@lootlog/types";
+import type { PartyReadyRoomOrganizerProjection } from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { usePartyFinderStore } from "@/store/party-finder.store";
@@ -24,7 +24,8 @@ const observeParty = vi.fn<
   ) => Promise<unknown>
 >();
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   partyReadyRoomControllerObserveParty: (
     path: { notificationId: string },
     data: {

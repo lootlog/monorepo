@@ -18,18 +18,16 @@ const { mockPost, mockPatch, mockSendNotification, mockSendChatMessage } =
     mockSendChatMessage: vi.fn(),
   }));
 
-vi.mock("@lootlog/api-client/transport", () => ({
+vi.mock("@lootlog/client/transport", () => ({
   createApiClient: () => ({
     post: mockPost,
     patch: mockPatch,
   }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/messaging", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   messagingControllerSendNotification: mockSendNotification,
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
   chatControllerSendChatMessage: mockSendChatMessage,
 }));
 

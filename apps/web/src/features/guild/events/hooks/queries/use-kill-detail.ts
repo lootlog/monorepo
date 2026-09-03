@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
   eventsRankingControllerGetKillDetail,
   getEventsRankingControllerGetKillDetailQueryKey,
-} from "@lootlog/api-client/react-query/main/events";
-import type { KillDetailResponseDto } from "@lootlog/api-client/models/main/kill-detail-response-dto";
-import type { KillDetailResponseDtoKill } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill";
-import type { KillDetailResponseDtoKillHeroNpc } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill-hero-npc";
-import type { KillDetailResponseDtoKillPointsItem } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill-points-item";
-import type { KillDetailResponseDtoKillTimerCreatedBy } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill-timer-created-by";
-import type { EventScoringRules } from "@lootlog/scoring";
-import { normalizeEventScoringRules } from "@lootlog/scoring";
+} from "@lootlog/client/main";
+import type { KillDetailResponseDto } from "@lootlog/client/main";
+import type { KillDetailResponseDtoKill } from "@lootlog/client/main";
+import type { KillDetailResponseDtoKillHeroNpc } from "@lootlog/client/main";
+import type { KillDetailResponseDtoKillPointsItem } from "@lootlog/client/main";
+import type { KillDetailResponseDtoKillTimerCreatedBy } from "@lootlog/client/main";
+import type { EventScoringRules } from "@lootlog/domain/scoring";
+import { normalizeEventScoringRules } from "@lootlog/domain/scoring";
 export type KillDetailMember = KillDetailResponseDtoKillTimerCreatedBy;
 export type KillDetailParticipant = KillDetailResponseDtoKillPointsItem;
 export type KillDetailHeroNpc = KillDetailResponseDtoKillHeroNpc;

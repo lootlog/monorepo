@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@lootlog/api-client/transport";
+import { ApiError } from "@lootlog/client/transport";
 import { ActivePartyGatheringError } from "./active-party-gathering-error";
 import { getCreatePartyGatheringErrorMessage } from "./get-create-party-gathering-error-message";
 

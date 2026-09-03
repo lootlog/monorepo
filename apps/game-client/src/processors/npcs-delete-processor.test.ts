@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import { queryClient } from "@/lib/query-client";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/api-client/react-query/main/user-lootlog-config";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { NpcsDeleteProcessor } from "./npcs-delete-processor";
 import type * as ApiModule from "@/api";
-import type * as LootlogTypesModule from "@lootlog/types";
+import type * as NpcTypeDomain from "@lootlog/domain/npc-type";
 import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
 import type { RuntimeNpc } from "@/lib/margonem-runtime/runtime.types";
 
@@ -38,8 +38,8 @@ vi.mock("@/api", async (importOriginal) => {
   };
 });
 
-vi.mock("@lootlog/types", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof LootlogTypesModule>();
+vi.mock("@lootlog/domain/npc-type", async (importOriginal) => {
+  const originalModule = await importOriginal<typeof NpcTypeDomain>();
   return {
     ...originalModule,
     getNpcTypeByWt: (...args: unknown[]) => mockGetNpcTypeByWt(...args),
