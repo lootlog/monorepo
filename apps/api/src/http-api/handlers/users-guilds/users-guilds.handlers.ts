@@ -27,22 +27,26 @@ import { RESTRICTED_VANITY_URLS } from "#src/guilds/constants/restricted-vanity-
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
 import {
   DiscordGuildSyncStateResponseDto as DiscordGuildSyncStateSchema,
-  GuildResponseDto_Output,
   GuildsControllerGetGuildPermissions200,
   GuildsControllerGetManageableUserGuilds200,
   GuildsControllerGetUserGuilds200,
   GuildsControllerGetUserGuildsWithPermissions200,
   GuildsControllerGetWorldsByGuildId200,
-  LootlogApi,
+  type UpdateGuildConfigDto,
+} from "../../contracts/guilds/schemas.js";
+import {
+  GuildResponseDto_Output,
   StatusOkResponseDto_Output,
+} from "../../contracts/shared.js";
+import { LootlogApi } from "../../lootlog-api.js";
+import {
   UserGameAccountPreferencesResponseDto_Output,
   UserPreferencesResponseDto_Output,
   UsersControllerGetCurrentUserAccessibleGuilds200,
   UsersControllerGetCurrentUserGuilds200,
-  type UpdateGuildConfigDto,
   type UpdateUserGameAccountPreferencesDto,
   type UpdateUserPreferencesDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/users/schemas.js";
 
 export type AuthenticatedIdentity = {
   readonly userId: string;

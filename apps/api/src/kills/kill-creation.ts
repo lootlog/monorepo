@@ -21,7 +21,7 @@ import {
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import { getStableNpcId } from "#src/shared/utils/get-stable-npc-id";
-import type { CreateKillDto } from "#src/http-api/lootlog-api";
+import type { CreateKillDto } from "#src/http-api/contracts/kills/schemas";
 import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,

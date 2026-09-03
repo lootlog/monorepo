@@ -7,7 +7,7 @@ import {
 import {
   PartyReadyRoomClientUpdateDto_Output,
   PartyReadyRoomProjectionDto_Output,
-} from "../../lootlog-api.js";
+} from "../../contracts/party-ready-room/schemas.js";
 import {
   ReadyRoomAccessDenied,
   ReadyRoomAuthorization,

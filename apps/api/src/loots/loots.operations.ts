@@ -16,7 +16,7 @@ import {
   type CreateCommentDto,
   LootsControllerFetchLootsByGuildId200,
   type LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/loots/schemas";
 import type { LootQueryResult } from "./dto/loot-query-result.dto.js";
 import { ErrorKey } from "./enum/error-key.enum.js";
 import type {

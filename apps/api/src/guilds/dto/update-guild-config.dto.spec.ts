@@ -1,6 +1,6 @@
 import { describe, expect, it } from "#test/bun-test";
 import { ErrorKey } from "#src/guilds/enum/error-key.enum";
-import { UpdateGuildConfigDto } from "#src/http-api/lootlog-api";
+import { UpdateGuildConfigDto } from "#src/http-api/contracts/guilds/schemas";
 import { Result, Schema } from "effect";
 
 describe("UpdateGuildConfigDto", () => {

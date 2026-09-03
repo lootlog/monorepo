@@ -10,7 +10,7 @@ import {
   ReorderLocationsDto,
   UpdateHeroDto,
   UpdateLocationDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/events/schemas";
 import { Effect } from "effect";
 import type { EventAccess } from "./event-access.js";
 import type { EventCatalogMutations } from "./event-catalog-mutations.js";

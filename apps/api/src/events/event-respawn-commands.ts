@@ -21,7 +21,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/logging/applicatio
 import type {
   CloseRespawnWindowDto,
   OpenRespawnWindowDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/events/schemas";
 import type { EventTimersPort } from "./services/event-timers.port.js";
 import { getSyntheticNpcId } from "./utils/get-synthetic-npc-id.js";
 

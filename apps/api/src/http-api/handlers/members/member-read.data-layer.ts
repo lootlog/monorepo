@@ -29,7 +29,7 @@ import {
   MembersControllerGetGuildMemberReferences200,
   MembersControllerGetGuildMembersSummary200,
   MembersControllerGetMemberLootlogConfigSummary200,
-} from "../../lootlog-api.js";
+} from "../../contracts/members/schemas.js";
 
 export interface MemberReadCache {
   readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(

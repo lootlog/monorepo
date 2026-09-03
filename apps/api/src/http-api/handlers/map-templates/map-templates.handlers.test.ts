@@ -4,7 +4,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import {
   MapTemplateResponseDto,
   type CreateMapTemplateDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/map-templates/schemas.js";
 import {
   createMapTemplate,
   MapTemplateNotFound,

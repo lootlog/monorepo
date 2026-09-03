@@ -11,7 +11,7 @@ import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import { EventWrappedApiResponseDto_Output } from "#src/http-api/lootlog-api";
+import { EventWrappedApiResponseDto_Output } from "#src/http-api/contracts/events/schemas";
 import { clipToWindowSeconds } from "../utils/tracking-window.util.js";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,

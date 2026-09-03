@@ -5,7 +5,7 @@ import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import {
   KillsControllerGetMemberKills200,
   type KillsControllerGetMemberKillsQuery as GetMemberKillsDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/kills/schemas";
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,

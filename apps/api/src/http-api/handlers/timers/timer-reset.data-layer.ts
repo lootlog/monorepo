@@ -20,7 +20,7 @@ import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
-import type { ResetTimerDto } from "../../lootlog-api.js";
+import type { ResetTimerDto } from "../../contracts/timers/schemas.js";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
 import { mapTimerResponse } from "./timer-response.js";

@@ -13,7 +13,7 @@ import { generateUniqueIntId } from "#src/shared/utils/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
-import type { CreateManualTimerDto } from "../../lootlog-api.js";
+import type { CreateManualTimerDto } from "../../contracts/timers/schemas.js";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
   TimersInvariantViolation,

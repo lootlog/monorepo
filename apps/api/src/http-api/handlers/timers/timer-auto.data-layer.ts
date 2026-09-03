@@ -44,7 +44,7 @@ import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
-import type { CreateTimerFromGameClientDto } from "../../lootlog-api.js";
+import type { CreateTimerFromGameClientDto } from "../../contracts/timers/schemas.js";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {
   TimersInfrastructureError,

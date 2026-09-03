@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { MemberResponseDto } from "../../lootlog-api.js";
+import { MemberResponseDto } from "../../contracts/members/schemas.js";
 import {
   deactivateGuildMember,
   getCurrentMember,

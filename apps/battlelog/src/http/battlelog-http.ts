@@ -29,14 +29,14 @@ import {
   DeleteUserDataSchema,
   type DeleteUserData,
 } from "#src/battles/internal-operations";
+import { BattlelogApi } from "../http-api/battlelog-api.js";
+import { BearerSecurityMiddleware } from "../http-api/contracts/battles/security.js";
 import {
-  BattlelogApi,
-  BearerSecurityMiddleware,
   type BattlesControllerGetBattleAnalyticsQuery,
   type BattlesControllerGetCombatProfileQuery,
   type BattlesControllerGetDashboardBattlesQuery,
   type BattlesControllerGetPlayerVsPlayerBattlesQuery,
-} from "../http-api/battlelog-api.js";
+} from "../http-api/contracts/battles/endpoints.schemas.js";
 import {
   ApplicationError,
   AuthenticationRequiredError,

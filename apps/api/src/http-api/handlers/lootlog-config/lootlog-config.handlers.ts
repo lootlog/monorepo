@@ -13,12 +13,12 @@ import {
   lootlogConfigNpcTable,
   lootlogConfigTable,
 } from "#src/database/drizzle/schema";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   LootlogConfigControllerGetLootlogConfig200,
   LootlogConfigControllerUpdateNpc200,
   type UpdateLootlogConfigNpcDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/lootlog-config/schemas.js";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",

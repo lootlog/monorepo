@@ -41,7 +41,7 @@ import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
 import type {
   UpdateUserGameAccountPreferencesDto,
   UpdateUserPreferencesDto,
-} from "../../lootlog-api.js";
+} from "../../contracts/users/schemas.js";
 import { UsersGuildsOperationError } from "./users-guilds.handlers.js";
 
 const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";

@@ -7,8 +7,8 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
+import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogApi,
   MembersControllerDeactivateMember200,
   MembersControllerGetGuildMemberReferences200,
   MembersControllerGetGuildMembers200,
@@ -20,7 +20,7 @@ import {
   MembersControllerRefreshAllMembers201,
   MembersControllerRefreshMe200,
   MembersControllerRefreshMember200,
-} from "../../lootlog-api.js";
+} from "../../contracts/members/schemas.js";
 
 export type MembersIdentity = {
   readonly userId: string;

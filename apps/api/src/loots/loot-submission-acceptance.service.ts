@@ -26,7 +26,7 @@ import type {
 import type {
   CreateLootDto,
   LootsControllerCreateLoot201 as CreateLootResponse,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import { getItemTypeByCl } from "#src/shared/utils/get-item-type-by-cl";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";

@@ -17,7 +17,7 @@ import {
 import type {
   CreateWatchedItemDto,
   CreateWatchedItemQuickAddDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/notifications/schemas";
 import {
   NotificationFiltersResponse,
   WatchedItemSnapshotResponse,

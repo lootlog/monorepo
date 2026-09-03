@@ -1,4 +1,4 @@
-import { CreateNotificationDto } from "#src/http-api/lootlog-api";
+import { CreateNotificationDto } from "#src/http-api/contracts/messaging/schemas";
 import { Result, Schema } from "effect";
 
 describe("CreateNotificationDto", () => {

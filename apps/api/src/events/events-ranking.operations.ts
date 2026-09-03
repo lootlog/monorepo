@@ -8,7 +8,7 @@ import {
   AcknowledgeExpiredParticipationConfirmationsDto,
   UpdateKillPointDto,
   UpdateRankingPointsDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/events/schemas";
 import type { EventKills } from "./services/event-kill.service.js";
 import type { EventRankingRead } from "./event-ranking-read.js";
 import { Effect } from "effect";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import type {
   CreateNotificationRuleDto,
   UpdateNotificationRuleDto,
-} from "#src/http-api/lootlog-api";
+} from "#src/http-api/contracts/notifications/schemas";
 import {
   NotificationOwnerType,
   NotificationScheduleIntervalType,

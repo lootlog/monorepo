@@ -28,8 +28,8 @@ import {
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,
-  LootlogApi,
-} from "../../lootlog-api.js";
+} from "../../contracts/internal/schemas.js";
+import { LootlogApi } from "../../lootlog-api.js";
 
 export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
   "InternalGuildsOperationError",

@@ -3,13 +3,17 @@ import { Result, Schema } from "effect";
 import {
   CloseRespawnWindowDto,
   CreateEventDto,
+  OpenRespawnWindowDto,
+} from "./contracts/events/schemas.js";
+import {
   CreateNotificationRuleDto,
+  UpdateNotificationRuleDto,
+} from "./contracts/notifications/schemas.js";
+import {
   KillsControllerGetGuildKillStatsQuery,
   KillsControllerGetUserNpcKillsQuery,
-  OpenRespawnWindowDto,
-  UpdateNotificationRuleDto,
-  UpdateReservationDto,
-} from "./lootlog-api.js";
+} from "./contracts/kills/schemas.js";
+import { UpdateReservationDto } from "./contracts/reservations/schemas.js";
 
 const rejects = (schema: Schema.ConstraintDecoder<unknown>, value: unknown) =>
   Result.isFailure(Schema.decodeUnknownResult(schema)(value));

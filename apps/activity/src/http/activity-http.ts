@@ -20,11 +20,9 @@ import {
 } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
-import {
-  ActivityApi,
-  BearerSecurityMiddleware,
-  type ActivitiesControllerFindByGuildQuery,
-} from "#src/http-api/activity-api";
+import { ActivityApi } from "#src/http-api/activity-api";
+import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
+import type { ActivitiesControllerFindByGuildQuery } from "#src/http-api/contracts/guilds/schemas";
 import { Permissions } from "#src/permissions/permissions";
 
 type HealthEntry = {

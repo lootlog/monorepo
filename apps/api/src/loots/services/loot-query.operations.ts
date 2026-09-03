@@ -3,7 +3,7 @@ import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
-import type { LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto } from "#src/http-api/lootlog-api";
+import type { LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto } from "#src/http-api/contracts/loots/schemas";
 import type { LootItemDto } from "../dto/loot-item.dto.js";
 import type { LootNpcDto } from "../dto/loot-npc.dto.js";
 import type { LootQueryResult } from "../dto/loot-query-result.dto.js";
