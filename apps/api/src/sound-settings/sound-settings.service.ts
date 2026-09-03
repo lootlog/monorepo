@@ -128,8 +128,8 @@ const toCompatibilitySettings = (
       effective.timersConfig,
       defaults.timersConfig,
     ) as unknown as JsonValue,
-    createdAt: updatedAt,
-    updatedAt,
+    createdAt: updatedAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 };
 

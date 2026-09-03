@@ -103,8 +103,8 @@ const mapGlobalSettingsResponse = (
     colorFiltersEnabled: effectiveTimers.colorFiltersEnabled === true,
     timersSortOrder,
     syncEnabled: effectiveTimers.syncEnabled !== false,
-    createdAt: updatedAt,
-    updatedAt,
+    createdAt: updatedAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 };
 
@@ -120,8 +120,8 @@ const mapGuildSettingsResponse = (
     guildId,
     hiddenTimers: asStringArray(timers?.effective.hiddenTimers),
     pinnedTimers: asStringArray(timers?.effective.pinnedTimers),
-    createdAt: updatedAt,
-    updatedAt,
+    createdAt: updatedAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 };
 
