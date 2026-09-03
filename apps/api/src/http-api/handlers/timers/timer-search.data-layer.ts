@@ -7,7 +7,7 @@ import {
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
-import { TimersOperationError } from "./timers.handlers.js";
+import { toTimersDataFailure } from "./timer-errors.js";
 
 const parseNpc = (
   npc: unknown,
@@ -73,6 +73,6 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
   });
   return (guildId: string, world: string, search: string, limit?: number) =>
     operation(guildId, world, search, limit).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
+      Effect.mapError(toTimersDataFailure),
     );
 };

@@ -3,6 +3,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { PresenceStore } from "./presence-store.js";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
+import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
@@ -81,6 +82,28 @@ class RecordingHub {
   async refreshRegistry(): Promise<void> {}
 }
 
+class RecordingCoverage {
+  readonly events: Array<{
+    readonly guildId: string;
+    readonly mapName: string;
+    readonly discordId: string;
+    readonly hasPlayer: boolean;
+    readonly isAfk?: boolean;
+  }> = [];
+
+  publish(event: {
+    readonly guildId: string;
+    readonly mapName: string;
+    readonly discordId: string;
+    readonly hasPlayer: boolean;
+    readonly isAfk?: boolean;
+  }): Effect.Effect<void> {
+    return Effect.sync(() => {
+      this.events.push(event);
+    });
+  }
+}
+
 const session = (permissions: Permission[]): SessionData => ({
   discordId: "discord-1",
   userId: "user-1",
@@ -100,6 +123,11 @@ const session = (permissions: Permission[]): SessionData => ({
 
 const socket = (data: SessionData): GatewaySocket =>
   ({ data }) as GatewaySocket;
+
+const secondGuild = (permissions: Permission[]) => ({
+  guild: { id: "organization-2", ownerId: "someone-else" },
+  roles: [{ id: "role-2", lvlRangeFrom: 0, lvlRangeTo: 500, permissions }],
+});
 
 describe("PresenceStore", () => {
   test("uses server lastSeen and separates basic from precise location", async () => {
@@ -167,5 +195,93 @@ describe("PresenceStore", () => {
     expect(snapshot.presences).toEqual([]);
     expect(snapshot.revision).toBe(2);
     expect(hub.events).toHaveLength(1);
+  });
+
+  test("clears published presence and coverage when the selected scope becomes empty", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const coverage = new RecordingCoverage();
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    const store = new PresenceStore(
+      { command: redis } as unknown as RedisGatewayStore,
+      hub as unknown as RealtimeHub,
+      () => 10_000,
+      coverage as unknown as CoveragePublisher,
+    );
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        location: { map: "Kwieciste Przejście" },
+      }),
+    );
+
+    await expect(
+      Effect.runPromise(store.publish(publisher, { organizationIds: [] })),
+    ).resolves.toBeUndefined();
+    expect(publisher.data.presence).toBeUndefined();
+    expect(
+      await Effect.runPromise(
+        store.snapshot(
+          session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+          "organization-1",
+        ),
+      ),
+    ).toMatchObject({ presences: [] });
+    expect(coverage.events).toContainEqual({
+      guildId: "organization-1",
+      mapName: "Kwieciste Przejście",
+      discordId: "discord-1",
+      hasPlayer: false,
+      isAfk: false,
+    });
+  });
+
+  test("heartbeat removes revoked organizations and never recreates their presence", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const coverage = new RecordingCoverage();
+    const publisherData = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    publisherData.guilds.push(
+      secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+    );
+    const publisher = socket(publisherData);
+    const store = new PresenceStore(
+      { command: redis } as unknown as RedisGatewayStore,
+      hub as unknown as RealtimeHub,
+      () => 10_000,
+      coverage as unknown as CoveragePublisher,
+    );
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1", "organization-2"],
+        location: { map: "Kwieciste Przejście" },
+      }),
+    );
+
+    const retainedGuild = publisher.data.guilds[0];
+    if (!retainedGuild) throw new Error("Expected the retained organization");
+    publisher.data.guilds = [retainedGuild];
+    await Effect.runPromise(store.heartbeat(publisher, "session-1"));
+
+    expect(publisher.data.presence?.organizationIds).toEqual([
+      "organization-1",
+    ]);
+    const revokedSnapshot = await Effect.runPromise(
+      store.snapshot(
+        {
+          ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+          guilds: [secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ])],
+        },
+        "organization-2",
+      ),
+    );
+    expect(revokedSnapshot.presences).toEqual([]);
+    expect(coverage.events).toContainEqual({
+      guildId: "organization-2",
+      mapName: "Kwieciste Przejście",
+      discordId: "discord-1",
+      hasPlayer: false,
+      isAfk: false,
+    });
   });
 });

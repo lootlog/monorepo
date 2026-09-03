@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -24,6 +24,14 @@ import {
   TimersControllerSearchNpcsWithTimerData200,
   type ResetTimerDto,
 } from "../../lootlog-api.js";
+import {
+  type TimersDataFailure,
+  TimersConflict,
+  TimersForbidden,
+  TimersInfrastructureError,
+  TimersInvalidRequest,
+  TimersNotFound,
+} from "./timer-errors.js";
 
 export const TIMERS_ENDPOINTS = [
   "TimersControllerGetAllTimers",
@@ -54,16 +62,6 @@ export class TimersAccessDenied extends TaggedErrorClass<TimersAccessDenied>()(
   { status: Schema.Literals([401, 403]), code: Schema.String },
 ) {}
 
-export class TimersNotFound extends TaggedErrorClass<TimersNotFound>()(
-  "TimersNotFound",
-  { status: Schema.Literal(404), code: Schema.String },
-) {}
-
-export class TimersOperationError extends TaggedErrorClass<TimersOperationError>()(
-  "TimersOperationError",
-  { cause: Schema.Defect() },
-) {}
-
 export class TimersAuthorization extends Context.Service<
   TimersAuthorization,
   {
@@ -75,7 +73,7 @@ export class TimersAuthorization extends Context.Service<
   }
 >()("@lootlog/api/http-api/timers/authorization") {}
 
-type DataEffect = Effect.Effect<unknown, TimersOperationError>;
+type DataEffect = Effect.Effect<unknown, TimersDataFailure>;
 
 export class TimersData extends Context.Service<
   TimersData,
@@ -169,27 +167,26 @@ const requireGuild = (guildId: string, capability: PermissionValue) =>
 const data = <A>(
   operation: (
     service: TimersData["Service"],
-  ) => Effect.Effect<A, TimersOperationError>,
+  ) => Effect.Effect<A, TimersDataFailure>,
 ) => Effect.flatMap(TimersData, operation);
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
   encodeDomainJson(value).pipe(
     Effect.flatMap(Schema.decodeUnknownEffect(schema)),
-    Effect.mapError((cause) => new TimersOperationError({ cause })),
+    Effect.mapError((cause) => new TimersInfrastructureError({ cause })),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof TimersOperationError ? error.cause : error;
+const errorStatus = (error: unknown): number | undefined =>
+  error instanceof TimersAccessDenied ||
+  error instanceof TimersInvalidRequest ||
+  error instanceof TimersForbidden ||
+  error instanceof TimersNotFound ||
+  error instanceof TimersConflict
+    ? error.status
+    : undefined;
 
-const errorStatus = (error: unknown): number | undefined => {
-  if (error instanceof TimersAccessDenied || error instanceof TimersNotFound) {
-    return error.status;
-  }
-  const cause = defectCause(error);
-  const applicationStatus = applicationErrorStatusOrUndefined(cause);
-  if (applicationStatus !== undefined) return applicationStatus;
-  return undefined;
-};
+const defectCause = (error: unknown) =>
+  error instanceof TimersInfrastructureError ? error.cause : error;
 
 const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   Effect.catch(effect, (error) => Effect.die(defectCause(error)));
@@ -200,7 +197,9 @@ const declaredEmptyError = <A, E, R>(
 ) =>
   Effect.catch(effect, (error) =>
     statuses.includes(errorStatus(error) ?? 0)
-      ? Effect.fail(undefined)
+      ? Effect.succeed(
+          HttpServerResponse.empty({ status: errorStatus(error) ?? 500 }),
+        )
       : Effect.die(defectCause(error)),
   );
 

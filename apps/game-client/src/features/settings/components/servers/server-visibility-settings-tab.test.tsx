@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ServerVisibilitySettingsTab } from "./server-visibility-settings-tab";
+import { useGameStore } from "@/store/game.store";
+import { useSettingsStore } from "@/store/settings.store";
 
 const mockUpdatePreferences = vi.fn();
 
@@ -46,6 +48,11 @@ vi.mock("@/hooks/api/use-user-preferences", () => ({
 describe("ServerVisibilitySettingsTab", () => {
   beforeEach(() => {
     mockUpdatePreferences.mockReset();
+    useGameStore.getState().clearGame();
+    useSettingsStore.setState({
+      guildIdByCharId: {},
+      presenceOrganizationIdsByCharId: {},
+    });
   });
 
   it("shows ordered guilds with avatars and visibility counts", () => {
@@ -115,5 +122,37 @@ describe("ServerVisibilitySettingsTab", () => {
     expect(mockUpdatePreferences).toHaveBeenCalledWith({
       hiddenGuildIds: ["temporarily-unavailable"],
     });
+  });
+
+  it("shows the active character's default presence organization as enabled", () => {
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "20",
+        characterId: "10",
+        clan: { id: 30, name: "Clan", rank: 1 },
+        currentHp: 100,
+        icon: "hero.gif",
+        level: 100,
+        maxHp: 100,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 100, name: "Karka-han", visibility: 0 },
+      world: "alpha",
+    });
+    useSettingsStore.setState({
+      guildIdByCharId: { "10": "guild-1" },
+    });
+
+    render(<ServerVisibilitySettingsTab />);
+
+    expect(
+      screen.getByRole("switch", {
+        name: "Publikuj obecność w organizacji Alpha",
+      }),
+    ).toBeChecked();
   });
 });

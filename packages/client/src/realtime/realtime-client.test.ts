@@ -226,4 +226,39 @@ describe("RealtimeClient", () => {
     ]);
     client.disconnect();
   });
+
+  it("stops heartbeats after an empty presence publication clears the session", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+        return socket;
+      },
+    });
+    client.connect();
+    const socket = socketAt(sockets, 0);
+    socket.open();
+    const joined = client.join(joinData);
+    respondToLastRequest(socket);
+    await flushMessages();
+    await joined;
+
+    const published = client.request("presence.publish", {
+      organizationIds: ["org-1"],
+    });
+    respondToLastRequest(socket, { sessionId: "session-1" });
+    await flushMessages();
+    await published;
+    const cleared = client.request("presence.publish", { organizationIds: [] });
+    respondToLastRequest(socket);
+    await flushMessages();
+    await cleared;
+    const sentAfterClear = socket.sent.length;
+
+    await vi.advanceTimersByTimeAsync(25_000);
+    expect(socket.sent).toHaveLength(sentAfterClear);
+  });
 });

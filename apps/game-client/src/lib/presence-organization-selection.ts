@@ -1,16 +1,17 @@
 export interface PresenceOrganizationCandidate {
   readonly id: string;
-  readonly margonemClanIds?: ReadonlyArray<number>;
 }
 
 export const resolvePresenceOrganizationIds = ({
   accessibleOrganizations,
   currentClanId,
   explicitlySelectedIds,
+  preferredOrganizationId,
 }: {
   readonly accessibleOrganizations: ReadonlyArray<PresenceOrganizationCandidate>;
   readonly currentClanId?: number;
   readonly explicitlySelectedIds?: ReadonlyArray<string>;
+  readonly preferredOrganizationId?: string;
 }): string[] => {
   const accessibleIds = new Set(
     accessibleOrganizations.map((organization) => organization.id),
@@ -20,10 +21,12 @@ export const resolvePresenceOrganizationIds = ({
       accessibleIds.has(id),
     );
   }
-  if (currentClanId === undefined) return [];
-  return accessibleOrganizations
-    .filter((organization) =>
-      organization.margonemClanIds?.includes(currentClanId),
-    )
-    .map((organization) => organization.id);
+  if (
+    currentClanId === undefined ||
+    preferredOrganizationId === undefined ||
+    !accessibleIds.has(preferredOrganizationId)
+  ) {
+    return [];
+  }
+  return [preferredOrganizationId];
 };

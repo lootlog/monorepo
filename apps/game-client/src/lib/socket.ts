@@ -116,6 +116,7 @@ export class AppSocket {
   });
   private readonly listeners = new Map<GatewayEvent, Set<Listener>>();
   private joinedOrganizationIds: string[] = [];
+  private readonly connectionReadyWaiters = new Set<(id: string) => void>();
   private lastIsAfk = false;
   private wasConnected = false;
   private lastJoinData: GameSessionJoinData | null = null;
@@ -131,6 +132,7 @@ export class AppSocket {
         state === "connected" || state === "joining" || state === "ready";
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
+      if (state === "disconnected") this.id = undefined;
       this.dispatch(connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT);
     });
   }
@@ -172,6 +174,16 @@ export class AppSocket {
     margonemAccountProof?: MargonemAccountProof,
   ): Promise<JoinResult> {
     this.lastJoinData = data;
+    let proof = margonemAccountProof;
+    if (!proof) {
+      const connectionId = await this.waitForConnectionId();
+      proof = await requestMargonemAccountProof({
+        socketId: connectionId,
+        accountId: data.accountId,
+        characterId: data.characterId,
+        clanId: data.clan?.id,
+      }).catch(() => undefined);
+    }
     const response = await this.realtime.join({
       world: data.world,
       character: {
@@ -184,27 +196,14 @@ export class AppSocket {
         prof: data.prof,
         clan: data.clan,
       },
-      margonemAccountProof,
+      margonemAccountProof: proof,
     });
     if (!isJoinResult(response))
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
     this.joinedOrganizationIds = [...response.organizationIds];
-    if (margonemAccountProof) {
-      this.dispatchJoin(response);
-      return response;
-    }
-    const proof = await requestMargonemAccountProof({
-      socketId: response.connectionId,
-      accountId: data.accountId,
-      characterId: data.characterId,
-      clanId: data.clan?.id,
-    }).catch(() => undefined);
-    if (!proof) {
-      this.dispatchJoin(response);
-      return response;
-    }
-    return this.join(data, proof);
+    this.dispatchJoin(response);
+    return response;
   }
 
   emit<Response = unknown>(
@@ -266,16 +265,15 @@ export class AppSocket {
   private async publishPresence(): Promise<void> {
     const game = useGameStore.getState().game;
     if (!game) return;
+    const settings = useSettingsStore.getState();
     const configured =
-      useSettingsStore.getState().presenceOrganizationIdsByCharId[
-        game.hero.characterId
-      ];
+      settings.presenceOrganizationIdsByCharId[game.hero.characterId];
     const organizationIds = resolvePresenceOrganizationIds({
       accessibleOrganizations: this.joinedOrganizationIds.map((id) => ({ id })),
       currentClanId: game.hero.clan?.id,
       explicitlySelectedIds: configured,
+      preferredOrganizationId: settings.guildIdByCharId[game.hero.characterId],
     });
-    if (organizationIds.length === 0) return;
     await this.realtime.request("presence.publish", {
       organizationIds,
       isAfk: this.lastIsAfk,
@@ -348,6 +346,14 @@ export class AppSocket {
   }
 
   private handleServerEvent(event: ServerEvent): void {
+    if (event.type === "connection.ready") {
+      this.id = event.data.connectionId;
+      for (const resolve of this.connectionReadyWaiters) {
+        resolve(event.data.connectionId);
+      }
+      this.connectionReadyWaiters.clear();
+      return;
+    }
     if (event.type === "session.joined") {
       this.id = event.data.connectionId;
       this.joinedOrganizationIds = [...event.data.organizationIds];
@@ -407,6 +413,13 @@ export class AppSocket {
       status: "success",
       guildsCount: result.organizationIds.length,
       guildIds: [...result.organizationIds],
+    });
+  }
+
+  private waitForConnectionId(): Promise<string> {
+    if (this.id) return Promise.resolve(this.id);
+    return new Promise((resolve) => {
+      this.connectionReadyWaiters.add(resolve);
     });
   }
 }

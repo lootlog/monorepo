@@ -21,10 +21,8 @@ import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
 import type { ResetTimerDto } from "../../lootlog-api.js";
-import {
-  type TimersGuildAccess,
-  TimersOperationError,
-} from "./timers.handlers.js";
+import type { TimersGuildAccess } from "./timers.handlers.js";
+import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
 import { mapTimerResponse } from "./timer-response.js";
 
 export interface ResetTimerPorts {
@@ -199,7 +197,12 @@ export const makeResetTimer = (
             .limit(1);
           const member = members[0];
           if (!member)
-            return yield* Effect.fail(new Error("Timer member was not found"));
+            return yield* Effect.die(
+              new TimersMemberNotFound({
+                guildId: access.guild.id,
+                discordId: access.discordId,
+              }),
+            );
           const actor = payload.actorCharacter;
           const actorCharacter = yield* upsertActorCharacter(
             transaction,
@@ -306,6 +309,6 @@ export const makeResetTimer = (
     payload: ResetTimerDto,
   ) =>
     operation(access, timerIdentifier, payload).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
+      Effect.mapError(toTimersDataFailure),
     );
 };

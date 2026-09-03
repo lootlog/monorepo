@@ -18,10 +18,12 @@ import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
+import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
-  type TimersGuildAccess,
-  TimersOperationError,
-} from "./timers.handlers.js";
+  TimersInvariantViolation,
+  TimersNotFound,
+  toTimersDataFailure,
+} from "./timer-errors.js";
 
 export interface DeleteTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
@@ -123,8 +125,8 @@ export const makeDeleteTimer = (
             .limit(1);
           const actorMemberId = actors[0]?.id;
           if (actorMemberId === undefined) {
-            return yield* Effect.fail(
-              new Error("Timer history actor member was not found"),
+            return yield* Effect.die(
+              new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
             );
           }
           yield* transaction.insert(timerHistoryEntryTable).values({
@@ -225,13 +227,9 @@ export const makeDeleteTimer = (
   ) =>
     world
       ? operation(access, timerIdentifier, world).pipe(
-          Effect.mapError((cause) => new TimersOperationError({ cause })),
+          Effect.mapError(toTimersDataFailure),
         )
       : Effect.fail(
-          new TimersOperationError({
-            cause: new ResourceNotFoundError({
-              message: ErrorKey.TIMER_NOT_FOUND,
-            }),
-          }),
+          new TimersNotFound({ status: 404, code: ErrorKey.TIMER_NOT_FOUND }),
         );
 };

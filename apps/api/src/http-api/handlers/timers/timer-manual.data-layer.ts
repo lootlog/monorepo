@@ -14,10 +14,12 @@ import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import type { CreateManualTimerDto } from "../../lootlog-api.js";
+import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
-  type TimersGuildAccess,
-  TimersOperationError,
-} from "./timers.handlers.js";
+  TimersInvariantViolation,
+  TimersMemberNotFound,
+  toTimersDataFailure,
+} from "./timer-errors.js";
 import { mapTimerResponse } from "./timer-response.js";
 
 export interface ManualTimerPorts {
@@ -97,7 +99,12 @@ export const makeManualTimer = (
           .limit(1);
         const member = members[0];
         if (!member)
-          return yield* Effect.fail(new Error("Timer member was not found"));
+          return yield* Effect.die(
+            new TimersMemberNotFound({
+              guildId: access.guild.id,
+              discordId: access.discordId,
+            }),
+          );
 
         let actorCharacter: typeof playerSnapshotTable.$inferSelect | null =
           null;
@@ -172,8 +179,8 @@ export const makeManualTimer = (
           .returning();
         const timer = insertedTimers[0];
         if (!timer)
-          return yield* Effect.fail(
-            new Error("Manual timer insert returned no row"),
+          return yield* Effect.die(
+            new TimersInvariantViolation({ code: "MANUAL_INSERT_NO_ROW" }),
           );
         return { ...timer, member, actorCharacter };
       }),
@@ -188,7 +195,5 @@ export const makeManualTimer = (
     return response;
   });
   return (access: TimersGuildAccess, payload: CreateManualTimerDto) =>
-    operation(access, payload).pipe(
-      Effect.mapError((cause) => new TimersOperationError({ cause })),
-    );
+    operation(access, payload).pipe(Effect.mapError(toTimersDataFailure));
 };

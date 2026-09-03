@@ -23,7 +23,7 @@ const guild = (
 
 class FakeGuildStore {
   guilds: UserGuildData[] = [guild()];
-  getUserGuilds(): Effect.Effect<UserGuildData[]> {
+  getUserGuilds(): Effect.Effect<UserGuildData[], unknown> {
     return Effect.succeed(this.guilds);
   }
   invalidate(): Effect.Effect<void> {
@@ -73,6 +73,28 @@ class FakeActivity {
   }
 }
 
+class FakePresence {
+  readonly reconciled: GatewaySocket[] = [];
+
+  reconcileAccess(socket: GatewaySocket): Effect.Effect<void> {
+    return Effect.sync(() => {
+      this.reconciled.push(socket);
+      const allowedIds = new Set(
+        socket.data.guilds.map(({ guild: currentGuild }) => currentGuild.id),
+      );
+      const current = socket.data.presence;
+      if (!current) return;
+      const organizationIds = current.organizationIds.filter((id) =>
+        allowedIds.has(id),
+      );
+      socket.data.presence =
+        organizationIds.length === 0
+          ? undefined
+          : { ...current, organizationIds };
+    });
+  }
+}
+
 const makeSocket = (): { socket: GatewaySocket; closes: number[] } => {
   const closes: number[] = [];
   const data: SessionData = {
@@ -100,19 +122,20 @@ const setup = () => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
   const activity = new FakeActivity();
+  const presence = new FakePresence();
   const handler = new CommandHandler(
     { margonemAccountProofRequired: false } as GatewayConfiguration,
     guilds as unknown as GuildStore,
     {
       verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
     } as unknown as MargonemProofVerifier,
-    {} as PresenceStore,
+    presence as unknown as PresenceStore,
     hub as unknown as RealtimeHub,
     activity as unknown as ActivityPublisher,
     {} as MapPingService,
     { clearSubscription: () => undefined } as unknown as AirTagService,
   );
-  return { handler, guilds, hub, activity };
+  return { handler, guilds, hub, activity, presence };
 };
 
 describe("CommandHandler session lifecycle", () => {
@@ -140,10 +163,20 @@ describe("CommandHandler session lifecycle", () => {
   });
 
   test("rebalances permissions and disconnects sessions with no organizations", async () => {
-    const { handler, guilds, hub, activity } = setup();
+    const { handler, guilds, hub, activity, presence } = setup();
     const target = makeSocket();
     target.socket.data.joined = true;
     target.socket.data.guilds = [guild()];
+    target.socket.data.presence = {
+      userId: "user-1",
+      sessionId: "connection-1",
+      organizationIds: ["organization-1"],
+      platform: "web-app",
+      status: "online",
+      confidence: "reported",
+      isAfk: false,
+      lastSeen: 1,
+    };
     hub.sockets.push(target.socket);
     guilds.guilds = [];
     await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
@@ -151,6 +184,8 @@ describe("CommandHandler session lifecycle", () => {
       { type: "DISCONNECT_EVENT", ids: ["organization-1"] },
     ]);
     expect(target.closes).toEqual([1008]);
+    expect(presence.reconciled).toEqual([target.socket]);
+    expect(target.socket.data.presence).toBeUndefined();
     expect(hub.events).toHaveLength(1);
   });
 
@@ -188,6 +223,63 @@ describe("CommandHandler session lifecycle", () => {
       requestId: "request-invalid",
       status: "success",
       data: { status: "rejected", code: "invalid-payload" },
+    });
+  });
+
+  test("maps typed command rejections without marking them retryable", async () => {
+    const { handler, hub } = setup();
+    const target = makeSocket();
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "subscription.unsubscribe",
+            requestId: "request-not-joined",
+            data: { topic: "organization.presence" },
+          }),
+        ),
+      ),
+    );
+    expect(hub.responses).toContainEqual({
+      v: 1,
+      requestId: "request-not-joined",
+      status: "error",
+      error: {
+        code: "COMMAND_REJECTED",
+        message: "session.join is required",
+        retryable: false,
+      },
+    });
+  });
+
+  test("does not expose dependency failures through command responses", async () => {
+    const { handler, guilds, hub } = setup();
+    guilds.getUserGuilds = () => Effect.fail(new Error("database secret"));
+    const target = makeSocket();
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "session.join",
+            requestId: "request-dependency",
+            data: {},
+          }),
+        ),
+      ),
+    );
+    expect(hub.responses).toContainEqual({
+      v: 1,
+      requestId: "request-dependency",
+      status: "error",
+      error: {
+        code: "COMMAND_REJECTED",
+        message: "command temporarily unavailable",
+        retryable: true,
+      },
     });
   });
 });
