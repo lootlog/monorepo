@@ -5,9 +5,11 @@ import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-const migrationArchive = readdirSync(path.resolve(dirname, "../drizzle")).find(
-  (entry) => entry.startsWith("legacy-") && !entry.endsWith(".sql"),
-);
+const migrationArchive = readdirSync(path.resolve(dirname, "../drizzle"), {
+  withFileTypes: true,
+}).find(
+  (entry) => entry.isDirectory() && entry.name.startsWith("legacy-"),
+)?.name;
 if (migrationArchive === undefined) {
   throw new Error("Legacy migration archive is missing");
 }
