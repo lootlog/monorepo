@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
-import type { ApplicationLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   KillsControllerGetMemberKills200,
   type KillsControllerGetMemberKillsQuery as GetMemberKillsDto,
@@ -17,7 +17,7 @@ import {
   visibilityCacheScope,
   visibilityFilter,
 } from "./kill-query-support.js";
-import { getKillStatsPeriodStart } from "./utils/kill-stats-period.js";
+import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
 export class MemberKillQueryError extends TaggedErrorClass<MemberKillQueryError>()(
   "MemberKillQueryError",

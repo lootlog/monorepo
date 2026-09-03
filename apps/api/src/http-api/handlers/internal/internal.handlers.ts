@@ -21,10 +21,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import {
-  getGuildCacheKey,
-  GUILD_CACHE_TTL_SECONDS,
-} from "#src/shared/constants/cache.constant";
+import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,

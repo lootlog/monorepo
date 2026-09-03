@@ -2,25 +2,25 @@ import type { Queue } from "bullmq";
 import { Effect } from "effect";
 import { battlelogOperation } from "./battlelog-operation.js";
 import type { Battles } from "#src/battles/battles.service";
-import type { DeleteUserBattlesJobData } from "#src/battles/delete-user-battles.processor";
+import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
 import type {
   BattleResponseInput,
   BattlesListResponseInput,
-} from "#src/battles/dto/battle-response.dto";
-import type { CreateBattleDto } from "#src/battles/dto/create-battle.dto";
-import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
+} from "#src/battles/catalog/battle-response";
+import type { CreateBattleInput } from "#src/battles/submission/create-battle";
+import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
 import type {
-  QueryAbyssSeasonsDto,
-  QueryBattleStatisticsDto,
-  QueryPlayerVsPlayerDto,
-} from "#src/battles/dto/query-battle-statistics.dto";
-import type { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
-import type { UpdateBattleDto } from "#src/battles/dto/update-battle.dto";
+  AbyssSeasonsQuery,
+  BattleStatisticsQuery,
+  PlayerVsPlayerQuery,
+} from "#src/battles/analytics/query-battle-statistics";
+import type { BattleListQuery } from "#src/battles/catalog/query-battles";
+import type { BattleUpdate } from "#src/battles/catalog/update-battle";
 import type {
   BattleWithRelations,
   GetAllBattlesResult,
-} from "#src/battles/interfaces/battle-service.interface";
-import type { BattleAnalytics } from "#src/battles/services/battle-analytics.service";
+} from "#src/battles/battle-service";
+import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { DeleteUserData } from "./internal-operations.js";
 
 const normalizeBattleResponse = (
@@ -51,12 +51,12 @@ export const makeBattlelogOperations = (
   battles: {
     createBattle: battlelogOperation(
       "BattlesController_createBattle",
-      (data: CreateBattleDto, userId: string) =>
+      (data: CreateBattleInput, userId: string) =>
         battles.createBattle({ data, userId }),
     ),
     getDashboardBattles: battlelogOperation(
       "BattlesController_getDashboardBattles",
-      (query: QueryBattlesDto, userId: string) =>
+      (query: BattleListQuery, userId: string) =>
         battles
           .getDashboardBattles(query, userId)
           .pipe(Effect.map(normalizeBattlesListResponse)),
@@ -67,57 +67,57 @@ export const makeBattlelogOperations = (
     ),
     getBattleAnalytics: battlelogOperation(
       "BattlesController_getBattleAnalytics",
-      (query: QueryBattleAnalyticsDto, userId: string) =>
+      (query: BattleAnalyticsCriteria, userId: string) =>
         analytics.getBattleAnalytics(query, userId),
     ),
     getAbyssSeasons: battlelogOperation(
       "BattlesController_getAbyssSeasons",
-      (query: QueryAbyssSeasonsDto, userId: string) =>
+      (query: AbyssSeasonsQuery, userId: string) =>
         analytics.getAbyssSeasons(query, userId),
     ),
     getCombatProfile: battlelogOperation(
       "BattlesController_getCombatProfile",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getCombatProfile(query, userId),
     ),
     getProfessionWinRate: battlelogOperation(
       "BattlesController_getProfessionWinRate",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.calculateProfessionWinRate(query, userId),
     ),
     getHeadToHead: battlelogOperation(
       "BattlesController_getHeadToHead",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getHeadToHead(query, userId),
     ),
     getCurrentStreak: battlelogOperation(
       "BattlesController_getCurrentStreak",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getCurrentStreak(query, userId),
     ),
     getBattleDuration: battlelogOperation(
       "BattlesController_getBattleDuration",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getBattleDurationStats(query, userId),
     ),
     getPhGrowth: battlelogOperation(
       "BattlesController_getPhGrowth",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getPhGrowthTimeSeries(query, userId),
     ),
     getRatingGrowth: battlelogOperation(
       "BattlesController_getRatingGrowth",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getRatingGrowthTimeSeries(query, userId),
     ),
     getRatingDeltaByOpponent: battlelogOperation(
       "BattlesController_getRatingDeltaByOpponent",
-      (query: QueryBattleStatisticsDto, userId: string) =>
+      (query: BattleStatisticsQuery, userId: string) =>
         analytics.getRatingDeltaByOpponent(query, userId),
     ),
     getPlayerVsPlayerBattles: battlelogOperation(
       "BattlesController_getPlayerVsPlayerBattles",
-      (query: QueryPlayerVsPlayerDto, userId: string) =>
+      (query: PlayerVsPlayerQuery, userId: string) =>
         analytics.getPlayerVsPlayerBattles(query, userId),
     ),
     searchWarriors: battlelogOperation(
@@ -147,7 +147,7 @@ export const makeBattlelogOperations = (
     ),
     updateBattle: battlelogOperation(
       "BattlesController_updateBattle",
-      (battleId: string, update: UpdateBattleDto, userId: string) =>
+      (battleId: string, update: BattleUpdate, userId: string) =>
         battles
           .assertBattleOwner(battleId, userId)
           .pipe(

@@ -16,6 +16,12 @@ Run commands from the monorepo root:
 bun run --filter @lootlog/discord-bot dev
 ```
 
+## Source layout
+
+- `src/bot` owns Discord delivery, synchronization, event handling, and RabbitMQ publishing.
+- `src/http-api/contracts` owns the health and internal synchronization contracts.
+- `src/bot-application.ts` wires the HTTP and RabbitMQ adapters; shared logging lives at `src/logger.ts`.
+
 ## Key Scripts
 
 - `bun run --filter @lootlog/discord-bot build`

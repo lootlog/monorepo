@@ -2,7 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Effect, Schema } from "effect";
-import type { ApplicationLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   KillsControllerGetGuildKillStats200,
   KillsControllerGetGuildTopKillersByType200,
@@ -24,7 +24,7 @@ import {
 import {
   getKillStatsPeriodStart,
   type KillStatsPeriod,
-} from "./utils/kill-stats-period.js";
+} from "./kill-stats-period.js";
 
 export class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
   "GuildKillQueriesError",

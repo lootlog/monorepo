@@ -14,17 +14,17 @@ import {
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
 import { authAccounts } from "#src/database/drizzle.schema";
-import { AuthRedisStorage } from "./auth-redis-storage.js";
+import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import {
   BetterAuthRuntime,
   type AppUserSession,
   type LootlogAuth,
-} from "./better-auth.js";
+} from "#src/auth/provider/better-auth";
 import {
   consumeRealtimeTicket,
   issueRealtimeTicket,
   type RealtimeTicketRedis,
-} from "./realtime-ticket.js";
+} from "#src/auth/realtime/realtime-ticket";
 
 export interface VerifiedIdentity {
   readonly userId: string;

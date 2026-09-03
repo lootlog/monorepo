@@ -10,6 +10,10 @@ Workers:
 Both Workers use the same route table. Their generated asset namespaces are
 explicit:
 
+The source intentionally stays flat: `src/index.ts` owns the complete Worker
+interface and `src/index.test.ts` verifies it. There is no internal module seam
+to justify another directory.
+
 | Paths                                                                   | Origin                     |
 | ----------------------------------------------------------------------- | -------------------------- |
 | `/`, legal pages, `/_next`, `/landing-assets`, `/brand`, `/screenshots` | Landing                    |

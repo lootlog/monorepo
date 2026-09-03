@@ -6,7 +6,7 @@ import {
   ActivityRepository,
   type ActivityRepositoryValue,
 } from "#src/activities/activity-repository";
-import { Permissions } from "#src/permissions/permissions";
+import { Permissions } from "#src/activities/activity-permissions";
 import {
   ActivityHealth,
   ActivityRoutes,

@@ -21,8 +21,8 @@ import type {
   Role,
 } from "discord.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { AppLogger } from "#src/shared/logger";
-import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant.js";
+import { AppLogger } from "#src/logger";
+import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./required-notification-permissions.js";
 import { discordSdkRead } from "./discord-sdk-read.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
 

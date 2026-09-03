@@ -1,6 +1,6 @@
 /** Transport schemas owned by the notifications HTTP module. */
 import * as Schema from "effect/Schema";
-import { Error as NotificationError } from "../../../notifications/enum/error.enum.js";
+import { Error as NotificationError } from "../../../notifications/error.js";
 import { SuccessResponseDto_Output } from "../shared.js";
 import {
   DateTimeWithOffsetString,

@@ -19,6 +19,14 @@ bun run db:battlelog:push
 bun run --filter @lootlog/battlelog dev
 ```
 
+## Source layout
+
+- `src/battles/submission`, `catalog`, `analytics`, `statistics`, and `deletion` group behavior by capability.
+- `src/http-api/contracts` owns deployed schemas; `src/http` adapts those contracts to battle operations.
+- `src/database` owns the Drizzle schema and connection adapter.
+- `src/infrastructure` owns Redis, R2, logging, HTTP errors, and query decoding.
+- `src/battlelog-application.ts` is the composition root.
+
 ## Key Scripts
 
 - `bun run db:battlelog:migrate:deploy`
@@ -30,6 +38,6 @@ bun run --filter @lootlog/battlelog dev
 
 ## Notes
 
-- Drizzle schema and migrations live in `src/shared/modules/drizzle/` and `drizzle/`.
+- Drizzle schema and migrations live in `src/database/` and `drizzle/`.
 - `BunRuntime.runMain` owns SIGINT/SIGTERM shutdown and closes the HTTP server, workers, queues, Redis, and PostgreSQL resources in scope order.
 - `openapi.yaml` is the compatibility artifact for the 26 deployed operations and is checked by deterministic generation.

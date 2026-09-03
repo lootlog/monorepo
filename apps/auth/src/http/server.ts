@@ -6,8 +6,11 @@ import {
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { BetterAuthRuntime, type LootlogAuth } from "#src/auth/better-auth";
-import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/better-auth-url";
+import {
+  BetterAuthRuntime,
+  type LootlogAuth,
+} from "#src/auth/provider/better-auth";
+import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
 import { AppConfig } from "#src/config/env";
 import { AuthApi } from "#src/http-api/auth-api";
 import { normalizeBetterAuthRequest } from "./application.js";

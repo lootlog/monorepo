@@ -1,11 +1,11 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import type { NotificationRuleOperations } from "#src/notifications/notification-rule-operations";
-import type { NotificationGuildTargets } from "#src/notifications/notification-guild-targets";
-import type { NotificationUserTargets } from "#src/notifications/notification-user-targets";
-import type { NotificationJobOperations } from "#src/notifications/notification-job-operations";
-import type { NotificationWatchedItems } from "#src/notifications/notification-watched-items";
+import type { NotificationRuleOperations } from "#src/notifications/rules/notification-rule-operations";
+import type { NotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
+import type { NotificationUserTargets } from "#src/notifications/targets/notification-user-targets";
+import type { NotificationJobOperations } from "#src/notifications/jobs/notification-job-operations";
+import type { NotificationWatchedItems } from "#src/notifications/rules/notification-watched-items";
 import {
   NotificationsBadRequest,
   NotificationsData,

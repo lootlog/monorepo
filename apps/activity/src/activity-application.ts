@@ -10,7 +10,7 @@ import { verifyAndAdoptDatabase } from "#src/database/adoption";
 import { ActivityDatabase, PgClientLive } from "#src/database/database";
 import { ActivityHealth, ActivityHttpServer } from "#src/http/activity-http";
 import { ApiHttpClient } from "#src/http/api-http-client";
-import { Permissions } from "#src/permissions/permissions";
+import { Permissions } from "#src/activities/activity-permissions";
 
 const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {

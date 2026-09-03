@@ -12,7 +12,7 @@ import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
-import type { UserGuildData } from "#src/guilds/types/guild.types";
+import type { UserGuildData } from "#src/guilds/guild";
 
 const guild = (
   permissions: Permission[] = [Permission.LOOTLOG_ONLINE_PLAYERS_READ],

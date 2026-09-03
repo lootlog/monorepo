@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import type { Meilisearch } from "meilisearch";
-import { ITEMS_INDEX } from "#src/items/constants/meilisearch";
-import { NPCS_INDEX } from "#src/npcs/constants/meilisearch";
-import { PLAYERS_INDEX } from "#src/players/constants/meilisearch";
+import { ITEMS_INDEX } from "#src/items/search-index";
+import { NPCS_INDEX } from "#src/npcs/search-index";
+import { PLAYERS_INDEX } from "#src/players/search-index";
 import type { AppLogger } from "#src/shared/logger";
-import { getMeilisearchErrorCode } from "./meilisearch.utils.js";
+import { getMeilisearchErrorCode } from "./query-builder.js";
 import { attemptMeilisearch } from "./search-operation-failure.js";
 
 const itemFilterableAttributes = [

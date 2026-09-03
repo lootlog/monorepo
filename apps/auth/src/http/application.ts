@@ -1,4 +1,4 @@
-import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/better-auth-url";
+import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
 
 export const normalizeBetterAuthRequest = (
   request: Request,

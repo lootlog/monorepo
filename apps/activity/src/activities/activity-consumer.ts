@@ -15,7 +15,7 @@ import {
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   verifyActivityEventSignature,
-} from "./utils/activity-event-signature.js";
+} from "./activity-event-signature.js";
 import { ActivityConfig } from "#src/config/activity-config";
 
 const mainQueue = (

@@ -13,10 +13,10 @@ import {
   getAdminBulkRefreshRateLimit,
   getMemberCacheSoftTtl,
   getRefreshPermissionsTtl,
-} from "#src/members/constants/member-cache.constant";
-import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
-import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
-import { ErrorKey } from "#src/members/enum/error-key.enum";
+} from "#src/members/member-cache";
+import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
+import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
+import { ErrorKey } from "#src/members/error-key";
 import { isTransientMemberSyncStatus } from "#src/members/member-discord-sync-status";
 import type {
   MemberBulkRefreshJobData,
@@ -29,7 +29,7 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
+import { ErrorKey as GuildErrorKey } from "#src/guilds/error-key";
 import {
   MembersData,
   MembersOperationError,

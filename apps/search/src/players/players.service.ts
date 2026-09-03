@@ -1,15 +1,15 @@
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
-import type { GetPlayersDto } from "./dto/get-players.dto.js";
-import { PLAYERS_INDEX } from "./constants/meilisearch.js";
-import type { IndexPlayersDto } from "./dto/index-players.dto.js";
-import type { PlayerHit } from "./dto/player-hit.schema.js";
+import type { PlayerSearchQuery } from "./player-search-query.js";
+import { PLAYERS_INDEX } from "./search-index.js";
+import type { IndexPlayersCommand } from "./index-players-command.js";
+import type { PlayerHit } from "./player-hit.js";
 
 export const makePlayersModule = (
   meilisearch: Meilisearch,
@@ -19,7 +19,7 @@ export const makePlayersModule = (
     limit,
     search,
     world,
-  }: GetPlayersDto) {
+  }: PlayerSearchQuery) {
     const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
@@ -52,7 +52,7 @@ export const makePlayersModule = (
   });
 
   const indexPlayers = Effect.fn("SearchPlayers.index")(function* (
-    data: IndexPlayersDto,
+    data: IndexPlayersCommand,
   ) {
     const index = meilisearch.index(PLAYERS_INDEX);
 
@@ -89,10 +89,10 @@ export const makePlayersModule = (
 
   return { getPlayers, indexPlayers } satisfies {
     readonly getPlayers: (
-      input: GetPlayersDto,
+      input: PlayerSearchQuery,
     ) => Effect.Effect<ReadonlyArray<PlayerHit>>;
     readonly indexPlayers: (
-      data: IndexPlayersDto,
+      data: IndexPlayersCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
   };
 };

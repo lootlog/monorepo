@@ -9,7 +9,7 @@ import {
   NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-} from "./notification-enums.js";
+} from "#src/notifications/notification-enums";
 import {
   isoDatetimeCodec,
   jsonValueSchema,

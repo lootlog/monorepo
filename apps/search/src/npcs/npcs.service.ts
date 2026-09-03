@@ -1,17 +1,17 @@
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
 import { getNpcTypeByWt } from "./npc-type.js";
-import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
-import { NPCS_INDEX } from "./constants/meilisearch.js";
-import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
-import type { NpcHit } from "./dto/npc-hit.schema.js";
+import type { NpcSearchQuery } from "./npc-search-query.js";
+import { NPCS_INDEX } from "./search-index.js";
+import type { IndexNpcsCommand } from "./index-npcs-command.js";
+import type { NpcHit } from "./npc-hit.js";
 
 type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
   margonemType?: number | null;
@@ -52,7 +52,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     limit,
     search,
     world,
-  }: GetNpcsDto) {
+  }: NpcSearchQuery) {
     const index = meilisearch.index<RawNpcHit>(NPCS_INDEX);
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
@@ -92,7 +92,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   });
 
   const indexNpcs = Effect.fn("SearchNpcs.index")(function* (
-    data: IndexNpcsDto,
+    data: IndexNpcsCommand,
   ) {
     const index = meilisearch.index(NPCS_INDEX);
 
@@ -135,10 +135,10 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
 
   return { getNpcs, indexNpcs } satisfies {
     readonly getNpcs: (
-      input: GetNpcsDto,
+      input: NpcSearchQuery,
     ) => Effect.Effect<ReadonlyArray<NpcHit>>;
     readonly indexNpcs: (
-      data: IndexNpcsDto,
+      data: IndexNpcsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
   };
 };

@@ -18,7 +18,7 @@
     "test:coverage": "bun test --coverage",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
-    "auth:generate": "auth generate --config src/auth/better-auth-cli.ts --output src/database/drizzle.schema.ts --yes",
+    "auth:generate": "auth generate --config src/auth/provider/better-auth-cli.ts --output src/database/drizzle.schema.ts --yes",
     "auth:migrate:plan": "bun scripts/migration-plan.ts",
     "auth:migrate:apply": "bun scripts/migration-apply.ts",
     "db:generate": "bunx drizzle-kit generate",

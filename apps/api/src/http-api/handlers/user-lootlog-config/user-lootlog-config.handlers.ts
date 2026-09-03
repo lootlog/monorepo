@@ -12,8 +12,7 @@ import {
   roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { getUserLootlogConfigCachePattern } from "#src/shared/constants/cache.constant";
-import { toUserLootlogConfigResponse } from "#src/user-lootlog-config/user-lootlog-config.schema";
+import { getUserLootlogConfigCachePattern } from "#src/shared/cache";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
@@ -153,12 +152,12 @@ export class UserLootlogConfigData extends Context.Service<
                 const result = Object.fromEntries(
                   configs.map((config) => [
                     config.characterId,
-                    toUserLootlogConfigResponse({
+                    {
                       ...config,
                       catchingGuildIds: config.catchingGuildIds.filter((id) =>
                         writableGuildIds.has(id),
                       ),
-                    }),
+                    },
                   ]),
                 );
                 yield* cacheWrite(cacheKey, result);
@@ -207,7 +206,7 @@ export class UserLootlogConfigData extends Context.Service<
                 yield* cache
                   .deleteByPattern(getUserLootlogConfigCachePattern(discordId))
                   .pipe(Effect.ignore);
-                return toUserLootlogConfigResponse(config);
+                return config;
               }).pipe(
                 Effect.withSpan("user-lootlog-config.upsert.persistence", {
                   attributes: { adapter: "ApiDatabase", retryCount: 0 },

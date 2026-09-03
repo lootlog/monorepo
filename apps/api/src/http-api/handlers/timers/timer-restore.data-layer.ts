@@ -13,7 +13,7 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { ErrorKey } from "#src/timers/enum/error-key.enum";
+import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {

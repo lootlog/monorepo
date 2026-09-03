@@ -6,7 +6,7 @@ import {
   ApplicationErrorKind,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { DiscordOperationFailure } from "#src/discord/discord.operations";
 import {
   getTransientMemberSyncStatus,

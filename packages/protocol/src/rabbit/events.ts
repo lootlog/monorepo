@@ -42,6 +42,8 @@ export const GuildRoleDeleted = Schema.Struct({
   guildId: NonEmptyString,
   id: NonEmptyString,
 });
+export type GuildRoleChanged = typeof GuildRoleChanged.Type;
+export type GuildRoleDeleted = typeof GuildRoleDeleted.Type;
 
 export const GuildMemberChanged = Schema.Struct({
   guildId: NonEmptyString,

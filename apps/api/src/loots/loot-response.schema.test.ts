@@ -1,6 +1,6 @@
 import { describe, expect, it } from "#test/bun-test";
 import { Schema } from "effect";
-import { LootResponse } from "./loot-response.schema.js";
+import { LootResponse } from "#src/loots/loot-response.schema";
 
 describe("LootResponse", () => {
   it("round-trips nested loot data and dates", () => {

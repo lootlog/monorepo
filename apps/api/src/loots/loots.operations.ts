@@ -11,23 +11,23 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import type { ApplicationLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   type CreateCommentDto,
   LootsControllerFetchLootsByGuildId200,
   type LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
 } from "#src/http-api/contracts/loots/schemas";
-import type { LootQueryResult } from "./dto/loot-query-result.dto.js";
-import { ErrorKey } from "./enum/error-key.enum.js";
+import type { LootQueryResult } from "#src/loots/query/loot-query-result";
+import { ErrorKey } from "#src/loots/error-key";
 import type {
   LootPersistence,
   LootPersistenceError,
-} from "./loot-persistence.js";
+} from "#src/loots/loot-persistence";
 import type {
   LootQueryError,
   LootQueryOperations,
-} from "./services/loot-query.operations.js";
-import type { LootStatsService } from "./services/loot-stats.service.js";
+} from "#src/loots/query/loot-query.operations";
+import type { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 type Guild = typeof guildTable.$inferSelect;
 type Role = typeof roleTable.$inferSelect;

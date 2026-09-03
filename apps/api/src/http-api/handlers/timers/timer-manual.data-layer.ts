@@ -8,11 +8,11 @@ import {
   playerSnapshotTable,
   timerTable,
 } from "#src/database/drizzle/schema";
-import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
-import { generateUniqueIntId } from "#src/shared/utils/generate-unique-int-id";
+import { getProfByShortname } from "#src/shared/margonem/profession";
+import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
-import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
-import { buildTimerKey } from "#src/timers/utils/timer-key";
+import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { buildTimerKey } from "#src/timers/timer-key";
 import type { CreateManualTimerDto } from "../../contracts/timers/schemas.js";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {

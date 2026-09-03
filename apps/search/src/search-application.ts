@@ -6,9 +6,9 @@ import {
 } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer, Redacted } from "effect";
 import { SearchConfig } from "#src/config/search-config";
-import { decodeIndexItemsPayload } from "#src/items/dto/index-items.dto";
-import { decodeIndexNpcsPayload } from "#src/npcs/dto/index-npcs.dto";
-import { decodeIndexPlayersPayload } from "#src/players/dto/index-players.dto";
+import { decodeIndexItemsPayload } from "#src/items/index-items-command";
+import { decodeIndexNpcsPayload } from "#src/npcs/index-npcs-command";
+import { decodeIndexPlayersPayload } from "#src/players/index-players-command";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 import { effectLogger } from "#src/shared/logger";

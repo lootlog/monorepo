@@ -6,9 +6,9 @@ import {
   OtlpSerialization,
   OtlpTracer,
 } from "effect/unstable/observability";
-import { AuthRedisStorage } from "#src/auth/auth-redis-storage";
+import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import { AuthService } from "#src/auth/auth-service";
-import { BetterAuthRuntime } from "#src/auth/better-auth";
+import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
 import { AuthHttpServer } from "#src/http/server";

@@ -5,7 +5,7 @@ import type {
   PresenceCharacter,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import type { UserGuildData } from "#src/guilds/types/guild.types";
+import type { UserGuildData } from "#src/guilds/guild";
 
 export interface AuthenticatedIdentity {
   readonly discordId: string;

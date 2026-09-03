@@ -2,7 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
-import { GAME_URL_REGEX } from "#src/gateway/constants/game-url-regex.constant";
+import { GAME_URL_REGEX } from "#src/auth/game-url";
 import type { AuthenticatedIdentity } from "#src/realtime/session";
 
 const ticketProtocolPrefix = "lootlog.ticket.v1.";

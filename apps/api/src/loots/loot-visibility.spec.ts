@@ -4,7 +4,7 @@ import type { roleTable } from "#src/database/drizzle/schema";
 import {
   buildLootNpcVisibilitySql,
   toLootVisibilityRoles,
-} from "./loot-visibility.js";
+} from "#src/loots/loot-visibility";
 
 type Role = typeof roleTable.$inferSelect;
 

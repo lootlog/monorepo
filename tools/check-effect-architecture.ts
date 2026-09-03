@@ -15,22 +15,22 @@ const sourceRoots = [
 const runtimeBoundaryAllowlist = new Set([
   "apps/api/src/database/drizzle/migrate.ts",
   "apps/api/src/discord/discord-rest-client.factory.ts",
-  "apps/api/src/events/event-hero-kill.processor.ts",
-  "apps/api/src/events/event-presence-tracking.ts",
-  "apps/api/src/http-api/runtime/native-background-layers.ts",
-  "apps/api/src/http-api/runtime/api-redis.ts",
-  "apps/auth/src/auth/auth-redis-storage.ts",
-  "apps/battlelog/src/app.factory.ts",
+  "apps/api/src/events/kills/event-hero-kill.processor.ts",
+  "apps/api/src/events/monitoring/event-presence-tracking.ts",
+  "apps/api/src/http-api/runtime/background/background-layers.ts",
+  "apps/api/src/http-api/runtime/infrastructure/api-redis.ts",
+  "apps/auth/src/auth/storage/auth-redis-storage.ts",
+  "apps/battlelog/src/battlelog-application.ts",
   "apps/gateway/src/app.ts",
 ]);
 
 const forkBoundaryAllowlist = new Set([
   "apps/api/src/shared/diagnostics/node-warning-diagnostics.ts",
-  "apps/api/src/shared/logging/application-logger.ts",
-  "apps/auth/src/auth/auth-redis-storage.ts",
-  "apps/battlelog/src/platform/logger.ts",
+  "apps/api/src/shared/application-logger.ts",
+  "apps/auth/src/auth/storage/auth-redis-storage.ts",
+  "apps/battlelog/src/infrastructure/logger.ts",
   "apps/discord-bot/src/bot/bot-discord-events.handler.ts",
-  "apps/discord-bot/src/shared/logger.ts",
+  "apps/discord-bot/src/logger.ts",
   "apps/gateway/src/platform/background-tasks.ts",
   "apps/gateway/src/platform/logger.ts",
   "apps/search/src/shared/logger.ts",
@@ -186,7 +186,7 @@ const rules: ReadonlyArray<Rule> = [
   {
     name: "synchronous Effect runtime",
     pattern: /\bEffect\.runSync\b/,
-    allow: (path) => path === "apps/auth/src/auth/better-auth-cli.ts",
+    allow: (path) => path === "apps/auth/src/auth/provider/better-auth-cli.ts",
   },
   {
     name: "untyped Promise rejection",

@@ -6,7 +6,7 @@ import {
 } from "@lootlog/schema/npc-type";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
-import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
+import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { toTimersDataFailure } from "./timer-errors.js";
 
 const parseNpc = (

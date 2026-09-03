@@ -3,10 +3,10 @@ import { Effect } from "effect";
 import {
   FALLBACK_NPC_NAME,
   FALLBACK_WORLD_NAME,
-} from "./constants/notification-messages.constant.js";
-import type { NotificationContentModule } from "./notification-content.service.js";
-import type { NotificationEventStore } from "./notification-event-store.js";
-import type { NotificationMatching } from "./notification-matching.service.js";
+} from "#src/notifications/content/notification-messages";
+import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
+import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
+import type { NotificationMatching } from "#src/notifications/rules/notification-matching.service";
 import {
   NotificationScheduleAnchor,
   NotificationTriggerType,
@@ -14,8 +14,8 @@ import {
   type NotificationScheduleStrategy,
   type NotificationTargetType,
   type NotificationTriggerType as NotificationTriggerTypeValue,
-} from "./notification-enums.js";
-import type { JsonValue } from "./notification-database.types.js";
+} from "#src/notifications/notification-enums";
+import type { JsonValue } from "#src/notifications/notification-database.types";
 
 export interface NotificationTestContentInput {
   readonly notificationRule: {

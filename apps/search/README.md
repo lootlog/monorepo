@@ -24,6 +24,13 @@ Run commands from the monorepo root:
 bun run --filter @lootlog/search dev
 ```
 
+## Source layout
+
+- `src/items`, `src/npcs`, `src/players`, and `src/all` own their query, indexing, and response models.
+- `src/meilisearch` owns index composition and query translation.
+- `src/http-api/contracts` owns deployed schemas; `src/http-api/handlers` contains one thin adapter per contract group.
+- Meilisearch payloads use explicit `*Command`, `*Query`, and `*Response` names instead of local DTO folders.
+
 ## Key Scripts
 
 - `bun run --filter @lootlog/search build`

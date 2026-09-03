@@ -7,24 +7,24 @@ import {
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { BattlelogApplication } from "#src/app.factory";
+import { BattlelogApplication } from "#src/battlelog-application";
 import type { BattlelogOperations } from "#src/battles/battlelog-operations";
 import { BattlelogOperationFailure } from "../battles/battlelog-operation.js";
 import {
   CreateBattleSchema,
-  type CreateBattleDto,
-} from "#src/battles/dto/create-battle.dto";
-import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
+  type CreateBattleInput,
+} from "#src/battles/submission/create-battle";
+import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
 import type {
-  QueryAbyssSeasonsDto,
-  QueryBattleStatisticsDto,
-  QueryPlayerVsPlayerDto,
-} from "#src/battles/dto/query-battle-statistics.dto";
-import type { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
+  AbyssSeasonsQuery,
+  BattleStatisticsQuery,
+  PlayerVsPlayerQuery,
+} from "#src/battles/analytics/query-battle-statistics";
+import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import {
   UpdateBattleSchema,
-  type UpdateBattleDto,
-} from "#src/battles/dto/update-battle.dto";
+  type BattleUpdate,
+} from "#src/battles/catalog/update-battle";
 import {
   DeleteUserDataSchema,
   type DeleteUserData,
@@ -41,8 +41,8 @@ import {
   ApplicationError,
   AuthenticationRequiredError,
   applicationErrorStatus,
-} from "#src/platform/http-error";
-import { Logger } from "#src/platform/logger";
+} from "#src/infrastructure/http-error";
+import { Logger } from "#src/infrastructure/logger";
 
 export type { BattlelogOperations };
 
@@ -140,7 +140,7 @@ const publicOperation = <A>(
 
 const dashboardQuery = (
   query: BattlesControllerGetDashboardBattlesQuery,
-): QueryBattlesDto => ({
+): BattleListQuery => ({
   ...query,
   size: query.size ?? 20,
   sortOrder: query.sortOrder ?? "desc",
@@ -152,11 +152,11 @@ const dashboardQuery = (
 
 const analyticsQuery = (
   query: BattlesControllerGetBattleAnalyticsQuery,
-): QueryBattleAnalyticsDto => ({ ...query });
+): BattleAnalyticsCriteria => ({ ...query });
 
 const statisticsQuery = (
   query: BattlesControllerGetCombatProfileQuery,
-): QueryBattleStatisticsDto => ({
+): BattleStatisticsQuery => ({
   ...query,
   size: query.size ?? 20,
   sortBy: query.sortBy ?? "totalBattles",
@@ -166,7 +166,7 @@ const statisticsQuery = (
 
 const playerVsPlayerQuery = (
   query: BattlesControllerGetPlayerVsPlayerBattlesQuery,
-): QueryPlayerVsPlayerDto => ({
+): PlayerVsPlayerQuery => ({
   ...statisticsQuery(query),
   opponentId: query.opponentId,
   excludeBattleId: query.excludeBattleId,
@@ -187,7 +187,7 @@ export const BattlelogHandlers = Layer.mergeAll(
         toResponse(
           Effect.gen(function* () {
             const userId = yield* currentUserId();
-            const data: CreateBattleDto =
+            const data: CreateBattleInput =
               yield* HttpServerRequest.schemaBodyJson(CreateBattleSchema, {
                 onExcessProperty: "error",
               }).pipe(
@@ -228,7 +228,7 @@ export const BattlelogHandlers = Layer.mergeAll(
             {
               characterId: query.characterId,
               world: query.world,
-            } satisfies QueryAbyssSeasonsDto,
+            } satisfies AbyssSeasonsQuery,
             userId,
           ),
         ),
@@ -316,18 +316,20 @@ export const BattlelogHandlers = Layer.mergeAll(
         toResponse(
           Effect.gen(function* () {
             const userId = yield* currentUserId();
-            const data: UpdateBattleDto =
-              yield* HttpServerRequest.schemaBodyJson(UpdateBattleSchema, {
+            const data: BattleUpdate = yield* HttpServerRequest.schemaBodyJson(
+              UpdateBattleSchema,
+              {
                 onExcessProperty: "error",
-              }).pipe(
-                Effect.mapError(
-                  (cause) =>
-                    new BattlelogOperationFailure({
-                      operation: "BattlesController_updateBattle",
-                      cause,
-                    }),
-                ),
-              );
+              },
+            ).pipe(
+              Effect.mapError(
+                (cause) =>
+                  new BattlelogOperationFailure({
+                    operation: "BattlesController_updateBattle",
+                    cause,
+                  }),
+              ),
+            );
             const services = yield* operations;
             return yield* services.battles.updateBattle(
               params.battleId,
