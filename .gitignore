@@ -77,6 +77,7 @@ playground/**
 !/docs/adr/
 !/docs/adr/**
 !/docs/product-evidence.md
+!/docs/ci-cd.md
 !/docs/rewrite/
 !/docs/rewrite/**
 **/.impeccable/direction-question.json

@@ -22,8 +22,8 @@ isolated linker, and declare native or lifecycle-script packages through
 `trustedDependencies`. CI and release automation must use frozen Bun installs.
 
 Use `bun:test` for backend applications and platform-independent packages.
-Keep Vitest only where Vite, DOM, coverage, or existing replay benchmark support
-requires it. Keep Cloudflare Workers and frontend deployment runtimes unchanged.
+Keep Vitest only where Vite, DOM, or existing replay benchmark support requires
+it. Keep Cloudflare Workers and frontend deployment runtimes unchanged.
 
 ## Consequences
 

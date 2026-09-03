@@ -13,9 +13,6 @@ import {
   runAuthMigrations,
 } from "./migrations.js";
 
-const describeWithPostgres = process.env.LOOTLOG_AUTH_TEST_POSTGRES
-  ? describe
-  : describe.skip;
 const baselinePath = fileURLToPath(
   new URL(
     "../../drizzle/20260422122033_loving_the_leader/migration.sql",
@@ -23,7 +20,7 @@ const baselinePath = fileURLToPath(
   ),
 );
 
-describeWithPostgres("Better Auth 1.7 PostgreSQL migration", () => {
+describe("Better Auth 1.7 PostgreSQL migration", () => {
   let postgres: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
@@ -31,6 +28,7 @@ describeWithPostgres("Better Auth 1.7 PostgreSQL migration", () => {
       .withDatabase("auth_migrations")
       .withUsername("lootlog")
       .withPassword("lootlog")
+      .withStartupTimeout(60_000)
       .start();
   }, 60_000);
 

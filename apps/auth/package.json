@@ -14,8 +14,8 @@
     "start:debug": "bun --inspect --watch src/main.ts",
     "lint": "oxlint src scripts",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
+    "test": "bun test --path-ignore-patterns='**/*.integration.*'",
+    "test:integration": "bun test src/auth/realtime/realtime-ticket.integration.spec.ts src/database/migrations.integration.spec.ts",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
     "auth:generate": "auth generate --config src/auth/provider/better-auth-cli.ts --output src/database/drizzle.schema.ts --yes",
@@ -45,6 +45,7 @@
     "@types/pg": "^8.23.1",
     "auth": "1.7.2",
     "drizzle-kit": "catalog:",
+    "testcontainers": "^12.1.0",
     "typescript": "catalog:"
   }
 }

@@ -115,16 +115,15 @@ bun run test
 bun run test:e2e
 bun run format
 bun run format:check
-bunx changeset
 ```
 
 Workspace-specific commands are documented in each app or package README.
 
 ## Releases and production
 
-Changesets version private workspaces and create immutable release artifacts.
-Merging an ordinary feature pull request may deploy development environments
-but does not create a production release.
+Merging a pull request deploys affected targets to development. Production is
+manual: choose a full commit SHA from `main` and one deployment target (or
+`all`) in the Release workflow.
 
 `dev.lootlog.pl` and `lootlog.pl` use the same repository-owned
 `@lootlog/traffic-splitter` implementation but remain separate Cloudflare
@@ -133,13 +132,15 @@ Workers. Merges to `main` can update only the development Worker. The GitHub
 Worker scripts and custom-domain updates; Pages deployments continue to use
 `CLOUDFLARE_API_TOKEN`.
 
-The Changesets version pull request is the release gate. Its merge creates tags,
-GitHub Releases, container images, and Cloudflare artifacts. Production
-promotion requires environment approval. Container services deploy through
-GitOps and ArgoCD; Cloudflare apps deploy the checksummed artifacts produced by
-the release. The production splitter is promoted before the frontend artifacts
-and rolled back after them if public asset checks fail. Rollbacks reuse
-existing artifacts.
+Production requires environment approval. Container images use immutable
+`sha-<commit>` tags and deploy through GitOps and ArgoCD. Cloudflare targets
+build and deploy in the same approved run. The production state stored in the
+infrastructure repository records image references and Cloudflare deployment
+IDs. The Roll back production workflow restores its previous revision without
+rebuilding code.
+
+See [CI and deployment](docs/ci-cd.md) for workflow inputs, required environment
+configuration, rollback, and the post-merge GitHub settings change.
 
 Do not use `docker-compose.prod.yml` as production documentation. Self-hosting
 is community-supported until the project ships a tested distribution.

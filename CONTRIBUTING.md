@@ -86,22 +86,11 @@ bun run format:check
 Use the narrowest relevant workspace checks while developing. Run every gate
 required by the affected workspace before handoff.
 
-## Changesets
+## Releases
 
-Add a Changeset when a workspace change affects runtime behavior, user-facing
-behavior, a public contract, build output, or dependencies.
-
-- Use `patch` for fixes and compatible improvements.
-- Use `minor` for backward-compatible features.
-- Use `major` for breaking consumer-facing changes.
-- Include every directly affected workspace.
-- Write the summary in English.
-
-Tests, non-published documentation, and non-release configuration do not require
-an empty Changeset. Published docs and landing content affect build output and
-require a normal Changeset.
-
-Never edit package versions or generated changelogs manually.
+Pull requests do not carry release metadata. Production releases select an
+immutable commit from `main` in GitHub Actions. Do not edit package versions or
+generated changelogs as part of a pull request.
 
 ## Pull requests
 

@@ -19,7 +19,7 @@
     "cloudflare:typegen": "wrangler types",
     "lint": "oxlint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests --config ./vitest.config.ts"
+    "test": "vitest run --config ./vitest.config.ts"
   },
   "dependencies": {
     "@lootlog/client": "workspace:*",

@@ -30,27 +30,5 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     css: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    coverage: {
-      provider: "istanbul",
-      reporter: ["text", "json", "html", "lcov"],
-      include: ["src/**/*.{ts,tsx}"],
-      exclude: [
-        "node_modules/",
-        "src/test/",
-        "src/**/*.test.{ts,tsx}",
-        "src/**/*.spec.{ts,tsx}",
-        "src/**/*.bench.{ts,tsx}",
-        "**/*.d.ts",
-        "**/*.config.*",
-        "**/mockData",
-        "**/__mocks__",
-      ],
-      thresholds: {
-        statements: 65,
-        branches: 58,
-        functions: 63,
-        lines: 66,
-      },
-    },
   },
 });

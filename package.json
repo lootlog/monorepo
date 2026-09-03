@@ -123,16 +123,11 @@
     "seed:scrape:items": "turbo run seed:scrape:items --filter=@lootlog/cli",
     "seed:scrape:npcs": "turbo run seed:scrape:npcs --filter=@lootlog/cli",
     "seed:setup": "turbo run seed:setup --filter=@lootlog/cli",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset publish",
     "prepare": "bun -e 'if (process.env.NODE_ENV !== \"production\" && process.env.HUSKY !== \"0\") { const { default: husky } = await import(\"husky\"); const message = husky(); if (message.length > 0) console.log(message); }'"
   },
   "devDependencies": {
-    "@changesets/cli": "^3.0.1",
     "@lootlog/client": "workspace:*",
     "husky": "^9.1.7",
-    "jsonc-parser": "^3.3.1",
     "knip": "^6.32.3",
     "lint-staged": "^17.4.1",
     "oxfmt": "^0.60.0",

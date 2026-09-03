@@ -155,19 +155,14 @@ Do not try to start the application; assume it is already running.
 ## Git, pull requests, and releases
 
 - Follow Conventional Commits and `commitlint.config.js`.
-- Write pull request titles, descriptions, Changesets, ADRs, and technical
+- Write pull request titles, descriptions, ADRs, and technical
   documentation in English.
 - Never bypass hooks with `--no-verify`.
-- Add a Changeset when runtime behavior, user-facing behavior, a public contract,
-  build output, or dependencies change.
-- Tests, non-published documentation, and non-release configuration do not need
-  an empty Changeset.
-- Published docs and landing content change build output and require a normal
-  Changeset.
-- Never edit package versions or generated changelogs manually, and never run
-  `bun run version` outside release automation.
-- Production promotions and rollbacks reuse immutable artifacts. Never rebuild
-  an existing release version.
+- Pull requests do not carry release metadata. Production workflows select an
+  immutable commit from `main`.
+- Never edit package versions or generated changelogs manually.
+- Production promotions and rollbacks reuse immutable image references and
+  Cloudflare deployments. Never rebuild a revision during rollback.
 
 ## Documentation
 

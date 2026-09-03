@@ -44,7 +44,6 @@ Margonem globals such as `window.Engine` and `window.g` are unavailable.
 - `bun run --filter=@lootlog/game-client dev:local-prod`
 - `bun run --filter=@lootlog/game-client preview`
 - `bun run --filter=@lootlog/game-client test`
-- `bun run --filter=@lootlog/game-client test:coverage`
 
 ## Notes
 

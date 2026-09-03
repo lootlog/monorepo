@@ -2,410 +2,152 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches:
-      - main
-  merge_group:
-    types:
-      - checks_requested
-  workflow_dispatch:
-    inputs:
-      base_sha:
-        description: Base commit used for affected package detection
-        required: true
-        type: string
-      head_sha:
-        description: Head commit to validate
-        required: true
-        type: string
-      pull_request_number:
-        description: Pull request associated with an automated dispatch
-        required: false
-        type: string
+    branches: [main]
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.merge_group.head_ref || inputs.pull_request_number || github.ref }}
+  group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   plan:
-    name: Plan affected CI
+    name: Plan affected checks
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     outputs:
-      base-sha: ${{ steps.context.outputs.base_sha }}
-      head-sha: ${{ steps.context.outputs.head_sha }}
+      base-sha: ${{ steps.plan.outputs.base_sha }}
       packages: ${{ steps.plan.outputs.packages }}
-      docker-services: ${{ steps.plan.outputs.docker_services }}
+      integration-packages: ${{ steps.plan.outputs.integration_packages }}
+      docker-targets: ${{ steps.plan.outputs.docker_targets }}
       run-client-check: ${{ steps.plan.outputs.run_client_check }}
-      version-pull-request: ${{ steps.plan.outputs.version_pull_request }}
     steps:
-      - name: Checkout validation commit
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.0
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Resolve validation context
-        id: context
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          DISPATCH_SHA: ${{ github.sha }}
-          INPUT_BASE_SHA: ${{ inputs.base_sha }}
-          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
-          INPUT_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
-          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
-          MERGE_GROUP_HEAD_REF: ${{ github.event.merge_group.head_ref }}
-          MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
-          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PULL_REQUEST_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          case "$EVENT_NAME" in
-            pull_request)
-              base_sha="$PULL_REQUEST_BASE_SHA"
-              head_sha="$PULL_REQUEST_HEAD_SHA"
-              pull_request_heads="$(jq -cn --arg head "$PULL_REQUEST_HEAD_REF" '[$head]')"
-              ;;
-            merge_group)
-              base_sha="$MERGE_GROUP_BASE_SHA"
-              head_sha="$MERGE_GROUP_HEAD_SHA"
-              pull_request_number="$(
-                bun tools/ci/merge-group-pull-request.mjs \
-                  "$MERGE_GROUP_HEAD_REF"
-              )"
-              pull_request_heads="$(
-                gh pr view "$pull_request_number" \
-                  --json headRefName \
-                  --jq '[.headRefName]'
-              )"
-              ;;
-            workflow_dispatch)
-              base_sha="$INPUT_BASE_SHA"
-              if [[ "$INPUT_HEAD_SHA" != "$DISPATCH_SHA" ]]; then
-                echo "::error::Dispatched head_sha does not match the selected ref."
-                exit 1
-              fi
-              head_sha="$DISPATCH_SHA"
-              if [[ -n "$INPUT_PULL_REQUEST_NUMBER" ]]; then
-                pull_request_heads="$(
-                  gh pr view "$INPUT_PULL_REQUEST_NUMBER" \
-                    --json headRefName \
-                    --jq '[.headRefName]'
-                )"
-              else
-                pull_request_heads="$(
-                  gh api "repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls" \
-                    --jq '[.[].head.ref]'
-                )"
-              fi
-              ;;
-            *)
-              echo "::error::Unsupported event: $EVENT_NAME"
-              exit 1
-              ;;
-          esac
-
-          git cat-file -e "$base_sha^{commit}"
-          git cat-file -e "$head_sha^{commit}"
-          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
-          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
-          echo "pull_request_heads=$(jq -c . <<< "$pull_request_heads")" >> "$GITHUB_OUTPUT"
-
-      - name: Create affected CI plan
+      - name: Create plan
         id: plan
         env:
-          BASE_SHA: ${{ steps.context.outputs.base_sha }}
-          HEAD_SHA: ${{ steps.context.outputs.head_sha }}
-          PULL_REQUEST_HEADS: ${{ steps.context.outputs.pull_request_heads }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
         run: |
-          affected="$(
-            bunx turbo query affected \
-              --base "$BASE_SHA" \
-              --head "$HEAD_SHA" \
-              --packages
-          )"
-          affected_packages="$(
-            jq -c '[.data.affectedPackages.items[].name]' <<< "$affected"
-          )"
-          plan="$(
-            bun tools/ci/create-ci-plan.mjs \
-              "$affected_packages" \
-              "$PULL_REQUEST_HEADS"
-          )"
-
-          echo "packages=$(jq -c '.packages' <<< "$plan")" >> "$GITHUB_OUTPUT"
-          echo "docker_services=$(jq -c '.dockerServices' <<< "$plan")" >> "$GITHUB_OUTPUT"
-          echo "run_client_check=$(jq -r '.runClientCheck' <<< "$plan")" >> "$GITHUB_OUTPUT"
-          echo "version_pull_request=$(jq -r '.versionPullRequest' <<< "$plan")" >> "$GITHUB_OUTPUT"
-
+          affected="$(bunx turbo@2.10.12 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+          affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
+          changed_files="$(git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" | jq -Rs 'split("\u0000") | map(select(length > 0))')"
+          input="$(jq -cn \
+            --argjson affectedPackages "$affected_packages" \
+            --argjson changedFiles "$changed_files" \
+            '{mode: "ci", affectedPackages: $affectedPackages, changedFiles: $changedFiles}')"
+          plan="$(bun scripts/deployment-targets.mjs "$input")"
           {
-            echo "## Affected CI plan"
-            echo
-            echo '```json'
-            jq . <<< "$plan"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+            echo "base_sha=$BASE_SHA"
+            echo "packages=$(jq -c '.packages' <<< "$plan")"
+            echo "integration_packages=$(jq -c '.integrationPackages' <<< "$plan")"
+            echo "docker_targets=$(jq -c '.dockerTargets' <<< "$plan")"
+            echo "run_client_check=$(jq -r '.runClientCheck' <<< "$plan")"
+          } >> "$GITHUB_OUTPUT"
+          jq . <<< "$plan" >> "$GITHUB_STEP_SUMMARY"
 
-  quality:
-    name: Affected quality checks
+  repository:
+    name: Repository checks
     needs: plan
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    services:
-      rabbitmq:
-        image: rabbitmq:4.1-alpine
-        ports:
-          - 5672:5672
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-      redis:
-        image: redis:7.2-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
+    timeout-minutes: 15
     steps:
-      - name: Checkout validation commit
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || needs.plan.outputs.head-sha }}
+      - uses: ./.github/actions/setup-bun
+      - run: bun test scripts/deployment-targets.test.mjs
+      - run: bun run format:check
+      - run: bun run deps:check
+      - name: Check workflow syntax
+        uses: docker://rhysd/actionlint:1.7.7
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.0
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Test CI and release tooling
-        run: bun test tools/release/*.test.mjs apps/developer/server-handler.test.js
-
-      - name: Validate changesets
-        if: needs.plan.outputs.version-pull-request != 'true'
-        run: bun tools/release/validate-workspace-changesets.mjs "${{ needs.plan.outputs.base-sha }}"
-
-      - name: Check formatting
-        run: bun run format:check
-
-      - name: Check dependencies
-        run: bun run deps:check
-
-      - name: Lint, typecheck, and build affected workspaces
-        env:
-          PACKAGES: ${{ needs.plan.outputs.packages }}
-        run: |
-          mapfile -t filters < <(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES")
-          if [[ "${#filters[@]}" -eq 0 ]]; then
-            echo "No affected workspaces."
-            exit 0
-          fi
-          bunx turbo run lint typecheck build "${filters[@]}"
-
-      - name: Test affected workspaces except Game Client
-        env:
-          PACKAGES: ${{ needs.plan.outputs.packages }}
-        run: |
-          mapfile -t filters < <(
-            jq -r '.[] | select(. != "@lootlog/game-client") | "--filter=" + .' <<< "$PACKAGES"
-          )
-          if [[ "${#filters[@]}" -eq 0 ]]; then
-            echo "No non-Game Client tests to run."
-            exit 0
-          fi
-          bunx turbo run test "${filters[@]}"
-
-      - name: Test real messaging and realtime integrations
-        env:
-          LOOTLOG_AUTH_TEST_POSTGRES: "1"
-          LOOTLOG_MESSAGING_TEST_RABBIT_URI: amqp://guest:guest@127.0.0.1:5672
-          LOOTLOG_REALTIME_TEST_REDIS_PORT: "6379"
-        run: |
-          bun test packages/messaging/test/rabbit.integration.test.ts
-          bun test apps/gateway/test/realtime-redis.integration.test.ts
-          bun test apps/auth/src/auth/realtime/realtime-ticket.integration.spec.ts
-          bun test apps/auth/src/database/migrations.integration.spec.ts
-
-      - name: Test Game Client coverage
-        if: contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
-        env:
-          COVERAGE_BASE_REF: ${{ needs.plan.outputs.base-sha }}
-        run: |
-          bun run --filter=@lootlog/game-client typecheck
-          bun run --filter=@lootlog/game-client test:coverage
-          bun run --filter=@lootlog/game-client test:coverage:changed
-
-      - name: Upload Game Client coverage
-        if: always() && contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
-        uses: codecov/codecov-action@v6
-        with:
-          files: ./apps/game-client/coverage/lcov.info
-          flags: game-client
-          name: game-client-coverage
-
-      - name: Regenerate and check API clients
-        if: needs.plan.outputs.run-client-check == 'true'
-        env:
-          PORT: "4000"
-          RABBITMQ_URI: amqp://guest:guest@localhost:5672
-          REDIS_HOST: localhost
-          REDIS_PORT: "6379"
-          REDIS_PASSWORD: ci
-          REDIS_USERNAME: default
-          AUTH_SERVICE_URL: http://localhost:4001
-          RESERVATIONS_CARDS_URL: http://localhost:4000/reservations/cards
-          MAPS_API_URL: http://localhost:4000/maps
-          TRUSTED_ORIGINS: http://localhost
-          COOKIE_DOMAIN: localhost
-          COOKIE_PREFIX: lootlog-ci
-          ADMIN_ACCOUNT_IDS: ci-admin
-          AUTH_SECRET: ci-openapi-generation-secret
-          APP_URL: http://localhost:4001
-          POSTGRESQL_CONNECTION_URI: postgresql://postgres:postgres@localhost:5432/lootlog
-          POSTGRESQL_PORT: "5432"
-          POSTGRESQL_HOST: localhost
-          POSTGRESQL_USER: postgres
-          POSTGRESQL_PASSWORD: postgres
-          POSTGRESQL_DATABASE: lootlog
-          DISCORD_CLIENT_SECRET: ci
-          DISCORD_CLIENT_ID: ci
-          MEILISEARCH_HOST: http://localhost:7700
-          MEILISEARCH_API_KEY: ci
-          R2_ACCESS_KEY_ID: ci
-          R2_SECRET_ACCESS_KEY: ci
-          R2_ENDPOINT: http://localhost
-          R2_BUCKET_NAME: ci
-          API_SERVICE_URL: http://localhost:4000
-        run: bun run client:check
-
-  docker:
-    name: Docker ${{ matrix.service }}
+  workspaces:
+    name: Affected workspace checks
     needs: plan
-    if: needs.plan.outputs.docker-services != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: read
-      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-bun
+      - name: Lint, typecheck, test and build
+        env:
+          TURBO_SCM_BASE: ${{ needs.plan.outputs.base-sha }}
+          TURBO_SCM_HEAD: ${{ github.sha }}
+        run: bunx turbo run lint typecheck test build --affected
+
+  integration:
+    name: Affected integration tests
+    needs: plan
+    if: needs.plan.outputs.integration-packages != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-bun
+      - name: Run self-contained integration tests
+        env:
+          PACKAGES: ${{ needs.plan.outputs.integration-packages }}
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES")
+          bunx turbo run test:integration "${filters[@]}"
+
+  generated-client:
+    name: Generated API client
+    needs: plan
+    if: needs.plan.outputs.run-client-check == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-bun
+      - run: bun run client:check
+
+  docker:
+    name: Docker ${{ matrix.id }}
+    needs: plan
+    if: needs.plan.outputs.docker-targets != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        service: ${{ fromJSON(needs.plan.outputs.docker-services) }}
+        include: ${{ fromJSON(needs.plan.outputs.docker-targets) }}
     steps:
-      - name: Checkout validation commit
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || needs.plan.outputs.head-sha }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build affected Docker image
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build packaging-sensitive image
         uses: docker/build-push-action@v7
         with:
           context: .
-          target: ${{ matrix.service }}
+          target: ${{ matrix.dockerTarget }}
           push: false
-          load: true
-          tags: lootlog-${{ matrix.service }}:ci
+          tags: lootlog-${{ matrix.id }}:ci
           build-args: |
-            GITHUB_SHA=${{ needs.plan.outputs.head-sha }}
+            GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
-          pull: true
-          no-cache-filters: runtime-base
-          cache-from: ${{ github.event_name != 'workflow_dispatch' && format('type=gha,scope=docker-{0}', matrix.service) || '' }}
-          cache-to: ${{ github.event_name != 'workflow_dispatch' && format('type=gha,mode=min,scope=docker-{0}', matrix.service) || '' }}
+          cache-from: type=gha,scope=docker-${{ matrix.id }}
+          cache-to: type=gha,mode=min,scope=docker-${{ matrix.id }}
           provenance: false
 
-      - name: Scan Docker image for vulnerabilities
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: v0.74.0
-          image-ref: lootlog-${{ matrix.service }}:ci
-          format: sarif
-          output: trivy-results.sarif
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
-          limit-severities-for-sarif: true
-
-      - name: Upload Trivy results to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-results.sarif
-          category: trivy-${{ matrix.service }}
-
   ci-success:
-    name: ${{ github.event_name == 'workflow_dispatch' && 'Automated CI result' || 'CI Success' }}
-    needs:
-      - plan
-      - quality
-      - docker
+    name: CI Success
+    needs: [plan, repository, workspaces, integration, generated-client, docker]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check every CI result
+      - name: Require every applicable job
         env:
           JOB_RESULTS: ${{ toJSON(needs) }}
-        run: |
-          jq -e '
-            all(
-              .[];
-              .result == "success" or .result == "skipped"
-            )
-          ' <<< "$JOB_RESULTS"
-
-  publish-automated-status:
-    name: Publish automated CI status
-    needs:
-      - plan
-      - ci-success
-    if: always() && github.event_name == 'workflow_dispatch'
-    permissions:
-      statuses: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Publish required status
-        env:
-          CI_RESULT: ${{ needs.ci-success.result }}
-          GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ needs.plan.outputs.head-sha }}
-          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          state="failure"
-          description="Automated CI failed."
-          if [[ "$CI_RESULT" == "success" ]]; then
-            state="success"
-            description="Automated CI passed."
-          fi
-
-          gh api \
-            --method POST \
-            "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" \
-            --raw-field state="$state" \
-            --raw-field context="CI Success" \
-            --raw-field description="$description" \
-            --raw-field target_url="$TARGET_URL"
+        run: jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<< "$JOB_RESULTS"

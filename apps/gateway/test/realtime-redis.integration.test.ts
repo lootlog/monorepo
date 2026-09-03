@@ -1,9 +1,14 @@
-import { expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { Permission } from "@lootlog/schema/permissions";
 import { Fiber, ManagedRuntime } from "effect";
 import { Redis } from "effect/unstable/persistence";
+import {
+  GenericContainer,
+  type StartedTestContainer,
+  Wait,
+} from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
 import { AirTagService } from "#src/realtime/air-tag-service";
@@ -11,20 +16,8 @@ import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
-const redisPort = Number(process.env.LOOTLOG_REALTIME_TEST_REDIS_PORT ?? 0);
-const integrationTest = redisPort > 0 ? test : test.skip;
-
-const configuration = {
-  redis: {
-    host: "127.0.0.1",
-    port: redisPort,
-    username: "",
-    password: "",
-    keyPrefix: "lootlog-realtime-integration:test",
-  },
-  maxBackpressureBytes: 1_048_576,
-  maxBackpressureStrikes: 3,
-} as GatewayConfiguration;
+let dragonfly: StartedTestContainer;
+let redisPort: number;
 
 const guilds = ["organization-1", "organization-2"].map((id) => ({
   guild: { id, ownerId: "owner" },
@@ -94,14 +87,40 @@ const waitFor = async (predicate: () => boolean): Promise<void> => {
   const deadline = Date.now() + 2_000;
   while (!predicate()) {
     if (Date.now() >= deadline)
-      throw new Error("Timed out waiting for Redis federation");
+      throw new Error("Timed out waiting for realtime federation");
     await Bun.sleep(20);
   }
 };
 
-integrationTest(
-  "real Redis federates two Gateway instances and preserves map/air contracts",
-  async () => {
+describe("realtime Dragonfly integration", () => {
+  beforeAll(async () => {
+    dragonfly = await new GenericContainer(
+      "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
+    )
+      .withCommand(["--logtostderr", "--proactor_threads=2"])
+      .withExposedPorts(6379)
+      .withWaitStrategy(Wait.forListeningPorts())
+      .withStartupTimeout(60_000)
+      .start();
+    redisPort = dragonfly.getMappedPort(6379);
+  }, 60_000);
+
+  afterAll(async () => {
+    await dragonfly?.stop();
+  });
+
+  test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
+    const configuration = {
+      redis: {
+        host: dragonfly.getHost(),
+        port: redisPort,
+        username: "",
+        password: "",
+        keyPrefix: "lootlog-realtime-integration:test",
+      },
+      maxBackpressureBytes: 1_048_576,
+      maxBackpressureStrikes: 3,
+    } as GatewayConfiguration;
     const firstRuntime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
     );
@@ -258,6 +277,5 @@ integrationTest(
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
     }
-  },
-  20_000,
-);
+  }, 20_000);
+});

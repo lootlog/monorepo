@@ -3,7 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { Client } from "pg";
-import { GenericContainer, type StartedTestContainer } from "testcontainers";
+import {
+  GenericContainer,
+  type StartedTestContainer,
+  Wait,
+} from "testcontainers";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const apiRoot = path.resolve(dirname, "..");
@@ -13,12 +17,19 @@ export default async function setup() {
     .withDatabase("lootlog_e2e")
     .withUsername("lootlog")
     .withPassword("lootlog")
+    .withStartupTimeout(60_000)
     .start();
   const redis = await new GenericContainer(
     "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
   )
-    .withCommand(["--requirepass=test"])
+    .withCommand([
+      "--requirepass=test",
+      "--logtostderr",
+      "--proactor_threads=2",
+    ])
     .withExposedPorts(6379)
+    .withWaitStrategy(Wait.forListeningPorts())
+    .withStartupTimeout(60_000)
     .start();
 
   process.env.POSTGRESQL_CONNECTION_URI = postgres.getConnectionUri();
