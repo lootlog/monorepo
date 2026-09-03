@@ -229,6 +229,7 @@ export async function createDeploymentPlan(input) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const input = JSON.parse(process.argv[2] ?? "null");
+  const serializedInput = process.argv[2] ?? (await Bun.stdin.text());
+  const input = JSON.parse(serializedInput || "null");
   process.stdout.write(JSON.stringify(await createDeploymentPlan(input)));
 }
