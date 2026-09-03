@@ -11,7 +11,7 @@ import {
 } from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { CreateCommentDto } from "#src/http-api/contracts/loots/schemas";
-import { ErrorKey } from "./enum/error-key.enum.js";
+import { ErrorKey } from "#src/loots/error-key";
 
 export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(
   "LootPersistenceError",

@@ -4,40 +4,36 @@ import {
   ApplicationError,
   ResourceNotFoundError,
   DependencyUnavailableError,
-} from "#src/platform/http-error";
-import { Logger } from "#src/platform/logger";
+} from "#src/infrastructure/http-error";
+import { Logger } from "#src/infrastructure/logger";
 import {
   makeJsonCodec,
   type RedisStore,
-} from "#src/shared/modules/redis/redis.service";
+} from "#src/infrastructure/redis-store";
 import { and, eq, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import type { CreateBattleDto } from "#src/battles/dto/create-battle.dto";
-import type { BattleTimelineResponseInput } from "#src/battles/dto/battle-response.dto";
-import type { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
-import type { UpdateBattleDto } from "#src/battles/dto/update-battle.dto";
-import type { PaginationOptions } from "#src/battles/interfaces/pagination.interface";
-import { BATTLE_WARRIOR_STATS_VERSION } from "#src/battles/battle-warrior-stats.types";
+import type { CreateBattleInput } from "#src/battles/submission/create-battle";
+import type { BattleTimelineResponseInput } from "#src/battles/catalog/battle-response";
+import type { BattleListQuery } from "#src/battles/catalog/query-battles";
+import type { BattleUpdate } from "#src/battles/catalog/update-battle";
+import type { PaginationOptions } from "#src/battles/analytics/pagination";
+import { BATTLE_WARRIOR_STATS_VERSION } from "#src/battles/statistics/battle-warrior-stats.types";
 import {
   buildBattleWarriorStats,
   inflateBattleWarriorsInBattle,
   inflateBattleWarriorsInBattles,
-} from "#src/battles/battle-warrior-stats";
-import type { BattleAnalytics } from "#src/battles/services/battle-analytics.service";
-import type { BattleListFilter } from "#src/battles/services/battle-list-filter.service";
-import type { BattleMetadata } from "#src/battles/services/battle-metadata.service";
-import type { BattlePagination } from "#src/battles/services/pagination.service";
-import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
-import {
-  battles,
-  battleWarriors,
-  userCharacters,
-} from "#src/shared/modules/drizzle/schema";
-import type { BattleObjectStorage } from "#src/shared/modules/r2/r2.service";
+} from "#src/battles/statistics/battle-warrior-stats";
+import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
+import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
+import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
+import type { BattlePagination } from "#src/battles/analytics/pagination.service";
+import type { DrizzleDatabase } from "#src/database/database";
+import { battles, battleWarriors, userCharacters } from "#src/database/schema";
+import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import {
   createBattleSemanticFingerprint,
   normalizeBattleSubmission,
-} from "#src/battles/battle-submission";
+} from "#src/battles/submission/battle-submission";
 import {
   BattleProcessor,
   type Warrior,
@@ -51,7 +47,7 @@ import {
   type CreateBattleParams,
   type CreateBattleResult,
   type RawBattleData,
-} from "./interfaces/battle-service.interface.js";
+} from "#src/battles/battle-service";
 
 export interface BattleDeduplicationTiming {
   readonly cacheTtlSeconds: number;
@@ -168,7 +164,7 @@ export const makeBattles = (
       userId,
     }: {
       analysis: BattleAnalysis;
-      data: CreateBattleDto;
+      data: CreateBattleInput;
       semanticFingerprint: string;
       userId: string;
     }) {
@@ -429,7 +425,7 @@ export const makeBattles = (
       );
     },
 
-    getPublicBattles(query: QueryBattlesDto) {
+    getPublicBattles(query: BattleListQuery) {
       return Effect.gen(function* () {
         const filterBuilder =
           yield* battleListFilterService.buildFilterConditions(query);
@@ -457,7 +453,7 @@ export const makeBattles = (
       );
     },
 
-    getDashboardBattles(query: QueryBattlesDto, requestingUserId: string) {
+    getDashboardBattles(query: BattleListQuery, requestingUserId: string) {
       return Effect.gen(function* () {
         const { userId: _userId, ...filteredQuery } = query;
         const filterBuilder =
@@ -665,7 +661,7 @@ export const makeBattles = (
       }));
     },
 
-    updateBattle(battleId: string, updateData: UpdateBattleDto) {
+    updateBattle(battleId: string, updateData: BattleUpdate) {
       return Effect.gen(function* () {
         const updated = yield* adapter("Battles_update", () =>
           drizzle
@@ -853,7 +849,7 @@ export const makeBattles = (
       };
     },
 
-    analyzeBattle(dto: CreateBattleDto): BattleAnalysis {
+    analyzeBattle(dto: CreateBattleInput): BattleAnalysis {
       try {
         const processor = new BattleProcessor();
         const analysis = processor.processBattle(dto);
@@ -867,7 +863,7 @@ export const makeBattles = (
       }
     },
 
-    buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {
+    buildPaginationOptions(query: BattleListQuery): PaginationOptions {
       return {
         sortOrder: query.sortOrder ?? "desc",
         includeTotal: query.includeTotal ?? false,
@@ -925,7 +921,7 @@ export const makeBattles = (
     },
 
     storeBattleInDatabase(
-      data: CreateBattleDto,
+      data: CreateBattleInput,
       userId: string,
       analysis: BattleAnalysis,
       semanticFingerprint: string,
@@ -1127,9 +1123,9 @@ export const makeBattles = (
 
     storeRawBattleData(
       battleId: string,
-      data: Omit<CreateBattleDto, "events"> & {
+      data: Omit<CreateBattleInput, "events"> & {
         events: ParsedMove[];
-        sourceEvents?: CreateBattleDto["events"];
+        sourceEvents?: CreateBattleInput["events"];
       },
     ) {
       return Effect.suspend(() => {

@@ -17,16 +17,16 @@ import {
 import type {
   GuildCreated,
   GuildDeleted,
+  GuildRoleChanged,
+  GuildRoleDeleted,
   GuildUpdated,
 } from "@lootlog/protocol/rabbit/events";
-import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
-import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
-import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
+import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import {
   getGuildCacheKey,
   getPermissionsCachePattern,
-} from "#src/shared/constants/cache.constant";
+} from "#src/shared/cache";
 
 export class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
   "GuildLifecycleFailure",
@@ -273,7 +273,7 @@ export const makeGuildLifecycle = (
   });
 
   const upsertRole = Effect.fn("guildLifecycle.role.upsert")(function* (
-    data: CreateRoleDto,
+    data: GuildRoleChanged,
   ) {
     const existing = yield* database
       .select({ permissions: roleTable.permissions })
@@ -319,7 +319,7 @@ export const makeGuildLifecycle = (
   });
 
   const deleteRole = Effect.fn("guildLifecycle.role.delete")(function* (
-    data: DeleteRoleDto,
+    data: GuildRoleDeleted,
   ) {
     yield* operation(
       "guildLifecycle.role.delete.write",

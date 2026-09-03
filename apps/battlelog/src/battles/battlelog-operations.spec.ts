@@ -2,9 +2,9 @@ import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import type { Queue } from "bullmq";
 import { makeBattlelogOperations } from "./battlelog-operations.js";
-import type { DeleteUserBattlesJobData } from "./delete-user-battles.processor.js";
-import type { Battles } from "./battles.service.js";
-import type { BattleAnalytics } from "./services/battle-analytics.service.js";
+import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
+import type { Battles } from "#src/battles/battles.service";
+import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 
 const queue = {} as Queue<DeleteUserBattlesJobData>;
 

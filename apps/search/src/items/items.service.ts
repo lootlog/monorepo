@@ -1,16 +1,16 @@
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import { getMeilisearchErrorCode } from "#src/meilisearch/meilisearch.utils";
+import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
-import type { GetItemsDto } from "./dto/get-items.dto.js";
-import { ITEMS_INDEX } from "./constants/meilisearch.js";
-import type { IndexItemsDto } from "./dto/index-items.dto.js";
-import type { ItemHit } from "./dto/item-hit.schema.js";
-import { createItemSearchFields } from "./utils/create-item-search-fields.js";
+import type { ItemSearchQuery } from "./item-search-query.js";
+import { ITEMS_INDEX } from "./search-index.js";
+import type { IndexItemsCommand } from "./index-items-command.js";
+import type { ItemHit } from "./item-hit.js";
+import { createItemSearchFields } from "./item-search-fields.js";
 
 type SearchItemsResponse = {
   estimatedTotalHits: number;
@@ -19,7 +19,7 @@ type SearchItemsResponse = {
   hits: ItemHit[];
 };
 
-type IndexItem = IndexItemsDto["items"][number];
+type IndexItem = IndexItemsCommand["items"][number];
 type IndexedItem = IndexItem & {
   uid: string;
   worlds: string[];
@@ -101,7 +101,7 @@ export const makeItemsModule = (
     search,
     sort,
     world,
-  }: GetItemsDto) {
+  }: ItemSearchQuery) {
     const index = meilisearch.index<ItemHit>(ITEMS_INDEX);
     const searchTerm = search ?? "";
     let incomingFilters: string[] = [];
@@ -163,7 +163,7 @@ export const makeItemsModule = (
     limit,
     search,
     world,
-  }: Pick<GetItemsDto, "limit" | "search" | "world">) {
+  }: Pick<ItemSearchQuery, "limit" | "search" | "world">) {
     const response = yield* searchItems({
       limit,
       offset: 0,
@@ -189,7 +189,7 @@ export const makeItemsModule = (
   };
 
   const indexItems = Effect.fn("SearchItems.index")(function* (
-    data: IndexItemsDto,
+    data: IndexItemsCommand,
   ) {
     const index = meilisearch.index<IndexedItem>(ITEMS_INDEX);
 
@@ -237,13 +237,13 @@ export const makeItemsModule = (
 
   return { getItems, indexItems, searchItems } satisfies {
     readonly getItems: (
-      input: Pick<GetItemsDto, "limit" | "search" | "world">,
+      input: Pick<ItemSearchQuery, "limit" | "search" | "world">,
     ) => Effect.Effect<ReadonlyArray<ItemHit>>;
     readonly indexItems: (
-      data: IndexItemsDto,
+      data: IndexItemsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
     readonly searchItems: (
-      input: GetItemsDto,
+      input: ItemSearchQuery,
     ) => Effect.Effect<SearchItemsResponse>;
   };
 };

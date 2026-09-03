@@ -6,7 +6,7 @@ import {
   OtlpSerialization,
   OtlpTracer,
 } from "effect/unstable/observability";
-import { BattlelogApplication } from "#src/app.factory";
+import { BattlelogApplication } from "#src/battlelog-application";
 import { BattlelogConfig } from "#src/config/env";
 import { BattlelogHttpServer } from "#src/http/battlelog-http";
 

@@ -23,7 +23,7 @@ import { ApiHttpClient } from "#src/http/api-http-client";
 import { ActivityApi } from "#src/http-api/activity-api";
 import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import type { ActivitiesControllerFindByGuildQuery } from "#src/http-api/contracts/guilds/schemas";
-import { Permissions } from "#src/permissions/permissions";
+import { Permissions } from "#src/activities/activity-permissions";
 
 type HealthEntry = {
   readonly status: "up" | "down";

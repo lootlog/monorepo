@@ -1,6 +1,6 @@
 import { Config, Context, Effect, Layer, Redacted } from "effect";
 import type { R2Config } from "#src/config/r2.config";
-import type { RedisOptions } from "#src/shared/modules/redis/redis.service";
+import type { RedisOptions } from "#src/infrastructure/redis-store";
 
 export interface BattlelogConfiguration {
   readonly environment: string;

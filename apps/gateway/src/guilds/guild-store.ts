@@ -3,14 +3,8 @@ import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
 import { Clock, Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
-import type {
-  GetUserGuildsOptions,
-  UserGuildData,
-} from "#src/guilds/types/guild.types";
-import {
-  CACHE_TTL,
-  getUserGuildsCacheKey,
-} from "#src/guilds/utils/cache-keys.util";
+import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
+import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 
 const RESPONSE_LIMIT_BYTES = 1024 * 1024;

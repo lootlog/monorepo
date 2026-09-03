@@ -1,6 +1,6 @@
 import { vi } from "#test/bun-test";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { mockFn } from "#src/test/mock-fn";
+import { mockFn } from "#test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";

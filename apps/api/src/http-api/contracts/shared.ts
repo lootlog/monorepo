@@ -1,6 +1,6 @@
 /** HTTP contract definitions owned by the shared module. */
 import * as Schema from "effect/Schema";
-import { ForwardAuthIdentity } from "../runtime/forward-auth-identity.js";
+import { ForwardAuthIdentity } from "../runtime/auth/forward-auth-identity.js";
 import {
   HttpApiMiddleware,
   HttpApiSecurity,

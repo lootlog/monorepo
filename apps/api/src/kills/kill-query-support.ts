@@ -3,7 +3,7 @@ import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/schema";
-import type { ApplicationLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { KillStatsFilter } from "./kill-stats-persistence.js";
 
 export type KillQueryRole = typeof roleTable.$inferSelect;

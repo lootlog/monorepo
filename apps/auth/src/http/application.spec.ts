@@ -3,8 +3,11 @@ import { betterAuth } from "better-auth";
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import { AuthService, createAuthService } from "#src/auth/auth-service";
-import { BetterAuthRuntime, type LootlogAuth } from "#src/auth/better-auth";
-import { resolveBetterAuthBaseURL } from "#src/auth/better-auth-url";
+import {
+  BetterAuthRuntime,
+  type LootlogAuth,
+} from "#src/auth/provider/better-auth";
+import { resolveBetterAuthBaseURL } from "#src/auth/provider/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
 

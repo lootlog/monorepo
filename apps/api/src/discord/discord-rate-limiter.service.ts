@@ -1,4 +1,4 @@
-import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { RedisService } from "#src/redis/redis.service";
 import type { DiscordEndpoint } from "./discord.types.js";
 import { decodeJsonUnknown } from "#src/shared/schema/json";

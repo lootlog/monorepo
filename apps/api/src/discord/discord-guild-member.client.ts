@@ -6,12 +6,9 @@ import {
   AuthenticationRequiredError,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
-import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
-import {
-  ExecutionError,
-  RedlockService,
-} from "#src/lib/redlock/redlock.service";
+import { ExecutionError, RedlockService } from "#src/redis/redlock";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import {
   getGuildMemberCacheKeys,

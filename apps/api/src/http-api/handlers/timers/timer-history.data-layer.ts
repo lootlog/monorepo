@@ -10,9 +10,9 @@ import {
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/schema";
-import { ErrorKey } from "#src/timers/enum/error-key.enum";
+import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
+import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { toTimersDataFailure } from "./timer-errors.js";

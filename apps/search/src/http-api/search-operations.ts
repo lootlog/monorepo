@@ -10,9 +10,9 @@ import {
 import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
 import { effectLogger } from "#src/shared/logger";
-import type { IndexItemsDto } from "#src/items/dto/index-items.dto";
-import type { IndexNpcsDto } from "#src/npcs/dto/index-npcs.dto";
-import type { IndexPlayersDto } from "#src/players/dto/index-players.dto";
+import type { IndexItemsCommand } from "#src/items/index-items-command";
+import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
+import type { IndexPlayersCommand } from "#src/players/index-players-command";
 import type {
   AllControllerSearchAllQuery,
   SearchAllResponseDto_Output,
@@ -52,13 +52,13 @@ export interface SearchOperationsValue {
     query: AllControllerSearchAllQuery,
   ) => Effect.Effect<SearchAllResponseDto_Output, SearchOperationFailureType>;
   readonly indexItems: (
-    data: IndexItemsDto,
+    data: IndexItemsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexNpcs: (
-    data: IndexNpcsDto,
+    data: IndexNpcsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexPlayers: (
-    data: IndexPlayersDto,
+    data: IndexPlayersCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
 }
 

@@ -246,7 +246,7 @@ jobs:
         run: |
           bun test packages/messaging/test/rabbit.integration.test.ts
           bun test apps/gateway/test/realtime-redis.integration.test.ts
-          bun test apps/auth/src/auth/realtime-ticket.integration.spec.ts
+          bun test apps/auth/src/auth/realtime/realtime-ticket.integration.spec.ts
           bun test apps/auth/src/database/migrations.integration.spec.ts
 
       - name: Test Game Client coverage

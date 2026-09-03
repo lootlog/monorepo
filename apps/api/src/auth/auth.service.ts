@@ -1,7 +1,7 @@
-import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
-import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
+import type { GetIdpTokenResponse } from "#src/auth/get-idp-token-response";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
@@ -13,7 +13,7 @@ import {
   getAuthTokenCachePattern,
   getLegacyAuthTokenCacheKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,
-} from "#src/shared/constants/cache.constant";
+} from "#src/shared/cache";
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
 const IdpTokenSuccess = Schema.Struct({

@@ -7,14 +7,14 @@ import {
   userKillStatsBucketTable,
   userKillStatsTable,
 } from "#src/database/drizzle/schema";
-import type { ApplicationLogger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   KillsControllerGetUserKillStats200,
   type KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto,
   KillsControllerGetUserNpcKills200,
   type KillsControllerGetUserNpcKillsQuery as GetUserNpcKillsDto,
 } from "#src/http-api/contracts/kills/schemas";
-import { getKillStatsPeriodStart } from "./utils/kill-stats-period.js";
+import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
 const CACHE_TTL_SECONDS = 30;
 const CACHE_PREFIX = "kill-stats";

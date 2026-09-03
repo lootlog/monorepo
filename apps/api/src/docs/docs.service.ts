@@ -7,7 +7,7 @@ import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,
   GUILD_DOCUMENT_TITLE_MAX_LENGTH,
-} from "./constants/docs-limits.js";
+} from "./docs-limits.js";
 import type {
   CreateGuildDocumentDto,
   UpdateGuildDocumentDto,

@@ -6,7 +6,7 @@ Bun and Effect-based authentication service for Lootlog.
 
 - Wraps Better Auth for session handling, JWT issuance, JWKS exposure, and provider integrations.
 - Supports Discord OAuth as the only product sign-in method configured in
-  `src/auth/better-auth.ts`.
+  `src/auth/provider/better-auth.ts`.
 - Exposes service-specific routes under `/auth/*` and delegates `/idp` and `/idp/*` directly to Better Auth's Web handler.
 - Owns PostgreSQL and Redis clients through scoped Effect Layers and shuts them down with the process scope.
 
@@ -32,6 +32,14 @@ Run commands from the monorepo root:
 bun run db:auth:migrate:dev
 bun run --filter=@lootlog/auth dev
 ```
+
+## Source layout
+
+- `src/auth/provider` owns Better Auth and Discord OAuth configuration.
+- `src/auth/storage` owns Redis-backed secondary storage and its fail-open policy.
+- `src/auth/realtime` owns short-lived, single-use realtime tickets.
+- `src/auth/auth-service.ts` is the application interface consumed by the HTTP adapter.
+- `src/http-api/contracts`, `src/http`, and `src/database` remain explicit transport and persistence seams.
 
 ## Key Scripts
 

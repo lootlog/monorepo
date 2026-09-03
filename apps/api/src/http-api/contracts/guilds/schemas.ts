@@ -1,7 +1,7 @@
 /** Transport schemas owned by the guilds HTTP module. */
 import * as Schema from "effect/Schema";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
-import { ErrorKey } from "../../../guilds/enum/error-key.enum.js";
+import { ErrorKey } from "../../../guilds/error-key.js";
 import { GuildResponseDto_Output } from "../shared.js";
 import { DateTimeString, FiniteNumber } from "../scalars.js";
 

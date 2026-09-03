@@ -7,8 +7,8 @@ import {
   HttpResponseError,
   normalizeScopes,
 } from "./auth-service.js";
-import type { LootlogAuth } from "./better-auth.js";
-import { issueRealtimeTicket } from "./realtime-ticket.js";
+import type { LootlogAuth } from "#src/auth/provider/better-auth";
+import { issueRealtimeTicket } from "#src/auth/realtime/realtime-ticket";
 
 const realtimeTicketRedis = {
   set: () => Promise.resolve("OK"),

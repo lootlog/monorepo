@@ -32,18 +32,18 @@ import {
   timerTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { getSyntheticNpcId } from "#src/events/utils/get-synthetic-npc-id";
-import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
+import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
+import { getProfByShortname } from "#src/shared/margonem/profession";
 import {
   InvalidRequestError,
   ResourceConflictError,
   PermissionDeniedError,
 } from "#src/shared/http/http-errors";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/constants/respawn";
-import { TIMER_LIMITS } from "#src/timers/constants/timer-limits";
-import { ErrorKey } from "#src/timers/enum/error-key.enum";
+import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/respawn";
+import { TIMER_LIMITS } from "#src/timers/timer-limits";
+import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { buildTimerKey } from "#src/timers/utils/timer-key";
+import { buildTimerKey } from "#src/timers/timer-key";
 import type { CreateTimerFromGameClientDto } from "../../contracts/timers/schemas.js";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {

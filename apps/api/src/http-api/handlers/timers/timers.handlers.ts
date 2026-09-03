@@ -125,7 +125,7 @@ export class TimersData extends Context.Service<
   }
 >()("@lootlog/api/http-api/timers/data") {
   static makeService(
-    native: Pick<
+    operations: Pick<
       TimersData["Service"],
       | "createAuto"
       | "getAll"
@@ -140,16 +140,16 @@ export class TimersData extends Context.Service<
     >,
   ): TimersData["Service"] {
     return TimersData.of({
-      getAll: native.getAll,
-      getRecentHistory: native.getRecentHistory,
-      getGuildTimers: native.getGuildTimers,
-      searchNpcs: native.searchNpcs,
-      createAuto: native.createAuto,
-      reset: native.reset,
-      delete: native.delete,
-      getHistory: native.getHistory,
-      restore: native.restore,
-      createManual: native.createManual,
+      getAll: operations.getAll,
+      getRecentHistory: operations.getRecentHistory,
+      getGuildTimers: operations.getGuildTimers,
+      searchNpcs: operations.searchNpcs,
+      createAuto: operations.createAuto,
+      reset: operations.reset,
+      delete: operations.delete,
+      getHistory: operations.getHistory,
+      restore: operations.restore,
+      createManual: operations.createManual,
     });
   }
 }

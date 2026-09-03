@@ -8,7 +8,7 @@ import {
 } from "@lootlog/schema/notifications";
 import { ChannelType, type Client, DiscordAPIError } from "discord.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./constants/non-retryable-discord-error-codes.constant.js";
+import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./non-retryable-discord-error-codes.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
 
 const discordMessageLimit = 2000;

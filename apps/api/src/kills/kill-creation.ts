@@ -19,14 +19,14 @@ import {
   userKillStatsBucketTable,
   userKillStatsTable,
 } from "#src/database/drizzle/schema";
-import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import { getStableNpcId } from "#src/shared/utils/get-stable-npc-id";
+import type { ApplicationLogger } from "#src/shared/application-logger";
+import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
 import type { CreateKillDto } from "#src/http-api/contracts/kills/schemas";
 import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
-} from "./utils/kill-dedup-key.js";
-import { getKillStatsBucketStart } from "./utils/kill-stats-period.js";
+} from "./kill-dedup-key.js";
+import { getKillStatsBucketStart } from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
 const STATS_CACHE_PREFIX = "kill-stats";

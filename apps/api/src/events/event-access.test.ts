@@ -3,7 +3,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { roleTable } from "#src/database/drizzle/schema";
-import { makeEventAccess } from "./event-access.js";
+import { makeEventAccess } from "#src/events/event-access";
 
 type Role = typeof roleTable.$inferSelect;
 

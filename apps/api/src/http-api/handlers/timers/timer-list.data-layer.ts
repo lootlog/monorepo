@@ -24,7 +24,7 @@ import {
   timerTable,
   userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
-import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
+import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";

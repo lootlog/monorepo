@@ -11,15 +11,15 @@ import {
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/schema";
-import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
+import { getProfByShortname } from "#src/shared/margonem/profession";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
-import { ErrorKey } from "#src/timers/enum/error-key.enum";
+import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
+import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
 import type { ResetTimerDto } from "../../contracts/timers/schemas.js";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";

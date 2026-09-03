@@ -1,10 +1,10 @@
 import { Context, Effect } from "effect";
 import { OpenApi } from "effect/unstable/httpapi";
-import type { EventsAssignment } from "#src/events/events-assignment.operations";
-import type { EventsCatalog } from "#src/events/events-catalog.operations";
-import type { EventsMonitoring } from "#src/events/events-monitoring.operations";
-import type { EventsPins } from "#src/events/events-pins.operations";
-import type { EventsRanking } from "#src/events/events-ranking.operations";
+import type { EventsAssignment } from "#src/events/coordination/events-assignment.operations";
+import type { EventsCatalog } from "#src/events/catalog/events-catalog.operations";
+import type { EventsMonitoring } from "#src/events/monitoring/events-monitoring.operations";
+import type { EventsPins } from "#src/events/pins/events-pins.operations";
+import type { EventsRanking } from "#src/events/ranking/events-ranking.operations";
 import {
   EventMutationResponse,
   EventOverviewResponse,
@@ -12,15 +12,15 @@ import {
   EventRankingResponse,
   EventTimersResponse,
   PendingParticipationConfirmationsResponse,
-} from "#src/events/event-response.schema";
-import { PinnedEventResponse } from "#src/events/pinned-event-response.schema";
+} from "#src/events/catalog/event-response.schema";
+import { PinnedEventResponse } from "#src/events/pins/pinned-event-response.schema";
 import {
   EventHeroStatsResponse,
   EventKillHistoryResponse,
   EventMemberKillHistoryResponse,
   KillDetailResponse,
-} from "#src/events/event-kill-response.schema";
-import { EventCoordinationResponse } from "#src/events/event-coordination-response.schema";
+} from "#src/events/kills/event-kill-response.schema";
+import { EventCoordinationResponse } from "#src/events/coordination/event-coordination-response.schema";
 import {
   CoverageGapResponse,
   HeroCoverageGapResponse,
@@ -28,7 +28,7 @@ import {
   HeroRespawnConfigResponse,
   KillTimelineMapResponse,
   NullableCoverageGapResponse,
-} from "#src/events/event-monitoring-response.schema";
+} from "#src/events/monitoring/event-monitoring-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { LootlogApi } from "../../lootlog-api.js";

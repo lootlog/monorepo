@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Job, Queue as BullQueue } from "bullmq";
 import { Clock, Effect, Schema } from "effect";
-import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 
 export interface MemberRefreshJobData {
   readonly discordId: string;

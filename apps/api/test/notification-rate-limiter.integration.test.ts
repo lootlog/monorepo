@@ -3,10 +3,7 @@ import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { RedisService } from "#src/redis/redis.service";
-import {
-  ExecutionError,
-  RedlockService,
-} from "#src/lib/redlock/redlock.service";
+import { ExecutionError, RedlockService } from "#src/redis/redlock";
 import {
   buildNotificationRateLimitKey,
   consumeNotificationRateLimit,

@@ -8,7 +8,7 @@ import {
 } from "effect/unstable/observability";
 import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
 import { apiConfiguration } from "#src/config/api.config";
-import { ApiApplicationLive } from "./http-api/runtime/api-application.js";
+import { ApiApplicationLive } from "./http-api/runtime/application/api-application.js";
 
 const ObservabilityLive = Layer.merge(
   OtlpTracer.layerFromConfig({ resource: { serviceName: "api" } }),

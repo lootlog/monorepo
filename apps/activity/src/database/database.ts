@@ -1,6 +1,6 @@
 import { PgClient } from "@effect/sql-pg";
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { ActivityConfig } from "#src/config/activity-config";
 
 export type ActivityDatabaseValue = Effect.Success<

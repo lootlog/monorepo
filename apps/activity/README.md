@@ -18,6 +18,12 @@ bun --filter @lootlog/activity db:migrate:dev
 bun --filter @lootlog/activity dev
 ```
 
+## Source layout
+
+- `src/activities` owns activity ingestion, modeling, authorization, signatures, and persistence.
+- `src/http-api/contracts` owns the deployed Effect HTTP contract; `src/http` adapts it to domain modules and Bun.
+- `src/database`, `src/config`, and `src/openapi` are explicit infrastructure seams.
+
 ## Key Scripts
 
 - `bun --filter @lootlog/activity build`

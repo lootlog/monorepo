@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { makeBattles, type Battles } from "./battles.service.js";
-import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
-import type { BattleObjectStorage } from "#src/shared/modules/r2/r2.service";
-import type { BattlePagination } from "./services/pagination.service.js";
-import type { BattleAnalytics } from "./services/battle-analytics.service.js";
-import { makeBattleListFilter } from "./services/battle-list-filter.service.js";
-import { makeBattleMetadata } from "./services/battle-metadata.service.js";
-import type { RedisStore } from "#src/shared/modules/redis/redis.service";
+import { makeBattles, type Battles } from "#src/battles/battles.service";
+import type { DrizzleDatabase } from "#src/database/database";
+import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
+import type { BattlePagination } from "#src/battles/analytics/pagination.service";
+import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
+import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
+import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
+import type { RedisStore } from "#src/infrastructure/redis-store";
 import { Effect } from "effect";
 import {
   effectDatabaseBoundary,
