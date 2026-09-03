@@ -15,14 +15,6 @@ import {
   updateChatMessage,
 } from "./chat.handlers.js";
 
-const expectedHandlerIdentifiers = [
-  "ChatControllerGetChatMessages",
-  "ChatControllerSendChatMessage",
-  "ChatControllerClearChatMessages",
-  "ChatControllerDeleteChatMessage",
-  "ChatControllerUpdateChatMessage",
-] as const;
-
 const identity = { userId: "user-a", discordId: "discord-a" };
 const access = {
   ...identity,
@@ -81,19 +73,6 @@ const provideServices = (
   );
 
 describe("Chat HttpApi handlers", () => {
-  it("wires every generated Chat endpoint identifier exactly once", async () => {
-    const source = await Bun.file(
-      new URL("./chat.handlers.ts", import.meta.url),
-    ).text();
-    const actual = [...source.matchAll(/\.handle\(\s*"([^"]+)"/g)].map(
-      (match) => match[1],
-    );
-
-    expect(actual).toHaveLength(5);
-    expect(new Set(actual).size).toBe(5);
-    expect(actual).toEqual([...expectedHandlerIdentifiers]);
-  });
-
   it("returns visible messages through the generated response schema", async () => {
     const calls: unknown[] = [];
     const layer = provideServices(

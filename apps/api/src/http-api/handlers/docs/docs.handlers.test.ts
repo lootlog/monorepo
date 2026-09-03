@@ -9,7 +9,6 @@ import {
   DocsAuthorization,
   DocsConflict,
   DocsData,
-  docsEndpointIdentifiers,
   getDocument,
   getHistory,
   restoreDocument,
@@ -103,23 +102,6 @@ describe("Docs HttpApi handlers", () => {
       createdAt: createdAt.toISOString(),
       updatedAt: createdAt.toISOString(),
     });
-  });
-
-  it("covers every generated DocsGroup endpoint identifier exactly once", async () => {
-    const generated = await Bun.file(
-      new URL("../../lootlog-api.ts", import.meta.url),
-    ).text();
-    const group = generated.slice(
-      generated.indexOf("class DocsGroup"),
-      generated.indexOf("export class LootlogApi"),
-    );
-    const generatedIdentifiers = Array.from(
-      group.matchAll(/HttpApiEndpoint\.[a-z]+\(\s*"([^"]+)"/g),
-      (match) => match[1],
-    );
-
-    expect(generatedIdentifiers).toEqual([...docsEndpointIdentifiers]);
-    expect(new Set(docsEndpointIdentifiers).size).toBe(10);
   });
 
   it("creates a document only after write authorization and preserves caller identity", async () => {

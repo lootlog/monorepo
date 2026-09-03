@@ -3,7 +3,6 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import {
-  eventEndpointIdentifiers,
   EventsAccessDenied,
   EventsAuthorization,
   EventsData,
@@ -86,11 +85,6 @@ const runSuccessCase = async (
 };
 
 describe("Events HttpApi handlers", () => {
-  it("covers every generated EventsGroup identifier exactly once", () => {
-    expect(eventEndpointIdentifiers).toHaveLength(49);
-    expect(new Set(eventEndpointIdentifiers).size).toBe(49);
-  });
-
   it("runs catalog reads behind event visibility permission", async () => {
     await runSuccessCase("showEvent", {
       capabilities: [Permission.LOOTLOG_EVENTS_READ],

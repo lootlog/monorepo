@@ -150,10 +150,6 @@ describe("battles module", () => {
     );
   });
 
-  it("should be defined", () => {
-    expect(service).toBeDefined();
-  });
-
   it("repairs raw storage when a canonical battle already exists", async () => {
     spyOn(service as never, "analyzeBattle").mockReturnValue({
       duration: 0,

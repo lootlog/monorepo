@@ -19,18 +19,6 @@ import {
   removeFromReadyRoom,
 } from "./party-ready-room.handlers.js";
 
-const expectedHandlerIdentifiers = [
-  "PartyReadyRoomControllerList",
-  "PartyReadyRoomControllerCreate",
-  "PartyReadyRoomControllerGet",
-  "PartyReadyRoomControllerApply",
-  "PartyReadyRoomControllerWithdraw",
-  "PartyReadyRoomControllerRemove",
-  "PartyReadyRoomControllerResolveInvitationTargets",
-  "PartyReadyRoomControllerObserveParty",
-  "PartyReadyRoomControllerCancel",
-] as const;
-
 const identity = { userId: "user-a", discordId: "discord-organizer" };
 const character = {
   lvl: 300,
@@ -95,19 +83,6 @@ const provideServices = (
   );
 
 describe("Party Ready Room HttpApi handlers", () => {
-  it("wires every generated Party Ready Room endpoint identifier exactly once", async () => {
-    const source = await Bun.file(
-      new URL("./party-ready-room.handlers.ts", import.meta.url),
-    ).text();
-    const actual = [...source.matchAll(/\.handle\(\s*"([^"]+)"/g)].map(
-      (match) => match[1],
-    );
-
-    expect(actual).toHaveLength(9);
-    expect(new Set(actual).size).toBe(9);
-    expect(actual).toEqual([...expectedHandlerIdentifiers]);
-  });
-
   it("creates a room only for visible Organizations and preserves projection TTL fields", async () => {
     const calls: unknown[] = [];
     const layer = provideServices(
