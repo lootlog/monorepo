@@ -16,9 +16,9 @@ import { Effect, Layer, ManagedRuntime } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { RedisService } from "#src/redis/redis.service";
-import { ApiRedis } from "../src/http-api/runtime/api-redis.js";
-import { ApiRuntimeConfig } from "../src/http-api/runtime/api-runtime-config.js";
-import { LootlogApiRouter } from "../src/http-api/runtime/http-routes.js";
+import { LootlogApiRouter } from "../src/http-api/runtime/application/http-routes.js";
+import { ApiRedis } from "../src/http-api/runtime/infrastructure/api-redis.js";
+import { ApiRuntimeConfig } from "../src/http-api/runtime/infrastructure/api-runtime-config.js";
 import { TestDatabase } from "./test-database.js";
 
 const caller = {

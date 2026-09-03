@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import process from "node:process";
 
 const require = createRequire(import.meta.url);
-const ts = require("../../node_modules/.bun/typescript@6.0.3/node_modules/typescript/lib/typescript.js");
+const ts = require("typescript");
 
 const DECORATOR_IMPORTS = new Set([
   "ApiBearerAuth",
