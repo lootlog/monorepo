@@ -16,6 +16,10 @@ const HTTP_METHODS = new Set([
   "trace",
 ]);
 const REALTIME_TICKET_OPERATION = "POST /auth/realtime-ticket";
+const GUILD_METADATA_FORBIDDEN_OPERATIONS = new Set([
+  "GET /guilds/{guildId}",
+  "GET /guilds/{guildId}/permissions",
+]);
 const TICKET_VERIFY_HEADERS = new Set([
   "x-lootlog-credential-purpose",
   "x-lootlog-websocket-origin",
@@ -119,6 +123,22 @@ const removeTicketVerifyHeaders = (value: JsonValue): JsonValue => {
   return operation;
 };
 
+const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
+  if (value === null || Array.isArray(value) || typeof value !== "object") {
+    return value;
+  }
+  const operation = structuredClone(value);
+  const responses = operation["responses"];
+  if (
+    responses !== null &&
+    !Array.isArray(responses) &&
+    typeof responses === "object"
+  ) {
+    delete responses[status];
+  }
+  return operation;
+};
+
 const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
   if (Array.isArray(value)) {
     const normalized = value.map(normalizeOpenApiRepresentation);
@@ -160,6 +180,12 @@ const normalizeAllowedChanges = (
 ): JsonValue => {
   let normalized = operation;
   if (service === "api") normalized = removePresencePermission(normalized);
+  if (
+    service === "api" &&
+    GUILD_METADATA_FORBIDDEN_OPERATIONS.has(operationKey)
+  ) {
+    normalized = removeResponseStatus(normalized, "403");
+  }
   if (service === "auth" && operationKey === "GET /auth/verify") {
     normalized = removeTicketVerifyHeaders(normalized);
   }

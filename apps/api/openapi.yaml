@@ -539,6 +539,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
+        "403":
+          description: <No Content>
       description: Retrieve guild information by guild ID
       summary: Get guild by ID
   /guilds/{guildId}/config:
@@ -666,6 +668,8 @@ paths:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+        "403":
+          description: <No Content>
       description: Retrieve resolved permissions for the current member in a guild
       summary: Get guild permissions
   /guilds/{guildId}/discord-sync:

@@ -12904,7 +12904,7 @@ export const getGuildsControllerGetGuildByIdQueryKey = ({ guildId }: GuildsContr
     }
 
 
-export const getGuildsControllerGetGuildByIdQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<unknown>>({ guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetGuildByIdQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>({ guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -12923,10 +12923,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetGuildByIdQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetGuildById>>>
-export type GuildsControllerGetGuildByIdQueryError = ErrorType<unknown>
+export type GuildsControllerGetGuildByIdQueryError = ErrorType<void>
 
 
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
  pathParams: GuildsControllerGetGuildByIdPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildById>>,
@@ -12936,7 +12936,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
  pathParams: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildById>>,
@@ -12946,7 +12946,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
  pathParams: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -12954,7 +12954,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
  * @summary Get guild by ID
  */
 
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
  { guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -12969,7 +12969,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
 /**
  * @summary Get guild by ID
  */
-export const prefetchGuildsControllerGetGuildByIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<unknown>>(
+export const prefetchGuildsControllerGetGuildByIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -13390,7 +13390,7 @@ export const getGuildsControllerGetGuildPermissionsQueryKey = ({ guildId }: Guil
     }
 
 
-export const getGuildsControllerGetGuildPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>({ guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetGuildPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>({ guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -13409,10 +13409,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetGuildPermissionsQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>>
-export type GuildsControllerGetGuildPermissionsQueryError = ErrorType<unknown>
+export type GuildsControllerGetGuildPermissionsQueryError = ErrorType<void>
 
 
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
  pathParams: GuildsControllerGetGuildPermissionsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>,
@@ -13422,7 +13422,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
  pathParams: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>,
@@ -13432,7 +13432,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
  pathParams: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -13440,7 +13440,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
  * @summary Get guild permissions
  */
 
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
  { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -13455,7 +13455,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
 /**
  * @summary Get guild permissions
  */
-export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
+export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
