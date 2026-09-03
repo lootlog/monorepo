@@ -14,7 +14,7 @@ import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 
 const LEVEL_MIN = 0;
 const LEVEL_MAX = 500;

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";

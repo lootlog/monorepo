@@ -75,9 +75,9 @@ describe("AirTagRuntime", () => {
       map: { id: 12, name: "Torneg", visibility: 30 },
       world: "fobos",
     });
-    vi.spyOn(crypto, "randomUUID")
-      .mockReturnValueOnce("00000000-0000-4000-8000-000000000001")
-      .mockReturnValueOnce("00000000-0000-4000-8000-000000000002");
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(
+      "00000000-0000-4000-8000-000000000001",
+    );
   });
 
   it("publishes presence before subscribing to the current map", () => {
@@ -111,6 +111,9 @@ describe("AirTagRuntime", () => {
     const runtime = new AirTagRuntime();
     runtime.configure({ connected: true, enabled: true, joined: true });
     vi.clearAllMocks();
+    vi.mocked(crypto.randomUUID).mockReturnValue(
+      "00000000-0000-4000-8000-000000000002",
+    );
 
     runtime.handleMapChange(13, "Nithal");
 
@@ -139,6 +142,9 @@ describe("AirTagRuntime", () => {
     const runtime = new AirTagRuntime();
     runtime.configure({ connected: true, enabled: true, joined: true });
     vi.clearAllMocks();
+    vi.mocked(crypto.randomUUID).mockReturnValue(
+      "00000000-0000-4000-8000-000000000002",
+    );
 
     runtime.configure({ connected: true, enabled: false, joined: true });
 
