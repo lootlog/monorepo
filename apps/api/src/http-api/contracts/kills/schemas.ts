@@ -1,19 +1,8 @@
 /** Transport schemas owned by the kills HTTP module. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "../scalars.js";
 
-export type CreateKillDto = {
-  readonly world: string;
-  readonly npc: {
-    readonly id: number;
-    readonly name: string;
-    readonly lvl: number;
-    readonly prof?: string;
-    readonly wt: number;
-    readonly icon?: string;
-  };
-  readonly characterId: string;
-  readonly accountId: string;
-};
+export type CreateKillDto = typeof CreateKillDto.Type;
 
 export const CreateKillDto = Schema.Struct({
   world: Schema.String.check(
@@ -22,21 +11,15 @@ export const CreateKillDto = Schema.Struct({
     }),
   ),
   npc: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     name: Schema.String.check(
       Schema.isMinLength(1).annotate({
         expected: "a value with a length of at least 1",
       }),
     ),
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     prof: Schema.optionalKey(Schema.String),
-    wt: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    wt: FiniteNumber,
     icon: Schema.optionalKey(Schema.String),
   }),
   characterId: Schema.String.check(
@@ -51,395 +34,122 @@ export const CreateKillDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateKillDto" });
 
-export type CreateKillResponseDto_Output = {
-  readonly updated: number;
-  readonly deduplicated?: boolean;
-};
+export type CreateKillResponseDto_Output =
+  typeof CreateKillResponseDto_Output.Type;
 
 export const CreateKillResponseDto_Output = Schema.Struct({
-  updated: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  updated: FiniteNumber,
   deduplicated: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "CreateKillResponseDto_Output" });
 
-export type GuildKillStatsResponseDto_Output = {
-  readonly overview: {
-    readonly guildUniqueKills: number;
-    readonly totalMemberParticipations: number;
-    readonly killsByType: {
-      readonly COMMON?: number;
-      readonly ELITE?: number;
-      readonly ELITE2?: number;
-      readonly ELITE3?: number;
-      readonly HERO?: number;
-      readonly TITAN?: number;
-      readonly COLOSSUS?: number;
-      readonly NPC?: number;
-      readonly EVENT_HERO?: number;
-    };
-    readonly participationsByType: {
-      readonly COMMON?: number;
-      readonly ELITE?: number;
-      readonly ELITE2?: number;
-      readonly ELITE3?: number;
-      readonly HERO?: number;
-      readonly TITAN?: number;
-      readonly COLOSSUS?: number;
-      readonly NPC?: number;
-      readonly EVENT_HERO?: number;
-    };
-  };
-  readonly memberRanking: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly memberUserId: string;
-    readonly totalParticipations: number;
-    readonly participationsByType: {
-      readonly COMMON?: number;
-      readonly ELITE?: number;
-      readonly ELITE2?: number;
-      readonly ELITE3?: number;
-      readonly HERO?: number;
-      readonly TITAN?: number;
-      readonly COLOSSUS?: number;
-      readonly NPC?: number;
-      readonly EVENT_HERO?: number;
-    };
-  }>;
-};
+export type GuildKillStatsResponseDto_Output =
+  typeof GuildKillStatsResponseDto_Output.Type;
 
 export const GuildKillStatsResponseDto_Output = Schema.Struct({
   overview: Schema.Struct({
-    guildUniqueKills: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalMemberParticipations: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    guildUniqueKills: FiniteNumber,
+    totalMemberParticipations: FiniteNumber,
     killsByType: Schema.Struct({
-      COMMON: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE2: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE3: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      HERO: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      TITAN: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      COLOSSUS: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      NPC: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      EVENT_HERO: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      COMMON: Schema.optionalKey(FiniteNumber),
+      ELITE: Schema.optionalKey(FiniteNumber),
+      ELITE2: Schema.optionalKey(FiniteNumber),
+      ELITE3: Schema.optionalKey(FiniteNumber),
+      HERO: Schema.optionalKey(FiniteNumber),
+      TITAN: Schema.optionalKey(FiniteNumber),
+      COLOSSUS: Schema.optionalKey(FiniteNumber),
+      NPC: Schema.optionalKey(FiniteNumber),
+      EVENT_HERO: Schema.optionalKey(FiniteNumber),
     }),
     participationsByType: Schema.Struct({
-      COMMON: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE2: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE3: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      HERO: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      TITAN: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      COLOSSUS: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      NPC: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      EVENT_HERO: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      COMMON: Schema.optionalKey(FiniteNumber),
+      ELITE: Schema.optionalKey(FiniteNumber),
+      ELITE2: Schema.optionalKey(FiniteNumber),
+      ELITE3: Schema.optionalKey(FiniteNumber),
+      HERO: Schema.optionalKey(FiniteNumber),
+      TITAN: Schema.optionalKey(FiniteNumber),
+      COLOSSUS: Schema.optionalKey(FiniteNumber),
+      NPC: Schema.optionalKey(FiniteNumber),
+      EVENT_HERO: Schema.optionalKey(FiniteNumber),
     }),
   }),
   memberRanking: Schema.Array(
     Schema.Struct({
-      memberId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      memberId: FiniteNumber,
       memberName: Schema.String,
       memberAvatar: Schema.Union([Schema.String, Schema.Null]),
       memberUserId: Schema.String,
-      totalParticipations: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      totalParticipations: FiniteNumber,
       participationsByType: Schema.Struct({
-        COMMON: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        ELITE: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        ELITE2: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        ELITE3: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        HERO: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        TITAN: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        COLOSSUS: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        NPC: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
-        EVENT_HERO: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
+        COMMON: Schema.optionalKey(FiniteNumber),
+        ELITE: Schema.optionalKey(FiniteNumber),
+        ELITE2: Schema.optionalKey(FiniteNumber),
+        ELITE3: Schema.optionalKey(FiniteNumber),
+        HERO: Schema.optionalKey(FiniteNumber),
+        TITAN: Schema.optionalKey(FiniteNumber),
+        COLOSSUS: Schema.optionalKey(FiniteNumber),
+        NPC: Schema.optionalKey(FiniteNumber),
+        EVENT_HERO: Schema.optionalKey(FiniteNumber),
       }),
     }),
   ),
 }).annotate({ identifier: "GuildKillStatsResponseDto_Output" });
 
-export type UserKillStatsResponseDto_Output = {
-  readonly overview: {
-    readonly totalKills: number;
-    readonly killsByType: {
-      readonly COMMON?: number;
-      readonly ELITE?: number;
-      readonly ELITE2?: number;
-      readonly ELITE3?: number;
-      readonly HERO?: number;
-      readonly TITAN?: number;
-      readonly COLOSSUS?: number;
-      readonly NPC?: number;
-      readonly EVENT_HERO?: number;
-    };
-    readonly killsByWorld: { readonly [x: string]: number };
-  };
-  readonly topNpcs: ReadonlyArray<{
-    readonly npcId: number;
-    readonly npcName: string;
-    readonly npcType: string;
-    readonly npcLvl: number;
-    readonly npcIcon: string | null;
-    readonly npcProf?: string | null;
-    readonly totalKills: number;
-  }>;
-};
+export type UserKillStatsResponseDto_Output =
+  typeof UserKillStatsResponseDto_Output.Type;
 
 export const UserKillStatsResponseDto_Output = Schema.Struct({
   overview: Schema.Struct({
-    totalKills: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    totalKills: FiniteNumber,
     killsByType: Schema.Struct({
-      COMMON: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE2: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      ELITE3: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      HERO: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      TITAN: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      COLOSSUS: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      NPC: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      EVENT_HERO: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      COMMON: Schema.optionalKey(FiniteNumber),
+      ELITE: Schema.optionalKey(FiniteNumber),
+      ELITE2: Schema.optionalKey(FiniteNumber),
+      ELITE3: Schema.optionalKey(FiniteNumber),
+      HERO: Schema.optionalKey(FiniteNumber),
+      TITAN: Schema.optionalKey(FiniteNumber),
+      COLOSSUS: Schema.optionalKey(FiniteNumber),
+      NPC: Schema.optionalKey(FiniteNumber),
+      EVENT_HERO: Schema.optionalKey(FiniteNumber),
     }),
-    killsByWorld: Schema.Record(
-      Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-    ),
+    killsByWorld: Schema.Record(Schema.String, FiniteNumber),
   }),
   topNpcs: Schema.Array(
     Schema.Struct({
-      npcId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcId: FiniteNumber,
       npcName: Schema.String,
       npcType: Schema.String,
-      npcLvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcLvl: FiniteNumber,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
       npcProf: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-      totalKills: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      totalKills: FiniteNumber,
     }),
   ),
 }).annotate({ identifier: "UserKillStatsResponseDto_Output" });
 
-export type UserNpcKillsResponseDto_Output = {
-  readonly npcs: ReadonlyArray<{
-    readonly npcId: number;
-    readonly npcName: string;
-    readonly npcType: string;
-    readonly npcLvl: number;
-    readonly npcProf: string | null;
-    readonly npcIcon: string | null;
-    readonly totalKills: number;
-  }>;
-  readonly pagination: {
-    readonly total: number;
-    readonly cursor: number;
-    readonly limit: number;
-    readonly hasNext: boolean;
-  };
-};
+export type UserNpcKillsResponseDto_Output =
+  typeof UserNpcKillsResponseDto_Output.Type;
 
 export const UserNpcKillsResponseDto_Output = Schema.Struct({
   npcs: Schema.Array(
     Schema.Struct({
-      npcId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcId: FiniteNumber,
       npcName: Schema.String,
       npcType: Schema.String,
-      npcLvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcLvl: FiniteNumber,
       npcProf: Schema.Union([Schema.String, Schema.Null]),
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      totalKills: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      totalKills: FiniteNumber,
     }),
   ),
   pagination: Schema.Struct({
-    total: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    cursor: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    limit: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    total: FiniteNumber,
+    cursor: FiniteNumber,
+    limit: FiniteNumber,
     hasNext: Schema.Boolean,
   }),
 }).annotate({ identifier: "UserNpcKillsResponseDto_Output" });
 
-export type NpcType =
-  | "COMMON"
-  | "ELITE"
-  | "ELITE2"
-  | "ELITE3"
-  | "HERO"
-  | "EVENT_HERO"
-  | "TITAN"
-  | "COLOSSUS"
-  | "NPC";
+export type NpcType = typeof NpcType.Type;
 
 export const NpcType = Schema.Literals([
   "COMMON",
@@ -453,20 +163,11 @@ export const NpcType = Schema.Literals([
   "NPC",
 ]).annotate({ identifier: "NpcType" });
 
-export type KillsControllerGetGuildTopNpcsParams = {
-  readonly limit: number;
-  readonly npcType?: NpcType;
-  readonly world: string;
-  readonly search: string;
-  readonly minLvl: string;
-  readonly maxLvl: string;
-  readonly period: string;
-};
+export type KillsControllerGetGuildTopNpcsParams =
+  typeof KillsControllerGetGuildTopNpcsParams.Type;
 
 export const KillsControllerGetGuildTopNpcsParams = Schema.Struct({
-  limit: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  limit: FiniteNumber,
   npcType: Schema.optionalKey(NpcType),
   world: Schema.String,
   search: Schema.String,
@@ -475,150 +176,76 @@ export const KillsControllerGetGuildTopNpcsParams = Schema.Struct({
   period: Schema.String,
 });
 
-export type GuildTopNpcsResponseDto_Output = {
-  readonly topNpcs: ReadonlyArray<{
-    readonly npcId: number;
-    readonly npcName: string;
-    readonly npcType: string;
-    readonly npcLvl: number;
-    readonly npcIcon: string | null;
-    readonly uniqueKills: number;
-  }>;
-};
+export type GuildTopNpcsResponseDto_Output =
+  typeof GuildTopNpcsResponseDto_Output.Type;
 
 export const GuildTopNpcsResponseDto_Output = Schema.Struct({
   topNpcs: Schema.Array(
     Schema.Struct({
-      npcId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcId: FiniteNumber,
       npcName: Schema.String,
       npcType: Schema.String,
-      npcLvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcLvl: FiniteNumber,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      uniqueKills: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      uniqueKills: FiniteNumber,
     }),
   ),
 }).annotate({ identifier: "GuildTopNpcsResponseDto_Output" });
 
-export type GuildTopKillersByTypeResponseDto_Output = {
-  readonly TITAN?: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly memberUserId: string;
-    readonly totalParticipations: number;
-  }>;
-  readonly HERO?: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly memberUserId: string;
-    readonly totalParticipations: number;
-  }>;
-  readonly EVENT_HERO?: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly memberUserId: string;
-    readonly totalParticipations: number;
-  }>;
-};
+export type GuildTopKillersByTypeResponseDto_Output =
+  typeof GuildTopKillersByTypeResponseDto_Output.Type;
 
 export const GuildTopKillersByTypeResponseDto_Output = Schema.Struct({
   TITAN: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
-        memberId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        memberId: FiniteNumber,
         memberName: Schema.String,
         memberAvatar: Schema.Union([Schema.String, Schema.Null]),
         memberUserId: Schema.String,
-        totalParticipations: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        totalParticipations: FiniteNumber,
       }),
     ),
   ),
   HERO: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
-        memberId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        memberId: FiniteNumber,
         memberName: Schema.String,
         memberAvatar: Schema.Union([Schema.String, Schema.Null]),
         memberUserId: Schema.String,
-        totalParticipations: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        totalParticipations: FiniteNumber,
       }),
     ),
   ),
   EVENT_HERO: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
-        memberId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        memberId: FiniteNumber,
         memberName: Schema.String,
         memberAvatar: Schema.Union([Schema.String, Schema.Null]),
         memberUserId: Schema.String,
-        totalParticipations: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        totalParticipations: FiniteNumber,
       }),
     ),
   ),
 }).annotate({ identifier: "GuildTopKillersByTypeResponseDto_Output" });
 
-export type NpcKillersResponseDto_Output = {
-  readonly npc:
-    | ({
-        readonly npcId: number;
-        readonly npcName: string;
-        readonly npcType: string;
-        readonly npcLvl: number;
-        readonly npcProf: string | null;
-        readonly npcIcon: string | null;
-        readonly uniqueGuildKills: number;
-        readonly totalMemberParticipations: number;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly killers: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly memberUserId: string;
-    readonly participationCount: number;
-  }>;
-};
+export type NpcKillersResponseDto_Output =
+  typeof NpcKillersResponseDto_Output.Type;
 
 export const NpcKillersResponseDto_Output = Schema.Struct({
   npc: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
-        npcId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        npcId: FiniteNumber,
         npcName: Schema.String,
         npcType: Schema.String,
-        npcLvl: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        npcLvl: FiniteNumber,
         npcProf: Schema.Union([Schema.String, Schema.Null]),
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        uniqueGuildKills: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        totalMemberParticipations: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        uniqueGuildKills: FiniteNumber,
+        totalMemberParticipations: FiniteNumber,
       }),
       [
         Schema.Record(
@@ -631,60 +258,23 @@ export const NpcKillersResponseDto_Output = Schema.Struct({
   ]),
   killers: Schema.Array(
     Schema.Struct({
-      memberId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      memberId: FiniteNumber,
       memberName: Schema.String,
       memberAvatar: Schema.Union([Schema.String, Schema.Null]),
       memberUserId: Schema.String,
-      participationCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      participationCount: FiniteNumber,
     }),
   ),
 }).annotate({ identifier: "NpcKillersResponseDto_Output" });
 
-export type MemberKillsResponseDto_Output = {
-  readonly member:
-    | ({
-        readonly memberId: number;
-        readonly memberName: string;
-        readonly memberAvatar: string | null;
-        readonly memberUserId: string;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly overview:
-    | ({
-        readonly totalParticipations: number;
-        readonly participationsByType: { readonly [x: string]: number };
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly npcs: ReadonlyArray<{
-    readonly npcId: number;
-    readonly npcName: string;
-    readonly npcType: string;
-    readonly npcLvl: number;
-    readonly npcProf: string | null;
-    readonly npcIcon: string | null;
-    readonly totalKills: number;
-  }>;
-  readonly pagination:
-    | ({
-        readonly total: number;
-        readonly cursor: number;
-        readonly limit: number;
-        readonly hasNext: boolean;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-};
+export type MemberKillsResponseDto_Output =
+  typeof MemberKillsResponseDto_Output.Type;
 
 export const MemberKillsResponseDto_Output = Schema.Struct({
   member: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
-        memberId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        memberId: FiniteNumber,
         memberName: Schema.String,
         memberAvatar: Schema.Union([Schema.String, Schema.Null]),
         memberUserId: Schema.String,
@@ -701,15 +291,8 @@ export const MemberKillsResponseDto_Output = Schema.Struct({
   overview: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
-        totalParticipations: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        participationsByType: Schema.Record(
-          Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
+        totalParticipations: FiniteNumber,
+        participationsByType: Schema.Record(Schema.String, FiniteNumber),
       }),
       [
         Schema.Record(
@@ -722,33 +305,21 @@ export const MemberKillsResponseDto_Output = Schema.Struct({
   ]),
   npcs: Schema.Array(
     Schema.Struct({
-      npcId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcId: FiniteNumber,
       npcName: Schema.String,
       npcType: Schema.String,
-      npcLvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcLvl: FiniteNumber,
       npcProf: Schema.Union([Schema.String, Schema.Null]),
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      totalKills: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      totalKills: FiniteNumber,
     }),
   ),
   pagination: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
-        total: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        cursor: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        limit: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        total: FiniteNumber,
+        cursor: FiniteNumber,
+        limit: FiniteNumber,
         hasNext: Schema.Boolean,
       }),
       [
@@ -762,39 +333,25 @@ export const MemberKillsResponseDto_Output = Schema.Struct({
   ]),
 }).annotate({ identifier: "MemberKillsResponseDto_Output" });
 
-export type KillsControllerCreateKillRequestJson = CreateKillDto;
+export type KillsControllerCreateKillRequestJson =
+  typeof KillsControllerCreateKillRequestJson.Type;
 
 export const KillsControllerCreateKillRequestJson = CreateKillDto;
 
-export type KillsControllerCreateKill201 = CreateKillResponseDto_Output;
+export type KillsControllerCreateKill201 =
+  typeof KillsControllerCreateKill201.Type;
 
 export const KillsControllerCreateKill201 = CreateKillResponseDto_Output;
 
-export type KillsControllerGetGuildKillStatsPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type KillsControllerGetGuildKillStatsPathParams =
+  typeof KillsControllerGetGuildKillStatsPathParams.Type;
 
 export const KillsControllerGetGuildKillStatsPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type KillsControllerGetGuildKillStatsQuery = {
-  readonly npcTypes?: ReadonlyArray<
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC"
-  >;
-  readonly minLvl?: number;
-  readonly maxLvl?: number;
-  readonly world?: string;
-  readonly period?: "all" | "24h" | "3d" | "7d" | "14d" | "30d";
-};
+export type KillsControllerGetGuildKillStatsQuery =
+  typeof KillsControllerGetGuildKillStatsQuery.Type;
 
 export const KillsControllerGetGuildKillStatsQuery = Schema.Struct({
   npcTypes: Schema.optionalKey(
@@ -853,37 +410,13 @@ export const KillsControllerGetGuildKillStatsQuery = Schema.Struct({
 );
 
 export type KillsControllerGetGuildKillStats200 =
-  GuildKillStatsResponseDto_Output;
+  typeof KillsControllerGetGuildKillStats200.Type;
 
 export const KillsControllerGetGuildKillStats200 =
   GuildKillStatsResponseDto_Output;
 
-export type KillsControllerGetUserKillStatsQuery = {
-  readonly npcTypes?: ReadonlyArray<
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC"
-  >;
-  readonly npcType?:
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC";
-  readonly world?: string;
-  readonly topNpcsLimit?: number;
-  readonly period?: "all" | "24h" | "3d" | "7d" | "14d" | "30d";
-};
+export type KillsControllerGetUserKillStatsQuery =
+  typeof KillsControllerGetUserKillStatsQuery.Type;
 
 export const KillsControllerGetUserKillStatsQuery = Schema.Struct({
   npcTypes: Schema.optionalKey(
@@ -934,33 +467,13 @@ export const KillsControllerGetUserKillStatsQuery = Schema.Struct({
 });
 
 export type KillsControllerGetUserKillStats200 =
-  UserKillStatsResponseDto_Output;
+  typeof KillsControllerGetUserKillStats200.Type;
 
 export const KillsControllerGetUserKillStats200 =
   UserKillStatsResponseDto_Output;
 
-export type KillsControllerGetUserNpcKillsQuery = {
-  readonly npcTypes?: ReadonlyArray<
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC"
-  >;
-  readonly world?: string;
-  readonly search?: string;
-  readonly cursor?: number;
-  readonly limit?: number;
-  readonly sortOrder?: "asc" | "desc";
-  readonly sortBy?: "kills" | "level";
-  readonly minLvl?: number;
-  readonly maxLvl?: number;
-  readonly period?: "all" | "24h" | "3d" | "7d" | "14d" | "30d";
-};
+export type KillsControllerGetUserNpcKillsQuery =
+  typeof KillsControllerGetUserNpcKillsQuery.Type;
 
 export const KillsControllerGetUserNpcKillsQuery = Schema.Struct({
   npcTypes: Schema.optionalKey(
@@ -1047,32 +560,23 @@ export const KillsControllerGetUserNpcKillsQuery = Schema.Struct({
   ),
 );
 
-export type KillsControllerGetUserNpcKills200 = UserNpcKillsResponseDto_Output;
+export type KillsControllerGetUserNpcKills200 =
+  typeof KillsControllerGetUserNpcKills200.Type;
 
 export const KillsControllerGetUserNpcKills200 = UserNpcKillsResponseDto_Output;
 
-export type KillsControllerGetGuildTopNpcsPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type KillsControllerGetGuildTopNpcsPathParams =
+  typeof KillsControllerGetGuildTopNpcsPathParams.Type;
 
 export const KillsControllerGetGuildTopNpcsPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type KillsControllerGetGuildTopNpcsQuery = {
-  readonly limit: number;
-  readonly npcType?: NpcType;
-  readonly world: string;
-  readonly search: string;
-  readonly minLvl: string;
-  readonly maxLvl: string;
-  readonly period: string;
-};
+export type KillsControllerGetGuildTopNpcsQuery =
+  typeof KillsControllerGetGuildTopNpcsQuery.Type;
 
 export const KillsControllerGetGuildTopNpcsQuery = Schema.Struct({
-  limit: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  limit: FiniteNumber,
   npcType: Schema.optionalKey(NpcType),
   world: Schema.String,
   search: Schema.String,
@@ -1081,51 +585,42 @@ export const KillsControllerGetGuildTopNpcsQuery = Schema.Struct({
   period: Schema.String,
 });
 
-export type KillsControllerGetGuildTopNpcs200 = GuildTopNpcsResponseDto_Output;
+export type KillsControllerGetGuildTopNpcs200 =
+  typeof KillsControllerGetGuildTopNpcs200.Type;
 
 export const KillsControllerGetGuildTopNpcs200 = GuildTopNpcsResponseDto_Output;
 
-export type KillsControllerGetGuildTopKillersByTypePathParams = {
-  readonly guildId: Schema.Json;
-};
+export type KillsControllerGetGuildTopKillersByTypePathParams =
+  typeof KillsControllerGetGuildTopKillersByTypePathParams.Type;
 
 export const KillsControllerGetGuildTopKillersByTypePathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type KillsControllerGetGuildTopKillersByTypeQuery = {
-  readonly limit: number;
-  readonly period: string;
-};
+export type KillsControllerGetGuildTopKillersByTypeQuery =
+  typeof KillsControllerGetGuildTopKillersByTypeQuery.Type;
 
 export const KillsControllerGetGuildTopKillersByTypeQuery = Schema.Struct({
-  limit: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  limit: FiniteNumber,
   period: Schema.String,
 });
 
 export type KillsControllerGetGuildTopKillersByType200 =
-  GuildTopKillersByTypeResponseDto_Output;
+  typeof KillsControllerGetGuildTopKillersByType200.Type;
 
 export const KillsControllerGetGuildTopKillersByType200 =
   GuildTopKillersByTypeResponseDto_Output;
 
-export type KillsControllerGetNpcKillersPathParams = {
-  readonly npcId: string;
-  readonly guildId: Schema.Json;
-};
+export type KillsControllerGetNpcKillersPathParams =
+  typeof KillsControllerGetNpcKillersPathParams.Type;
 
 export const KillsControllerGetNpcKillersPathParams = Schema.Struct({
   npcId: Schema.String.annotate({ examples: ["999"] }),
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type KillsControllerGetNpcKillersQuery = {
-  readonly limit?: number;
-  readonly world?: string;
-  readonly period?: "all" | "24h" | "3d" | "7d" | "14d" | "30d";
-};
+export type KillsControllerGetNpcKillersQuery =
+  typeof KillsControllerGetNpcKillersQuery.Type;
 
 export const KillsControllerGetNpcKillersQuery = Schema.Struct({
   limit: Schema.optionalKey(
@@ -1147,40 +642,21 @@ export const KillsControllerGetNpcKillersQuery = Schema.Struct({
   ),
 });
 
-export type KillsControllerGetNpcKillers200 = NpcKillersResponseDto_Output;
+export type KillsControllerGetNpcKillers200 =
+  typeof KillsControllerGetNpcKillers200.Type;
 
 export const KillsControllerGetNpcKillers200 = NpcKillersResponseDto_Output;
 
-export type KillsControllerGetMemberKillsPathParams = {
-  readonly memberId: string;
-  readonly guildId: Schema.Json;
-};
+export type KillsControllerGetMemberKillsPathParams =
+  typeof KillsControllerGetMemberKillsPathParams.Type;
 
 export const KillsControllerGetMemberKillsPathParams = Schema.Struct({
   memberId: Schema.String.annotate({ examples: ["123"] }),
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type KillsControllerGetMemberKillsQuery = {
-  readonly minLvl?: number;
-  readonly maxLvl?: number;
-  readonly world?: string;
-  readonly npcTypes?: ReadonlyArray<
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC"
-  >;
-  readonly search?: string;
-  readonly limit?: number;
-  readonly cursor?: number;
-  readonly period?: "all" | "24h" | "3d" | "7d" | "14d" | "30d";
-};
+export type KillsControllerGetMemberKillsQuery =
+  typeof KillsControllerGetMemberKillsQuery.Type;
 
 export const KillsControllerGetMemberKillsQuery = Schema.Struct({
   minLvl: Schema.optionalKey(
@@ -1257,6 +733,7 @@ export const KillsControllerGetMemberKillsQuery = Schema.Struct({
   ),
 });
 
-export type KillsControllerGetMemberKills200 = MemberKillsResponseDto_Output;
+export type KillsControllerGetMemberKills200 =
+  typeof KillsControllerGetMemberKills200.Type;
 
 export const KillsControllerGetMemberKills200 = MemberKillsResponseDto_Output;

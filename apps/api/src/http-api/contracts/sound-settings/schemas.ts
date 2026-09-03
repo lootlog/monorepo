@@ -1,5 +1,6 @@
 /** Transport schemas owned by the sound-settings HTTP module. */
 import * as Schema from "effect/Schema";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
 export type SoundSettingsResponseDto__schema0 =
   | string
@@ -29,61 +30,19 @@ export const SoundSettingsResponseDto__schema0 = Schema.suspend(
     __recursive_SoundSettingsResponseDto__schema0,
 );
 
-export type SoundSettingsResponseDto = {
-  readonly userId: string;
-  readonly masterVolume: number;
-  readonly notificationsVolume: number;
-  readonly detectorVolume: number;
-  readonly timersVolume: number;
-  readonly pingsVolume: number;
-  readonly notificationsConfig:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<SoundSettingsResponseDto__schema0>
-    | { readonly [x: string]: SoundSettingsResponseDto__schema0 }
-    | null;
-  readonly detectorConfig:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<SoundSettingsResponseDto__schema0>
-    | { readonly [x: string]: SoundSettingsResponseDto__schema0 }
-    | null;
-  readonly timersConfig:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<SoundSettingsResponseDto__schema0>
-    | { readonly [x: string]: SoundSettingsResponseDto__schema0 }
-    | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-};
+export type SoundSettingsResponseDto = typeof SoundSettingsResponseDto.Type;
 
 export const SoundSettingsResponseDto = Schema.Struct({
   userId: Schema.String,
-  masterVolume: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  notificationsVolume: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  detectorVolume: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  timersVolume: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  pingsVolume: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  masterVolume: FiniteNumber,
+  notificationsVolume: FiniteNumber,
+  detectorVolume: FiniteNumber,
+  timersVolume: FiniteNumber,
+  pingsVolume: FiniteNumber,
   notificationsConfig: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(SoundSettingsResponseDto__schema0),
       Schema.Record(Schema.String, SoundSettingsResponseDto__schema0),
@@ -93,9 +52,7 @@ export const SoundSettingsResponseDto = Schema.Struct({
   detectorConfig: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(SoundSettingsResponseDto__schema0),
       Schema.Record(Schema.String, SoundSettingsResponseDto__schema0),
@@ -105,205 +62,89 @@ export const SoundSettingsResponseDto = Schema.Struct({
   timersConfig: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(SoundSettingsResponseDto__schema0),
       Schema.Record(Schema.String, SoundSettingsResponseDto__schema0),
     ]),
     Schema.Null,
   ]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "SoundSettingsResponseDto" });
 
-export type UpdateSoundSettingsDto = {
-  readonly masterVolume?: number;
-  readonly notificationsVolume?: number;
-  readonly detectorVolume?: number;
-  readonly timersVolume?: number;
-  readonly pingsVolume?: number;
-  readonly notificationsConfig?: {
-    readonly ELITE2?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly HERO?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly TITAN?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly COLOSSUS?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly message?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-  };
-  readonly detectorConfig?: {
-    readonly ELITE2?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly HERO?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly TITAN?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly COLOSSUS?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly message?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-  };
-  readonly timersConfig?: {
-    readonly ELITE2?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly HERO?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly TITAN?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly COLOSSUS?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-    readonly message?: {
-      readonly volume?: number;
-      readonly soundUrl?: "" | string;
-    };
-  };
-};
+export type UpdateSoundSettingsDto = typeof UpdateSoundSettingsDto.Type;
 
 export const UpdateSoundSettingsDto = Schema.Struct({
   masterVolume: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1).annotate({
-          expected: "a value less than or equal to 1",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(0).annotate({
+        expected: "a value greater than or equal to 0",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1).annotate({
+        expected: "a value less than or equal to 1",
+      }),
+    ),
   ),
   notificationsVolume: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1).annotate({
-          expected: "a value less than or equal to 1",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(0).annotate({
+        expected: "a value greater than or equal to 0",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1).annotate({
+        expected: "a value less than or equal to 1",
+      }),
+    ),
   ),
   detectorVolume: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1).annotate({
-          expected: "a value less than or equal to 1",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(0).annotate({
+        expected: "a value greater than or equal to 0",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1).annotate({
+        expected: "a value less than or equal to 1",
+      }),
+    ),
   ),
   timersVolume: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1).annotate({
-          expected: "a value less than or equal to 1",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(0).annotate({
+        expected: "a value greater than or equal to 0",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1).annotate({
+        expected: "a value less than or equal to 1",
+      }),
+    ),
   ),
   pingsVolume: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1).annotate({
-          expected: "a value less than or equal to 1",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(0).annotate({
+        expected: "a value greater than or equal to 0",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1).annotate({
+        expected: "a value less than or equal to 1",
+      }),
+    ),
   ),
   notificationsConfig: Schema.optionalKey(
     Schema.Struct({
       ELITE2: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -316,19 +157,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       HERO: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -341,19 +178,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       TITAN: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -366,19 +199,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       COLOSSUS: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -391,19 +220,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       message: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -420,19 +245,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       ELITE2: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -445,19 +266,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       HERO: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -470,19 +287,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       TITAN: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -495,19 +308,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       COLOSSUS: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -520,19 +329,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       message: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -549,19 +354,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       ELITE2: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -574,19 +375,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       HERO: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -599,19 +396,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       TITAN: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -624,19 +417,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       COLOSSUS: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -649,19 +438,15 @@ export const UpdateSoundSettingsDto = Schema.Struct({
       message: Schema.optionalKey(
         Schema.Struct({
           volume: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(1).annotate({
-                  expected: "a value less than or equal to 1",
-                }),
-              ),
+            FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(1).annotate({
+                expected: "a value less than or equal to 1",
+              }),
+            ),
           ),
           soundUrl: Schema.optionalKey(
             Schema.Union([
@@ -678,17 +463,13 @@ export const UpdateSoundSettingsDto = Schema.Struct({
 const __recursive_SoundSettingsResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -712,9 +493,7 @@ const __recursive_SoundSettingsResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -737,17 +516,19 @@ const __recursive_SoundSettingsResponseDto__schema0 = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "SoundSettingsResponseDto__schema0" });
 
-export type SoundSettingsControllerGetSettings200 = SoundSettingsResponseDto;
+export type SoundSettingsControllerGetSettings200 =
+  typeof SoundSettingsControllerGetSettings200.Type;
 
 export const SoundSettingsControllerGetSettings200 = SoundSettingsResponseDto;
 
 export type SoundSettingsControllerUpdateSettingsRequestJson =
-  UpdateSoundSettingsDto;
+  typeof SoundSettingsControllerUpdateSettingsRequestJson.Type;
 
 export const SoundSettingsControllerUpdateSettingsRequestJson =
   UpdateSoundSettingsDto;
 
-export type SoundSettingsControllerUpdateSettings200 = SoundSettingsResponseDto;
+export type SoundSettingsControllerUpdateSettings200 =
+  typeof SoundSettingsControllerUpdateSettings200.Type;
 
 export const SoundSettingsControllerUpdateSettings200 =
   SoundSettingsResponseDto;

@@ -6,36 +6,35 @@ import {
 } from "@lootlog/schema/settings-documents";
 
 export type SettingsDocumentsResponseDto_Output =
-  typeof SettingsDocumentsResponseSchema.Type;
+  typeof SettingsDocumentsResponseDto_Output.Type;
 
 export const SettingsDocumentsResponseDto_Output =
   SettingsDocumentsResponseSchema;
 
-export type PatchSettingsDocumentsDto =
-  typeof PatchSettingsDocumentsSchema.Type;
+export type PatchSettingsDocumentsDto = typeof PatchSettingsDocumentsDto.Type;
 
 export const PatchSettingsDocumentsDto = PatchSettingsDocumentsSchema;
 
 export type SettingsDocumentsControllerGetPreferencesQuery =
-  typeof SettingsDocumentsQuerySchema.Type;
+  typeof SettingsDocumentsControllerGetPreferencesQuery.Type;
 
 export const SettingsDocumentsControllerGetPreferencesQuery =
   SettingsDocumentsQuerySchema;
 
 export type SettingsDocumentsControllerGetPreferences200 =
-  SettingsDocumentsResponseDto_Output;
+  typeof SettingsDocumentsControllerGetPreferences200.Type;
 
 export const SettingsDocumentsControllerGetPreferences200 =
   SettingsDocumentsResponseDto_Output;
 
 export type SettingsDocumentsControllerPatchPreferencesRequestJson =
-  PatchSettingsDocumentsDto;
+  typeof SettingsDocumentsControllerPatchPreferencesRequestJson.Type;
 
 export const SettingsDocumentsControllerPatchPreferencesRequestJson =
   PatchSettingsDocumentsDto;
 
 export type SettingsDocumentsControllerPatchPreferences200 =
-  SettingsDocumentsResponseDto_Output;
+  typeof SettingsDocumentsControllerPatchPreferences200.Type;
 
 export const SettingsDocumentsControllerPatchPreferences200 =
   SettingsDocumentsResponseDto_Output;

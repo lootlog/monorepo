@@ -41,6 +41,7 @@ npm-debug.log*
 **/battlelog-service/generated
 **/activity/prisma/generated
 /apps/api/generated
+/apps/api/src/mocks/data/players.json
 
 .claude/settings.local.json
 analysis

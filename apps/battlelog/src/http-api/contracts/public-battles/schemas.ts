@@ -6,42 +6,39 @@ import {
   BattleTimelineResponseDto_Output,
 } from "../shared.js";
 
-export type PublicBattlesControllerGetPublicBattlePathParams = {
-  readonly battleId: string;
-};
+export type PublicBattlesControllerGetPublicBattlePathParams =
+  typeof PublicBattlesControllerGetPublicBattlePathParams.Type;
 
 export const PublicBattlesControllerGetPublicBattlePathParams = Schema.Struct({
   battleId: Schema.String,
 });
 
 export type PublicBattlesControllerGetPublicBattle200 =
-  BattleResponseDto_Output;
+  typeof PublicBattlesControllerGetPublicBattle200.Type;
 
 export const PublicBattlesControllerGetPublicBattle200 =
   BattleResponseDto_Output;
 
-export type PublicBattlesControllerGetPublicBattleRawPathParams = {
-  readonly battleId: string;
-};
+export type PublicBattlesControllerGetPublicBattleRawPathParams =
+  typeof PublicBattlesControllerGetPublicBattleRawPathParams.Type;
 
 export const PublicBattlesControllerGetPublicBattleRawPathParams =
   Schema.Struct({ battleId: Schema.String });
 
 export type PublicBattlesControllerGetPublicBattleRaw200 =
-  BattleRawResponseDto_Output;
+  typeof PublicBattlesControllerGetPublicBattleRaw200.Type;
 
 export const PublicBattlesControllerGetPublicBattleRaw200 =
   BattleRawResponseDto_Output;
 
-export type PublicBattlesControllerGetPublicBattleTimelinePathParams = {
-  readonly battleId: string;
-};
+export type PublicBattlesControllerGetPublicBattleTimelinePathParams =
+  typeof PublicBattlesControllerGetPublicBattleTimelinePathParams.Type;
 
 export const PublicBattlesControllerGetPublicBattleTimelinePathParams =
   Schema.Struct({ battleId: Schema.String });
 
 export type PublicBattlesControllerGetPublicBattleTimeline200 =
-  BattleTimelineResponseDto_Output;
+  typeof PublicBattlesControllerGetPublicBattleTimeline200.Type;
 
 export const PublicBattlesControllerGetPublicBattleTimeline200 =
   BattleTimelineResponseDto_Output;

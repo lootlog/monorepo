@@ -2,12 +2,7 @@
 import * as Schema from "effect/Schema";
 
 // schemas
-export type HealthzControllerCheck200 = {
-  readonly status?: string;
-  readonly info?: { readonly [x: string]: { readonly status: string } } | null;
-  readonly error?: { readonly [x: string]: { readonly status: string } } | null;
-  readonly details?: { readonly [x: string]: { readonly status: string } };
-};
+export type HealthzControllerCheck200 = typeof HealthzControllerCheck200.Type;
 
 export const HealthzControllerCheck200 = Schema.Struct({
   status: Schema.optionalKey(Schema.String.annotate({ examples: ["ok"] })),
@@ -31,12 +26,7 @@ export const HealthzControllerCheck200 = Schema.Struct({
   ),
 });
 
-export type HealthzControllerCheck503 = {
-  readonly status?: string;
-  readonly info?: { readonly [x: string]: { readonly status: string } } | null;
-  readonly error?: { readonly [x: string]: { readonly status: string } } | null;
-  readonly details?: { readonly [x: string]: { readonly status: string } };
-};
+export type HealthzControllerCheck503 = typeof HealthzControllerCheck503.Type;
 
 export const HealthzControllerCheck503 = Schema.Struct({
   status: Schema.optionalKey(Schema.String.annotate({ examples: ["error"] })),

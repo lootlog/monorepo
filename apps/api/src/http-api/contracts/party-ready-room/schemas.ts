@@ -1,59 +1,16 @@
 /** Transport schemas owned by the party-ready-room HTTP module. */
 import * as Schema from "effect/Schema";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
-export type PartyReadyRoomProjectionDto_Output = {
-  readonly schemaVersion: 3;
-  readonly notificationId: string;
-  readonly organizerDiscordId: string;
-  readonly organizerCharacter: {
-    readonly lvl: number;
-    readonly nick: string;
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly prof: string;
-    readonly icon: string;
-    readonly clan?: { readonly id?: number; readonly name?: string };
-  };
-  readonly guildIds: ReadonlyArray<string>;
-  readonly world: string;
-  readonly description?: string;
-  readonly minLvl?: number;
-  readonly maxLvl?: number;
-  readonly status: "ACTIVE";
-  readonly revision: number;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly expiresAt: string;
-  readonly viewer: "ORGANIZER" | "PARTICIPANT";
-  readonly participants: {
-    readonly [x: string]: {
-      readonly participantId: string;
-      readonly discordId: string;
-      readonly character: {
-        readonly lvl: number;
-        readonly nick: string;
-        readonly accountId: string;
-        readonly characterId: string;
-        readonly prof: string;
-        readonly icon: string;
-        readonly clan?: { readonly id?: number; readonly name?: string };
-      };
-      readonly partyPresence: "OUTSIDE" | "IN_PARTY";
-      readonly createdAt: string;
-      readonly updatedAt: string;
-    };
-  };
-  readonly ownedParticipantIds?: ReadonlyArray<string>;
-};
+export type PartyReadyRoomProjectionDto_Output =
+  typeof PartyReadyRoomProjectionDto_Output.Type;
 
 export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
   schemaVersion: Schema.Literal(3),
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
   organizerCharacter: Schema.Struct({
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     nick: Schema.String.check(
       Schema.isMinLength(1).annotate({
         expected: "a value with a length of at least 1",
@@ -101,11 +58,7 @@ export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
     ),
     clan: Schema.optionalKey(
       Schema.Struct({
-        id: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
+        id: Schema.optionalKey(FiniteNumber),
         name: Schema.optionalKey(
           Schema.String.check(
             Schema.isMaxLength(255).annotate({
@@ -119,16 +72,8 @@ export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
   guildIds: Schema.Array(Schema.String),
   world: Schema.String,
   description: Schema.optionalKey(Schema.String),
-  minLvl: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
-  maxLvl: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  minLvl: Schema.optionalKey(FiniteNumber),
+  maxLvl: Schema.optionalKey(FiniteNumber),
   status: Schema.Literal("ACTIVE"),
   revision: Schema.Number.check(
     Schema.isInt().annotate({ expected: "an integer" }),
@@ -143,36 +88,9 @@ export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
         expected: "a value less than or equal to 9007199254740991",
       }),
     ),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  expiresAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
+  expiresAt: DateTimeString,
   viewer: Schema.Literals(["ORGANIZER", "PARTICIPANT"]),
   participants: Schema.Record(
     Schema.String,
@@ -180,9 +98,7 @@ export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
       participantId: Schema.String,
       discordId: Schema.String,
       character: Schema.Struct({
-        lvl: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        lvl: FiniteNumber,
         nick: Schema.String.check(
           Schema.isMinLength(1).annotate({
             expected: "a value with a length of at least 1",
@@ -230,11 +146,7 @@ export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
         ),
         clan: Schema.optionalKey(
           Schema.Struct({
-            id: Schema.optionalKey(
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-            ),
+            id: Schema.optionalKey(FiniteNumber),
             name: Schema.optionalKey(
               Schema.String.check(
                 Schema.isMaxLength(255).annotate({
@@ -246,47 +158,14 @@ export const PartyReadyRoomProjectionDto_Output = Schema.Struct({
         ),
       }),
       partyPresence: Schema.Literals(["OUTSIDE", "IN_PARTY"]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
     }),
   ),
   ownedParticipantIds: Schema.optionalKey(Schema.Array(Schema.String)),
 }).annotate({ identifier: "PartyReadyRoomProjectionDto_Output" });
 
-export type CreatePartyGatheringDto = {
-  readonly guildIds: ReadonlyArray<string>;
-  readonly world: string;
-  readonly character: {
-    readonly lvl: number;
-    readonly nick: string;
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly prof: string;
-    readonly icon: string;
-    readonly clan?: { readonly id?: number; readonly name?: string };
-  };
-  readonly description?: string;
-  readonly minLvl?: number;
-  readonly maxLvl?: number;
-};
+export type CreatePartyGatheringDto = typeof CreatePartyGatheringDto.Type;
 
 export const CreatePartyGatheringDto = Schema.Struct({
   guildIds: Schema.Array(
@@ -316,9 +195,7 @@ export const CreatePartyGatheringDto = Schema.Struct({
     }),
   ),
   character: Schema.Struct({
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     nick: Schema.String.check(
       Schema.isMinLength(1).annotate({
         expected: "a value with a length of at least 1",
@@ -366,11 +243,7 @@ export const CreatePartyGatheringDto = Schema.Struct({
     ),
     clan: Schema.optionalKey(
       Schema.Struct({
-        id: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
+        id: Schema.optionalKey(FiniteNumber),
         name: Schema.optionalKey(
           Schema.String.check(
             Schema.isMaxLength(255).annotate({
@@ -389,49 +262,31 @@ export const CreatePartyGatheringDto = Schema.Struct({
     ),
   ),
   minLvl: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(1).annotate({
+        expected: "a value greater than or equal to 1",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(500).annotate({
+        expected: "a value less than or equal to 500",
+      }),
+    ),
   ),
   maxLvl: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(1).annotate({
+        expected: "a value greater than or equal to 1",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(500).annotate({
+        expected: "a value less than or equal to 500",
+      }),
+    ),
   ),
 }).annotate({ identifier: "CreatePartyGatheringDto" });
 
-export type PartyReadyRoomApplicationDto = {
-  readonly world: string;
-  readonly character: {
-    readonly lvl: number;
-    readonly nick: string;
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly prof: string;
-    readonly icon: string;
-    readonly clan?: { readonly id?: number; readonly name?: string };
-  };
-};
+export type PartyReadyRoomApplicationDto =
+  typeof PartyReadyRoomApplicationDto.Type;
 
 export const PartyReadyRoomApplicationDto = Schema.Struct({
   world: Schema.String.check(
@@ -444,9 +299,7 @@ export const PartyReadyRoomApplicationDto = Schema.Struct({
     }),
   ),
   character: Schema.Struct({
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     nick: Schema.String.check(
       Schema.isMinLength(1).annotate({
         expected: "a value with a length of at least 1",
@@ -494,11 +347,7 @@ export const PartyReadyRoomApplicationDto = Schema.Struct({
     ),
     clan: Schema.optionalKey(
       Schema.Struct({
-        id: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
+        id: Schema.optionalKey(FiniteNumber),
         name: Schema.optionalKey(
           Schema.String.check(
             Schema.isMaxLength(255).annotate({
@@ -511,9 +360,8 @@ export const PartyReadyRoomApplicationDto = Schema.Struct({
   }),
 }).annotate({ identifier: "PartyReadyRoomApplicationDto" });
 
-export type PartyReadyRoomParticipantIdentityDto = {
-  readonly participantId: string;
-};
+export type PartyReadyRoomParticipantIdentityDto =
+  typeof PartyReadyRoomParticipantIdentityDto.Type;
 
 export const PartyReadyRoomParticipantIdentityDto = Schema.Struct({
   participantId: Schema.String.check(
@@ -527,56 +375,8 @@ export const PartyReadyRoomParticipantIdentityDto = Schema.Struct({
   ),
 }).annotate({ identifier: "PartyReadyRoomParticipantIdentityDto" });
 
-export type PartyReadyRoomClientUpdateDto_Output = {
-  readonly schemaVersion: 3;
-  readonly type: "UPSERT" | "REMOVE";
-  readonly projection?: {
-    readonly schemaVersion: 3;
-    readonly notificationId: string;
-    readonly organizerDiscordId: string;
-    readonly organizerCharacter: {
-      readonly lvl: number;
-      readonly nick: string;
-      readonly accountId: string;
-      readonly characterId: string;
-      readonly prof: string;
-      readonly icon: string;
-      readonly clan?: { readonly id?: number; readonly name?: string };
-    };
-    readonly guildIds: ReadonlyArray<string>;
-    readonly world: string;
-    readonly description?: string;
-    readonly minLvl?: number;
-    readonly maxLvl?: number;
-    readonly status: "ACTIVE";
-    readonly revision: number;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly expiresAt: string;
-    readonly viewer: "ORGANIZER" | "PARTICIPANT";
-    readonly participants: {
-      readonly [x: string]: {
-        readonly participantId: string;
-        readonly discordId: string;
-        readonly character: {
-          readonly lvl: number;
-          readonly nick: string;
-          readonly accountId: string;
-          readonly characterId: string;
-          readonly prof: string;
-          readonly icon: string;
-          readonly clan?: { readonly id?: number; readonly name?: string };
-        };
-        readonly partyPresence: "OUTSIDE" | "IN_PARTY";
-        readonly createdAt: string;
-        readonly updatedAt: string;
-      };
-    };
-    readonly ownedParticipantIds?: ReadonlyArray<string>;
-  };
-  readonly notificationId?: string;
-  readonly revision?: number;
-};
+export type PartyReadyRoomClientUpdateDto_Output =
+  typeof PartyReadyRoomClientUpdateDto_Output.Type;
 
 export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
   schemaVersion: Schema.Literal(3),
@@ -587,9 +387,7 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
       notificationId: Schema.String,
       organizerDiscordId: Schema.String,
       organizerCharacter: Schema.Struct({
-        lvl: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        lvl: FiniteNumber,
         nick: Schema.String.check(
           Schema.isMinLength(1).annotate({
             expected: "a value with a length of at least 1",
@@ -637,11 +435,7 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
         ),
         clan: Schema.optionalKey(
           Schema.Struct({
-            id: Schema.optionalKey(
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-            ),
+            id: Schema.optionalKey(FiniteNumber),
             name: Schema.optionalKey(
               Schema.String.check(
                 Schema.isMaxLength(255).annotate({
@@ -655,16 +449,8 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
       guildIds: Schema.Array(Schema.String),
       world: Schema.String,
       description: Schema.optionalKey(Schema.String),
-      minLvl: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      maxLvl: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      minLvl: Schema.optionalKey(FiniteNumber),
+      maxLvl: Schema.optionalKey(FiniteNumber),
       status: Schema.Literal("ACTIVE"),
       revision: Schema.Number.check(
         Schema.isInt().annotate({ expected: "an integer" }),
@@ -679,36 +465,9 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
             expected: "a value less than or equal to 9007199254740991",
           }),
         ),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      expiresAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
+      expiresAt: DateTimeString,
       viewer: Schema.Literals(["ORGANIZER", "PARTICIPANT"]),
       participants: Schema.Record(
         Schema.String,
@@ -716,9 +475,7 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
           participantId: Schema.String,
           discordId: Schema.String,
           character: Schema.Struct({
-            lvl: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            lvl: FiniteNumber,
             nick: Schema.String.check(
               Schema.isMinLength(1).annotate({
                 expected: "a value with a length of at least 1",
@@ -766,11 +523,7 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
             ),
             clan: Schema.optionalKey(
               Schema.Struct({
-                id: Schema.optionalKey(
-                  Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
-                ),
+                id: Schema.optionalKey(FiniteNumber),
                 name: Schema.optionalKey(
                   Schema.String.check(
                     Schema.isMaxLength(255).annotate({
@@ -782,26 +535,8 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
             ),
           }),
           partyPresence: Schema.Literals(["OUTSIDE", "IN_PARTY"]),
-          createdAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          createdAt: DateTimeString,
+          updatedAt: DateTimeString,
         }),
       ),
       ownedParticipantIds: Schema.optionalKey(Schema.Array(Schema.String)),
@@ -823,10 +558,8 @@ export const PartyReadyRoomClientUpdateDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "PartyReadyRoomClientUpdateDto_Output" });
 
-export type PartyReadyRoomParticipantActionDto = {
-  readonly expectedRevision: number;
-  readonly participantId: string;
-};
+export type PartyReadyRoomParticipantActionDto =
+  typeof PartyReadyRoomParticipantActionDto.Type;
 
 export const PartyReadyRoomParticipantActionDto = Schema.Struct({
   expectedRevision: Schema.Number.check(
@@ -853,9 +586,8 @@ export const PartyReadyRoomParticipantActionDto = Schema.Struct({
   ),
 }).annotate({ identifier: "PartyReadyRoomParticipantActionDto" });
 
-export type PartyReadyRoomResolveInvitationTargetsDto = {
-  readonly participantIds: ReadonlyArray<string>;
-};
+export type PartyReadyRoomResolveInvitationTargetsDto =
+  typeof PartyReadyRoomResolveInvitationTargetsDto.Type;
 
 export const PartyReadyRoomResolveInvitationTargetsDto = Schema.Struct({
   participantIds: Schema.Array(
@@ -881,12 +613,8 @@ export const PartyReadyRoomResolveInvitationTargetsDto = Schema.Struct({
     ),
 }).annotate({ identifier: "PartyReadyRoomResolveInvitationTargetsDto" });
 
-export type PartyReadyRoomInvitationTargetsDto_Output = {
-  readonly targets: ReadonlyArray<{
-    readonly participantId: string;
-    readonly characterId: string;
-  }>;
-};
+export type PartyReadyRoomInvitationTargetsDto_Output =
+  typeof PartyReadyRoomInvitationTargetsDto_Output.Type;
 
 export const PartyReadyRoomInvitationTargetsDto_Output = Schema.Struct({
   targets: Schema.Array(
@@ -894,11 +622,8 @@ export const PartyReadyRoomInvitationTargetsDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "PartyReadyRoomInvitationTargetsDto_Output" });
 
-export type PartyReadyRoomObservationDto = {
-  readonly memberCharacterIds: ReadonlyArray<string>;
-  readonly organizerAccountId: string;
-  readonly organizerCharacterId: string;
-};
+export type PartyReadyRoomObservationDto =
+  typeof PartyReadyRoomObservationDto.Type;
 
 export const PartyReadyRoomObservationDto = Schema.Struct({
   memberCharacterIds: Schema.Array(
@@ -936,9 +661,8 @@ export const PartyReadyRoomObservationDto = Schema.Struct({
   ),
 }).annotate({ identifier: "PartyReadyRoomObservationDto" });
 
-export type PartyReadyRoomExpectedRevisionDto = {
-  readonly expectedRevision: number;
-};
+export type PartyReadyRoomExpectedRevisionDto =
+  typeof PartyReadyRoomExpectedRevisionDto.Type;
 
 export const PartyReadyRoomExpectedRevisionDto = Schema.Struct({
   expectedRevision: Schema.Number.check(
@@ -957,151 +681,146 @@ export const PartyReadyRoomExpectedRevisionDto = Schema.Struct({
 }).annotate({ identifier: "PartyReadyRoomExpectedRevisionDto" });
 
 export type PartyReadyRoomControllerList200 =
-  ReadonlyArray<PartyReadyRoomProjectionDto_Output>;
+  typeof PartyReadyRoomControllerList200.Type;
 
 export const PartyReadyRoomControllerList200 = Schema.Array(
   PartyReadyRoomProjectionDto_Output,
 );
 
-export type PartyReadyRoomControllerCreateRequestJson = CreatePartyGatheringDto;
+export type PartyReadyRoomControllerCreateRequestJson =
+  typeof PartyReadyRoomControllerCreateRequestJson.Type;
 
 export const PartyReadyRoomControllerCreateRequestJson =
   CreatePartyGatheringDto;
 
 export type PartyReadyRoomControllerCreate201 =
-  PartyReadyRoomProjectionDto_Output;
+  typeof PartyReadyRoomControllerCreate201.Type;
 
 export const PartyReadyRoomControllerCreate201 =
   PartyReadyRoomProjectionDto_Output;
 
-export type PartyReadyRoomControllerGetPathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerGetPathParams =
+  typeof PartyReadyRoomControllerGetPathParams.Type;
 
 export const PartyReadyRoomControllerGetPathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
-export type PartyReadyRoomControllerGet200 = PartyReadyRoomProjectionDto_Output;
+export type PartyReadyRoomControllerGet200 =
+  typeof PartyReadyRoomControllerGet200.Type;
 
 export const PartyReadyRoomControllerGet200 =
   PartyReadyRoomProjectionDto_Output;
 
-export type PartyReadyRoomControllerApplyPathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerApplyPathParams =
+  typeof PartyReadyRoomControllerApplyPathParams.Type;
 
 export const PartyReadyRoomControllerApplyPathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
 export type PartyReadyRoomControllerApplyRequestJson =
-  PartyReadyRoomApplicationDto;
+  typeof PartyReadyRoomControllerApplyRequestJson.Type;
 
 export const PartyReadyRoomControllerApplyRequestJson =
   PartyReadyRoomApplicationDto;
 
 export type PartyReadyRoomControllerApply201 =
-  PartyReadyRoomProjectionDto_Output;
+  typeof PartyReadyRoomControllerApply201.Type;
 
 export const PartyReadyRoomControllerApply201 =
   PartyReadyRoomProjectionDto_Output;
 
-export type PartyReadyRoomControllerWithdrawPathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerWithdrawPathParams =
+  typeof PartyReadyRoomControllerWithdrawPathParams.Type;
 
 export const PartyReadyRoomControllerWithdrawPathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
 export type PartyReadyRoomControllerWithdrawRequestJson =
-  PartyReadyRoomParticipantIdentityDto;
+  typeof PartyReadyRoomControllerWithdrawRequestJson.Type;
 
 export const PartyReadyRoomControllerWithdrawRequestJson =
   PartyReadyRoomParticipantIdentityDto;
 
 export type PartyReadyRoomControllerWithdraw200 =
-  PartyReadyRoomClientUpdateDto_Output;
+  typeof PartyReadyRoomControllerWithdraw200.Type;
 
 export const PartyReadyRoomControllerWithdraw200 =
   PartyReadyRoomClientUpdateDto_Output;
 
-export type PartyReadyRoomControllerRemovePathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerRemovePathParams =
+  typeof PartyReadyRoomControllerRemovePathParams.Type;
 
 export const PartyReadyRoomControllerRemovePathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
 export type PartyReadyRoomControllerRemoveRequestJson =
-  PartyReadyRoomParticipantActionDto;
+  typeof PartyReadyRoomControllerRemoveRequestJson.Type;
 
 export const PartyReadyRoomControllerRemoveRequestJson =
   PartyReadyRoomParticipantActionDto;
 
 export type PartyReadyRoomControllerRemove200 =
-  PartyReadyRoomClientUpdateDto_Output;
+  typeof PartyReadyRoomControllerRemove200.Type;
 
 export const PartyReadyRoomControllerRemove200 =
   PartyReadyRoomClientUpdateDto_Output;
 
-export type PartyReadyRoomControllerResolveInvitationTargetsPathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerResolveInvitationTargetsPathParams =
+  typeof PartyReadyRoomControllerResolveInvitationTargetsPathParams.Type;
 
 export const PartyReadyRoomControllerResolveInvitationTargetsPathParams =
   Schema.Struct({ notificationId: Schema.String });
 
 export type PartyReadyRoomControllerResolveInvitationTargetsRequestJson =
-  PartyReadyRoomResolveInvitationTargetsDto;
+  typeof PartyReadyRoomControllerResolveInvitationTargetsRequestJson.Type;
 
 export const PartyReadyRoomControllerResolveInvitationTargetsRequestJson =
   PartyReadyRoomResolveInvitationTargetsDto;
 
 export type PartyReadyRoomControllerResolveInvitationTargets201 =
-  PartyReadyRoomInvitationTargetsDto_Output;
+  typeof PartyReadyRoomControllerResolveInvitationTargets201.Type;
 
 export const PartyReadyRoomControllerResolveInvitationTargets201 =
   PartyReadyRoomInvitationTargetsDto_Output;
 
-export type PartyReadyRoomControllerObservePartyPathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerObservePartyPathParams =
+  typeof PartyReadyRoomControllerObservePartyPathParams.Type;
 
 export const PartyReadyRoomControllerObservePartyPathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
 export type PartyReadyRoomControllerObservePartyRequestJson =
-  PartyReadyRoomObservationDto;
+  typeof PartyReadyRoomControllerObservePartyRequestJson.Type;
 
 export const PartyReadyRoomControllerObservePartyRequestJson =
   PartyReadyRoomObservationDto;
 
 export type PartyReadyRoomControllerObserveParty201 =
-  PartyReadyRoomProjectionDto_Output;
+  typeof PartyReadyRoomControllerObserveParty201.Type;
 
 export const PartyReadyRoomControllerObserveParty201 =
   PartyReadyRoomProjectionDto_Output;
 
-export type PartyReadyRoomControllerCancelPathParams = {
-  readonly notificationId: string;
-};
+export type PartyReadyRoomControllerCancelPathParams =
+  typeof PartyReadyRoomControllerCancelPathParams.Type;
 
 export const PartyReadyRoomControllerCancelPathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
 export type PartyReadyRoomControllerCancelRequestJson =
-  PartyReadyRoomExpectedRevisionDto;
+  typeof PartyReadyRoomControllerCancelRequestJson.Type;
 
 export const PartyReadyRoomControllerCancelRequestJson =
   PartyReadyRoomExpectedRevisionDto;
 
 export type PartyReadyRoomControllerCancel201 =
-  PartyReadyRoomClientUpdateDto_Output;
+  typeof PartyReadyRoomControllerCancel201.Type;
 
 export const PartyReadyRoomControllerCancel201 =
   PartyReadyRoomClientUpdateDto_Output;

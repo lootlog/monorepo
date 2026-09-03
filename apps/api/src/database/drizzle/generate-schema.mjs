@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { gzipSync } from "node:zlib";
 
 const legacyPrismaSchemaUrl = new URL(
   "../../../drizzle/legacy-prisma/schema.prisma",
@@ -454,6 +455,9 @@ await writeFile(outputUrl, `${output.join("\n")}\n`);
 
 const catalogJson = JSON.stringify(catalog);
 const catalogHash = createHash("sha256").update(catalogJson).digest("hex");
+const compressedCatalog = gzipSync(catalogJson, { level: 9 }).toString(
+  "base64",
+);
 const legacyManifest = await readFile(legacyManifestUrl, "utf8");
 const legacyMigrationEvidenceHash = createHash("sha256")
   .update(legacyManifest)
@@ -467,7 +471,30 @@ await writeFile(
   [
     "// Generated from the immutable legacy Prisma schema and migration manifest.",
     "// Do not edit by hand.",
-    `export const EXPECTED_API_CATALOG = ${JSON.stringify(catalog, null, 2)} as const;`,
+    'import { gunzipSync } from "node:zlib";',
+    "",
+    "interface ExpectedApiCatalog {",
+    "  readonly tables: ReadonlyArray<string>;",
+    "  readonly columns: ReadonlyArray<{",
+    "    readonly tableName: string;",
+    "    readonly columnName: string;",
+    "    readonly formattedType: string;",
+    "    readonly isNullable: boolean;",
+    "    readonly hasDefault: boolean;",
+    "  }> ;",
+    "  readonly enums: ReadonlyArray<{",
+    "    readonly name: string;",
+    "    readonly values: ReadonlyArray<string>;",
+    "  }> ;",
+    "  readonly indexes: ReadonlyArray<string>;",
+    "  readonly constraints: ReadonlyArray<string>;",
+    "}",
+    "",
+    `const compressedCatalog = ${quote(compressedCatalog)};`,
+    "",
+    "export const EXPECTED_API_CATALOG: ExpectedApiCatalog = JSON.parse(",
+    '  gunzipSync(Buffer.from(compressedCatalog, "base64")).toString("utf8"),',
+    ");",
     `export const EXPECTED_API_CATALOG_SHA256 = ${quote(catalogHash)};`,
     `export const LEGACY_MIGRATION_EVIDENCE_SHA256 = ${quote(legacyMigrationEvidenceHash)};`,
     `export const BASELINE_MIGRATION_SHA256 = ${quote(baselineMigrationHash)};`,

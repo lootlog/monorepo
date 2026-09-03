@@ -1,42 +1,25 @@
 /** Transport schemas owned by the players HTTP module. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "../scalars.js";
 
-export type PlayerHitDto_Output = {
-  readonly id: string;
-  readonly name: string;
-  readonly lvl: number;
-  readonly prof: string;
-  readonly icon: string;
-  readonly characterId: number;
-  readonly accountId: number;
-  readonly world: string;
-};
+export type PlayerHitDto_Output = typeof PlayerHitDto_Output.Type;
 
 export const PlayerHitDto_Output = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
-  lvl: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lvl: FiniteNumber,
   prof: Schema.String,
   icon: Schema.String,
-  characterId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  accountId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  characterId: FiniteNumber,
+  accountId: FiniteNumber,
   world: Schema.String,
 }).annotate({
   description: "Player search hit",
   identifier: "PlayerHitDto_Output",
 });
 
-export type PlayersControllerGetPlayersQuery = {
-  readonly limit?: number;
-  readonly search?: string | ReadonlyArray<string>;
-  readonly world?: string;
-};
+export type PlayersControllerGetPlayersQuery =
+  typeof PlayersControllerGetPlayersQuery.Type;
 
 export const PlayersControllerGetPlayersQuery = Schema.Struct({
   limit: Schema.optionalKey(
@@ -50,6 +33,7 @@ export const PlayersControllerGetPlayersQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
 });
 
-export type PlayersControllerGetPlayers200 = ReadonlyArray<PlayerHitDto_Output>;
+export type PlayersControllerGetPlayers200 =
+  typeof PlayersControllerGetPlayers200.Type;
 
 export const PlayersControllerGetPlayers200 = Schema.Array(PlayerHitDto_Output);

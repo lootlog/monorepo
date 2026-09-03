@@ -1,13 +1,9 @@
 /** Transport schemas owned by the auth HTTP module. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "../scalars.js";
 
-export type AuthControllerVerifyHeaders = {
-  readonly "x-auth-user-id"?: string;
-  readonly "x-auth-discord-id"?: string;
-  readonly authorization?: string;
-  readonly "x-lootlog-credential-purpose"?: "websocket-ticket";
-  readonly "x-lootlog-websocket-origin"?: string;
-};
+export type AuthControllerVerifyHeaders =
+  typeof AuthControllerVerifyHeaders.Type;
 
 export const AuthControllerVerifyHeaders = Schema.Struct({
   "x-auth-user-id": Schema.optionalKey(Schema.String),
@@ -19,48 +15,37 @@ export const AuthControllerVerifyHeaders = Schema.Struct({
   "x-lootlog-websocket-origin": Schema.optionalKey(Schema.String),
 });
 
-export type AuthControllerVerify200 = { readonly status: "OK" };
+export type AuthControllerVerify200 = typeof AuthControllerVerify200.Type;
 
 export const AuthControllerVerify200 = Schema.Struct({
   status: Schema.Literal("OK"),
 });
 
-export type AuthControllerIssueRealtimeTicket201 = {
-  readonly ticket: string;
-  readonly expiresAt: number;
-};
+export type AuthControllerIssueRealtimeTicket201 =
+  typeof AuthControllerIssueRealtimeTicket201.Type;
 
 export const AuthControllerIssueRealtimeTicket201 = Schema.Struct({
   ticket: Schema.String,
-  expiresAt: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  expiresAt: FiniteNumber,
 });
 
-export type AuthControllerGetScopes200 = ReadonlyArray<string>;
+export type AuthControllerGetScopes200 = typeof AuthControllerGetScopes200.Type;
 
 export const AuthControllerGetScopes200 = Schema.Array(Schema.String);
 
-export type AuthControllerGetIdpTokenRequestJson = {
-  readonly userId: string;
-  readonly discordId: string;
-};
+export type AuthControllerGetIdpTokenRequestJson =
+  typeof AuthControllerGetIdpTokenRequestJson.Type;
 
 export const AuthControllerGetIdpTokenRequestJson = Schema.Struct({
   userId: Schema.String,
   discordId: Schema.String,
 });
 
-export type AuthControllerGetIdpToken200 = {
-  readonly accessToken: string;
-  readonly expiresIn: number;
-  readonly scopes: ReadonlyArray<string>;
-};
+export type AuthControllerGetIdpToken200 =
+  typeof AuthControllerGetIdpToken200.Type;
 
 export const AuthControllerGetIdpToken200 = Schema.Struct({
   accessToken: Schema.String,
-  expiresIn: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  expiresIn: FiniteNumber,
   scopes: Schema.Array(Schema.String),
 });

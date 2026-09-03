@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "files": [
+    "src/database/drizzle/adoption.ts",
+    "src/database/drizzle/expected-catalog.ts",
+    "src/database/drizzle/migrate.ts"
+  ]
+}
