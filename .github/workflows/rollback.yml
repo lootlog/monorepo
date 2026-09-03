@@ -20,7 +20,7 @@ jobs:
     name: Restore previous production state
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: production
+    environment: prod
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-bun
