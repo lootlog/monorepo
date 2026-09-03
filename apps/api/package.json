@@ -46,7 +46,7 @@
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "bullmq": "^5.81.4",
+    "bullmq": "^6.3.3",
     "discord-api-types": "0.38.54",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
