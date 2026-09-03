@@ -189,12 +189,14 @@ their configured service account.
 
 ## Deployment
 
-Managed production uses immutable release artifacts:
+Managed production uses immutable source revisions:
 
 - containerized services are promoted through GitOps and rolled out by ArgoCD;
-- Cloudflare applications use checksummed artifacts built by the release;
-- the Changesets version PR creates release versions and artifacts;
-- production rollback reuses an existing artifact instead of rebuilding it.
+- container images use `sha-<commit>` tags;
+- Cloudflare applications build and deploy in one approved release run;
+- the infrastructure repository records the deployed image references and
+  Cloudflare deployment IDs;
+- production rollback restores the previous recorded state without rebuilding.
 
 The `@lootlog/traffic-splitter` route table serves `dev.lootlog.pl` and
 `lootlog.pl` through separate Cloudflare Workers and origin sets. Merges to
@@ -207,11 +209,10 @@ legacy `/_next` assets during coordinated rollouts. Landing and Docs legacy
 assets are redirected into origin-tagged aliases; cached untagged parents are
 identified with HEAD probes against only the three configured origins.
 
-Production promotes the compatible splitter artifact before Landing and Docs,
-then verifies their generated CSS and JavaScript through the public domains. A
-failed deployment or smoke check rolls frontend applications back before the
-splitter. Both Workers' Wrangler configuration in this repository is the source
-of truth for their custom domains.
+Production deploys the traffic splitter before other Cloudflare targets. A
+partial failure rolls applications back in reverse order. Both Workers'
+Wrangler configuration in this repository remains the source of truth for
+their custom domains.
 
 Docker Compose supports local infrastructure. `docker-compose.prod.yml` is not
 a supported production model and should be retired or clearly marked legacy.

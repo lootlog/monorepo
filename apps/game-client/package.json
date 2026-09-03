@@ -15,8 +15,6 @@
     "lint": "oxlint src --deny-warnings",
     "doctor": "react-doctor .",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:coverage:changed": "bun ./scripts/report-changed-coverage.mjs",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts"
@@ -59,7 +57,6 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "@vitest/coverage-istanbul": "^4.1.11",
     "@vitest/ui": "^4.1.11",
     "babel-plugin-react-compiler": "^1.0.0",
     "happy-dom": "^20.11.12",

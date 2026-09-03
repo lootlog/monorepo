@@ -22,7 +22,6 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun --conditions=development test src test",
-    "test:coverage": "bun --conditions=development test --coverage src test",
     "test:debug": "bun --conditions=development test --inspect-brk src test",
     "test:watch": "bun --conditions=development test --watch src test",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",

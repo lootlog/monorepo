@@ -13,7 +13,7 @@ import {
   type NotificationRateLimitOutcome,
 } from "../src/http-api/handlers/messaging/messaging.data-layer.js";
 
-describe("Notification rate limiter Redis integration", () => {
+describe("Notification rate limiter Dragonfly integration", () => {
   let firstRedis: RedisService;
   let secondRedis: RedisService;
   let firstLimiter: (userId: string) => Promise<NotificationRateLimitOutcome>;

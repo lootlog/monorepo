@@ -1,9 +1,8 @@
-name: Deploy affected services to development
+name: Deploy affected targets to development
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 concurrency:
   group: development-deployment
@@ -11,7 +10,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: read
 
 env:
   INFRA_REPOSITORY: lootlog/infra
@@ -19,73 +17,40 @@ env:
 
 jobs:
   plan:
-    name: Plan development deployment
+    name: Plan affected targets
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     outputs:
+      targets: ${{ steps.plan.outputs.targets }}
+      docker-targets: ${{ steps.plan.outputs.docker_targets }}
       cloudflare-targets: ${{ steps.plan.outputs.cloudflare_targets }}
-      docker-services: ${{ steps.plan.outputs.docker_services }}
-      version-pull-request: ${{ steps.plan.outputs.version_pull_request }}
     steps:
-      - name: Checkout main commit
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.0
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Create affected deployment plan
+      - name: Select affected deployment targets
         id: plan
         env:
           BASE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
-            BASE_SHA="$(git rev-parse "$HEAD_SHA^")"
-          fi
-
-          pull_request_heads="$(
-            gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/pulls" \
-              --jq '[.[].head.ref]'
-          )"
-          affected="$(
-            bunx turbo query affected \
-              --base "$BASE_SHA" \
-              --head "$HEAD_SHA" \
-              --packages
-          )"
-          affected_packages="$(
-            jq -c '[.data.affectedPackages.items[].name]' <<< "$affected"
-          )"
-          plan="$(
-            bun tools/ci/create-ci-plan.mjs \
-              "$affected_packages" \
-              "$pull_request_heads"
-          )"
-
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then BASE_SHA="$(git rev-parse "$HEAD_SHA^")"; fi
+          affected="$(bunx turbo@2.10.12 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+          packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
+          input="$(jq -cn --argjson affectedPackages "$packages" '{mode: "dev", affectedPackages: $affectedPackages}')"
+          plan="$(bun scripts/deployment-targets.mjs "$input")"
           {
-            echo "cloudflare_targets=$(jq -c '.cloudflareTargets' <<< "$plan")"
-            echo "docker_services=$(jq -c '.dockerServices' <<< "$plan")"
-            echo "version_pull_request=$(jq -r '.versionPullRequest' <<< "$plan")"
+            echo "targets=$(jq -c '.targets' <<< "$plan")"
+            echo "docker_targets=$(jq -c '[.targets[] | select(.kind == "docker")]' <<< "$plan")"
+            echo "cloudflare_targets=$(jq -c '[.targets[] | select(.kind != "docker")]' <<< "$plan")"
           } >> "$GITHUB_OUTPUT"
+          jq . <<< "$plan" >> "$GITHUB_STEP_SUMMARY"
 
-          {
-            echo "## Development deployment plan"
-            echo
-            echo '```json'
-            jq . <<< "$plan"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  deploy-cloudflare:
-    name: Deploy ${{ matrix.project }} to development
+  cloudflare:
+    name: Deploy ${{ matrix.id }} to development
     needs: plan
     if: needs.plan.outputs.cloudflare-targets != '[]'
     runs-on: ubuntu-latest
@@ -95,233 +60,106 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.cloudflare-targets) }}
+    env:
+      VITE_ACTIVITY_API_URL: ${{ vars.VITE_ACTIVITY_API_URL }}
+      VITE_ADDON_INSTALL_URL: ${{ vars.VITE_ADDON_INSTALL_URL }}
+      VITE_ADDON_URL: ${{ vars.VITE_ADDON_URL }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
+      VITE_BATTLELOG_API_URL: ${{ vars.VITE_BATTLELOG_API_URL }}
+      VITE_BATTLELOG_PUBLIC_URL: ${{ vars.VITE_BATTLELOG_PUBLIC_URL }}
+      VITE_DISCORD_BOT_PERMISSIONS: ${{ vars.VITE_DISCORD_BOT_PERMISSIONS }}
+      VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+      VITE_GATEWAY_URL: ${{ vars.VITE_GATEWAY_URL }}
+      VITE_SEARCH_API_URL: ${{ vars.VITE_SEARCH_API_URL }}
     steps:
-      - name: Checkout main commit
-        uses: actions/checkout@v7
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.0
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Load Cloudflare preview variables
-        if: matrix.kind == 'pages'
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          PACKAGE_NAME: ${{ matrix.packageName }}
-          PROJECT: ${{ matrix.project }}
-        run: |
-          settings="$(
-            curl --fail-with-body --silent --show-error \
-              --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT"
-          )"
-
-          case "$PACKAGE_NAME" in
-            @lootlog/landing)
-              keys=(
-                VITE_ADDON_URL
-                VITE_AUTH_SERVICE_URL
-              )
-              ;;
-            @lootlog/web)
-              keys=(
-                VITE_ACTIVITY_API_URL
-                VITE_ADDON_INSTALL_URL
-                VITE_API_URL
-                VITE_AUTH_SERVICE_URL
-                VITE_BATTLELOG_API_URL
-                VITE_BATTLELOG_PUBLIC_URL
-                VITE_DISCORD_BOT_PERMISSIONS
-                VITE_DISCORD_CLIENT_ID
-                VITE_GATEWAY_URL
-                VITE_SEARCH_API_URL
-              )
-              ;;
-            *)
-              echo "::error::Unsupported Cloudflare package: $PACKAGE_NAME"
-              exit 1
-              ;;
-          esac
-
-          for key in "${keys[@]}"; do
-            value="$(
-              jq --exit-status --raw-output \
-                --arg key "$key" \
-                '.result.deployment_configs.preview.env_vars[$key] | select(.type == "plain_text") | .value' \
-                <<< "$settings"
-            )"
-            if [[ "$value" == *$'\n'* ]]; then
-              echo "::error::Cloudflare variable $key contains a newline."
-              exit 1
-            fi
-            echo "$key=$value" >> "$GITHUB_ENV"
-          done
-
-      - name: Build development artifact
-        env:
-          ARTIFACT_PATH: ${{ matrix.artifactPath }}
-          PACKAGE_NAME: ${{ matrix.packageName }}
-        run: |
-          bunx turbo run build --filter="$PACKAGE_NAME"
-          test -d "$ARTIFACT_PATH"
-
-      - name: Deploy development artifact
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-bun
+      - name: Build target
+        run: bunx turbo run build --filter='${{ matrix.package }}'
+      - name: Deploy target
         env:
           ARTIFACT_PATH: ${{ matrix.artifactPath }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ matrix.kind == 'worker' && secrets.CLOUDFLARE_WORKERS_API_TOKEN || matrix.kind == 'pages' && secrets.CLOUDFLARE_API_TOKEN || '' }}
+          CLOUDFLARE_API_TOKEN: ${{ matrix.kind == 'worker' && secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CONFIG_PATH: ${{ matrix.configPath }}
+          ENVIRONMENT: ${{ matrix.development.environment }}
           KIND: ${{ matrix.kind }}
-          PACKAGE_NAME: ${{ matrix.packageName }}
-          PROJECT: ${{ matrix.project }}
-          WRANGLER_ENV: ${{ matrix.environment }}
+          PROJECT: ${{ matrix.development.project }}
         run: |
-          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
-            echo "::error::Missing Cloudflare API token for $KIND deployment."
-            exit 1
+          if [[ "$KIND" == "pages" ]]; then
+            bunx wrangler pages deploy "$ARTIFACT_PATH" --project-name "$PROJECT" --branch develop --commit-hash "$GITHUB_SHA" --commit-dirty=false
+          else
+            bunx wrangler deploy --config "$CONFIG_PATH" --env "$ENVIRONMENT" --keep-vars --message "Deploy $GITHUB_SHA to development"
           fi
 
-          case "$KIND" in
-            pages)
-              bunx wrangler pages deploy "$ARTIFACT_PATH" \
-                --project-name "$PROJECT" \
-                --branch develop \
-                --commit-hash "$GITHUB_SHA" \
-                --commit-message "Deploy $PACKAGE_NAME to development" \
-                --commit-dirty=false
-              ;;
-            worker)
-              bunx wrangler deploy \
-                --config "$CONFIG_PATH" \
-                --env "$WRANGLER_ENV" \
-                --keep-vars \
-                --message "Deploy $PACKAGE_NAME to development"
-              ;;
-            *)
-              echo "::error::Unsupported Cloudflare deployment kind: $KIND"
-              exit 1
-              ;;
-          esac
-
-  build-images:
-    name: Build and push ${{ matrix.service }}
+  docker:
+    name: Build and push ${{ matrix.id }}
     needs: plan
-    if: needs.plan.outputs.docker-services != '[]'
+    if: needs.plan.outputs.docker-targets != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        service: ${{ fromJSON(needs.plan.outputs.docker-services) }}
+        include: ${{ fromJSON(needs.plan.outputs.docker-targets) }}
     steps:
-      - name: Checkout main commit
-        uses: actions/checkout@v7
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v4
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-
-      - name: Build and push immutable development image
-        uses: docker/build-push-action@v7
+      - uses: docker/build-push-action@v7
         with:
           context: .
-          target: ${{ matrix.service }}
+          target: ${{ matrix.dockerTarget }}
           push: true
-          tags: kamilwronka7/lootlog-${{ matrix.service }}:dev-${{ github.sha }}
+          tags: ${{ matrix.image }}:dev-${{ github.sha }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
-          pull: true
-          no-cache-filters: runtime-base
-          cache-from: type=gha,scope=docker-${{ matrix.service }}
-          cache-to: type=gha,mode=min,scope=docker-${{ matrix.service }}
+          cache-from: type=gha,scope=docker-${{ matrix.id }}
+          cache-to: type=gha,mode=min,scope=docker-${{ matrix.id }}
           provenance: false
 
-  update-development:
+  update-gitops:
     name: Update development GitOps
-    needs:
-      - plan
-      - build-images
-    if: needs.plan.outputs.docker-services != '[]'
+    needs: [plan, docker]
+    if: needs.plan.outputs.docker-targets != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout infra repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: ${{ env.INFRA_REPOSITORY }}
           ref: main
           token: ${{ secrets.INFRA_REPO_PUSH_TOKEN }}
           path: ${{ env.INFRA_REPO_PATH }}
           fetch-depth: 0
-
-      - name: Update every affected image
+      - name: Update affected image tags
         env:
-          SERVICES: ${{ needs.plan.outputs.docker-services }}
+          TARGETS: ${{ needs.plan.outputs.docker-targets }}
         run: |
-          while IFS= read -r service; do
-            image="kamilwronka7/lootlog-$service"
+          while IFS= read -r target; do
+            id="$(jq -r '.id' <<< "$target")"
+            image="$(jq -r '.image' <<< "$target")"
             tag="dev-$GITHUB_SHA"
-            kustomization="$INFRA_REPO_PATH/apps/dev/$service/kustomization.yml"
-
-            docker run --rm \
-              --user "$(id -u):$(id -g)" \
-              -e IMAGE="$image" \
-              -e TAG="$tag" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" \
-              mikefarah/yq:4.53.3 \
+            docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="$tag" \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.3 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
-              "apps/dev/$service/kustomization.yml"
-
-            if ! grep -q "newTag: $tag" "$kustomization"; then
-              echo "::error::Failed to update $service to $tag"
-              exit 1
-            fi
-          done < <(jq -r '.[]' <<< "$SERVICES")
-
-      - name: Commit and push one development change
+              "apps/dev/$id/kustomization.yml"
+          done < <(jq -c '.[]' <<< "$TARGETS")
+      - name: Commit deployment
         working-directory: ${{ env.INFRA_REPO_PATH }}
-        env:
-          SERVICES: ${{ needs.plan.outputs.docker-services }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add apps/dev
-
-          if git diff --cached --quiet; then
-            echo "Development already references the requested images."
-            exit 0
-          fi
-
-          service_list="$(jq -r 'join(", ")' <<< "$SERVICES")"
-          git commit \
-            -m "ci: deploy main to development" \
-            -m "Services: $service_list" \
-            -m "Source: $GITHUB_SHA"
-
-          for attempt in {1..5}; do
-            git fetch origin main
-            git rebase origin/main
-
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-
-            if [[ "$attempt" -eq 5 ]]; then
-              echo "::error::Failed to push the development GitOps update."
-              exit 1
-            fi
-          done
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "ci: deploy $GITHUB_SHA to development"
+          git pull --rebase origin main
+          git push origin HEAD:main

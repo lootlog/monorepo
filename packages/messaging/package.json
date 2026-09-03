@@ -10,7 +10,8 @@
   "scripts": {
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test --path-ignore-patterns='**/*.integration.*'",
+    "test:integration": "bun test test/rabbit.integration.test.ts"
   },
   "dependencies": {
     "@lootlog/protocol": "workspace:*",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "testcontainers": "^12.1.0",
     "typescript": "catalog:"
   }
 }

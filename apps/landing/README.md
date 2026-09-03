@@ -34,4 +34,5 @@ bun run --filter=@lootlog/landing test
 ```
 
 The app prerenders its public routes to `dist/client` for Cloudflare Pages.
-Published content changes require a Changeset.
+Merges deploy affected development targets. Production deploys select an
+immutable commit in the Release workflow.

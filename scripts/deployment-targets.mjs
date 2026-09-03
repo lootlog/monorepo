@@ -1,0 +1,206 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
+
+const catalogPath = fileURLToPath(
+  new URL("../.github/deployment-targets.json", import.meta.url),
+);
+
+const clientProducers = new Set([
+  "@lootlog/activity",
+  "@lootlog/api",
+  "@lootlog/auth",
+  "@lootlog/battlelog",
+  "@lootlog/client",
+  "@lootlog/search",
+]);
+
+const integrationPackages = new Set([
+  "@lootlog/api",
+  "@lootlog/auth",
+  "@lootlog/gateway",
+  "@lootlog/messaging",
+]);
+
+const globalDockerInputs = new Set([
+  ".github/deployment-targets.json",
+  ".dockerignore",
+  "Dockerfile",
+  "bun.lock",
+  "package.json",
+  "turbo.json",
+]);
+
+export async function loadDeploymentTargets() {
+  const targets = JSON.parse(await readFile(catalogPath, "utf8"));
+  const ids = new Set();
+  const packages = new Set();
+
+  for (const target of targets) {
+    if (!target.id || !target.package || !target.directory || !target.kind) {
+      throw new Error(
+        "Every deployment target needs id, package, directory and kind",
+      );
+    }
+    if (ids.has(target.id))
+      throw new Error(`Duplicate target id: ${target.id}`);
+    if (packages.has(target.package)) {
+      throw new Error(`Duplicate target package: ${target.package}`);
+    }
+    if (target.kind === "docker" && (!target.dockerTarget || !target.image)) {
+      throw new Error(
+        `Docker target ${target.id} needs dockerTarget and image`,
+      );
+    }
+    if (
+      target.kind !== "docker" &&
+      (!target.artifactPath || !target.production?.project)
+    ) {
+      throw new Error(
+        `Cloudflare target ${target.id} needs artifactPath and production.project`,
+      );
+    }
+    if (target.kind === "worker" && !target.configPath) {
+      throw new Error(`Worker target ${target.id} needs configPath`);
+    }
+    if (!new Set(["docker", "pages", "worker"]).has(target.kind)) {
+      throw new Error(`Unsupported target kind: ${target.kind}`);
+    }
+    ids.add(target.id);
+    packages.add(target.package);
+  }
+
+  return targets;
+}
+
+function isDockerPackagingChange(target, changedFiles) {
+  return changedFiles.some(
+    (file) =>
+      globalDockerInputs.has(file) ||
+      file === `${target.directory}/package.json` ||
+      file.startsWith(`${target.directory}/scripts/`) ||
+      file.startsWith(`${target.directory}/tools/`),
+  );
+}
+
+function validateProductionState(state, label, targetsById) {
+  if (
+    state?.schemaVersion !== 1 ||
+    !state.targets ||
+    typeof state.targets !== "object" ||
+    Array.isArray(state.targets)
+  ) {
+    throw new Error(`${label} production state has an unsupported schema`);
+  }
+
+  for (const [id, deployment] of Object.entries(state.targets)) {
+    const target = targetsById.get(id);
+    if (!target)
+      throw new Error(`${label} state contains unknown target: ${id}`);
+    if (deployment?.kind !== target.kind) {
+      throw new Error(`${label} state has an invalid kind for target: ${id}`);
+    }
+    const validDocker =
+      deployment.kind === "docker" &&
+      typeof deployment.image === "string" &&
+      typeof deployment.reference === "string";
+    const validCloudflare =
+      deployment.kind !== "docker" &&
+      typeof deployment.project === "string" &&
+      typeof deployment.deploymentId === "string" &&
+      (deployment.kind !== "worker" ||
+        typeof deployment.configPath === "string");
+    if (!validDocker && !validCloudflare) {
+      throw new Error(`${label} state is incomplete for target: ${id}`);
+    }
+  }
+}
+
+function createRollbackPlan(input, targets) {
+  const targetsById = new Map(targets.map((target) => [target.id, target]));
+  validateProductionState(input.currentState, "Current", targetsById);
+  validateProductionState(input.previousState, "Previous", targetsById);
+
+  const changedTargets = new Set([
+    ...Object.keys(input.currentState.targets),
+    ...Object.keys(input.previousState.targets),
+  ]);
+  const rollbackTargets = targets
+    .filter(({ id }) => {
+      if (!changedTargets.has(id)) return false;
+      return !isDeepStrictEqual(
+        input.currentState.targets[id],
+        input.previousState.targets[id],
+      );
+    })
+    .map(({ id }) => ({
+      id,
+      current: input.currentState.targets[id] ?? null,
+      previous: input.previousState.targets[id] ?? null,
+    }));
+
+  if (rollbackTargets.length === 0) {
+    throw new Error("The last production state change has nothing to restore");
+  }
+  const unrestorable = rollbackTargets.find(
+    ({ previous }) => previous === null,
+  );
+  if (unrestorable) {
+    throw new Error(
+      `Previous production state does not contain target: ${unrestorable.id}`,
+    );
+  }
+
+  return { targets: rollbackTargets };
+}
+
+export async function createDeploymentPlan(input) {
+  const targets = await loadDeploymentTargets();
+
+  if (input.mode === "rollback") return createRollbackPlan(input, targets);
+
+  if (input.mode === "release") {
+    if (input.target === "all") return { targets };
+    const target = targets.find(({ id }) => id === input.target);
+    if (!target) throw new Error(`Unknown deployment target: ${input.target}`);
+    return { targets: [target] };
+  }
+
+  const affectedPackages = new Set(input.affectedPackages ?? []);
+  if (input.mode === "dev") {
+    return {
+      targets: targets.filter(
+        (target) =>
+          affectedPackages.has(target.package) && target.development !== false,
+      ),
+    };
+  }
+
+  if (input.mode === "ci") {
+    const packages = [...affectedPackages]
+      .filter(
+        (name) => typeof name === "string" && name.startsWith("@lootlog/"),
+      )
+      .sort();
+    const changedFiles = input.changedFiles ?? [];
+    return {
+      packages,
+      integrationPackages: packages.filter((name) =>
+        integrationPackages.has(name),
+      ),
+      runClientCheck: packages.some((name) => clientProducers.has(name)),
+      dockerTargets: targets.filter(
+        (target) =>
+          target.kind === "docker" &&
+          isDockerPackagingChange(target, changedFiles),
+      ),
+    };
+  }
+
+  throw new Error(`Unknown planning mode: ${input.mode}`);
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const input = JSON.parse(process.argv[2] ?? "null");
+  process.stdout.write(JSON.stringify(await createDeploymentPlan(input)));
+}

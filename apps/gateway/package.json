@@ -21,8 +21,8 @@
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "format": "oxfmt src test",
-    "test": "bun --conditions=development test --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
-    "test:coverage": "bun --conditions=development test --coverage --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
+    "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' src/auth src/realtime src/rabbit test",
+    "test:integration": "bun --conditions=development test test/realtime-redis.integration.test.ts",
     "test:debug": "bun --conditions=development test --inspect-brk --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
     "test:e2e": "bun --conditions=development test --path-ignore-patterns=dist test",
     "test:watch": "bun --conditions=development test --watch --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
@@ -41,6 +41,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
+    "testcontainers": "^12.1.0",
     "typescript": "catalog:"
   }
 }
