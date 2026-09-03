@@ -291,7 +291,11 @@ const createDatabaseBoundary = ({
   };
 };
 
-const createRedisBoundary = () => {
+const createRedisBoundary = ({
+  now = Date.now,
+}: {
+  now?: () => number;
+} = {}) => {
   const values = new Map<
     string,
     { expiresAt: number | null; value: unknown }
@@ -310,10 +314,10 @@ const createRedisBoundary = () => {
           key &&
           lock &&
           lock.token === token &&
-          (lock.expiresAt === null || lock.expiresAt > Date.now())
+          (lock.expiresAt === null || lock.expiresAt > now())
         ) {
           if (ttlSeconds !== undefined) {
-            lock.expiresAt = Date.now() + Number(ttlSeconds) * 1_000;
+            lock.expiresAt = now() + Number(ttlSeconds) * 1_000;
             return 1;
           }
           locks.delete(key);
@@ -325,7 +329,7 @@ const createRedisBoundary = () => {
     getJson: vi.fn(async (key: string) => {
       const cached = values.get(key);
       if (!cached) return null;
-      if (cached.expiresAt !== null && cached.expiresAt <= Date.now()) {
+      if (cached.expiresAt !== null && cached.expiresAt <= now()) {
         values.delete(key);
         return null;
       }
@@ -336,7 +340,7 @@ const createRedisBoundary = () => {
     ),
     setJson: vi.fn(async (key: string, value: unknown, ttlSeconds?: number) => {
       values.set(key, {
-        expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1_000 : null,
+        expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
         value,
       });
     }),
@@ -344,12 +348,12 @@ const createRedisBoundary = () => {
       const existingLock = locks.get(key);
       if (
         existingLock &&
-        (existingLock.expiresAt === null || existingLock.expiresAt > Date.now())
+        (existingLock.expiresAt === null || existingLock.expiresAt > now())
       ) {
         return false;
       }
       locks.set(key, {
-        expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1_000 : null,
+        expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
         token,
       });
       return true;
@@ -484,6 +488,8 @@ describe("battle creation deduplication", () => {
   });
 
   it("keeps equivalent creation single-flight after the initial lock TTL", async () => {
+    let currentTime = 0;
+    const redis = createRedisBoundary({ now: () => currentTime });
     let releaseTransaction!: () => void;
     const transactionGate = new Promise<void>((resolve) => {
       releaseTransaction = resolve;
@@ -493,6 +499,7 @@ describe("battle creation deduplication", () => {
       markTransactionStarted = resolve;
     });
     const testApplication = await createTestApplication({
+      redis,
       beforeTransaction: async () => {
         markTransactionStarted();
         await transactionGate;
@@ -510,7 +517,11 @@ describe("battle creation deduplication", () => {
     });
 
     await transactionStarted;
-    await sleep(31);
+    currentTime = 10;
+    while (redis.eval.mock.calls.length === 0) {
+      await sleep(1);
+    }
+    currentTime = 31;
 
     const secondCreation = battlesService.createBattle({
       data: {
