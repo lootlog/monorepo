@@ -62,6 +62,18 @@ function validateCloudflareTarget(target) {
   if (target.kind === "worker" && !target.configPath) {
     throw new Error(`Worker target ${target.id} needs configPath`);
   }
+  const requiredEnvironmentVariables =
+    target.production?.requiredEnvironmentVariables ?? [];
+  if (
+    !Array.isArray(requiredEnvironmentVariables) ||
+    requiredEnvironmentVariables.some(
+      (name) => typeof name !== "string" || !/^[A-Z][A-Z0-9_]*$/u.test(name),
+    )
+  ) {
+    throw new Error(
+      `Cloudflare target ${target.id} has invalid required environment variables`,
+    );
+  }
 }
 
 export async function loadDeploymentTargets() {
@@ -185,10 +197,18 @@ export async function createDeploymentPlan(input) {
   if (input.mode === "rollback") return createRollbackPlan(input, targets);
 
   if (input.mode === "release") {
-    if (input.target === "all") return { targets };
     const target = targets.find(({ id }) => id === input.target);
-    if (!target) throw new Error(`Unknown deployment target: ${input.target}`);
-    return { targets: [target] };
+    if (input.target !== "all" && !target) {
+      throw new Error(`Unknown deployment target: ${input.target}`);
+    }
+    const selectedTargets = input.target === "all" ? targets : [target];
+    if (
+      selectedTargets.some(({ id }) => id === "auth") &&
+      input.authMigrationConfirmed !== true
+    ) {
+      throw new Error("Auth migration confirmation is required");
+    }
+    return { targets: selectedTargets };
   }
 
   const affectedPackages = new Set(input.affectedPackages ?? []);

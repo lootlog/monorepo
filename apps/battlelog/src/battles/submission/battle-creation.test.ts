@@ -364,9 +364,11 @@ const createRedisBoundary = ({
 const createTestApplication = async ({
   beforeTransaction,
   redis = createRedisBoundary(),
+  waitTimeoutMs = 30,
 }: {
   beforeTransaction?: () => Promise<void>;
   redis?: ReturnType<typeof createRedisBoundary>;
+  waitTimeoutMs?: number;
 } = {}) => {
   const database = createDatabaseBoundary({ beforeTransaction });
   const drizzle = effectDatabaseBoundary(
@@ -394,7 +396,7 @@ const createTestApplication = async ({
       lockRefreshIntervalMs: 10,
       lockTtlSeconds: 0.03,
       waitIntervalMs: 1,
-      waitTimeoutMs: 30,
+      waitTimeoutMs,
     },
   );
   const battlesService = runEffectService(battlesModule);
@@ -419,7 +421,9 @@ describe("battle creation deduplication", () => {
   });
 
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = await createTestApplication({
+      waitTimeoutMs: 1_000,
+    });
     app = testApplication.app;
 
     const [firstResponse, secondResponse] = await Promise.all([

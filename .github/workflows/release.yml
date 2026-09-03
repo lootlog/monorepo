@@ -27,6 +27,11 @@ on:
           - docs
           - wiki
           - all
+      auth_migration_confirmed:
+        description: Confirm the Better Auth 1.7 maintenance and migration runbook is complete
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: production-deployment
@@ -59,6 +64,7 @@ jobs:
       - name: Validate SHA and target
         id: plan
         env:
+          AUTH_MIGRATION_CONFIRMED: ${{ inputs.auth_migration_confirmed }}
           SOURCE_SHA: ${{ inputs.source_sha }}
           TARGET: ${{ inputs.target }}
         run: |
@@ -66,7 +72,7 @@ jobs:
           git fetch origin main
           git cat-file -e "$SOURCE_SHA^{commit}"
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "::error::source_sha is not on main"; exit 1; }
-          plan="$(bun scripts/deployment-targets.mjs "$(jq -cn --arg target "$TARGET" '{mode: "release", target: $target}')")"
+          plan="$(bun scripts/deployment-targets.mjs "$(jq -cn --arg target "$TARGET" --argjson authMigrationConfirmed "$AUTH_MIGRATION_CONFIRMED" '{mode: "release", target: $target, authMigrationConfirmed: $authMigrationConfirmed}')")"
           {
             echo "targets=$(jq -c '.targets' <<< "$plan")"
             echo "docker_targets=$(jq -c '[.targets[] | select(.kind == "docker")]' <<< "$plan")"
@@ -81,17 +87,25 @@ jobs:
     timeout-minutes: 120
     environment: prod
     env:
-      VITE_ACTIVITY_API_URL: ${{ vars.VITE_ACTIVITY_API_URL }}
-      VITE_ADDON_INSTALL_URL: ${{ vars.VITE_ADDON_INSTALL_URL }}
-      VITE_ADDON_URL: ${{ vars.VITE_ADDON_URL }}
-      VITE_API_URL: ${{ vars.VITE_API_URL }}
-      VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
-      VITE_BATTLELOG_API_URL: ${{ vars.VITE_BATTLELOG_API_URL }}
-      VITE_BATTLELOG_PUBLIC_URL: ${{ vars.VITE_BATTLELOG_PUBLIC_URL }}
-      VITE_DISCORD_BOT_PERMISSIONS: ${{ vars.VITE_DISCORD_BOT_PERMISSIONS }}
-      VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
-      VITE_GATEWAY_URL: ${{ vars.VITE_GATEWAY_URL }}
-      VITE_SEARCH_API_URL: ${{ vars.VITE_SEARCH_API_URL }}
+      GAME_CLIENT_GAME_CLIENT_URL: ${{ vars.GAME_CLIENT_GAME_CLIENT_URL }}
+      GAME_CLIENT_VITE_API_URL: ${{ vars.GAME_CLIENT_VITE_API_URL }}
+      GAME_CLIENT_VITE_AUTH_SERVICE_URL: ${{ vars.GAME_CLIENT_VITE_AUTH_SERVICE_URL }}
+      GAME_CLIENT_VITE_BATTLELOG_API_URL: ${{ vars.GAME_CLIENT_VITE_BATTLELOG_API_URL }}
+      GAME_CLIENT_VITE_GATEWAY_URL: ${{ vars.GAME_CLIENT_VITE_GATEWAY_URL }}
+      GAME_CLIENT_VITE_GATEWAY_SOCKET_PATH: /gateway/ws
+      GAME_CLIENT_VITE_LOOTLOG_APP_URL: ${{ vars.GAME_CLIENT_VITE_LOOTLOG_APP_URL }}
+      LANDING_VITE_ADDON_URL: ${{ vars.LANDING_VITE_ADDON_URL }}
+      LANDING_VITE_AUTH_SERVICE_URL: ${{ vars.LANDING_VITE_AUTH_SERVICE_URL }}
+      WEB_VITE_ACTIVITY_API_URL: ${{ vars.WEB_VITE_ACTIVITY_API_URL }}
+      WEB_VITE_ADDON_INSTALL_URL: ${{ vars.WEB_VITE_ADDON_INSTALL_URL }}
+      WEB_VITE_API_URL: ${{ vars.WEB_VITE_API_URL }}
+      WEB_VITE_AUTH_SERVICE_URL: ${{ vars.WEB_VITE_AUTH_SERVICE_URL }}
+      WEB_VITE_BATTLELOG_API_URL: ${{ vars.WEB_VITE_BATTLELOG_API_URL }}
+      WEB_VITE_BATTLELOG_PUBLIC_URL: ${{ vars.WEB_VITE_BATTLELOG_PUBLIC_URL }}
+      WEB_VITE_DISCORD_BOT_PERMISSIONS: ${{ vars.WEB_VITE_DISCORD_BOT_PERMISSIONS }}
+      WEB_VITE_DISCORD_CLIENT_ID: ${{ vars.WEB_VITE_DISCORD_CLIENT_ID }}
+      WEB_VITE_GATEWAY_URL: ${{ vars.WEB_VITE_GATEWAY_URL }}
+      WEB_VITE_SEARCH_API_URL: ${{ vars.WEB_VITE_SEARCH_API_URL }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -122,6 +136,14 @@ jobs:
           jq -e '.schemaVersion == 1 and (.targets | type == "object")' "$state" >/dev/null
           : > "$RUNNER_TEMP/cloudflare-rollback.jsonl"
 
+      - name: Validate target environment
+        env:
+          TARGETS: ${{ needs.plan.outputs.targets }}
+        run: |
+          while IFS= read -r variable; do
+            [[ -n "${!variable:-}" ]] || { echo "::error::Missing required production variable: $variable"; exit 1; }
+          done < <(jq -r '.[].production.requiredEnvironmentVariables[]?' <<< "$TARGETS")
+
       - name: Build, scan and push Docker targets
         env:
           SOURCE_SHA: ${{ inputs.source_sha }}
@@ -138,24 +160,29 @@ jobs:
             image_title="$(jq -r '.imageTitle' <<< "$target")"
             image_description="$(jq -r '.imageDescription' <<< "$target")"
             reference="$image:sha-$SOURCE_SHA"
-            if docker buildx imagetools inspect "$reference" >/dev/null 2>&1; then
-              echo "::error::Immutable image already exists: $reference"
-              exit 1
+            manifest="$(docker buildx imagetools inspect "$reference" --format '{{json .Manifest}}' 2>/dev/null || true)"
+            if [[ -n "$manifest" ]]; then
+              image_config="$(docker buildx imagetools inspect "$reference" --format '{{json .Image}}')"
+              revision="$(jq -er '.config.Labels["org.opencontainers.image.revision"]' <<< "$image_config")"
+              [[ "$revision" == "$SOURCE_SHA" ]] || { echo "::error::Existing image revision does not match $SOURCE_SHA: $reference"; exit 1; }
+              digest="$(jq -er '.digest' <<< "$manifest")"
+              echo "Reusing immutable image: $reference@$digest"
+            else
+              docker buildx build . --file "$dockerfile" --load --tag "$reference" \
+                --build-arg "PACKAGE=$package_name" --build-arg "APP_DIR=$app_directory" \
+                --build-arg "INSTALL_FONTS=$install_fonts" --build-arg "GITHUB_SHA=$SOURCE_SHA" \
+                --label "org.opencontainers.image.title=$image_title" \
+                --label "org.opencontainers.image.description=$image_description" \
+                --label "org.opencontainers.image.vendor=Lootlog" \
+                --label "org.opencontainers.image.revision=$SOURCE_SHA" \
+                --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+                --cache-from "type=gha,scope=docker-$id" --cache-to "type=gha,mode=min,scope=docker-$id"
+              docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.74.0 \
+                image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL "$reference"
+              push_output="$(docker push "$reference")"
+              printf '%s\n' "$push_output"
+              digest="$(sed -nE 's/.*digest: (sha256:[0-9a-f]{64}).*/\1/p' <<< "$push_output" | tail -n 1)"
             fi
-            docker buildx build . --file "$dockerfile" --load --tag "$reference" \
-              --build-arg "PACKAGE=$package_name" --build-arg "APP_DIR=$app_directory" \
-              --build-arg "INSTALL_FONTS=$install_fonts" --build-arg "GITHUB_SHA=$SOURCE_SHA" \
-              --label "org.opencontainers.image.title=$image_title" \
-              --label "org.opencontainers.image.description=$image_description" \
-              --label "org.opencontainers.image.vendor=Lootlog" \
-              --label "org.opencontainers.image.revision=$SOURCE_SHA" \
-              --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
-              --cache-from "type=gha,scope=docker-$id" --cache-to "type=gha,mode=min,scope=docker-$id"
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.74.0 \
-              image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL "$reference"
-            push_output="$(docker push "$reference")"
-            printf '%s\n' "$push_output"
-            digest="$(sed -nE 's/.*digest: (sha256:[0-9a-f]{64}).*/\1/p' <<< "$push_output" | tail -n 1)"
             [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::Registry did not return an image digest"; exit 1; }
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="sha-$SOURCE_SHA" \
               -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.3 \
@@ -185,6 +212,33 @@ jobs:
             project="$(jq -r '.production.project' <<< "$target")"
             config_path="$(jq -r '.configPath // empty' <<< "$target")"
             artifact_path="$(jq -r '.artifactPath' <<< "$target")"
+            case "$package_name" in
+              @lootlog/landing)
+                export VITE_ADDON_URL="$LANDING_VITE_ADDON_URL"
+                export VITE_AUTH_SERVICE_URL="$LANDING_VITE_AUTH_SERVICE_URL"
+                ;;
+              @lootlog/web)
+                export VITE_ACTIVITY_API_URL="$WEB_VITE_ACTIVITY_API_URL"
+                export VITE_ADDON_INSTALL_URL="$WEB_VITE_ADDON_INSTALL_URL"
+                export VITE_API_URL="$WEB_VITE_API_URL"
+                export VITE_AUTH_SERVICE_URL="$WEB_VITE_AUTH_SERVICE_URL"
+                export VITE_BATTLELOG_API_URL="$WEB_VITE_BATTLELOG_API_URL"
+                export VITE_BATTLELOG_PUBLIC_URL="$WEB_VITE_BATTLELOG_PUBLIC_URL"
+                export VITE_DISCORD_BOT_PERMISSIONS="$WEB_VITE_DISCORD_BOT_PERMISSIONS"
+                export VITE_DISCORD_CLIENT_ID="$WEB_VITE_DISCORD_CLIENT_ID"
+                export VITE_GATEWAY_URL="$WEB_VITE_GATEWAY_URL"
+                export VITE_SEARCH_API_URL="$WEB_VITE_SEARCH_API_URL"
+                ;;
+              @lootlog/game-client)
+                export GAME_CLIENT_URL="$GAME_CLIENT_GAME_CLIENT_URL"
+                export VITE_API_URL="$GAME_CLIENT_VITE_API_URL"
+                export VITE_AUTH_SERVICE_URL="$GAME_CLIENT_VITE_AUTH_SERVICE_URL"
+                export VITE_BATTLELOG_API_URL="$GAME_CLIENT_VITE_BATTLELOG_API_URL"
+                export VITE_GATEWAY_URL="$GAME_CLIENT_VITE_GATEWAY_URL"
+                export VITE_GATEWAY_SOCKET_PATH="$GAME_CLIENT_VITE_GATEWAY_SOCKET_PATH"
+                export VITE_LOOTLOG_APP_URL="$GAME_CLIENT_VITE_LOOTLOG_APP_URL"
+                ;;
+            esac
             bunx turbo run build --filter="$package_name"
 
             if [[ "$kind" == "pages" ]]; then
