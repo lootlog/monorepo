@@ -1,38 +1,10 @@
 /** Transport schemas owned by the users HTTP module. */
 import * as Schema from "effect/Schema";
 import { StatusOkResponseDto_Output } from "../shared.js";
+import { FiniteNumber } from "../scalars.js";
 
-export type UserPreferencesResponseDto_Output = {
-  readonly userId: string;
-  readonly guildsOrder: ReadonlyArray<string>;
-  readonly hiddenGuildIds: ReadonlyArray<string>;
-  readonly theme: string;
-  readonly chatAppearance: {
-    readonly npcLayout: "tile" | "inline";
-    readonly fontScalePercent: number;
-    readonly messageGapPx: number;
-    readonly showTimestamp: boolean;
-    readonly showGuildLabel: boolean;
-    readonly showNpcAvatar: boolean;
-    readonly showNpcLevel: boolean;
-    readonly showNpcLocationAndCoordinates: boolean;
-  };
-  readonly mutes: {
-    readonly players: ReadonlyArray<{
-      readonly discordId: string;
-      readonly displayName: string;
-    }>;
-    readonly npcs: ReadonlyArray<{
-      readonly npcKey: string;
-      readonly npcId: number;
-      readonly name: string;
-      readonly npcType: "ELITE2" | "HERO" | "COLOSSUS" | "TITAN";
-      readonly lvl: number;
-      readonly prof: string | null;
-      readonly icon: string | null;
-    }>;
-  };
-};
+export type UserPreferencesResponseDto_Output =
+  typeof UserPreferencesResponseDto_Output.Type;
 
 export const UserPreferencesResponseDto_Output = Schema.Struct({
   userId: Schema.String,
@@ -41,32 +13,24 @@ export const UserPreferencesResponseDto_Output = Schema.Struct({
   theme: Schema.String,
   chatAppearance: Schema.Struct({
     npcLayout: Schema.Literals(["tile", "inline"]),
-    fontScalePercent: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(70).annotate({
-          expected: "a value greater than or equal to 70",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(150).annotate({
-          expected: "a value less than or equal to 150",
-        }),
-      ),
-    messageGapPx: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(16).annotate({
-          expected: "a value less than or equal to 16",
-        }),
-      ),
+    fontScalePercent: FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(70).annotate({
+        expected: "a value greater than or equal to 70",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(150).annotate({
+        expected: "a value less than or equal to 150",
+      }),
+    ),
+    messageGapPx: FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(0).annotate({
+        expected: "a value greater than or equal to 0",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(16).annotate({
+        expected: "a value less than or equal to 16",
+      }),
+    ),
     showTimestamp: Schema.Boolean,
     showGuildLabel: Schema.Boolean,
     showNpcAvatar: Schema.Boolean,
@@ -130,55 +94,7 @@ export const UserPreferencesResponseDto_Output = Schema.Struct({
   }),
 }).annotate({ identifier: "UserPreferencesResponseDto_Output" });
 
-export type UpdateUserPreferencesDto = {
-  readonly guildsOrder?: ReadonlyArray<string>;
-  readonly hiddenGuildIds?: ReadonlyArray<string>;
-  readonly theme?:
-    | "default"
-    | "cyberpunk"
-    | "pastel"
-    | "fantasy"
-    | "shonen"
-    | "onepiece"
-    | "anime"
-    | "goth"
-    | "halloween"
-    | "realmadrid"
-    | "realmadrid-3rd"
-    | "barcelona"
-    | "waguri"
-    | "rukia"
-    | "rias"
-    | "cat-pink"
-    | "cat-purple"
-    | "cat-blue"
-    | "cat-random";
-  readonly chatAppearance?: {
-    readonly npcLayout?: "tile" | "inline";
-    readonly fontScalePercent?: number;
-    readonly messageGapPx?: number;
-    readonly showTimestamp?: boolean;
-    readonly showGuildLabel?: boolean;
-    readonly showNpcAvatar?: boolean;
-    readonly showNpcLevel?: boolean;
-    readonly showNpcLocationAndCoordinates?: boolean;
-  };
-  readonly mutes?: {
-    readonly players?: ReadonlyArray<{
-      readonly discordId: string;
-      readonly displayName: string;
-    }>;
-    readonly npcs?: ReadonlyArray<{
-      readonly npcKey: string;
-      readonly npcId: number;
-      readonly name: string;
-      readonly npcType: "ELITE2" | "HERO" | "COLOSSUS" | "TITAN";
-      readonly lvl: number;
-      readonly prof: string | null;
-      readonly icon: string | null;
-    }>;
-  };
-};
+export type UpdateUserPreferencesDto = typeof UpdateUserPreferencesDto.Type;
 
 export const UpdateUserPreferencesDto = Schema.Struct({
   guildsOrder: Schema.optionalKey(
@@ -223,16 +139,8 @@ export const UpdateUserPreferencesDto = Schema.Struct({
   chatAppearance: Schema.optionalKey(
     Schema.Struct({
       npcLayout: Schema.optionalKey(Schema.Literals(["tile", "inline"])),
-      fontScalePercent: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      messageGapPx: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      fontScalePercent: Schema.optionalKey(FiniteNumber),
+      messageGapPx: Schema.optionalKey(FiniteNumber),
       showTimestamp: Schema.optionalKey(Schema.Boolean),
       showGuildLabel: Schema.optionalKey(Schema.Boolean),
       showNpcAvatar: Schema.optionalKey(Schema.Boolean),
@@ -304,16 +212,8 @@ export const UpdateUserPreferencesDto = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateUserPreferencesDto" });
 
-export type UserCurrentGuildResponseDto_Output = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon?: string | null;
-  readonly vanityUrl?: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly hasLootlogAccess: boolean;
-  readonly isAccessDataStale: boolean;
-};
+export type UserCurrentGuildResponseDto_Output =
+  typeof UserCurrentGuildResponseDto_Output.Type;
 
 export const UserCurrentGuildResponseDto_Output = Schema.Struct({
   id: Schema.String,
@@ -326,104 +226,8 @@ export const UserCurrentGuildResponseDto_Output = Schema.Struct({
   isAccessDataStale: Schema.Boolean,
 }).annotate({ identifier: "UserCurrentGuildResponseDto_Output" });
 
-export type UserGameAccountPreferencesResponseDto_Output = {
-  readonly accountId: string;
-  readonly notifications: {
-    readonly ELITE2: {
-      readonly show: boolean;
-      readonly highlight: boolean;
-      readonly ignoreOtherWorlds: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds: ReadonlyArray<string>;
-      readonly sound: boolean;
-    };
-    readonly HERO: {
-      readonly show: boolean;
-      readonly highlight: boolean;
-      readonly ignoreOtherWorlds: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds: ReadonlyArray<string>;
-      readonly sound: boolean;
-    };
-    readonly COLOSSUS: {
-      readonly show: boolean;
-      readonly highlight: boolean;
-      readonly ignoreOtherWorlds: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds: ReadonlyArray<string>;
-      readonly sound: boolean;
-    };
-    readonly TITAN: {
-      readonly show: boolean;
-      readonly highlight: boolean;
-      readonly ignoreOtherWorlds: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds: ReadonlyArray<string>;
-      readonly sound: boolean;
-    };
-    readonly message: {
-      readonly show: boolean;
-      readonly highlight: boolean;
-      readonly ignoreOtherWorlds: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds: ReadonlyArray<string>;
-      readonly sound: boolean;
-    };
-    readonly "party-gathering": {
-      readonly show: boolean;
-      readonly highlight: boolean;
-      readonly ignoreOtherWorlds: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds: ReadonlyArray<string>;
-      readonly sound: boolean;
-    };
-  };
-  readonly detector: {
-    readonly routingRules: ReadonlyArray<{
-      readonly id: string;
-      readonly name?: string;
-      readonly minLevel: number;
-      readonly maxLevel: number;
-      readonly world?: string;
-      readonly guildIds: ReadonlyArray<string>;
-    }>;
-    readonly ELITE2: {
-      readonly detect: boolean;
-      readonly autoSend: boolean;
-      readonly notifyWindow: boolean;
-      readonly highlight: boolean;
-      readonly notifySound: boolean;
-    };
-    readonly HERO: {
-      readonly detect: boolean;
-      readonly autoSend: boolean;
-      readonly notifyWindow: boolean;
-      readonly highlight: boolean;
-      readonly notifySound: boolean;
-    };
-    readonly COLOSSUS: {
-      readonly detect: boolean;
-      readonly autoSend: boolean;
-      readonly notifyWindow: boolean;
-      readonly highlight: boolean;
-      readonly notifySound: boolean;
-    };
-    readonly TITAN: {
-      readonly detect: boolean;
-      readonly autoSend: boolean;
-      readonly notifyWindow: boolean;
-      readonly highlight: boolean;
-      readonly notifySound: boolean;
-    };
-  };
-  readonly pings: { readonly enabled: boolean };
-  readonly airTags: { readonly enabled: boolean };
-  readonly hasStoredNotifications: boolean;
-  readonly hasStoredDetector: boolean;
-  readonly hasStoredPings: boolean;
-  readonly hasStoredAirTags: boolean;
-  readonly hasStoredPreferences: boolean;
-};
+export type UserGameAccountPreferencesResponseDto_Output =
+  typeof UserGameAccountPreferencesResponseDto_Output.Type;
 
 export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
   accountId: Schema.String.check(
@@ -437,9 +241,7 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
       highlight: Schema.Boolean,
       ignoreOtherWorlds: Schema.Boolean,
       autoHideTimeout: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -453,9 +255,7 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
       highlight: Schema.Boolean,
       ignoreOtherWorlds: Schema.Boolean,
       autoHideTimeout: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -469,9 +269,7 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
       highlight: Schema.Boolean,
       ignoreOtherWorlds: Schema.Boolean,
       autoHideTimeout: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -485,9 +283,7 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
       highlight: Schema.Boolean,
       ignoreOtherWorlds: Schema.Boolean,
       autoHideTimeout: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -501,9 +297,7 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
       highlight: Schema.Boolean,
       ignoreOtherWorlds: Schema.Boolean,
       autoHideTimeout: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -517,9 +311,7 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
       highlight: Schema.Boolean,
       ignoreOtherWorlds: Schema.Boolean,
       autoHideTimeout: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -538,32 +330,24 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
           }),
         ),
         name: Schema.optionalKey(Schema.String),
-        minLevel: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        )
-          .check(
-            Schema.isGreaterThanOrEqualTo(0).annotate({
-              expected: "a value greater than or equal to 0",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(500).annotate({
-              expected: "a value less than or equal to 500",
-            }),
-          ),
-        maxLevel: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        )
-          .check(
-            Schema.isGreaterThanOrEqualTo(0).annotate({
-              expected: "a value greater than or equal to 0",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(500).annotate({
-              expected: "a value less than or equal to 500",
-            }),
-          ),
+        minLevel: FiniteNumber.check(
+          Schema.isGreaterThanOrEqualTo(0).annotate({
+            expected: "a value greater than or equal to 0",
+          }),
+        ).check(
+          Schema.isLessThanOrEqualTo(500).annotate({
+            expected: "a value less than or equal to 500",
+          }),
+        ),
+        maxLevel: FiniteNumber.check(
+          Schema.isGreaterThanOrEqualTo(0).annotate({
+            expected: "a value greater than or equal to 0",
+          }),
+        ).check(
+          Schema.isLessThanOrEqualTo(500).annotate({
+            expected: "a value less than or equal to 500",
+          }),
+        ),
         world: Schema.optionalKey(Schema.String),
         guildIds: Schema.Array(Schema.String),
       }),
@@ -606,98 +390,8 @@ export const UserGameAccountPreferencesResponseDto_Output = Schema.Struct({
   hasStoredPreferences: Schema.Boolean,
 }).annotate({ identifier: "UserGameAccountPreferencesResponseDto_Output" });
 
-export type UpdateUserGameAccountPreferencesDto = {
-  readonly notifications?: {
-    readonly ELITE2?: {
-      readonly show?: boolean;
-      readonly highlight?: boolean;
-      readonly ignoreOtherWorlds?: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds?: ReadonlyArray<string>;
-      readonly sound?: boolean;
-    };
-    readonly HERO?: {
-      readonly show?: boolean;
-      readonly highlight?: boolean;
-      readonly ignoreOtherWorlds?: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds?: ReadonlyArray<string>;
-      readonly sound?: boolean;
-    };
-    readonly COLOSSUS?: {
-      readonly show?: boolean;
-      readonly highlight?: boolean;
-      readonly ignoreOtherWorlds?: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds?: ReadonlyArray<string>;
-      readonly sound?: boolean;
-    };
-    readonly TITAN?: {
-      readonly show?: boolean;
-      readonly highlight?: boolean;
-      readonly ignoreOtherWorlds?: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds?: ReadonlyArray<string>;
-      readonly sound?: boolean;
-    };
-    readonly message?: {
-      readonly show?: boolean;
-      readonly highlight?: boolean;
-      readonly ignoreOtherWorlds?: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds?: ReadonlyArray<string>;
-      readonly sound?: boolean;
-    };
-    readonly "party-gathering"?: {
-      readonly show?: boolean;
-      readonly highlight?: boolean;
-      readonly ignoreOtherWorlds?: boolean;
-      readonly autoHideTimeout?: number;
-      readonly guildIds?: ReadonlyArray<string>;
-      readonly sound?: boolean;
-    };
-  };
-  readonly detector?: {
-    readonly routingRules?: ReadonlyArray<{
-      readonly id: string;
-      readonly name?: string;
-      readonly minLevel: number;
-      readonly maxLevel: number;
-      readonly world?: string;
-      readonly guildIds: ReadonlyArray<string>;
-    }>;
-    readonly ELITE2?: {
-      readonly detect?: boolean;
-      readonly autoSend?: boolean;
-      readonly notifyWindow?: boolean;
-      readonly highlight?: boolean;
-      readonly notifySound?: boolean;
-    };
-    readonly HERO?: {
-      readonly detect?: boolean;
-      readonly autoSend?: boolean;
-      readonly notifyWindow?: boolean;
-      readonly highlight?: boolean;
-      readonly notifySound?: boolean;
-    };
-    readonly COLOSSUS?: {
-      readonly detect?: boolean;
-      readonly autoSend?: boolean;
-      readonly notifyWindow?: boolean;
-      readonly highlight?: boolean;
-      readonly notifySound?: boolean;
-    };
-    readonly TITAN?: {
-      readonly detect?: boolean;
-      readonly autoSend?: boolean;
-      readonly notifyWindow?: boolean;
-      readonly highlight?: boolean;
-      readonly notifySound?: boolean;
-    };
-  };
-  readonly pings?: { readonly enabled?: boolean };
-  readonly airTags?: { readonly enabled?: boolean };
-};
+export type UpdateUserGameAccountPreferencesDto =
+  typeof UpdateUserGameAccountPreferencesDto.Type;
 
 export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
   notifications: Schema.optionalKey(
@@ -708,9 +402,7 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
           highlight: Schema.optionalKey(Schema.Boolean),
           ignoreOtherWorlds: Schema.optionalKey(Schema.Boolean),
           autoHideTimeout: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ).check(
+            FiniteNumber.check(
               Schema.isGreaterThanOrEqualTo(0).annotate({
                 expected: "a value greater than or equal to 0",
               }),
@@ -726,9 +418,7 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
           highlight: Schema.optionalKey(Schema.Boolean),
           ignoreOtherWorlds: Schema.optionalKey(Schema.Boolean),
           autoHideTimeout: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ).check(
+            FiniteNumber.check(
               Schema.isGreaterThanOrEqualTo(0).annotate({
                 expected: "a value greater than or equal to 0",
               }),
@@ -744,9 +434,7 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
           highlight: Schema.optionalKey(Schema.Boolean),
           ignoreOtherWorlds: Schema.optionalKey(Schema.Boolean),
           autoHideTimeout: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ).check(
+            FiniteNumber.check(
               Schema.isGreaterThanOrEqualTo(0).annotate({
                 expected: "a value greater than or equal to 0",
               }),
@@ -762,9 +450,7 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
           highlight: Schema.optionalKey(Schema.Boolean),
           ignoreOtherWorlds: Schema.optionalKey(Schema.Boolean),
           autoHideTimeout: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ).check(
+            FiniteNumber.check(
               Schema.isGreaterThanOrEqualTo(0).annotate({
                 expected: "a value greater than or equal to 0",
               }),
@@ -780,9 +466,7 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
           highlight: Schema.optionalKey(Schema.Boolean),
           ignoreOtherWorlds: Schema.optionalKey(Schema.Boolean),
           autoHideTimeout: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ).check(
+            FiniteNumber.check(
               Schema.isGreaterThanOrEqualTo(0).annotate({
                 expected: "a value greater than or equal to 0",
               }),
@@ -798,9 +482,7 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
           highlight: Schema.optionalKey(Schema.Boolean),
           ignoreOtherWorlds: Schema.optionalKey(Schema.Boolean),
           autoHideTimeout: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ).check(
+            FiniteNumber.check(
               Schema.isGreaterThanOrEqualTo(0).annotate({
                 expected: "a value greater than or equal to 0",
               }),
@@ -823,32 +505,24 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
               }),
             ),
             name: Schema.optionalKey(Schema.String),
-            minLevel: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(500).annotate({
-                  expected: "a value less than or equal to 500",
-                }),
-              ),
-            maxLevel: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            )
-              .check(
-                Schema.isGreaterThanOrEqualTo(0).annotate({
-                  expected: "a value greater than or equal to 0",
-                }),
-              )
-              .check(
-                Schema.isLessThanOrEqualTo(500).annotate({
-                  expected: "a value less than or equal to 500",
-                }),
-              ),
+            minLevel: FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(500).annotate({
+                expected: "a value less than or equal to 500",
+              }),
+            ),
+            maxLevel: FiniteNumber.check(
+              Schema.isGreaterThanOrEqualTo(0).annotate({
+                expected: "a value greater than or equal to 0",
+              }),
+            ).check(
+              Schema.isLessThanOrEqualTo(500).annotate({
+                expected: "a value less than or equal to 500",
+              }),
+            ),
             world: Schema.optionalKey(Schema.String),
             guildIds: Schema.Array(Schema.String),
           }),
@@ -901,45 +575,45 @@ export const UpdateUserGameAccountPreferencesDto = Schema.Struct({
 }).annotate({ identifier: "UpdateUserGameAccountPreferencesDto" });
 
 // schemas
-export type UsersControllerDeleteAccount200 = StatusOkResponseDto_Output;
+export type UsersControllerDeleteAccount200 =
+  typeof UsersControllerDeleteAccount200.Type;
 
 export const UsersControllerDeleteAccount200 = StatusOkResponseDto_Output;
 
 export type UsersControllerGetUserPreferences200 =
-  UserPreferencesResponseDto_Output;
+  typeof UsersControllerGetUserPreferences200.Type;
 
 export const UsersControllerGetUserPreferences200 =
   UserPreferencesResponseDto_Output;
 
 export type UsersControllerUpdateUserPreferencesRequestJson =
-  UpdateUserPreferencesDto;
+  typeof UsersControllerUpdateUserPreferencesRequestJson.Type;
 
 export const UsersControllerUpdateUserPreferencesRequestJson =
   UpdateUserPreferencesDto;
 
 export type UsersControllerUpdateUserPreferences200 =
-  UserPreferencesResponseDto_Output;
+  typeof UsersControllerUpdateUserPreferences200.Type;
 
 export const UsersControllerUpdateUserPreferences200 =
   UserPreferencesResponseDto_Output;
 
 export type UsersControllerGetCurrentUserGuilds200 =
-  ReadonlyArray<UserCurrentGuildResponseDto_Output>;
+  typeof UsersControllerGetCurrentUserGuilds200.Type;
 
 export const UsersControllerGetCurrentUserGuilds200 = Schema.Array(
   UserCurrentGuildResponseDto_Output,
 );
 
 export type UsersControllerGetCurrentUserAccessibleGuilds200 =
-  ReadonlyArray<UserCurrentGuildResponseDto_Output>;
+  typeof UsersControllerGetCurrentUserAccessibleGuilds200.Type;
 
 export const UsersControllerGetCurrentUserAccessibleGuilds200 = Schema.Array(
   UserCurrentGuildResponseDto_Output,
 );
 
-export type UsersControllerGetUserGameAccountPreferencesPathParams = {
-  readonly accountId: string;
-};
+export type UsersControllerGetUserGameAccountPreferencesPathParams =
+  typeof UsersControllerGetUserGameAccountPreferencesPathParams.Type;
 
 export const UsersControllerGetUserGameAccountPreferencesPathParams =
   Schema.Struct({
@@ -947,14 +621,13 @@ export const UsersControllerGetUserGameAccountPreferencesPathParams =
   });
 
 export type UsersControllerGetUserGameAccountPreferences200 =
-  UserGameAccountPreferencesResponseDto_Output;
+  typeof UsersControllerGetUserGameAccountPreferences200.Type;
 
 export const UsersControllerGetUserGameAccountPreferences200 =
   UserGameAccountPreferencesResponseDto_Output;
 
-export type UsersControllerUpdateUserGameAccountPreferencesPathParams = {
-  readonly accountId: string;
-};
+export type UsersControllerUpdateUserGameAccountPreferencesPathParams =
+  typeof UsersControllerUpdateUserGameAccountPreferencesPathParams.Type;
 
 export const UsersControllerUpdateUserGameAccountPreferencesPathParams =
   Schema.Struct({
@@ -962,13 +635,13 @@ export const UsersControllerUpdateUserGameAccountPreferencesPathParams =
   });
 
 export type UsersControllerUpdateUserGameAccountPreferencesRequestJson =
-  UpdateUserGameAccountPreferencesDto;
+  typeof UsersControllerUpdateUserGameAccountPreferencesRequestJson.Type;
 
 export const UsersControllerUpdateUserGameAccountPreferencesRequestJson =
   UpdateUserGameAccountPreferencesDto;
 
 export type UsersControllerUpdateUserGameAccountPreferences200 =
-  UserGameAccountPreferencesResponseDto_Output;
+  typeof UsersControllerUpdateUserGameAccountPreferences200.Type;
 
 export const UsersControllerUpdateUserGameAccountPreferences200 =
   UserGameAccountPreferencesResponseDto_Output;

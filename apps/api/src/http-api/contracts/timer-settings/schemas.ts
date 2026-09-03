@@ -1,5 +1,6 @@
 /** Transport schemas owned by the timer-settings HTTP module. */
 import * as Schema from "effect/Schema";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
 export type TimerSettingsResponseDto__schema0 =
   | string
@@ -29,74 +30,14 @@ export const TimerSettingsResponseDto__schema0 = Schema.suspend(
     __recursive_TimerSettingsResponseDto__schema0,
 );
 
-export type TimerSettingsResponseDto = {
-  readonly userId: string;
-  readonly generalConfig:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly displayConfig:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly customColors:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly timersColors:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly alwaysVisibleExpiredTimers:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly defaultColorNames:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly overriddenDefaultColors:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<TimerSettingsResponseDto__schema0>
-    | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-    | null;
-  readonly hiddenDefaultColors: ReadonlyArray<string>;
-  readonly timerFiltersEnabled: boolean;
-  readonly colorFiltersEnabled: boolean;
-  readonly timersSortOrder: "asc" | "desc";
-  readonly syncEnabled: boolean;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-};
+export type TimerSettingsResponseDto = typeof TimerSettingsResponseDto.Type;
 
 export const TimerSettingsResponseDto = Schema.Struct({
   userId: Schema.String,
   generalConfig: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -106,9 +47,7 @@ export const TimerSettingsResponseDto = Schema.Struct({
   displayConfig: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -118,9 +57,7 @@ export const TimerSettingsResponseDto = Schema.Struct({
   customColors: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -130,9 +67,7 @@ export const TimerSettingsResponseDto = Schema.Struct({
   timersColors: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -142,9 +77,7 @@ export const TimerSettingsResponseDto = Schema.Struct({
   alwaysVisibleExpiredTimers: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -154,9 +87,7 @@ export const TimerSettingsResponseDto = Schema.Struct({
   defaultColorNames: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -166,9 +97,7 @@ export const TimerSettingsResponseDto = Schema.Struct({
   overriddenDefaultColors: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(TimerSettingsResponseDto__schema0),
       Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
@@ -180,76 +109,17 @@ export const TimerSettingsResponseDto = Schema.Struct({
   colorFiltersEnabled: Schema.Boolean,
   timersSortOrder: Schema.Literals(["asc", "desc"]),
   syncEnabled: Schema.Boolean,
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "TimerSettingsResponseDto" });
 
-export type UpdateTimerSettingsDto = {
-  readonly generalConfig?: {
-    readonly removeTimerAfterMs?: number;
-    readonly compactView?: boolean;
-    readonly timersGrouping?: boolean;
-    readonly timersUnderBag?: boolean;
-    readonly countdownMode?: "min" | "max";
-  };
-  readonly displayConfig?: {
-    readonly showType?: boolean;
-    readonly showLevel?: boolean;
-    readonly fontSize?: number;
-    readonly minColumnWidth?: number;
-    readonly singleTimerDisplayMode?: "column" | "row";
-  };
-  readonly customColors?: {
-    readonly [x: string]: {
-      readonly id: string;
-      readonly name: string;
-      readonly borderColor: string;
-      readonly backgroundColor: string;
-    };
-  };
-  readonly timersColors?: { readonly [x: string]: string };
-  readonly alwaysVisibleExpiredTimers?: {
-    readonly [x: string]: ReadonlyArray<string>;
-  };
-  readonly defaultColorNames?: { readonly [x: string]: string };
-  readonly overriddenDefaultColors?: {
-    readonly [x: string]: {
-      readonly borderColor: string;
-      readonly backgroundColor: string;
-    };
-  };
-  readonly hiddenDefaultColors?: ReadonlyArray<string>;
-  readonly timerFiltersEnabled?: boolean;
-  readonly colorFiltersEnabled?: boolean;
-  readonly timersSortOrder?: "asc" | "desc";
-  readonly syncEnabled?: boolean;
-};
+export type UpdateTimerSettingsDto = typeof UpdateTimerSettingsDto.Type;
 
 export const UpdateTimerSettingsDto = Schema.Struct({
   generalConfig: Schema.optionalKey(
     Schema.Struct({
       removeTimerAfterMs: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ).check(
+        FiniteNumber.check(
           Schema.isGreaterThanOrEqualTo(0).annotate({
             expected: "a value greater than or equal to 0",
           }),
@@ -266,34 +136,26 @@ export const UpdateTimerSettingsDto = Schema.Struct({
       showType: Schema.optionalKey(Schema.Boolean),
       showLevel: Schema.optionalKey(Schema.Boolean),
       fontSize: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        )
-          .check(
-            Schema.isGreaterThanOrEqualTo(8).annotate({
-              expected: "a value greater than or equal to 8",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(24).annotate({
-              expected: "a value less than or equal to 24",
-            }),
-          ),
+        FiniteNumber.check(
+          Schema.isGreaterThanOrEqualTo(8).annotate({
+            expected: "a value greater than or equal to 8",
+          }),
+        ).check(
+          Schema.isLessThanOrEqualTo(24).annotate({
+            expected: "a value less than or equal to 24",
+          }),
+        ),
       ),
       minColumnWidth: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        )
-          .check(
-            Schema.isGreaterThanOrEqualTo(50).annotate({
-              expected: "a value greater than or equal to 50",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(500).annotate({
-              expected: "a value less than or equal to 500",
-            }),
-          ),
+        FiniteNumber.check(
+          Schema.isGreaterThanOrEqualTo(50).annotate({
+            expected: "a value greater than or equal to 50",
+          }),
+        ).check(
+          Schema.isLessThanOrEqualTo(500).annotate({
+            expected: "a value less than or equal to 500",
+          }),
+        ),
       ),
       singleTimerDisplayMode: Schema.optionalKey(
         Schema.Literals(["column", "row"]),
@@ -334,56 +196,27 @@ export const UpdateTimerSettingsDto = Schema.Struct({
   syncEnabled: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "UpdateTimerSettingsDto" });
 
-export type GuildTimerSettingsResponseDto = {
-  readonly userId: string;
-  readonly guildId: string;
-  readonly hiddenTimers: ReadonlyArray<string>;
-  readonly pinnedTimers: ReadonlyArray<string>;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-};
+export type GuildTimerSettingsResponseDto =
+  typeof GuildTimerSettingsResponseDto.Type;
 
 export const GuildTimerSettingsResponseDto = Schema.Struct({
   userId: Schema.String,
   guildId: Schema.String,
   hiddenTimers: Schema.Array(Schema.String),
   pinnedTimers: Schema.Array(Schema.String),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "GuildTimerSettingsResponseDto" });
 
-export type UpdateGuildTimerSettingsDto = {
-  readonly hiddenTimers?: ReadonlyArray<string>;
-  readonly pinnedTimers?: ReadonlyArray<string>;
-};
+export type UpdateGuildTimerSettingsDto =
+  typeof UpdateGuildTimerSettingsDto.Type;
 
 export const UpdateGuildTimerSettingsDto = Schema.Struct({
   hiddenTimers: Schema.optionalKey(Schema.Array(Schema.String)),
   pinnedTimers: Schema.optionalKey(Schema.Array(Schema.String)),
 }).annotate({ identifier: "UpdateGuildTimerSettingsDto" });
 
-export type MigrateTimerSettingsDto = {
-  readonly localData: { readonly [x: string]: Schema.Json };
-  readonly conflictResolution?: "local" | "remote" | "merge";
-};
+export type MigrateTimerSettingsDto = typeof MigrateTimerSettingsDto.Type;
 
 export const MigrateTimerSettingsDto = Schema.Struct({
   localData: Schema.Record(
@@ -399,17 +232,13 @@ export const MigrateTimerSettingsDto = Schema.Struct({
 const __recursive_TimerSettingsResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -433,9 +262,7 @@ const __recursive_TimerSettingsResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -459,40 +286,38 @@ const __recursive_TimerSettingsResponseDto__schema0 = Schema.Union([
 ]).annotate({ identifier: "TimerSettingsResponseDto__schema0" });
 
 export type TimerSettingsControllerGetGlobalSettings200 =
-  TimerSettingsResponseDto;
+  typeof TimerSettingsControllerGetGlobalSettings200.Type;
 
 export const TimerSettingsControllerGetGlobalSettings200 =
   TimerSettingsResponseDto;
 
 export type TimerSettingsControllerUpdateGlobalSettingsRequestJson =
-  UpdateTimerSettingsDto;
+  typeof TimerSettingsControllerUpdateGlobalSettingsRequestJson.Type;
 
 export const TimerSettingsControllerUpdateGlobalSettingsRequestJson =
   UpdateTimerSettingsDto;
 
 export type TimerSettingsControllerUpdateGlobalSettings200 =
-  TimerSettingsResponseDto;
+  typeof TimerSettingsControllerUpdateGlobalSettings200.Type;
 
 export const TimerSettingsControllerUpdateGlobalSettings200 =
   TimerSettingsResponseDto;
 
-export type TimerSettingsControllerGetGuildSettingsPathParams = {
-  readonly guildId: string;
-};
+export type TimerSettingsControllerGetGuildSettingsPathParams =
+  typeof TimerSettingsControllerGetGuildSettingsPathParams.Type;
 
 export const TimerSettingsControllerGetGuildSettingsPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
 export type TimerSettingsControllerGetGuildSettings200 =
-  GuildTimerSettingsResponseDto;
+  typeof TimerSettingsControllerGetGuildSettings200.Type;
 
 export const TimerSettingsControllerGetGuildSettings200 =
   GuildTimerSettingsResponseDto;
 
-export type TimerSettingsControllerUpdateGuildSettingsPathParams = {
-  readonly guildId: string;
-};
+export type TimerSettingsControllerUpdateGuildSettingsPathParams =
+  typeof TimerSettingsControllerUpdateGuildSettingsPathParams.Type;
 
 export const TimerSettingsControllerUpdateGuildSettingsPathParams =
   Schema.Struct({
@@ -500,19 +325,19 @@ export const TimerSettingsControllerUpdateGuildSettingsPathParams =
   });
 
 export type TimerSettingsControllerUpdateGuildSettingsRequestJson =
-  UpdateGuildTimerSettingsDto;
+  typeof TimerSettingsControllerUpdateGuildSettingsRequestJson.Type;
 
 export const TimerSettingsControllerUpdateGuildSettingsRequestJson =
   UpdateGuildTimerSettingsDto;
 
 export type TimerSettingsControllerUpdateGuildSettings200 =
-  GuildTimerSettingsResponseDto;
+  typeof TimerSettingsControllerUpdateGuildSettings200.Type;
 
 export const TimerSettingsControllerUpdateGuildSettings200 =
   GuildTimerSettingsResponseDto;
 
 export type TimerSettingsControllerMigrateSettingsRequestJson =
-  MigrateTimerSettingsDto;
+  typeof TimerSettingsControllerMigrateSettingsRequestJson.Type;
 
 export const TimerSettingsControllerMigrateSettingsRequestJson =
   MigrateTimerSettingsDto;

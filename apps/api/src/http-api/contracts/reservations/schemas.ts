@@ -1,84 +1,13 @@
 /** Transport schemas owned by the reservations HTTP module. */
 import * as Schema from "effect/Schema";
+import {
+  DateTimeWithOffsetString,
+  DateTimeString,
+  FiniteNumber,
+} from "../scalars.js";
 
-export type ReservationSpotsResponseDto = ReadonlyArray<{
-  readonly id: string;
-  readonly name: string;
-  readonly level: number;
-  readonly images: ReadonlyArray<string>;
-  readonly maps: ReadonlyArray<string>;
-  readonly isPinned: boolean;
-  readonly isAvailableNow: boolean;
-  readonly availableUntil: string | null;
-  readonly activeReservationCount: number;
-  readonly hasPartnerReservations: boolean;
-  readonly currentReservation:
-    | ({
-        readonly id: number;
-        readonly spotId: string;
-        readonly spotName: string;
-        readonly startsAt: string;
-        readonly endsAt: string;
-        readonly comment: string | null;
-        readonly createdAt: string;
-        readonly author: {
-          readonly displayName: string;
-          readonly avatarUrl: string | null;
-        };
-        readonly sourceOrganization: {
-          readonly name: string;
-          readonly iconUrl: string | null;
-          readonly isCurrent: boolean;
-          readonly calendarPath: string;
-        };
-        readonly isMine: boolean;
-        readonly canEdit: boolean;
-        readonly canCancel: boolean;
-        readonly editingConstraints:
-          | ({
-              readonly reservationMaxDurationMinutes: number;
-              readonly reservationMinDurationMinutes: number;
-              readonly reservationTimeGranularityMinutes: number;
-              readonly reservationMaxAdvanceDays: number;
-            } & { readonly [x: string]: Schema.Json })
-          | null;
-        readonly reminderMinutesBefore: 0 | 5 | 15 | 30 | null;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly nextReservation:
-    | ({
-        readonly id: number;
-        readonly spotId: string;
-        readonly spotName: string;
-        readonly startsAt: string;
-        readonly endsAt: string;
-        readonly comment: string | null;
-        readonly createdAt: string;
-        readonly author: {
-          readonly displayName: string;
-          readonly avatarUrl: string | null;
-        };
-        readonly sourceOrganization: {
-          readonly name: string;
-          readonly iconUrl: string | null;
-          readonly isCurrent: boolean;
-          readonly calendarPath: string;
-        };
-        readonly isMine: boolean;
-        readonly canEdit: boolean;
-        readonly canCancel: boolean;
-        readonly editingConstraints:
-          | ({
-              readonly reservationMaxDurationMinutes: number;
-              readonly reservationMinDurationMinutes: number;
-              readonly reservationTimeGranularityMinutes: number;
-              readonly reservationMaxAdvanceDays: number;
-            } & { readonly [x: string]: Schema.Json })
-          | null;
-        readonly reminderMinutesBefore: 0 | 5 | 15 | 30 | null;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-}>;
+export type ReservationSpotsResponseDto =
+  typeof ReservationSpotsResponseDto.Type;
 
 export const ReservationSpotsResponseDto = Schema.Array(
   Schema.Struct({
@@ -101,19 +30,7 @@ export const ReservationSpotsResponseDto = Schema.Array(
     maps: Schema.Array(Schema.String),
     isPinned: Schema.Boolean,
     isAvailableNow: Schema.Boolean,
-    availableUntil: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
+    availableUntil: Schema.Union([DateTimeString, Schema.Null]),
     activeReservationCount: Schema.Number.check(
       Schema.isInt().annotate({ expected: "an integer" }),
     )
@@ -146,37 +63,10 @@ export const ReservationSpotsResponseDto = Schema.Array(
             ),
           spotId: Schema.String,
           spotName: Schema.String,
-          startsAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          endsAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          startsAt: DateTimeString,
+          endsAt: DateTimeString,
           comment: Schema.Union([Schema.String, Schema.Null]),
-          createdAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          createdAt: DateTimeString,
           author: Schema.Struct({
             displayName: Schema.String,
             avatarUrl: Schema.Union([Schema.String, Schema.Null]),
@@ -295,37 +185,10 @@ export const ReservationSpotsResponseDto = Schema.Array(
             ),
           spotId: Schema.String,
           spotName: Schema.String,
-          startsAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          endsAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          startsAt: DateTimeString,
+          endsAt: DateTimeString,
           comment: Schema.Union([Schema.String, Schema.Null]),
-          createdAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          createdAt: DateTimeString,
           author: Schema.Struct({
             displayName: Schema.String,
             avatarUrl: Schema.Union([Schema.String, Schema.Null]),
@@ -429,40 +292,8 @@ export const ReservationSpotsResponseDto = Schema.Array(
   }),
 ).annotate({ identifier: "ReservationSpotsResponseDto" });
 
-export type ReservationWindowResponseDto = {
-  readonly items: ReadonlyArray<{
-    readonly id: number;
-    readonly spotId: string;
-    readonly spotName: string;
-    readonly startsAt: string;
-    readonly endsAt: string;
-    readonly comment: string | null;
-    readonly createdAt: string;
-    readonly author: {
-      readonly displayName: string;
-      readonly avatarUrl: string | null;
-    };
-    readonly sourceOrganization: {
-      readonly name: string;
-      readonly iconUrl: string | null;
-      readonly isCurrent: boolean;
-      readonly calendarPath: string;
-    };
-    readonly isMine: boolean;
-    readonly canEdit: boolean;
-    readonly canCancel: boolean;
-    readonly editingConstraints:
-      | ({
-          readonly reservationMaxDurationMinutes: number;
-          readonly reservationMinDurationMinutes: number;
-          readonly reservationTimeGranularityMinutes: number;
-          readonly reservationMaxAdvanceDays: number;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly reminderMinutesBefore: 0 | 5 | 15 | 30 | null;
-  }>;
-  readonly window: { readonly from: string; readonly to: string };
-};
+export type ReservationWindowResponseDto =
+  typeof ReservationWindowResponseDto.Type;
 
 export const ReservationWindowResponseDto = Schema.Struct({
   items: Schema.Array(
@@ -482,37 +313,10 @@ export const ReservationWindowResponseDto = Schema.Struct({
         ),
       spotId: Schema.String,
       spotName: Schema.String,
-      startsAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      endsAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      startsAt: DateTimeString,
+      endsAt: DateTimeString,
       comment: Schema.Union([Schema.String, Schema.Null]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
       author: Schema.Struct({
         displayName: Schema.String,
         avatarUrl: Schema.Union([Schema.String, Schema.Null]),
@@ -602,57 +406,16 @@ export const ReservationWindowResponseDto = Schema.Struct({
     }),
   ),
   window: Schema.Struct({
-    from: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    to: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
+    from: DateTimeString,
+    to: DateTimeString,
   }),
 }).annotate({ identifier: "ReservationWindowResponseDto" });
 
-export type CreateReservationDto = {
-  readonly startsAt: string;
-  readonly endsAt: string;
-  readonly comment?: string;
-  readonly reminderMinutesBefore?: 0 | 5 | 15 | 30 | null;
-};
+export type CreateReservationDto = typeof CreateReservationDto.Type;
 
 export const CreateReservationDto = Schema.Struct({
-  startsAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-    }),
-  ),
-  endsAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-    }),
-  ),
+  startsAt: DateTimeWithOffsetString,
+  endsAt: DateTimeWithOffsetString,
   comment: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(128).annotate({
@@ -665,37 +428,7 @@ export const CreateReservationDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateReservationDto" });
 
-export type ReservationResponseDto = {
-  readonly id: number;
-  readonly spotId: string;
-  readonly spotName: string;
-  readonly startsAt: string;
-  readonly endsAt: string;
-  readonly comment: string | null;
-  readonly createdAt: string;
-  readonly author: {
-    readonly displayName: string;
-    readonly avatarUrl: string | null;
-  };
-  readonly sourceOrganization: {
-    readonly name: string;
-    readonly iconUrl: string | null;
-    readonly isCurrent: boolean;
-    readonly calendarPath: string;
-  };
-  readonly isMine: boolean;
-  readonly canEdit: boolean;
-  readonly canCancel: boolean;
-  readonly editingConstraints:
-    | ({
-        readonly reservationMaxDurationMinutes: number;
-        readonly reservationMinDurationMinutes: number;
-        readonly reservationTimeGranularityMinutes: number;
-        readonly reservationMaxAdvanceDays: number;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly reminderMinutesBefore: 0 | 5 | 15 | 30 | null;
-};
+export type ReservationResponseDto = typeof ReservationResponseDto.Type;
 
 export const ReservationResponseDto = Schema.Struct({
   id: Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -711,37 +444,10 @@ export const ReservationResponseDto = Schema.Struct({
     ),
   spotId: Schema.String,
   spotName: Schema.String,
-  startsAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  endsAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  startsAt: DateTimeString,
+  endsAt: DateTimeString,
   comment: Schema.Union([Schema.String, Schema.Null]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
   author: Schema.Struct({
     displayName: Schema.String,
     avatarUrl: Schema.Union([Schema.String, Schema.Null]),
@@ -830,39 +536,7 @@ export const ReservationResponseDto = Schema.Struct({
   ]),
 }).annotate({ identifier: "ReservationResponseDto" });
 
-export type MyReservationsResponseDto = {
-  readonly items: ReadonlyArray<{
-    readonly id: number;
-    readonly spotId: string;
-    readonly spotName: string;
-    readonly startsAt: string;
-    readonly endsAt: string;
-    readonly comment: string | null;
-    readonly createdAt: string;
-    readonly author: {
-      readonly displayName: string;
-      readonly avatarUrl: string | null;
-    };
-    readonly sourceOrganization: {
-      readonly name: string;
-      readonly iconUrl: string | null;
-      readonly isCurrent: boolean;
-      readonly calendarPath: string;
-    };
-    readonly isMine: boolean;
-    readonly canEdit: boolean;
-    readonly canCancel: boolean;
-    readonly editingConstraints:
-      | ({
-          readonly reservationMaxDurationMinutes: number;
-          readonly reservationMinDurationMinutes: number;
-          readonly reservationTimeGranularityMinutes: number;
-          readonly reservationMaxAdvanceDays: number;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly reminderMinutesBefore: 0 | 5 | 15 | 30 | null;
-  }>;
-};
+export type MyReservationsResponseDto = typeof MyReservationsResponseDto.Type;
 
 export const MyReservationsResponseDto = Schema.Struct({
   items: Schema.Array(
@@ -882,37 +556,10 @@ export const MyReservationsResponseDto = Schema.Struct({
         ),
       spotId: Schema.String,
       spotName: Schema.String,
-      startsAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      endsAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      startsAt: DateTimeString,
+      endsAt: DateTimeString,
       comment: Schema.Union([Schema.String, Schema.Null]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
       author: Schema.Struct({
         displayName: Schema.String,
         avatarUrl: Schema.Union([Schema.String, Schema.Null]),
@@ -1003,38 +650,11 @@ export const MyReservationsResponseDto = Schema.Struct({
   ),
 }).annotate({ identifier: "MyReservationsResponseDto" });
 
-export type UpdateReservationDto = {
-  readonly startsAt?: string;
-  readonly endsAt?: string;
-  readonly comment?: string | null;
-  readonly reminderMinutesBefore?: 0 | 5 | 15 | 30 | null;
-};
+export type UpdateReservationDto = typeof UpdateReservationDto.Type;
 
 export const UpdateReservationDto = Schema.Struct({
-  startsAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
-  endsAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  startsAt: Schema.optionalKey(DateTimeWithOffsetString),
+  endsAt: Schema.optionalKey(DateTimeWithOffsetString),
   comment: Schema.optionalKey(
     Schema.Union([
       Schema.String.check(
@@ -1056,109 +676,78 @@ export const UpdateReservationDto = Schema.Struct({
   )
   .annotate({ identifier: "UpdateReservationDto" });
 
-export type ListReservationSpotsPathParams = { readonly guildId: string };
+export type ListReservationSpotsPathParams =
+  typeof ListReservationSpotsPathParams.Type;
 
 export const ListReservationSpotsPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ListReservationSpots200 = ReservationSpotsResponseDto;
+export type ListReservationSpots200 = typeof ListReservationSpots200.Type;
 
 export const ListReservationSpots200 = ReservationSpotsResponseDto;
 
-export type ListSpotReservationsPathParams = {
-  readonly spotId: string;
-  readonly guildId: string;
-};
+export type ListSpotReservationsPathParams =
+  typeof ListSpotReservationsPathParams.Type;
 
 export const ListSpotReservationsPathParams = Schema.Struct({
   spotId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ListSpotReservationsQuery = {
-  readonly from: string;
-  readonly to: string;
-};
+export type ListSpotReservationsQuery = typeof ListSpotReservationsQuery.Type;
 
 export const ListSpotReservationsQuery = Schema.Struct({
-  from: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-    }),
-  ),
-  to: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-    }),
-  ),
+  from: DateTimeWithOffsetString,
+  to: DateTimeWithOffsetString,
 });
 
-export type ListSpotReservations200 = ReservationWindowResponseDto;
+export type ListSpotReservations200 = typeof ListSpotReservations200.Type;
 
 export const ListSpotReservations200 = ReservationWindowResponseDto;
 
-export type CreateReservationPathParams = {
-  readonly spotId: string;
-  readonly guildId: string;
-};
+export type CreateReservationPathParams =
+  typeof CreateReservationPathParams.Type;
 
 export const CreateReservationPathParams = Schema.Struct({
   spotId: Schema.String,
   guildId: Schema.String,
 });
 
-export type CreateReservationRequestJson = CreateReservationDto;
+export type CreateReservationRequestJson =
+  typeof CreateReservationRequestJson.Type;
 
 export const CreateReservationRequestJson = CreateReservationDto;
 
-export type CreateReservation201 = ReservationResponseDto;
+export type CreateReservation201 = typeof CreateReservation201.Type;
 
 export const CreateReservation201 = ReservationResponseDto;
 
-export type DeleteReservationPathParams = {
-  readonly reservationId: number;
-  readonly guildId: string;
-};
+export type DeleteReservationPathParams =
+  typeof DeleteReservationPathParams.Type;
 
 export const DeleteReservationPathParams = Schema.Struct({
-  reservationId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  reservationId: FiniteNumber,
   guildId: Schema.String,
 });
 
-export type PinReservationSpotPathParams = {
-  readonly spotId: string;
-  readonly guildId: string;
-};
+export type PinReservationSpotPathParams =
+  typeof PinReservationSpotPathParams.Type;
 
 export const PinReservationSpotPathParams = Schema.Struct({
   spotId: Schema.String,
   guildId: Schema.String,
 });
 
-export type UnpinReservationSpotPathParams = {
-  readonly spotId: string;
-  readonly guildId: string;
-};
+export type UnpinReservationSpotPathParams =
+  typeof UnpinReservationSpotPathParams.Type;
 
 export const UnpinReservationSpotPathParams = Schema.Struct({
   spotId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ListMyReservationsQuery = { readonly status?: "upcoming" | "past" };
+export type ListMyReservationsQuery = typeof ListMyReservationsQuery.Type;
 
 export const ListMyReservationsQuery = Schema.Struct({
   status: Schema.optionalKey(
@@ -1166,30 +755,29 @@ export const ListMyReservationsQuery = Schema.Struct({
   ),
 });
 
-export type ListMyReservations200 = MyReservationsResponseDto;
+export type ListMyReservations200 = typeof ListMyReservations200.Type;
 
 export const ListMyReservations200 = MyReservationsResponseDto;
 
-export type DeleteMyReservationPathParams = { readonly reservationId: number };
+export type DeleteMyReservationPathParams =
+  typeof DeleteMyReservationPathParams.Type;
 
 export const DeleteMyReservationPathParams = Schema.Struct({
-  reservationId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  reservationId: FiniteNumber,
 });
 
-export type UpdateMyReservationPathParams = { readonly reservationId: number };
+export type UpdateMyReservationPathParams =
+  typeof UpdateMyReservationPathParams.Type;
 
 export const UpdateMyReservationPathParams = Schema.Struct({
-  reservationId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  reservationId: FiniteNumber,
 });
 
-export type UpdateMyReservationRequestJson = UpdateReservationDto;
+export type UpdateMyReservationRequestJson =
+  typeof UpdateMyReservationRequestJson.Type;
 
 export const UpdateMyReservationRequestJson = UpdateReservationDto;
 
-export type UpdateMyReservation200 = ReservationResponseDto;
+export type UpdateMyReservation200 = typeof UpdateMyReservation200.Type;
 
 export const UpdateMyReservation200 = ReservationResponseDto;

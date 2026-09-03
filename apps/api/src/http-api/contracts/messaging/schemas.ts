@@ -1,34 +1,8 @@
 /** Transport schemas owned by the messaging HTTP module. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "../scalars.js";
 
-export type CreateNotificationDto = {
-  readonly message?: string;
-  readonly npc?: {
-    readonly id: number;
-    readonly name: string;
-    readonly location: string;
-    readonly lvl: number;
-    readonly prof?: string;
-    readonly wt: number;
-    readonly hpp?: number;
-    readonly x?: number;
-    readonly y?: number;
-    readonly icon: string;
-    readonly type: number;
-  };
-  readonly guildIds: ReadonlyArray<string>;
-  readonly world: string;
-  readonly isGatheringParty?: boolean;
-  readonly character?: {
-    readonly lvl: number;
-    readonly nick: string;
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly prof: string;
-    readonly icon: string;
-    readonly clan?: { readonly id?: number; readonly name?: string };
-  };
-};
+export type CreateNotificationDto = typeof CreateNotificationDto.Type;
 
 export const CreateNotificationDto = Schema.Struct({
   message: Schema.optionalKey(
@@ -40,9 +14,7 @@ export const CreateNotificationDto = Schema.Struct({
   ),
   npc: Schema.optionalKey(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       name: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
@@ -53,36 +25,18 @@ export const CreateNotificationDto = Schema.Struct({
           expected: "a value with a length of at least 1",
         }),
       ),
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
       prof: Schema.optionalKey(Schema.String),
-      wt: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      hpp: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      x: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      y: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      wt: FiniteNumber,
+      hpp: Schema.optionalKey(FiniteNumber),
+      x: Schema.optionalKey(FiniteNumber),
+      y: Schema.optionalKey(FiniteNumber),
       icon: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
         }),
       ),
-      type: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      type: FiniteNumber,
     }),
   ),
   guildIds: Schema.Array(
@@ -114,9 +68,7 @@ export const CreateNotificationDto = Schema.Struct({
   isGatheringParty: Schema.optionalKey(Schema.Boolean),
   character: Schema.optionalKey(
     Schema.Struct({
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
       nick: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
@@ -164,11 +116,7 @@ export const CreateNotificationDto = Schema.Struct({
       ),
       clan: Schema.optionalKey(
         Schema.Struct({
-          id: Schema.optionalKey(
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-          ),
+          id: Schema.optionalKey(FiniteNumber),
           name: Schema.optionalKey(
             Schema.String.check(
               Schema.isMaxLength(255).annotate({
@@ -203,10 +151,8 @@ export const CreateNotificationDto = Schema.Struct({
   )
   .annotate({ identifier: "CreateNotificationDto" });
 
-export type NotificationResponseDto_Output = {
-  readonly notificationId: string;
-  readonly guildIds: ReadonlyArray<string>;
-};
+export type NotificationResponseDto_Output =
+  typeof NotificationResponseDto_Output.Type;
 
 export const NotificationResponseDto_Output = Schema.Struct({
   notificationId: Schema.String.check(
@@ -223,10 +169,8 @@ export const NotificationResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "NotificationResponseDto_Output" });
 
-export type NotificationRateLimitResponseDto = {
-  readonly message: "NOTIFICATION_RATE_LIMITED";
-  readonly retryAfterMs: number;
-};
+export type NotificationRateLimitResponseDto =
+  typeof NotificationRateLimitResponseDto.Type;
 
 export const NotificationRateLimitResponseDto = Schema.Struct({
   message: Schema.Literal("NOTIFICATION_RATE_LIMITED"),
@@ -243,19 +187,7 @@ export const NotificationRateLimitResponseDto = Schema.Struct({
     ),
 }).annotate({ identifier: "NotificationRateLimitResponseDto" });
 
-export type CreateVolunteerDto = {
-  readonly world: string;
-  readonly targetDiscordId: string;
-  readonly character: {
-    readonly lvl: number;
-    readonly nick: string;
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly prof: string;
-    readonly icon: string;
-    readonly clan?: { readonly id?: number; readonly name?: string };
-  };
-};
+export type CreateVolunteerDto = typeof CreateVolunteerDto.Type;
 
 export const CreateVolunteerDto = Schema.Struct({
   world: Schema.String.check(
@@ -277,9 +209,7 @@ export const CreateVolunteerDto = Schema.Struct({
     }),
   ),
   character: Schema.Struct({
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     nick: Schema.String.check(
       Schema.isMinLength(1).annotate({
         expected: "a value with a length of at least 1",
@@ -327,11 +257,7 @@ export const CreateVolunteerDto = Schema.Struct({
     ),
     clan: Schema.optionalKey(
       Schema.Struct({
-        id: Schema.optionalKey(
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-        ),
+        id: Schema.optionalKey(FiniteNumber),
         name: Schema.optionalKey(
           Schema.String.check(
             Schema.isMaxLength(255).annotate({
@@ -345,31 +271,31 @@ export const CreateVolunteerDto = Schema.Struct({
 }).annotate({ identifier: "CreateVolunteerDto" });
 
 export type MessagingControllerSendNotificationRequestJson =
-  CreateNotificationDto;
+  typeof MessagingControllerSendNotificationRequestJson.Type;
 
 export const MessagingControllerSendNotificationRequestJson =
   CreateNotificationDto;
 
 export type MessagingControllerSendNotification201 =
-  NotificationResponseDto_Output;
+  typeof MessagingControllerSendNotification201.Type;
 
 export const MessagingControllerSendNotification201 =
   NotificationResponseDto_Output;
 
 export type MessagingControllerSendNotification429 =
-  NotificationRateLimitResponseDto;
+  typeof MessagingControllerSendNotification429.Type;
 
 export const MessagingControllerSendNotification429 =
   NotificationRateLimitResponseDto;
 
-export type MessagingControllerVolunteerPathParams = {
-  readonly notificationId: string;
-};
+export type MessagingControllerVolunteerPathParams =
+  typeof MessagingControllerVolunteerPathParams.Type;
 
 export const MessagingControllerVolunteerPathParams = Schema.Struct({
   notificationId: Schema.String,
 });
 
-export type MessagingControllerVolunteerRequestJson = CreateVolunteerDto;
+export type MessagingControllerVolunteerRequestJson =
+  typeof MessagingControllerVolunteerRequestJson.Type;
 
 export const MessagingControllerVolunteerRequestJson = CreateVolunteerDto;

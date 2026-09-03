@@ -1,78 +1,13 @@
 /** Transport schemas owned by the members HTTP module. */
 import * as Schema from "effect/Schema";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
-export type NullableMemberResponseDto =
-  | ({
-      readonly id: number;
-      readonly userId: string;
-      readonly guildId: string;
-      readonly type: "OWNER" | "ADMIN" | "USER" | "BOT";
-      readonly name: string;
-      readonly avatar?: string | null;
-      readonly banner?: string | null;
-      readonly active: boolean;
-      readonly roles: ReadonlyArray<{
-        readonly id: string;
-        readonly guildId: string;
-        readonly name: string;
-        readonly color: number | null;
-        readonly position?: number | null;
-        readonly permissions: ReadonlyArray<
-          | "OWNER"
-          | "ADMIN"
-          | "LOOTLOG_MANAGE"
-          | "LOOTLOG_ACCESS"
-          | "LOOTLOG_LOOTS_READ"
-          | "LOOTLOG_LOOTS_WRITE"
-          | "LOOTLOG_LOOTS_ARCHIVE"
-          | "LOOTLOG_LOOTS_TITANS_READ"
-          | "LOOTLOG_LOOTS_HEROES_READ"
-          | "LOOTLOG_TIMERS_READ"
-          | "LOOTLOG_TIMERS_WRITE"
-          | "LOOTLOG_TIMERS_RESET"
-          | "LOOTLOG_TIMERS_DELETE"
-          | "LOOTLOG_TIMERS_TITANS_READ"
-          | "LOOTLOG_TIMERS_HEROES_READ"
-          | "LOOTLOG_RESERVATIONS_READ"
-          | "LOOTLOG_RESERVATIONS_WRITE"
-          | "LOOTLOG_MEMBERS_READ"
-          | "LOOTLOG_ONLINE_PLAYERS_READ"
-          | "LOOTLOG_PRESENCE_LOCATION_READ"
-          | "LOOTLOG_CHAT_READ"
-          | "LOOTLOG_CHAT_WRITE"
-          | "LOOTLOG_CHAT_TITANS_READ"
-          | "LOOTLOG_CHAT_HEROES_READ"
-          | "LOOTLOG_NOTIFICATIONS_READ"
-          | "LOOTLOG_NOTIFICATIONS_SEND"
-          | "LOOTLOG_NOTIFICATIONS_TITANS_READ"
-          | "LOOTLOG_NOTIFICATIONS_HEROES_READ"
-          | "LOOTLOG_EVENTS_MANAGE"
-          | "LOOTLOG_EVENTS_READ"
-          | "LOOTLOG_EVENTS_WRITE"
-          | "LOOTLOG_DOCS_READ"
-          | "LOOTLOG_DOCS_WRITE"
-        >;
-        readonly lvlRangeFrom?: number | null;
-        readonly lvlRangeTo?: number | null;
-      }>;
-      readonly globalUserId?: string | null;
-      readonly lastDiscordSyncAt?: string | null;
-      readonly lastDiscordAttemptAt?: string | null;
-      readonly lastDiscordStatus?: string | null;
-      readonly isStale?: boolean;
-      readonly staleWarning?: string;
-      readonly refreshQueued?: boolean;
-      readonly nextRefreshAt?: string | null;
-      readonly updatedAt: string;
-    } & { readonly [x: string]: Schema.Json })
-  | null;
+export type NullableMemberResponseDto = typeof NullableMemberResponseDto.Type;
 
 export const NullableMemberResponseDto = Schema.Union([
   Schema.StructWithRest(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       userId: Schema.String,
       guildId: Schema.String,
       type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
@@ -85,19 +20,9 @@ export const NullableMemberResponseDto = Schema.Union([
           id: Schema.String,
           guildId: Schema.String,
           name: Schema.String,
-          color: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          color: Schema.Union([FiniteNumber, Schema.Null]),
           position: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
           permissions: Schema.Array(
             Schema.Literals([
@@ -137,20 +62,10 @@ export const NullableMemberResponseDto = Schema.Union([
             ]),
           ),
           lvlRangeFrom: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
           lvlRangeTo: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
         }),
       ),
@@ -158,34 +73,10 @@ export const NullableMemberResponseDto = Schema.Union([
         Schema.Union([Schema.String, Schema.Null]),
       ),
       lastDiscordSyncAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
       lastDiscordAttemptAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
       lastDiscordStatus: Schema.optionalKey(
         Schema.Union([Schema.String, Schema.Null]),
@@ -194,30 +85,9 @@ export const NullableMemberResponseDto = Schema.Union([
       staleWarning: Schema.optionalKey(Schema.String),
       refreshQueued: Schema.optionalKey(Schema.Boolean),
       nextRefreshAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      updatedAt: DateTimeString,
     }),
     [
       Schema.Record(
@@ -229,74 +99,10 @@ export const NullableMemberResponseDto = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "NullableMemberResponseDto" });
 
-export type MemberResponseDto = {
-  readonly id: number;
-  readonly userId: string;
-  readonly guildId: string;
-  readonly type: "OWNER" | "ADMIN" | "USER" | "BOT";
-  readonly name: string;
-  readonly avatar?: string | null;
-  readonly banner?: string | null;
-  readonly active: boolean;
-  readonly roles: ReadonlyArray<{
-    readonly id: string;
-    readonly guildId: string;
-    readonly name: string;
-    readonly color: number | null;
-    readonly position?: number | null;
-    readonly permissions: ReadonlyArray<
-      | "OWNER"
-      | "ADMIN"
-      | "LOOTLOG_MANAGE"
-      | "LOOTLOG_ACCESS"
-      | "LOOTLOG_LOOTS_READ"
-      | "LOOTLOG_LOOTS_WRITE"
-      | "LOOTLOG_LOOTS_ARCHIVE"
-      | "LOOTLOG_LOOTS_TITANS_READ"
-      | "LOOTLOG_LOOTS_HEROES_READ"
-      | "LOOTLOG_TIMERS_READ"
-      | "LOOTLOG_TIMERS_WRITE"
-      | "LOOTLOG_TIMERS_RESET"
-      | "LOOTLOG_TIMERS_DELETE"
-      | "LOOTLOG_TIMERS_TITANS_READ"
-      | "LOOTLOG_TIMERS_HEROES_READ"
-      | "LOOTLOG_RESERVATIONS_READ"
-      | "LOOTLOG_RESERVATIONS_WRITE"
-      | "LOOTLOG_MEMBERS_READ"
-      | "LOOTLOG_ONLINE_PLAYERS_READ"
-      | "LOOTLOG_PRESENCE_LOCATION_READ"
-      | "LOOTLOG_CHAT_READ"
-      | "LOOTLOG_CHAT_WRITE"
-      | "LOOTLOG_CHAT_TITANS_READ"
-      | "LOOTLOG_CHAT_HEROES_READ"
-      | "LOOTLOG_NOTIFICATIONS_READ"
-      | "LOOTLOG_NOTIFICATIONS_SEND"
-      | "LOOTLOG_NOTIFICATIONS_TITANS_READ"
-      | "LOOTLOG_NOTIFICATIONS_HEROES_READ"
-      | "LOOTLOG_EVENTS_MANAGE"
-      | "LOOTLOG_EVENTS_READ"
-      | "LOOTLOG_EVENTS_WRITE"
-      | "LOOTLOG_DOCS_READ"
-      | "LOOTLOG_DOCS_WRITE"
-    >;
-    readonly lvlRangeFrom?: number | null;
-    readonly lvlRangeTo?: number | null;
-  }>;
-  readonly globalUserId?: string | null;
-  readonly lastDiscordSyncAt?: string | null;
-  readonly lastDiscordAttemptAt?: string | null;
-  readonly lastDiscordStatus?: string | null;
-  readonly isStale?: boolean;
-  readonly staleWarning?: string;
-  readonly refreshQueued?: boolean;
-  readonly nextRefreshAt?: string | null;
-  readonly updatedAt: string;
-};
+export type MemberResponseDto = typeof MemberResponseDto.Type;
 
 export const MemberResponseDto = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   userId: Schema.String,
   guildId: Schema.String,
   type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
@@ -309,20 +115,8 @@ export const MemberResponseDto = Schema.Struct({
       id: Schema.String,
       guildId: Schema.String,
       name: Schema.String,
-      color: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
-      position: Schema.optionalKey(
-        Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
-      ),
+      color: Schema.Union([FiniteNumber, Schema.Null]),
+      position: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
       permissions: Schema.Array(
         Schema.Literals([
           "OWNER",
@@ -361,53 +155,17 @@ export const MemberResponseDto = Schema.Struct({
         ]),
       ),
       lvlRangeFrom: Schema.optionalKey(
-        Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([FiniteNumber, Schema.Null]),
       ),
-      lvlRangeTo: Schema.optionalKey(
-        Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
-      ),
+      lvlRangeTo: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
     }),
   ),
   globalUserId: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
   lastDiscordSyncAt: Schema.optionalKey(
-    Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([DateTimeString, Schema.Null]),
   ),
   lastDiscordAttemptAt: Schema.optionalKey(
-    Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([DateTimeString, Schema.Null]),
   ),
   lastDiscordStatus: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Null]),
@@ -416,62 +174,20 @@ export const MemberResponseDto = Schema.Struct({
   staleWarning: Schema.optionalKey(Schema.String),
   refreshQueued: Schema.optionalKey(Schema.Boolean),
   nextRefreshAt: Schema.optionalKey(
-    Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([DateTimeString, Schema.Null]),
   ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "MemberResponseDto" });
 
-export type MemberLootlogConfigSummaryResponseDto_Output = {
-  readonly memberUserId: string;
-  readonly guildId: string;
-  readonly isActive: boolean;
-  readonly configuredCharacterCount: number;
-  readonly enabledCharacterCount: number;
-  readonly characters: ReadonlyArray<{
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly enabledForGuild: boolean;
-    readonly characterName: string | null;
-    readonly world: string | null;
-    readonly icon: string | null;
-    readonly metadataStatus:
-      | "resolved"
-      | "missing_snapshot"
-      | "invalid_character_ref";
-  }>;
-};
+export type MemberLootlogConfigSummaryResponseDto_Output =
+  typeof MemberLootlogConfigSummaryResponseDto_Output.Type;
 
 export const MemberLootlogConfigSummaryResponseDto_Output = Schema.Struct({
   memberUserId: Schema.String,
   guildId: Schema.String,
   isActive: Schema.Boolean,
-  configuredCharacterCount: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  enabledCharacterCount: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  configuredCharacterCount: FiniteNumber,
+  enabledCharacterCount: FiniteNumber,
   characters: Schema.Array(
     Schema.Struct({
       accountId: Schema.String,
@@ -489,185 +205,60 @@ export const MemberLootlogConfigSummaryResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "MemberLootlogConfigSummaryResponseDto_Output" });
 
-export type MemberReferenceResponseDto_Output = {
-  readonly id: number;
-  readonly userId: string;
-  readonly name: string;
-  readonly avatar?: string | null;
-  readonly color: number | null;
-  readonly active: boolean;
-};
+export type MemberReferenceResponseDto_Output =
+  typeof MemberReferenceResponseDto_Output.Type;
 
 export const MemberReferenceResponseDto_Output = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   userId: Schema.String,
   name: Schema.String,
   avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  color: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  color: Schema.Union([FiniteNumber, Schema.Null]),
   active: Schema.Boolean,
 }).annotate({ identifier: "MemberReferenceResponseDto_Output" });
 
-export type MemberSummaryResponseDto_Output = {
-  readonly id: number;
-  readonly userId: string;
-  readonly name: string;
-  readonly avatar?: string | null;
-  readonly color?: number | null;
-};
+export type MemberSummaryResponseDto_Output =
+  typeof MemberSummaryResponseDto_Output.Type;
 
 export const MemberSummaryResponseDto_Output = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   userId: Schema.String,
   name: Schema.String,
   avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  color: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
-  ),
+  color: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
 }).annotate({ identifier: "MemberSummaryResponseDto_Output" });
 
-export type MemberRefreshJobResponseDto = {
-  readonly id: number;
-  readonly guildId: string;
-  readonly status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-  readonly totalMembers: number;
-  readonly processedMembers: number;
-  readonly failedMembers: number;
-  readonly createdAt: string;
-  readonly nextAvailableAt: string;
-  readonly completedAt?: string | null;
-};
+export type MemberRefreshJobResponseDto =
+  typeof MemberRefreshJobResponseDto.Type;
 
 export const MemberRefreshJobResponseDto = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   guildId: Schema.String,
   status: Schema.Literals(["PENDING", "PROCESSING", "COMPLETED", "FAILED"]),
-  totalMembers: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  processedMembers: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  failedMembers: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  nextAvailableAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  completedAt: Schema.optionalKey(
-    Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
-  ),
+  totalMembers: FiniteNumber,
+  processedMembers: FiniteNumber,
+  failedMembers: FiniteNumber,
+  createdAt: DateTimeString,
+  nextAvailableAt: DateTimeString,
+  completedAt: Schema.optionalKey(Schema.Union([DateTimeString, Schema.Null])),
 }).annotate({ identifier: "MemberRefreshJobResponseDto" });
 
 export type NullableMemberRefreshJobResponseDto =
-  | ({
-      readonly id: number;
-      readonly guildId: string;
-      readonly status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-      readonly totalMembers: number;
-      readonly processedMembers: number;
-      readonly failedMembers: number;
-      readonly createdAt: string;
-      readonly nextAvailableAt: string;
-      readonly completedAt?: string | null;
-    } & { readonly [x: string]: Schema.Json })
-  | null;
+  typeof NullableMemberRefreshJobResponseDto.Type;
 
 export const NullableMemberRefreshJobResponseDto = Schema.Union([
   Schema.StructWithRest(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       guildId: Schema.String,
       status: Schema.Literals(["PENDING", "PROCESSING", "COMPLETED", "FAILED"]),
-      totalMembers: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      processedMembers: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      failedMembers: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      nextAvailableAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      totalMembers: FiniteNumber,
+      processedMembers: FiniteNumber,
+      failedMembers: FiniteNumber,
+      createdAt: DateTimeString,
+      nextAvailableAt: DateTimeString,
       completedAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
     }),
     [
@@ -680,58 +271,57 @@ export const NullableMemberRefreshJobResponseDto = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "NullableMemberRefreshJobResponseDto" });
 
-export type MembersControllerGetMePathParams = { readonly guildId: string };
+export type MembersControllerGetMePathParams =
+  typeof MembersControllerGetMePathParams.Type;
 
 export const MembersControllerGetMePathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
-export type MembersControllerGetMe200 = NullableMemberResponseDto;
+export type MembersControllerGetMe200 = typeof MembersControllerGetMe200.Type;
 
 export const MembersControllerGetMe200 = NullableMemberResponseDto;
 
-export type MembersControllerRefreshMePathParams = { readonly guildId: string };
+export type MembersControllerRefreshMePathParams =
+  typeof MembersControllerRefreshMePathParams.Type;
 
 export const MembersControllerRefreshMePathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
-export type MembersControllerRefreshMe200 = NullableMemberResponseDto;
+export type MembersControllerRefreshMe200 =
+  typeof MembersControllerRefreshMe200.Type;
 
 export const MembersControllerRefreshMe200 = NullableMemberResponseDto;
 
-export type MembersControllerRefreshMemberPathParams = {
-  readonly discordId: string;
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerRefreshMemberPathParams =
+  typeof MembersControllerRefreshMemberPathParams.Type;
 
 export const MembersControllerRefreshMemberPathParams = Schema.Struct({
   discordId: Schema.String.annotate({ examples: ["user_123"] }),
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type MembersControllerRefreshMember200 = NullableMemberResponseDto;
+export type MembersControllerRefreshMember200 =
+  typeof MembersControllerRefreshMember200.Type;
 
 export const MembersControllerRefreshMember200 = NullableMemberResponseDto;
 
-export type MembersControllerDeactivateMemberPathParams = {
-  readonly discordId: string;
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerDeactivateMemberPathParams =
+  typeof MembersControllerDeactivateMemberPathParams.Type;
 
 export const MembersControllerDeactivateMemberPathParams = Schema.Struct({
   discordId: Schema.String.annotate({ examples: ["user_123"] }),
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type MembersControllerDeactivateMember200 = MemberResponseDto;
+export type MembersControllerDeactivateMember200 =
+  typeof MembersControllerDeactivateMember200.Type;
 
 export const MembersControllerDeactivateMember200 = MemberResponseDto;
 
-export type MembersControllerGetMemberLootlogConfigSummaryPathParams = {
-  readonly discordId: string;
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerGetMemberLootlogConfigSummaryPathParams =
+  typeof MembersControllerGetMemberLootlogConfigSummaryPathParams.Type;
 
 export const MembersControllerGetMemberLootlogConfigSummaryPathParams =
   Schema.Struct({
@@ -740,111 +330,101 @@ export const MembersControllerGetMemberLootlogConfigSummaryPathParams =
   });
 
 export type MembersControllerGetMemberLootlogConfigSummary200 =
-  MemberLootlogConfigSummaryResponseDto_Output;
+  typeof MembersControllerGetMemberLootlogConfigSummary200.Type;
 
 export const MembersControllerGetMemberLootlogConfigSummary200 =
   MemberLootlogConfigSummaryResponseDto_Output;
 
-export type MembersControllerGetGuildMembersPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerGetGuildMembersPathParams =
+  typeof MembersControllerGetGuildMembersPathParams.Type;
 
 export const MembersControllerGetGuildMembersPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type MembersControllerGetGuildMembersQuery = {
-  readonly includeInactive?: boolean;
-};
+export type MembersControllerGetGuildMembersQuery =
+  typeof MembersControllerGetGuildMembersQuery.Type;
 
 export const MembersControllerGetGuildMembersQuery = Schema.Struct({
   includeInactive: Schema.optionalKey(Schema.Boolean),
 });
 
 export type MembersControllerGetGuildMembers200 =
-  ReadonlyArray<MemberResponseDto>;
+  typeof MembersControllerGetGuildMembers200.Type;
 
 export const MembersControllerGetGuildMembers200 =
   Schema.Array(MemberResponseDto);
 
-export type MembersControllerGetGuildMemberReferencesPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerGetGuildMemberReferencesPathParams =
+  typeof MembersControllerGetGuildMemberReferencesPathParams.Type;
 
 export const MembersControllerGetGuildMemberReferencesPathParams =
   Schema.Struct({ guildId: Schema.Json.annotate({ expected: "JSON value" }) });
 
-export type MembersControllerGetGuildMemberReferencesQuery = {
-  readonly includeInactive?: boolean;
-};
+export type MembersControllerGetGuildMemberReferencesQuery =
+  typeof MembersControllerGetGuildMemberReferencesQuery.Type;
 
 export const MembersControllerGetGuildMemberReferencesQuery = Schema.Struct({
   includeInactive: Schema.optionalKey(Schema.Boolean),
 });
 
 export type MembersControllerGetGuildMemberReferences200 =
-  ReadonlyArray<MemberReferenceResponseDto_Output>;
+  typeof MembersControllerGetGuildMemberReferences200.Type;
 
 export const MembersControllerGetGuildMemberReferences200 = Schema.Array(
   MemberReferenceResponseDto_Output,
 );
 
-export type MembersControllerGetGuildMembersSummaryPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerGetGuildMembersSummaryPathParams =
+  typeof MembersControllerGetGuildMembersSummaryPathParams.Type;
 
 export const MembersControllerGetGuildMembersSummaryPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
 export type MembersControllerGetGuildMembersSummary200 =
-  ReadonlyArray<MemberSummaryResponseDto_Output>;
+  typeof MembersControllerGetGuildMembersSummary200.Type;
 
 export const MembersControllerGetGuildMembersSummary200 = Schema.Array(
   MemberSummaryResponseDto_Output,
 );
 
-export type MembersControllerRefreshAllMembersPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerRefreshAllMembersPathParams =
+  typeof MembersControllerRefreshAllMembersPathParams.Type;
 
 export const MembersControllerRefreshAllMembersPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type MembersControllerRefreshAllMembers201 = MemberRefreshJobResponseDto;
+export type MembersControllerRefreshAllMembers201 =
+  typeof MembersControllerRefreshAllMembers201.Type;
 
 export const MembersControllerRefreshAllMembers201 =
   MemberRefreshJobResponseDto;
 
-export type MembersControllerGetLatestRefreshJobPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerGetLatestRefreshJobPathParams =
+  typeof MembersControllerGetLatestRefreshJobPathParams.Type;
 
 export const MembersControllerGetLatestRefreshJobPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
 export type MembersControllerGetLatestRefreshJob200 =
-  NullableMemberRefreshJobResponseDto;
+  typeof MembersControllerGetLatestRefreshJob200.Type;
 
 export const MembersControllerGetLatestRefreshJob200 =
   NullableMemberRefreshJobResponseDto;
 
-export type MembersControllerGetRefreshJobStatusPathParams = {
-  readonly jobId: number;
-  readonly guildId: Schema.Json;
-};
+export type MembersControllerGetRefreshJobStatusPathParams =
+  typeof MembersControllerGetRefreshJobStatusPathParams.Type;
 
 export const MembersControllerGetRefreshJobStatusPathParams = Schema.Struct({
-  jobId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  jobId: FiniteNumber,
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
 export type MembersControllerGetRefreshJobStatus200 =
-  MemberRefreshJobResponseDto;
+  typeof MembersControllerGetRefreshJobStatus200.Type;
 
 export const MembersControllerGetRefreshJobStatus200 =
   MemberRefreshJobResponseDto;

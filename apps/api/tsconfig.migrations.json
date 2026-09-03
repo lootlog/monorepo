@@ -1,15 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "noEmit": true,
     "rootDir": "."
   },
-  "exclude": [
-    "node_modules",
-    "test",
-    "dist",
-    "**/*spec.ts",
-    "scripts",
-    "generated",
+  "files": [
     "src/database/drizzle/adoption.ts",
     "src/database/drizzle/expected-catalog.ts",
     "src/database/drizzle/migrate.ts"

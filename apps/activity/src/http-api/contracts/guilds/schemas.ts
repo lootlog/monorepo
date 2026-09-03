@@ -1,34 +1,13 @@
 /** Transport schemas owned by the guilds HTTP module. */
 import * as Schema from "effect/Schema";
+import {
+  DateTimeWithOffsetString,
+  DateTimeString,
+  FiniteNumber,
+} from "../scalars.js";
 
-export type PaginatedActivitiesResponseDto = {
-  readonly data: ReadonlyArray<{
-    readonly id: string;
-    readonly userId: string;
-    readonly guildId: string;
-    readonly discordId: string;
-    readonly type: "CONNECT_EVENT" | "DISCONNECT_EVENT";
-    readonly source: "GAME" | "WEB_APP";
-    readonly createdAt: string;
-    readonly world?: string | null;
-    readonly details?: { readonly [x: string]: Schema.Json };
-    readonly actorSnapshot?: {
-      readonly id: string;
-      readonly accountId: number;
-      readonly characterId: number;
-      readonly name: string;
-      readonly clanName?: string | null;
-      readonly clanId?: number | null;
-      readonly icon: string;
-      readonly lvl: number;
-      readonly prof: string;
-      readonly source: "GAME" | "WEB_APP";
-      readonly createdAt: string;
-    };
-  }>;
-  readonly nextCursor?: string;
-  readonly hasMore: boolean;
-};
+export type PaginatedActivitiesResponseDto =
+  typeof PaginatedActivitiesResponseDto.Type;
 
 export const PaginatedActivitiesResponseDto = Schema.Struct({
   data: Schema.Array(
@@ -39,16 +18,7 @@ export const PaginatedActivitiesResponseDto = Schema.Struct({
       discordId: Schema.String,
       type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
       source: Schema.Literals(["GAME", "WEB_APP"]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
       world: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
       details: Schema.optionalKey(
         Schema.Record(
@@ -59,40 +29,18 @@ export const PaginatedActivitiesResponseDto = Schema.Struct({
       actorSnapshot: Schema.optionalKey(
         Schema.Struct({
           id: Schema.String,
-          accountId: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          characterId: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          accountId: FiniteNumber,
+          characterId: FiniteNumber,
           name: Schema.String,
           clanName: Schema.optionalKey(
             Schema.Union([Schema.String, Schema.Null]),
           ),
-          clanId: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
-          ),
+          clanId: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
           icon: Schema.String,
-          lvl: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          lvl: FiniteNumber,
           prof: Schema.String,
           source: Schema.Literals(["GAME", "WEB_APP"]),
-          createdAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          createdAt: DateTimeString,
         }),
       ),
     }),
@@ -101,40 +49,29 @@ export const PaginatedActivitiesResponseDto = Schema.Struct({
   hasMore: Schema.Boolean,
 }).annotate({ identifier: "PaginatedActivitiesResponseDto" });
 
-export type ActorNameSuggestionsResponseDto_Output = {
-  readonly suggestions: ReadonlyArray<string>;
-};
+export type ActorNameSuggestionsResponseDto_Output =
+  typeof ActorNameSuggestionsResponseDto_Output.Type;
 
 export const ActorNameSuggestionsResponseDto_Output = Schema.Struct({
   suggestions: Schema.Array(Schema.String),
 }).annotate({ identifier: "ActorNameSuggestionsResponseDto_Output" });
 
-export type WorldSuggestionsResponseDto_Output = {
-  readonly worlds: ReadonlyArray<string>;
-};
+export type WorldSuggestionsResponseDto_Output =
+  typeof WorldSuggestionsResponseDto_Output.Type;
 
 export const WorldSuggestionsResponseDto_Output = Schema.Struct({
   worlds: Schema.Array(Schema.String),
 }).annotate({ identifier: "WorldSuggestionsResponseDto_Output" });
 
-export type ClanNameSuggestionsResponseDto_Output = {
-  readonly suggestions: ReadonlyArray<string>;
-};
+export type ClanNameSuggestionsResponseDto_Output =
+  typeof ClanNameSuggestionsResponseDto_Output.Type;
 
 export const ClanNameSuggestionsResponseDto_Output = Schema.Struct({
   suggestions: Schema.Array(Schema.String),
 }).annotate({ identifier: "ClanNameSuggestionsResponseDto_Output" });
 
-export type MemberActivityStatsResponseDto = {
-  readonly guildId: string;
-  readonly discordId: string;
-  readonly source: "GAME" | "WEB_APP";
-  readonly lastSeenAt?: string | null;
-  readonly visitCount: number;
-  readonly activeSessionCount: number;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-};
+export type MemberActivityStatsResponseDto =
+  typeof MemberActivityStatsResponseDto.Type;
 
 export const MemberActivityStatsResponseDto = Schema.Struct({
   guildId: Schema.String,
@@ -155,58 +92,13 @@ export const MemberActivityStatsResponseDto = Schema.Struct({
       Schema.Null,
     ]).annotate({ format: "date-time" }),
   ),
-  visitCount: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  activeSessionCount: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  visitCount: FiniteNumber,
+  activeSessionCount: FiniteNumber,
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "MemberActivityStatsResponseDto" });
 
-export type ActivityResponseDto = {
-  readonly id: string;
-  readonly userId: string;
-  readonly guildId: string;
-  readonly discordId: string;
-  readonly type: "CONNECT_EVENT" | "DISCONNECT_EVENT";
-  readonly source: "GAME" | "WEB_APP";
-  readonly createdAt: string;
-  readonly world?: string | null;
-  readonly details?: { readonly [x: string]: Schema.Json };
-  readonly actorSnapshot?: {
-    readonly id: string;
-    readonly accountId: number;
-    readonly characterId: number;
-    readonly name: string;
-    readonly clanName?: string | null;
-    readonly clanId?: number | null;
-    readonly icon: string;
-    readonly lvl: number;
-    readonly prof: string;
-    readonly source: "GAME" | "WEB_APP";
-    readonly createdAt: string;
-  };
-};
+export type ActivityResponseDto = typeof ActivityResponseDto.Type;
 
 export const ActivityResponseDto = Schema.Struct({
   id: Schema.String,
@@ -215,16 +107,7 @@ export const ActivityResponseDto = Schema.Struct({
   discordId: Schema.String,
   type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
   source: Schema.Literals(["GAME", "WEB_APP"]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
   world: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
   details: Schema.optionalKey(
     Schema.Record(
@@ -235,69 +118,36 @@ export const ActivityResponseDto = Schema.Struct({
   actorSnapshot: Schema.optionalKey(
     Schema.Struct({
       id: Schema.String,
-      accountId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      characterId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      accountId: FiniteNumber,
+      characterId: FiniteNumber,
       name: Schema.String,
       clanName: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-      clanId: Schema.optionalKey(
-        Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
-      ),
+      clanId: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
       icon: Schema.String,
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
       prof: Schema.String,
       source: Schema.Literals(["GAME", "WEB_APP"]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
     }),
   ),
 }).annotate({ identifier: "ActivityResponseDto" });
 
-export type DeleteActivityResponseDto_Output = { readonly count: number };
+export type DeleteActivityResponseDto_Output =
+  typeof DeleteActivityResponseDto_Output.Type;
 
 export const DeleteActivityResponseDto_Output = Schema.Struct({
-  count: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  count: FiniteNumber,
 }).annotate({ identifier: "DeleteActivityResponseDto_Output" });
 
-export type ActivitiesControllerFindByGuildPathParams = {
-  readonly guildId: string;
-};
+export type ActivitiesControllerFindByGuildPathParams =
+  typeof ActivitiesControllerFindByGuildPathParams.Type;
 
 export const ActivitiesControllerFindByGuildPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ActivitiesControllerFindByGuildQuery = {
-  readonly type?: ReadonlyArray<"CONNECT_EVENT" | "DISCONNECT_EVENT">;
-  readonly source?: ReadonlyArray<"GAME" | "WEB_APP">;
-  readonly playerName?: string;
-  readonly clanName?: string;
-  readonly world?: string;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly limit?: number;
-};
+export type ActivitiesControllerFindByGuildQuery =
+  typeof ActivitiesControllerFindByGuildQuery.Type;
 
 export const ActivitiesControllerFindByGuildQuery = Schema.Struct({
   type: Schema.optionalKey(
@@ -309,30 +159,8 @@ export const ActivitiesControllerFindByGuildQuery = Schema.Struct({
   playerName: Schema.optionalKey(Schema.String),
   clanName: Schema.optionalKey(Schema.String),
   world: Schema.optionalKey(Schema.String),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeWithOffsetString),
+  endDate: Schema.optionalKey(DateTimeWithOffsetString),
   cursor: Schema.optionalKey(Schema.String),
   limit: Schema.optionalKey(
     Schema.Number.annotate({ default: 50 })
@@ -350,23 +178,21 @@ export const ActivitiesControllerFindByGuildQuery = Schema.Struct({
   ),
 });
 
-export type ActivitiesControllerFindByGuild200 = PaginatedActivitiesResponseDto;
+export type ActivitiesControllerFindByGuild200 =
+  typeof ActivitiesControllerFindByGuild200.Type;
 
 export const ActivitiesControllerFindByGuild200 =
   PaginatedActivitiesResponseDto;
 
-export type ActivitiesControllerSuggestActorNamesPathParams = {
-  readonly guildId: string;
-};
+export type ActivitiesControllerSuggestActorNamesPathParams =
+  typeof ActivitiesControllerSuggestActorNamesPathParams.Type;
 
 export const ActivitiesControllerSuggestActorNamesPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ActivitiesControllerSuggestActorNamesQuery = {
-  readonly search?: string;
-  readonly limit?: number;
-};
+export type ActivitiesControllerSuggestActorNamesQuery =
+  typeof ActivitiesControllerSuggestActorNamesQuery.Type;
 
 export const ActivitiesControllerSuggestActorNamesQuery = Schema.Struct({
   search: Schema.optionalKey(
@@ -393,23 +219,20 @@ export const ActivitiesControllerSuggestActorNamesQuery = Schema.Struct({
 });
 
 export type ActivitiesControllerSuggestActorNames200 =
-  ActorNameSuggestionsResponseDto_Output;
+  typeof ActivitiesControllerSuggestActorNames200.Type;
 
 export const ActivitiesControllerSuggestActorNames200 =
   ActorNameSuggestionsResponseDto_Output;
 
-export type ActivitiesControllerSuggestWorldsPathParams = {
-  readonly guildId: string;
-};
+export type ActivitiesControllerSuggestWorldsPathParams =
+  typeof ActivitiesControllerSuggestWorldsPathParams.Type;
 
 export const ActivitiesControllerSuggestWorldsPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ActivitiesControllerSuggestWorldsQuery = {
-  readonly search?: string;
-  readonly limit?: number;
-};
+export type ActivitiesControllerSuggestWorldsQuery =
+  typeof ActivitiesControllerSuggestWorldsQuery.Type;
 
 export const ActivitiesControllerSuggestWorldsQuery = Schema.Struct({
   search: Schema.optionalKey(
@@ -436,23 +259,20 @@ export const ActivitiesControllerSuggestWorldsQuery = Schema.Struct({
 });
 
 export type ActivitiesControllerSuggestWorlds200 =
-  WorldSuggestionsResponseDto_Output;
+  typeof ActivitiesControllerSuggestWorlds200.Type;
 
 export const ActivitiesControllerSuggestWorlds200 =
   WorldSuggestionsResponseDto_Output;
 
-export type ActivitiesControllerSuggestClanNamesPathParams = {
-  readonly guildId: string;
-};
+export type ActivitiesControllerSuggestClanNamesPathParams =
+  typeof ActivitiesControllerSuggestClanNamesPathParams.Type;
 
 export const ActivitiesControllerSuggestClanNamesPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ActivitiesControllerSuggestClanNamesQuery = {
-  readonly search?: string;
-  readonly limit?: number;
-};
+export type ActivitiesControllerSuggestClanNamesQuery =
+  typeof ActivitiesControllerSuggestClanNamesQuery.Type;
 
 export const ActivitiesControllerSuggestClanNamesQuery = Schema.Struct({
   search: Schema.optionalKey(
@@ -479,32 +299,21 @@ export const ActivitiesControllerSuggestClanNamesQuery = Schema.Struct({
 });
 
 export type ActivitiesControllerSuggestClanNames200 =
-  ClanNameSuggestionsResponseDto_Output;
+  typeof ActivitiesControllerSuggestClanNames200.Type;
 
 export const ActivitiesControllerSuggestClanNames200 =
   ClanNameSuggestionsResponseDto_Output;
 
-export type ActivitiesControllerFindByUserPathParams = {
-  readonly guildId: string;
-  readonly userId: string;
-};
+export type ActivitiesControllerFindByUserPathParams =
+  typeof ActivitiesControllerFindByUserPathParams.Type;
 
 export const ActivitiesControllerFindByUserPathParams = Schema.Struct({
   guildId: Schema.String,
   userId: Schema.String,
 });
 
-export type ActivitiesControllerFindByUserQuery = {
-  readonly type?: ReadonlyArray<"CONNECT_EVENT" | "DISCONNECT_EVENT">;
-  readonly source?: ReadonlyArray<"GAME" | "WEB_APP">;
-  readonly playerName?: string;
-  readonly clanName?: string;
-  readonly world?: string;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly limit?: number;
-};
+export type ActivitiesControllerFindByUserQuery =
+  typeof ActivitiesControllerFindByUserQuery.Type;
 
 export const ActivitiesControllerFindByUserQuery = Schema.Struct({
   type: Schema.optionalKey(
@@ -516,30 +325,8 @@ export const ActivitiesControllerFindByUserQuery = Schema.Struct({
   playerName: Schema.optionalKey(Schema.String),
   clanName: Schema.optionalKey(Schema.String),
   world: Schema.optionalKey(Schema.String),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeWithOffsetString),
+  endDate: Schema.optionalKey(DateTimeWithOffsetString),
   cursor: Schema.optionalKey(Schema.String),
   limit: Schema.optionalKey(
     Schema.Number.annotate({ default: 50 })
@@ -557,42 +344,39 @@ export const ActivitiesControllerFindByUserQuery = Schema.Struct({
   ),
 });
 
-export type ActivitiesControllerFindByUser200 = PaginatedActivitiesResponseDto;
+export type ActivitiesControllerFindByUser200 =
+  typeof ActivitiesControllerFindByUser200.Type;
 
 export const ActivitiesControllerFindByUser200 = PaginatedActivitiesResponseDto;
 
-export type ActivitiesControllerGetMemberActivityStatsPathParams = {
-  readonly guildId: string;
-};
+export type ActivitiesControllerGetMemberActivityStatsPathParams =
+  typeof ActivitiesControllerGetMemberActivityStatsPathParams.Type;
 
 export const ActivitiesControllerGetMemberActivityStatsPathParams =
   Schema.Struct({ guildId: Schema.String });
 
 export type ActivitiesControllerGetMemberActivityStats200 =
-  ReadonlyArray<MemberActivityStatsResponseDto>;
+  typeof ActivitiesControllerGetMemberActivityStats200.Type;
 
 export const ActivitiesControllerGetMemberActivityStats200 = Schema.Array(
   MemberActivityStatsResponseDto,
 );
 
-export type ActivitiesControllerFindOnePathParams = {
-  readonly guildId: string;
-  readonly id: string;
-};
+export type ActivitiesControllerFindOnePathParams =
+  typeof ActivitiesControllerFindOnePathParams.Type;
 
 export const ActivitiesControllerFindOnePathParams = Schema.Struct({
   guildId: Schema.String,
   id: Schema.String,
 });
 
-export type ActivitiesControllerFindOne200 = ActivityResponseDto;
+export type ActivitiesControllerFindOne200 =
+  typeof ActivitiesControllerFindOne200.Type;
 
 export const ActivitiesControllerFindOne200 = ActivityResponseDto;
 
-export type ActivitiesControllerDeleteActivityPathParams = {
-  readonly guildId: string;
-  readonly id: string;
-};
+export type ActivitiesControllerDeleteActivityPathParams =
+  typeof ActivitiesControllerDeleteActivityPathParams.Type;
 
 export const ActivitiesControllerDeleteActivityPathParams = Schema.Struct({
   guildId: Schema.String,
@@ -600,7 +384,7 @@ export const ActivitiesControllerDeleteActivityPathParams = Schema.Struct({
 });
 
 export type ActivitiesControllerDeleteActivity200 =
-  DeleteActivityResponseDto_Output;
+  typeof ActivitiesControllerDeleteActivity200.Type;
 
 export const ActivitiesControllerDeleteActivity200 =
   DeleteActivityResponseDto_Output;

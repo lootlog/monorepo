@@ -1,6 +1,7 @@
 /** Transport schemas owned by the events HTTP module. */
 import * as Schema from "effect/Schema";
 import { SuccessResponseDto_Output } from "../shared.js";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
 export type EventMutationResponseDto__schema0 =
   | string
@@ -142,24 +143,7 @@ export const KillDetailResponseDto__schema0 = Schema.suspend(
     __recursive_KillDetailResponseDto__schema0,
 );
 
-export type EventListItemResponseDto = {
-  readonly id: string;
-  readonly guildId: string;
-  readonly name: string;
-  readonly world: string;
-  readonly active: boolean;
-  readonly startsAt: string | null;
-  readonly endsAt: string | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly heroNpcs: ReadonlyArray<{
-    readonly id: string;
-    readonly npcId: number | null;
-    readonly npcName: string;
-    readonly npcIcon: string | null;
-    readonly npcLvl: number | null;
-  }>;
-};
+export type EventListItemResponseDto = typeof EventListItemResponseDto.Type;
 
 export const EventListItemResponseDto = Schema.Struct({
   id: Schema.String,
@@ -167,169 +151,28 @@ export const EventListItemResponseDto = Schema.Struct({
   name: Schema.String,
   world: Schema.String,
   active: Schema.Boolean,
-  startsAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  endsAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  startsAt: Schema.Union([DateTimeString, Schema.Null]),
+  endsAt: Schema.Union([DateTimeString, Schema.Null]),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   heroNpcs: Schema.Array(
     Schema.Struct({
       id: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      npcLvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
     }),
   ),
 }).annotate({ identifier: "EventListItemResponseDto" });
 
-export type CreateEventDto = {
-  readonly name: string;
-  readonly world: string;
-  readonly startsAt?: string;
-  readonly endsAt?: string;
-  readonly basePointsPerKill?: number;
-  readonly assignmentTimeoutMinutes?: number;
-  readonly participationConfirmationMinutes?: number;
-  readonly mapAssignmentCap?: number;
-  readonly rulebookMarkdown?: string;
-  readonly scoringRules?: {
-    readonly version: number;
-    readonly timezone: string;
-    readonly hardCapPoints: number;
-    readonly minTrackingPercentForBonuses?: number;
-    readonly rules: ReadonlyArray<{
-      readonly id: string;
-      readonly name?: string;
-      readonly enabled?: boolean;
-      readonly conditions: ReadonlyArray<
-        | {
-            readonly type: "NUMERIC";
-            readonly factor:
-              | "trackingDurationPercentage"
-              | "trackingDurationSeconds"
-              | "assignedMembersCount"
-              | "minutesSinceLeaveToKill"
-              | "timeOnMapSeconds"
-              | "afkPercentage"
-              | "respawnDurationSeconds"
-              | "respawnProgressPercentage";
-            readonly operator: ">" | ">=" | "<" | "<=" | "==" | "!=";
-            readonly value: number;
-          }
-        | {
-            readonly type: "BOOLEAN";
-            readonly factor: "eligible" | "memberPresentAtKill" | "wasPresent";
-            readonly value: boolean;
-          }
-        | {
-            readonly type: "KILL_TIME_IN_WINDOW";
-            readonly from: string;
-            readonly to: string;
-          }
-        | {
-            readonly type: "RESPAWN_WINDOW_COVERAGE";
-            readonly from: string;
-            readonly to: string;
-            readonly operator: ">" | ">=" | "<" | "<=" | "==" | "!=";
-            readonly value: number;
-          }
-      >;
-      readonly action: {
-        readonly type: "SET_BASE" | "ADD_BONUS" | "ZERO_BASE";
-        readonly points?: number;
-      };
-    }>;
-  };
-  readonly scoringMode?: "SIMPLE" | "ADVANCED";
-  readonly heroNpcs?: ReadonlyArray<{
-    readonly npcId?: number;
-    readonly npcName: string;
-    readonly maps: ReadonlyArray<{
-      readonly mapId: number;
-      readonly mapName: string;
-    }>;
-  }>;
-};
+export type CreateEventDto = typeof CreateEventDto.Type;
 
 export const CreateEventDto = Schema.Struct({
   name: Schema.String,
   world: Schema.String,
-  startsAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endsAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startsAt: Schema.optionalKey(DateTimeString),
+  endsAt: Schema.optionalKey(DateTimeString),
   basePointsPerKill: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
       .check(
@@ -391,41 +234,31 @@ export const CreateEventDto = Schema.Struct({
   ),
   scoringRules: Schema.optionalKey(
     Schema.Struct({
-      version: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      )
-        .check(
-          Schema.isGreaterThanOrEqualTo(1).annotate({
-            expected: "a value greater than or equal to 1",
-          }),
-        )
-        .check(
-          Schema.isLessThanOrEqualTo(1).annotate({
-            expected: "a value less than or equal to 1",
-          }),
-        ),
-      timezone: Schema.String,
-      hardCapPoints: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
+      version: FiniteNumber.check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
       ).check(
+        Schema.isLessThanOrEqualTo(1).annotate({
+          expected: "a value less than or equal to 1",
+        }),
+      ),
+      timezone: Schema.String,
+      hardCapPoints: FiniteNumber.check(
         Schema.isGreaterThanOrEqualTo(0).annotate({
           expected: "a value greater than or equal to 0",
         }),
       ),
       minTrackingPercentForBonuses: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        )
-          .check(
-            Schema.isGreaterThanOrEqualTo(0).annotate({
-              expected: "a value greater than or equal to 0",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(100).annotate({
-              expected: "a value less than or equal to 100",
-            }),
-          ),
+        FiniteNumber.check(
+          Schema.isGreaterThanOrEqualTo(0).annotate({
+            expected: "a value greater than or equal to 0",
+          }),
+        ).check(
+          Schema.isLessThanOrEqualTo(100).annotate({
+            expected: "a value less than or equal to 100",
+          }),
+        ),
       ),
       rules: Schema.Array(
         Schema.Struct({
@@ -448,9 +281,7 @@ export const CreateEventDto = Schema.Struct({
                     "respawnProgressPercentage",
                   ]),
                   operator: Schema.Literals([">", ">=", "<", "<=", "==", "!="]),
-                  value: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  value: FiniteNumber,
                 }),
                 Schema.Struct({
                   type: Schema.Literal("BOOLEAN"),
@@ -499,9 +330,7 @@ export const CreateEventDto = Schema.Struct({
                     }),
                   ),
                   operator: Schema.Literals([">", ">=", "<", "<=", "==", "!="]),
-                  value: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  value: FiniteNumber,
                 }),
               ],
               { mode: "oneOf" },
@@ -510,9 +339,7 @@ export const CreateEventDto = Schema.Struct({
           action: Schema.Struct({
             type: Schema.Literals(["SET_BASE", "ADD_BONUS", "ZERO_BASE"]),
             points: Schema.optionalKey(
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ).check(
+              FiniteNumber.check(
                 Schema.isGreaterThanOrEqualTo(0).annotate({
                   expected: "a value greater than or equal to 0",
                 }),
@@ -577,53 +404,7 @@ export const CreateEventDto = Schema.Struct({
   )
   .annotate({ identifier: "CreateEventDto" });
 
-export type EventMutationResponseDto = {
-  readonly id: string;
-  readonly guildId: string;
-  readonly name: string;
-  readonly world: string;
-  readonly active: boolean;
-  readonly startsAt: string | null;
-  readonly endsAt: string | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly basePointsPerKill?: number | null;
-  readonly assignmentTimeoutMinutes?: number | null;
-  readonly participationConfirmationMinutes?: number | null;
-  readonly mapAssignmentCap?: number | null;
-  readonly rulebookMarkdown?: string | null;
-  readonly scoringMode: "SIMPLE" | "ADVANCED";
-  readonly scoringRules:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<EventMutationResponseDto__schema0>
-    | { readonly [x: string]: EventMutationResponseDto__schema0 }
-    | null;
-  readonly heroNpcs: ReadonlyArray<{
-    readonly id: string;
-    readonly npcId: number | null;
-    readonly npcName: string;
-    readonly npcIcon: string | null;
-    readonly npcLvl: number | null;
-    readonly maps: ReadonlyArray<{
-      readonly id: string;
-      readonly mapId: number;
-      readonly mapName: string;
-      readonly locationId: string | null;
-      readonly assignedMembers: ReadonlyArray<{
-        readonly id: number;
-        readonly name: string;
-        readonly avatar: string | null;
-        readonly userId: string;
-        readonly roles: ReadonlyArray<{
-          readonly position: number;
-          readonly color: number | null;
-        }>;
-      }>;
-    }>;
-  }>;
-};
+export type EventMutationResponseDto = typeof EventMutationResponseDto.Type;
 
 export const EventMutationResponseDto = Schema.Struct({
   id: Schema.String,
@@ -631,83 +412,21 @@ export const EventMutationResponseDto = Schema.Struct({
   name: Schema.String,
   world: Schema.String,
   active: Schema.Boolean,
-  startsAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  endsAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  startsAt: Schema.Union([DateTimeString, Schema.Null]),
+  endsAt: Schema.Union([DateTimeString, Schema.Null]),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   basePointsPerKill: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   assignmentTimeoutMinutes: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   participationConfirmationMinutes: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   mapAssignmentCap: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   rulebookMarkdown: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Null]),
@@ -716,9 +435,7 @@ export const EventMutationResponseDto = Schema.Struct({
   scoringRules: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(EventMutationResponseDto__schema0),
       Schema.Record(Schema.String, EventMutationResponseDto__schema0),
@@ -728,49 +445,26 @@ export const EventMutationResponseDto = Schema.Struct({
   heroNpcs: Schema.Array(
     Schema.Struct({
       id: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      npcLvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       maps: Schema.Array(
         Schema.Struct({
           id: Schema.String,
-          mapId: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          mapId: FiniteNumber,
           mapName: Schema.String,
           locationId: Schema.Union([Schema.String, Schema.Null]),
           assignedMembers: Schema.Array(
             Schema.Struct({
-              id: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              id: FiniteNumber,
               name: Schema.String,
               avatar: Schema.Union([Schema.String, Schema.Null]),
               userId: Schema.String,
               roles: Schema.Array(
                 Schema.Struct({
-                  position: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
-                  color: Schema.Union([
-                    Schema.Number.check(
-                      Schema.isFinite().annotate({
-                        expected: "a finite number",
-                      }),
-                    ),
-                    Schema.Null,
-                  ]),
+                  position: FiniteNumber,
+                  color: Schema.Union([FiniteNumber, Schema.Null]),
                 }),
               ),
             }),
@@ -781,37 +475,7 @@ export const EventMutationResponseDto = Schema.Struct({
   ),
 }).annotate({ identifier: "EventMutationResponseDto" });
 
-export type EventOverviewResponseDto = {
-  readonly id: string;
-  readonly guildId: string;
-  readonly name: string;
-  readonly world: string;
-  readonly active: boolean;
-  readonly startsAt: string | null;
-  readonly endsAt: string | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly basePointsPerKill?: number | null;
-  readonly assignmentTimeoutMinutes?: number | null;
-  readonly participationConfirmationMinutes?: number | null;
-  readonly mapAssignmentCap?: number | null;
-  readonly rulebookMarkdown?: string | null;
-  readonly scoringMode: "SIMPLE" | "ADVANCED";
-  readonly scoringRules:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<EventOverviewResponseDto__schema0>
-    | { readonly [x: string]: EventOverviewResponseDto__schema0 }
-    | null;
-  readonly heroNpcs: ReadonlyArray<{
-    readonly id: string;
-    readonly npcId: number | null;
-    readonly npcName: string;
-    readonly npcIcon: string | null;
-    readonly npcLvl: number | null;
-  }>;
-};
+export type EventOverviewResponseDto = typeof EventOverviewResponseDto.Type;
 
 export const EventOverviewResponseDto = Schema.Struct({
   id: Schema.String,
@@ -819,83 +483,21 @@ export const EventOverviewResponseDto = Schema.Struct({
   name: Schema.String,
   world: Schema.String,
   active: Schema.Boolean,
-  startsAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  endsAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  startsAt: Schema.Union([DateTimeString, Schema.Null]),
+  endsAt: Schema.Union([DateTimeString, Schema.Null]),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   basePointsPerKill: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   assignmentTimeoutMinutes: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   participationConfirmationMinutes: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   mapAssignmentCap: Schema.optionalKey(
-    Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    Schema.Union([FiniteNumber, Schema.Null]),
   ),
   rulebookMarkdown: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Null]),
@@ -904,9 +506,7 @@ export const EventOverviewResponseDto = Schema.Struct({
   scoringRules: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(EventOverviewResponseDto__schema0),
       Schema.Record(Schema.String, EventOverviewResponseDto__schema0),
@@ -916,118 +516,20 @@ export const EventOverviewResponseDto = Schema.Struct({
   heroNpcs: Schema.Array(
     Schema.Struct({
       id: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      npcLvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
     }),
   ),
 }).annotate({ identifier: "EventOverviewResponseDto" });
 
-export type UpdateEventDto = {
-  readonly name?: string;
-  readonly startsAt?: string;
-  readonly endsAt?: string;
-  readonly heroNpcs?: ReadonlyArray<{
-    readonly npcId?: number;
-    readonly npcName: string;
-    readonly maps: ReadonlyArray<{
-      readonly mapId: number;
-      readonly mapName: string;
-    }>;
-  }>;
-  readonly basePointsPerKill?: number;
-  readonly assignmentTimeoutMinutes?: number;
-  readonly participationConfirmationMinutes?: number;
-  readonly mapAssignmentCap?: number;
-  readonly rulebookMarkdown?: string;
-  readonly scoringRules?: {
-    readonly version: number;
-    readonly timezone: string;
-    readonly hardCapPoints: number;
-    readonly minTrackingPercentForBonuses?: number;
-    readonly rules: ReadonlyArray<{
-      readonly id: string;
-      readonly name?: string;
-      readonly enabled?: boolean;
-      readonly conditions: ReadonlyArray<
-        | {
-            readonly type: "NUMERIC";
-            readonly factor:
-              | "trackingDurationPercentage"
-              | "trackingDurationSeconds"
-              | "assignedMembersCount"
-              | "minutesSinceLeaveToKill"
-              | "timeOnMapSeconds"
-              | "afkPercentage"
-              | "respawnDurationSeconds"
-              | "respawnProgressPercentage";
-            readonly operator: ">" | ">=" | "<" | "<=" | "==" | "!=";
-            readonly value: number;
-          }
-        | {
-            readonly type: "BOOLEAN";
-            readonly factor: "eligible" | "memberPresentAtKill" | "wasPresent";
-            readonly value: boolean;
-          }
-        | {
-            readonly type: "KILL_TIME_IN_WINDOW";
-            readonly from: string;
-            readonly to: string;
-          }
-        | {
-            readonly type: "RESPAWN_WINDOW_COVERAGE";
-            readonly from: string;
-            readonly to: string;
-            readonly operator: ">" | ">=" | "<" | "<=" | "==" | "!=";
-            readonly value: number;
-          }
-      >;
-      readonly action: {
-        readonly type: "SET_BASE" | "ADD_BONUS" | "ZERO_BASE";
-        readonly points?: number;
-      };
-    }>;
-  };
-  readonly scoringMode?: "SIMPLE" | "ADVANCED";
-};
+export type UpdateEventDto = typeof UpdateEventDto.Type;
 
 export const UpdateEventDto = Schema.Struct({
   name: Schema.optionalKey(Schema.String),
-  startsAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endsAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startsAt: Schema.optionalKey(DateTimeString),
+  endsAt: Schema.optionalKey(DateTimeString),
   heroNpcs: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
@@ -1130,41 +632,31 @@ export const UpdateEventDto = Schema.Struct({
   ),
   scoringRules: Schema.optionalKey(
     Schema.Struct({
-      version: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      )
-        .check(
-          Schema.isGreaterThanOrEqualTo(1).annotate({
-            expected: "a value greater than or equal to 1",
-          }),
-        )
-        .check(
-          Schema.isLessThanOrEqualTo(1).annotate({
-            expected: "a value less than or equal to 1",
-          }),
-        ),
-      timezone: Schema.String,
-      hardCapPoints: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
+      version: FiniteNumber.check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
       ).check(
+        Schema.isLessThanOrEqualTo(1).annotate({
+          expected: "a value less than or equal to 1",
+        }),
+      ),
+      timezone: Schema.String,
+      hardCapPoints: FiniteNumber.check(
         Schema.isGreaterThanOrEqualTo(0).annotate({
           expected: "a value greater than or equal to 0",
         }),
       ),
       minTrackingPercentForBonuses: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        )
-          .check(
-            Schema.isGreaterThanOrEqualTo(0).annotate({
-              expected: "a value greater than or equal to 0",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(100).annotate({
-              expected: "a value less than or equal to 100",
-            }),
-          ),
+        FiniteNumber.check(
+          Schema.isGreaterThanOrEqualTo(0).annotate({
+            expected: "a value greater than or equal to 0",
+          }),
+        ).check(
+          Schema.isLessThanOrEqualTo(100).annotate({
+            expected: "a value less than or equal to 100",
+          }),
+        ),
       ),
       rules: Schema.Array(
         Schema.Struct({
@@ -1187,9 +679,7 @@ export const UpdateEventDto = Schema.Struct({
                     "respawnProgressPercentage",
                   ]),
                   operator: Schema.Literals([">", ">=", "<", "<=", "==", "!="]),
-                  value: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  value: FiniteNumber,
                 }),
                 Schema.Struct({
                   type: Schema.Literal("BOOLEAN"),
@@ -1238,9 +728,7 @@ export const UpdateEventDto = Schema.Struct({
                     }),
                   ),
                   operator: Schema.Literals([">", ">=", "<", "<=", "==", "!="]),
-                  value: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  value: FiniteNumber,
                 }),
               ],
               { mode: "oneOf" },
@@ -1249,9 +737,7 @@ export const UpdateEventDto = Schema.Struct({
           action: Schema.Struct({
             type: Schema.Literals(["SET_BASE", "ADD_BONUS", "ZERO_BASE"]),
             points: Schema.optionalKey(
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ).check(
+              FiniteNumber.check(
                 Schema.isGreaterThanOrEqualTo(0).annotate({
                   expected: "a value greater than or equal to 0",
                 }),
@@ -1265,288 +751,36 @@ export const UpdateEventDto = Schema.Struct({
   scoringMode: Schema.optionalKey(Schema.Literals(["SIMPLE", "ADVANCED"])),
 }).annotate({ identifier: "UpdateEventDto" });
 
-export type EventWrappedApiResponseDto_Output = {
-  readonly generatedAt: string;
-  readonly event: {
-    readonly id: string;
-    readonly name: string;
-    readonly world: string;
-    readonly startsAt: string | null;
-    readonly endsAt: string | null;
-    readonly heroCount: number;
-    readonly mapCount: number;
-    readonly spawnCount: number;
-  };
-  readonly overview: {
-    readonly totalKills: number;
-    readonly participantCount: number;
-    readonly totalPoints: number;
-    readonly totalTrackedSeconds: number;
-    readonly totalAfkSeconds: number;
-    readonly coveragePercentage: number;
-    readonly avgMapsPerSpawnWindow: number;
-    readonly busiestHour: number | null;
-    readonly busiestHourKills: number;
-    readonly totalLoots: number;
-    readonly rarityTotals: {
-      readonly unique: number;
-      readonly heroic: number;
-      readonly legendary: number;
-    };
-  };
-  readonly leaders: {
-    readonly topHunter: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-    readonly topScorer: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-    readonly longestDuty: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-    readonly topAfk: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-    readonly mostFlexible: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-    readonly topEfficiency: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-  };
-  readonly coverage: {
-    readonly totalWindowCount: number;
-    readonly totalWindowSeconds: number;
-    readonly totalCoverageSeconds: number;
-    readonly totalUncoveredSeconds: number;
-    readonly totalUnassignedSeconds: number;
-    readonly coveragePercentage: number;
-    readonly avgMapsPerSpawnWindow: number;
-    readonly bestHeroCoverage:
-      | ({
-          readonly heroNpcId: string;
-          readonly npcName: string;
-          readonly npcIcon: string | null;
-          readonly mapCount: number;
-          readonly totalKills: number;
-          readonly coveragePercentage: number;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly roughestHeroCoverage:
-      | ({
-          readonly heroNpcId: string;
-          readonly npcName: string;
-          readonly npcIcon: string | null;
-          readonly mapCount: number;
-          readonly totalKills: number;
-          readonly coveragePercentage: number;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-  };
-  readonly heroes: ReadonlyArray<{
-    readonly heroNpcId: string;
-    readonly npcId: number | null;
-    readonly npcName: string;
-    readonly npcIcon: string | null;
-    readonly mapCount: number;
-    readonly totalKills: number;
-    readonly totalPoints: number;
-    readonly coveragePercentage: number;
-    readonly rarityTotals: {
-      readonly unique: number;
-      readonly heroic: number;
-      readonly legendary: number;
-    };
-    readonly topHunter: {
-      readonly winner:
-        | ({
-            readonly memberId: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly primaryValue: number;
-            readonly secondaryValue?: number | null;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly candidateCount: number;
-      readonly tiedWinnerCount: number;
-    };
-  }>;
-  readonly loot: {
-    readonly totalLoots: number;
-    readonly rarityTotals: {
-      readonly unique: number;
-      readonly heroic: number;
-      readonly legendary: number;
-    };
-    readonly heroBreakdown: ReadonlyArray<{
-      readonly heroNpcId: string;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly totalLoots: number;
-      readonly rarityTotals: {
-        readonly unique: number;
-        readonly heroic: number;
-        readonly legendary: number;
-      };
-    }>;
-  };
-};
+export type EventWrappedApiResponseDto_Output =
+  typeof EventWrappedApiResponseDto_Output.Type;
 
 export const EventWrappedApiResponseDto_Output = Schema.Struct({
-  generatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  generatedAt: DateTimeString,
   event: Schema.Struct({
     id: Schema.String,
     name: Schema.String,
     world: Schema.String,
-    startsAt: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
-    endsAt: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
-    heroCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    mapCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    spawnCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    startsAt: Schema.Union([DateTimeString, Schema.Null]),
+    endsAt: Schema.Union([DateTimeString, Schema.Null]),
+    heroCount: FiniteNumber,
+    mapCount: FiniteNumber,
+    spawnCount: FiniteNumber,
   }),
   overview: Schema.Struct({
-    totalKills: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    participantCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalPoints: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalTrackedSeconds: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalAfkSeconds: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    coveragePercentage: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    avgMapsPerSpawnWindow: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    busiestHour: Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
-    busiestHourKills: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalLoots: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    totalKills: FiniteNumber,
+    participantCount: FiniteNumber,
+    totalPoints: FiniteNumber,
+    totalTrackedSeconds: FiniteNumber,
+    totalAfkSeconds: FiniteNumber,
+    coveragePercentage: FiniteNumber,
+    avgMapsPerSpawnWindow: FiniteNumber,
+    busiestHour: Schema.Union([FiniteNumber, Schema.Null]),
+    busiestHourKills: FiniteNumber,
+    totalLoots: FiniteNumber,
     rarityTotals: Schema.Struct({
-      unique: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      heroic: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      legendary: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      unique: FiniteNumber,
+      heroic: FiniteNumber,
+      legendary: FiniteNumber,
     }),
   }),
   leaders: Schema.Struct({
@@ -1554,21 +788,12 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
       winner: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
-            primaryValue: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            primaryValue: FiniteNumber,
             secondaryValue: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
           }),
           [
@@ -1580,32 +805,19 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
         ),
         Schema.Null,
       ]),
-      candidateCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      tiedWinnerCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      candidateCount: FiniteNumber,
+      tiedWinnerCount: FiniteNumber,
     }),
     topScorer: Schema.Struct({
       winner: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
-            primaryValue: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            primaryValue: FiniteNumber,
             secondaryValue: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
           }),
           [
@@ -1617,32 +829,19 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
         ),
         Schema.Null,
       ]),
-      candidateCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      tiedWinnerCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      candidateCount: FiniteNumber,
+      tiedWinnerCount: FiniteNumber,
     }),
     longestDuty: Schema.Struct({
       winner: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
-            primaryValue: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            primaryValue: FiniteNumber,
             secondaryValue: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
           }),
           [
@@ -1654,32 +853,19 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
         ),
         Schema.Null,
       ]),
-      candidateCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      tiedWinnerCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      candidateCount: FiniteNumber,
+      tiedWinnerCount: FiniteNumber,
     }),
     topAfk: Schema.Struct({
       winner: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
-            primaryValue: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            primaryValue: FiniteNumber,
             secondaryValue: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
           }),
           [
@@ -1691,32 +877,19 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
         ),
         Schema.Null,
       ]),
-      candidateCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      tiedWinnerCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      candidateCount: FiniteNumber,
+      tiedWinnerCount: FiniteNumber,
     }),
     mostFlexible: Schema.Struct({
       winner: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
-            primaryValue: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            primaryValue: FiniteNumber,
             secondaryValue: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
           }),
           [
@@ -1728,32 +901,19 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
         ),
         Schema.Null,
       ]),
-      candidateCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      tiedWinnerCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      candidateCount: FiniteNumber,
+      tiedWinnerCount: FiniteNumber,
     }),
     topEfficiency: Schema.Struct({
       winner: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
-            primaryValue: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            primaryValue: FiniteNumber,
             secondaryValue: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
           }),
           [
@@ -1765,51 +925,27 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
         ),
         Schema.Null,
       ]),
-      candidateCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      tiedWinnerCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      candidateCount: FiniteNumber,
+      tiedWinnerCount: FiniteNumber,
     }),
   }),
   coverage: Schema.Struct({
-    totalWindowCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalWindowSeconds: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalCoverageSeconds: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalUncoveredSeconds: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalUnassignedSeconds: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    coveragePercentage: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    avgMapsPerSpawnWindow: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    totalWindowCount: FiniteNumber,
+    totalWindowSeconds: FiniteNumber,
+    totalCoverageSeconds: FiniteNumber,
+    totalUncoveredSeconds: FiniteNumber,
+    totalUnassignedSeconds: FiniteNumber,
+    coveragePercentage: FiniteNumber,
+    avgMapsPerSpawnWindow: FiniteNumber,
     bestHeroCoverage: Schema.Union([
       Schema.StructWithRest(
         Schema.Struct({
           heroNpcId: Schema.String,
           npcName: Schema.String,
           npcIcon: Schema.Union([Schema.String, Schema.Null]),
-          mapCount: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          totalKills: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          coveragePercentage: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          mapCount: FiniteNumber,
+          totalKills: FiniteNumber,
+          coveragePercentage: FiniteNumber,
         }),
         [
           Schema.Record(
@@ -1826,15 +962,9 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
           heroNpcId: Schema.String,
           npcName: Schema.String,
           npcIcon: Schema.Union([Schema.String, Schema.Null]),
-          mapCount: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          totalKills: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          coveragePercentage: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          mapCount: FiniteNumber,
+          totalKills: FiniteNumber,
+          coveragePercentage: FiniteNumber,
         }),
         [
           Schema.Record(
@@ -1849,56 +979,28 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
   heroes: Schema.Array(
     Schema.Struct({
       heroNpcId: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      mapCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      totalKills: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      totalPoints: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      coveragePercentage: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      mapCount: FiniteNumber,
+      totalKills: FiniteNumber,
+      totalPoints: FiniteNumber,
+      coveragePercentage: FiniteNumber,
       rarityTotals: Schema.Struct({
-        unique: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        heroic: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        legendary: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        unique: FiniteNumber,
+        heroic: FiniteNumber,
+        legendary: FiniteNumber,
       }),
       topHunter: Schema.Struct({
         winner: Schema.Union([
           Schema.StructWithRest(
             Schema.Struct({
-              memberId: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              memberId: FiniteNumber,
               name: Schema.String,
               avatar: Schema.Union([Schema.String, Schema.Null]),
-              primaryValue: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              primaryValue: FiniteNumber,
               secondaryValue: Schema.optionalKey(
-                Schema.Union([
-                  Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
-                  Schema.Null,
-                ]),
+                Schema.Union([FiniteNumber, Schema.Null]),
               ),
             }),
             [
@@ -1910,159 +1012,67 @@ export const EventWrappedApiResponseDto_Output = Schema.Struct({
           ),
           Schema.Null,
         ]),
-        candidateCount: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        tiedWinnerCount: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        candidateCount: FiniteNumber,
+        tiedWinnerCount: FiniteNumber,
       }),
     }),
   ),
   loot: Schema.Struct({
-    totalLoots: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    totalLoots: FiniteNumber,
     rarityTotals: Schema.Struct({
-      unique: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      heroic: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      legendary: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      unique: FiniteNumber,
+      heroic: FiniteNumber,
+      legendary: FiniteNumber,
     }),
     heroBreakdown: Schema.Array(
       Schema.Struct({
         heroNpcId: Schema.String,
         npcName: Schema.String,
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        totalLoots: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        totalLoots: FiniteNumber,
         rarityTotals: Schema.Struct({
-          unique: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          heroic: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          legendary: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          unique: FiniteNumber,
+          heroic: FiniteNumber,
+          legendary: FiniteNumber,
         }),
       }),
     ),
   }),
 }).annotate({ identifier: "EventWrappedApiResponseDto_Output" });
 
-export type EventMapsResponseDto_Output = {
-  readonly id: string;
-  readonly heroNpcs: ReadonlyArray<{
-    readonly id: string;
-    readonly npcId: number | null;
-    readonly npcName: string;
-    readonly npcIcon: string | null;
-    readonly npcLvl: number | null;
-    readonly locations: ReadonlyArray<{
-      readonly id: string;
-      readonly name: string;
-      readonly order: number;
-      readonly maps: ReadonlyArray<{
-        readonly id: string;
-        readonly mapId: number;
-        readonly mapName: string;
-        readonly locationId: string | null;
-        readonly assignedMembers: ReadonlyArray<{
-          readonly id: number;
-          readonly name: string;
-          readonly avatar: string | null;
-          readonly userId: string;
-          readonly roles: ReadonlyArray<{
-            readonly position: number;
-            readonly color: number | null;
-          }>;
-        }>;
-      }>;
-    }>;
-    readonly maps: ReadonlyArray<{
-      readonly id: string;
-      readonly mapId: number;
-      readonly mapName: string;
-      readonly locationId: string | null;
-      readonly assignedMembers: ReadonlyArray<{
-        readonly id: number;
-        readonly name: string;
-        readonly avatar: string | null;
-        readonly userId: string;
-        readonly roles: ReadonlyArray<{
-          readonly position: number;
-          readonly color: number | null;
-        }>;
-      }>;
-    }>;
-  }>;
-};
+export type EventMapsResponseDto_Output =
+  typeof EventMapsResponseDto_Output.Type;
 
 export const EventMapsResponseDto_Output = Schema.Struct({
   id: Schema.String,
   heroNpcs: Schema.Array(
     Schema.Struct({
       id: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      npcLvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       locations: Schema.Array(
         Schema.Struct({
           id: Schema.String,
           name: Schema.String,
-          order: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          order: FiniteNumber,
           maps: Schema.Array(
             Schema.Struct({
               id: Schema.String,
-              mapId: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              mapId: FiniteNumber,
               mapName: Schema.String,
               locationId: Schema.Union([Schema.String, Schema.Null]),
               assignedMembers: Schema.Array(
                 Schema.Struct({
-                  id: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  id: FiniteNumber,
                   name: Schema.String,
                   avatar: Schema.Union([Schema.String, Schema.Null]),
                   userId: Schema.String,
                   roles: Schema.Array(
                     Schema.Struct({
-                      position: Schema.Number.check(
-                        Schema.isFinite().annotate({
-                          expected: "a finite number",
-                        }),
-                      ),
-                      color: Schema.Union([
-                        Schema.Number.check(
-                          Schema.isFinite().annotate({
-                            expected: "a finite number",
-                          }),
-                        ),
-                        Schema.Null,
-                      ]),
+                      position: FiniteNumber,
+                      color: Schema.Union([FiniteNumber, Schema.Null]),
                     }),
                   ),
                 }),
@@ -2074,32 +1084,19 @@ export const EventMapsResponseDto_Output = Schema.Struct({
       maps: Schema.Array(
         Schema.Struct({
           id: Schema.String,
-          mapId: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          mapId: FiniteNumber,
           mapName: Schema.String,
           locationId: Schema.Union([Schema.String, Schema.Null]),
           assignedMembers: Schema.Array(
             Schema.Struct({
-              id: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              id: FiniteNumber,
               name: Schema.String,
               avatar: Schema.Union([Schema.String, Schema.Null]),
               userId: Schema.String,
               roles: Schema.Array(
                 Schema.Struct({
-                  position: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
-                  color: Schema.Union([
-                    Schema.Number.check(
-                      Schema.isFinite().annotate({
-                        expected: "a finite number",
-                      }),
-                    ),
-                    Schema.Null,
-                  ]),
+                  position: FiniteNumber,
+                  color: Schema.Union([FiniteNumber, Schema.Null]),
                 }),
               ),
             }),
@@ -2110,7 +1107,7 @@ export const EventMapsResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "EventMapsResponseDto_Output" });
 
-export type AssignMemberDto = { readonly memberId: number };
+export type AssignMemberDto = typeof AssignMemberDto.Type;
 
 export const AssignMemberDto = Schema.Struct({
   memberId: Schema.Number.check(
@@ -2128,14 +1125,7 @@ export const AssignMemberDto = Schema.Struct({
     ),
 }).annotate({ identifier: "AssignMemberDto" });
 
-export type CreateHeroDto = {
-  readonly npcId?: number;
-  readonly npcName: string;
-  readonly maps?: ReadonlyArray<{
-    readonly mapId: number;
-    readonly mapName: string;
-  }>;
-};
+export type CreateHeroDto = typeof CreateHeroDto.Type;
 
 export const CreateHeroDto = Schema.Struct({
   npcId: Schema.optionalKey(
@@ -2174,21 +1164,14 @@ export const CreateHeroDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateHeroDto" });
 
-export type UpdateHeroDto = {
-  readonly npcName: string;
-  readonly npcId?: number;
-};
+export type UpdateHeroDto = typeof UpdateHeroDto.Type;
 
 export const UpdateHeroDto = Schema.Struct({
   npcName: Schema.String,
-  npcId: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  npcId: Schema.optionalKey(FiniteNumber),
 }).annotate({ identifier: "UpdateHeroDto" });
 
-export type CreateMapDto = { readonly mapId: number; readonly mapName: string };
+export type CreateMapDto = typeof CreateMapDto.Type;
 
 export const CreateMapDto = Schema.Struct({
   mapId: Schema.Number.check(
@@ -2207,56 +1190,30 @@ export const CreateMapDto = Schema.Struct({
   mapName: Schema.String,
 }).annotate({ identifier: "CreateMapDto" });
 
-export type EventMapResponseDto_Output = {
-  readonly id: string;
-  readonly mapId: number;
-  readonly mapName: string;
-  readonly locationId: string | null;
-  readonly assignedMembers: ReadonlyArray<{
-    readonly id: number;
-    readonly name: string;
-    readonly avatar: string | null;
-    readonly userId: string;
-    readonly roles: ReadonlyArray<{
-      readonly position: number;
-      readonly color: number | null;
-    }>;
-  }>;
-};
+export type EventMapResponseDto_Output = typeof EventMapResponseDto_Output.Type;
 
 export const EventMapResponseDto_Output = Schema.Struct({
   id: Schema.String,
-  mapId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  mapId: FiniteNumber,
   mapName: Schema.String,
   locationId: Schema.Union([Schema.String, Schema.Null]),
   assignedMembers: Schema.Array(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       name: Schema.String,
       avatar: Schema.Union([Schema.String, Schema.Null]),
       userId: Schema.String,
       roles: Schema.Array(
         Schema.Struct({
-          position: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          color: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          position: FiniteNumber,
+          color: Schema.Union([FiniteNumber, Schema.Null]),
         }),
       ),
     }),
   ),
 }).annotate({ identifier: "EventMapResponseDto_Output" });
 
-export type CreateLocationDto = { readonly name: string };
+export type CreateLocationDto = typeof CreateLocationDto.Type;
 
 export const CreateLocationDto = Schema.Struct({
   name: Schema.String.check(
@@ -2270,7 +1227,7 @@ export const CreateLocationDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateLocationDto" });
 
-export type UpdateLocationDto = { readonly name?: string };
+export type UpdateLocationDto = typeof UpdateLocationDto.Type;
 
 export const UpdateLocationDto = Schema.Struct({
   name: Schema.optionalKey(
@@ -2286,61 +1243,26 @@ export const UpdateLocationDto = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateLocationDto" });
 
-export type ReorderLocationsDto = {
-  readonly locationIds: ReadonlyArray<string>;
-};
+export type ReorderLocationsDto = typeof ReorderLocationsDto.Type;
 
 export const ReorderLocationsDto = Schema.Struct({
   locationIds: Schema.Array(Schema.String),
 }).annotate({ identifier: "ReorderLocationsDto" });
 
-export type AssignMapLocationDto = { readonly locationId?: string | null };
+export type AssignMapLocationDto = typeof AssignMapLocationDto.Type;
 
 export const AssignMapLocationDto = Schema.Struct({
   locationId: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
 }).annotate({ identifier: "AssignMapLocationDto" });
 
-export type PendingParticipationConfirmationsResponseDto = {
-  readonly items: ReadonlyArray<{
-    readonly killId: string;
-    readonly killedAt: string;
-    readonly confirmationDeadlineAt: string;
-    readonly heroNpc: {
-      readonly id: string;
-      readonly npcId: number | null;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly npcLvl: number | null;
-    };
-  }>;
-  readonly expiredItems: ReadonlyArray<{
-    readonly killId: string;
-    readonly killedAt: string;
-    readonly confirmationDeadlineAt: string;
-    readonly heroNpc: {
-      readonly id: string;
-      readonly npcId: number | null;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly npcLvl: number | null;
-    };
-  }>;
-};
+export type PendingParticipationConfirmationsResponseDto =
+  typeof PendingParticipationConfirmationsResponseDto.Type;
 
 export const PendingParticipationConfirmationsResponseDto = Schema.Struct({
   items: Schema.Array(
     Schema.Struct({
       killId: Schema.String,
-      killedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      killedAt: DateTimeString,
       confirmationDeadlineAt: Schema.String.annotate({
         format: "date-time",
       }).check(
@@ -2355,36 +1277,17 @@ export const PendingParticipationConfirmationsResponseDto = Schema.Struct({
       ),
       heroNpc: Schema.Struct({
         id: Schema.String,
-        npcId: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcId: Schema.Union([FiniteNumber, Schema.Null]),
         npcName: Schema.String,
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        npcLvl: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       }),
     }),
   ),
   expiredItems: Schema.Array(
     Schema.Struct({
       killId: Schema.String,
-      killedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      killedAt: DateTimeString,
       confirmationDeadlineAt: Schema.String.annotate({
         format: "date-time",
       }).check(
@@ -2399,28 +1302,17 @@ export const PendingParticipationConfirmationsResponseDto = Schema.Struct({
       ),
       heroNpc: Schema.Struct({
         id: Schema.String,
-        npcId: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcId: Schema.Union([FiniteNumber, Schema.Null]),
         npcName: Schema.String,
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        npcLvl: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       }),
     }),
   ),
 }).annotate({ identifier: "PendingParticipationConfirmationsResponseDto" });
 
-export type AcknowledgeExpiredParticipationConfirmationsDto = {
-  readonly killIds: ReadonlyArray<string>;
-};
+export type AcknowledgeExpiredParticipationConfirmationsDto =
+  typeof AcknowledgeExpiredParticipationConfirmationsDto.Type;
 
 export const AcknowledgeExpiredParticipationConfirmationsDto = Schema.Struct({
   killIds: Schema.Array(Schema.String).check(
@@ -2430,9 +1322,8 @@ export const AcknowledgeExpiredParticipationConfirmationsDto = Schema.Struct({
   ),
 }).annotate({ identifier: "AcknowledgeExpiredParticipationConfirmationsDto" });
 
-export type AcknowledgeExpiredParticipationConfirmationsResponseDto_Output = {
-  readonly acknowledgedCount: number;
-};
+export type AcknowledgeExpiredParticipationConfirmationsResponseDto_Output =
+  typeof AcknowledgeExpiredParticipationConfirmationsResponseDto_Output.Type;
 
 export const AcknowledgeExpiredParticipationConfirmationsResponseDto_Output =
   Schema.Struct({
@@ -2454,95 +1345,35 @@ export const AcknowledgeExpiredParticipationConfirmationsResponseDto_Output =
       "AcknowledgeExpiredParticipationConfirmationsResponseDto_Output",
   });
 
-export type ConfirmParticipationForKillResponseDto_Output = {
-  readonly success: boolean;
-  readonly confirmedNow: boolean;
-};
+export type ConfirmParticipationForKillResponseDto_Output =
+  typeof ConfirmParticipationForKillResponseDto_Output.Type;
 
 export const ConfirmParticipationForKillResponseDto_Output = Schema.Struct({
   success: Schema.Boolean,
   confirmedNow: Schema.Boolean,
 }).annotate({ identifier: "ConfirmParticipationForKillResponseDto_Output" });
 
-export type EventRankingEntryResponseDto = {
-  readonly id: string;
-  readonly eventId: string;
-  readonly memberId: number;
-  readonly heroNpcName: string;
-  readonly totalPoints: number;
-  readonly totalKills: number;
-  readonly totalTimeSeconds: number;
-  readonly avgAfkPercentage: number;
-  readonly pointsModified: boolean;
-  readonly updatedAt: string;
-  readonly member: {
-    readonly id: number;
-    readonly name: string;
-    readonly roles: ReadonlyArray<{
-      readonly position: number;
-      readonly color: number | null;
-    }>;
-  };
-  readonly editHistory: ReadonlyArray<{
-    readonly id: string;
-    readonly rankingId: string;
-    readonly previousPoints: number;
-    readonly newPoints: number;
-    readonly deltaPoints: number;
-    readonly editType: "KILL_POINT" | "RANKING";
-    readonly editedByUserId: string;
-    readonly editedByName: string | null;
-    readonly comment: string | null;
-    readonly editedAt: string;
-  }>;
-};
+export type EventRankingEntryResponseDto =
+  typeof EventRankingEntryResponseDto.Type;
 
 export const EventRankingEntryResponseDto = Schema.Struct({
   id: Schema.String,
   eventId: Schema.String,
-  memberId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  memberId: FiniteNumber,
   heroNpcName: Schema.String,
-  totalPoints: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  totalKills: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  totalTimeSeconds: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  avgAfkPercentage: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  totalPoints: FiniteNumber,
+  totalKills: FiniteNumber,
+  totalTimeSeconds: FiniteNumber,
+  avgAfkPercentage: FiniteNumber,
   pointsModified: Schema.Boolean,
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  updatedAt: DateTimeString,
   member: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     name: Schema.String,
     roles: Schema.Array(
       Schema.Struct({
-        position: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        color: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        position: FiniteNumber,
+        color: Schema.Union([FiniteNumber, Schema.Null]),
       }),
     ),
   }),
@@ -2550,42 +1381,22 @@ export const EventRankingEntryResponseDto = Schema.Struct({
     Schema.Struct({
       id: Schema.String,
       rankingId: Schema.String,
-      previousPoints: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      newPoints: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      deltaPoints: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      previousPoints: FiniteNumber,
+      newPoints: FiniteNumber,
+      deltaPoints: FiniteNumber,
       editType: Schema.Literals(["KILL_POINT", "RANKING"]),
       editedByUserId: Schema.String,
       editedByName: Schema.Union([Schema.String, Schema.Null]),
       comment: Schema.Union([Schema.String, Schema.Null]),
-      editedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      editedAt: DateTimeString,
     }),
   ),
 }).annotate({ identifier: "EventRankingEntryResponseDto" });
 
-export type UpdateRankingPointsDto = {
-  readonly pointsDelta: number;
-  readonly comment?: string;
-};
+export type UpdateRankingPointsDto = typeof UpdateRankingPointsDto.Type;
 
 export const UpdateRankingPointsDto = Schema.Struct({
-  pointsDelta: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  pointsDelta: FiniteNumber,
   comment: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(500).annotate({
@@ -2595,227 +1406,68 @@ export const UpdateRankingPointsDto = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateRankingPointsDto" });
 
-export type EventTimerResponseDto = {
-  readonly npcId: number;
-  readonly world: string;
-  readonly minSpawnTime: string;
-  readonly maxSpawnTime: string;
-  readonly npc: { readonly name: string; readonly icon: string | null };
-};
+export type EventTimerResponseDto = typeof EventTimerResponseDto.Type;
 
 export const EventTimerResponseDto = Schema.Struct({
-  npcId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  npcId: FiniteNumber,
   world: Schema.String,
-  minSpawnTime: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  maxSpawnTime: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  minSpawnTime: DateTimeString,
+  maxSpawnTime: DateTimeString,
   npc: Schema.Struct({
     name: Schema.String,
     icon: Schema.Union([Schema.String, Schema.Null]),
   }),
 }).annotate({ identifier: "EventTimerResponseDto" });
 
-export type EventHeroStatsResponseDto = {
-  readonly heroId: string;
-  readonly npcId: number | null;
-  readonly npcName: string;
-  readonly npcLvl: number | null;
-  readonly npcProf: string | null;
-  readonly killCount: number;
-};
+export type EventHeroStatsResponseDto = typeof EventHeroStatsResponseDto.Type;
 
 export const EventHeroStatsResponseDto = Schema.Struct({
   heroId: Schema.String,
-  npcId: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  npcId: Schema.Union([FiniteNumber, Schema.Null]),
   npcName: Schema.String,
-  npcLvl: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
   npcProf: Schema.Union([Schema.String, Schema.Null]),
-  killCount: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  killCount: FiniteNumber,
 }).annotate({ identifier: "EventHeroStatsResponseDto" });
 
-export type EventKillHistoryResponseDto = {
-  readonly data: ReadonlyArray<{
-    readonly id: string;
-    readonly heroNpcId: string;
-    readonly killedAt: string;
-    readonly minSpawnTimeAtKill: string;
-    readonly maxSpawnTimeAtKill: string;
-    readonly isManualClose: boolean;
-    readonly heroNpc: {
-      readonly id: string;
-      readonly npcId: number | null;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly npcLvl: number | null;
-    };
-    readonly points: ReadonlyArray<{
-      readonly id: string;
-      readonly memberId: number;
-      readonly points: number;
-      readonly basePoints: number;
-      readonly manualAdjustmentPoints?: number | null;
-      readonly trackingDurationSeconds: number | null;
-      readonly trackingDurationPercentage: number | null;
-      readonly timeOnMapSeconds: number;
-      readonly afkPercentage: number;
-      readonly wasPresent: boolean;
-      readonly bonusBreakdown?:
-        | string
-        | number
-        | boolean
-        | ReadonlyArray<EventKillHistoryResponseDto__schema0>
-        | { readonly [x: string]: EventKillHistoryResponseDto__schema0 }
-        | null;
-      readonly member: {
-        readonly id: number;
-        readonly name: string;
-        readonly avatar: string | null;
-        readonly userId: string;
-      };
-      readonly mapData?: ReadonlyArray<{
-        readonly mapId: string;
-        readonly mapName: string;
-        readonly assignedAt: string;
-        readonly unassignedAt: string | null;
-        readonly assignmentDurationSeconds: number;
-        readonly presenceTimeSeconds: number;
-        readonly afkTimeSeconds: number;
-      }>;
-    }>;
-  }>;
-  readonly nextCursor: string | null;
-};
+export type EventKillHistoryResponseDto =
+  typeof EventKillHistoryResponseDto.Type;
 
 export const EventKillHistoryResponseDto = Schema.Struct({
   data: Schema.Array(
     Schema.Struct({
       id: Schema.String,
       heroNpcId: Schema.String,
-      killedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      minSpawnTimeAtKill: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      maxSpawnTimeAtKill: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      killedAt: DateTimeString,
+      minSpawnTimeAtKill: DateTimeString,
+      maxSpawnTimeAtKill: DateTimeString,
       isManualClose: Schema.Boolean,
       heroNpc: Schema.Struct({
         id: Schema.String,
-        npcId: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcId: Schema.Union([FiniteNumber, Schema.Null]),
         npcName: Schema.String,
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        npcLvl: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       }),
       points: Schema.Array(
         Schema.Struct({
           id: Schema.String,
-          memberId: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          points: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          basePoints: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          memberId: FiniteNumber,
+          points: FiniteNumber,
+          basePoints: FiniteNumber,
           manualAdjustmentPoints: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
-          trackingDurationSeconds: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
-          trackingDurationPercentage: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
-          timeOnMapSeconds: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          afkPercentage: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          trackingDurationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
+          trackingDurationPercentage: Schema.Union([FiniteNumber, Schema.Null]),
+          timeOnMapSeconds: FiniteNumber,
+          afkPercentage: FiniteNumber,
           wasPresent: Schema.Boolean,
           bonusBreakdown: Schema.optionalKey(
             Schema.Union([
               Schema.Union([
                 Schema.String,
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
+                FiniteNumber,
                 Schema.Boolean,
                 Schema.Array(EventKillHistoryResponseDto__schema0),
                 Schema.Record(
@@ -2827,9 +1479,7 @@ export const EventKillHistoryResponseDto = Schema.Struct({
             ]),
           ),
           member: Schema.Struct({
-            id: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            id: FiniteNumber,
             name: Schema.String,
             avatar: Schema.Union([Schema.String, Schema.Null]),
             userId: Schema.String,
@@ -2851,28 +1501,10 @@ export const EventKillHistoryResponseDto = Schema.Struct({
                       "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                   }),
                 ),
-                unassignedAt: Schema.Union([
-                  Schema.String.annotate({ format: "date-time" }).check(
-                    Schema.isPattern(
-                      new RegExp(
-                        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      ),
-                    ).annotate({
-                      expected:
-                        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                    }),
-                  ),
-                  Schema.Null,
-                ]),
-                assignmentDurationSeconds: Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                presenceTimeSeconds: Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                afkTimeSeconds: Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
+                unassignedAt: Schema.Union([DateTimeString, Schema.Null]),
+                assignmentDurationSeconds: FiniteNumber,
+                presenceTimeSeconds: FiniteNumber,
+                afkTimeSeconds: FiniteNumber,
               }),
             ),
           ),
@@ -2883,74 +1515,12 @@ export const EventKillHistoryResponseDto = Schema.Struct({
   nextCursor: Schema.Union([Schema.String, Schema.Null]),
 }).annotate({ identifier: "EventKillHistoryResponseDto" });
 
-export type EventMemberKillHistoryResponseDto = {
-  readonly member: {
-    readonly id: number;
-    readonly name: string;
-    readonly avatar: string | null;
-    readonly userId: string;
-  };
-  readonly data: ReadonlyArray<{
-    readonly id: string;
-    readonly heroNpcId: string;
-    readonly killedAt: string;
-    readonly minSpawnTimeAtKill: string;
-    readonly maxSpawnTimeAtKill: string;
-    readonly isManualClose: boolean;
-    readonly heroNpc: {
-      readonly id: string;
-      readonly npcId: number | null;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly npcLvl: number | null;
-    };
-    readonly memberPoint:
-      | ({
-          readonly id: string;
-          readonly memberId: number;
-          readonly points: number;
-          readonly basePoints: number;
-          readonly manualAdjustmentPoints?: number | null;
-          readonly trackingDurationSeconds: number | null;
-          readonly trackingDurationPercentage: number | null;
-          readonly timeOnMapSeconds: number;
-          readonly afkPercentage: number;
-          readonly wasPresent: boolean;
-          readonly bonusBreakdown?:
-            | string
-            | number
-            | boolean
-            | ReadonlyArray<EventMemberKillHistoryResponseDto__schema0>
-            | {
-                readonly [x: string]: EventMemberKillHistoryResponseDto__schema0;
-              }
-            | null;
-          readonly member: {
-            readonly id: number;
-            readonly name: string;
-            readonly avatar: string | null;
-            readonly userId: string;
-          };
-          readonly mapData?: ReadonlyArray<{
-            readonly mapId: string;
-            readonly mapName: string;
-            readonly assignedAt: string;
-            readonly unassignedAt: string | null;
-            readonly assignmentDurationSeconds: number;
-            readonly presenceTimeSeconds: number;
-            readonly afkTimeSeconds: number;
-          }>;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-  }>;
-  readonly nextCursor: string | null;
-};
+export type EventMemberKillHistoryResponseDto =
+  typeof EventMemberKillHistoryResponseDto.Type;
 
 export const EventMemberKillHistoryResponseDto = Schema.Struct({
   member: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     name: Schema.String,
     avatar: Schema.Union([Schema.String, Schema.Null]),
     userId: Schema.String,
@@ -2959,101 +1529,40 @@ export const EventMemberKillHistoryResponseDto = Schema.Struct({
     Schema.Struct({
       id: Schema.String,
       heroNpcId: Schema.String,
-      killedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      minSpawnTimeAtKill: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      maxSpawnTimeAtKill: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      killedAt: DateTimeString,
+      minSpawnTimeAtKill: DateTimeString,
+      maxSpawnTimeAtKill: DateTimeString,
       isManualClose: Schema.Boolean,
       heroNpc: Schema.Struct({
         id: Schema.String,
-        npcId: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcId: Schema.Union([FiniteNumber, Schema.Null]),
         npcName: Schema.String,
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        npcLvl: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       }),
       memberPoint: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
             id: Schema.String,
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            points: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            basePoints: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
+            points: FiniteNumber,
+            basePoints: FiniteNumber,
             manualAdjustmentPoints: Schema.optionalKey(
-              Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([FiniteNumber, Schema.Null]),
             ),
-            trackingDurationSeconds: Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            trackingDurationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
             trackingDurationPercentage: Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              FiniteNumber,
               Schema.Null,
             ]),
-            timeOnMapSeconds: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            afkPercentage: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            timeOnMapSeconds: FiniteNumber,
+            afkPercentage: FiniteNumber,
             wasPresent: Schema.Boolean,
             bonusBreakdown: Schema.optionalKey(
               Schema.Union([
                 Schema.Union([
                   Schema.String,
-                  Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  FiniteNumber,
                   Schema.Boolean,
                   Schema.Array(EventMemberKillHistoryResponseDto__schema0),
                   Schema.Record(
@@ -3065,9 +1574,7 @@ export const EventMemberKillHistoryResponseDto = Schema.Struct({
               ]),
             ),
             member: Schema.Struct({
-              id: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              id: FiniteNumber,
               name: Schema.String,
               avatar: Schema.Union([Schema.String, Schema.Null]),
               userId: Schema.String,
@@ -3089,28 +1596,10 @@ export const EventMemberKillHistoryResponseDto = Schema.Struct({
                         "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                     }),
                   ),
-                  unassignedAt: Schema.Union([
-                    Schema.String.annotate({ format: "date-time" }).check(
-                      Schema.isPattern(
-                        new RegExp(
-                          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                        ),
-                      ).annotate({
-                        expected:
-                          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      }),
-                    ),
-                    Schema.Null,
-                  ]),
-                  assignmentDurationSeconds: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
-                  presenceTimeSeconds: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
-                  afkTimeSeconds: Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  unassignedAt: Schema.Union([DateTimeString, Schema.Null]),
+                  assignmentDurationSeconds: FiniteNumber,
+                  presenceTimeSeconds: FiniteNumber,
+                  afkTimeSeconds: FiniteNumber,
                 }),
               ),
             ),
@@ -3129,164 +1618,26 @@ export const EventMemberKillHistoryResponseDto = Schema.Struct({
   nextCursor: Schema.Union([Schema.String, Schema.Null]),
 }).annotate({ identifier: "EventMemberKillHistoryResponseDto" });
 
-export type KillDetailResponseDto = {
-  readonly kill: {
-    readonly id: string;
-    readonly heroNpcId: string;
-    readonly killedAt: string;
-    readonly minSpawnTimeAtKill: string;
-    readonly maxSpawnTimeAtKill: string;
-    readonly timerCreatedById: number | null;
-    readonly isManualClose: boolean;
-    readonly respawnDurationSeconds: number | null;
-    readonly windowDurationSeconds: number | null;
-    readonly resolvedAfterMaxSpawnTimeMs: number | null;
-    readonly heroNpc: {
-      readonly id: string;
-      readonly npcId: number | null;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly npcLvl: number | null;
-      readonly event: {
-        readonly id: string;
-        readonly name: string;
-        readonly world: string;
-      };
-    };
-    readonly timerCreatedBy:
-      | ({
-          readonly id: number;
-          readonly name: string;
-          readonly avatar: string | null;
-          readonly userId: string;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly points: ReadonlyArray<{
-      readonly id: string;
-      readonly memberId: number;
-      readonly points: number;
-      readonly basePoints: number;
-      readonly manualAdjustmentPoints?: number | null;
-      readonly trackingDurationSeconds: number | null;
-      readonly trackingDurationPercentage: number | null;
-      readonly timeOnMapSeconds: number;
-      readonly afkPercentage: number;
-      readonly wasPresent: boolean;
-      readonly bonusBreakdown?:
-        | string
-        | number
-        | boolean
-        | ReadonlyArray<KillDetailResponseDto__schema0>
-        | { readonly [x: string]: KillDetailResponseDto__schema0 }
-        | null;
-      readonly member: {
-        readonly id: number;
-        readonly name: string;
-        readonly avatar: string | null;
-        readonly userId: string;
-        readonly roles: ReadonlyArray<{
-          readonly position: number | null;
-          readonly color: number | null;
-        }>;
-      };
-      readonly mapData?: ReadonlyArray<{
-        readonly mapId: string;
-        readonly mapName: string;
-        readonly assignedAt: string;
-        readonly unassignedAt: string | null;
-        readonly assignmentDurationSeconds: number;
-        readonly presenceTimeSeconds: number;
-        readonly afkTimeSeconds: number;
-      }>;
-    }>;
-  };
-  readonly eventConfig: {
-    readonly scoringMode: "SIMPLE" | "ADVANCED";
-    readonly scoringRules:
-      | string
-      | number
-      | boolean
-      | ReadonlyArray<KillDetailResponseDto__schema0>
-      | { readonly [x: string]: KillDetailResponseDto__schema0 }
-      | null;
-  };
-};
+export type KillDetailResponseDto = typeof KillDetailResponseDto.Type;
 
 export const KillDetailResponseDto = Schema.Struct({
   kill: Schema.Struct({
     id: Schema.String,
     heroNpcId: Schema.String,
-    killedAt: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    minSpawnTimeAtKill: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    maxSpawnTimeAtKill: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    timerCreatedById: Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    killedAt: DateTimeString,
+    minSpawnTimeAtKill: DateTimeString,
+    maxSpawnTimeAtKill: DateTimeString,
+    timerCreatedById: Schema.Union([FiniteNumber, Schema.Null]),
     isManualClose: Schema.Boolean,
-    respawnDurationSeconds: Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
-    windowDurationSeconds: Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
-    resolvedAfterMaxSpawnTimeMs: Schema.Union([
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      Schema.Null,
-    ]),
+    respawnDurationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
+    windowDurationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
+    resolvedAfterMaxSpawnTimeMs: Schema.Union([FiniteNumber, Schema.Null]),
     heroNpc: Schema.Struct({
       id: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      npcLvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       event: Schema.Struct({
         id: Schema.String,
         name: Schema.String,
@@ -3296,9 +1647,7 @@ export const KillDetailResponseDto = Schema.Struct({
     timerCreatedBy: Schema.Union([
       Schema.StructWithRest(
         Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          id: FiniteNumber,
           name: Schema.String,
           avatar: Schema.Union([Schema.String, Schema.Null]),
           userId: Schema.String,
@@ -3315,49 +1664,22 @@ export const KillDetailResponseDto = Schema.Struct({
     points: Schema.Array(
       Schema.Struct({
         id: Schema.String,
-        memberId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        points: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        basePoints: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        memberId: FiniteNumber,
+        points: FiniteNumber,
+        basePoints: FiniteNumber,
         manualAdjustmentPoints: Schema.optionalKey(
-          Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          Schema.Union([FiniteNumber, Schema.Null]),
         ),
-        trackingDurationSeconds: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
-        trackingDurationPercentage: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
-        timeOnMapSeconds: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        afkPercentage: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        trackingDurationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
+        trackingDurationPercentage: Schema.Union([FiniteNumber, Schema.Null]),
+        timeOnMapSeconds: FiniteNumber,
+        afkPercentage: FiniteNumber,
         wasPresent: Schema.Boolean,
         bonusBreakdown: Schema.optionalKey(
           Schema.Union([
             Schema.Union([
               Schema.String,
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              FiniteNumber,
               Schema.Boolean,
               Schema.Array(KillDetailResponseDto__schema0),
               Schema.Record(Schema.String, KillDetailResponseDto__schema0),
@@ -3366,26 +1688,14 @@ export const KillDetailResponseDto = Schema.Struct({
           ]),
         ),
         member: Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          id: FiniteNumber,
           name: Schema.String,
           avatar: Schema.Union([Schema.String, Schema.Null]),
           userId: Schema.String,
           roles: Schema.Array(
             Schema.Struct({
-              position: Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
-              color: Schema.Union([
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
-                Schema.Null,
-              ]),
+              position: Schema.Union([FiniteNumber, Schema.Null]),
+              color: Schema.Union([FiniteNumber, Schema.Null]),
             }),
           ),
         }),
@@ -3394,38 +1704,11 @@ export const KillDetailResponseDto = Schema.Struct({
             Schema.Struct({
               mapId: Schema.String,
               mapName: Schema.String,
-              assignedAt: Schema.String.annotate({ format: "date-time" }).check(
-                Schema.isPattern(
-                  new RegExp(
-                    "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  ),
-                ).annotate({
-                  expected:
-                    "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                }),
-              ),
-              unassignedAt: Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
-              assignmentDurationSeconds: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              presenceTimeSeconds: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              afkTimeSeconds: Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
+              assignedAt: DateTimeString,
+              unassignedAt: Schema.Union([DateTimeString, Schema.Null]),
+              assignmentDurationSeconds: FiniteNumber,
+              presenceTimeSeconds: FiniteNumber,
+              afkTimeSeconds: FiniteNumber,
             }),
           ),
         ),
@@ -3437,9 +1720,7 @@ export const KillDetailResponseDto = Schema.Struct({
     scoringRules: Schema.Union([
       Schema.Union([
         Schema.String,
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        FiniteNumber,
         Schema.Boolean,
         Schema.Array(KillDetailResponseDto__schema0),
         Schema.Record(Schema.String, KillDetailResponseDto__schema0),
@@ -3449,15 +1730,10 @@ export const KillDetailResponseDto = Schema.Struct({
   }),
 }).annotate({ identifier: "KillDetailResponseDto" });
 
-export type UpdateKillPointDto = {
-  readonly pointsDelta: number;
-  readonly comment?: string;
-};
+export type UpdateKillPointDto = typeof UpdateKillPointDto.Type;
 
 export const UpdateKillPointDto = Schema.Struct({
-  pointsDelta: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  pointsDelta: FiniteNumber,
   comment: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(500).annotate({
@@ -3467,155 +1743,37 @@ export const UpdateKillPointDto = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateKillPointDto" });
 
-export type EventCoordinationResponseDto = {
-  readonly assignmentTimeoutMinutes: number;
-  readonly generatedAt: string;
-  readonly eventId: string;
-  readonly world: string;
-  readonly summary: {
-    readonly criticalCount: number;
-    readonly warningCount: number;
-    readonly coveredMaps: number;
-    readonly totalMaps: number;
-    readonly nextSpawnAt: string | null;
-  };
-  readonly heroes: ReadonlyArray<{
-    readonly heroId: string;
-    readonly npcId: number | null;
-    readonly npcName: string;
-    readonly npcIcon: string | null;
-    readonly npcLvl: number | null;
-    readonly timer:
-      | ({
-          readonly npcId: number;
-          readonly world: string;
-          readonly minSpawnTime: string;
-          readonly maxSpawnTime: string;
-          readonly status: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
-          readonly overdueMs: number | null;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly coverage: {
-      readonly totalMaps: number;
-      readonly assignedMaps: number;
-      readonly coveredMaps: number;
-      readonly unassignedMaps: number;
-      readonly uncoveredMaps: number;
-      readonly activeGapCount: number;
-    };
-    readonly activeGaps: ReadonlyArray<{
-      readonly id: string;
-      readonly mapId: string;
-      readonly numericMapId: number;
-      readonly mapName: string;
-      readonly gapType: "UNASSIGNED" | "UNCOVERED";
-      readonly startedAt: string;
-      readonly durationSeconds: number;
-    }>;
-    readonly priority: "CRITICAL" | "WARNING" | "OK" | "IDLE";
-    readonly recommendedAction:
-      | "CLOSE_WINDOW"
-      | "ASSIGN_MAPS"
-      | "JOIN_MAP"
-      | "WAIT"
-      | "NONE";
-  }>;
-};
+export type EventCoordinationResponseDto =
+  typeof EventCoordinationResponseDto.Type;
 
 export const EventCoordinationResponseDto = Schema.Struct({
-  assignmentTimeoutMinutes: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  generatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  assignmentTimeoutMinutes: FiniteNumber,
+  generatedAt: DateTimeString,
   eventId: Schema.String,
   world: Schema.String,
   summary: Schema.Struct({
-    criticalCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    warningCount: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    coveredMaps: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalMaps: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    nextSpawnAt: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
+    criticalCount: FiniteNumber,
+    warningCount: FiniteNumber,
+    coveredMaps: FiniteNumber,
+    totalMaps: FiniteNumber,
+    nextSpawnAt: Schema.Union([DateTimeString, Schema.Null]),
   }),
   heroes: Schema.Array(
     Schema.Struct({
       heroId: Schema.String,
-      npcId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcId: Schema.Union([FiniteNumber, Schema.Null]),
       npcName: Schema.String,
       npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      npcLvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       timer: Schema.Union([
         Schema.StructWithRest(
           Schema.Struct({
-            npcId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            npcId: FiniteNumber,
             world: Schema.String,
-            minSpawnTime: Schema.String.annotate({ format: "date-time" }).check(
-              Schema.isPattern(
-                new RegExp(
-                  "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                ),
-              ).annotate({
-                expected:
-                  "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              }),
-            ),
-            maxSpawnTime: Schema.String.annotate({ format: "date-time" }).check(
-              Schema.isPattern(
-                new RegExp(
-                  "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                ),
-              ).annotate({
-                expected:
-                  "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              }),
-            ),
+            minSpawnTime: DateTimeString,
+            maxSpawnTime: DateTimeString,
             status: Schema.Literals(["OPEN", "WAITING", "OVERDUE", "NONE"]),
-            overdueMs: Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            overdueMs: Schema.Union([FiniteNumber, Schema.Null]),
           }),
           [
             Schema.Record(
@@ -3627,47 +1785,22 @@ export const EventCoordinationResponseDto = Schema.Struct({
         Schema.Null,
       ]),
       coverage: Schema.Struct({
-        totalMaps: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        assignedMaps: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        coveredMaps: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        unassignedMaps: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        uncoveredMaps: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        activeGapCount: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        totalMaps: FiniteNumber,
+        assignedMaps: FiniteNumber,
+        coveredMaps: FiniteNumber,
+        unassignedMaps: FiniteNumber,
+        uncoveredMaps: FiniteNumber,
+        activeGapCount: FiniteNumber,
       }),
       activeGaps: Schema.Array(
         Schema.Struct({
           id: Schema.String,
           mapId: Schema.String,
-          numericMapId: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          numericMapId: FiniteNumber,
           mapName: Schema.String,
           gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-          startedAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          durationSeconds: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          startedAt: DateTimeString,
+          durationSeconds: FiniteNumber,
         }),
       ),
       priority: Schema.Literals(["CRITICAL", "WARNING", "OK", "IDLE"]),
@@ -3682,213 +1815,63 @@ export const EventCoordinationResponseDto = Schema.Struct({
   ),
 }).annotate({ identifier: "EventCoordinationResponseDto" });
 
-export type KillTimelineMapResponseDto = {
-  readonly mapId: string;
-  readonly mapName: string;
-  readonly numericMapId: number;
-  readonly assignments: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly memberUserId: string;
-    readonly assignedAt: string;
-    readonly unassignedAt: string | null;
-  }>;
-  readonly gaps: ReadonlyArray<{
-    readonly id: string;
-    readonly gapType: "UNASSIGNED" | "UNCOVERED";
-    readonly startedAt: string;
-    readonly endedAt: string | null;
-    readonly durationSeconds: number | null;
-  }>;
-};
+export type KillTimelineMapResponseDto = typeof KillTimelineMapResponseDto.Type;
 
 export const KillTimelineMapResponseDto = Schema.Struct({
   mapId: Schema.String,
   mapName: Schema.String,
-  numericMapId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  numericMapId: FiniteNumber,
   assignments: Schema.Array(
     Schema.Struct({
-      memberId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      memberId: FiniteNumber,
       memberName: Schema.String,
       memberAvatar: Schema.Union([Schema.String, Schema.Null]),
       memberUserId: Schema.String,
-      assignedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      unassignedAt: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
+      assignedAt: DateTimeString,
+      unassignedAt: Schema.Union([DateTimeString, Schema.Null]),
     }),
   ),
   gaps: Schema.Array(
     Schema.Struct({
       id: Schema.String,
       gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-      startedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      endedAt: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
-      durationSeconds: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      startedAt: DateTimeString,
+      endedAt: Schema.Union([DateTimeString, Schema.Null]),
+      durationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
     }),
   ),
 }).annotate({ identifier: "KillTimelineMapResponseDto" });
 
-export type HeroCoverageGapResponseDto = {
-  readonly id: string;
-  readonly mapId: string;
-  readonly heroNpcId: string;
-  readonly gapType: "UNASSIGNED" | "UNCOVERED";
-  readonly startedAt: string;
-  readonly endedAt: string | null;
-  readonly durationSeconds: number | null;
-  readonly map: { readonly mapName: string; readonly mapId: number };
-};
+export type HeroCoverageGapResponseDto = typeof HeroCoverageGapResponseDto.Type;
 
 export const HeroCoverageGapResponseDto = Schema.Struct({
   id: Schema.String,
   mapId: Schema.String,
   heroNpcId: Schema.String,
   gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-  startedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  endedAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  durationSeconds: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  startedAt: DateTimeString,
+  endedAt: Schema.Union([DateTimeString, Schema.Null]),
+  durationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
   map: Schema.Struct({
     mapName: Schema.String,
-    mapId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    mapId: FiniteNumber,
   }),
 }).annotate({ identifier: "HeroCoverageGapResponseDto" });
 
-export type CoverageGapResponseDto = {
-  readonly id: string;
-  readonly mapId: string;
-  readonly heroNpcId: string;
-  readonly gapType: "UNASSIGNED" | "UNCOVERED";
-  readonly startedAt: string;
-  readonly endedAt: string | null;
-  readonly durationSeconds: number | null;
-};
+export type CoverageGapResponseDto = typeof CoverageGapResponseDto.Type;
 
 export const CoverageGapResponseDto = Schema.Struct({
   id: Schema.String,
   mapId: Schema.String,
   heroNpcId: Schema.String,
   gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-  startedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  endedAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  durationSeconds: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  startedAt: DateTimeString,
+  endedAt: Schema.Union([DateTimeString, Schema.Null]),
+  durationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
 }).annotate({ identifier: "CoverageGapResponseDto" });
 
 export type NullableCoverageGapResponseDto =
-  | ({
-      readonly id: string;
-      readonly mapId: string;
-      readonly heroNpcId: string;
-      readonly gapType: "UNASSIGNED" | "UNCOVERED";
-      readonly startedAt: string;
-      readonly endedAt: string | null;
-      readonly durationSeconds: number | null;
-    } & { readonly [x: string]: Schema.Json })
-  | null;
+  typeof NullableCoverageGapResponseDto.Type;
 
 export const NullableCoverageGapResponseDto = Schema.Union([
   Schema.StructWithRest(
@@ -3897,35 +1880,9 @@ export const NullableCoverageGapResponseDto = Schema.Union([
       mapId: Schema.String,
       heroNpcId: Schema.String,
       gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-      startedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      endedAt: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
-      durationSeconds: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      startedAt: DateTimeString,
+      endedAt: Schema.Union([DateTimeString, Schema.Null]),
+      durationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
     }),
     [
       Schema.Record(
@@ -3937,127 +1894,42 @@ export const NullableCoverageGapResponseDto = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "NullableCoverageGapResponseDto" });
 
-export type HeroPresenceStatsResponseDto = {
-  readonly totalCoverageSeconds: number;
-  readonly totalEventSeconds: number;
-  readonly presencePercentage: number;
-  readonly memberStats: ReadonlyArray<{
-    readonly memberId: number;
-    readonly memberName: string;
-    readonly memberAvatar: string | null;
-    readonly totalTimeSeconds: number;
-    readonly afkTimeSeconds: number;
-    readonly afkPercentage: number;
-  }>;
-};
+export type HeroPresenceStatsResponseDto =
+  typeof HeroPresenceStatsResponseDto.Type;
 
 export const HeroPresenceStatsResponseDto = Schema.Struct({
-  totalCoverageSeconds: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  totalEventSeconds: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  presencePercentage: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  totalCoverageSeconds: FiniteNumber,
+  totalEventSeconds: FiniteNumber,
+  presencePercentage: FiniteNumber,
   memberStats: Schema.Array(
     Schema.Struct({
-      memberId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      memberId: FiniteNumber,
       memberName: Schema.String,
       memberAvatar: Schema.Union([Schema.String, Schema.Null]),
-      totalTimeSeconds: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      afkTimeSeconds: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      afkPercentage: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      totalTimeSeconds: FiniteNumber,
+      afkTimeSeconds: FiniteNumber,
+      afkPercentage: FiniteNumber,
     }),
   ),
 }).annotate({ identifier: "HeroPresenceStatsResponseDto" });
 
-export type HeroRespawnConfigResponseDto = {
-  readonly hasTimer: boolean;
-  readonly windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
-  readonly minSpawnTime: string | null;
-  readonly maxSpawnTime: string | null;
-  readonly overdueMs: number | null;
-};
+export type HeroRespawnConfigResponseDto =
+  typeof HeroRespawnConfigResponseDto.Type;
 
 export const HeroRespawnConfigResponseDto = Schema.Struct({
   hasTimer: Schema.Boolean,
   windowStatus: Schema.Literals(["OPEN", "WAITING", "OVERDUE", "NONE"]),
-  minSpawnTime: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  maxSpawnTime: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  overdueMs: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  minSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
+  maxSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
+  overdueMs: Schema.Union([FiniteNumber, Schema.Null]),
 }).annotate({ identifier: "HeroRespawnConfigResponseDto" });
 
-export type CloseRespawnWindowDto = {
-  readonly createNewWindow?: boolean;
-  readonly newMinSpawnTime?: string;
-  readonly newMaxSpawnTime?: string;
-};
+export type CloseRespawnWindowDto = typeof CloseRespawnWindowDto.Type;
 
 export const CloseRespawnWindowDto = Schema.Struct({
   createNewWindow: Schema.optionalKey(Schema.Boolean),
-  newMinSpawnTime: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  newMaxSpawnTime: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  newMinSpawnTime: Schema.optionalKey(DateTimeString),
+  newMaxSpawnTime: Schema.optionalKey(DateTimeString),
 })
   .check(
     Schema.makeFilter((data) =>
@@ -4069,10 +1941,7 @@ export const CloseRespawnWindowDto = Schema.Struct({
   )
   .annotate({ identifier: "CloseRespawnWindowDto" });
 
-export type OpenRespawnWindowDto = {
-  readonly minSpawnTime: string;
-  readonly maxSpawnTime: string;
-};
+export type OpenRespawnWindowDto = typeof OpenRespawnWindowDto.Type;
 
 export const OpenRespawnWindowDto = Schema.Struct({
   minSpawnTime: Schema.String.annotate({ format: "date-time" })
@@ -4120,108 +1989,27 @@ export const OpenRespawnWindowDto = Schema.Struct({
   )
   .annotate({ identifier: "OpenRespawnWindowDto" });
 
-export type PinnedEventResponseDto = {
-  readonly pinnedAt: string;
-  readonly event: {
-    readonly id: string;
-    readonly guildId: string;
-    readonly name: string;
-    readonly world: string;
-    readonly active: boolean;
-    readonly startsAt: string | null;
-    readonly endsAt: string | null;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly heroNpcs: ReadonlyArray<{
-      readonly id: string;
-      readonly npcId: number | null;
-      readonly npcName: string;
-      readonly npcIcon: string | null;
-      readonly npcLvl: number | null;
-    }>;
-  };
-};
+export type PinnedEventResponseDto = typeof PinnedEventResponseDto.Type;
 
 export const PinnedEventResponseDto = Schema.Struct({
-  pinnedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  pinnedAt: DateTimeString,
   event: Schema.Struct({
     id: Schema.String,
     guildId: Schema.String,
     name: Schema.String,
     world: Schema.String,
     active: Schema.Boolean,
-    startsAt: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
-    endsAt: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
-    createdAt: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
+    startsAt: Schema.Union([DateTimeString, Schema.Null]),
+    endsAt: Schema.Union([DateTimeString, Schema.Null]),
+    createdAt: DateTimeString,
+    updatedAt: DateTimeString,
     heroNpcs: Schema.Array(
       Schema.Struct({
         id: Schema.String,
-        npcId: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcId: Schema.Union([FiniteNumber, Schema.Null]),
         npcName: Schema.String,
         npcIcon: Schema.Union([Schema.String, Schema.Null]),
-        npcLvl: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
+        npcLvl: Schema.Union([FiniteNumber, Schema.Null]),
       }),
     ),
   }),
@@ -4230,17 +2018,13 @@ export const PinnedEventResponseDto = Schema.Struct({
 const __recursive_EventMutationResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4264,9 +2048,7 @@ const __recursive_EventMutationResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4292,17 +2074,13 @@ const __recursive_EventMutationResponseDto__schema0 = Schema.Union([
 const __recursive_EventOverviewResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4326,9 +2104,7 @@ const __recursive_EventOverviewResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4354,17 +2130,13 @@ const __recursive_EventOverviewResponseDto__schema0 = Schema.Union([
 const __recursive_EventKillHistoryResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4388,9 +2160,7 @@ const __recursive_EventKillHistoryResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4416,17 +2186,13 @@ const __recursive_EventKillHistoryResponseDto__schema0 = Schema.Union([
 const __recursive_EventMemberKillHistoryResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4450,9 +2216,7 @@ const __recursive_EventMemberKillHistoryResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4478,17 +2242,13 @@ const __recursive_EventMemberKillHistoryResponseDto__schema0 = Schema.Union([
 const __recursive_KillDetailResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4512,9 +2272,7 @@ const __recursive_KillDetailResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4537,143 +2295,118 @@ const __recursive_KillDetailResponseDto__schema0 = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "KillDetailResponseDto__schema0" });
 
-export type ListEventsPathParams = { readonly guildId: string };
+export type ListEventsPathParams = typeof ListEventsPathParams.Type;
 
 export const ListEventsPathParams = Schema.Struct({ guildId: Schema.String });
 
-export type ListEventsQuery = {
-  readonly world?: string;
-  readonly activeOnly?: string;
-};
+export type ListEventsQuery = typeof ListEventsQuery.Type;
 
 export const ListEventsQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   activeOnly: Schema.optionalKey(Schema.String),
 });
 
-export type ListEvents200 = ReadonlyArray<EventListItemResponseDto>;
+export type ListEvents200 = typeof ListEvents200.Type;
 
 export const ListEvents200 = Schema.Array(EventListItemResponseDto);
 
-export type CreateEventPathParams = { readonly guildId: string };
+export type CreateEventPathParams = typeof CreateEventPathParams.Type;
 
 export const CreateEventPathParams = Schema.Struct({ guildId: Schema.String });
 
-export type CreateEventRequestJson = CreateEventDto;
+export type CreateEventRequestJson = typeof CreateEventRequestJson.Type;
 
 export const CreateEventRequestJson = CreateEventDto;
 
-export type CreateEvent201 = EventMutationResponseDto;
+export type CreateEvent201 = typeof CreateEvent201.Type;
 
 export const CreateEvent201 = EventMutationResponseDto;
 
-export type ShowEventPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ShowEventPathParams = typeof ShowEventPathParams.Type;
 
 export const ShowEventPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ShowEvent200 = EventOverviewResponseDto;
+export type ShowEvent200 = typeof ShowEvent200.Type;
 
 export const ShowEvent200 = EventOverviewResponseDto;
 
-export type DeleteEventPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type DeleteEventPathParams = typeof DeleteEventPathParams.Type;
 
 export const DeleteEventPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type DeleteEvent200 = SuccessResponseDto_Output;
+export type DeleteEvent200 = typeof DeleteEvent200.Type;
 
 export const DeleteEvent200 = SuccessResponseDto_Output;
 
-export type UpdateEventPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type UpdateEventPathParams = typeof UpdateEventPathParams.Type;
 
 export const UpdateEventPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type UpdateEventRequestJson = UpdateEventDto;
+export type UpdateEventRequestJson = typeof UpdateEventRequestJson.Type;
 
 export const UpdateEventRequestJson = UpdateEventDto;
 
-export type UpdateEvent200 = EventMutationResponseDto;
+export type UpdateEvent200 = typeof UpdateEvent200.Type;
 
 export const UpdateEvent200 = EventMutationResponseDto;
 
-export type ShowEventOverviewPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ShowEventOverviewPathParams =
+  typeof ShowEventOverviewPathParams.Type;
 
 export const ShowEventOverviewPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ShowEventOverview200 = EventOverviewResponseDto;
+export type ShowEventOverview200 = typeof ShowEventOverview200.Type;
 
 export const ShowEventOverview200 = EventOverviewResponseDto;
 
-export type ShowEventWrappedPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ShowEventWrappedPathParams = typeof ShowEventWrappedPathParams.Type;
 
 export const ShowEventWrappedPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ShowEventWrapped200 = EventWrappedApiResponseDto_Output;
+export type ShowEventWrapped200 = typeof ShowEventWrapped200.Type;
 
 export const ShowEventWrapped200 = EventWrappedApiResponseDto_Output;
 
-export type ListEventMapsPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ListEventMapsPathParams = typeof ListEventMapsPathParams.Type;
 
 export const ListEventMapsPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ListEventMaps200 = EventMapsResponseDto_Output;
+export type ListEventMaps200 = typeof ListEventMaps200.Type;
 
 export const ListEventMaps200 = EventMapsResponseDto_Output;
 
-export type RecalculateEventPointsPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type RecalculateEventPointsPathParams =
+  typeof RecalculateEventPointsPathParams.Type;
 
 export const RecalculateEventPointsPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type RecalculateEventPoints200 = SuccessResponseDto_Output;
+export type RecalculateEventPoints200 = typeof RecalculateEventPoints200.Type;
 
 export const RecalculateEventPoints200 = SuccessResponseDto_Output;
 
-export type EventsAssignmentControllerAssignMemberPathParams = {
-  readonly eventId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerAssignMemberPathParams =
+  typeof EventsAssignmentControllerAssignMemberPathParams.Type;
 
 export const EventsAssignmentControllerAssignMemberPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4681,34 +2414,28 @@ export const EventsAssignmentControllerAssignMemberPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerAssignMemberRequestJson = AssignMemberDto;
+export type EventsAssignmentControllerAssignMemberRequestJson =
+  typeof EventsAssignmentControllerAssignMemberRequestJson.Type;
 
 export const EventsAssignmentControllerAssignMemberRequestJson =
   AssignMemberDto;
 
-export type EventsAssignmentControllerUnassignMemberPathParams = {
-  readonly eventId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerUnassignMemberPathParams =
+  typeof EventsAssignmentControllerUnassignMemberPathParams.Type;
 
 export const EventsAssignmentControllerUnassignMemberPathParams = Schema.Struct(
   { eventId: Schema.String, mapId: Schema.String, guildId: Schema.String },
 );
 
-export type EventsAssignmentControllerUnassignMemberQuery = {
-  readonly memberId?: string;
-};
+export type EventsAssignmentControllerUnassignMemberQuery =
+  typeof EventsAssignmentControllerUnassignMemberQuery.Type;
 
 export const EventsAssignmentControllerUnassignMemberQuery = Schema.Struct({
   memberId: Schema.optionalKey(Schema.String),
 });
 
-export type EventsAssignmentControllerSelfAssignMemberPathParams = {
-  readonly eventId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerSelfAssignMemberPathParams =
+  typeof EventsAssignmentControllerSelfAssignMemberPathParams.Type;
 
 export const EventsAssignmentControllerSelfAssignMemberPathParams =
   Schema.Struct({
@@ -4717,11 +2444,8 @@ export const EventsAssignmentControllerSelfAssignMemberPathParams =
     guildId: Schema.String,
   });
 
-export type EventsAssignmentControllerSelfUnassignMemberPathParams = {
-  readonly eventId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerSelfUnassignMemberPathParams =
+  typeof EventsAssignmentControllerSelfUnassignMemberPathParams.Type;
 
 export const EventsAssignmentControllerSelfUnassignMemberPathParams =
   Schema.Struct({
@@ -4730,25 +2454,21 @@ export const EventsAssignmentControllerSelfUnassignMemberPathParams =
     guildId: Schema.String,
   });
 
-export type EventsAssignmentControllerAddHeroPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerAddHeroPathParams =
+  typeof EventsAssignmentControllerAddHeroPathParams.Type;
 
 export const EventsAssignmentControllerAddHeroPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerAddHeroRequestJson = CreateHeroDto;
+export type EventsAssignmentControllerAddHeroRequestJson =
+  typeof EventsAssignmentControllerAddHeroRequestJson.Type;
 
 export const EventsAssignmentControllerAddHeroRequestJson = CreateHeroDto;
 
-export type EventsAssignmentControllerDeleteHeroPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerDeleteHeroPathParams =
+  typeof EventsAssignmentControllerDeleteHeroPathParams.Type;
 
 export const EventsAssignmentControllerDeleteHeroPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4756,11 +2476,8 @@ export const EventsAssignmentControllerDeleteHeroPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerUpdateHeroPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerUpdateHeroPathParams =
+  typeof EventsAssignmentControllerUpdateHeroPathParams.Type;
 
 export const EventsAssignmentControllerUpdateHeroPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4768,15 +2485,13 @@ export const EventsAssignmentControllerUpdateHeroPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerUpdateHeroRequestJson = UpdateHeroDto;
+export type EventsAssignmentControllerUpdateHeroRequestJson =
+  typeof EventsAssignmentControllerUpdateHeroRequestJson.Type;
 
 export const EventsAssignmentControllerUpdateHeroRequestJson = UpdateHeroDto;
 
-export type EventsAssignmentControllerAddMapPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerAddMapPathParams =
+  typeof EventsAssignmentControllerAddMapPathParams.Type;
 
 export const EventsAssignmentControllerAddMapPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4784,20 +2499,18 @@ export const EventsAssignmentControllerAddMapPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerAddMapRequestJson = CreateMapDto;
+export type EventsAssignmentControllerAddMapRequestJson =
+  typeof EventsAssignmentControllerAddMapRequestJson.Type;
 
 export const EventsAssignmentControllerAddMapRequestJson = CreateMapDto;
 
-export type EventsAssignmentControllerAddMap201 = EventMapResponseDto_Output;
+export type EventsAssignmentControllerAddMap201 =
+  typeof EventsAssignmentControllerAddMap201.Type;
 
 export const EventsAssignmentControllerAddMap201 = EventMapResponseDto_Output;
 
-export type EventsAssignmentControllerDeleteMapPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerDeleteMapPathParams =
+  typeof EventsAssignmentControllerDeleteMapPathParams.Type;
 
 export const EventsAssignmentControllerDeleteMapPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4806,11 +2519,8 @@ export const EventsAssignmentControllerDeleteMapPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerGetLocationsPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerGetLocationsPathParams =
+  typeof EventsAssignmentControllerGetLocationsPathParams.Type;
 
 export const EventsAssignmentControllerGetLocationsPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4818,28 +2528,21 @@ export const EventsAssignmentControllerGetLocationsPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsAssignmentControllerCreateLocationPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerCreateLocationPathParams =
+  typeof EventsAssignmentControllerCreateLocationPathParams.Type;
 
 export const EventsAssignmentControllerCreateLocationPathParams = Schema.Struct(
   { eventId: Schema.String, heroId: Schema.String, guildId: Schema.String },
 );
 
 export type EventsAssignmentControllerCreateLocationRequestJson =
-  CreateLocationDto;
+  typeof EventsAssignmentControllerCreateLocationRequestJson.Type;
 
 export const EventsAssignmentControllerCreateLocationRequestJson =
   CreateLocationDto;
 
-export type EventsAssignmentControllerDeleteLocationPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly locationId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerDeleteLocationPathParams =
+  typeof EventsAssignmentControllerDeleteLocationPathParams.Type;
 
 export const EventsAssignmentControllerDeleteLocationPathParams = Schema.Struct(
   {
@@ -4850,12 +2553,8 @@ export const EventsAssignmentControllerDeleteLocationPathParams = Schema.Struct(
   },
 );
 
-export type EventsAssignmentControllerUpdateLocationPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly locationId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerUpdateLocationPathParams =
+  typeof EventsAssignmentControllerUpdateLocationPathParams.Type;
 
 export const EventsAssignmentControllerUpdateLocationPathParams = Schema.Struct(
   {
@@ -4867,16 +2566,13 @@ export const EventsAssignmentControllerUpdateLocationPathParams = Schema.Struct(
 );
 
 export type EventsAssignmentControllerUpdateLocationRequestJson =
-  UpdateLocationDto;
+  typeof EventsAssignmentControllerUpdateLocationRequestJson.Type;
 
 export const EventsAssignmentControllerUpdateLocationRequestJson =
   UpdateLocationDto;
 
-export type EventsAssignmentControllerReorderLocationsPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerReorderLocationsPathParams =
+  typeof EventsAssignmentControllerReorderLocationsPathParams.Type;
 
 export const EventsAssignmentControllerReorderLocationsPathParams =
   Schema.Struct({
@@ -4886,17 +2582,13 @@ export const EventsAssignmentControllerReorderLocationsPathParams =
   });
 
 export type EventsAssignmentControllerReorderLocationsRequestJson =
-  ReorderLocationsDto;
+  typeof EventsAssignmentControllerReorderLocationsRequestJson.Type;
 
 export const EventsAssignmentControllerReorderLocationsRequestJson =
   ReorderLocationsDto;
 
-export type EventsAssignmentControllerAssignMapToLocationPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsAssignmentControllerAssignMapToLocationPathParams =
+  typeof EventsAssignmentControllerAssignMapToLocationPathParams.Type;
 
 export const EventsAssignmentControllerAssignMapToLocationPathParams =
   Schema.Struct({
@@ -4907,15 +2599,13 @@ export const EventsAssignmentControllerAssignMapToLocationPathParams =
   });
 
 export type EventsAssignmentControllerAssignMapToLocationRequestJson =
-  AssignMapLocationDto;
+  typeof EventsAssignmentControllerAssignMapToLocationRequestJson.Type;
 
 export const EventsAssignmentControllerAssignMapToLocationRequestJson =
   AssignMapLocationDto;
 
-export type ListPendingParticipationConfirmationsPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ListPendingParticipationConfirmationsPathParams =
+  typeof ListPendingParticipationConfirmationsPathParams.Type;
 
 export const ListPendingParticipationConfirmationsPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4923,36 +2613,31 @@ export const ListPendingParticipationConfirmationsPathParams = Schema.Struct({
 });
 
 export type ListPendingParticipationConfirmations200 =
-  PendingParticipationConfirmationsResponseDto;
+  typeof ListPendingParticipationConfirmations200.Type;
 
 export const ListPendingParticipationConfirmations200 =
   PendingParticipationConfirmationsResponseDto;
 
-export type AcknowledgeExpiredParticipationConfirmationsPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type AcknowledgeExpiredParticipationConfirmationsPathParams =
+  typeof AcknowledgeExpiredParticipationConfirmationsPathParams.Type;
 
 export const AcknowledgeExpiredParticipationConfirmationsPathParams =
   Schema.Struct({ eventId: Schema.String, guildId: Schema.String });
 
 export type AcknowledgeExpiredParticipationConfirmationsRequestJson =
-  AcknowledgeExpiredParticipationConfirmationsDto;
+  typeof AcknowledgeExpiredParticipationConfirmationsRequestJson.Type;
 
 export const AcknowledgeExpiredParticipationConfirmationsRequestJson =
   AcknowledgeExpiredParticipationConfirmationsDto;
 
 export type AcknowledgeExpiredParticipationConfirmations201 =
-  AcknowledgeExpiredParticipationConfirmationsResponseDto_Output;
+  typeof AcknowledgeExpiredParticipationConfirmations201.Type;
 
 export const AcknowledgeExpiredParticipationConfirmations201 =
   AcknowledgeExpiredParticipationConfirmationsResponseDto_Output;
 
-export type ConfirmParticipationForKillPathParams = {
-  readonly eventId: string;
-  readonly killId: string;
-  readonly guildId: string;
-};
+export type ConfirmParticipationForKillPathParams =
+  typeof ConfirmParticipationForKillPathParams.Type;
 
 export const ConfirmParticipationForKillPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4961,30 +2646,24 @@ export const ConfirmParticipationForKillPathParams = Schema.Struct({
 });
 
 export type ConfirmParticipationForKill200 =
-  ConfirmParticipationForKillResponseDto_Output;
+  typeof ConfirmParticipationForKill200.Type;
 
 export const ConfirmParticipationForKill200 =
   ConfirmParticipationForKillResponseDto_Output;
 
-export type ListEventRankingPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ListEventRankingPathParams = typeof ListEventRankingPathParams.Type;
 
 export const ListEventRankingPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ListEventRanking200 = ReadonlyArray<EventRankingEntryResponseDto>;
+export type ListEventRanking200 = typeof ListEventRanking200.Type;
 
 export const ListEventRanking200 = Schema.Array(EventRankingEntryResponseDto);
 
-export type UpdateRankingPointsPathParams = {
-  readonly eventId: string;
-  readonly rankingId: string;
-  readonly guildId: string;
-};
+export type UpdateRankingPointsPathParams =
+  typeof UpdateRankingPointsPathParams.Type;
 
 export const UpdateRankingPointsPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -4992,57 +2671,49 @@ export const UpdateRankingPointsPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type UpdateRankingPointsRequestJson = UpdateRankingPointsDto;
+export type UpdateRankingPointsRequestJson =
+  typeof UpdateRankingPointsRequestJson.Type;
 
 export const UpdateRankingPointsRequestJson = UpdateRankingPointsDto;
 
-export type ListEventHeroTimersPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type ListEventHeroTimersPathParams =
+  typeof ListEventHeroTimersPathParams.Type;
 
 export const ListEventHeroTimersPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type ListEventHeroTimersQuery = { readonly world: string };
+export type ListEventHeroTimersQuery = typeof ListEventHeroTimersQuery.Type;
 
 export const ListEventHeroTimersQuery = Schema.Struct({ world: Schema.String });
 
-export type ListEventHeroTimers200 = ReadonlyArray<EventTimerResponseDto>;
+export type ListEventHeroTimers200 = typeof ListEventHeroTimers200.Type;
 
 export const ListEventHeroTimers200 = Schema.Array(EventTimerResponseDto);
 
-export type EventsRankingControllerGetEventHeroStatsPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type EventsRankingControllerGetEventHeroStatsPathParams =
+  typeof EventsRankingControllerGetEventHeroStatsPathParams.Type;
 
 export const EventsRankingControllerGetEventHeroStatsPathParams = Schema.Struct(
   { eventId: Schema.String, guildId: Schema.String },
 );
 
 export type EventsRankingControllerGetEventHeroStats200 =
-  ReadonlyArray<EventHeroStatsResponseDto>;
+  typeof EventsRankingControllerGetEventHeroStats200.Type;
 
 export const EventsRankingControllerGetEventHeroStats200 = Schema.Array(
   EventHeroStatsResponseDto,
 );
 
-export type EventsRankingControllerGetEventKillHistoryPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type EventsRankingControllerGetEventKillHistoryPathParams =
+  typeof EventsRankingControllerGetEventKillHistoryPathParams.Type;
 
 export const EventsRankingControllerGetEventKillHistoryPathParams =
   Schema.Struct({ eventId: Schema.String, guildId: Schema.String });
 
-export type EventsRankingControllerGetEventKillHistoryQuery = {
-  readonly limit?: string;
-  readonly cursor?: string;
-  readonly heroId?: string;
-};
+export type EventsRankingControllerGetEventKillHistoryQuery =
+  typeof EventsRankingControllerGetEventKillHistoryQuery.Type;
 
 export const EventsRankingControllerGetEventKillHistoryQuery = Schema.Struct({
   limit: Schema.optionalKey(Schema.String),
@@ -5051,16 +2722,13 @@ export const EventsRankingControllerGetEventKillHistoryQuery = Schema.Struct({
 });
 
 export type EventsRankingControllerGetEventKillHistory200 =
-  EventKillHistoryResponseDto;
+  typeof EventsRankingControllerGetEventKillHistory200.Type;
 
 export const EventsRankingControllerGetEventKillHistory200 =
   EventKillHistoryResponseDto;
 
-export type EventsRankingControllerGetMemberKillHistoryPathParams = {
-  readonly eventId: string;
-  readonly memberId: string;
-  readonly guildId: string;
-};
+export type EventsRankingControllerGetMemberKillHistoryPathParams =
+  typeof EventsRankingControllerGetMemberKillHistoryPathParams.Type;
 
 export const EventsRankingControllerGetMemberKillHistoryPathParams =
   Schema.Struct({
@@ -5069,11 +2737,8 @@ export const EventsRankingControllerGetMemberKillHistoryPathParams =
     guildId: Schema.String,
   });
 
-export type EventsRankingControllerGetMemberKillHistoryQuery = {
-  readonly limit?: string;
-  readonly cursor?: string;
-  readonly heroId?: string;
-};
+export type EventsRankingControllerGetMemberKillHistoryQuery =
+  typeof EventsRankingControllerGetMemberKillHistoryQuery.Type;
 
 export const EventsRankingControllerGetMemberKillHistoryQuery = Schema.Struct({
   limit: Schema.optionalKey(Schema.String),
@@ -5082,16 +2747,13 @@ export const EventsRankingControllerGetMemberKillHistoryQuery = Schema.Struct({
 });
 
 export type EventsRankingControllerGetMemberKillHistory200 =
-  EventMemberKillHistoryResponseDto;
+  typeof EventsRankingControllerGetMemberKillHistory200.Type;
 
 export const EventsRankingControllerGetMemberKillHistory200 =
   EventMemberKillHistoryResponseDto;
 
-export type EventsRankingControllerGetHeroKillHistoryPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsRankingControllerGetHeroKillHistoryPathParams =
+  typeof EventsRankingControllerGetHeroKillHistoryPathParams.Type;
 
 export const EventsRankingControllerGetHeroKillHistoryPathParams =
   Schema.Struct({
@@ -5100,10 +2762,8 @@ export const EventsRankingControllerGetHeroKillHistoryPathParams =
     guildId: Schema.String,
   });
 
-export type EventsRankingControllerGetHeroKillHistoryQuery = {
-  readonly limit?: string;
-  readonly cursor?: string;
-};
+export type EventsRankingControllerGetHeroKillHistoryQuery =
+  typeof EventsRankingControllerGetHeroKillHistoryQuery.Type;
 
 export const EventsRankingControllerGetHeroKillHistoryQuery = Schema.Struct({
   limit: Schema.optionalKey(Schema.String),
@@ -5111,17 +2771,13 @@ export const EventsRankingControllerGetHeroKillHistoryQuery = Schema.Struct({
 });
 
 export type EventsRankingControllerGetHeroKillHistory200 =
-  EventKillHistoryResponseDto;
+  typeof EventsRankingControllerGetHeroKillHistory200.Type;
 
 export const EventsRankingControllerGetHeroKillHistory200 =
   EventKillHistoryResponseDto;
 
-export type EventsRankingControllerGetKillDetailPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly killId: string;
-  readonly guildId: string;
-};
+export type EventsRankingControllerGetKillDetailPathParams =
+  typeof EventsRankingControllerGetKillDetailPathParams.Type;
 
 export const EventsRankingControllerGetKillDetailPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -5130,16 +2786,13 @@ export const EventsRankingControllerGetKillDetailPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type EventsRankingControllerGetKillDetail200 = KillDetailResponseDto;
+export type EventsRankingControllerGetKillDetail200 =
+  typeof EventsRankingControllerGetKillDetail200.Type;
 
 export const EventsRankingControllerGetKillDetail200 = KillDetailResponseDto;
 
-export type EventsRankingControllerUpdateKillPointPathParams = {
-  readonly eventId: string;
-  readonly killId: string;
-  readonly killPointId: string;
-  readonly guildId: string;
-};
+export type EventsRankingControllerUpdateKillPointPathParams =
+  typeof EventsRankingControllerUpdateKillPointPathParams.Type;
 
 export const EventsRankingControllerUpdateKillPointPathParams = Schema.Struct({
   eventId: Schema.String,
@@ -5149,31 +2802,25 @@ export const EventsRankingControllerUpdateKillPointPathParams = Schema.Struct({
 });
 
 export type EventsRankingControllerUpdateKillPointRequestJson =
-  UpdateKillPointDto;
+  typeof EventsRankingControllerUpdateKillPointRequestJson.Type;
 
 export const EventsRankingControllerUpdateKillPointRequestJson =
   UpdateKillPointDto;
 
-export type EventsMonitoringControllerGetCoordinationPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetCoordinationPathParams =
+  typeof EventsMonitoringControllerGetCoordinationPathParams.Type;
 
 export const EventsMonitoringControllerGetCoordinationPathParams =
   Schema.Struct({ eventId: Schema.String, guildId: Schema.String });
 
 export type EventsMonitoringControllerGetCoordination200 =
-  EventCoordinationResponseDto;
+  typeof EventsMonitoringControllerGetCoordination200.Type;
 
 export const EventsMonitoringControllerGetCoordination200 =
   EventCoordinationResponseDto;
 
-export type EventsMonitoringControllerGetKillTimelineDataPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly killId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetKillTimelineDataPathParams =
+  typeof EventsMonitoringControllerGetKillTimelineDataPathParams.Type;
 
 export const EventsMonitoringControllerGetKillTimelineDataPathParams =
   Schema.Struct({
@@ -5184,17 +2831,14 @@ export const EventsMonitoringControllerGetKillTimelineDataPathParams =
   });
 
 export type EventsMonitoringControllerGetKillTimelineData200 =
-  ReadonlyArray<KillTimelineMapResponseDto>;
+  typeof EventsMonitoringControllerGetKillTimelineData200.Type;
 
 export const EventsMonitoringControllerGetKillTimelineData200 = Schema.Array(
   KillTimelineMapResponseDto,
 );
 
-export type EventsMonitoringControllerGetHeroCoverageGapsPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetHeroCoverageGapsPathParams =
+  typeof EventsMonitoringControllerGetHeroCoverageGapsPathParams.Type;
 
 export const EventsMonitoringControllerGetHeroCoverageGapsPathParams =
   Schema.Struct({
@@ -5204,17 +2848,14 @@ export const EventsMonitoringControllerGetHeroCoverageGapsPathParams =
   });
 
 export type EventsMonitoringControllerGetHeroCoverageGaps200 =
-  ReadonlyArray<HeroCoverageGapResponseDto>;
+  typeof EventsMonitoringControllerGetHeroCoverageGaps200.Type;
 
 export const EventsMonitoringControllerGetHeroCoverageGaps200 = Schema.Array(
   HeroCoverageGapResponseDto,
 );
 
-export type EventsMonitoringControllerGetMapCoverageGapsPathParams = {
-  readonly eventId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetMapCoverageGapsPathParams =
+  typeof EventsMonitoringControllerGetMapCoverageGapsPathParams.Type;
 
 export const EventsMonitoringControllerGetMapCoverageGapsPathParams =
   Schema.Struct({
@@ -5224,17 +2865,14 @@ export const EventsMonitoringControllerGetMapCoverageGapsPathParams =
   });
 
 export type EventsMonitoringControllerGetMapCoverageGaps200 =
-  ReadonlyArray<CoverageGapResponseDto>;
+  typeof EventsMonitoringControllerGetMapCoverageGaps200.Type;
 
 export const EventsMonitoringControllerGetMapCoverageGaps200 = Schema.Array(
   CoverageGapResponseDto,
 );
 
-export type EventsMonitoringControllerGetActiveGapForMapPathParams = {
-  readonly eventId: string;
-  readonly mapId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetActiveGapForMapPathParams =
+  typeof EventsMonitoringControllerGetActiveGapForMapPathParams.Type;
 
 export const EventsMonitoringControllerGetActiveGapForMapPathParams =
   Schema.Struct({
@@ -5244,16 +2882,13 @@ export const EventsMonitoringControllerGetActiveGapForMapPathParams =
   });
 
 export type EventsMonitoringControllerGetActiveGapForMap200 =
-  NullableCoverageGapResponseDto;
+  typeof EventsMonitoringControllerGetActiveGapForMap200.Type;
 
 export const EventsMonitoringControllerGetActiveGapForMap200 =
   NullableCoverageGapResponseDto;
 
-export type EventsMonitoringControllerGetActiveGapsForHeroPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetActiveGapsForHeroPathParams =
+  typeof EventsMonitoringControllerGetActiveGapsForHeroPathParams.Type;
 
 export const EventsMonitoringControllerGetActiveGapsForHeroPathParams =
   Schema.Struct({
@@ -5263,17 +2898,14 @@ export const EventsMonitoringControllerGetActiveGapsForHeroPathParams =
   });
 
 export type EventsMonitoringControllerGetActiveGapsForHero200 =
-  ReadonlyArray<CoverageGapResponseDto>;
+  typeof EventsMonitoringControllerGetActiveGapsForHero200.Type;
 
 export const EventsMonitoringControllerGetActiveGapsForHero200 = Schema.Array(
   CoverageGapResponseDto,
 );
 
-export type EventsMonitoringControllerGetHeroPresenceStatsPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetHeroPresenceStatsPathParams =
+  typeof EventsMonitoringControllerGetHeroPresenceStatsPathParams.Type;
 
 export const EventsMonitoringControllerGetHeroPresenceStatsPathParams =
   Schema.Struct({
@@ -5283,16 +2915,13 @@ export const EventsMonitoringControllerGetHeroPresenceStatsPathParams =
   });
 
 export type EventsMonitoringControllerGetHeroPresenceStats200 =
-  HeroPresenceStatsResponseDto;
+  typeof EventsMonitoringControllerGetHeroPresenceStats200.Type;
 
 export const EventsMonitoringControllerGetHeroPresenceStats200 =
   HeroPresenceStatsResponseDto;
 
-export type EventsMonitoringControllerGetHeroRespawnConfigPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerGetHeroRespawnConfigPathParams =
+  typeof EventsMonitoringControllerGetHeroRespawnConfigPathParams.Type;
 
 export const EventsMonitoringControllerGetHeroRespawnConfigPathParams =
   Schema.Struct({
@@ -5302,16 +2931,13 @@ export const EventsMonitoringControllerGetHeroRespawnConfigPathParams =
   });
 
 export type EventsMonitoringControllerGetHeroRespawnConfig200 =
-  HeroRespawnConfigResponseDto;
+  typeof EventsMonitoringControllerGetHeroRespawnConfig200.Type;
 
 export const EventsMonitoringControllerGetHeroRespawnConfig200 =
   HeroRespawnConfigResponseDto;
 
-export type EventsMonitoringControllerCloseRespawnWindowPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerCloseRespawnWindowPathParams =
+  typeof EventsMonitoringControllerCloseRespawnWindowPathParams.Type;
 
 export const EventsMonitoringControllerCloseRespawnWindowPathParams =
   Schema.Struct({
@@ -5321,16 +2947,13 @@ export const EventsMonitoringControllerCloseRespawnWindowPathParams =
   });
 
 export type EventsMonitoringControllerCloseRespawnWindowRequestJson =
-  CloseRespawnWindowDto;
+  typeof EventsMonitoringControllerCloseRespawnWindowRequestJson.Type;
 
 export const EventsMonitoringControllerCloseRespawnWindowRequestJson =
   CloseRespawnWindowDto;
 
-export type EventsMonitoringControllerOpenRespawnWindowPathParams = {
-  readonly eventId: string;
-  readonly heroId: string;
-  readonly guildId: string;
-};
+export type EventsMonitoringControllerOpenRespawnWindowPathParams =
+  typeof EventsMonitoringControllerOpenRespawnWindowPathParams.Type;
 
 export const EventsMonitoringControllerOpenRespawnWindowPathParams =
   Schema.Struct({
@@ -5340,39 +2963,33 @@ export const EventsMonitoringControllerOpenRespawnWindowPathParams =
   });
 
 export type EventsMonitoringControllerOpenRespawnWindowRequestJson =
-  OpenRespawnWindowDto;
+  typeof EventsMonitoringControllerOpenRespawnWindowRequestJson.Type;
 
 export const EventsMonitoringControllerOpenRespawnWindowRequestJson =
   OpenRespawnWindowDto;
 
-export type ListPinnedEventsPathParams = { readonly guildId: string };
+export type ListPinnedEventsPathParams = typeof ListPinnedEventsPathParams.Type;
 
 export const ListPinnedEventsPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ListPinnedEvents200 = ReadonlyArray<PinnedEventResponseDto>;
+export type ListPinnedEvents200 = typeof ListPinnedEvents200.Type;
 
 export const ListPinnedEvents200 = Schema.Array(PinnedEventResponseDto);
 
-export type PinEventPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type PinEventPathParams = typeof PinEventPathParams.Type;
 
 export const PinEventPathParams = Schema.Struct({
   eventId: Schema.String,
   guildId: Schema.String,
 });
 
-export type PinEvent200 = PinnedEventResponseDto;
+export type PinEvent200 = typeof PinEvent200.Type;
 
 export const PinEvent200 = PinnedEventResponseDto;
 
-export type UnpinEventPathParams = {
-  readonly eventId: string;
-  readonly guildId: string;
-};
+export type UnpinEventPathParams = typeof UnpinEventPathParams.Type;
 
 export const UnpinEventPathParams = Schema.Struct({
   eventId: Schema.String,

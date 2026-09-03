@@ -1,98 +1,22 @@
 /** Transport schemas owned by the loots HTTP module. */
 import * as Schema from "effect/Schema";
+import {
+  DateTimeWithOffsetString,
+  DateTimeString,
+  FiniteNumber,
+} from "../scalars.js";
 
-export type LootResponseDto = {
-  readonly id: number;
-  readonly uniqueId: string;
-  readonly world: string;
-  readonly source: "LOOTBOX" | "DIALOG" | "FIGHT";
-  readonly location: string;
-  readonly items: ReadonlyArray<{
-    readonly id: number;
-    readonly hid: string;
-    readonly name: string;
-    readonly icon: string;
-    readonly stat: string;
-    readonly type: string | null;
-    readonly rarity: "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED" | null;
-    readonly lvl: number;
-    readonly prof: ReadonlyArray<
-      "WARRIOR" | "PALADIN" | "HUNTER" | "MAGE" | "BLADE_DANCER" | "TRACKER"
-    >;
-  }>;
-  readonly players: ReadonlyArray<{
-    readonly id: string | number;
-    readonly name: string;
-    readonly lvl: number | null;
-    readonly prof:
-      | "WARRIOR"
-      | "PALADIN"
-      | "HUNTER"
-      | "MAGE"
-      | "BLADE_DANCER"
-      | "TRACKER"
-      | null;
-    readonly icon: string | null;
-    readonly characterId: number | null;
-    readonly accountId: number | null;
-    readonly hpp: number | null;
-  }>;
-  readonly npcs: ReadonlyArray<{
-    readonly id: number;
-    readonly name: string;
-    readonly wt: number | null;
-    readonly lvl: number | null;
-    readonly prof:
-      | "WARRIOR"
-      | "PALADIN"
-      | "HUNTER"
-      | "MAGE"
-      | "BLADE_DANCER"
-      | "TRACKER"
-      | null;
-    readonly icon: string | null;
-    readonly type:
-      | "COMMON"
-      | "ELITE"
-      | "ELITE2"
-      | "ELITE3"
-      | "HERO"
-      | "EVENT_HERO"
-      | "TITAN"
-      | "COLOSSUS"
-      | "NPC"
-      | null;
-    readonly margonemType: number | null;
-  }>;
-  readonly lootShare: { readonly [x: string]: ReadonlyArray<string> };
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly submissions?: ReadonlyArray<{
-    readonly guildId: string;
-    readonly memberId: number;
-    readonly lootId: number;
-    readonly member: {
-      readonly name: string;
-      readonly avatar?: string | null;
-      readonly userId: string;
-    };
-  }>;
-  readonly commentsCount: number;
-};
+export type LootResponseDto = typeof LootResponseDto.Type;
 
 export const LootResponseDto = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   uniqueId: Schema.String,
   world: Schema.String,
   source: Schema.Literals(["LOOTBOX", "DIALOG", "FIGHT"]),
   location: Schema.String,
   items: Schema.Array(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       hid: Schema.String,
       name: Schema.String,
       icon: Schema.String,
@@ -102,9 +26,7 @@ export const LootResponseDto = Schema.Struct({
         Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
         Schema.Null,
       ]),
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
       prof: Schema.Array(
         Schema.Literals([
           "WARRIOR",
@@ -119,19 +41,9 @@ export const LootResponseDto = Schema.Struct({
   ),
   players: Schema.Array(
     Schema.Struct({
-      id: Schema.Union([
-        Schema.String,
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ]),
+      id: Schema.Union([Schema.String, FiniteNumber]),
       name: Schema.String,
-      lvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      lvl: Schema.Union([FiniteNumber, Schema.Null]),
       prof: Schema.Union([
         Schema.Literals([
           "WARRIOR",
@@ -144,44 +56,17 @@ export const LootResponseDto = Schema.Struct({
         Schema.Null,
       ]),
       icon: Schema.Union([Schema.String, Schema.Null]),
-      characterId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
-      accountId: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
-      hpp: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      characterId: Schema.Union([FiniteNumber, Schema.Null]),
+      accountId: Schema.Union([FiniteNumber, Schema.Null]),
+      hpp: Schema.Union([FiniteNumber, Schema.Null]),
     }),
   ),
   npcs: Schema.Array(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       name: Schema.String,
-      wt: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
-      lvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      wt: Schema.Union([FiniteNumber, Schema.Null]),
+      lvl: Schema.Union([FiniteNumber, Schema.Null]),
       prof: Schema.Union([
         Schema.Literals([
           "WARRIOR",
@@ -208,45 +93,18 @@ export const LootResponseDto = Schema.Struct({
         ]),
         Schema.Null,
       ]),
-      margonemType: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      margonemType: Schema.Union([FiniteNumber, Schema.Null]),
     }),
   ),
   lootShare: Schema.Record(Schema.String, Schema.Array(Schema.String)),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   submissions: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
         guildId: Schema.String,
-        memberId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        lootId: Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
+        memberId: FiniteNumber,
+        lootId: FiniteNumber,
         member: Schema.Struct({
           name: Schema.String,
           avatar: Schema.optionalKey(
@@ -257,116 +115,37 @@ export const LootResponseDto = Schema.Struct({
       }),
     ),
   ),
-  commentsCount: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  commentsCount: FiniteNumber,
 }).annotate({ identifier: "LootResponseDto" });
 
-export type LootStatsResponseDto_Output = {
-  readonly overview: {
-    readonly totalLoots: number;
-    readonly totalItems: number;
-    readonly legendaryItems: number;
-    readonly heroicItems: number;
-    readonly avgItemLevel: number;
-  };
-  readonly byRarity: {
-    readonly [x: string]: {
-      readonly count: number;
-      readonly percentage: number;
-    };
-  };
-  readonly timeline: ReadonlyArray<{
-    readonly date: string;
-    readonly total: number;
-    readonly byRarity: { readonly [x: string]: number };
-  }>;
-  readonly topNpcs: ReadonlyArray<{
-    readonly npcId: number;
-    readonly name: string;
-    readonly type:
-      | "COMMON"
-      | "ELITE"
-      | "ELITE2"
-      | "ELITE3"
-      | "HERO"
-      | "EVENT_HERO"
-      | "TITAN"
-      | "COLOSSUS"
-      | "NPC"
-      | null;
-    readonly lvl: number | null;
-    readonly icon: string | null;
-    readonly count: number;
-    readonly byRarity: { readonly [x: string]: number };
-  }>;
-  readonly topContributors: ReadonlyArray<{
-    readonly memberId: number;
-    readonly name: string;
-    readonly avatar: string | null;
-    readonly userId: string;
-    readonly count: number;
-    readonly byRarity: { readonly [x: string]: number };
-  }>;
-  readonly topItems: ReadonlyArray<{
-    readonly itemId: number;
-    readonly hid: string;
-    readonly name: string;
-    readonly icon: string;
-    readonly rarity: "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED";
-    readonly lvl: number;
-    readonly count: number;
-  }>;
-};
+export type LootStatsResponseDto_Output =
+  typeof LootStatsResponseDto_Output.Type;
 
 export const LootStatsResponseDto_Output = Schema.Struct({
   overview: Schema.Struct({
-    totalLoots: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    totalItems: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    legendaryItems: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    heroicItems: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    avgItemLevel: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    totalLoots: FiniteNumber,
+    totalItems: FiniteNumber,
+    legendaryItems: FiniteNumber,
+    heroicItems: FiniteNumber,
+    avgItemLevel: FiniteNumber,
   }),
   byRarity: Schema.Record(
     Schema.String,
     Schema.Struct({
-      count: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      percentage: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      count: FiniteNumber,
+      percentage: FiniteNumber,
     }),
   ),
   timeline: Schema.Array(
     Schema.Struct({
       date: Schema.String,
-      total: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      byRarity: Schema.Record(
-        Schema.String,
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      total: FiniteNumber,
+      byRarity: Schema.Record(Schema.String, FiniteNumber),
     }),
   ),
   topNpcs: Schema.Array(
     Schema.Struct({
-      npcId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      npcId: FiniteNumber,
       name: Schema.String,
       type: Schema.Union([
         Schema.Literals([
@@ -382,88 +161,46 @@ export const LootStatsResponseDto_Output = Schema.Struct({
         ]),
         Schema.Null,
       ]),
-      lvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
+      lvl: Schema.Union([FiniteNumber, Schema.Null]),
       icon: Schema.Union([Schema.String, Schema.Null]),
-      count: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      byRarity: Schema.Record(
-        Schema.String,
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      count: FiniteNumber,
+      byRarity: Schema.Record(Schema.String, FiniteNumber),
     }),
   ),
   topContributors: Schema.Array(
     Schema.Struct({
-      memberId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      memberId: FiniteNumber,
       name: Schema.String,
       avatar: Schema.Union([Schema.String, Schema.Null]),
       userId: Schema.String,
-      count: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      byRarity: Schema.Record(
-        Schema.String,
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      count: FiniteNumber,
+      byRarity: Schema.Record(Schema.String, FiniteNumber),
     }),
   ),
   topItems: Schema.Array(
     Schema.Struct({
-      itemId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      itemId: FiniteNumber,
       hid: Schema.String,
       name: Schema.String,
       icon: Schema.String,
       rarity: Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      count: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
+      count: FiniteNumber,
     }),
   ),
 }).annotate({ identifier: "LootStatsResponseDto_Output" });
 
-export type CountResponseDto_Output = { readonly count: number };
+export type CountResponseDto_Output = typeof CountResponseDto_Output.Type;
 
 export const CountResponseDto_Output = Schema.Struct({
-  count: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  count: FiniteNumber,
 }).annotate({ identifier: "CountResponseDto_Output" });
 
-export type NullableLootItemResponseDto_Output = {
-  readonly id: number;
-  readonly hid: string;
-  readonly name: string;
-  readonly icon: string;
-  readonly stat: string;
-  readonly type: string | null;
-  readonly rarity: "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED" | null;
-  readonly lvl: number;
-  readonly prof: ReadonlyArray<
-    "WARRIOR" | "PALADIN" | "HUNTER" | "MAGE" | "BLADE_DANCER" | "TRACKER"
-  >;
-};
+export type NullableLootItemResponseDto_Output =
+  typeof NullableLootItemResponseDto_Output.Type;
 
 export const NullableLootItemResponseDto_Output = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   hid: Schema.String,
   name: Schema.String,
   icon: Schema.String,
@@ -473,9 +210,7 @@ export const NullableLootItemResponseDto_Output = Schema.Struct({
     Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
     Schema.Null,
   ]),
-  lvl: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lvl: FiniteNumber,
   prof: Schema.Array(
     Schema.Literals([
       "WARRIOR",
@@ -488,102 +223,19 @@ export const NullableLootItemResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "NullableLootItemResponseDto_Output" });
 
-export type NullableLootResponseDto =
-  | ({
-      readonly id: number;
-      readonly uniqueId: string;
-      readonly world: string;
-      readonly source: "LOOTBOX" | "DIALOG" | "FIGHT";
-      readonly location: string;
-      readonly items: ReadonlyArray<{
-        readonly id: number;
-        readonly hid: string;
-        readonly name: string;
-        readonly icon: string;
-        readonly stat: string;
-        readonly type: string | null;
-        readonly rarity: "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED" | null;
-        readonly lvl: number;
-        readonly prof: ReadonlyArray<
-          "WARRIOR" | "PALADIN" | "HUNTER" | "MAGE" | "BLADE_DANCER" | "TRACKER"
-        >;
-      }>;
-      readonly players: ReadonlyArray<{
-        readonly id: string | number;
-        readonly name: string;
-        readonly lvl: number | null;
-        readonly prof:
-          | "WARRIOR"
-          | "PALADIN"
-          | "HUNTER"
-          | "MAGE"
-          | "BLADE_DANCER"
-          | "TRACKER"
-          | null;
-        readonly icon: string | null;
-        readonly characterId: number | null;
-        readonly accountId: number | null;
-        readonly hpp: number | null;
-      }>;
-      readonly npcs: ReadonlyArray<{
-        readonly id: number;
-        readonly name: string;
-        readonly wt: number | null;
-        readonly lvl: number | null;
-        readonly prof:
-          | "WARRIOR"
-          | "PALADIN"
-          | "HUNTER"
-          | "MAGE"
-          | "BLADE_DANCER"
-          | "TRACKER"
-          | null;
-        readonly icon: string | null;
-        readonly type:
-          | "COMMON"
-          | "ELITE"
-          | "ELITE2"
-          | "ELITE3"
-          | "HERO"
-          | "EVENT_HERO"
-          | "TITAN"
-          | "COLOSSUS"
-          | "NPC"
-          | null;
-        readonly margonemType: number | null;
-      }>;
-      readonly lootShare: { readonly [x: string]: ReadonlyArray<string> };
-      readonly createdAt: string;
-      readonly updatedAt: string;
-      readonly submissions?: ReadonlyArray<{
-        readonly guildId: string;
-        readonly memberId: number;
-        readonly lootId: number;
-        readonly member: {
-          readonly name: string;
-          readonly avatar?: string | null;
-          readonly userId: string;
-        };
-      }>;
-      readonly commentsCount: number;
-    } & { readonly [x: string]: Schema.Json })
-  | null;
+export type NullableLootResponseDto = typeof NullableLootResponseDto.Type;
 
 export const NullableLootResponseDto = Schema.Union([
   Schema.StructWithRest(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       uniqueId: Schema.String,
       world: Schema.String,
       source: Schema.Literals(["LOOTBOX", "DIALOG", "FIGHT"]),
       location: Schema.String,
       items: Schema.Array(
         Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          id: FiniteNumber,
           hid: Schema.String,
           name: Schema.String,
           icon: Schema.String,
@@ -593,9 +245,7 @@ export const NullableLootResponseDto = Schema.Union([
             Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
             Schema.Null,
           ]),
-          lvl: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          lvl: FiniteNumber,
           prof: Schema.Array(
             Schema.Literals([
               "WARRIOR",
@@ -610,19 +260,9 @@ export const NullableLootResponseDto = Schema.Union([
       ),
       players: Schema.Array(
         Schema.Struct({
-          id: Schema.Union([
-            Schema.String,
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-          ]),
+          id: Schema.Union([Schema.String, FiniteNumber]),
           name: Schema.String,
-          lvl: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          lvl: Schema.Union([FiniteNumber, Schema.Null]),
           prof: Schema.Union([
             Schema.Literals([
               "WARRIOR",
@@ -635,44 +275,17 @@ export const NullableLootResponseDto = Schema.Union([
             Schema.Null,
           ]),
           icon: Schema.Union([Schema.String, Schema.Null]),
-          characterId: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
-          accountId: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
-          hpp: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          characterId: Schema.Union([FiniteNumber, Schema.Null]),
+          accountId: Schema.Union([FiniteNumber, Schema.Null]),
+          hpp: Schema.Union([FiniteNumber, Schema.Null]),
         }),
       ),
       npcs: Schema.Array(
         Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          id: FiniteNumber,
           name: Schema.String,
-          wt: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
-          lvl: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          wt: Schema.Union([FiniteNumber, Schema.Null]),
+          lvl: Schema.Union([FiniteNumber, Schema.Null]),
           prof: Schema.Union([
             Schema.Literals([
               "WARRIOR",
@@ -699,45 +312,18 @@ export const NullableLootResponseDto = Schema.Union([
             ]),
             Schema.Null,
           ]),
-          margonemType: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          margonemType: Schema.Union([FiniteNumber, Schema.Null]),
         }),
       ),
       lootShare: Schema.Record(Schema.String, Schema.Array(Schema.String)),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
       submissions: Schema.optionalKey(
         Schema.Array(
           Schema.Struct({
             guildId: Schema.String,
-            memberId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            lootId: Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            memberId: FiniteNumber,
+            lootId: FiniteNumber,
             member: Schema.Struct({
               name: Schema.String,
               avatar: Schema.optionalKey(
@@ -748,9 +334,7 @@ export const NullableLootResponseDto = Schema.Union([
           }),
         ),
       ),
-      commentsCount: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      commentsCount: FiniteNumber,
     }),
     [
       Schema.Record(
@@ -762,46 +346,7 @@ export const NullableLootResponseDto = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "NullableLootResponseDto" });
 
-export type CreateLootDto = {
-  readonly loots: ReadonlyArray<{
-    readonly hid: string;
-    readonly name: string;
-    readonly icon: string;
-    readonly pr: number;
-    readonly prc: string;
-    readonly stat: string;
-    readonly id: number;
-    readonly cl: number;
-    readonly own?: number;
-  }>;
-  readonly npcs: ReadonlyArray<{
-    readonly id: number;
-    readonly name: string;
-    readonly location: string;
-    readonly lvl: number;
-    readonly prof?: string;
-    readonly wt: number;
-    readonly hpp?: number;
-    readonly icon: string;
-    readonly type: number;
-    readonly x?: number;
-    readonly y?: number;
-  }>;
-  readonly players: ReadonlyArray<{
-    readonly id: number;
-    readonly accountId: number;
-    readonly name: string;
-    readonly lvl: number;
-    readonly prof: string;
-    readonly icon: string;
-    readonly hpp?: number;
-  }>;
-  readonly world: string;
-  readonly source: "LOOTBOX" | "DIALOG" | "FIGHT";
-  readonly location: string;
-  readonly accountId: string;
-  readonly characterId: string;
-};
+export type CreateLootDto = typeof CreateLootDto.Type;
 
 export const CreateLootDto = Schema.Struct({
   loots: Schema.Array(
@@ -821,9 +366,7 @@ export const CreateLootDto = Schema.Struct({
           expected: "a value with a length of at least 1",
         }),
       ),
-      pr: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      pr: FiniteNumber,
       prc: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
@@ -834,17 +377,9 @@ export const CreateLootDto = Schema.Struct({
           expected: "a value with a length of at least 1",
         }),
       ),
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      cl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      own: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      id: FiniteNumber,
+      cl: FiniteNumber,
+      own: Schema.optionalKey(FiniteNumber),
     }),
   )
     .check(
@@ -859,9 +394,7 @@ export const CreateLootDto = Schema.Struct({
     ),
   npcs: Schema.Array(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       name: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
@@ -872,36 +405,18 @@ export const CreateLootDto = Schema.Struct({
           expected: "a value with a length of at least 1",
         }),
       ),
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
       prof: Schema.optionalKey(Schema.String),
-      wt: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      hpp: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      wt: FiniteNumber,
+      hpp: Schema.optionalKey(FiniteNumber),
       icon: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
         }),
       ),
-      type: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      x: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
-      y: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      type: FiniteNumber,
+      x: Schema.optionalKey(FiniteNumber),
+      y: Schema.optionalKey(FiniteNumber),
     }),
   ).check(
     Schema.isMinLength(1).annotate({
@@ -910,20 +425,14 @@ export const CreateLootDto = Schema.Struct({
   ),
   players: Schema.Array(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      accountId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
+      accountId: FiniteNumber,
       name: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
         }),
       ),
-      lvl: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: FiniteNumber,
       prof: Schema.String.check(
         Schema.isMinLength(1).annotate({
           expected: "a value with a length of at least 1",
@@ -934,11 +443,7 @@ export const CreateLootDto = Schema.Struct({
           expected: "a value with a length of at least 1",
         }),
       ),
-      hpp: Schema.optionalKey(
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-      ),
+      hpp: Schema.optionalKey(FiniteNumber),
     }),
   ).check(
     Schema.isMinLength(1).annotate({
@@ -968,27 +473,11 @@ export const CreateLootDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateLootDto" });
 
-export type CreateLootResponseDto_Output = {
-  readonly id: number;
-  readonly submittedGuilds: ReadonlyArray<{
-    readonly guildId: string;
-    readonly guildName: string;
-  }>;
-  readonly rejectedGuilds: ReadonlyArray<{
-    readonly guildId: string;
-    readonly guildName: string;
-    readonly reason:
-      | "NOT_ON_CHARACTER_WHITELIST"
-      | "MISSING_LOOTLOG_CONFIG"
-      | "LOOT_NOT_ACCEPTED_BY_CONFIG"
-      | "MISSING_MEMBER";
-  }>;
-};
+export type CreateLootResponseDto_Output =
+  typeof CreateLootResponseDto_Output.Type;
 
 export const CreateLootResponseDto_Output = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   submittedGuilds: Schema.Array(
     Schema.Struct({ guildId: Schema.String, guildName: Schema.String }),
   ),
@@ -1006,28 +495,11 @@ export const CreateLootResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateLootResponseDto_Output" });
 
-export type LootCommentResponseDto = {
-  readonly id: number;
-  readonly lootId: number;
-  readonly guildId: string;
-  readonly content: string;
-  readonly member: {
-    readonly name: string;
-    readonly avatar?: string | null;
-    readonly userId: string;
-    readonly roles?: ReadonlyArray<{ readonly color?: number | null }>;
-  };
-  readonly createdAt: string;
-  readonly updatedAt: string;
-};
+export type LootCommentResponseDto = typeof LootCommentResponseDto.Type;
 
 export const LootCommentResponseDto = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  lootId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
+  lootId: FiniteNumber,
   guildId: Schema.String,
   content: Schema.String,
   member: Schema.Struct({
@@ -1037,41 +509,16 @@ export const LootCommentResponseDto = Schema.Struct({
     roles: Schema.optionalKey(
       Schema.Array(
         Schema.Struct({
-          color: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
-          ),
+          color: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
         }),
       ),
     ),
   }),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "LootCommentResponseDto" });
 
-export type CreateCommentDto = { readonly content: string };
+export type CreateCommentDto = typeof CreateCommentDto.Type;
 
 export const CreateCommentDto = Schema.Struct({
   content: Schema.String.check(
@@ -1081,50 +528,29 @@ export const CreateCommentDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateCommentDto" });
 
-export type UpdateLootDto = { readonly msg: string };
+export type UpdateLootDto = typeof UpdateLootDto.Type;
 
 export const UpdateLootDto = Schema.Struct({ msg: Schema.String }).annotate({
   identifier: "UpdateLootDto",
 });
 
-export type LootShareResponseDto_Output = {
-  readonly [x: string]: ReadonlyArray<string>;
-};
+export type LootShareResponseDto_Output =
+  typeof LootShareResponseDto_Output.Type;
 
 export const LootShareResponseDto_Output = Schema.Record(
   Schema.String,
   Schema.Array(Schema.String),
 ).annotate({ identifier: "LootShareResponseDto_Output" });
 
-export type LootsControllerFetchLootsByGuildIdPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerFetchLootsByGuildIdPathParams =
+  typeof LootsControllerFetchLootsByGuildIdPathParams.Type;
 
 export const LootsControllerFetchLootsByGuildIdPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerFetchLootsByGuildIdQuery = {
-  readonly limit?: number;
-  readonly cursor?: number;
-  readonly npcs?: ReadonlyArray<string>;
-  readonly players?: ReadonlyArray<string>;
-  readonly rarities?: ReadonlyArray<string>;
-  readonly professions?: ReadonlyArray<string>;
-  readonly npcTypes?: ReadonlyArray<string>;
-  readonly world?: string;
-  readonly npcLevelMin?: number;
-  readonly npcLevelMax?: number;
-  readonly itemLevelMin?: number;
-  readonly itemLevelMax?: number;
-  readonly playerLevelMin?: number;
-  readonly playerLevelMax?: number;
-  readonly search?: string;
-  readonly hid?: string;
-  readonly itemNames?: ReadonlyArray<string>;
-  readonly createdAtMin?: string;
-  readonly createdAtMax?: string;
-};
+export type LootsControllerFetchLootsByGuildIdQuery =
+  typeof LootsControllerFetchLootsByGuildIdQuery.Type;
 
 export const LootsControllerFetchLootsByGuildIdQuery = Schema.Struct({
   limit: Schema.optionalKey(
@@ -1240,60 +666,25 @@ export const LootsControllerFetchLootsByGuildIdQuery = Schema.Struct({
   search: Schema.optionalKey(Schema.String),
   hid: Schema.optionalKey(Schema.String),
   itemNames: Schema.optionalKey(Schema.Array(Schema.String)),
-  createdAtMin: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
-  createdAtMax: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  createdAtMin: Schema.optionalKey(DateTimeWithOffsetString),
+  createdAtMax: Schema.optionalKey(DateTimeWithOffsetString),
 });
 
 export type LootsControllerFetchLootsByGuildId200 =
-  ReadonlyArray<LootResponseDto>;
+  typeof LootsControllerFetchLootsByGuildId200.Type;
 
 export const LootsControllerFetchLootsByGuildId200 =
   Schema.Array(LootResponseDto);
 
-export type LootsControllerGetLootStatsPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerGetLootStatsPathParams =
+  typeof LootsControllerGetLootStatsPathParams.Type;
 
 export const LootsControllerGetLootStatsPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerGetLootStatsQuery = {
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly world?: string;
-  readonly npcTypes?: string;
-  readonly excludeColossus?: boolean;
-};
+export type LootsControllerGetLootStatsQuery =
+  typeof LootsControllerGetLootStatsQuery.Type;
 
 export const LootsControllerGetLootStatsQuery = Schema.Struct({
   period: Schema.optionalKey(
@@ -1313,39 +704,20 @@ export const LootsControllerGetLootStatsQuery = Schema.Struct({
   excludeColossus: Schema.optionalKey(Schema.Boolean),
 });
 
-export type LootsControllerGetLootStats200 = LootStatsResponseDto_Output;
+export type LootsControllerGetLootStats200 =
+  typeof LootsControllerGetLootStats200.Type;
 
 export const LootsControllerGetLootStats200 = LootStatsResponseDto_Output;
 
-export type LootsControllerCountLootsByGuildIdPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerCountLootsByGuildIdPathParams =
+  typeof LootsControllerCountLootsByGuildIdPathParams.Type;
 
 export const LootsControllerCountLootsByGuildIdPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerCountLootsByGuildIdQuery = {
-  readonly limit?: number;
-  readonly cursor?: number;
-  readonly npcs?: ReadonlyArray<string>;
-  readonly players?: ReadonlyArray<string>;
-  readonly rarities?: ReadonlyArray<string>;
-  readonly professions?: ReadonlyArray<string>;
-  readonly npcTypes?: ReadonlyArray<string>;
-  readonly world?: string;
-  readonly npcLevelMin?: number;
-  readonly npcLevelMax?: number;
-  readonly itemLevelMin?: number;
-  readonly itemLevelMax?: number;
-  readonly playerLevelMin?: number;
-  readonly playerLevelMax?: number;
-  readonly search?: string;
-  readonly hid?: string;
-  readonly itemNames?: ReadonlyArray<string>;
-  readonly createdAtMin?: string;
-  readonly createdAtMax?: string;
-};
+export type LootsControllerCountLootsByGuildIdQuery =
+  typeof LootsControllerCountLootsByGuildIdQuery.Type;
 
 export const LootsControllerCountLootsByGuildIdQuery = Schema.Struct({
   limit: Schema.optionalKey(
@@ -1461,48 +833,24 @@ export const LootsControllerCountLootsByGuildIdQuery = Schema.Struct({
   search: Schema.optionalKey(Schema.String),
   hid: Schema.optionalKey(Schema.String),
   itemNames: Schema.optionalKey(Schema.Array(Schema.String)),
-  createdAtMin: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
-  createdAtMax: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  createdAtMin: Schema.optionalKey(DateTimeWithOffsetString),
+  createdAtMax: Schema.optionalKey(DateTimeWithOffsetString),
 });
 
-export type LootsControllerCountLootsByGuildId200 = CountResponseDto_Output;
+export type LootsControllerCountLootsByGuildId200 =
+  typeof LootsControllerCountLootsByGuildId200.Type;
 
 export const LootsControllerCountLootsByGuildId200 = CountResponseDto_Output;
 
-export type LootsControllerResolveLootItemByHidPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerResolveLootItemByHidPathParams =
+  typeof LootsControllerResolveLootItemByHidPathParams.Type;
 
 export const LootsControllerResolveLootItemByHidPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerResolveLootItemByHidQuery = {
-  readonly hid: string;
-  readonly world?: string;
-};
+export type LootsControllerResolveLootItemByHidQuery =
+  typeof LootsControllerResolveLootItemByHidQuery.Type;
 
 export const LootsControllerResolveLootItemByHidQuery = Schema.Struct({
   hid: Schema.String.check(
@@ -1514,98 +862,88 @@ export const LootsControllerResolveLootItemByHidQuery = Schema.Struct({
 });
 
 export type LootsControllerResolveLootItemByHid200 =
-  NullableLootItemResponseDto_Output;
+  typeof LootsControllerResolveLootItemByHid200.Type;
 
 export const LootsControllerResolveLootItemByHid200 =
   NullableLootItemResponseDto_Output;
 
-export type LootsControllerFetchLootByIdPathParams = {
-  readonly lootId: number;
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerFetchLootByIdPathParams =
+  typeof LootsControllerFetchLootByIdPathParams.Type;
 
 export const LootsControllerFetchLootByIdPathParams = Schema.Struct({
-  lootId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lootId: FiniteNumber,
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerFetchLootById200 = NullableLootResponseDto;
+export type LootsControllerFetchLootById200 =
+  typeof LootsControllerFetchLootById200.Type;
 
 export const LootsControllerFetchLootById200 = NullableLootResponseDto;
 
-export type LootsControllerDeleteLootPathParams = {
-  readonly lootId: number;
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerDeleteLootPathParams =
+  typeof LootsControllerDeleteLootPathParams.Type;
 
 export const LootsControllerDeleteLootPathParams = Schema.Struct({
-  lootId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lootId: FiniteNumber,
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerCreateLootRequestJson = CreateLootDto;
+export type LootsControllerCreateLootRequestJson =
+  typeof LootsControllerCreateLootRequestJson.Type;
 
 export const LootsControllerCreateLootRequestJson = CreateLootDto;
 
-export type LootsControllerCreateLoot201 = CreateLootResponseDto_Output;
+export type LootsControllerCreateLoot201 =
+  typeof LootsControllerCreateLoot201.Type;
 
 export const LootsControllerCreateLoot201 = CreateLootResponseDto_Output;
 
-export type LootsControllerGetCommentsPathParams = {
-  readonly lootId: number;
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerGetCommentsPathParams =
+  typeof LootsControllerGetCommentsPathParams.Type;
 
 export const LootsControllerGetCommentsPathParams = Schema.Struct({
-  lootId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lootId: FiniteNumber,
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
 export type LootsControllerGetComments200 =
-  ReadonlyArray<LootCommentResponseDto>;
+  typeof LootsControllerGetComments200.Type;
 
 export const LootsControllerGetComments200 = Schema.Array(
   LootCommentResponseDto,
 );
 
-export type LootsControllerCreateCommentPathParams = {
-  readonly lootId: number;
-  readonly guildId: Schema.Json;
-};
+export type LootsControllerCreateCommentPathParams =
+  typeof LootsControllerCreateCommentPathParams.Type;
 
 export const LootsControllerCreateCommentPathParams = Schema.Struct({
-  lootId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lootId: FiniteNumber,
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type LootsControllerCreateCommentRequestJson = CreateCommentDto;
+export type LootsControllerCreateCommentRequestJson =
+  typeof LootsControllerCreateCommentRequestJson.Type;
 
 export const LootsControllerCreateCommentRequestJson = CreateCommentDto;
 
-export type LootsControllerCreateComment201 = LootCommentResponseDto;
+export type LootsControllerCreateComment201 =
+  typeof LootsControllerCreateComment201.Type;
 
 export const LootsControllerCreateComment201 = LootCommentResponseDto;
 
-export type LootsControllerUpdateLootPathParams = { readonly id: number };
+export type LootsControllerUpdateLootPathParams =
+  typeof LootsControllerUpdateLootPathParams.Type;
 
 export const LootsControllerUpdateLootPathParams = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
 });
 
-export type LootsControllerUpdateLootRequestJson = UpdateLootDto;
+export type LootsControllerUpdateLootRequestJson =
+  typeof LootsControllerUpdateLootRequestJson.Type;
 
 export const LootsControllerUpdateLootRequestJson = UpdateLootDto;
 
-export type LootsControllerUpdateLoot200 = LootShareResponseDto_Output;
+export type LootsControllerUpdateLoot200 =
+  typeof LootsControllerUpdateLoot200.Type;
 
 export const LootsControllerUpdateLoot200 = LootShareResponseDto_Output;

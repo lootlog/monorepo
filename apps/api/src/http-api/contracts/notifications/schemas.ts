@@ -2,6 +2,11 @@
 import * as Schema from "effect/Schema";
 import { Error as NotificationError } from "../../../notifications/enum/error.enum.js";
 import { SuccessResponseDto_Output } from "../shared.js";
+import {
+  DateTimeWithOffsetString,
+  DateTimeString,
+  FiniteNumber,
+} from "../scalars.js";
 
 export type NotificationTargetResponseDto__schema0 =
   | string
@@ -176,30 +181,8 @@ export const WatchedItemResponseDto__schema0 = Schema.suspend(
     __recursive_WatchedItemResponseDto__schema0,
 );
 
-export type NotificationTargetResponseDto = {
-  readonly id: number;
-  readonly ownerType: "GUILD" | "USER";
-  readonly ownerId: string;
-  readonly provider: "DISCORD";
-  readonly targetType: "CHANNEL" | "DM";
-  readonly externalId: string;
-  readonly displayName: string | null;
-  readonly guildName: string | null;
-  readonly metadata:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<NotificationTargetResponseDto__schema0>
-    | { readonly [x: string]: NotificationTargetResponseDto__schema0 }
-    | null;
-  readonly active: boolean;
-  readonly canSend: boolean;
-  readonly lastSyncedAt: string | null;
-  readonly lastDeliveryAt: string | null;
-  readonly lastDeliveryError: string | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-};
+export type NotificationTargetResponseDto =
+  typeof NotificationTargetResponseDto.Type;
 
 export const NotificationTargetResponseDto = Schema.Struct({
   id: Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -223,9 +206,7 @@ export const NotificationTargetResponseDto = Schema.Struct({
   metadata: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(NotificationTargetResponseDto__schema0),
       Schema.Record(Schema.String, NotificationTargetResponseDto__schema0),
@@ -234,60 +215,15 @@ export const NotificationTargetResponseDto = Schema.Struct({
   ]),
   active: Schema.Boolean,
   canSend: Schema.Boolean,
-  lastSyncedAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  lastDeliveryAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
+  lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+  lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
   lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "NotificationTargetResponseDto" });
 
-export type CreateNotificationTargetDto = {
-  readonly targetType: "CHANNEL" | "DM";
-  readonly externalId?: string;
-  readonly displayName?: string;
-};
+export type CreateNotificationTargetDto =
+  typeof CreateNotificationTargetDto.Type;
 
 export const CreateNotificationTargetDto = Schema.Struct({
   targetType: Schema.Literals(["CHANNEL", "DM"]),
@@ -307,49 +243,8 @@ export const CreateNotificationTargetDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateNotificationTargetDto" });
 
-export type GuildAvailableNotificationTargetsResponseDto = {
-  readonly channels: ReadonlyArray<{
-    readonly id: number;
-    readonly guildId: string;
-    readonly channelId: string;
-    readonly name: string;
-    readonly channelType: string;
-    readonly parentId: string | null;
-    readonly position: number;
-    readonly active: boolean;
-    readonly canView: boolean;
-    readonly canSend: boolean;
-    readonly hasRequiredPermissions: boolean;
-    readonly requiredPermissions: ReadonlyArray<string>;
-    readonly grantedPermissions: ReadonlyArray<string>;
-    readonly missingPermissions: ReadonlyArray<string>;
-    readonly lastSyncedAt: string;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-  }>;
-  readonly syncState:
-    | ({
-        readonly guildId: string;
-        readonly status:
-          | "SYNCED"
-          | "SYNCING"
-          | "FAILED"
-          | "STALE"
-          | "NOT_FOUND";
-        readonly hasRequiredPermissions: boolean;
-        readonly requiredPermissions: ReadonlyArray<string>;
-        readonly grantedPermissions: ReadonlyArray<string>;
-        readonly missingPermissions: ReadonlyArray<string>;
-        readonly channelCount: number;
-        readonly selectableChannelCount: number;
-        readonly lastAttemptAt: string | null;
-        readonly lastSuccessAt: string | null;
-        readonly lastError: string | null;
-        readonly createdAt: string;
-        readonly updatedAt: string;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-};
+export type GuildAvailableNotificationTargetsResponseDto =
+  typeof GuildAvailableNotificationTargetsResponseDto.Type;
 
 export const GuildAvailableNotificationTargetsResponseDto = Schema.Struct({
   channels: Schema.Array(
@@ -392,36 +287,9 @@ export const GuildAvailableNotificationTargetsResponseDto = Schema.Struct({
       requiredPermissions: Schema.Array(Schema.String),
       grantedPermissions: Schema.Array(Schema.String),
       missingPermissions: Schema.Array(Schema.String),
-      lastSyncedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      lastSyncedAt: DateTimeString,
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
     }),
   ),
   syncState: Schema.Union([
@@ -465,53 +333,11 @@ export const GuildAvailableNotificationTargetsResponseDto = Schema.Struct({
               expected: "a value less than or equal to 9007199254740991",
             }),
           ),
-        lastAttemptAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
-        lastSuccessAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        lastAttemptAt: Schema.Union([DateTimeString, Schema.Null]),
+        lastSuccessAt: Schema.Union([DateTimeString, Schema.Null]),
         lastError: Schema.Union([Schema.String, Schema.Null]),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
       }),
       [
         Schema.Record(
@@ -524,10 +350,8 @@ export const GuildAvailableNotificationTargetsResponseDto = Schema.Struct({
   ]),
 }).annotate({ identifier: "GuildAvailableNotificationTargetsResponseDto" });
 
-export type UpdateNotificationTargetDto = {
-  readonly displayName?: string | null;
-  readonly active?: boolean;
-};
+export type UpdateNotificationTargetDto =
+  typeof UpdateNotificationTargetDto.Type;
 
 export const UpdateNotificationTargetDto = Schema.Struct({
   displayName: Schema.optionalKey(
@@ -543,97 +367,8 @@ export const UpdateNotificationTargetDto = Schema.Struct({
   active: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "UpdateNotificationTargetDto" });
 
-export type GuildNotificationRulesResponseDto = {
-  readonly items: ReadonlyArray<{
-    readonly id: number;
-    readonly ownerType: "GUILD" | "USER";
-    readonly ownerId: string;
-    readonly triggerType:
-      | "TIMER_BEFORE_SPAWN"
-      | "NPC_SPAWNED"
-      | "WATCHED_ITEM_DROPPED"
-      | "SCHEDULED_MESSAGE";
-    readonly guildId: string | null;
-    readonly world: string | null;
-    readonly name: string | null;
-    readonly filters:
-      | ({
-          readonly guildIds?: ReadonlyArray<string>;
-          readonly world?: string;
-          readonly npcId?: number | null;
-          readonly npcIds?: ReadonlyArray<number>;
-          readonly itemId?: number | null;
-          readonly itemIds?: ReadonlyArray<number>;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly contentTemplate: string | null;
-    readonly scheduleStrategy:
-      | "SPAWN_WINDOW_RELATIVE"
-      | "FIXED_DATETIME"
-      | null;
-    readonly scheduleAnchor: "MIN_SPAWN" | "MAX_SPAWN" | null;
-    readonly scheduleOffsetMinutes: number | null;
-    readonly scheduledAt: string | null;
-    readonly scheduleIntervalType:
-      | "ONCE"
-      | "HOURLY"
-      | "DAILY"
-      | "WEEKLY"
-      | null;
-    readonly scheduleIntervalValue: number | null;
-    readonly scheduleWeekday: number | null;
-    readonly scheduleTimeOfDay: string | null;
-    readonly scheduledUntil: string | null;
-    readonly scheduleTimezone: string | null;
-    readonly enabled: boolean;
-    readonly dedupeWindowSeconds: number;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly targets: ReadonlyArray<{
-      readonly ruleId: number;
-      readonly targetId: number;
-      readonly createdAt: string;
-      readonly target: {
-        readonly id: number;
-        readonly ownerType: "GUILD" | "USER";
-        readonly ownerId: string;
-        readonly provider: "DISCORD";
-        readonly targetType: "CHANNEL" | "DM";
-        readonly externalId: string;
-        readonly displayName: string | null;
-        readonly guildName: string | null;
-        readonly metadata:
-          | string
-          | number
-          | boolean
-          | ReadonlyArray<GuildNotificationRulesResponseDto__schema0>
-          | { readonly [x: string]: GuildNotificationRulesResponseDto__schema0 }
-          | null;
-        readonly active: boolean;
-        readonly canSend: boolean;
-        readonly lastSyncedAt: string | null;
-        readonly lastDeliveryAt: string | null;
-        readonly lastDeliveryError: string | null;
-        readonly createdAt: string;
-        readonly updatedAt: string;
-      };
-    }>;
-    readonly testTrigger: {
-      readonly limit: number;
-      readonly used: number;
-      readonly remaining: number;
-      readonly windowSeconds: number;
-      readonly nextAvailableAt: string | null;
-    };
-  }>;
-  readonly limits: {
-    readonly ruleLimit: number;
-    readonly ruleCount: number;
-    readonly maxNpcsPerRule: number;
-    readonly testTriggerLimit: number;
-    readonly testTriggerWindowSeconds: number;
-  };
-};
+export type GuildNotificationRulesResponseDto =
+  typeof GuildNotificationRulesResponseDto.Type;
 
 export const GuildNotificationRulesResponseDto = Schema.Struct({
   items: Schema.Array(
@@ -778,19 +513,7 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
           ),
         Schema.Null,
       ]),
-      scheduledAt: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
+      scheduledAt: Schema.Union([DateTimeString, Schema.Null]),
       scheduleIntervalType: Schema.Union([
         Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
         Schema.Null,
@@ -824,19 +547,7 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
         Schema.Null,
       ]),
       scheduleTimeOfDay: Schema.Union([Schema.String, Schema.Null]),
-      scheduledUntil: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
+      scheduledUntil: Schema.Union([DateTimeString, Schema.Null]),
       scheduleTimezone: Schema.Union([Schema.String, Schema.Null]),
       enabled: Schema.Boolean,
       dedupeWindowSeconds: Schema.Number.check(
@@ -852,26 +563,8 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
             expected: "a value less than or equal to 9007199254740991",
           }),
         ),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
       targets: Schema.Array(
         Schema.Struct({
           ruleId: Schema.Number.check(
@@ -900,16 +593,7 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
                 expected: "a value less than or equal to 9007199254740991",
               }),
             ),
-          createdAt: Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
+          createdAt: DateTimeString,
           target: Schema.Struct({
             id: Schema.Number.check(
               Schema.isInt().annotate({ expected: "an integer" }),
@@ -935,9 +619,7 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
             metadata: Schema.Union([
               Schema.Union([
                 Schema.String,
-                Schema.Number.check(
-                  Schema.isFinite().annotate({ expected: "a finite number" }),
-                ),
+                FiniteNumber,
                 Schema.Boolean,
                 Schema.Array(GuildNotificationRulesResponseDto__schema0),
                 Schema.Record(
@@ -949,53 +631,11 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
             ]),
             active: Schema.Boolean,
             canSend: Schema.Boolean,
-            lastSyncedAt: Schema.Union([
-              Schema.String.annotate({ format: "date-time" }).check(
-                Schema.isPattern(
-                  new RegExp(
-                    "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  ),
-                ).annotate({
-                  expected:
-                    "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                }),
-              ),
-              Schema.Null,
-            ]),
-            lastDeliveryAt: Schema.Union([
-              Schema.String.annotate({ format: "date-time" }).check(
-                Schema.isPattern(
-                  new RegExp(
-                    "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  ),
-                ).annotate({
-                  expected:
-                    "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                }),
-              ),
-              Schema.Null,
-            ]),
+            lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+            lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
             lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-            createdAt: Schema.String.annotate({ format: "date-time" }).check(
-              Schema.isPattern(
-                new RegExp(
-                  "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                ),
-              ).annotate({
-                expected:
-                  "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              }),
-            ),
-            updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-              Schema.isPattern(
-                new RegExp(
-                  "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                ),
-              ).annotate({
-                expected:
-                  "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              }),
-            ),
+            createdAt: DateTimeString,
+            updatedAt: DateTimeString,
           }),
         }),
       ),
@@ -1052,19 +692,7 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
               expected: "a value less than or equal to 9007199254740991",
             }),
           ),
-        nextAvailableAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        nextAvailableAt: Schema.Union([DateTimeWithOffsetString, Schema.Null]),
       }),
     }),
   ),
@@ -1137,32 +765,7 @@ export const GuildNotificationRulesResponseDto = Schema.Struct({
   }),
 }).annotate({ identifier: "GuildNotificationRulesResponseDto" });
 
-export type CreateNotificationRuleDto = {
-  readonly name?: string | null;
-  readonly contentTemplate?: string | null;
-  readonly triggerType:
-    | "TIMER_BEFORE_SPAWN"
-    | "NPC_SPAWNED"
-    | "WATCHED_ITEM_DROPPED"
-    | "SCHEDULED_MESSAGE";
-  readonly world?: string;
-  readonly npcId?: number;
-  readonly npcIds?: ReadonlyArray<number>;
-  readonly itemId?: number;
-  readonly itemIds?: ReadonlyArray<number>;
-  readonly scheduleStrategy?: "SPAWN_WINDOW_RELATIVE" | "FIXED_DATETIME";
-  readonly scheduleAnchor?: "MIN_SPAWN" | "MAX_SPAWN";
-  readonly scheduleOffsetMinutes?: number;
-  readonly scheduledAt?: string;
-  readonly scheduleIntervalType?: "ONCE" | "HOURLY" | "DAILY" | "WEEKLY";
-  readonly scheduleIntervalValue?: number;
-  readonly scheduleWeekday?: number;
-  readonly scheduleTimeOfDay?: string;
-  readonly scheduledUntil?: string;
-  readonly scheduleTimezone?: string;
-  readonly targetIds: ReadonlyArray<number>;
-  readonly enabled?: boolean;
-};
+export type CreateNotificationRuleDto = typeof CreateNotificationRuleDto.Type;
 
 export const CreateNotificationRuleDto = Schema.Struct({
   name: Schema.optionalKey(
@@ -1281,18 +884,7 @@ export const CreateNotificationRuleDto = Schema.Struct({
         }),
       ),
   ),
-  scheduledAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  scheduledAt: Schema.optionalKey(DateTimeWithOffsetString),
   scheduleIntervalType: Schema.optionalKey(
     Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
   ),
@@ -1329,18 +921,7 @@ export const CreateNotificationRuleDto = Schema.Struct({
       }),
     ),
   ),
-  scheduledUntil: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  scheduledUntil: Schema.optionalKey(DateTimeWithOffsetString),
   scheduleTimezone: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(50).annotate({
@@ -1394,73 +975,8 @@ export const CreateNotificationRuleDto = Schema.Struct({
   )
   .annotate({ identifier: "CreateNotificationRuleDto" });
 
-export type NotificationRuleResponseDto = {
-  readonly id: number;
-  readonly ownerType: "GUILD" | "USER";
-  readonly ownerId: string;
-  readonly triggerType:
-    | "TIMER_BEFORE_SPAWN"
-    | "NPC_SPAWNED"
-    | "WATCHED_ITEM_DROPPED"
-    | "SCHEDULED_MESSAGE";
-  readonly guildId: string | null;
-  readonly world: string | null;
-  readonly name: string | null;
-  readonly filters:
-    | ({
-        readonly guildIds?: ReadonlyArray<string>;
-        readonly world?: string;
-        readonly npcId?: number | null;
-        readonly npcIds?: ReadonlyArray<number>;
-        readonly itemId?: number | null;
-        readonly itemIds?: ReadonlyArray<number>;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly contentTemplate: string | null;
-  readonly scheduleStrategy: "SPAWN_WINDOW_RELATIVE" | "FIXED_DATETIME" | null;
-  readonly scheduleAnchor: "MIN_SPAWN" | "MAX_SPAWN" | null;
-  readonly scheduleOffsetMinutes: number | null;
-  readonly scheduledAt: string | null;
-  readonly scheduleIntervalType: "ONCE" | "HOURLY" | "DAILY" | "WEEKLY" | null;
-  readonly scheduleIntervalValue: number | null;
-  readonly scheduleWeekday: number | null;
-  readonly scheduleTimeOfDay: string | null;
-  readonly scheduledUntil: string | null;
-  readonly scheduleTimezone: string | null;
-  readonly enabled: boolean;
-  readonly dedupeWindowSeconds: number;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly targets: ReadonlyArray<{
-    readonly ruleId: number;
-    readonly targetId: number;
-    readonly createdAt: string;
-    readonly target: {
-      readonly id: number;
-      readonly ownerType: "GUILD" | "USER";
-      readonly ownerId: string;
-      readonly provider: "DISCORD";
-      readonly targetType: "CHANNEL" | "DM";
-      readonly externalId: string;
-      readonly displayName: string | null;
-      readonly guildName: string | null;
-      readonly metadata:
-        | string
-        | number
-        | boolean
-        | ReadonlyArray<NotificationRuleResponseDto__schema0>
-        | { readonly [x: string]: NotificationRuleResponseDto__schema0 }
-        | null;
-      readonly active: boolean;
-      readonly canSend: boolean;
-      readonly lastSyncedAt: string | null;
-      readonly lastDeliveryAt: string | null;
-      readonly lastDeliveryError: string | null;
-      readonly createdAt: string;
-      readonly updatedAt: string;
-    };
-  }>;
-};
+export type NotificationRuleResponseDto =
+  typeof NotificationRuleResponseDto.Type;
 
 export const NotificationRuleResponseDto = Schema.Struct({
   id: Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -1597,19 +1113,7 @@ export const NotificationRuleResponseDto = Schema.Struct({
       ),
     Schema.Null,
   ]),
-  scheduledAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
+  scheduledAt: Schema.Union([DateTimeString, Schema.Null]),
   scheduleIntervalType: Schema.Union([
     Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
     Schema.Null,
@@ -1643,19 +1147,7 @@ export const NotificationRuleResponseDto = Schema.Struct({
     Schema.Null,
   ]),
   scheduleTimeOfDay: Schema.Union([Schema.String, Schema.Null]),
-  scheduledUntil: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
+  scheduledUntil: Schema.Union([DateTimeString, Schema.Null]),
   scheduleTimezone: Schema.Union([Schema.String, Schema.Null]),
   enabled: Schema.Boolean,
   dedupeWindowSeconds: Schema.Number.check(
@@ -1671,26 +1163,8 @@ export const NotificationRuleResponseDto = Schema.Struct({
         expected: "a value less than or equal to 9007199254740991",
       }),
     ),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   targets: Schema.Array(
     Schema.Struct({
       ruleId: Schema.Number.check(
@@ -1719,16 +1193,7 @@ export const NotificationRuleResponseDto = Schema.Struct({
             expected: "a value less than or equal to 9007199254740991",
           }),
         ),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      createdAt: DateTimeString,
       target: Schema.Struct({
         id: Schema.Number.check(
           Schema.isInt().annotate({ expected: "an integer" }),
@@ -1753,9 +1218,7 @@ export const NotificationRuleResponseDto = Schema.Struct({
         metadata: Schema.Union([
           Schema.Union([
             Schema.String,
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            FiniteNumber,
             Schema.Boolean,
             Schema.Array(NotificationRuleResponseDto__schema0),
             Schema.Record(Schema.String, NotificationRuleResponseDto__schema0),
@@ -1764,84 +1227,17 @@ export const NotificationRuleResponseDto = Schema.Struct({
         ]),
         active: Schema.Boolean,
         canSend: Schema.Boolean,
-        lastSyncedAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
-        lastDeliveryAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+        lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
         lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
       }),
     }),
   ),
 }).annotate({ identifier: "NotificationRuleResponseDto" });
 
-export type UpdateNotificationRuleDto = {
-  readonly name?: string | null;
-  readonly contentTemplate?: string | null;
-  readonly triggerType?:
-    | "TIMER_BEFORE_SPAWN"
-    | "NPC_SPAWNED"
-    | "WATCHED_ITEM_DROPPED"
-    | "SCHEDULED_MESSAGE";
-  readonly world?: string;
-  readonly npcId?: number;
-  readonly npcIds?: ReadonlyArray<number>;
-  readonly itemId?: number;
-  readonly itemIds?: ReadonlyArray<number>;
-  readonly scheduleStrategy?: "SPAWN_WINDOW_RELATIVE" | "FIXED_DATETIME";
-  readonly scheduleAnchor?: "MIN_SPAWN" | "MAX_SPAWN";
-  readonly scheduleOffsetMinutes?: number;
-  readonly scheduledAt?: string;
-  readonly scheduleIntervalType?: "ONCE" | "HOURLY" | "DAILY" | "WEEKLY";
-  readonly scheduleIntervalValue?: number;
-  readonly scheduleWeekday?: number;
-  readonly scheduleTimeOfDay?: string;
-  readonly scheduledUntil?: string;
-  readonly scheduleTimezone?: string;
-  readonly targetIds?: ReadonlyArray<number>;
-  readonly enabled?: boolean;
-};
+export type UpdateNotificationRuleDto = typeof UpdateNotificationRuleDto.Type;
 
 export const UpdateNotificationRuleDto = Schema.Struct({
   name: Schema.optionalKey(
@@ -1962,18 +1358,7 @@ export const UpdateNotificationRuleDto = Schema.Struct({
         }),
       ),
   ),
-  scheduledAt: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  scheduledAt: Schema.optionalKey(DateTimeWithOffsetString),
   scheduleIntervalType: Schema.optionalKey(
     Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
   ),
@@ -2010,18 +1395,7 @@ export const UpdateNotificationRuleDto = Schema.Struct({
       }),
     ),
   ),
-  scheduledUntil: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-      }),
-    ),
-  ),
+  scheduledUntil: Schema.optionalKey(DateTimeWithOffsetString),
   scheduleTimezone: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(50).annotate({
@@ -2076,274 +1450,8 @@ export const UpdateNotificationRuleDto = Schema.Struct({
   )
   .annotate({ identifier: "UpdateNotificationRuleDto" });
 
-export type NotificationJobsResponseDto = {
-  readonly pending: ReadonlyArray<{
-    readonly id: string;
-    readonly ruleId: number;
-    readonly targetId: number;
-    readonly ownerType: "GUILD" | "USER";
-    readonly ownerId: string;
-    readonly jobKind: "SCHEDULED" | "INSTANT" | "TEST";
-    readonly scheduledFor: string;
-    readonly status:
-      | "PENDING"
-      | "PROCESSING"
-      | "SENT"
-      | "FAILED"
-      | "BLOCKED"
-      | "CANCELED";
-    readonly idempotencyKey: string;
-    readonly sourceEntityType: string | null;
-    readonly sourceEntityId: string | null;
-    readonly sourceEventId: string | null;
-    readonly payloadSnapshot:
-      | ({
-          readonly title?: string | null;
-          readonly message?: string | null;
-          readonly content?: string | null;
-          readonly allowedMentions?: {
-            readonly parse?: ReadonlyArray<"roles" | "users" | "everyone">;
-            readonly roles?: ReadonlyArray<string>;
-            readonly users?: ReadonlyArray<string>;
-            readonly repliedUser?: boolean;
-          };
-          readonly ruleId?: number | null;
-          readonly ruleName?: string | null;
-          readonly triggerType?:
-            | "TIMER_BEFORE_SPAWN"
-            | "NPC_SPAWNED"
-            | "WATCHED_ITEM_DROPPED"
-            | "SCHEDULED_MESSAGE"
-            | null;
-          readonly world?: string | null;
-          readonly npcId?: number | null;
-          readonly npcName?: string | null;
-          readonly timerKey?: string | null;
-          readonly minSpawnTime?: string | null;
-          readonly maxSpawnTime?: string | null;
-          readonly scheduledFor?: string | null;
-          readonly scheduleStrategy?:
-            | "SPAWN_WINDOW_RELATIVE"
-            | "FIXED_DATETIME"
-            | null;
-          readonly scheduleAnchor?: "MIN_SPAWN" | "MAX_SPAWN" | null;
-          readonly scheduleOffsetMinutes?: number | null;
-          readonly contentTemplate?: string | null;
-          readonly testTriggeredAt?: string | null;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly attemptCount: number;
-    readonly lastError: string | null;
-    readonly blockedReason: string | null;
-    readonly providerMessageId: string | null;
-    readonly processedAt: string | null;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly rule: {
-      readonly id: number;
-      readonly ownerType: "GUILD" | "USER";
-      readonly ownerId: string;
-      readonly triggerType:
-        | "TIMER_BEFORE_SPAWN"
-        | "NPC_SPAWNED"
-        | "WATCHED_ITEM_DROPPED"
-        | "SCHEDULED_MESSAGE";
-      readonly guildId: string | null;
-      readonly world: string | null;
-      readonly name: string | null;
-      readonly filters:
-        | ({
-            readonly guildIds?: ReadonlyArray<string>;
-            readonly world?: string;
-            readonly npcId?: number | null;
-            readonly npcIds?: ReadonlyArray<number>;
-            readonly itemId?: number | null;
-            readonly itemIds?: ReadonlyArray<number>;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly contentTemplate: string | null;
-      readonly scheduleStrategy:
-        | "SPAWN_WINDOW_RELATIVE"
-        | "FIXED_DATETIME"
-        | null;
-      readonly scheduleAnchor: "MIN_SPAWN" | "MAX_SPAWN" | null;
-      readonly scheduleOffsetMinutes: number | null;
-      readonly scheduledAt: string | null;
-      readonly scheduleIntervalType:
-        | "ONCE"
-        | "HOURLY"
-        | "DAILY"
-        | "WEEKLY"
-        | null;
-      readonly scheduleIntervalValue: number | null;
-      readonly scheduleWeekday: number | null;
-      readonly scheduleTimeOfDay: string | null;
-      readonly scheduledUntil: string | null;
-      readonly scheduleTimezone: string | null;
-      readonly enabled: boolean;
-      readonly dedupeWindowSeconds: number;
-      readonly createdAt: string;
-      readonly updatedAt: string;
-    };
-    readonly target: {
-      readonly id: number;
-      readonly ownerType: "GUILD" | "USER";
-      readonly ownerId: string;
-      readonly provider: "DISCORD";
-      readonly targetType: "CHANNEL" | "DM";
-      readonly externalId: string;
-      readonly displayName: string | null;
-      readonly guildName: string | null;
-      readonly metadata:
-        | string
-        | number
-        | boolean
-        | ReadonlyArray<NotificationJobsResponseDto__schema0>
-        | { readonly [x: string]: NotificationJobsResponseDto__schema0 }
-        | null;
-      readonly active: boolean;
-      readonly canSend: boolean;
-      readonly lastSyncedAt: string | null;
-      readonly lastDeliveryAt: string | null;
-      readonly lastDeliveryError: string | null;
-      readonly createdAt: string;
-      readonly updatedAt: string;
-    };
-  }>;
-  readonly history: ReadonlyArray<{
-    readonly id: string;
-    readonly ruleId: number;
-    readonly targetId: number;
-    readonly ownerType: "GUILD" | "USER";
-    readonly ownerId: string;
-    readonly jobKind: "SCHEDULED" | "INSTANT" | "TEST";
-    readonly scheduledFor: string;
-    readonly status:
-      | "PENDING"
-      | "PROCESSING"
-      | "SENT"
-      | "FAILED"
-      | "BLOCKED"
-      | "CANCELED";
-    readonly idempotencyKey: string;
-    readonly sourceEntityType: string | null;
-    readonly sourceEntityId: string | null;
-    readonly sourceEventId: string | null;
-    readonly payloadSnapshot:
-      | ({
-          readonly title?: string | null;
-          readonly message?: string | null;
-          readonly content?: string | null;
-          readonly allowedMentions?: {
-            readonly parse?: ReadonlyArray<"roles" | "users" | "everyone">;
-            readonly roles?: ReadonlyArray<string>;
-            readonly users?: ReadonlyArray<string>;
-            readonly repliedUser?: boolean;
-          };
-          readonly ruleId?: number | null;
-          readonly ruleName?: string | null;
-          readonly triggerType?:
-            | "TIMER_BEFORE_SPAWN"
-            | "NPC_SPAWNED"
-            | "WATCHED_ITEM_DROPPED"
-            | "SCHEDULED_MESSAGE"
-            | null;
-          readonly world?: string | null;
-          readonly npcId?: number | null;
-          readonly npcName?: string | null;
-          readonly timerKey?: string | null;
-          readonly minSpawnTime?: string | null;
-          readonly maxSpawnTime?: string | null;
-          readonly scheduledFor?: string | null;
-          readonly scheduleStrategy?:
-            | "SPAWN_WINDOW_RELATIVE"
-            | "FIXED_DATETIME"
-            | null;
-          readonly scheduleAnchor?: "MIN_SPAWN" | "MAX_SPAWN" | null;
-          readonly scheduleOffsetMinutes?: number | null;
-          readonly contentTemplate?: string | null;
-          readonly testTriggeredAt?: string | null;
-        } & { readonly [x: string]: Schema.Json })
-      | null;
-    readonly attemptCount: number;
-    readonly lastError: string | null;
-    readonly blockedReason: string | null;
-    readonly providerMessageId: string | null;
-    readonly processedAt: string | null;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly rule: {
-      readonly id: number;
-      readonly ownerType: "GUILD" | "USER";
-      readonly ownerId: string;
-      readonly triggerType:
-        | "TIMER_BEFORE_SPAWN"
-        | "NPC_SPAWNED"
-        | "WATCHED_ITEM_DROPPED"
-        | "SCHEDULED_MESSAGE";
-      readonly guildId: string | null;
-      readonly world: string | null;
-      readonly name: string | null;
-      readonly filters:
-        | ({
-            readonly guildIds?: ReadonlyArray<string>;
-            readonly world?: string;
-            readonly npcId?: number | null;
-            readonly npcIds?: ReadonlyArray<number>;
-            readonly itemId?: number | null;
-            readonly itemIds?: ReadonlyArray<number>;
-          } & { readonly [x: string]: Schema.Json })
-        | null;
-      readonly contentTemplate: string | null;
-      readonly scheduleStrategy:
-        | "SPAWN_WINDOW_RELATIVE"
-        | "FIXED_DATETIME"
-        | null;
-      readonly scheduleAnchor: "MIN_SPAWN" | "MAX_SPAWN" | null;
-      readonly scheduleOffsetMinutes: number | null;
-      readonly scheduledAt: string | null;
-      readonly scheduleIntervalType:
-        | "ONCE"
-        | "HOURLY"
-        | "DAILY"
-        | "WEEKLY"
-        | null;
-      readonly scheduleIntervalValue: number | null;
-      readonly scheduleWeekday: number | null;
-      readonly scheduleTimeOfDay: string | null;
-      readonly scheduledUntil: string | null;
-      readonly scheduleTimezone: string | null;
-      readonly enabled: boolean;
-      readonly dedupeWindowSeconds: number;
-      readonly createdAt: string;
-      readonly updatedAt: string;
-    };
-    readonly target: {
-      readonly id: number;
-      readonly ownerType: "GUILD" | "USER";
-      readonly ownerId: string;
-      readonly provider: "DISCORD";
-      readonly targetType: "CHANNEL" | "DM";
-      readonly externalId: string;
-      readonly displayName: string | null;
-      readonly guildName: string | null;
-      readonly metadata:
-        | string
-        | number
-        | boolean
-        | ReadonlyArray<NotificationJobsResponseDto__schema0>
-        | { readonly [x: string]: NotificationJobsResponseDto__schema0 }
-        | null;
-      readonly active: boolean;
-      readonly canSend: boolean;
-      readonly lastSyncedAt: string | null;
-      readonly lastDeliveryAt: string | null;
-      readonly lastDeliveryError: string | null;
-      readonly createdAt: string;
-      readonly updatedAt: string;
-    };
-  }>;
-};
+export type NotificationJobsResponseDto =
+  typeof NotificationJobsResponseDto.Type;
 
 export const NotificationJobsResponseDto = Schema.Struct({
   pending: Schema.Array(
@@ -2378,16 +1486,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
       ownerType: Schema.Literals(["GUILD", "USER"]),
       ownerId: Schema.String,
       jobKind: Schema.Literals(["SCHEDULED", "INSTANT", "TEST"]),
-      scheduledFor: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      scheduledFor: DateTimeString,
       status: Schema.Literals([
         "PENDING",
         "PROCESSING",
@@ -2486,49 +1585,13 @@ export const NotificationJobsResponseDto = Schema.Struct({
               Schema.Union([Schema.String, Schema.Null]),
             ),
             minSpawnTime: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
             maxSpawnTime: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
             scheduledFor: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
             scheduleStrategy: Schema.optionalKey(
               Schema.Union([
@@ -2566,19 +1629,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
               Schema.Union([Schema.String, Schema.Null]),
             ),
             testTriggeredAt: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
           }),
           [
@@ -2606,39 +1657,9 @@ export const NotificationJobsResponseDto = Schema.Struct({
       lastError: Schema.Union([Schema.String, Schema.Null]),
       blockedReason: Schema.Union([Schema.String, Schema.Null]),
       providerMessageId: Schema.Union([Schema.String, Schema.Null]),
-      processedAt: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      processedAt: Schema.Union([DateTimeString, Schema.Null]),
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
       rule: Schema.Struct({
         id: Schema.Number.check(
           Schema.isInt().annotate({ expected: "an integer" }),
@@ -2790,19 +1811,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
             ),
           Schema.Null,
         ]),
-        scheduledAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        scheduledAt: Schema.Union([DateTimeString, Schema.Null]),
         scheduleIntervalType: Schema.Union([
           Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
           Schema.Null,
@@ -2840,19 +1849,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
           Schema.Null,
         ]),
         scheduleTimeOfDay: Schema.Union([Schema.String, Schema.Null]),
-        scheduledUntil: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        scheduledUntil: Schema.Union([DateTimeString, Schema.Null]),
         scheduleTimezone: Schema.Union([Schema.String, Schema.Null]),
         enabled: Schema.Boolean,
         dedupeWindowSeconds: Schema.Number.check(
@@ -2868,26 +1865,8 @@ export const NotificationJobsResponseDto = Schema.Struct({
               expected: "a value less than or equal to 9007199254740991",
             }),
           ),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
       }),
       target: Schema.Struct({
         id: Schema.Number.check(
@@ -2913,9 +1892,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
         metadata: Schema.Union([
           Schema.Union([
             Schema.String,
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            FiniteNumber,
             Schema.Boolean,
             Schema.Array(NotificationJobsResponseDto__schema0),
             Schema.Record(Schema.String, NotificationJobsResponseDto__schema0),
@@ -2924,53 +1901,11 @@ export const NotificationJobsResponseDto = Schema.Struct({
         ]),
         active: Schema.Boolean,
         canSend: Schema.Boolean,
-        lastSyncedAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
-        lastDeliveryAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+        lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
         lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
       }),
     }),
   ),
@@ -3006,16 +1941,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
       ownerType: Schema.Literals(["GUILD", "USER"]),
       ownerId: Schema.String,
       jobKind: Schema.Literals(["SCHEDULED", "INSTANT", "TEST"]),
-      scheduledFor: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      scheduledFor: DateTimeString,
       status: Schema.Literals([
         "PENDING",
         "PROCESSING",
@@ -3114,49 +2040,13 @@ export const NotificationJobsResponseDto = Schema.Struct({
               Schema.Union([Schema.String, Schema.Null]),
             ),
             minSpawnTime: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
             maxSpawnTime: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
             scheduledFor: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
             scheduleStrategy: Schema.optionalKey(
               Schema.Union([
@@ -3194,19 +2084,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
               Schema.Union([Schema.String, Schema.Null]),
             ),
             testTriggeredAt: Schema.optionalKey(
-              Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              Schema.Union([DateTimeWithOffsetString, Schema.Null]),
             ),
           }),
           [
@@ -3234,39 +2112,9 @@ export const NotificationJobsResponseDto = Schema.Struct({
       lastError: Schema.Union([Schema.String, Schema.Null]),
       blockedReason: Schema.Union([Schema.String, Schema.Null]),
       providerMessageId: Schema.Union([Schema.String, Schema.Null]),
-      processedAt: Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
-      createdAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      processedAt: Schema.Union([DateTimeString, Schema.Null]),
+      createdAt: DateTimeString,
+      updatedAt: DateTimeString,
       rule: Schema.Struct({
         id: Schema.Number.check(
           Schema.isInt().annotate({ expected: "an integer" }),
@@ -3418,19 +2266,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
             ),
           Schema.Null,
         ]),
-        scheduledAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        scheduledAt: Schema.Union([DateTimeString, Schema.Null]),
         scheduleIntervalType: Schema.Union([
           Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
           Schema.Null,
@@ -3468,19 +2304,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
           Schema.Null,
         ]),
         scheduleTimeOfDay: Schema.Union([Schema.String, Schema.Null]),
-        scheduledUntil: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        scheduledUntil: Schema.Union([DateTimeString, Schema.Null]),
         scheduleTimezone: Schema.Union([Schema.String, Schema.Null]),
         enabled: Schema.Boolean,
         dedupeWindowSeconds: Schema.Number.check(
@@ -3496,26 +2320,8 @@ export const NotificationJobsResponseDto = Schema.Struct({
               expected: "a value less than or equal to 9007199254740991",
             }),
           ),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
       }),
       target: Schema.Struct({
         id: Schema.Number.check(
@@ -3541,9 +2347,7 @@ export const NotificationJobsResponseDto = Schema.Struct({
         metadata: Schema.Union([
           Schema.Union([
             Schema.String,
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            FiniteNumber,
             Schema.Boolean,
             Schema.Array(NotificationJobsResponseDto__schema0),
             Schema.Record(Schema.String, NotificationJobsResponseDto__schema0),
@@ -3552,91 +2356,18 @@ export const NotificationJobsResponseDto = Schema.Struct({
         ]),
         active: Schema.Boolean,
         canSend: Schema.Boolean,
-        lastSyncedAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
-        lastDeliveryAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+        lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
         lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
       }),
     }),
   ),
 }).annotate({ identifier: "NotificationJobsResponseDto" });
 
-export type NotificationTargetWithTestTriggerResponseDto = {
-  readonly id: number;
-  readonly ownerType: "GUILD" | "USER";
-  readonly ownerId: string;
-  readonly provider: "DISCORD";
-  readonly targetType: "CHANNEL" | "DM";
-  readonly externalId: string;
-  readonly displayName: string | null;
-  readonly guildName: string | null;
-  readonly metadata:
-    | string
-    | number
-    | boolean
-    | ReadonlyArray<NotificationTargetWithTestTriggerResponseDto__schema0>
-    | {
-        readonly [x: string]: NotificationTargetWithTestTriggerResponseDto__schema0;
-      }
-    | null;
-  readonly active: boolean;
-  readonly canSend: boolean;
-  readonly lastSyncedAt: string | null;
-  readonly lastDeliveryAt: string | null;
-  readonly lastDeliveryError: string | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly testTrigger: {
-    readonly limit: number;
-    readonly used: number;
-    readonly remaining: number;
-    readonly windowSeconds: number;
-    readonly nextAvailableAt: string | null;
-  };
-};
+export type NotificationTargetWithTestTriggerResponseDto =
+  typeof NotificationTargetWithTestTriggerResponseDto.Type;
 
 export const NotificationTargetWithTestTriggerResponseDto = Schema.Struct({
   id: Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -3660,9 +2391,7 @@ export const NotificationTargetWithTestTriggerResponseDto = Schema.Struct({
   metadata: Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(NotificationTargetWithTestTriggerResponseDto__schema0),
       Schema.Record(
@@ -3674,53 +2403,11 @@ export const NotificationTargetWithTestTriggerResponseDto = Schema.Struct({
   ]),
   active: Schema.Boolean,
   canSend: Schema.Boolean,
-  lastSyncedAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  lastDeliveryAt: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
+  lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+  lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
   lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   testTrigger: Schema.Struct({
     limit: Schema.Number.check(
       Schema.isInt().annotate({ expected: "an integer" }),
@@ -3774,120 +2461,11 @@ export const NotificationTargetWithTestTriggerResponseDto = Schema.Struct({
           expected: "a value less than or equal to 9007199254740991",
         }),
       ),
-    nextAvailableAt: Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
+    nextAvailableAt: Schema.Union([DateTimeWithOffsetString, Schema.Null]),
   }),
 }).annotate({ identifier: "NotificationTargetWithTestTriggerResponseDto" });
 
-export type WatchedItemResponseDto = {
-  readonly id: number;
-  readonly userId: string;
-  readonly itemId: number;
-  readonly itemName: string;
-  readonly world: string;
-  readonly enabled: boolean;
-  readonly notificationRuleId: number | null;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly itemSnapshot:
-    | ({
-        readonly name: string;
-        readonly icon: string;
-        readonly rarity: string | null;
-        readonly lvl: number | null;
-        readonly type: string | null;
-        readonly stat: string;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-  readonly notificationRule:
-    | ({
-        readonly id: number;
-        readonly ownerType: "GUILD" | "USER";
-        readonly ownerId: string;
-        readonly triggerType:
-          | "TIMER_BEFORE_SPAWN"
-          | "NPC_SPAWNED"
-          | "WATCHED_ITEM_DROPPED"
-          | "SCHEDULED_MESSAGE";
-        readonly guildId: string | null;
-        readonly world: string | null;
-        readonly name: string | null;
-        readonly filters:
-          | ({
-              readonly guildIds?: ReadonlyArray<string>;
-              readonly world?: string;
-              readonly npcId?: number | null;
-              readonly npcIds?: ReadonlyArray<number>;
-              readonly itemId?: number | null;
-              readonly itemIds?: ReadonlyArray<number>;
-            } & { readonly [x: string]: Schema.Json })
-          | null;
-        readonly contentTemplate: string | null;
-        readonly scheduleStrategy:
-          | "SPAWN_WINDOW_RELATIVE"
-          | "FIXED_DATETIME"
-          | null;
-        readonly scheduleAnchor: "MIN_SPAWN" | "MAX_SPAWN" | null;
-        readonly scheduleOffsetMinutes: number | null;
-        readonly scheduledAt: string | null;
-        readonly scheduleIntervalType:
-          | "ONCE"
-          | "HOURLY"
-          | "DAILY"
-          | "WEEKLY"
-          | null;
-        readonly scheduleIntervalValue: number | null;
-        readonly scheduleWeekday: number | null;
-        readonly scheduleTimeOfDay: string | null;
-        readonly scheduledUntil: string | null;
-        readonly scheduleTimezone: string | null;
-        readonly enabled: boolean;
-        readonly dedupeWindowSeconds: number;
-        readonly createdAt: string;
-        readonly updatedAt: string;
-        readonly targets: ReadonlyArray<{
-          readonly ruleId: number;
-          readonly targetId: number;
-          readonly createdAt: string;
-          readonly target: {
-            readonly id: number;
-            readonly ownerType: "GUILD" | "USER";
-            readonly ownerId: string;
-            readonly provider: "DISCORD";
-            readonly targetType: "CHANNEL" | "DM";
-            readonly externalId: string;
-            readonly displayName: string | null;
-            readonly guildName: string | null;
-            readonly metadata:
-              | string
-              | number
-              | boolean
-              | ReadonlyArray<WatchedItemResponseDto__schema0>
-              | { readonly [x: string]: WatchedItemResponseDto__schema0 }
-              | null;
-            readonly active: boolean;
-            readonly canSend: boolean;
-            readonly lastSyncedAt: string | null;
-            readonly lastDeliveryAt: string | null;
-            readonly lastDeliveryError: string | null;
-            readonly createdAt: string;
-            readonly updatedAt: string;
-          };
-        }>;
-      } & { readonly [x: string]: Schema.Json })
-    | null;
-};
+export type WatchedItemResponseDto = typeof WatchedItemResponseDto.Type;
 
 export const WatchedItemResponseDto = Schema.Struct({
   id: Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -3932,26 +2510,8 @@ export const WatchedItemResponseDto = Schema.Struct({
       ),
     Schema.Null,
   ]),
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
+  updatedAt: DateTimeString,
   itemSnapshot: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
@@ -4139,19 +2699,7 @@ export const WatchedItemResponseDto = Schema.Struct({
             ),
           Schema.Null,
         ]),
-        scheduledAt: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        scheduledAt: Schema.Union([DateTimeString, Schema.Null]),
         scheduleIntervalType: Schema.Union([
           Schema.Literals(["ONCE", "HOURLY", "DAILY", "WEEKLY"]),
           Schema.Null,
@@ -4189,19 +2737,7 @@ export const WatchedItemResponseDto = Schema.Struct({
           Schema.Null,
         ]),
         scheduleTimeOfDay: Schema.Union([Schema.String, Schema.Null]),
-        scheduledUntil: Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        scheduledUntil: Schema.Union([DateTimeString, Schema.Null]),
         scheduleTimezone: Schema.Union([Schema.String, Schema.Null]),
         enabled: Schema.Boolean,
         dedupeWindowSeconds: Schema.Number.check(
@@ -4217,26 +2753,8 @@ export const WatchedItemResponseDto = Schema.Struct({
               expected: "a value less than or equal to 9007199254740991",
             }),
           ),
-        createdAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
+        createdAt: DateTimeString,
+        updatedAt: DateTimeString,
         targets: Schema.Array(
           Schema.Struct({
             ruleId: Schema.Number.check(
@@ -4267,16 +2785,7 @@ export const WatchedItemResponseDto = Schema.Struct({
                   expected: "a value less than or equal to 9007199254740991",
                 }),
               ),
-            createdAt: Schema.String.annotate({ format: "date-time" }).check(
-              Schema.isPattern(
-                new RegExp(
-                  "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                ),
-              ).annotate({
-                expected:
-                  "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              }),
-            ),
+            createdAt: DateTimeString,
             target: Schema.Struct({
               id: Schema.Number.check(
                 Schema.isInt().annotate({ expected: "an integer" }),
@@ -4302,9 +2811,7 @@ export const WatchedItemResponseDto = Schema.Struct({
               metadata: Schema.Union([
                 Schema.Union([
                   Schema.String,
-                  Schema.Number.check(
-                    Schema.isFinite().annotate({ expected: "a finite number" }),
-                  ),
+                  FiniteNumber,
                   Schema.Boolean,
                   Schema.Array(WatchedItemResponseDto__schema0),
                   Schema.Record(Schema.String, WatchedItemResponseDto__schema0),
@@ -4313,53 +2820,11 @@ export const WatchedItemResponseDto = Schema.Struct({
               ]),
               active: Schema.Boolean,
               canSend: Schema.Boolean,
-              lastSyncedAt: Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
-              lastDeliveryAt: Schema.Union([
-                Schema.String.annotate({ format: "date-time" }).check(
-                  Schema.isPattern(
-                    new RegExp(
-                      "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                    ),
-                  ).annotate({
-                    expected:
-                      "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  }),
-                ),
-                Schema.Null,
-              ]),
+              lastSyncedAt: Schema.Union([DateTimeString, Schema.Null]),
+              lastDeliveryAt: Schema.Union([DateTimeString, Schema.Null]),
               lastDeliveryError: Schema.Union([Schema.String, Schema.Null]),
-              createdAt: Schema.String.annotate({ format: "date-time" }).check(
-                Schema.isPattern(
-                  new RegExp(
-                    "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  ),
-                ).annotate({
-                  expected:
-                    "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                }),
-              ),
-              updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-                Schema.isPattern(
-                  new RegExp(
-                    "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  ),
-                ).annotate({
-                  expected:
-                    "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                }),
-              ),
+              createdAt: DateTimeString,
+              updatedAt: DateTimeString,
             }),
           }),
         ),
@@ -4375,12 +2840,7 @@ export const WatchedItemResponseDto = Schema.Struct({
   ]),
 }).annotate({ identifier: "WatchedItemResponseDto" });
 
-export type CreateWatchedItemDto = {
-  readonly itemId: number;
-  readonly itemName: string;
-  readonly world: string;
-  readonly guildIds: ReadonlyArray<string>;
-};
+export type CreateWatchedItemDto = typeof CreateWatchedItemDto.Type;
 
 export const CreateWatchedItemDto = Schema.Struct({
   itemId: Schema.Number.check(
@@ -4433,12 +2893,8 @@ export const CreateWatchedItemDto = Schema.Struct({
     ),
 }).annotate({ identifier: "CreateWatchedItemDto" });
 
-export type CreateWatchedItemQuickAddDto = {
-  readonly itemId: number;
-  readonly itemName: string;
-  readonly world: string;
-  readonly guildId: string;
-};
+export type CreateWatchedItemQuickAddDto =
+  typeof CreateWatchedItemQuickAddDto.Type;
 
 export const CreateWatchedItemQuickAddDto = Schema.Struct({
   itemId: Schema.Number.check(
@@ -4486,17 +2942,13 @@ export const CreateWatchedItemQuickAddDto = Schema.Struct({
 const __recursive_NotificationTargetResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4520,9 +2972,7 @@ const __recursive_NotificationTargetResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4548,17 +2998,13 @@ const __recursive_NotificationTargetResponseDto__schema0 = Schema.Union([
 const __recursive_GuildNotificationRulesResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4582,9 +3028,7 @@ const __recursive_GuildNotificationRulesResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4610,17 +3054,13 @@ const __recursive_GuildNotificationRulesResponseDto__schema0 = Schema.Union([
 const __recursive_NotificationRuleResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4644,9 +3084,7 @@ const __recursive_NotificationRuleResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4672,17 +3110,13 @@ const __recursive_NotificationRuleResponseDto__schema0 = Schema.Union([
 const __recursive_NotificationJobsResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4706,9 +3140,7 @@ const __recursive_NotificationJobsResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4735,17 +3167,13 @@ const __recursive_NotificationTargetWithTestTriggerResponseDto__schema0 =
   Schema.Union([
     Schema.Union([
       Schema.String,
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      FiniteNumber,
       Schema.Boolean,
       Schema.Array(
         Schema.Union([
           Schema.Union([
             Schema.String,
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            FiniteNumber,
             Schema.Boolean,
             Schema.Array(
               Schema.suspend(
@@ -4769,9 +3197,7 @@ const __recursive_NotificationTargetWithTestTriggerResponseDto__schema0 =
         Schema.Union([
           Schema.Union([
             Schema.String,
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
+            FiniteNumber,
             Schema.Boolean,
             Schema.Array(
               Schema.suspend(
@@ -4799,17 +3225,13 @@ const __recursive_NotificationTargetWithTestTriggerResponseDto__schema0 =
 const __recursive_WatchedItemResponseDto__schema0 = Schema.Union([
   Schema.Union([
     Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    FiniteNumber,
     Schema.Boolean,
     Schema.Array(
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4833,9 +3255,7 @@ const __recursive_WatchedItemResponseDto__schema0 = Schema.Union([
       Schema.Union([
         Schema.Union([
           Schema.String,
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          FiniteNumber,
           Schema.Boolean,
           Schema.Array(
             Schema.suspend(
@@ -4858,228 +3278,196 @@ const __recursive_WatchedItemResponseDto__schema0 = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "WatchedItemResponseDto__schema0" });
 
-export type NotificationsGuildControllerGetGuildTargetsPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerGetGuildTargetsPathParams =
+  typeof NotificationsGuildControllerGetGuildTargetsPathParams.Type;
 
 export const NotificationsGuildControllerGetGuildTargetsPathParams =
   Schema.Struct({ guildId: Schema.Json.annotate({ expected: "JSON value" }) });
 
 export type NotificationsGuildControllerGetGuildTargets200 =
-  ReadonlyArray<NotificationTargetResponseDto>;
+  typeof NotificationsGuildControllerGetGuildTargets200.Type;
 
 export const NotificationsGuildControllerGetGuildTargets200 = Schema.Array(
   NotificationTargetResponseDto,
 );
 
-export type NotificationsGuildControllerCreateGuildTargetPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerCreateGuildTargetPathParams =
+  typeof NotificationsGuildControllerCreateGuildTargetPathParams.Type;
 
 export const NotificationsGuildControllerCreateGuildTargetPathParams =
   Schema.Struct({ guildId: Schema.Json.annotate({ expected: "JSON value" }) });
 
 export type NotificationsGuildControllerCreateGuildTargetRequestJson =
-  CreateNotificationTargetDto;
+  typeof NotificationsGuildControllerCreateGuildTargetRequestJson.Type;
 
 export const NotificationsGuildControllerCreateGuildTargetRequestJson =
   CreateNotificationTargetDto;
 
 export type NotificationsGuildControllerCreateGuildTarget201 =
-  NotificationTargetResponseDto;
+  typeof NotificationsGuildControllerCreateGuildTarget201.Type;
 
 export const NotificationsGuildControllerCreateGuildTarget201 =
   NotificationTargetResponseDto;
 
-export type NotificationsGuildControllerGetAvailableGuildTargetsPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerGetAvailableGuildTargetsPathParams =
+  typeof NotificationsGuildControllerGetAvailableGuildTargetsPathParams.Type;
 
 export const NotificationsGuildControllerGetAvailableGuildTargetsPathParams =
   Schema.Struct({ guildId: Schema.Json.annotate({ expected: "JSON value" }) });
 
 export type NotificationsGuildControllerGetAvailableGuildTargets200 =
-  GuildAvailableNotificationTargetsResponseDto;
+  typeof NotificationsGuildControllerGetAvailableGuildTargets200.Type;
 
 export const NotificationsGuildControllerGetAvailableGuildTargets200 =
   GuildAvailableNotificationTargetsResponseDto;
 
-export type NotificationsGuildControllerDeleteGuildTargetPathParams = {
-  readonly targetId: number;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerDeleteGuildTargetPathParams =
+  typeof NotificationsGuildControllerDeleteGuildTargetPathParams.Type;
 
 export const NotificationsGuildControllerDeleteGuildTargetPathParams =
   Schema.Struct({
-    targetId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    targetId: FiniteNumber,
     guildId: Schema.Json.annotate({ expected: "JSON value" }),
   });
 
 export type NotificationsGuildControllerDeleteGuildTarget200 =
-  SuccessResponseDto_Output;
+  typeof NotificationsGuildControllerDeleteGuildTarget200.Type;
 
 export const NotificationsGuildControllerDeleteGuildTarget200 =
   SuccessResponseDto_Output;
 
-export type NotificationsGuildControllerUpdateGuildTargetPathParams = {
-  readonly targetId: number;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerUpdateGuildTargetPathParams =
+  typeof NotificationsGuildControllerUpdateGuildTargetPathParams.Type;
 
 export const NotificationsGuildControllerUpdateGuildTargetPathParams =
   Schema.Struct({
-    targetId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    targetId: FiniteNumber,
     guildId: Schema.Json.annotate({ expected: "JSON value" }),
   });
 
 export type NotificationsGuildControllerUpdateGuildTargetRequestJson =
-  UpdateNotificationTargetDto;
+  typeof NotificationsGuildControllerUpdateGuildTargetRequestJson.Type;
 
 export const NotificationsGuildControllerUpdateGuildTargetRequestJson =
   UpdateNotificationTargetDto;
 
 export type NotificationsGuildControllerUpdateGuildTarget200 =
-  NotificationTargetResponseDto;
+  typeof NotificationsGuildControllerUpdateGuildTarget200.Type;
 
 export const NotificationsGuildControllerUpdateGuildTarget200 =
   NotificationTargetResponseDto;
 
-export type NotificationsGuildControllerGetGuildRulesPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerGetGuildRulesPathParams =
+  typeof NotificationsGuildControllerGetGuildRulesPathParams.Type;
 
 export const NotificationsGuildControllerGetGuildRulesPathParams =
   Schema.Struct({ guildId: Schema.Json.annotate({ expected: "JSON value" }) });
 
 export type NotificationsGuildControllerGetGuildRules200 =
-  GuildNotificationRulesResponseDto;
+  typeof NotificationsGuildControllerGetGuildRules200.Type;
 
 export const NotificationsGuildControllerGetGuildRules200 =
   GuildNotificationRulesResponseDto;
 
-export type NotificationsGuildControllerCreateGuildRulePathParams = {
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerCreateGuildRulePathParams =
+  typeof NotificationsGuildControllerCreateGuildRulePathParams.Type;
 
 export const NotificationsGuildControllerCreateGuildRulePathParams =
   Schema.Struct({ guildId: Schema.Json.annotate({ expected: "JSON value" }) });
 
 export type NotificationsGuildControllerCreateGuildRuleRequestJson =
-  CreateNotificationRuleDto;
+  typeof NotificationsGuildControllerCreateGuildRuleRequestJson.Type;
 
 export const NotificationsGuildControllerCreateGuildRuleRequestJson =
   CreateNotificationRuleDto;
 
 export type NotificationsGuildControllerCreateGuildRule201 =
-  NotificationRuleResponseDto;
+  typeof NotificationsGuildControllerCreateGuildRule201.Type;
 
 export const NotificationsGuildControllerCreateGuildRule201 =
   NotificationRuleResponseDto;
 
-export type NotificationsGuildControllerDeleteGuildRulePathParams = {
-  readonly ruleId: number;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerDeleteGuildRulePathParams =
+  typeof NotificationsGuildControllerDeleteGuildRulePathParams.Type;
 
 export const NotificationsGuildControllerDeleteGuildRulePathParams =
   Schema.Struct({
-    ruleId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    ruleId: FiniteNumber,
     guildId: Schema.Json.annotate({ expected: "JSON value" }),
   });
 
 export type NotificationsGuildControllerDeleteGuildRule200 =
-  SuccessResponseDto_Output;
+  typeof NotificationsGuildControllerDeleteGuildRule200.Type;
 
 export const NotificationsGuildControllerDeleteGuildRule200 =
   SuccessResponseDto_Output;
 
-export type NotificationsGuildControllerUpdateGuildRulePathParams = {
-  readonly ruleId: number;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerUpdateGuildRulePathParams =
+  typeof NotificationsGuildControllerUpdateGuildRulePathParams.Type;
 
 export const NotificationsGuildControllerUpdateGuildRulePathParams =
   Schema.Struct({
-    ruleId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    ruleId: FiniteNumber,
     guildId: Schema.Json.annotate({ expected: "JSON value" }),
   });
 
 export type NotificationsGuildControllerUpdateGuildRuleRequestJson =
-  UpdateNotificationRuleDto;
+  typeof NotificationsGuildControllerUpdateGuildRuleRequestJson.Type;
 
 export const NotificationsGuildControllerUpdateGuildRuleRequestJson =
   UpdateNotificationRuleDto;
 
 export type NotificationsGuildControllerUpdateGuildRule200 =
-  NotificationRuleResponseDto;
+  typeof NotificationsGuildControllerUpdateGuildRule200.Type;
 
 export const NotificationsGuildControllerUpdateGuildRule200 =
   NotificationRuleResponseDto;
 
-export type NotificationsGuildControllerRebuildGuildRuleJobsPathParams = {
-  readonly ruleId: number;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerRebuildGuildRuleJobsPathParams =
+  typeof NotificationsGuildControllerRebuildGuildRuleJobsPathParams.Type;
 
 export const NotificationsGuildControllerRebuildGuildRuleJobsPathParams =
   Schema.Struct({
-    ruleId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    ruleId: FiniteNumber,
     guildId: Schema.Json.annotate({ expected: "JSON value" }),
   });
 
 export type NotificationsGuildControllerRebuildGuildRuleJobs201 =
-  SuccessResponseDto_Output;
+  typeof NotificationsGuildControllerRebuildGuildRuleJobs201.Type;
 
 export const NotificationsGuildControllerRebuildGuildRuleJobs201 =
   SuccessResponseDto_Output;
 
-export type NotificationsGuildControllerTriggerGuildRuleTestPathParams = {
-  readonly ruleId: number;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerTriggerGuildRuleTestPathParams =
+  typeof NotificationsGuildControllerTriggerGuildRuleTestPathParams.Type;
 
 export const NotificationsGuildControllerTriggerGuildRuleTestPathParams =
   Schema.Struct({
-    ruleId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    ruleId: FiniteNumber,
     guildId: Schema.Json.annotate({ expected: "JSON value" }),
   });
 
 export type NotificationsGuildControllerTriggerGuildRuleTest201 =
-  SuccessResponseDto_Output;
+  typeof NotificationsGuildControllerTriggerGuildRuleTest201.Type;
 
 export const NotificationsGuildControllerTriggerGuildRuleTest201 =
   SuccessResponseDto_Output;
 
-export type NotificationsGuildControllerGetGuildJobsPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerGetGuildJobsPathParams =
+  typeof NotificationsGuildControllerGetGuildJobsPathParams.Type;
 
 export const NotificationsGuildControllerGetGuildJobsPathParams = Schema.Struct(
   { guildId: Schema.Json.annotate({ expected: "JSON value" }) },
 );
 
 export type NotificationsGuildControllerGetGuildJobs200 =
-  NotificationJobsResponseDto;
+  typeof NotificationsGuildControllerGetGuildJobs200.Type;
 
 export const NotificationsGuildControllerGetGuildJobs200 =
   NotificationJobsResponseDto;
 
-export type NotificationsGuildControllerCancelGuildJobPathParams = {
-  readonly jobId: string;
-  readonly guildId: Schema.Json;
-};
+export type NotificationsGuildControllerCancelGuildJobPathParams =
+  typeof NotificationsGuildControllerCancelGuildJobPathParams.Type;
 
 export const NotificationsGuildControllerCancelGuildJobPathParams =
   Schema.Struct({
@@ -5088,196 +3476,178 @@ export const NotificationsGuildControllerCancelGuildJobPathParams =
   });
 
 export type NotificationsGuildControllerCancelGuildJob200 =
-  SuccessResponseDto_Output;
+  typeof NotificationsGuildControllerCancelGuildJob200.Type;
 
 export const NotificationsGuildControllerCancelGuildJob200 =
   SuccessResponseDto_Output;
 
 export type NotificationsUserControllerGetUserTargets200 =
-  ReadonlyArray<NotificationTargetWithTestTriggerResponseDto>;
+  typeof NotificationsUserControllerGetUserTargets200.Type;
 
 export const NotificationsUserControllerGetUserTargets200 = Schema.Array(
   NotificationTargetWithTestTriggerResponseDto,
 );
 
 export type NotificationsUserControllerCreateUserTargetRequestJson =
-  CreateNotificationTargetDto;
+  typeof NotificationsUserControllerCreateUserTargetRequestJson.Type;
 
 export const NotificationsUserControllerCreateUserTargetRequestJson =
   CreateNotificationTargetDto;
 
 export type NotificationsUserControllerCreateUserTarget201 =
-  NotificationTargetResponseDto;
+  typeof NotificationsUserControllerCreateUserTarget201.Type;
 
 export const NotificationsUserControllerCreateUserTarget201 =
   NotificationTargetResponseDto;
 
-export type NotificationsUserControllerDeleteUserTargetPathParams = {
-  readonly targetId: number;
-};
+export type NotificationsUserControllerDeleteUserTargetPathParams =
+  typeof NotificationsUserControllerDeleteUserTargetPathParams.Type;
 
 export const NotificationsUserControllerDeleteUserTargetPathParams =
   Schema.Struct({
-    targetId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    targetId: FiniteNumber,
   });
 
 export type NotificationsUserControllerDeleteUserTarget200 =
-  SuccessResponseDto_Output;
+  typeof NotificationsUserControllerDeleteUserTarget200.Type;
 
 export const NotificationsUserControllerDeleteUserTarget200 =
   SuccessResponseDto_Output;
 
-export type NotificationsUserControllerUpdateUserTargetPathParams = {
-  readonly targetId: number;
-};
+export type NotificationsUserControllerUpdateUserTargetPathParams =
+  typeof NotificationsUserControllerUpdateUserTargetPathParams.Type;
 
 export const NotificationsUserControllerUpdateUserTargetPathParams =
   Schema.Struct({
-    targetId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    targetId: FiniteNumber,
   });
 
 export type NotificationsUserControllerUpdateUserTargetRequestJson =
-  UpdateNotificationTargetDto;
+  typeof NotificationsUserControllerUpdateUserTargetRequestJson.Type;
 
 export const NotificationsUserControllerUpdateUserTargetRequestJson =
   UpdateNotificationTargetDto;
 
 export type NotificationsUserControllerUpdateUserTarget200 =
-  NotificationTargetResponseDto;
+  typeof NotificationsUserControllerUpdateUserTarget200.Type;
 
 export const NotificationsUserControllerUpdateUserTarget200 =
   NotificationTargetResponseDto;
 
-export type NotificationsUserControllerTriggerUserTargetTestPathParams = {
-  readonly targetId: number;
-};
+export type NotificationsUserControllerTriggerUserTargetTestPathParams =
+  typeof NotificationsUserControllerTriggerUserTargetTestPathParams.Type;
 
 export const NotificationsUserControllerTriggerUserTargetTestPathParams =
   Schema.Struct({
-    targetId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    targetId: FiniteNumber,
   });
 
 export type NotificationsUserControllerTriggerUserTargetTest201 =
-  SuccessResponseDto_Output;
+  typeof NotificationsUserControllerTriggerUserTargetTest201.Type;
 
 export const NotificationsUserControllerTriggerUserTargetTest201 =
   SuccessResponseDto_Output;
 
 export type NotificationsUserControllerGetUserRules200 =
-  ReadonlyArray<NotificationRuleResponseDto>;
+  typeof NotificationsUserControllerGetUserRules200.Type;
 
 export const NotificationsUserControllerGetUserRules200 = Schema.Array(
   NotificationRuleResponseDto,
 );
 
 export type NotificationsUserControllerCreateUserRuleRequestJson =
-  CreateNotificationRuleDto;
+  typeof NotificationsUserControllerCreateUserRuleRequestJson.Type;
 
 export const NotificationsUserControllerCreateUserRuleRequestJson =
   CreateNotificationRuleDto;
 
 export type NotificationsUserControllerCreateUserRule201 =
-  NotificationRuleResponseDto;
+  typeof NotificationsUserControllerCreateUserRule201.Type;
 
 export const NotificationsUserControllerCreateUserRule201 =
   NotificationRuleResponseDto;
 
-export type NotificationsUserControllerDeleteUserRulePathParams = {
-  readonly ruleId: number;
-};
+export type NotificationsUserControllerDeleteUserRulePathParams =
+  typeof NotificationsUserControllerDeleteUserRulePathParams.Type;
 
 export const NotificationsUserControllerDeleteUserRulePathParams =
   Schema.Struct({
-    ruleId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    ruleId: FiniteNumber,
   });
 
 export type NotificationsUserControllerDeleteUserRule200 =
-  SuccessResponseDto_Output;
+  typeof NotificationsUserControllerDeleteUserRule200.Type;
 
 export const NotificationsUserControllerDeleteUserRule200 =
   SuccessResponseDto_Output;
 
-export type NotificationsUserControllerUpdateUserRulePathParams = {
-  readonly ruleId: number;
-};
+export type NotificationsUserControllerUpdateUserRulePathParams =
+  typeof NotificationsUserControllerUpdateUserRulePathParams.Type;
 
 export const NotificationsUserControllerUpdateUserRulePathParams =
   Schema.Struct({
-    ruleId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    ruleId: FiniteNumber,
   });
 
 export type NotificationsUserControllerUpdateUserRuleRequestJson =
-  UpdateNotificationRuleDto;
+  typeof NotificationsUserControllerUpdateUserRuleRequestJson.Type;
 
 export const NotificationsUserControllerUpdateUserRuleRequestJson =
   UpdateNotificationRuleDto;
 
 export type NotificationsUserControllerUpdateUserRule200 =
-  NotificationRuleResponseDto;
+  typeof NotificationsUserControllerUpdateUserRule200.Type;
 
 export const NotificationsUserControllerUpdateUserRule200 =
   NotificationRuleResponseDto;
 
 export type NotificationsUserControllerGetUserJobs200 =
-  NotificationJobsResponseDto;
+  typeof NotificationsUserControllerGetUserJobs200.Type;
 
 export const NotificationsUserControllerGetUserJobs200 =
   NotificationJobsResponseDto;
 
 export type NotificationsUserControllerGetWatchedItems200 =
-  ReadonlyArray<WatchedItemResponseDto>;
+  typeof NotificationsUserControllerGetWatchedItems200.Type;
 
 export const NotificationsUserControllerGetWatchedItems200 = Schema.Array(
   WatchedItemResponseDto,
 );
 
 export type NotificationsUserControllerCreateWatchedItemRequestJson =
-  CreateWatchedItemDto;
+  typeof NotificationsUserControllerCreateWatchedItemRequestJson.Type;
 
 export const NotificationsUserControllerCreateWatchedItemRequestJson =
   CreateWatchedItemDto;
 
 export type NotificationsUserControllerCreateWatchedItem201 =
-  WatchedItemResponseDto;
+  typeof NotificationsUserControllerCreateWatchedItem201.Type;
 
 export const NotificationsUserControllerCreateWatchedItem201 =
   WatchedItemResponseDto;
 
 export type NotificationsUserControllerQuickAddWatchedItemRequestJson =
-  CreateWatchedItemQuickAddDto;
+  typeof NotificationsUserControllerQuickAddWatchedItemRequestJson.Type;
 
 export const NotificationsUserControllerQuickAddWatchedItemRequestJson =
   CreateWatchedItemQuickAddDto;
 
 export type NotificationsUserControllerQuickAddWatchedItem201 =
-  WatchedItemResponseDto;
+  typeof NotificationsUserControllerQuickAddWatchedItem201.Type;
 
 export const NotificationsUserControllerQuickAddWatchedItem201 =
   WatchedItemResponseDto;
 
-export type NotificationsUserControllerDeleteWatchedItemPathParams = {
-  readonly watchedItemId: number;
-};
+export type NotificationsUserControllerDeleteWatchedItemPathParams =
+  typeof NotificationsUserControllerDeleteWatchedItemPathParams.Type;
 
 export const NotificationsUserControllerDeleteWatchedItemPathParams =
   Schema.Struct({
-    watchedItemId: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    watchedItemId: FiniteNumber,
   });
 
 export type NotificationsUserControllerDeleteWatchedItem200 =
-  SuccessResponseDto_Output;
+  typeof NotificationsUserControllerDeleteWatchedItem200.Type;
 
 export const NotificationsUserControllerDeleteWatchedItem200 =
   SuccessResponseDto_Output;

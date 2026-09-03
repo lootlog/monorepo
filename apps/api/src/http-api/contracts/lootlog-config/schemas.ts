@@ -1,27 +1,9 @@
 /** Transport schemas owned by the lootlog-config HTTP module. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "../scalars.js";
 
 export type NullableLootlogConfigResponseDto_Output =
-  | ({
-      readonly id: string;
-      readonly npcs: ReadonlyArray<{
-        readonly id: number;
-        readonly npcType:
-          | "COMMON"
-          | "ELITE"
-          | "ELITE2"
-          | "ELITE3"
-          | "HERO"
-          | "EVENT_HERO"
-          | "TITAN"
-          | "COLOSSUS"
-          | "NPC";
-        readonly allowedRarities: ReadonlyArray<
-          "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED"
-        >;
-      }>;
-    } & { readonly [x: string]: Schema.Json })
-  | null;
+  typeof NullableLootlogConfigResponseDto_Output.Type;
 
 export const NullableLootlogConfigResponseDto_Output = Schema.Union([
   Schema.StructWithRest(
@@ -29,9 +11,7 @@ export const NullableLootlogConfigResponseDto_Output = Schema.Union([
       id: Schema.String,
       npcs: Schema.Array(
         Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
+          id: FiniteNumber,
           npcType: Schema.Literals([
             "COMMON",
             "ELITE",
@@ -59,11 +39,7 @@ export const NullableLootlogConfigResponseDto_Output = Schema.Union([
   Schema.Null,
 ]).annotate({ identifier: "NullableLootlogConfigResponseDto_Output" });
 
-export type UpdateLootlogConfigNpcDto = {
-  readonly allowedRarities: ReadonlyArray<
-    "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED"
-  >;
-};
+export type UpdateLootlogConfigNpcDto = typeof UpdateLootlogConfigNpcDto.Type;
 
 export const UpdateLootlogConfigNpcDto = Schema.Struct({
   allowedRarities: Schema.Array(
@@ -71,27 +47,11 @@ export const UpdateLootlogConfigNpcDto = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateLootlogConfigNpcDto" });
 
-export type LootlogConfigNpcResponseDto_Output = {
-  readonly id: number;
-  readonly npcType:
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC";
-  readonly allowedRarities: ReadonlyArray<
-    "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED"
-  >;
-};
+export type LootlogConfigNpcResponseDto_Output =
+  typeof LootlogConfigNpcResponseDto_Output.Type;
 
 export const LootlogConfigNpcResponseDto_Output = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   npcType: Schema.Literals([
     "COMMON",
     "ELITE",
@@ -108,24 +68,21 @@ export const LootlogConfigNpcResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "LootlogConfigNpcResponseDto_Output" });
 
-export type LootlogConfigControllerGetLootlogConfigPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type LootlogConfigControllerGetLootlogConfigPathParams =
+  typeof LootlogConfigControllerGetLootlogConfigPathParams.Type;
 
 export const LootlogConfigControllerGetLootlogConfigPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
 export type LootlogConfigControllerGetLootlogConfig200 =
-  NullableLootlogConfigResponseDto_Output;
+  typeof LootlogConfigControllerGetLootlogConfig200.Type;
 
 export const LootlogConfigControllerGetLootlogConfig200 =
   NullableLootlogConfigResponseDto_Output;
 
-export type LootlogConfigControllerUpdateNpcPathParams = {
-  readonly npcId: string;
-  readonly guildId: Schema.Json;
-};
+export type LootlogConfigControllerUpdateNpcPathParams =
+  typeof LootlogConfigControllerUpdateNpcPathParams.Type;
 
 export const LootlogConfigControllerUpdateNpcPathParams = Schema.Struct({
   npcId: Schema.String.annotate({ examples: ["1"] }),
@@ -133,13 +90,13 @@ export const LootlogConfigControllerUpdateNpcPathParams = Schema.Struct({
 });
 
 export type LootlogConfigControllerUpdateNpcRequestJson =
-  UpdateLootlogConfigNpcDto;
+  typeof LootlogConfigControllerUpdateNpcRequestJson.Type;
 
 export const LootlogConfigControllerUpdateNpcRequestJson =
   UpdateLootlogConfigNpcDto;
 
 export type LootlogConfigControllerUpdateNpc200 =
-  LootlogConfigNpcResponseDto_Output;
+  typeof LootlogConfigControllerUpdateNpc200.Type;
 
 export const LootlogConfigControllerUpdateNpc200 =
   LootlogConfigNpcResponseDto_Output;

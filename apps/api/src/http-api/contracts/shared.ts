@@ -6,26 +6,15 @@ import {
   HttpApiSecurity,
   OpenApi,
 } from "effect/unstable/httpapi";
+import { FiniteNumber } from "./scalars.js";
 
-export type StatusOkResponseDto_Output = { readonly status: "OK" };
+export type StatusOkResponseDto_Output = typeof StatusOkResponseDto_Output.Type;
 
 export const StatusOkResponseDto_Output = Schema.Struct({
   status: Schema.Literal("OK"),
 }).annotate({ identifier: "StatusOkResponseDto_Output" });
 
-export type GuildResponseDto_Output = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon?: string | null;
-  readonly vanityUrl?: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly reservationMaxDurationMinutes: number;
-  readonly reservationMinDurationMinutes: number;
-  readonly reservationTimeGranularityMinutes: number;
-  readonly reservationMaxAdvanceDays: number;
-  readonly reservationActiveLimitPerSpot: number;
-};
+export type GuildResponseDto_Output = typeof GuildResponseDto_Output.Type;
 
 export const GuildResponseDto_Output = Schema.Struct({
   id: Schema.String,
@@ -34,24 +23,14 @@ export const GuildResponseDto_Output = Schema.Struct({
   vanityUrl: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
   ownerId: Schema.String,
   publicStatsCardEnabled: Schema.Boolean,
-  reservationMaxDurationMinutes: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  reservationMinDurationMinutes: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  reservationTimeGranularityMinutes: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  reservationMaxAdvanceDays: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
-  reservationActiveLimitPerSpot: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  reservationMaxDurationMinutes: FiniteNumber,
+  reservationMinDurationMinutes: FiniteNumber,
+  reservationTimeGranularityMinutes: FiniteNumber,
+  reservationMaxAdvanceDays: FiniteNumber,
+  reservationActiveLimitPerSpot: FiniteNumber,
 }).annotate({ identifier: "GuildResponseDto_Output" });
 
-export type SuccessResponseDto_Output = { readonly success: boolean };
+export type SuccessResponseDto_Output = typeof SuccessResponseDto_Output.Type;
 
 export const SuccessResponseDto_Output = Schema.Struct({
   success: Schema.Boolean,

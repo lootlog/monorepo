@@ -6,51 +6,48 @@ import {
 } from "../../../map-templates/map-template.schema.js";
 import { StatusOkResponseDto_Output } from "../shared.js";
 
-export type MapTemplateResponseDto = typeof MapTemplateResponseSchema.Type;
+export type MapTemplateResponseDto = typeof MapTemplateResponseDto.Type;
 
 export const MapTemplateResponseDto = MapTemplateResponseSchema;
 
-export type CreateMapTemplateDto = typeof CreateMapTemplateSchema.Type;
+export type CreateMapTemplateDto = typeof CreateMapTemplateDto.Type;
 
 export const CreateMapTemplateDto = CreateMapTemplateSchema;
 
-export type MapTemplatesControllerGetTemplatesPathParams = {
-  readonly guildId: string;
-};
+export type MapTemplatesControllerGetTemplatesPathParams =
+  typeof MapTemplatesControllerGetTemplatesPathParams.Type;
 
 export const MapTemplatesControllerGetTemplatesPathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
 export type MapTemplatesControllerGetTemplates200 =
-  ReadonlyArray<MapTemplateResponseDto>;
+  typeof MapTemplatesControllerGetTemplates200.Type;
 
 export const MapTemplatesControllerGetTemplates200 = Schema.Array(
   MapTemplateResponseDto,
 );
 
-export type MapTemplatesControllerCreateTemplatePathParams = {
-  readonly guildId: string;
-};
+export type MapTemplatesControllerCreateTemplatePathParams =
+  typeof MapTemplatesControllerCreateTemplatePathParams.Type;
 
 export const MapTemplatesControllerCreateTemplatePathParams = Schema.Struct({
   guildId: Schema.String,
 });
 
 export type MapTemplatesControllerCreateTemplateRequestJson =
-  CreateMapTemplateDto;
+  typeof MapTemplatesControllerCreateTemplateRequestJson.Type;
 
 export const MapTemplatesControllerCreateTemplateRequestJson =
   CreateMapTemplateDto;
 
-export type MapTemplatesControllerCreateTemplate201 = MapTemplateResponseDto;
+export type MapTemplatesControllerCreateTemplate201 =
+  typeof MapTemplatesControllerCreateTemplate201.Type;
 
 export const MapTemplatesControllerCreateTemplate201 = MapTemplateResponseDto;
 
-export type MapTemplatesControllerUpdateTemplatePathParams = {
-  readonly templateId: string;
-  readonly guildId: string;
-};
+export type MapTemplatesControllerUpdateTemplatePathParams =
+  typeof MapTemplatesControllerUpdateTemplatePathParams.Type;
 
 export const MapTemplatesControllerUpdateTemplatePathParams = Schema.Struct({
   templateId: Schema.String,
@@ -58,19 +55,18 @@ export const MapTemplatesControllerUpdateTemplatePathParams = Schema.Struct({
 });
 
 export type MapTemplatesControllerUpdateTemplateRequestJson =
-  CreateMapTemplateDto;
+  typeof MapTemplatesControllerUpdateTemplateRequestJson.Type;
 
 export const MapTemplatesControllerUpdateTemplateRequestJson =
   CreateMapTemplateDto;
 
-export type MapTemplatesControllerUpdateTemplate200 = MapTemplateResponseDto;
+export type MapTemplatesControllerUpdateTemplate200 =
+  typeof MapTemplatesControllerUpdateTemplate200.Type;
 
 export const MapTemplatesControllerUpdateTemplate200 = MapTemplateResponseDto;
 
-export type MapTemplatesControllerDeleteTemplatePathParams = {
-  readonly templateId: string;
-  readonly guildId: string;
-};
+export type MapTemplatesControllerDeleteTemplatePathParams =
+  typeof MapTemplatesControllerDeleteTemplatePathParams.Type;
 
 export const MapTemplatesControllerDeleteTemplatePathParams = Schema.Struct({
   templateId: Schema.String,
@@ -78,7 +74,7 @@ export const MapTemplatesControllerDeleteTemplatePathParams = Schema.Struct({
 });
 
 export type MapTemplatesControllerDeleteTemplate200 =
-  StatusOkResponseDto_Output;
+  typeof MapTemplatesControllerDeleteTemplate200.Type;
 
 export const MapTemplatesControllerDeleteTemplate200 =
   StatusOkResponseDto_Output;

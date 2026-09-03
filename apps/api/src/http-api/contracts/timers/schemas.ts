@@ -1,154 +1,23 @@
 /** Transport schemas owned by the timers HTTP module. */
 import * as Schema from "effect/Schema";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
-export type TimerResponseDto = {
-  readonly guildId: string;
-  readonly npcId: number;
-  readonly timerKey: string;
-  readonly world: string;
-  readonly minSpawnTime: string;
-  readonly maxSpawnTime: string;
-  readonly npc: {
-    readonly id: number;
-    readonly name: string;
-    readonly prof: string;
-    readonly location: string;
-    readonly wt: string;
-    readonly lvl: number;
-    readonly type:
-      | "COMMON"
-      | "ELITE"
-      | "ELITE2"
-      | "ELITE3"
-      | "HERO"
-      | "EVENT_HERO"
-      | "TITAN"
-      | "COLOSSUS"
-      | "NPC";
-    readonly icon: string | null;
-    readonly margonemType: string;
-  };
-  readonly wasReset: boolean;
-  readonly member?: {
-    readonly id: number;
-    readonly userId: string;
-    readonly guildId: string;
-    readonly type: "OWNER" | "ADMIN" | "USER" | "BOT";
-    readonly name: string;
-    readonly avatar?: string | null;
-    readonly banner?: string | null;
-    readonly active: boolean;
-    readonly roles: ReadonlyArray<{
-      readonly id: string;
-      readonly guildId: string;
-      readonly name: string;
-      readonly color: number | null;
-      readonly position?: number | null;
-      readonly permissions: ReadonlyArray<
-        | "OWNER"
-        | "ADMIN"
-        | "LOOTLOG_MANAGE"
-        | "LOOTLOG_ACCESS"
-        | "LOOTLOG_LOOTS_READ"
-        | "LOOTLOG_LOOTS_WRITE"
-        | "LOOTLOG_LOOTS_ARCHIVE"
-        | "LOOTLOG_LOOTS_TITANS_READ"
-        | "LOOTLOG_LOOTS_HEROES_READ"
-        | "LOOTLOG_TIMERS_READ"
-        | "LOOTLOG_TIMERS_WRITE"
-        | "LOOTLOG_TIMERS_RESET"
-        | "LOOTLOG_TIMERS_DELETE"
-        | "LOOTLOG_TIMERS_TITANS_READ"
-        | "LOOTLOG_TIMERS_HEROES_READ"
-        | "LOOTLOG_RESERVATIONS_READ"
-        | "LOOTLOG_RESERVATIONS_WRITE"
-        | "LOOTLOG_MEMBERS_READ"
-        | "LOOTLOG_ONLINE_PLAYERS_READ"
-        | "LOOTLOG_PRESENCE_LOCATION_READ"
-        | "LOOTLOG_CHAT_READ"
-        | "LOOTLOG_CHAT_WRITE"
-        | "LOOTLOG_CHAT_TITANS_READ"
-        | "LOOTLOG_CHAT_HEROES_READ"
-        | "LOOTLOG_NOTIFICATIONS_READ"
-        | "LOOTLOG_NOTIFICATIONS_SEND"
-        | "LOOTLOG_NOTIFICATIONS_TITANS_READ"
-        | "LOOTLOG_NOTIFICATIONS_HEROES_READ"
-        | "LOOTLOG_EVENTS_MANAGE"
-        | "LOOTLOG_EVENTS_READ"
-        | "LOOTLOG_EVENTS_WRITE"
-        | "LOOTLOG_DOCS_READ"
-        | "LOOTLOG_DOCS_WRITE"
-      >;
-      readonly lvlRangeFrom?: number | null;
-      readonly lvlRangeTo?: number | null;
-    }>;
-    readonly globalUserId?: string | null;
-    readonly lastDiscordSyncAt?: string | null;
-    readonly lastDiscordAttemptAt?: string | null;
-    readonly lastDiscordStatus?: string | null;
-    readonly isStale?: boolean;
-    readonly staleWarning?: string;
-    readonly refreshQueued?: boolean;
-    readonly nextRefreshAt?: string | null;
-    readonly updatedAt: string;
-  };
-  readonly actorCharacter?: {
-    readonly name: string;
-    readonly prof:
-      | "WARRIOR"
-      | "PALADIN"
-      | "HUNTER"
-      | "MAGE"
-      | "BLADE_DANCER"
-      | "TRACKER"
-      | null;
-    readonly icon: string | null;
-    readonly lvl: number | null;
-    readonly characterId: number;
-    readonly accountId: number;
-  };
-  readonly deletedAt?: string | null;
-  readonly updatedAt: string;
-};
+export type TimerResponseDto = typeof TimerResponseDto.Type;
 
 export const TimerResponseDto = Schema.Struct({
   guildId: Schema.String,
-  npcId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  npcId: FiniteNumber,
   timerKey: Schema.String,
   world: Schema.String,
-  minSpawnTime: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
-  maxSpawnTime: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  minSpawnTime: DateTimeString,
+  maxSpawnTime: DateTimeString,
   npc: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     name: Schema.String,
     prof: Schema.String,
     location: Schema.String,
     wt: Schema.String,
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     type: Schema.Literals([
       "COMMON",
       "ELITE",
@@ -166,9 +35,7 @@ export const TimerResponseDto = Schema.Struct({
   wasReset: Schema.Boolean,
   member: Schema.optionalKey(
     Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      id: FiniteNumber,
       userId: Schema.String,
       guildId: Schema.String,
       type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
@@ -181,19 +48,9 @@ export const TimerResponseDto = Schema.Struct({
           id: Schema.String,
           guildId: Schema.String,
           name: Schema.String,
-          color: Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          color: Schema.Union([FiniteNumber, Schema.Null]),
           position: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
           permissions: Schema.Array(
             Schema.Literals([
@@ -233,20 +90,10 @@ export const TimerResponseDto = Schema.Struct({
             ]),
           ),
           lvlRangeFrom: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
           lvlRangeTo: Schema.optionalKey(
-            Schema.Union([
-              Schema.Number.check(
-                Schema.isFinite().annotate({ expected: "a finite number" }),
-              ),
-              Schema.Null,
-            ]),
+            Schema.Union([FiniteNumber, Schema.Null]),
           ),
         }),
       ),
@@ -254,34 +101,10 @@ export const TimerResponseDto = Schema.Struct({
         Schema.Union([Schema.String, Schema.Null]),
       ),
       lastDiscordSyncAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
       lastDiscordAttemptAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
       lastDiscordStatus: Schema.optionalKey(
         Schema.Union([Schema.String, Schema.Null]),
@@ -290,30 +113,9 @@ export const TimerResponseDto = Schema.Struct({
       staleWarning: Schema.optionalKey(Schema.String),
       refreshQueued: Schema.optionalKey(Schema.Boolean),
       nextRefreshAt: Schema.optionalKey(
-        Schema.Union([
-          Schema.String.annotate({ format: "date-time" }).check(
-            Schema.isPattern(
-              new RegExp(
-                "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-              ),
-            ).annotate({
-              expected:
-                "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            }),
-          ),
-          Schema.Null,
-        ]),
+        Schema.Union([DateTimeString, Schema.Null]),
       ),
-      updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
+      updatedAt: DateTimeString,
     }),
   ),
   actorCharacter: Schema.optionalKey(
@@ -331,181 +133,31 @@ export const TimerResponseDto = Schema.Struct({
         Schema.Null,
       ]),
       icon: Schema.Union([Schema.String, Schema.Null]),
-      lvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
-      characterId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      accountId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: Schema.Union([FiniteNumber, Schema.Null]),
+      characterId: FiniteNumber,
+      accountId: FiniteNumber,
     }),
   ),
-  deletedAt: Schema.optionalKey(
-    Schema.Union([
-      Schema.String.annotate({ format: "date-time" }).check(
-        Schema.isPattern(
-          new RegExp(
-            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          ),
-        ).annotate({
-          expected:
-            "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        }),
-      ),
-      Schema.Null,
-    ]),
-  ),
-  updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  deletedAt: Schema.optionalKey(Schema.Union([DateTimeString, Schema.Null])),
+  updatedAt: DateTimeString,
 }).annotate({ identifier: "TimerResponseDto" });
 
-export type TimerHistoryResponseDto = {
-  readonly id: number;
-  readonly guildId: string;
-  readonly guildName: string;
-  readonly world: string;
-  readonly timerKey: string;
-  readonly npcId: number;
-  readonly npc: {
-    readonly id: number;
-    readonly name: string;
-    readonly prof: string;
-    readonly location: string;
-    readonly wt: string;
-    readonly lvl: number;
-    readonly type:
-      | "COMMON"
-      | "ELITE"
-      | "ELITE2"
-      | "ELITE3"
-      | "HERO"
-      | "EVENT_HERO"
-      | "TITAN"
-      | "COLOSSUS"
-      | "NPC";
-    readonly icon: string | null;
-    readonly margonemType: string;
-  };
-  readonly action: "CREATE" | "RESET" | "DELETE" | "RESTORE";
-  readonly member: {
-    readonly id: number;
-    readonly userId: string;
-    readonly guildId: string;
-    readonly type: "OWNER" | "ADMIN" | "USER" | "BOT";
-    readonly name: string;
-    readonly avatar?: string | null;
-    readonly banner?: string | null;
-    readonly active: boolean;
-    readonly roles: ReadonlyArray<{
-      readonly id: string;
-      readonly guildId: string;
-      readonly name: string;
-      readonly color: number | null;
-      readonly position?: number | null;
-      readonly permissions: ReadonlyArray<
-        | "OWNER"
-        | "ADMIN"
-        | "LOOTLOG_MANAGE"
-        | "LOOTLOG_ACCESS"
-        | "LOOTLOG_LOOTS_READ"
-        | "LOOTLOG_LOOTS_WRITE"
-        | "LOOTLOG_LOOTS_ARCHIVE"
-        | "LOOTLOG_LOOTS_TITANS_READ"
-        | "LOOTLOG_LOOTS_HEROES_READ"
-        | "LOOTLOG_TIMERS_READ"
-        | "LOOTLOG_TIMERS_WRITE"
-        | "LOOTLOG_TIMERS_RESET"
-        | "LOOTLOG_TIMERS_DELETE"
-        | "LOOTLOG_TIMERS_TITANS_READ"
-        | "LOOTLOG_TIMERS_HEROES_READ"
-        | "LOOTLOG_RESERVATIONS_READ"
-        | "LOOTLOG_RESERVATIONS_WRITE"
-        | "LOOTLOG_MEMBERS_READ"
-        | "LOOTLOG_ONLINE_PLAYERS_READ"
-        | "LOOTLOG_PRESENCE_LOCATION_READ"
-        | "LOOTLOG_CHAT_READ"
-        | "LOOTLOG_CHAT_WRITE"
-        | "LOOTLOG_CHAT_TITANS_READ"
-        | "LOOTLOG_CHAT_HEROES_READ"
-        | "LOOTLOG_NOTIFICATIONS_READ"
-        | "LOOTLOG_NOTIFICATIONS_SEND"
-        | "LOOTLOG_NOTIFICATIONS_TITANS_READ"
-        | "LOOTLOG_NOTIFICATIONS_HEROES_READ"
-        | "LOOTLOG_EVENTS_MANAGE"
-        | "LOOTLOG_EVENTS_READ"
-        | "LOOTLOG_EVENTS_WRITE"
-        | "LOOTLOG_DOCS_READ"
-        | "LOOTLOG_DOCS_WRITE"
-      >;
-      readonly lvlRangeFrom?: number | null;
-      readonly lvlRangeTo?: number | null;
-    }>;
-    readonly globalUserId?: string | null;
-    readonly lastDiscordSyncAt?: string | null;
-    readonly lastDiscordAttemptAt?: string | null;
-    readonly lastDiscordStatus?: string | null;
-    readonly isStale?: boolean;
-    readonly staleWarning?: string;
-    readonly refreshQueued?: boolean;
-    readonly nextRefreshAt?: string | null;
-    readonly updatedAt: string;
-  };
-  readonly actorCharacter?: {
-    readonly name: string;
-    readonly prof:
-      | "WARRIOR"
-      | "PALADIN"
-      | "HUNTER"
-      | "MAGE"
-      | "BLADE_DANCER"
-      | "TRACKER"
-      | null;
-    readonly icon: string | null;
-    readonly lvl: number | null;
-    readonly characterId: number;
-    readonly accountId: number;
-  };
-  readonly minSpawnTime: string | null;
-  readonly maxSpawnTime: string | null;
-  readonly canRestore: boolean;
-  readonly createdAt: string;
-};
+export type TimerHistoryResponseDto = typeof TimerHistoryResponseDto.Type;
 
 export const TimerHistoryResponseDto = Schema.Struct({
-  id: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  id: FiniteNumber,
   guildId: Schema.String,
   guildName: Schema.String,
   world: Schema.String,
   timerKey: Schema.String,
-  npcId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  npcId: FiniteNumber,
   npc: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     name: Schema.String,
     prof: Schema.String,
     location: Schema.String,
     wt: Schema.String,
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     type: Schema.Literals([
       "COMMON",
       "ELITE",
@@ -522,9 +174,7 @@ export const TimerHistoryResponseDto = Schema.Struct({
   }),
   action: Schema.Literals(["CREATE", "RESET", "DELETE", "RESTORE"]),
   member: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     userId: Schema.String,
     guildId: Schema.String,
     type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
@@ -537,20 +187,8 @@ export const TimerHistoryResponseDto = Schema.Struct({
         id: Schema.String,
         guildId: Schema.String,
         name: Schema.String,
-        color: Schema.Union([
-          Schema.Number.check(
-            Schema.isFinite().annotate({ expected: "a finite number" }),
-          ),
-          Schema.Null,
-        ]),
-        position: Schema.optionalKey(
-          Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
-        ),
+        color: Schema.Union([FiniteNumber, Schema.Null]),
+        position: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
         permissions: Schema.Array(
           Schema.Literals([
             "OWNER",
@@ -589,20 +227,10 @@ export const TimerHistoryResponseDto = Schema.Struct({
           ]),
         ),
         lvlRangeFrom: Schema.optionalKey(
-          Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          Schema.Union([FiniteNumber, Schema.Null]),
         ),
         lvlRangeTo: Schema.optionalKey(
-          Schema.Union([
-            Schema.Number.check(
-              Schema.isFinite().annotate({ expected: "a finite number" }),
-            ),
-            Schema.Null,
-          ]),
+          Schema.Union([FiniteNumber, Schema.Null]),
         ),
       }),
     ),
@@ -610,34 +238,10 @@ export const TimerHistoryResponseDto = Schema.Struct({
       Schema.Union([Schema.String, Schema.Null]),
     ),
     lastDiscordSyncAt: Schema.optionalKey(
-      Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
+      Schema.Union([DateTimeString, Schema.Null]),
     ),
     lastDiscordAttemptAt: Schema.optionalKey(
-      Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
+      Schema.Union([DateTimeString, Schema.Null]),
     ),
     lastDiscordStatus: Schema.optionalKey(
       Schema.Union([Schema.String, Schema.Null]),
@@ -646,30 +250,9 @@ export const TimerHistoryResponseDto = Schema.Struct({
     staleWarning: Schema.optionalKey(Schema.String),
     refreshQueued: Schema.optionalKey(Schema.Boolean),
     nextRefreshAt: Schema.optionalKey(
-      Schema.Union([
-        Schema.String.annotate({ format: "date-time" }).check(
-          Schema.isPattern(
-            new RegExp(
-              "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            ),
-          ).annotate({
-            expected:
-              "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-          }),
-        ),
-        Schema.Null,
-      ]),
+      Schema.Union([DateTimeString, Schema.Null]),
     ),
-    updatedAt: Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
+    updatedAt: DateTimeString,
   }),
   actorCharacter: Schema.optionalKey(
     Schema.Struct({
@@ -686,91 +269,25 @@ export const TimerHistoryResponseDto = Schema.Struct({
         Schema.Null,
       ]),
       icon: Schema.Union([Schema.String, Schema.Null]),
-      lvl: Schema.Union([
-        Schema.Number.check(
-          Schema.isFinite().annotate({ expected: "a finite number" }),
-        ),
-        Schema.Null,
-      ]),
-      characterId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-      accountId: Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
+      lvl: Schema.Union([FiniteNumber, Schema.Null]),
+      characterId: FiniteNumber,
+      accountId: FiniteNumber,
     }),
   ),
-  minSpawnTime: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
-  maxSpawnTime: Schema.Union([
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-    Schema.Null,
-  ]),
+  minSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
+  maxSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
   canRestore: Schema.Boolean,
-  createdAt: Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(
-      new RegExp(
-        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      ),
-    ).annotate({
-      expected:
-        "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-    }),
-  ),
+  createdAt: DateTimeString,
 }).annotate({ identifier: "TimerHistoryResponseDto" });
 
-export type SearchTimersNpcResponseDto_Output = {
-  readonly npcId: number;
-  readonly timerKey: string;
-  readonly name: string;
-  readonly lvl: number;
-  readonly type:
-    | "COMMON"
-    | "ELITE"
-    | "ELITE2"
-    | "ELITE3"
-    | "HERO"
-    | "EVENT_HERO"
-    | "TITAN"
-    | "COLOSSUS"
-    | "NPC";
-  readonly prof: string;
-  readonly location: string;
-  readonly wt: string | number;
-  readonly icon: string;
-  readonly latestRespBaseSeconds: number | null;
-  readonly latestRespawnRandomness: number | null;
-};
+export type SearchTimersNpcResponseDto_Output =
+  typeof SearchTimersNpcResponseDto_Output.Type;
 
 export const SearchTimersNpcResponseDto_Output = Schema.Struct({
-  npcId: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  npcId: FiniteNumber,
   timerKey: Schema.String,
   name: Schema.String,
-  lvl: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ),
+  lvl: FiniteNumber,
   type: Schema.Literals([
     "COMMON",
     "ELITE",
@@ -784,132 +301,41 @@ export const SearchTimersNpcResponseDto_Output = Schema.Struct({
   ]),
   prof: Schema.String,
   location: Schema.String,
-  wt: Schema.Union([
-    Schema.String,
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ]),
+  wt: Schema.Union([Schema.String, FiniteNumber]),
   icon: Schema.String,
-  latestRespBaseSeconds: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
-  latestRespawnRandomness: Schema.Union([
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    Schema.Null,
-  ]),
+  latestRespBaseSeconds: Schema.Union([FiniteNumber, Schema.Null]),
+  latestRespawnRandomness: Schema.Union([FiniteNumber, Schema.Null]),
 }).annotate({ identifier: "SearchTimersNpcResponseDto_Output" });
 
-export type CreateTimerFromGameClientDto = {
-  readonly respBaseSeconds: number;
-  readonly respawnRandomness?: number;
-  readonly customMinSpawnTime?: string;
-  readonly customMaxSpawnTime?: string;
-  readonly world: string;
-  readonly npc: {
-    readonly id: number;
-    readonly name: string;
-    readonly location: string;
-    readonly lvl: number;
-    readonly prof?: string;
-    readonly wt: number;
-    readonly hpp?: number;
-    readonly icon: string;
-    readonly type: number;
-    readonly x?: number;
-    readonly y?: number;
-  };
-  readonly characterId: string;
-  readonly accountId: string;
-  readonly actorCharacter?: {
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly name: string;
-    readonly prof?: string;
-    readonly icon?: string;
-    readonly lvl?: number;
-  };
-};
+export type CreateTimerFromGameClientDto =
+  typeof CreateTimerFromGameClientDto.Type;
 
 export const CreateTimerFromGameClientDto = Schema.Struct({
-  respBaseSeconds: Schema.Number.check(
-    Schema.isFinite().annotate({ expected: "a finite number" }),
-  ).check(
+  respBaseSeconds: FiniteNumber.check(
     Schema.isGreaterThanOrEqualTo(2).annotate({
       expected: "a value greater than or equal to 2",
     }),
   ),
-  respawnRandomness: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
-  customMinSpawnTime: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  customMaxSpawnTime: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  respawnRandomness: Schema.optionalKey(FiniteNumber),
+  customMinSpawnTime: Schema.optionalKey(DateTimeString),
+  customMaxSpawnTime: Schema.optionalKey(DateTimeString),
   world: Schema.String.check(
     Schema.isMinLength(1).annotate({
       expected: "a value with a length of at least 1",
     }),
   ),
   npc: Schema.Struct({
-    id: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    id: FiniteNumber,
     name: Schema.String,
     location: Schema.String,
-    lvl: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
+    lvl: FiniteNumber,
     prof: Schema.optionalKey(Schema.String),
-    wt: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    hpp: Schema.optionalKey(
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-    ),
+    wt: FiniteNumber,
+    hpp: Schema.optionalKey(FiniteNumber),
     icon: Schema.String,
-    type: Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-    x: Schema.optionalKey(
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-    ),
-    y: Schema.optionalKey(
-      Schema.Number.check(
-        Schema.isFinite().annotate({ expected: "a finite number" }),
-      ),
-    ),
+    type: FiniteNumber,
+    x: Schema.optionalKey(FiniteNumber),
+    y: Schema.optionalKey(FiniteNumber),
   }),
   characterId: Schema.String.check(
     Schema.isMinLength(1).annotate({
@@ -961,17 +387,8 @@ export const CreateTimerFromGameClientDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateTimerFromGameClientDto" });
 
-export type CreateAutoTimerResponseDto_Output = {
-  readonly submittedGuilds: ReadonlyArray<{
-    readonly guildId: string;
-    readonly guildName: string;
-  }>;
-  readonly rejectedGuilds: ReadonlyArray<{
-    readonly guildId: string;
-    readonly guildName: string;
-    readonly reason: "NOT_ON_CATCHING_WHITELIST" | "TIMER_CREATE_FAILED";
-  }>;
-};
+export type CreateAutoTimerResponseDto_Output =
+  typeof CreateAutoTimerResponseDto_Output.Type;
 
 export const CreateAutoTimerResponseDto_Output = Schema.Struct({
   submittedGuilds: Schema.Array(
@@ -989,17 +406,7 @@ export const CreateAutoTimerResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateAutoTimerResponseDto_Output" });
 
-export type ResetTimerDto = {
-  readonly world: string;
-  readonly actorCharacter?: {
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly name: string;
-    readonly prof?: string;
-    readonly icon?: string;
-    readonly lvl?: number;
-  };
-};
+export type ResetTimerDto = typeof ResetTimerDto.Type;
 
 export const ResetTimerDto = Schema.Struct({
   world: Schema.String.check(
@@ -1047,25 +454,7 @@ export const ResetTimerDto = Schema.Struct({
   ),
 }).annotate({ identifier: "ResetTimerDto" });
 
-export type CreateManualTimerDto = {
-  readonly name: string;
-  readonly minSeconds?: number;
-  readonly maxSeconds?: number;
-  readonly lvl?: number;
-  readonly prof?: string;
-  readonly type?: "ELITE2" | "ELITE3" | "HERO" | "TITAN";
-  readonly customMinSpawnTime?: string;
-  readonly customMaxSpawnTime?: string;
-  readonly world: string;
-  readonly actorCharacter?: {
-    readonly accountId: string;
-    readonly characterId: string;
-    readonly name: string;
-    readonly prof?: string;
-    readonly icon?: string;
-    readonly lvl?: number;
-  };
-};
+export type CreateManualTimerDto = typeof CreateManualTimerDto.Type;
 
 export const CreateManualTimerDto = Schema.Struct({
   name: Schema.String.check(
@@ -1078,56 +467,26 @@ export const CreateManualTimerDto = Schema.Struct({
     }),
   ),
   minSeconds: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ).check(
+    FiniteNumber.check(
       Schema.isGreaterThanOrEqualTo(1).annotate({
         expected: "a value greater than or equal to 1",
       }),
     ),
   ),
   maxSeconds: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ).check(
+    FiniteNumber.check(
       Schema.isGreaterThanOrEqualTo(1).annotate({
         expected: "a value greater than or equal to 1",
       }),
     ),
   ),
-  lvl: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  lvl: Schema.optionalKey(FiniteNumber),
   prof: Schema.optionalKey(Schema.String),
   type: Schema.optionalKey(
     Schema.Literals(["ELITE2", "ELITE3", "HERO", "TITAN"]),
   ),
-  customMinSpawnTime: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  customMaxSpawnTime: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  customMinSpawnTime: Schema.optionalKey(DateTimeString),
+  customMaxSpawnTime: Schema.optionalKey(DateTimeString),
   world: Schema.String.check(
     Schema.isMinLength(1).annotate({
       expected: "a value with a length of at least 1",
@@ -1173,21 +532,20 @@ export const CreateManualTimerDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateManualTimerDto" });
 
-export type TimersControllerGetAllTimersQuery = { readonly world?: string };
+export type TimersControllerGetAllTimersQuery =
+  typeof TimersControllerGetAllTimersQuery.Type;
 
 export const TimersControllerGetAllTimersQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
 });
 
-export type TimersControllerGetAllTimers200 = ReadonlyArray<TimerResponseDto>;
+export type TimersControllerGetAllTimers200 =
+  typeof TimersControllerGetAllTimers200.Type;
 
 export const TimersControllerGetAllTimers200 = Schema.Array(TimerResponseDto);
 
-export type TimersControllerGetRecentTimerHistoryQuery = {
-  readonly guildId: string;
-  readonly world: string;
-  readonly limit?: Schema.Json;
-};
+export type TimersControllerGetRecentTimerHistoryQuery =
+  typeof TimersControllerGetRecentTimerHistoryQuery.Type;
 
 export const TimersControllerGetRecentTimerHistoryQuery = Schema.Struct({
   guildId: Schema.String,
@@ -1196,43 +554,40 @@ export const TimersControllerGetRecentTimerHistoryQuery = Schema.Struct({
 });
 
 export type TimersControllerGetRecentTimerHistory200 =
-  ReadonlyArray<TimerHistoryResponseDto>;
+  typeof TimersControllerGetRecentTimerHistory200.Type;
 
 export const TimersControllerGetRecentTimerHistory200 = Schema.Array(
   TimerHistoryResponseDto,
 );
 
-export type TimersControllerGetTimersPathParams = {
-  readonly guildId: Schema.Json;
-};
+export type TimersControllerGetTimersPathParams =
+  typeof TimersControllerGetTimersPathParams.Type;
 
 export const TimersControllerGetTimersPathParams = Schema.Struct({
   guildId: Schema.Json.annotate({ expected: "JSON value" }),
 });
 
-export type TimersControllerGetTimersQuery = { readonly world?: string };
+export type TimersControllerGetTimersQuery =
+  typeof TimersControllerGetTimersQuery.Type;
 
 export const TimersControllerGetTimersQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
 });
 
-export type TimersControllerGetTimers200 = ReadonlyArray<TimerResponseDto>;
+export type TimersControllerGetTimers200 =
+  typeof TimersControllerGetTimers200.Type;
 
 export const TimersControllerGetTimers200 = Schema.Array(TimerResponseDto);
 
-export type TimersControllerSearchNpcsWithTimerDataPathParams = {
-  readonly guildId: string;
-};
+export type TimersControllerSearchNpcsWithTimerDataPathParams =
+  typeof TimersControllerSearchNpcsWithTimerDataPathParams.Type;
 
 export const TimersControllerSearchNpcsWithTimerDataPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
-export type TimersControllerSearchNpcsWithTimerDataQuery = {
-  readonly search: string;
-  readonly world: string;
-  readonly limit?: number;
-};
+export type TimersControllerSearchNpcsWithTimerDataQuery =
+  typeof TimersControllerSearchNpcsWithTimerDataQuery.Type;
 
 export const TimersControllerSearchNpcsWithTimerDataQuery = Schema.Struct({
   search: Schema.String.check(
@@ -1262,72 +617,67 @@ export const TimersControllerSearchNpcsWithTimerDataQuery = Schema.Struct({
 });
 
 export type TimersControllerSearchNpcsWithTimerData200 =
-  ReadonlyArray<SearchTimersNpcResponseDto_Output>;
+  typeof TimersControllerSearchNpcsWithTimerData200.Type;
 
 export const TimersControllerSearchNpcsWithTimerData200 = Schema.Array(
   SearchTimersNpcResponseDto_Output,
 );
 
 export type TimersControllerCreateAutoTimerRequestJson =
-  CreateTimerFromGameClientDto;
+  typeof TimersControllerCreateAutoTimerRequestJson.Type;
 
 export const TimersControllerCreateAutoTimerRequestJson =
   CreateTimerFromGameClientDto;
 
 export type TimersControllerCreateAutoTimer201 =
-  CreateAutoTimerResponseDto_Output;
+  typeof TimersControllerCreateAutoTimer201.Type;
 
 export const TimersControllerCreateAutoTimer201 =
   CreateAutoTimerResponseDto_Output;
 
-export type TimersControllerResetTimerPathParams = {
-  readonly guildId: string;
-  readonly timerIdentifier: string;
-};
+export type TimersControllerResetTimerPathParams =
+  typeof TimersControllerResetTimerPathParams.Type;
 
 export const TimersControllerResetTimerPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
   timerIdentifier: Schema.String.annotate({ examples: ["12345:test boss"] }),
 });
 
-export type TimersControllerResetTimerRequestJson = ResetTimerDto;
+export type TimersControllerResetTimerRequestJson =
+  typeof TimersControllerResetTimerRequestJson.Type;
 
 export const TimersControllerResetTimerRequestJson = ResetTimerDto;
 
-export type TimersControllerResetTimer200 = TimerResponseDto;
+export type TimersControllerResetTimer200 =
+  typeof TimersControllerResetTimer200.Type;
 
 export const TimersControllerResetTimer200 = TimerResponseDto;
 
-export type TimersControllerDeleteTimerPathParams = {
-  readonly guildId: string;
-  readonly timerIdentifier: string;
-};
+export type TimersControllerDeleteTimerPathParams =
+  typeof TimersControllerDeleteTimerPathParams.Type;
 
 export const TimersControllerDeleteTimerPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
   timerIdentifier: Schema.String.annotate({ examples: ["12345:test boss"] }),
 });
 
-export type TimersControllerDeleteTimerQuery = { readonly world?: string };
+export type TimersControllerDeleteTimerQuery =
+  typeof TimersControllerDeleteTimerQuery.Type;
 
 export const TimersControllerDeleteTimerQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
 });
 
-export type TimersControllerGetTimerHistoryPathParams = {
-  readonly guildId: string;
-  readonly timerIdentifier: string;
-};
+export type TimersControllerGetTimerHistoryPathParams =
+  typeof TimersControllerGetTimerHistoryPathParams.Type;
 
 export const TimersControllerGetTimerHistoryPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
   timerIdentifier: Schema.String.annotate({ examples: ["12345:test boss"] }),
 });
 
-export type TimersControllerGetTimerHistoryQuery = {
-  readonly world: string;
-  readonly limit?: Schema.Json;
-};
+export type TimersControllerGetTimerHistoryQuery =
+  typeof TimersControllerGetTimerHistoryQuery.Type;
 
 export const TimersControllerGetTimerHistoryQuery = Schema.Struct({
   world: Schema.String,
@@ -1335,39 +685,39 @@ export const TimersControllerGetTimerHistoryQuery = Schema.Struct({
 });
 
 export type TimersControllerGetTimerHistory200 =
-  ReadonlyArray<TimerHistoryResponseDto>;
+  typeof TimersControllerGetTimerHistory200.Type;
 
 export const TimersControllerGetTimerHistory200 = Schema.Array(
   TimerHistoryResponseDto,
 );
 
-export type TimersControllerRestoreTimerFromHistoryPathParams = {
-  readonly guildId: string;
-  readonly historyEntryId: string;
-};
+export type TimersControllerRestoreTimerFromHistoryPathParams =
+  typeof TimersControllerRestoreTimerFromHistoryPathParams.Type;
 
 export const TimersControllerRestoreTimerFromHistoryPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
   historyEntryId: Schema.String,
 });
 
-export type TimersControllerRestoreTimerFromHistory201 = TimerResponseDto;
+export type TimersControllerRestoreTimerFromHistory201 =
+  typeof TimersControllerRestoreTimerFromHistory201.Type;
 
 export const TimersControllerRestoreTimerFromHistory201 = TimerResponseDto;
 
-export type TimersControllerCreateManualTimerPathParams = {
-  readonly guildId: string;
-};
+export type TimersControllerCreateManualTimerPathParams =
+  typeof TimersControllerCreateManualTimerPathParams.Type;
 
 export const TimersControllerCreateManualTimerPathParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
-export type TimersControllerCreateManualTimerRequestJson = CreateManualTimerDto;
+export type TimersControllerCreateManualTimerRequestJson =
+  typeof TimersControllerCreateManualTimerRequestJson.Type;
 
 export const TimersControllerCreateManualTimerRequestJson =
   CreateManualTimerDto;
 
-export type TimersControllerCreateManualTimer201 = TimerResponseDto;
+export type TimersControllerCreateManualTimer201 =
+  typeof TimersControllerCreateManualTimer201.Type;
 
 export const TimersControllerCreateManualTimer201 = TimerResponseDto;

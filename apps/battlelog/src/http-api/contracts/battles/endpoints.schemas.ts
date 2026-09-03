@@ -32,35 +32,21 @@ import {
   BattleDeletedResponseDto_Output,
   UpdateBattleDto,
 } from "./mutations.schemas.js";
+import { DateTimeString, FiniteNumber } from "../scalars.js";
 
 // schemas
-export type BattlesControllerCreateBattleRequestJson = CreateBattleDto;
+export type BattlesControllerCreateBattleRequestJson =
+  typeof BattlesControllerCreateBattleRequestJson.Type;
 
 export const BattlesControllerCreateBattleRequestJson = CreateBattleDto;
 
-export type BattlesControllerCreateBattle201 = BattleCreatedResponseDto_Output;
+export type BattlesControllerCreateBattle201 =
+  typeof BattlesControllerCreateBattle201.Type;
 
 export const BattlesControllerCreateBattle201 = BattleCreatedResponseDto_Output;
 
-export type BattlesControllerGetDashboardBattlesQuery = {
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly world?: string;
-  readonly type?: ReadonlyArray<"solo" | "group">;
-  readonly userId?: string;
-  readonly public?: boolean;
-  readonly characterId?: ReadonlyArray<string>;
-  readonly search?: string;
-  readonly result?: ReadonlyArray<"won" | "lost" | "flee">;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-};
+export type BattlesControllerGetDashboardBattlesQuery =
+  typeof BattlesControllerGetDashboardBattlesQuery.Type;
 
 export const BattlesControllerGetDashboardBattlesQuery = Schema.Struct({
   cursor: Schema.optionalKey(Schema.String),
@@ -93,85 +79,46 @@ export const BattlesControllerGetDashboardBattlesQuery = Schema.Struct({
   ),
   ph: Schema.optionalKey(Schema.Boolean),
   matchmaking: Schema.optionalKey(Schema.Boolean),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   minLevel: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1000).annotate({
-          expected: "a value less than or equal to 1000",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(1).annotate({
+        expected: "a value greater than or equal to 1",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1000).annotate({
+        expected: "a value less than or equal to 1000",
+      }),
+    ),
   ),
   maxLevel: Schema.optionalKey(
-    Schema.Number.check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(1000).annotate({
-          expected: "a value less than or equal to 1000",
-        }),
-      ),
+    FiniteNumber.check(
+      Schema.isGreaterThanOrEqualTo(1).annotate({
+        expected: "a value greater than or equal to 1",
+      }),
+    ).check(
+      Schema.isLessThanOrEqualTo(1000).annotate({
+        expected: "a value less than or equal to 1000",
+      }),
+    ),
   ),
 });
 
 export type BattlesControllerGetDashboardBattles200 =
-  BattlesListResponseDto_Output;
+  typeof BattlesControllerGetDashboardBattles200.Type;
 
 export const BattlesControllerGetDashboardBattles200 =
   BattlesListResponseDto_Output;
 
 export type BattlesControllerGetUserCharacters200 =
-  BattleCharactersResponseDto_Output;
+  typeof BattlesControllerGetUserCharacters200.Type;
 
 export const BattlesControllerGetUserCharacters200 =
   BattleCharactersResponseDto_Output;
 
-export type BattlesControllerGetBattleAnalyticsQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?: "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetBattleAnalyticsQuery =
+  typeof BattlesControllerGetBattleAnalyticsQuery.Type;
 
 export const BattlesControllerGetBattleAnalyticsQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -205,44 +152,20 @@ export const BattlesControllerGetBattleAnalyticsQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   ph: Schema.optionalKey(Schema.Boolean),
   matchmaking: Schema.optionalKey(Schema.Boolean),
 });
 
 export type BattlesControllerGetBattleAnalytics200 =
-  BattleAnalyticsResponseDto_Output;
+  typeof BattlesControllerGetBattleAnalytics200.Type;
 
 export const BattlesControllerGetBattleAnalytics200 =
   BattleAnalyticsResponseDto_Output;
 
-export type BattlesControllerGetAbyssSeasonsQuery = {
-  readonly characterId: string;
-  readonly world?: string;
-};
+export type BattlesControllerGetAbyssSeasonsQuery =
+  typeof BattlesControllerGetAbyssSeasonsQuery.Type;
 
 export const BattlesControllerGetAbyssSeasonsQuery = Schema.Struct({
   characterId: Schema.String,
@@ -250,45 +173,14 @@ export const BattlesControllerGetAbyssSeasonsQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetAbyssSeasons200 =
-  ReadonlyArray<AbyssSeasonResponseDto_Output>;
+  typeof BattlesControllerGetAbyssSeasons200.Type;
 
 export const BattlesControllerGetAbyssSeasons200 = Schema.Array(
   AbyssSeasonResponseDto_Output,
 );
 
-export type BattlesControllerGetCombatProfileQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetCombatProfileQuery =
+  typeof BattlesControllerGetCombatProfileQuery.Type;
 
 export const BattlesControllerGetCombatProfileQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -322,30 +214,8 @@ export const BattlesControllerGetCombatProfileQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -394,44 +264,13 @@ export const BattlesControllerGetCombatProfileQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetCombatProfile200 =
-  CombatProfileResponseDto_Output;
+  typeof BattlesControllerGetCombatProfile200.Type;
 
 export const BattlesControllerGetCombatProfile200 =
   CombatProfileResponseDto_Output;
 
-export type BattlesControllerGetProfessionWinRateQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetProfessionWinRateQuery =
+  typeof BattlesControllerGetProfessionWinRateQuery.Type;
 
 export const BattlesControllerGetProfessionWinRateQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -465,30 +304,8 @@ export const BattlesControllerGetProfessionWinRateQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -537,45 +354,14 @@ export const BattlesControllerGetProfessionWinRateQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetProfessionWinRate200 =
-  ReadonlyArray<ProfessionWinRateResponseDto_Output>;
+  typeof BattlesControllerGetProfessionWinRate200.Type;
 
 export const BattlesControllerGetProfessionWinRate200 = Schema.Array(
   ProfessionWinRateResponseDto_Output,
 );
 
-export type BattlesControllerGetHeadToHeadQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetHeadToHeadQuery =
+  typeof BattlesControllerGetHeadToHeadQuery.Type;
 
 export const BattlesControllerGetHeadToHeadQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -609,30 +395,8 @@ export const BattlesControllerGetHeadToHeadQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -681,44 +445,13 @@ export const BattlesControllerGetHeadToHeadQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetHeadToHead200 =
-  HeadToHeadPaginatedResponseDto_Output;
+  typeof BattlesControllerGetHeadToHead200.Type;
 
 export const BattlesControllerGetHeadToHead200 =
   HeadToHeadPaginatedResponseDto_Output;
 
-export type BattlesControllerGetCurrentStreakQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetCurrentStreakQuery =
+  typeof BattlesControllerGetCurrentStreakQuery.Type;
 
 export const BattlesControllerGetCurrentStreakQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -752,30 +485,8 @@ export const BattlesControllerGetCurrentStreakQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -823,43 +534,13 @@ export const BattlesControllerGetCurrentStreakQuery = Schema.Struct({
   matchmaking: Schema.optionalKey(Schema.Boolean),
 });
 
-export type BattlesControllerGetCurrentStreak200 = StreakResponseDto_Output;
+export type BattlesControllerGetCurrentStreak200 =
+  typeof BattlesControllerGetCurrentStreak200.Type;
 
 export const BattlesControllerGetCurrentStreak200 = StreakResponseDto_Output;
 
-export type BattlesControllerGetBattleDurationQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetBattleDurationQuery =
+  typeof BattlesControllerGetBattleDurationQuery.Type;
 
 export const BattlesControllerGetBattleDurationQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -893,30 +574,8 @@ export const BattlesControllerGetBattleDurationQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -965,44 +624,13 @@ export const BattlesControllerGetBattleDurationQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetBattleDuration200 =
-  BattleDurationStatsResponseDto_Output;
+  typeof BattlesControllerGetBattleDuration200.Type;
 
 export const BattlesControllerGetBattleDuration200 =
   BattleDurationStatsResponseDto_Output;
 
-export type BattlesControllerGetPhGrowthQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetPhGrowthQuery =
+  typeof BattlesControllerGetPhGrowthQuery.Type;
 
 export const BattlesControllerGetPhGrowthQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -1036,30 +664,8 @@ export const BattlesControllerGetPhGrowthQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -1108,45 +714,14 @@ export const BattlesControllerGetPhGrowthQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetPhGrowth200 =
-  ReadonlyArray<PhGrowthDataPointResponseDto_Output>;
+  typeof BattlesControllerGetPhGrowth200.Type;
 
 export const BattlesControllerGetPhGrowth200 = Schema.Array(
   PhGrowthDataPointResponseDto_Output,
 );
 
-export type BattlesControllerGetRatingGrowthQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetRatingGrowthQuery =
+  typeof BattlesControllerGetRatingGrowthQuery.Type;
 
 export const BattlesControllerGetRatingGrowthQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -1180,30 +755,8 @@ export const BattlesControllerGetRatingGrowthQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -1252,45 +805,14 @@ export const BattlesControllerGetRatingGrowthQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetRatingGrowth200 =
-  ReadonlyArray<RatingGrowthDataPointResponseDto_Output>;
+  typeof BattlesControllerGetRatingGrowth200.Type;
 
 export const BattlesControllerGetRatingGrowth200 = Schema.Array(
   RatingGrowthDataPointResponseDto_Output,
 );
 
-export type BattlesControllerGetRatingDeltaByOpponentQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-};
+export type BattlesControllerGetRatingDeltaByOpponentQuery =
+  typeof BattlesControllerGetRatingDeltaByOpponentQuery.Type;
 
 export const BattlesControllerGetRatingDeltaByOpponentQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -1324,30 +846,8 @@ export const BattlesControllerGetRatingDeltaByOpponentQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -1396,47 +896,14 @@ export const BattlesControllerGetRatingDeltaByOpponentQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetRatingDeltaByOpponent200 =
-  ReadonlyArray<RatingDeltaByOpponentResponseDto_Output>;
+  typeof BattlesControllerGetRatingDeltaByOpponent200.Type;
 
 export const BattlesControllerGetRatingDeltaByOpponent200 = Schema.Array(
   RatingDeltaByOpponentResponseDto_Output,
 );
 
-export type BattlesControllerGetPlayerVsPlayerBattlesQuery = {
-  readonly characterId?: string;
-  readonly world?: string;
-  readonly period?:
-    | "24h"
-    | "3d"
-    | "7d"
-    | "14d"
-    | "30d"
-    | "90d"
-    | "180d"
-    | "all";
-  readonly minLevel?: number;
-  readonly maxLevel?: number;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly cursor?: string;
-  readonly size?: number;
-  readonly sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta";
-  readonly sortOrder?: "asc" | "desc";
-  readonly includeTotal?: boolean;
-  readonly search?: string;
-  readonly minBattles?: number;
-  readonly ph?: boolean;
-  readonly matchmaking?: boolean;
-  readonly opponentId: string;
-  readonly excludeBattleId?: string;
-};
+export type BattlesControllerGetPlayerVsPlayerBattlesQuery =
+  typeof BattlesControllerGetPlayerVsPlayerBattlesQuery.Type;
 
 export const BattlesControllerGetPlayerVsPlayerBattlesQuery = Schema.Struct({
   characterId: Schema.optionalKey(Schema.String),
@@ -1470,30 +937,8 @@ export const BattlesControllerGetPlayerVsPlayerBattlesQuery = Schema.Struct({
         }),
       ),
   ),
-  startDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
-  endDate: Schema.optionalKey(
-    Schema.String.annotate({ format: "date-time" }).check(
-      Schema.isPattern(
-        new RegExp(
-          "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        ),
-      ).annotate({
-        expected:
-          "a string matching the RegExp ^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-      }),
-    ),
-  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
@@ -1544,91 +989,92 @@ export const BattlesControllerGetPlayerVsPlayerBattlesQuery = Schema.Struct({
 });
 
 export type BattlesControllerGetPlayerVsPlayerBattles200 =
-  PlayerVsPlayerPaginatedResponseDto_Output;
+  typeof BattlesControllerGetPlayerVsPlayerBattles200.Type;
 
 export const BattlesControllerGetPlayerVsPlayerBattles200 =
   PlayerVsPlayerPaginatedResponseDto_Output;
 
-export type BattlesControllerSearchWarriorsQuery = { readonly q: string };
+export type BattlesControllerSearchWarriorsQuery =
+  typeof BattlesControllerSearchWarriorsQuery.Type;
 
 export const BattlesControllerSearchWarriorsQuery = Schema.Struct({
   q: Schema.String,
 });
 
 export type BattlesControllerSearchWarriors200 =
-  BattleWarriorsSearchResponseDto_Output;
+  typeof BattlesControllerSearchWarriors200.Type;
 
 export const BattlesControllerSearchWarriors200 =
   BattleWarriorsSearchResponseDto_Output;
 
 export type BattlesControllerGetUserWorlds200 =
-  BattleUserWorldsResponseDto_Output;
+  typeof BattlesControllerGetUserWorlds200.Type;
 
 export const BattlesControllerGetUserWorlds200 =
   BattleUserWorldsResponseDto_Output;
 
-export type BattlesControllerGetBattleTimelinePathParams = {
-  readonly battleId: string;
-};
+export type BattlesControllerGetBattleTimelinePathParams =
+  typeof BattlesControllerGetBattleTimelinePathParams.Type;
 
 export const BattlesControllerGetBattleTimelinePathParams = Schema.Struct({
   battleId: Schema.String,
 });
 
 export type BattlesControllerGetBattleTimeline200 =
-  BattleTimelineResponseDto_Output;
+  typeof BattlesControllerGetBattleTimeline200.Type;
 
 export const BattlesControllerGetBattleTimeline200 =
   BattleTimelineResponseDto_Output;
 
-export type BattlesControllerGetBattlePathParams = {
-  readonly battleId: string;
-};
+export type BattlesControllerGetBattlePathParams =
+  typeof BattlesControllerGetBattlePathParams.Type;
 
 export const BattlesControllerGetBattlePathParams = Schema.Struct({
   battleId: Schema.String,
 });
 
-export type BattlesControllerGetBattle200 = BattleResponseDto_Output;
+export type BattlesControllerGetBattle200 =
+  typeof BattlesControllerGetBattle200.Type;
 
 export const BattlesControllerGetBattle200 = BattleResponseDto_Output;
 
-export type BattlesControllerDeleteBattlePathParams = {
-  readonly battleId: string;
-};
+export type BattlesControllerDeleteBattlePathParams =
+  typeof BattlesControllerDeleteBattlePathParams.Type;
 
 export const BattlesControllerDeleteBattlePathParams = Schema.Struct({
   battleId: Schema.String,
 });
 
-export type BattlesControllerDeleteBattle200 = BattleDeletedResponseDto_Output;
+export type BattlesControllerDeleteBattle200 =
+  typeof BattlesControllerDeleteBattle200.Type;
 
 export const BattlesControllerDeleteBattle200 = BattleDeletedResponseDto_Output;
 
-export type BattlesControllerUpdateBattlePathParams = {
-  readonly battleId: string;
-};
+export type BattlesControllerUpdateBattlePathParams =
+  typeof BattlesControllerUpdateBattlePathParams.Type;
 
 export const BattlesControllerUpdateBattlePathParams = Schema.Struct({
   battleId: Schema.String,
 });
 
-export type BattlesControllerUpdateBattleRequestJson = UpdateBattleDto;
+export type BattlesControllerUpdateBattleRequestJson =
+  typeof BattlesControllerUpdateBattleRequestJson.Type;
 
 export const BattlesControllerUpdateBattleRequestJson = UpdateBattleDto;
 
-export type BattlesControllerUpdateBattle200 = BattleResponseDto_Output;
+export type BattlesControllerUpdateBattle200 =
+  typeof BattlesControllerUpdateBattle200.Type;
 
 export const BattlesControllerUpdateBattle200 = BattleResponseDto_Output;
 
-export type BattlesControllerGetBattleRawDataPathParams = {
-  readonly battleId: string;
-};
+export type BattlesControllerGetBattleRawDataPathParams =
+  typeof BattlesControllerGetBattleRawDataPathParams.Type;
 
 export const BattlesControllerGetBattleRawDataPathParams = Schema.Struct({
   battleId: Schema.String,
 });
 
-export type BattlesControllerGetBattleRawData200 = BattleRawResponseDto_Output;
+export type BattlesControllerGetBattleRawData200 =
+  typeof BattlesControllerGetBattleRawData200.Type;
 
 export const BattlesControllerGetBattleRawData200 = BattleRawResponseDto_Output;
