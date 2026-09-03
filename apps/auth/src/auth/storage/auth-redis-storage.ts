@@ -1,5 +1,5 @@
 import type { SecondaryStorage } from "better-auth";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, FiberSet, Layer } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js";
 
@@ -28,8 +28,10 @@ export class AuthRedisStorage extends Context.Service<
     AuthRedisStorage,
     Effect.gen(function* () {
       const redis = yield* Redis.Redis;
+      const fibers = yield* FiberSet.make<unknown, unknown>();
+      const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
       const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
-        Effect.runPromise(effect);
+        runPromise(effect);
       const client: RealtimeTicketRedis = {
         set: (key, value, mode, ttl, condition) =>
           run(redis.send("SET", key, value, mode, String(ttl), condition)),

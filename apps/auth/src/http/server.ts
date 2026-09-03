@@ -1,4 +1,5 @@
 import { BunHttpServer } from "@effect/platform-bun";
+import { httpServerMetrics } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import {
   HttpRouter,
@@ -71,7 +72,7 @@ export const AuthRoutes = Layer.merge(
 
 export const AuthHttpServer = Layer.unwrap(
   Effect.map(AppConfig, ({ port }) =>
-    HttpRouter.serve(AuthRoutes).pipe(
+    HttpRouter.serve(AuthRoutes, { middleware: httpServerMetrics }).pipe(
       Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
     ),
   ),

@@ -26,11 +26,8 @@ import {
 } from "../../contracts/timers/schemas.js";
 import {
   type TimersDataFailure,
-  TimersConflict,
-  TimersForbidden,
   TimersInfrastructureError,
-  TimersInvalidRequest,
-  TimersNotFound,
+  type TimersNotFound,
 } from "./timer-errors.js";
 
 export const TIMERS_ENDPOINTS = [
@@ -176,26 +173,20 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new TimersInfrastructureError({ cause })),
   );
 
-const errorStatus = (error: unknown): number | undefined =>
-  error instanceof TimersAccessDenied ||
-  error instanceof TimersInvalidRequest ||
-  error instanceof TimersForbidden ||
-  error instanceof TimersNotFound ||
-  error instanceof TimersConflict
-    ? error.status
-    : undefined;
+type TimersHttpFailure = TimersAccessDenied | TimersDataFailure;
 
-const defectCause = (error: unknown) =>
-  error instanceof TimersInfrastructureError ? error.cause : error;
+const statusResponse = (error: { readonly status: number }) =>
+  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
 
-const toHttpResponse = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    errorStatus(error) !== undefined
-      ? Effect.succeed(
-          HttpServerResponse.empty({ status: errorStatus(error) ?? 500 }),
-        )
-      : Effect.die(defectCause(error)),
-  );
+const toHttpResponse = <A, R>(effect: Effect.Effect<A, TimersHttpFailure, R>) =>
+  Effect.catchTags(effect, {
+    TimersAccessDenied: statusResponse,
+    TimersConflict: statusResponse,
+    TimersForbidden: statusResponse,
+    TimersInfrastructureError: (error) => Effect.die(error.cause),
+    TimersInvalidRequest: statusResponse,
+    TimersNotFound: statusResponse,
+  });
 
 const pathString = (value: unknown, name: string) =>
   typeof value === "string"

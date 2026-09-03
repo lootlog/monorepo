@@ -1,6 +1,6 @@
 import {
-  decodeRealtimeFrame,
   encodeRealtimeFrame,
+  tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import type {
   Response as RealtimeResponse,
@@ -351,15 +351,16 @@ export class RealtimeHub {
   private deliver(message: FederatedRealtimeMessage): void {
     if (!this.remember(message.id)) return;
     if (!message.frame) return;
-    let frame: Event;
-    try {
-      const decoded = decodeRealtimeFrame(fromBase64(message.frame));
-      if (!("type" in decoded)) return;
-      frame = decoded as Event;
-    } catch (error) {
-      this.logger.warn("Rejected malformed Redis federation frame", error);
+    const decoded = tryDecodeRealtimeFrame(fromBase64(message.frame));
+    if (decoded._tag === "Failure") {
+      this.logger.warn(
+        "Rejected malformed Redis federation frame",
+        decoded.failure,
+      );
       return;
     }
+    if (!("type" in decoded.success)) return;
+    const frame = decoded.success as Event;
 
     for (const socket of this.sockets.values()) {
       if (!this.matchesRecipient(socket, message)) continue;

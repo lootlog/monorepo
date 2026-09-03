@@ -101,18 +101,25 @@ export const makeInternalGuildsData = (
       if (!guild) return yield* Effect.fail(new Error("Guild not found"));
 
       const encoded = JSON.stringify(guild);
-      yield* Effect.all([
-        cache.set(getGuildCacheKey(guild.id), encoded, GUILD_CACHE_TTL_SECONDS),
-        ...(guild.vanityUrl
-          ? [
-              cache.set(
-                getGuildCacheKey(guild.vanityUrl),
-                encoded,
-                GUILD_CACHE_TTL_SECONDS,
-              ),
-            ]
-          : []),
-      ]);
+      yield* Effect.all(
+        [
+          cache.set(
+            getGuildCacheKey(guild.id),
+            encoded,
+            GUILD_CACHE_TTL_SECONDS,
+          ),
+          ...(guild.vanityUrl
+            ? [
+                cache.set(
+                  getGuildCacheKey(guild.vanityUrl),
+                  encoded,
+                  GUILD_CACHE_TTL_SECONDS,
+                ),
+              ]
+            : []),
+        ],
+        { concurrency: "unbounded" },
+      );
       return { ...guild, ...resolveReservationSettings(guild) };
     });
 
@@ -323,11 +330,11 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
     }),
   );
 
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    Effect.die(
-      error instanceof InternalGuildsOperationError ? error.cause : error,
-    ),
+const orDieHttpFailure = <A, R>(
+  effect: Effect.Effect<A, InternalGuildsOperationError, R>,
+) =>
+  Effect.catchTag(effect, "InternalGuildsOperationError", (error) =>
+    Effect.die(error.cause),
   );
 
 export const InternalGuildsHandlers = HttpApiBuilder.group(

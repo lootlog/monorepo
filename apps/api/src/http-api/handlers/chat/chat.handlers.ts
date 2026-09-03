@@ -97,25 +97,18 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new ChatOperationError({ cause })),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof ChatOperationError ? error.cause : error;
+type ChatFailure = ChatAccessDenied | ChatNotFound | ChatOperationError;
 
-const errorStatus = (error: unknown): number | undefined => {
-  if (error instanceof ChatAccessDenied || error instanceof ChatNotFound) {
-    return error.status;
-  }
-  const cause = defectCause(error);
-  const applicationStatus = applicationErrorStatusOrUndefined(cause);
-  if (applicationStatus !== undefined) return applicationStatus;
-  return undefined;
-};
-
-const declaredForbidden = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    errorStatus(error) === 403
-      ? Effect.fail(undefined)
-      : Effect.die(defectCause(error)),
-  );
+const declaredForbidden = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
+  Effect.catchTags(effect, {
+    ChatAccessDenied: (error) =>
+      error.status === 403 ? Effect.fail(undefined) : Effect.die(error),
+    ChatNotFound: Effect.die,
+    ChatOperationError: (error) =>
+      applicationErrorStatusOrUndefined(error.cause) === 403
+        ? Effect.fail(undefined)
+        : Effect.die(error.cause),
+  });
 
 const pathString = (value: unknown, name: string) =>
   typeof value === "string"

@@ -52,7 +52,7 @@ import {
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { makeMembersDataLayer } from "#src/http-api/handlers/members/member-commands.data-layer";
 import {
@@ -111,6 +111,8 @@ export const memberServicesLive = Layer.effect(
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
+    const fibers = yield* FiberSet.make<unknown, unknown>();
+    const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
     const queueConnection = {
       host: config.redis.host,
       port: config.redis.port,
@@ -149,6 +151,7 @@ export const memberServicesLive = Layer.effect(
             httpClient,
             config.authServiceUrl,
           ),
+          runPromise,
         );
         const userGuildsClient = new DiscordUserGuildsClient(
           applicationLogger,

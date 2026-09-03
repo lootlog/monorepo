@@ -7,6 +7,8 @@ const trackedOutputs = [
   "apps/api/openapi.yaml",
   "apps/auth/openapi.yaml",
   "apps/battlelog/openapi.yaml",
+  "apps/discord-bot/openapi.yaml",
+  "apps/gateway/openapi.yaml",
   "apps/search/openapi.yaml",
   "packages/client/src/generated",
 ];

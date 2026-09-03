@@ -417,10 +417,13 @@ export const makeEventsCatalogRead = (
           const heroNpcs = yield* Effect.forEach(
             heroes,
             (hero) =>
-              Effect.all({
-                locations: locationsWithMaps(hero.id),
-                maps: mapsWithMembers(hero.id),
-              }).pipe(
+              Effect.all(
+                {
+                  locations: locationsWithMaps(hero.id),
+                  maps: mapsWithMembers(hero.id),
+                },
+                { concurrency: "unbounded" },
+              ).pipe(
                 Effect.map(({ locations, maps }) => ({
                   ...hero,
                   locations,

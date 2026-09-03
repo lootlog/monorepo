@@ -6,8 +6,8 @@ import {
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import {
-  decodeRealtimeFrame,
   encodeRealtimeFrame,
+  tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 
 type CommandType = ClientCommand["type"];
@@ -344,7 +344,9 @@ export class RealtimeClient {
   }
 
   private async handleMessage(data: unknown): Promise<void> {
-    const frame = decodeRealtimeFrame(await toBytes(data));
+    const decoded = tryDecodeRealtimeFrame(await toBytes(data));
+    if (decoded._tag === "Failure") throw decoded.failure;
+    const frame = decoded.success;
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);
       if (!pending) return;

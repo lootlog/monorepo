@@ -156,16 +156,19 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       const existingLootId = yield* self.repository.findLootIdByUniqueId(
         options.uniqueId,
       );
-      const { guilds, characterConfig } = yield* Effect.all({
-        guilds: self.repository.findGuildsForPermissions(options.discordId, [
-          Permission.LOOTLOG_LOOTS_WRITE,
-        ]),
-        characterConfig: self.repository.findCharacterConfig(
-          options.discordId,
-          options.submission.accountId,
-          options.submission.characterId,
-        ),
-      });
+      const { guilds, characterConfig } = yield* Effect.all(
+        {
+          guilds: self.repository.findGuildsForPermissions(options.discordId, [
+            Permission.LOOTLOG_LOOTS_WRITE,
+          ]),
+          characterConfig: self.repository.findCharacterConfig(
+            options.discordId,
+            options.submission.accountId,
+            options.submission.characterId,
+          ),
+        },
+        { concurrency: "unbounded" },
+      );
       if (guilds.length === 0) {
         return yield* Effect.fail(new PermissionDeniedError());
       }
@@ -188,13 +191,16 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         );
       }
 
-      const { lootlogConfigs, members } = yield* Effect.all({
-        lootlogConfigs: self.repository.findLootlogConfigs(filteredGuildIds),
-        members: self.repository.findMembers(
-          options.discordId,
-          filteredGuildIds,
-        ),
-      });
+      const { lootlogConfigs, members } = yield* Effect.all(
+        {
+          lootlogConfigs: self.repository.findLootlogConfigs(filteredGuildIds),
+          members: self.repository.findMembers(
+            options.discordId,
+            filteredGuildIds,
+          ),
+        },
+        { concurrency: "unbounded" },
+      );
       const npcData = yield* Effect.try({
         try: () => self.processNpcs(options.submission.npcs),
         catch: (error) =>

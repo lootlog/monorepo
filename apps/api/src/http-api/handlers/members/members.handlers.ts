@@ -147,40 +147,43 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new MembersOperationError({ cause })),
   );
 
-const defectCause = (error: unknown) =>
-  error instanceof MembersOperationError ? error.cause : error;
+type MembersFailure =
+  | MembersAccessDenied
+  | MembersNotFound
+  | MembersOperationError;
 
-const errorStatus = (error: unknown): number | undefined => {
-  if (
-    error instanceof MembersAccessDenied ||
-    error instanceof MembersNotFound
-  ) {
-    return error.status;
-  }
-  const cause = defectCause(error);
-  const applicationStatus = applicationErrorStatusOrUndefined(cause);
-  if (applicationStatus !== undefined) return applicationStatus;
-  return undefined;
-};
+const orDieHttpFailure = <A, R>(effect: Effect.Effect<A, MembersFailure, R>) =>
+  Effect.catchTags(effect, {
+    MembersAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    MembersNotFound: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    MembersOperationError: (error) => {
+      const status = applicationErrorStatusOrUndefined(error.cause);
+      return status === undefined
+        ? Effect.die(error.cause)
+        : Effect.succeed(HttpServerResponse.empty({ status }));
+    },
+  });
 
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    errorStatus(error) !== undefined
-      ? Effect.succeed(
-          HttpServerResponse.empty({ status: errorStatus(error) ?? 500 }),
-        )
-      : Effect.die(defectCause(error)),
-  );
-
-const declaredEmptyError = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
+const declaredEmptyError = <A, R>(
+  effect: Effect.Effect<A, MembersFailure, R>,
   statuses: ReadonlyArray<number>,
 ) =>
-  Effect.catch(effect, (error) =>
-    statuses.includes(errorStatus(error) ?? 0)
-      ? Effect.fail(undefined)
-      : Effect.die(defectCause(error)),
-  );
+  Effect.catchTags(effect, {
+    MembersAccessDenied: (error) =>
+      statuses.includes(error.status)
+        ? Effect.fail(undefined)
+        : Effect.die(error),
+    MembersNotFound: (error) =>
+      statuses.includes(error.status)
+        ? Effect.fail(undefined)
+        : Effect.die(error),
+    MembersOperationError: (error) =>
+      statuses.includes(applicationErrorStatusOrUndefined(error.cause) ?? 0)
+        ? Effect.fail(undefined)
+        : Effect.die(error.cause),
+  });
 
 const pathString = (value: unknown, name: string) =>
   typeof value === "string"

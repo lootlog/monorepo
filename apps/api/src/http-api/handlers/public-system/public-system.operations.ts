@@ -130,9 +130,15 @@ export const getPublicStatsCard = Effect.fn(
   });
 });
 
-const defectCause = (error: unknown) =>
-  error instanceof PublicSystemOperationError ? error.cause : error;
-
-export const toPublicSystemHttpResponse = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
-) => Effect.catch(effect, (error) => Effect.die(defectCause(error)));
+export const toPublicSystemHttpResponse = <A, R>(
+  effect: Effect.Effect<
+    A,
+    PublicSystemAccessDenied | PublicSystemOperationError,
+    R
+  >,
+) =>
+  Effect.catchTags(effect, {
+    PublicSystemAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    PublicSystemOperationError: (error) => Effect.die(error.cause),
+  });

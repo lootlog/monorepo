@@ -166,14 +166,18 @@ export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
   },
 );
 
-const defectCause = (error: unknown) =>
-  error instanceof LootlogConfigOperationError ? error.cause : error;
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    error instanceof LootlogConfigAccessDenied
-      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-      : Effect.die(defectCause(error)),
-  );
+type LootlogConfigHttpFailure =
+  | LootlogConfigAccessDenied
+  | LootlogConfigOperationError;
+
+const orDieHttpFailure = <A, R>(
+  effect: Effect.Effect<A, LootlogConfigHttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    LootlogConfigAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    LootlogConfigOperationError: (error) => Effect.die(error.cause),
+  });
 
 export const LootlogConfigHandlers = HttpApiBuilder.group(
   LootlogApi,

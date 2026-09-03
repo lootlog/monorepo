@@ -70,14 +70,16 @@ export const volunteerForNotification = (
     yield* data.volunteer(authenticated.discordId, notificationId, payload);
   });
 
-const defectCause = (error: unknown) =>
-  error instanceof MessagingOperationError ? error.cause : error;
-const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  Effect.catch(effect, (error) =>
-    error instanceof MessagingAccessDenied
-      ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-      : Effect.die(defectCause(error)),
-  );
+type MessagingHttpFailure = MessagingAccessDenied | MessagingOperationError;
+
+const orDieHttpFailure = <A, R>(
+  effect: Effect.Effect<A, MessagingHttpFailure, R>,
+) =>
+  Effect.catchTags(effect, {
+    MessagingAccessDenied: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    MessagingOperationError: (error) => Effect.die(error.cause),
+  });
 
 export const MessagingHandlers = HttpApiBuilder.group(
   LootlogApi,

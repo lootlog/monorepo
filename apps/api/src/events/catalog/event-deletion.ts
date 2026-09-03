@@ -52,24 +52,27 @@ export const makeEventDeletion =
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
-      const jobs = yield* Effect.all({
-        pending: Effect.tryPromise({
-          try: queue.pending,
-          catch: (cause) =>
-            new EventDeletionError({
-              operation: "events.delete.pendingJobs",
-              cause,
-            }),
-        }),
-        delayed: Effect.tryPromise({
-          try: queue.delayed,
-          catch: (cause) =>
-            new EventDeletionError({
-              operation: "events.delete.delayedJobs",
-              cause,
-            }),
-        }),
-      });
+      const jobs = yield* Effect.all(
+        {
+          pending: Effect.tryPromise({
+            try: queue.pending,
+            catch: (cause) =>
+              new EventDeletionError({
+                operation: "events.delete.pendingJobs",
+                cause,
+              }),
+          }),
+          delayed: Effect.tryPromise({
+            try: queue.delayed,
+            catch: (cause) =>
+              new EventDeletionError({
+                operation: "events.delete.delayedJobs",
+                cause,
+              }),
+          }),
+        },
+        { concurrency: "unbounded" },
+      );
       yield* Effect.forEach(
         [...jobs.pending, ...jobs.delayed].filter(
           (job) => job.eventId === eventId,

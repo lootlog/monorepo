@@ -1,11 +1,7 @@
 import { BunRedis, BunRuntime } from "@effect/platform-bun";
 import { Effect, Layer, Redacted } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
-import {
-  OtlpLogger,
-  OtlpSerialization,
-  OtlpTracer,
-} from "effect/unstable/observability";
+import { Otlp, OtlpSerialization } from "effect/unstable/observability";
 import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import { AuthService } from "#src/auth/auth-service";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
@@ -25,10 +21,10 @@ const ObservabilityLive = Layer.unwrap(
       },
     };
 
-    return Layer.merge(
-      OtlpTracer.layerFromConfig({ resource }),
-      OtlpLogger.layerFromConfig({ resource, mergeWithExisting: true }),
-    );
+    return Otlp.layerFromConfig({
+      resource,
+      loggerMergeWithExisting: true,
+    });
   }),
 ).pipe(
   Layer.provide(AppConfig.layer),

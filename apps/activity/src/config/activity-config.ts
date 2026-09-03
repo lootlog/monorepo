@@ -8,6 +8,7 @@ export interface ActivityConfigValue {
   readonly environment: RuntimeEnvironment;
   readonly port: number;
   readonly serviceName: string;
+  readonly serviceNamespace: string;
   readonly databaseUrl: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl?: Redacted.Redacted<string>;
@@ -63,6 +64,9 @@ export class ActivityConfig extends Context.Service<
         port: yield* Config.int("PORT"),
         serviceName: yield* Config.string("SERVICE_NAME").pipe(
           Config.withDefault("activity"),
+        ),
+        serviceNamespace: yield* Config.string("SERVICE_NAMESPACE").pipe(
+          Config.withDefault("local"),
         ),
         databaseUrl: yield* Config.redacted("POSTGRESQL_CONNECTION_URI"),
         rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
