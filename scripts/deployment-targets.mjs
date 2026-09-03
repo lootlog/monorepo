@@ -16,6 +16,7 @@ const clientProducers = new Set([
 ]);
 
 const integrationPackages = new Set([
+  "@lootlog/activity",
   "@lootlog/api",
   "@lootlog/auth",
   "@lootlog/gateway",

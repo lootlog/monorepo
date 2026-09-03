@@ -10,7 +10,15 @@ import amqp, {
   type ConsumeMessage,
   type Options,
 } from "amqplib";
-import { Context, Effect, FiberSet, Layer, Schema, type Scope } from "effect";
+import {
+  Cause,
+  Context,
+  Effect,
+  FiberSet,
+  Layer,
+  Schema,
+  type Scope,
+} from "effect";
 
 export class MessagingError extends TaggedErrorClass<MessagingError>()(
   "MessagingError",
@@ -252,10 +260,12 @@ const makeService = (channel: RabbitChannel): RabbitMessagingService => {
             if (message === null) return;
             const delivery = toDelivery(message);
             runDelivery(
-              handler(delivery).pipe(
-                Effect.matchEffect({
-                  onFailure: () =>
-                    routeFailure(delivery, options.failurePolicy),
+              Effect.suspend(() => handler(delivery)).pipe(
+                Effect.matchCauseEffect({
+                  onFailure: (cause) =>
+                    Cause.hasInterruptsOnly(cause)
+                      ? Effect.interrupt
+                      : routeFailure(delivery, options.failurePolicy),
                   onSuccess: () => ack(delivery),
                 }),
                 Effect.catch((error) =>

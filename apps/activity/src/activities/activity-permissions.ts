@@ -42,18 +42,25 @@ export class Permissions extends Context.Service<
         key: string,
         decodeValue: (value: unknown) => A,
         decodeJson: (value: string) => A,
-      ): Effect.Effect<A | undefined, Redis.RedisError> => {
+      ): Effect.Effect<A | undefined, Redis.RedisError | Error> => {
+        const decode = <Value>(value: Value, decoder: (value: Value) => A) =>
+          Effect.try({
+            try: () => decoder(value),
+            catch: (cause) => new Error("Cache value was invalid", { cause }),
+          });
         if (config.redisUrl) {
           return redis
             .send<string | null>("GET", key)
             .pipe(
-              Effect.map((value) => (value ? decodeJson(value) : undefined)),
+              Effect.flatMap((value) =>
+                value ? decode(value, decodeJson) : Effect.succeed(undefined),
+              ),
             );
         }
         const entry = memory.get(key);
-        return Effect.sync(() =>
-          entry ? decodeValue(entry.value) : undefined,
-        );
+        return entry
+          ? decode(entry.value, decodeValue)
+          : Effect.succeed(undefined);
       };
       const set = (
         key: string,

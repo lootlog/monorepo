@@ -1,10 +1,11 @@
+import { runLogEffect } from "@lootlog/instrumentation";
 import { Effect } from "effect";
 
 export class Logger {
   constructor(private readonly context: string) {}
 
   debug(message: string, ...details: unknown[]): void {
-    Effect.runFork(
+    runLogEffect(
       Effect.logDebug(message, ...details).pipe(
         Effect.annotateLogs({ context: this.context }),
       ),
@@ -12,7 +13,7 @@ export class Logger {
   }
 
   log(message: string, ...details: unknown[]): void {
-    Effect.runFork(
+    runLogEffect(
       Effect.logInfo(message, ...details).pipe(
         Effect.annotateLogs({ context: this.context }),
       ),
@@ -20,7 +21,7 @@ export class Logger {
   }
 
   warn(message: string, ...details: unknown[]): void {
-    Effect.runFork(
+    runLogEffect(
       Effect.logWarning(message, ...details).pipe(
         Effect.annotateLogs({ context: this.context }),
       ),
@@ -28,7 +29,7 @@ export class Logger {
   }
 
   error(message: string, ...details: unknown[]): void {
-    Effect.runFork(
+    runLogEffect(
       Effect.logError(message, ...details).pipe(
         Effect.annotateLogs({ context: this.context }),
       ),

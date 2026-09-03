@@ -1,10 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { Effect, Metric } from "effect";
+import { Effect, Fiber, Logger, Metric } from "effect";
 import {
   httpServerDuration,
   httpServerRequestCount,
+  installScopedLogRunner,
   recordHttpServerMetrics,
+  runLogEffect,
 } from "../src/instrumentation.js";
+
+test("the scoped log runner preserves the configured logger", async () => {
+  const messages: unknown[] = [];
+  const logger = Logger.make(({ message }) => {
+    messages.push(message);
+  });
+
+  await Effect.runPromise(
+    Effect.gen(function* () {
+      yield* installScopedLogRunner;
+      yield* Fiber.join(runLogEffect(Effect.logInfo("scoped log")));
+    }).pipe(Effect.scoped, Effect.provide(Logger.layer([logger]))),
+  );
+
+  expect(messages).toHaveLength(1);
+});
 
 describe("HTTP server metrics", () => {
   test("records request count and duration with bounded HTTP attributes", async () => {

@@ -1,4 +1,5 @@
 import { BunRuntime } from "@effect/platform-bun";
+import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp, OtlpSerialization } from "effect/unstable/observability";
@@ -26,13 +27,11 @@ const ObservabilityLive = Layer.unwrap(
 
 BunRuntime.runMain(
   Effect.gen(function* () {
+    yield* installScopedLogRunner;
     const config = yield* apiConfiguration;
     yield* Effect.sync(() => registerNodeWarningDiagnostics(config));
     yield* Layer.launch(
-      ApiApplicationLive.pipe(
-        Layer.provide(FetchHttpClient.layer),
-        Layer.provide(ObservabilityLive),
-      ),
+      ApiApplicationLive.pipe(Layer.provide(FetchHttpClient.layer)),
     );
-  }),
+  }).pipe(Effect.scoped, Effect.provide(ObservabilityLive)),
 );

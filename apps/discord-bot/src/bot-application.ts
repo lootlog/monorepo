@@ -13,7 +13,7 @@ import {
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { Client, IntentsBitField } from "discord.js";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import {
   HttpRouter,
   HttpServer,
@@ -61,6 +61,17 @@ const isNotificationCommand = (
   );
 };
 
+export const decodeNotificationCommand = (
+  content: Uint8Array,
+): DiscordNotificationSendCommand | undefined => {
+  try {
+    const input: unknown = JSON.parse(new TextDecoder().decode(content));
+    return isNotificationCommand(input) ? input : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export interface BotServicesValue {
   readonly client: Client;
   readonly delivery: DiscordDelivery;
@@ -97,7 +108,8 @@ export class BotServices extends Context.Service<
       );
       const delivery = makeDiscordDelivery(publisher, client);
       const sync = makeDiscordSync(publisher, client);
-      registerDiscordEventHandlers(client, sync);
+      const runEvent = yield* FiberSet.makeRuntime<never, void, never>();
+      registerDiscordEventHandlers(client, sync, runEvent);
       return BotServices.of({ client, delivery, sync });
     }),
   );
@@ -186,10 +198,13 @@ export const BotConsumer = Layer.effectDiscard(
       },
       (delivery) =>
         Effect.gen(function* () {
-          const input: unknown = JSON.parse(
-            new TextDecoder().decode(delivery.content),
-          );
-          if (!isNotificationCommand(input)) return;
+          const input = decodeNotificationCommand(delivery.content);
+          if (!input) {
+            yield* Effect.logError(
+              "Discord notification delivery payload was invalid",
+            );
+            return;
+          }
           yield* services.delivery.sendNotification(input);
         }),
     );

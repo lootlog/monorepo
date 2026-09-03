@@ -1,9 +1,25 @@
-import { Clock, Effect, Metric } from "effect";
+import { Clock, Effect, FiberSet, Metric } from "effect";
 import { HttpMiddleware, HttpServerRequest } from "effect/unstable/http";
 
 const durationBoundaries = [
   5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000,
 ];
+
+const defaultLogRunner = (effect: Effect.Effect<void>) =>
+  Effect.runFork(effect);
+let logRunner = defaultLogRunner;
+
+export const runLogEffect = (effect: Effect.Effect<void>) => logRunner(effect);
+
+export const installScopedLogRunner = Effect.gen(function* () {
+  const previous = logRunner;
+  logRunner = yield* FiberSet.makeRuntime<never, void, never>();
+  yield* Effect.addFinalizer(() =>
+    Effect.sync(() => {
+      logRunner = previous;
+    }),
+  );
+});
 
 export const httpServerDuration = Metric.histogram("http.server.duration", {
   description: "HTTP server request duration in milliseconds",

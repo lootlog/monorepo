@@ -1,3 +1,4 @@
+import { runLogEffect } from "@lootlog/instrumentation";
 import { Effect } from "effect";
 
 export type BackgroundTaskRunner = (
@@ -22,7 +23,7 @@ export const unmanagedBackgroundTaskRunner: BackgroundTaskRunner = (
   label,
   task,
 ) => {
-  Effect.runFork(
+  runLogEffect(
     task.pipe(
       Effect.catch((cause) =>
         Effect.logError("Gateway background task failed", cause).pipe(
