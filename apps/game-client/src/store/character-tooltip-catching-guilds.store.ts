@@ -1,7 +1,7 @@
 import type { Other } from "@lootlog/margonem/others";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { create } from "zustand";
-import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@lootlog/api-client/models/main/user-lootlog-players-catching-guilds-response-dto-output-players-item-guilds-item";
+import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@lootlog/client/main";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 export type CharacterTooltipCatchingGuildsStatus =

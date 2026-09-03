@@ -13,7 +13,7 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { ReservationForm } from "./reservation-form";
 
 type ReservationFormDialogProps = {

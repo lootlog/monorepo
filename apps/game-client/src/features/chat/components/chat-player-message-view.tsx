@@ -3,7 +3,7 @@ import { format } from "@/utils/local-date";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
-} from "@lootlog/types";
+} from "@lootlog/schema/chat-appearance";
 import type { ComponentPropsWithRef, FC, ReactNode } from "react";
 
 type ChatPlayerMessageViewProps = ComponentPropsWithRef<"div"> & {

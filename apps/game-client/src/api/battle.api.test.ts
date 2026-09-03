@@ -6,7 +6,7 @@ const { post } = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
-vi.mock("@lootlog/api-client/transport", () => ({
+vi.mock("@lootlog/client/transport", () => ({
   createApiClient: () => ({ post }),
 }));
 

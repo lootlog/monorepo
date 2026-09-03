@@ -1,4 +1,4 @@
-import { Capability, type AccessPolicy } from "@lootlog/access-policy";
+import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 
 export const canWriteGuildDocs = (accessPolicy: AccessPolicy | undefined) =>
   accessPolicy?.allows(Capability.LOOTLOG_DOCS_WRITE) ?? false;

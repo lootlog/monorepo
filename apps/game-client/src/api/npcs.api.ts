@@ -1,5 +1,5 @@
-import { createApiClient } from "@lootlog/api-client/transport";
-import { NpcTypeEnum as NpcType } from "@lootlog/types";
+import { createApiClient } from "@lootlog/client/transport";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 export { NpcType };
 

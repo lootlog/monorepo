@@ -1,9 +1,9 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 
 export const useGuildPermissions = () => {
   const guildId = useGuildId();

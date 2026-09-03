@@ -21,7 +21,7 @@ import { t } from "@/i18n/messages";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
-} from "@lootlog/api-client/react-query/search/items";
+} from "@lootlog/client/search";
 import { renderItemStat } from "@/components/render-item-stat";
 
 const SEARCH_DEBOUNCE_MS = 300;

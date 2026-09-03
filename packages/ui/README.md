@@ -21,7 +21,7 @@ Shared React UI toolkit for Lootlog frontends.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/ui lint
+bun run --filter=@lootlog/ui lint
 ```
 
 ## Notes

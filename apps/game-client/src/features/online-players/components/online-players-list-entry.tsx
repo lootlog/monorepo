@@ -6,7 +6,7 @@ import { VerifiedMargonemAccountIcon } from "@/features/online-players/component
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];

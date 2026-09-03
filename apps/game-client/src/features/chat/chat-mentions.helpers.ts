@@ -1,7 +1,9 @@
-import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
-import type { NullableMemberResponseDto } from "@lootlog/api-client/models/main/nullable-member-response-dto";
-import type { RoleResponseDtoOutput } from "@lootlog/api-client/models/main/role-response-dto-output";
+import type {
+  ChatMessageResponseDtoOutput,
+  MemberSummaryResponseDtoOutput,
+  NullableMemberResponseDto,
+  RoleResponseDtoOutput,
+} from "@lootlog/client/main";
 
 const MENTION_BOUNDARY_PATTERN = /[\s.,!?;:()[\]{}"'`<>/\\|]/;
 

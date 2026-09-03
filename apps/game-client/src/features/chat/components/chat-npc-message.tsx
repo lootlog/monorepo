@@ -1,7 +1,11 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
-import type { ChatAppearanceSettings, NpcTypeColors } from "@lootlog/types";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@lootlog/client/main";
+
+import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC } from "react";
 import { ChatCharacterTooltip } from "./chat-character-tooltip";
 import { ChatNpcMessageView } from "./chat-npc-message-view";

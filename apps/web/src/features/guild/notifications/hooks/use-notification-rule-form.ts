@@ -5,13 +5,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
-import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-anchor";
-import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-interval-type";
-import { CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-strategy";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
-import type { NotificationRuleResponseDto } from "@lootlog/api-client/models/main/notification-rule-response-dto";
+import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
+import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
+import { CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy } from "@lootlog/client/main";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
+import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
+import type { NotificationTargetResponseDto } from "@lootlog/client/main";
+import type { NotificationRuleResponseDto } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getDefaultGuildNotificationRuleContentTemplate,
@@ -44,14 +44,14 @@ import {
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
   useNotificationsGuildControllerUpdateGuildRule,
-} from "@lootlog/api-client/react-query/main/notifications";
+} from "@lootlog/client/main";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
-import { useRolesControllerGetGuildRoles } from "@lootlog/api-client/react-query/main/roles";
-import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/api-client/react-query/main/guilds";
+import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
+import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/client/main";
 import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
-} from "@lootlog/api-client/react-query/search/npcs";
+} from "@lootlog/client/search";
 
 const getDefaultContentTemplate = (
   triggerType: CreateNotificationRuleDtoTriggerType,

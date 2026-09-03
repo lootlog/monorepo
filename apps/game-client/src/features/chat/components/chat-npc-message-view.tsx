@@ -1,13 +1,13 @@
 import { NpcTile } from "@/components/npc-tile";
 import { cn } from "@/lib/utils";
 import { format } from "@/utils/local-date";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
-  type NpcTypeColors,
-} from "@lootlog/types";
+} from "@lootlog/schema/chat-appearance";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC, ReactElement, ReactNode } from "react";
 import {
   getChatNpcCoordinatesLabel,

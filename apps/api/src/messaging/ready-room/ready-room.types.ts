@@ -2,7 +2,7 @@ import type {
   PartyReadyRoomCharacter,
   PartyReadyRoomParticipant,
   PartyReadyRoomStatus,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 
 export interface ReadyRoomAggregate {
   schemaVersion: 3;

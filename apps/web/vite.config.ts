@@ -99,51 +99,72 @@ export default defineConfig({
       // Path aliases
       {
         find: "@/components",
-        replacement: path.resolve(__dirname, "./src/components"),
+        replacement: path.resolve(import.meta.dirname, "./src/components"),
       },
       {
         find: "@/config",
-        replacement: path.resolve(__dirname, "./src/config"),
+        replacement: path.resolve(import.meta.dirname, "./src/config"),
       },
       {
         find: "@/constants",
-        replacement: path.resolve(__dirname, "./src/constants"),
+        replacement: path.resolve(import.meta.dirname, "./src/constants"),
       },
       {
         find: "@/contexts",
-        replacement: path.resolve(__dirname, "./src/contexts"),
+        replacement: path.resolve(import.meta.dirname, "./src/contexts"),
       },
-      { find: "@/enums", replacement: path.resolve(__dirname, "./src/enums") },
+      {
+        find: "@/enums",
+        replacement: path.resolve(import.meta.dirname, "./src/enums"),
+      },
       {
         find: "@/eventEmitter",
-        replacement: path.resolve(__dirname, "./src/eventEmitter"),
+        replacement: path.resolve(import.meta.dirname, "./src/eventEmitter"),
       },
       {
         find: "@/features",
-        replacement: path.resolve(__dirname, "./src/features"),
+        replacement: path.resolve(import.meta.dirname, "./src/features"),
       },
-      { find: "@/hooks", replacement: path.resolve(__dirname, "./src/hooks") },
-      { find: "@/i18n", replacement: path.resolve(__dirname, "./src/i18n") },
+      {
+        find: "@/hooks",
+        replacement: path.resolve(import.meta.dirname, "./src/hooks"),
+      },
+      {
+        find: "@/i18n",
+        replacement: path.resolve(import.meta.dirname, "./src/i18n"),
+      },
       {
         find: "@/layout",
-        replacement: path.resolve(__dirname, "./src/layout"),
+        replacement: path.resolve(import.meta.dirname, "./src/layout"),
       },
-      { find: "@/lib", replacement: path.resolve(__dirname, "./src/lib") },
+      {
+        find: "@/lib",
+        replacement: path.resolve(import.meta.dirname, "./src/lib"),
+      },
       {
         find: "@/navigation",
-        replacement: path.resolve(__dirname, "./src/navigation"),
+        replacement: path.resolve(import.meta.dirname, "./src/navigation"),
       },
       {
         find: "@/providers",
-        replacement: path.resolve(__dirname, "./src/providers"),
+        replacement: path.resolve(import.meta.dirname, "./src/providers"),
       },
-      { find: "@/store", replacement: path.resolve(__dirname, "./src/store") },
+      {
+        find: "@/store",
+        replacement: path.resolve(import.meta.dirname, "./src/store"),
+      },
       {
         find: "@/themes",
-        replacement: path.resolve(__dirname, "./src/themes"),
+        replacement: path.resolve(import.meta.dirname, "./src/themes"),
       },
-      { find: "@/types", replacement: path.resolve(__dirname, "./src/types") },
-      { find: "@/utils", replacement: path.resolve(__dirname, "./src/utils") },
+      {
+        find: "@/types",
+        replacement: path.resolve(import.meta.dirname, "./src/types"),
+      },
+      {
+        find: "@/utils",
+        replacement: path.resolve(import.meta.dirname, "./src/utils"),
+      },
     ],
   },
   optimizeDeps: {

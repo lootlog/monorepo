@@ -1,25 +1,34 @@
 import { Button } from "@lootlog/ui/components/button";
 import { useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export const SignIn: React.FC = () => {
   const search = useSearch({ from: "/signin" });
   const [isLoading, setIsLoading] = useState(false);
+  const signInAttempt = useRef<Promise<unknown> | null>(null);
   const { t } = useTranslation();
 
   const handleDiscordSignIn = async () => {
+    if (signInAttempt.current) {
+      return;
+    }
+
     try {
       setIsLoading(true);
-      await authClient.signIn.social({
+      const attempt = authClient.signIn.social({
         provider: "discord",
         callbackURL: search.redirect
           ? `${window.location.origin}${search.redirect}`
           : `${window.location.origin}/@me`,
+        errorCallbackURL: window.location.href,
       });
+      signInAttempt.current = attempt;
+      await attempt;
     } catch {
+      signInAttempt.current = null;
       toast.error(t("auth.signin.failed"));
       setIsLoading(false);
     }
@@ -33,7 +42,9 @@ export const SignIn: React.FC = () => {
             {t("auth.signin.title")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {t("auth.signin.description")}
+            {search.error
+              ? t("auth.signin.callbackFailed")
+              : t("auth.signin.description")}
           </p>
         </div>
 

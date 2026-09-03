@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ReservationSpotsResponseDtoItem } from "@lootlog/api-client/models/main/reservation-spots-response-dto-item";
+import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import { ReservationCard } from "./reservation-card";
 
 vi.mock("react-i18next", () => ({

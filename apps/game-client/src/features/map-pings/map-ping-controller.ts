@@ -1,4 +1,4 @@
-import type { MapPingEvent, MapPingType } from "@lootlog/types";
+import type { MapPingEvent, MapPingType } from "@lootlog/schema/map-ping";
 import {
   rendererRuntimeAdapter,
   type RendererRuntimeAdapter,

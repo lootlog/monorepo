@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
@@ -22,13 +22,14 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { CreateManualTimerDtoType } from "@lootlog/api-client/models/main/create-manual-timer-dto-type";
-import type { CreateManualTimerDto } from "@lootlog/api-client/models/main/create-manual-timer-dto";
-import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/api-client/models/main/search-timers-npc-response-dto-output";
 import {
+  CreateManualTimerDtoType,
+  type CreateManualTimerDto,
+  type SearchTimersNpcResponseDtoOutput,
   getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
-} from "@lootlog/api-client/react-query/main/timers";
+} from "@lootlog/client/main";
+
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";

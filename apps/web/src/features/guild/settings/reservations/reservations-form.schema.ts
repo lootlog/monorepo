@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/reservations";
+import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 
 export const reservationsSettingsFormSchema = z
   .object({

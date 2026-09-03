@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError } from "@lootlog/api-client/transport";
+import { ApiError } from "@lootlog/client/transport";
 import { getApiErrorMessage } from "./get-api-error-message";
 
 describe("getApiErrorMessage", () => {

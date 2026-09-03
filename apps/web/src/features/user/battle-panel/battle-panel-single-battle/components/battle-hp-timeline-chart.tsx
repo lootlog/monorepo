@@ -1,4 +1,4 @@
-import type { BattleTimelineResponseDtoOutput } from "@lootlog/api-client/models/battlelog/battle-timeline-response-dto-output";
+import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
 import { BattleHpTimelineDialog } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-dialog";
 import { getBattleHpTimelineEventLayerCounts } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-markers";
 import { BattleHpTimelineLegendPopover } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legend-popover";

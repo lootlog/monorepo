@@ -1,11 +1,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
-  type NpcTypeColors,
-} from "@lootlog/types";
+} from "@lootlog/schema/chat-appearance";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import {
   useEffect,
   useEffectEvent,

@@ -57,7 +57,7 @@ const APP_DATABASES: Record<string, LocalDatabaseName> = {
   "apps/api": "lootlog",
   "apps/auth": "users",
   "apps/activity": "activityLog",
-  "apps/battlelog-service": "battleLog",
+  "apps/battlelog": "battleLog",
   "apps/search": "lootlog",
 };
 

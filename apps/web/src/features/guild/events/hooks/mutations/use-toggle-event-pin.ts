@@ -4,8 +4,8 @@ import {
   useListPinnedEvents,
   usePinEvent,
   useUnpinEvent,
-} from "@lootlog/api-client/react-query/main/events";
-import type { PinnedEventResponseDto } from "@lootlog/api-client/models/main/pinned-event-response-dto";
+} from "@lootlog/client/main";
+import type { PinnedEventResponseDto } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {

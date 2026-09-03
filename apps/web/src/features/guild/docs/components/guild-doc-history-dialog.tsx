@@ -15,8 +15,8 @@ import {
   getDocsControllerGetHistorySnapshotQueryKey,
   useDocsControllerGetHistory,
   useDocsControllerGetHistorySnapshot,
-} from "@lootlog/api-client/react-query/main/docs";
-import type { GuildDocumentHistoryResponseDtoItemsItem } from "@lootlog/api-client/models/main/guild-document-history-response-dto-items-item";
+} from "@lootlog/client/main";
+import type { GuildDocumentHistoryResponseDtoItemsItem } from "@lootlog/client/main";
 import { GuildDocEditor } from "../editor/guild-doc-editor";
 import { normalizeGuildDocEditorContent } from "../editor/guild-doc-editor-content";
 import { formatGuildDocDateTime } from "../docs-date-format";

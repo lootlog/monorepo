@@ -22,8 +22,8 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { toast } from "sonner";
-import { Permission } from "@lootlog/types";
-import { getApiErrorStatus } from "@lootlog/api-client/transport";
+import { Permission } from "@lootlog/schema/permissions";
+import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useToggleEventPin } from "@/features/guild/events/hooks/mutations/use-toggle-event-pin";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
@@ -34,8 +34,8 @@ import {
   getListEventsQueryKey,
   useDeleteEvent,
   useListEvents,
-} from "@lootlog/api-client/react-query/main/events";
-import type { EventListItemResponseDto } from "@lootlog/api-client/models/main/event-list-item-response-dto";
+} from "@lootlog/client/main";
+import type { EventListItemResponseDto } from "@lootlog/client/main";
 import type { Event } from "./types/api";
 import { cn } from "@lootlog/ui/lib/utils";
 import {

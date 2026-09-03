@@ -1,32 +1,10 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalEnv": [
-    "RABBITMQ_URI",
-    "ENV",
-    "PORT",
-    "HOSTNAME",
-    "REDIS_HOST",
-    "REDIS_PASSWORD",
-    "REDIS_PORT",
-    "REDIS_USERNAME",
-    "DISCORD_BOT_TOKEN",
-    "DISCORD_DEVELOPMENT_GUILD_ID",
-    "API_URL",
-    "SERVICE_NAME",
-    "R2_ACCESS_KEY_ID",
-    "R2_SECRET_ACCESS_KEY",
-    "R2_ENDPOINT",
-    "R2_REGION",
-    "R2_BUCKET_NAME",
-    "GOOGLE_TAG_ID",
-    "AUTH_SERVICE_URL"
-  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "env": ["GAME_CLIENT_URL"],
       "outputs": ["dist/**"]
     },
     "transit": {
@@ -36,6 +14,7 @@
       "dependsOn": ["transit"],
       "outputs": [],
       "inputs": [
+        "$TURBO_DEFAULT$",
         "src/**/*.ts",
         "src/**/*.tsx",
         "**/*.ts",
@@ -48,18 +27,13 @@
       "dependsOn": ["^build", "transit"],
       "outputs": [],
       "inputs": [
+        "$TURBO_DEFAULT$",
         "src/**/*.ts",
         "src/**/*.tsx",
         "**/*.ts",
         "**/*.tsx",
         "tsconfig.json"
       ]
-    },
-    "test:coverage:changed": {
-      "cache": false,
-      "dependsOn": ["test:coverage"],
-      "env": ["COVERAGE_BASE_REF"],
-      "outputs": []
     },
     "doctor": {
       "cache": false,
@@ -82,35 +56,16 @@
     "openapi:generate": {
       "dependsOn": ["^build"],
       "cache": false,
-      "passThroughEnv": [
-        "ADMIN_ACCOUNT_IDS",
-        "API_SERVICE_URL",
-        "APP_URL",
-        "AUTH_SECRET",
-        "COOKIE_DOMAIN",
-        "COOKIE_PREFIX",
-        "DISCORD_CLIENT_ID",
-        "DISCORD_CLIENT_SECRET",
-        "MAPS_API_URL",
-        "MEILISEARCH_API_KEY",
-        "MEILISEARCH_HOST",
-        "POSTGRESQL_CONNECTION_URI",
-        "POSTGRESQL_DATABASE",
-        "POSTGRESQL_HOST",
-        "POSTGRESQL_PASSWORD",
-        "POSTGRESQL_PORT",
-        "POSTGRESQL_USER",
-        "RESERVATIONS_CARDS_URL",
-        "TRUSTED_ORIGINS"
-      ],
       "outputs": ["openapi.yaml"]
     },
-    "api-client:generate": {
+    "client:generate": {
       "dependsOn": [
         "@lootlog/activity#openapi:generate",
         "@lootlog/api#openapi:generate",
         "@lootlog/auth#openapi:generate",
-        "@lootlog/battlelog-service#openapi:generate",
+        "@lootlog/battlelog#openapi:generate",
+        "@lootlog/discord-bot#openapi:generate",
+        "@lootlog/gateway#openapi:generate",
         "@lootlog/search#openapi:generate"
       ],
       "inputs": [
@@ -118,25 +73,17 @@
         "$TURBO_ROOT$/apps/activity/openapi.yaml",
         "$TURBO_ROOT$/apps/api/openapi.yaml",
         "$TURBO_ROOT$/apps/auth/openapi.yaml",
-        "$TURBO_ROOT$/apps/battlelog-service/openapi.yaml",
+        "$TURBO_ROOT$/apps/battlelog/openapi.yaml",
+        "$TURBO_ROOT$/apps/discord-bot/openapi.yaml",
+        "$TURBO_ROOT$/apps/gateway/openapi.yaml",
         "$TURBO_ROOT$/apps/search/openapi.yaml"
       ],
       "outputs": ["src/generated/**"]
     },
-    "api-client:check": {
+    "client:check": {
       "cache": false,
-      "dependsOn": ["api-client:generate"],
+      "dependsOn": ["client:generate"],
       "outputs": []
-    },
-    "test:coverage": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"],
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "vitest.config.*",
-        "tsconfig.json"
-      ]
     },
     "env:generate": {
       "cache": false,
@@ -146,6 +93,7 @@
       "dependsOn": ["^build"],
       "outputs": [],
       "inputs": [
+        "$TURBO_DEFAULT$",
         "src/**/*.ts",
         "src/**/*.tsx",
         "test/**/*.ts",
@@ -154,11 +102,18 @@
         "tsconfig.json"
       ]
     },
+    "test:integration": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
     "test:e2e": {
       "dependsOn": ["^build"],
       "cache": false,
       "outputs": [],
       "inputs": [
+        "$TURBO_DEFAULT$",
         "src/**/*.ts",
         "test/**/*.ts",
         "test/**/*.e2e-spec.ts",
@@ -178,6 +133,12 @@
       "cache": false
     },
     "db:migrate:init": {
+      "cache": false
+    },
+    "auth:migrate:plan": {
+      "cache": false
+    },
+    "auth:migrate:apply": {
       "cache": false
     },
     "db:pull": {

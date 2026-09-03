@@ -7,7 +7,7 @@ import {
   loadBattlePanelHeadToHeadSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { getBattlesControllerGetHeadToHeadQueryOptions } from "@lootlog/api-client/react-query/battlelog/battles";
+import { getBattlesControllerGetHeadToHeadQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(

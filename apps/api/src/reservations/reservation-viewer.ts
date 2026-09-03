@@ -1,11 +1,14 @@
-import { Permission } from "#src/generated/prisma/client";
+import {
+  Permission,
+  type Permission as PermissionValue,
+} from "@lootlog/schema/permissions";
 
 export type ReservationViewerContext = {
   guildId: string;
   userId: string;
   discordId: string;
   actorIsOwner: boolean;
-  permissions: Permission[];
+  permissions: PermissionValue[];
 };
 
 export function canModerateReservations(

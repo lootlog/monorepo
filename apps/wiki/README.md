@@ -29,10 +29,10 @@ Cloudflare credentials and deployment settings are managed by Cloudflare Workers
 Run commands from the repository root with a package filter:
 
 ```bash
-pnpm --filter @lootlog/wiki dev
-pnpm --filter @lootlog/wiki build
-pnpm --filter @lootlog/wiki test
-pnpm --filter @lootlog/wiki lint
+bun run --filter=@lootlog/wiki dev
+bun run --filter=@lootlog/wiki build
+bun run --filter=@lootlog/wiki test
+bun run --filter=@lootlog/wiki lint
 ```
 
 The app uses file-based TanStack Router routes under `src/routes`.
@@ -50,13 +50,13 @@ approval. The `lootlog-wiki-develop` integration deploys the same `main` commit 
 the `develop` Wrangler environment.
 
 Use `apps/wiki` as the Workers Builds root directory. TanStack Start emits the deployable Worker
-entrypoint during `pnpm run build`, so Wrangler must deploy the built server artifact while still
+entrypoint during `bun run build`, so Wrangler must deploy the built server artifact while still
 reading environment-specific settings from `wrangler.jsonc`.
 
 Production build settings:
 
 ```bash
-Build command: pnpm run build
+Build command: bun run build
 Deploy command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
 Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
 ```
@@ -64,7 +64,7 @@ Version command: npx wrangler versions upload dist/server/index.js --config wran
 Development build settings:
 
 ```bash
-Build command: pnpm run build
+Build command: bun run build
 Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client
 Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client
 ```
@@ -72,5 +72,5 @@ Version command: npx wrangler versions upload dist/server/index.js --config wran
 If Cloudflare binding types need to be refreshed, run:
 
 ```bash
-pnpm --filter @lootlog/wiki cloudflare:typegen
+bun run --filter=@lootlog/wiki cloudflare:typegen
 ```

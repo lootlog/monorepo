@@ -5,8 +5,8 @@ import {
   type MembersControllerGetGuildMembersSummaryQueryError,
   type MembersControllerGetGuildMembersSummaryQueryResult,
   useMembersControllerGetGuildMembersSummary,
-} from "@lootlog/api-client/react-query/main/members";
-import type { MembersControllerGetGuildMembersSummaryPathParameters } from "@lootlog/api-client/models/main/members-controller-get-guild-members-summary-path-parameters";
+  type MembersControllerGetGuildMembersSummaryPathParameters,
+} from "@lootlog/client/main";
 
 export const GUILD_MEMBERS_SUMMARY_STALE_TIME = 5 * 60 * 1000;
 export const GUILD_MEMBERS_SUMMARY_GC_TIME = 30 * 60 * 1000;

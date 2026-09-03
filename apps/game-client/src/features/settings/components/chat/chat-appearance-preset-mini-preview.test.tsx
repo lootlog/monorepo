@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
-  DEFAULT_NPC_TYPE_COLORS,
-} from "@lootlog/types";
+} from "@lootlog/schema/chat-appearance";
+import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { ChatAppearancePresetMiniPreview } from "./chat-appearance-preset-mini-preview";
 
 vi.mock("@/components/npc-tile", () => ({

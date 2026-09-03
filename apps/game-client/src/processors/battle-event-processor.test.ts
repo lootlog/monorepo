@@ -1460,7 +1460,7 @@ describe("BattleEventProcessor", () => {
 
 describe("TRACKABLE_NPC_TYPES", () => {
   it("should include correct NPC types", () => {
-    const trackableTypes = new Set([
+    const trackableTypes: ReadonlySet<NpcType> = new Set([
       NpcType.ELITE2,
       NpcType.ELITE3,
       NpcType.HERO,

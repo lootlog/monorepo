@@ -6,14 +6,14 @@ import {
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerQuickAddWatchedItem,
-} from "@lootlog/api-client/react-query/main/notifications";
-import type { CreateWatchedItemQuickAddDto } from "@lootlog/api-client/models/main/create-watched-item-quick-add-dto";
-import type { WatchedItemResponseDto } from "@lootlog/api-client/models/main/watched-item-response-dto";
+} from "@lootlog/client/main";
+import type { CreateWatchedItemQuickAddDto } from "@lootlog/client/main";
+import type { WatchedItemResponseDto } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, type PropsWithChildren } from "react";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
+import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
 
 type GuildWatchedItemsContextValue = {
   state: "loading" | "error" | "ready";

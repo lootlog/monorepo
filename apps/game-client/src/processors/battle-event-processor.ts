@@ -1,7 +1,7 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import { mergeBattleWarriorPatches } from "@/hooks/game-events/helpers/battle.helpers";
 import { useGameStore } from "@/store/game.store";
@@ -16,7 +16,7 @@ import { createKill, createBattle } from "@/api";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
-const TRACKABLE_NPC_TYPES = new Set([
+const TRACKABLE_NPC_TYPES: ReadonlySet<NpcType> = new Set([
   NpcType.ELITE2,
   NpcType.ELITE3,
   NpcType.HERO,

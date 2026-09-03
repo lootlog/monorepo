@@ -1,7 +1,7 @@
 import {
   eventsRankingControllerGetEventKillHistory,
   getEventsRankingControllerGetEventKillHistoryQueryKey,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import type { HeroKill, KillHistoryResponse } from "./use-hero-kill-history";
 import { useCursorInfiniteQuery } from "./use-cursor-infinite-query";
 

@@ -9,14 +9,14 @@
 
 ### Patch Changes
 
-- @lootlog/api-client@5.0.5
+- @lootlog/client@5.0.5
 
 ## 1.2.13
 
 ### Patch Changes
 
 - Updated dependencies [1f174e8]
-  - @lootlog/api-client@5.0.5
+  - @lootlog/client@5.0.5
 
 ## 1.2.12
 
@@ -30,7 +30,7 @@
 - Updated dependencies [bf625a4]
 - Updated dependencies [87c9155]
   - @lootlog/types@3.0.2
-  - @lootlog/api-client@5.0.4
+  - @lootlog/client@5.0.4
   - @lootlog/margonem@1.0.2
   - @lootlog/socket-parser@1.0.2
 
@@ -42,7 +42,7 @@
 - af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
 - Updated dependencies [f0a1338]
 - Updated dependencies [af13bc9]
-  - @lootlog/api-client@5.0.3
+  - @lootlog/client@5.0.3
   - @lootlog/margonem@1.0.2
   - @lootlog/socket-parser@1.0.2
   - @lootlog/types@3.0.1
@@ -53,7 +53,7 @@
 
 - Updated dependencies [008ef3f]
   - @lootlog/types@3.0.1
-  - @lootlog/api-client@5.0.2
+  - @lootlog/client@5.0.2
 
 ## 1.2.9
 
@@ -63,7 +63,7 @@
   dedicated backend API.
 - 2d1444b: Allow selecting a single timer NPC type by right-clicking its filter.
 - Updated dependencies [3a87411]
-  - @lootlog/api-client@5.0.1
+  - @lootlog/client@5.0.1
 
 ## 1.2.8
 
@@ -83,7 +83,7 @@
 - 4ae5fe2: Remove the development permission override UI, transport contract, and server-side permission substitution so all clients use the standard guild permission model.
 - Updated dependencies [321b96a]
 - Updated dependencies [4ae5fe2]
-  - @lootlog/api-client@5.0.0
+  - @lootlog/client@5.0.0
   - @lootlog/types@3.0.0
 
 ## 1.2.6
@@ -91,21 +91,21 @@
 ### Patch Changes
 
 - Updated dependencies [d782374]
-  - @lootlog/api-client@4.0.1
+  - @lootlog/client@4.0.1
 
 ## 1.2.5
 
 ### Patch Changes
 
 - Updated dependencies [ed13484]
-  - @lootlog/api-client@4.0.0
+  - @lootlog/client@4.0.0
 
 ## 1.2.4
 
 ### Patch Changes
 
 - Updated dependencies [c9e3ca1]
-  - @lootlog/api-client@3.0.1
+  - @lootlog/client@3.0.1
 
 ## 1.2.3
 
@@ -119,7 +119,7 @@
 
 - Updated dependencies [3e25d98]
   - @lootlog/types@2.0.2
-  - @lootlog/api-client@3.0.0
+  - @lootlog/client@3.0.0
 
 ## 1.2.1
 
@@ -132,7 +132,7 @@
 - Updated dependencies [5af6865]
 - Updated dependencies [5af6865]
 - Updated dependencies [25406a5]
-  - @lootlog/api-client@3.0.0
+  - @lootlog/client@3.0.0
   - @lootlog/margonem@1.0.2
   - @lootlog/socket-parser@1.0.2
   - @lootlog/types@2.0.1
@@ -149,7 +149,7 @@
 
 - 6defdc4: Preserve every inbound runtime packet, share one full-envelope game event processor across overlapping client registrations, deduplicate semantic battle replays, and harden battle creation retries after lock or raw-storage failures.
 - Updated dependencies [9096829]
-  - @lootlog/api-client@2.0.0
+  - @lootlog/client@2.0.0
   - @lootlog/types@2.0.0
 
 ## 1.1.1
@@ -158,7 +158,7 @@
 
 - 4b501b7: Prevent repeated Margonem events and equivalent battle submissions from creating duplicated battles or doubled combat statistics.
 - Updated dependencies [4b501b7]
-  - @lootlog/api-client@1.1.1
+  - @lootlog/client@1.1.1
 
 ## 1.1.0
 
@@ -171,7 +171,7 @@
 - bddc4c2: Polish server selector states when one or all accessible servers are hidden.
 - Updated dependencies [fee6e4d]
   - @lootlog/types@1.1.0
-  - @lootlog/api-client@1.1.0
+  - @lootlog/client@1.1.0
 
 ## 1.0.4
 
@@ -195,7 +195,7 @@
 
 - 785632e: Initialize automated version tracking for all workspace packages.
 - Updated dependencies [785632e]
-  - @lootlog/api-client@1.0.1
+  - @lootlog/client@1.0.1
   - @lootlog/margonem@1.0.1
   - @lootlog/socket-parser@1.0.1
   - @lootlog/types@1.0.1

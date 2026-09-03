@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { ChevronRight, Clock3, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ReservationSpotsResponseDtoItem } from "@lootlog/api-client/models/main/reservation-spots-response-dto-item";
+import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";

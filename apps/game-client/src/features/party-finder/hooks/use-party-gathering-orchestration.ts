@@ -1,17 +1,18 @@
 import { MessageType, type SendChatMessageOptions } from "@/api/chat.api";
 import { ActivePartyGatheringError } from "@/features/party-finder/active-party-gathering-error";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { useMessagingControllerSendNotification } from "@lootlog/api-client/react-query/main/messaging";
 import {
+  useMessagingControllerSendNotification,
   partyReadyRoomControllerGet,
   usePartyReadyRoomControllerCreate,
-} from "@lootlog/api-client/react-query/main/party-ready-room";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+} from "@lootlog/client/main";
+
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import {
   buildChatCharacterData,
   buildCurrentCharacterPayload,
 } from "@/lib/api/generated-helpers";
-import { isApiError } from "@lootlog/api-client/transport";
+import { isApiError } from "@lootlog/client/transport";
 import { useGameStore } from "@/store/game.store";
 import {
   selectOwnedReadyRoom,

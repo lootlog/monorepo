@@ -1,4 +1,7 @@
-import { RedisService } from "../../../../packages/nest-shared/src/redis/redis.service.js";
+import { vi } from "#test/bun-test";
+import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { Effect, Queue, Schema } from "effect";
+import { Redis } from "effect/unstable/persistence";
 
 type RedisCommandMock = ReturnType<
   typeof vi.fn<(...args: unknown[]) => unknown>
@@ -14,15 +17,28 @@ type RedisClientMock = {
 };
 
 const createRedisService = (client: RedisClientMock) => {
-  const service = new RedisService({
-    host: "localhost",
-    port: 6379,
-    prefix: "lootlog",
+  const redis = Redis.Redis.of({
+    send: <A>(command: string, ...args: ReadonlyArray<string>) =>
+      Effect.promise(
+        () =>
+          client[command.toLowerCase() as keyof RedisClientMock](
+            ...args,
+          ) as Promise<A>,
+      ),
+    subscribe: () => Queue.unbounded(),
+    eval:
+      (script) =>
+      (...parameters) =>
+        Effect.promise(
+          () =>
+            client.eval(
+              script.lua,
+              String(script.numberOfKeys(...parameters)),
+              ...parameters,
+            ) as Promise<unknown>,
+        ),
   });
-
-  (service as unknown as { client: RedisClientMock }).client = client;
-
-  return service;
+  return new RedisService(redis, { prefix: "lootlog" }, Effect.runPromise);
 };
 
 const redisCommandMock = (): RedisCommandMock =>
@@ -38,6 +54,9 @@ const createRedisClient = (): RedisClientMock => ({
 });
 
 describe("RedisService", () => {
+  const valueCodec = makeJsonCodec(Schema.Struct({ value: Schema.Number }));
+  const cachedCodec = makeJsonCodec(Schema.Struct({ cached: Schema.Boolean }));
+  const freshCodec = makeJsonCodec(Schema.Struct({ fresh: Schema.Boolean }));
   it("deletes pattern matches with SCAN batches instead of KEYS", async () => {
     const client = createRedisClient();
     client.scan
@@ -56,7 +75,7 @@ describe("RedisService", () => {
       "MATCH",
       "lootlog:timer:*",
       "COUNT",
-      500,
+      "500",
     );
     expect(client.scan).toHaveBeenNthCalledWith(
       2,
@@ -64,7 +83,7 @@ describe("RedisService", () => {
       "MATCH",
       "lootlog:timer:*",
       "COUNT",
-      500,
+      "500",
     );
     expect(client.del).toHaveBeenNthCalledWith(
       1,
@@ -94,7 +113,18 @@ describe("RedisService", () => {
     client.del.mockResolvedValueOnce(1);
     const service = createRedisService(client);
 
-    await expect(service.getJson("cache:key")).resolves.toBeNull();
+    await expect(service.getJson("cache:key", valueCodec)).resolves.toBeNull();
+
+    expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
+  });
+
+  it("removes syntactically valid cache values that violate their schema", async () => {
+    const client = createRedisClient();
+    client.get.mockResolvedValueOnce(JSON.stringify({ value: "not-a-number" }));
+    client.del.mockResolvedValueOnce(1);
+    const service = createRedisService(client);
+
+    await expect(service.getJson("cache:key", valueCodec)).resolves.toBeNull();
 
     expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
   });
@@ -113,6 +143,7 @@ describe("RedisService", () => {
       key: "cache:key",
       ttlSeconds: 60,
       factory,
+      codec: valueCodec,
     });
 
     expect(result).toEqual({ value: 1 });
@@ -122,7 +153,7 @@ describe("RedisService", () => {
       "lootlog:cache:key:single-flight",
       expect.any(String),
       "EX",
-      10,
+      "10",
       "NX",
     );
     expect(client.set).toHaveBeenNthCalledWith(
@@ -130,11 +161,11 @@ describe("RedisService", () => {
       "lootlog:cache:key",
       JSON.stringify({ value: 1 }),
       "EX",
-      60,
+      "60",
     );
     expect(client.eval).toHaveBeenCalledWith(
       expect.stringContaining('redis.call("get", KEYS[1]) == ARGV[1]'),
-      1,
+      "1",
       "lootlog:cache:key:single-flight",
       expect.any(String),
     );
@@ -155,6 +186,7 @@ describe("RedisService", () => {
       key: "cache:key",
       ttlSeconds: 60,
       factory,
+      codec: cachedCodec,
       waitIntervalMs: 0,
       waitTimeoutMs: 100,
     });
@@ -177,6 +209,7 @@ describe("RedisService", () => {
       key: "cache:key",
       ttlSeconds: 60,
       factory,
+      codec: freshCodec,
       onError,
     });
 
@@ -202,6 +235,7 @@ describe("RedisService", () => {
         key: "cache:key",
         ttlSeconds: 60,
         factory,
+        codec: freshCodec,
         onError,
       }),
     ).rejects.toThrow(factoryError);

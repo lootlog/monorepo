@@ -1,5 +1,5 @@
-import type { UserSoundSettings } from "@lootlog/types";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/api-client/react-query/main/sound-settings";
+import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { queryClient } from "@/lib/query-client";
 import { useSettingsStore } from "@/store/settings.store";

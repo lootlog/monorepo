@@ -26,8 +26,8 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
-import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
+} from "@lootlog/client/main";
+import type { NpcType } from "@lootlog/client/main";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
 import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";

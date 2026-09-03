@@ -1,6 +1,6 @@
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useEffect, useRef } from "react";
-import { partyReadyRoomControllerObserveParty } from "@lootlog/api-client/react-query/main/party-ready-room";
+import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
 import {
   selectOwnedReadyRoom,
   usePartyFinderStore,

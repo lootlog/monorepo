@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
-import type { MapPingType } from "@lootlog/types";
+import type { MapPingType } from "@lootlog/schema/map-ping";
 import {
   MAP_PING_WHEEL_RADIUS_PX,
   mapPingInteractionController,

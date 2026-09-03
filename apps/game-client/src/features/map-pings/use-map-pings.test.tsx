@@ -1,5 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
-import type { MapPingAck, MapPingEvent, MapPingType } from "@lootlog/types";
+import type {
+  MapPingAck,
+  MapPingEvent,
+  MapPingType,
+} from "@lootlog/schema/map-ping";
 import { GatewayEvent } from "@/config/gateway";
 import { useMapPings } from "./use-map-pings";
 import { useGameStore } from "@/store/game.store";

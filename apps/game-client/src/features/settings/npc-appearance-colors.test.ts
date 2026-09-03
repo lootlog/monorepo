@@ -1,10 +1,12 @@
 import {
   COMBAT_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
+} from "@lootlog/schema/npc-appearance";
+import {
   deriveNpcSurfaceColors,
   normalizeNpcTypeColors,
-  SETTINGS_CATALOG,
-} from "@lootlog/types";
+} from "@lootlog/domain/npc-appearance";
+import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { describe, expect, it } from "vitest";
 
 describe("NPC appearance colors", () => {

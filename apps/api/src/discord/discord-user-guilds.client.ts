@@ -6,18 +6,26 @@ import {
 } from "@discordjs/rest";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
-  HttpException,
-  Inject,
-  Injectable,
-  ServiceUnavailableException,
-  UnauthorizedException,
-  type OnModuleInit,
-} from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
+  ApplicationError,
+  DependencyUnavailableError,
+  AuthenticationRequiredError,
+} from "#src/shared/http/http-errors";
+import { RedisService } from "#src/redis/redis.service";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Routes, type APIGuild } from "discord-api-types/v10";
-import { ExecutionError } from "redlock";
+import { ExecutionError, RedlockService } from "#src/redis/redlock";
+import { Schema } from "effect";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
+
+const decodeFreshCompleteHandoff = Schema.decodeUnknownSync(
+  Schema.fromJsonString(
+    Schema.Struct({
+      guilds: Schema.Unknown,
+      fresh: Schema.Literal(true),
+      complete: Schema.Literal(true),
+    }),
+  ),
+);
 import {
   getFreshCompleteUserGuildsHandoffKey,
   getFreshCompleteUserGuildsLockKey,
@@ -27,13 +35,11 @@ import {
   getUserGuildsLockKey,
   isApiGuildArray,
 } from "./discord-cache.util.js";
-import { serviceConfig } from "#src/config/service.config";
-import { RedlockService } from "#src/lib/redlock/redlock.service";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {
   recordInvalidDiscordRequest,
-  toDiscordRequestException,
+  toDiscordRequestError,
   throwIfDiscordRateLimited,
 } from "./discord-error.util.js";
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
@@ -45,8 +51,7 @@ export interface FreshCompleteUserGuildsResult {
   complete: true;
 }
 
-@Injectable()
-export class DiscordUserGuildsClient implements OnModuleInit {
+export class DiscordUserGuildsClient {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
@@ -64,17 +69,18 @@ export class DiscordUserGuildsClient implements OnModuleInit {
   private readonly isLocal: boolean;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redlockService: RedlockService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
+    environment: RuntimeEnvironment,
   ) {
-    this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
+    this.isLocal = environment === RuntimeEnvironment.LOCAL;
   }
 
-  onModuleInit() {
+  initialize() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 3000,
     });
@@ -116,12 +122,12 @@ export class DiscordUserGuildsClient implements OnModuleInit {
           message: `Lock acquisition failed for getUserGuilds`,
           userId,
         });
-        throw new ServiceUnavailableException({
+        throw new DependencyUnavailableError({
           message: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
         });
       }
 
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
           message: `User authentication failed for userId: ${userId}`,
@@ -130,7 +136,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
         throw error;
       }
 
-      if (error instanceof HttpException) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
 
@@ -139,7 +145,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
         message: `Failed to fetch user guilds for userId: ${userId}`,
         error,
       });
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     } finally {
       await this.releaseLock(lock, {
         action: "getUserGuilds",
@@ -204,7 +210,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
         complete: true,
       };
     } catch (error: unknown) {
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
           message: `User authentication failed for userId: ${userId}`,
@@ -213,7 +219,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
         throw error;
       }
 
-      if (error instanceof HttpException) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
 
@@ -222,7 +228,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
         message: `Failed to fetch fresh user guilds for userId: ${userId}`,
         error,
       });
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     }
   }
 
@@ -261,7 +267,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
           message: "Fresh complete guild lookup is already in progress",
           userId,
         });
-        throw new ServiceUnavailableException({
+        throw new DependencyUnavailableError({
           message: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
         });
       }
@@ -308,13 +314,9 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     }
 
     try {
-      const parsed = JSON.parse(cached) as FreshCompleteUserGuildsResult;
-      if (
-        parsed.fresh === true &&
-        parsed.complete === true &&
-        isApiGuildArray(parsed.guilds)
-      ) {
-        return parsed;
+      const parsed = decodeFreshCompleteHandoff(cached);
+      if (isApiGuildArray(parsed.guilds)) {
+        return { guilds: parsed.guilds, fresh: true, complete: true };
       }
     } catch (error) {
       this.logger.log({
@@ -339,7 +341,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     }
 
     try {
-      const parsed = JSON.parse(cached) as unknown;
+      const parsed = decodeJsonUnknown(cached);
       if (isApiGuildArray(parsed)) {
         return parsed;
       }
@@ -427,7 +429,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
 
     const lastGuild = page[page.length - 1];
     if (!lastGuild || lastGuild.id === after) {
-      throw new ServiceUnavailableException({
+      throw new DependencyUnavailableError({
         message: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
       });
     }
@@ -473,7 +475,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
         );
       }
 
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     }
   }
 }

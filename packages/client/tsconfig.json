@@ -1,0 +1,10 @@
+{
+  "extends": "@lootlog/typescript-config/react-library.json",
+  "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "types": ["node", "bun"]
+  },
+  "include": ["src", "scripts", "orval.config.ts"]
+}

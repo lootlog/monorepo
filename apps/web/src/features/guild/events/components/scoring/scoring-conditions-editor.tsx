@@ -20,7 +20,7 @@ import {
   EVENT_SCORING_CONDITION_TYPES,
   type EventScoringCondition,
   type EventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import { getScoringConditionTypeLabel } from "../../utils/scoring-rule-labels";
 import { createDefaultScoringCondition } from "../../utils/scoring-condition-defaults";
 import { ScoringConditionNumeric } from "./scoring-condition-numeric";

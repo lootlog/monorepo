@@ -20,8 +20,8 @@ import {
   invalidateMapTemplatesControllerGetTemplates,
   useMapTemplatesControllerDeleteTemplate,
   useMapTemplatesControllerGetTemplates,
-} from "@lootlog/api-client/react-query/main/map-templates";
-import type { MapTemplateResponseDto } from "@lootlog/api-client/models/main/map-template-response-dto";
+} from "@lootlog/client/main";
+import type { MapTemplateResponseDto } from "@lootlog/client/main";
 
 export const MapTemplatesSettings = () => {
   const { t } = useTranslation();

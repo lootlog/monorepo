@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type {
   PartyReadyRoomOrganizerProjection,
   PartyReadyRoomParticipant,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
 import {
@@ -18,7 +18,8 @@ const resolveInvitationTargets =
   vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const inviteCharacterToParty = vi.fn();
 
-vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   partyReadyRoomControllerResolveInvitationTargets: (...args: unknown[]) =>
     resolveInvitationTargets(...args),
 }));

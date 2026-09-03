@@ -37,7 +37,8 @@ vi.mock("@/features/guild/reservations/get-reservation-error-message", () => ({
   getReservationErrorMessage: () => "Błąd",
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/reservation-sharing", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getListReservationSharesQueryKey: () => ["reservation-shares"],
   useListReservationShares: () => ({
     data: {

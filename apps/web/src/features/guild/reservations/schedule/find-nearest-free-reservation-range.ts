@@ -1,4 +1,4 @@
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import {
   ceilDateToReservationStep,
   floorDateToReservationStep,

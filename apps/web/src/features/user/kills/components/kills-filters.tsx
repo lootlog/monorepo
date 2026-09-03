@@ -15,7 +15,7 @@ import {
 import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
+} from "@lootlog/client/main";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,

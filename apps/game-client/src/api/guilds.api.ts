@@ -1,4 +1,4 @@
-import { createApiClient } from "@lootlog/api-client/transport";
+import { createApiClient } from "@lootlog/client/transport";
 import type { GameGuildMember } from "@/types/guild-member";
 
 export type Guild = {

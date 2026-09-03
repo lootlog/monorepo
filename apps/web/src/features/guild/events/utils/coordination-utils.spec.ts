@@ -7,7 +7,7 @@ import {
   getCoordinationStatusLabelKey,
   getCoveragePercentage,
 } from "./coordination-utils";
-import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
+import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/client/main";
 
 describe("coordination-utils", () => {
   it("maps priorities to stable UI tones and translation keys", () => {

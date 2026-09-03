@@ -23,15 +23,15 @@ import { useMemberGamePresence } from "@/features/guild/settings/members/use-mem
 import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
-import { useMembersControllerGetGuildMembers } from "@lootlog/api-client/react-query/main/members";
-import { useRolesControllerGetGuildRoles } from "@lootlog/api-client/react-query/main/roles";
+import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
+import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
+import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import type {
   GuildMember,
   MembersStats,
 } from "@/features/guild/settings/members/members.types";
 import { cn } from "@lootlog/ui/lib/utils";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";

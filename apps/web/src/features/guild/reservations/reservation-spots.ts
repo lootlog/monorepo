@@ -1,4 +1,4 @@
-import type { ReservationSpotsResponseDto } from "@lootlog/api-client/models/main/reservation-spots-response-dto";
+import type { ReservationSpotsResponseDto } from "@lootlog/client/main";
 import type { ReservationFilter } from "./reservation-filters";
 
 type ReservationSpot = ReservationSpotsResponseDto[number];

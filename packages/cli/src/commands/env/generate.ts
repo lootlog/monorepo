@@ -139,7 +139,7 @@ export const generate = async (args: string[]): Promise<void> => {
 ${chalk.bold("env generate - Generate environment files")}
 
 ${chalk.bold("Usage:")}
-  pnpm env generate [options]
+  bun run env:generate [options]
 
 ${chalk.bold("Options:")}
   -a, --auto              Automatically generate with smart defaults (default)
@@ -149,10 +149,10 @@ ${chalk.bold("Options:")}
   -h, --help              Show this help message
 
 ${chalk.bold("Examples:")}
-  pnpm env generate                      # Auto-generate with smart defaults
-  pnpm env generate --interactive        # Interactive mode
-  pnpm env generate --skip-existing      # Only create missing files
-  pnpm env generate --force              # Overwrite all files
+  bun run env:generate                      # Auto-generate with smart defaults
+  bun run env:generate --interactive        # Interactive mode
+  bun run env:generate --skip-existing      # Only create missing files
+  bun run env:generate --force              # Overwrite all files
 
 ${chalk.bold("Note:")}
   The CLI automatically discovers all .env.example files in the monorepo.

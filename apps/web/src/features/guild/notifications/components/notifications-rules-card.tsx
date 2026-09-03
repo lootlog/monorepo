@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
 import { NotificationRuleCard } from "./notification-rule-card";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/api-client/models/main/guild-notification-rules-response-dto";
+import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
 
 type NotificationsRulesCardProps = {
   rules: GuildNotificationRulesResponseDto["items"];

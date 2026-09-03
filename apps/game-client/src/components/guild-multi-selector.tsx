@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 

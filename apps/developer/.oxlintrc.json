@@ -5,8 +5,7 @@
     "**/dist",
     "**/build",
     "**/coverage",
-    "**/*.tsbuildinfo",
-    "**/pnpm-lock.yaml"
+    "**/*.tsbuildinfo"
   ],
   "env": {
     "browser": true,

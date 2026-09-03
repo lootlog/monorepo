@@ -1,0 +1,56 @@
+import { describe, expect, test } from "bun:test";
+import { RabbitExchange } from "@lootlog/protocol/rabbit/topology";
+import {
+  gatewayConsumerSpecs,
+  gatewayQueueDefinitions,
+} from "./rabbit-bridge.js";
+
+describe("Gateway RabbitMQ topology", () => {
+  test("keeps every legacy consumer queue unique", () => {
+    const names = gatewayConsumerSpecs.map((spec) => spec.queue);
+    expect(new Set(names).size).toBe(names.length);
+    expect(names).toContain("gateway-guilds-loots-create");
+    expect(names).toContain("gateway-presence-check-request");
+  });
+
+  test("installs retry and dead-letter queues for retryable deliveries", () => {
+    const lootRetry = gatewayQueueDefinitions.find(
+      (queue) => queue.name === "gateway-guilds-loots-create.retry",
+    );
+    const lootDlq = gatewayQueueDefinitions.find(
+      (queue) => queue.name === "gateway-guilds-loots-create.dlq",
+    );
+    expect(lootRetry?.exchange).toBe(RabbitExchange.RETRY);
+    expect(lootRetry?.messageTtl).toBe(30_000);
+    expect(lootDlq?.exchange).toBe(RabbitExchange.DEAD_LETTER);
+    for (const spec of gatewayConsumerSpecs) {
+      if (
+        spec.retryRoutingKey === undefined ||
+        spec.deadLetterRoutingKey === undefined
+      ) {
+        continue;
+      }
+      expect(
+        gatewayQueueDefinitions.some(
+          (queue) => queue.name === `${spec.queue}.dlq`,
+        ),
+      ).toBe(true);
+      expect(
+        gatewayQueueDefinitions.some(
+          (queue) => queue.name === `${spec.queue}.retry`,
+        ),
+      ).toBe(spec.installRetryQueue !== false);
+    }
+    expect(
+      gatewayQueueDefinitions.some(
+        (queue) =>
+          queue.name === "gateway-guilds-notifications-volunteer.retry",
+      ),
+    ).toBe(false);
+    expect(
+      gatewayQueueDefinitions.some(
+        (queue) => queue.name === "gateway-guilds-notifications-volunteer.dlq",
+      ),
+    ).toBe(true);
+  });
+});

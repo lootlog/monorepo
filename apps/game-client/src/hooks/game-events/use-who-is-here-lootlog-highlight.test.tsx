@@ -22,7 +22,8 @@ const mocks = vi.hoisted(() => ({
   getPlayersCatchingGuilds: vi.fn(),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/user-lootlog-config", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   userLootlogConfigControllerGetPlayersCatchingGuilds:
     mocks.getPlayersCatchingGuilds,
 }));

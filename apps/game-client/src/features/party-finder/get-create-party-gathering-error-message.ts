@@ -1,5 +1,5 @@
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { isApiError } from "@lootlog/api-client/transport";
+import { isApiError } from "@lootlog/client/transport";
 import { ActivePartyGatheringError } from "./active-party-gathering-error";
 
 export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {

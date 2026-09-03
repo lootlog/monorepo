@@ -1,0 +1,105 @@
+import { describe, expect, it, vi } from "#test/bun-test";
+import { Effect, Schema } from "effect";
+import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import {
+  makeReservationCatalogAdapter,
+  type ReservationCatalogCache,
+} from "./reservation-catalog.adapter.js";
+
+const makeHttpClient = (status: number, payload: unknown) =>
+  ({
+    get: () =>
+      Effect.succeed({
+        status,
+        headers: {},
+        arrayBuffer: Effect.succeed(
+          new TextEncoder().encode(JSON.stringify(payload)).buffer,
+        ),
+      }),
+  }) as unknown as HttpClientValue;
+
+const emptyCache = (): ReservationCatalogCache => ({
+  getJson: () => Effect.succeed(null),
+  setJson: vi.fn(() => Effect.succeed(undefined)),
+});
+
+const cacheWith = (value: unknown): ReservationCatalogCache => ({
+  getJson: (_key, schema) =>
+    Effect.sync(() => Schema.decodeUnknownSync(schema)(value)),
+  setJson: vi.fn(() => Effect.succeed(undefined)),
+});
+
+describe("reservation catalog Effect adapter", () => {
+  it("reads the normalized catalog representation written to the cache", async () => {
+    const cachedSpots = [
+      {
+        id: "titan-a",
+        name: "Titan A",
+        level: 120,
+        images: ["a.webp"],
+        maps: ["map-a"],
+      },
+    ];
+    const adapter = makeReservationCatalogAdapter({
+      cache: cacheWith(cachedSpots),
+      httpClient: makeHttpClient(500, null),
+      url: "http://catalog.test/cards",
+    });
+
+    expect(await Effect.runPromise(adapter.getSpots)).toEqual(cachedSpots);
+  });
+
+  it("rejects an invalid cached catalog instead of trusting its shape", async () => {
+    const adapter = makeReservationCatalogAdapter({
+      cache: cacheWith([{ id: "titan-a", name: "Titan A", level: -1 }]),
+      httpClient: makeHttpClient(500, null),
+      url: "http://catalog.test/cards",
+    });
+
+    await expect(Effect.runPromise(adapter.getSpots)).rejects.toThrow();
+  });
+
+  it("fetches, normalizes and caches the established payload", async () => {
+    const cache = emptyCache();
+    const adapter = makeReservationCatalogAdapter({
+      cache,
+      httpClient: makeHttpClient(200, {
+        data: {
+          "Titan A": {
+            lvl: "120",
+            images: ["a.webp"],
+            maps: ["map-a"],
+          },
+          "Titan  A": [
+            { lvl: -1, images: "invalid", maps: [] },
+            { lvl: 130, images: ["b.webp"], maps: ["map-b"] },
+          ],
+        },
+      }),
+      url: "http://catalog.test/cards",
+    });
+
+    expect(await Effect.runPromise(adapter.getSpots)).toEqual([
+      {
+        id: "titan-a",
+        name: "Titan A",
+        level: 130,
+        images: ["a.webp", "b.webp"],
+        maps: ["map-a", "map-b"],
+      },
+    ]);
+    expect(cache.setJson).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails closed on a non-success catalog response", async () => {
+    const adapter = makeReservationCatalogAdapter({
+      cache: emptyCache(),
+      httpClient: makeHttpClient(503, null),
+      url: "http://catalog.test/cards",
+    });
+
+    await expect(Effect.runPromise(adapter.getSpots)).rejects.toThrow(
+      "Reservation catalog request failed: 503",
+    );
+  });
+});

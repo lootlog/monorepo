@@ -19,7 +19,7 @@ copy.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/landing dev
+bun run --filter=@lootlog/landing dev
 ```
 
 The development server uses port `3003`.
@@ -27,11 +27,12 @@ The development server uses port `3003`.
 ## Checks
 
 ```bash
-pnpm --filter @lootlog/landing build
-pnpm --filter @lootlog/landing lint
-pnpm --filter @lootlog/landing typecheck
-pnpm --filter @lootlog/landing test
+bun run --filter=@lootlog/landing build
+bun run --filter=@lootlog/landing lint
+bun run --filter=@lootlog/landing typecheck
+bun run --filter=@lootlog/landing test
 ```
 
 The app prerenders its public routes to `dist/client` for Cloudflare Pages.
-Published content changes require a Changeset.
+Merges deploy affected development targets. Production deploys select an
+immutable commit in the Release workflow.

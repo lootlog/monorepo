@@ -1,28 +1,34 @@
 openapi: 3.0.0
+info:
+  title: Search API
+  version: "1.0"
+  description: Meilisearch-powered search microservice
+  contact: {}
 paths:
   /healthz:
     get:
-      description: Check the health status of the search service
+      tags:
+        - health
       operationId: HealthzController_healthCheck
       parameters: []
       responses:
         "200":
           description: Search service is healthy
+      description: Check the health status of the search service
       summary: Health check
-      tags:
-        - health
   /players:
     get:
+      tags:
+        - Players
       operationId: PlayersController_getPlayers
       parameters:
         - name: limit
-          required: false
           in: query
           schema:
-            default: 10
             type: number
-        - name: search
+            default: 10
           required: false
+        - name: search
           in: query
           schema:
             anyOf:
@@ -30,11 +36,12 @@ paths:
               - type: array
                 items:
                   type: string
-        - name: world
           required: false
+        - name: world
           in: query
           schema:
             type: string
+          required: false
       responses:
         "200":
           description: List of matching players
@@ -45,14 +52,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/PlayerHitDto_Output"
       summary: Search players by name
-      tags:
-        - Players
   /npcs:
     get:
+      tags:
+        - NPCs
       operationId: NpcsController_getNpcs
       parameters:
         - name: ids
-          required: false
           in: query
           schema:
             type: array
@@ -60,14 +66,14 @@ paths:
               type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-        - name: limit
           required: false
+        - name: limit
           in: query
           schema:
-            default: 10
             type: number
-        - name: search
+            default: 10
           required: false
+        - name: search
           in: query
           schema:
             anyOf:
@@ -75,11 +81,12 @@ paths:
               - type: array
                 items:
                   type: string
-        - name: world
           required: false
+        - name: world
           in: query
           schema:
             type: string
+          required: false
       responses:
         "200":
           description: List of matching NPCs
@@ -90,63 +97,63 @@ paths:
                 items:
                   $ref: "#/components/schemas/NpcHitDto_Output"
       summary: Search NPCs by name
-      tags:
-        - NPCs
   /items:
     get:
+      tags:
+        - Items
       operationId: ItemsController_getItems
       parameters:
         - name: limit
-          required: false
           in: query
           schema:
+            type: number
             default: 20
-            type: number
+          required: false
         - name: offset
-          required: false
           in: query
           schema:
-            default: 0
             type: number
+            default: 0
+          required: false
         - name: search
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
-        - name: filter
           required: false
+        - name: filter
           in: query
-          style: form
-          explode: true
           schema:
             anyOf:
               - type: string
               - type: array
                 items:
                   type: string
+          required: false
+          style: form
+          explode: true
         - name: facets
-          required: false
           in: query
-          style: form
-          explode: true
           schema:
             type: array
             items:
               type: string
+          required: false
+          style: form
+          explode: true
         - name: sort
-          required: false
           in: query
-          style: form
-          explode: true
           schema:
             type: array
             items:
               type: string
+          required: false
+          style: form
+          explode: true
       responses:
         "200":
           description: Item search results
@@ -155,28 +162,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchItemsResponseDto_Output"
       summary: Search items with filters, sorting, and facets
-      tags:
-        - Items
   /all:
     get:
+      tags:
+        - All
       operationId: AllController_searchAll
       parameters:
         - name: limit
-          required: false
           in: query
           schema:
-            default: 10
             type: number
+            default: 10
+          required: false
         - name: search
-          required: false
           in: query
           schema:
             type: string
+          required: false
         - name: world
-          required: false
           in: query
           schema:
             type: string
+          required: false
       responses:
         "200":
           description: Aggregated search results across items, players, and NPCs
@@ -185,15 +192,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchAllResponseDto_Output"
       summary: Search across all categories
-      tags:
-        - All
-info:
-  title: Search API
-  description: Meilisearch-powered search microservice
-  version: "1.0"
-  contact: {}
-tags: []
-servers: []
 components:
   schemas:
     PlayerHitDto_Output:
@@ -282,21 +280,21 @@ components:
               icon:
                 type: string
               stat:
-                default: ""
                 type: string
+                default: ""
               lvl:
                 type: number
               rarity:
-                type: string
                 nullable: true
+                type: string
               type:
-                type: string
                 nullable: true
+                type: string
               worlds:
-                default: []
                 type: array
                 items:
                   type: string
+                default: []
             required:
               - id
               - name
@@ -311,14 +309,13 @@ components:
           type: number
         facetDistribution:
           type: object
-          default: {}
           additionalProperties:
             type: object
             additionalProperties:
               type: number
+          default: {}
         facetStats:
           type: object
-          default: {}
           additionalProperties:
             type: object
             properties:
@@ -329,6 +326,7 @@ components:
             required:
               - min
               - max
+          default: {}
       required:
         - hits
         - estimatedTotalHits
@@ -350,21 +348,21 @@ components:
               icon:
                 type: string
               stat:
-                default: ""
                 type: string
+                default: ""
               lvl:
                 type: number
               rarity:
-                type: string
                 nullable: true
+                type: string
               type:
-                type: string
                 nullable: true
+                type: string
               worlds:
-                default: []
                 type: array
                 items:
                   type: string
+                default: []
             required:
               - id
               - name
@@ -455,3 +453,5 @@ components:
         - players
         - npcs
       description: Aggregated search results
+tags: []
+servers: []

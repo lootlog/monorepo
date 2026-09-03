@@ -1,0 +1,31 @@
+name: Setup Bun workspace
+description: Install the pinned Bun version, restore caches and install dependencies
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.4.0
+
+    - name: Restore Bun packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.bun/install/cache
+        key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+        restore-keys: bun-${{ runner.os }}-
+
+    - name: Restore Turbo cache
+      uses: actions/cache@v5
+      with:
+        path: .turbo
+        key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-${{ github.ref_name }}-
+          turbo-${{ runner.os }}-main-
+          turbo-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install --frozen-lockfile

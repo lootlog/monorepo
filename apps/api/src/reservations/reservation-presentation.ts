@@ -1,4 +1,34 @@
-import type { Guild, Reservation } from "#src/generated/prisma/client";
+import type {
+  guildTable,
+  reservationTable,
+} from "#src/database/drizzle/schema";
+
+type Guild = typeof guildTable.$inferSelect;
+type Reservation = typeof reservationTable.$inferSelect;
+
+type DiscordGuildIcon =
+  | { readonly kind: "hash"; readonly value: string }
+  | { readonly kind: "cdn-url"; readonly value: string };
+
+const parseDiscordGuildIcon = (
+  guildId: string,
+  storedIcon: string | null,
+): DiscordGuildIcon | null => {
+  if (!storedIcon) return null;
+  if (!storedIcon.startsWith("https://")) {
+    return { kind: "hash", value: storedIcon };
+  }
+  try {
+    const url = new URL(storedIcon);
+    const isDiscordCdn = url.hostname === "cdn.discordapp.com";
+    const belongsToGuild = url.pathname.startsWith(`/icons/${guildId}/`);
+    return isDiscordCdn && belongsToGuild
+      ? { kind: "cdn-url", value: url.toString() }
+      : null;
+  } catch {
+    return null;
+  }
+};
 
 export type ReservationWithGuild = Reservation & {
   guild: Pick<
@@ -17,12 +47,12 @@ export type ReservationWithGuild = Reservation & {
 export function getGuildIconUrl(
   guild: Pick<Guild, "id" | "icon">,
 ): string | null {
-  if (!guild.icon) {
-    return null;
-  }
+  const icon = parseDiscordGuildIcon(guild.id, guild.icon);
+  if (!icon) return null;
+  if (icon.kind === "cdn-url") return icon.value;
 
-  const extension = guild.icon.startsWith("a_") ? "gif" : "webp";
-  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${extension}?size=128`;
+  const extension = icon.value.startsWith("a_") ? "gif" : "webp";
+  return `https://cdn.discordapp.com/icons/${guild.id}/${icon.value}.${extension}?size=128`;
 }
 
 export function getDiscordAvatarUrl(

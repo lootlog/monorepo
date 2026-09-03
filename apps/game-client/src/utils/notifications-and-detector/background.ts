@@ -1,10 +1,10 @@
 import { NpcType } from "@/api/npcs.api";
 import {
   DEFAULT_NPC_TYPE_COLORS,
-  deriveNpcSurfaceColors,
   isCombatNpcType,
   type NpcTypeColors,
-} from "@lootlog/types";
+} from "@lootlog/schema/npc-appearance";
+import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
 
 const TEXT_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.COLOSSUS]: "rgba(33, 131, 128, 1)",

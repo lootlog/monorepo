@@ -19,7 +19,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { cn } from "@lootlog/ui/lib/utils";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   Avatar,
   AvatarFallback,

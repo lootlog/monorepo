@@ -1,6 +1,6 @@
 import { cn } from "@lootlog/ui/lib/utils";
-import { Permission } from "@lootlog/types";
-import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
+import { Permission } from "@lootlog/schema/permissions";
+import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 
 export type MemberOnlineSource = "web" | "game";

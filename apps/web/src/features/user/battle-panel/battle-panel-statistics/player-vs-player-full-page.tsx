@@ -25,7 +25,7 @@ import {
   resetBattlePanelCursorPagination,
   type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { useBattlesControllerGetPlayerVsPlayerBattles } from "@lootlog/api-client/react-query/battlelog/battles";
+import { useBattlesControllerGetPlayerVsPlayerBattles } from "@lootlog/client/battlelog";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
@@ -39,7 +39,7 @@ import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import type { PlayerVsPlayerPaginatedResponseDtoOutput } from "@lootlog/api-client/models/battlelog/player-vs-player-paginated-response-dto-output";
+import type { PlayerVsPlayerPaginatedResponseDtoOutput } from "@lootlog/client/battlelog";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
 
