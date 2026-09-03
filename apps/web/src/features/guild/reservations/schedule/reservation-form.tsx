@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { toast } from "sonner";
 import {
   getListReservationSpotsQueryKey,
   getListSpotReservationsQueryKey,
   useCreateReservation,
-} from "@lootlog/api-client/react-query/main/reservations";
-import { useNotificationsUserControllerGetUserTargets } from "@lootlog/api-client/react-query/main/notifications";
+} from "@lootlog/client/main";
+import { useNotificationsUserControllerGetUserTargets } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import { Label } from "@lootlog/ui/components/label";

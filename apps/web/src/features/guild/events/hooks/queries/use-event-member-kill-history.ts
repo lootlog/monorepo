@@ -1,7 +1,7 @@
 import {
   eventsRankingControllerGetMemberKillHistory,
   getEventsRankingControllerGetMemberKillHistoryQueryKey,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import type {
   HeroKillHeroNpc,
   KillParticipant,

@@ -1,10 +1,11 @@
 import {
   messagingControllerSendNotification,
   messagingControllerVolunteer,
-} from "@lootlog/api-client/react-query/main/messaging";
-import type { CreateNotificationDto } from "@lootlog/api-client/models/main/create-notification-dto";
-import type { CreateVolunteerDto } from "@lootlog/api-client/models/main/create-volunteer-dto";
-import type { NotificationResponseDtoOutput } from "@lootlog/api-client/models/main/notification-response-dto-output";
+  type CreateNotificationDto,
+  type CreateVolunteerDto,
+  type NotificationResponseDtoOutput,
+} from "@lootlog/client/main";
+
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 

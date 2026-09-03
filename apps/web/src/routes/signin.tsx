@@ -5,12 +5,18 @@ import { SigninPageSkeleton } from "@/features/signin/signin-page-skeleton";
 
 const validateSigninSearch = (
   search: Record<string, unknown>,
-): { redirect?: string } => {
+): { error?: string; redirect?: string } => {
+  const validatedSearch: { error?: string; redirect?: string } = {};
+
   if (typeof search.redirect === "string") {
-    return { redirect: search.redirect };
+    validatedSearch.redirect = search.redirect;
   }
 
-  return {};
+  if (typeof search.error === "string") {
+    validatedSearch.error = search.error;
+  }
+
+  return validatedSearch;
 };
 
 export const Route = createFileRoute("/signin")({
@@ -20,7 +26,7 @@ export const Route = createFileRoute("/signin")({
   beforeLoad: async ({ context, search }) => {
     const session = await context.queryClient.fetchQuery(sessionQueryOptions);
 
-    if (session?.data?.session) {
+    if (session?.data?.session && !search.error) {
       throw redirect({
         to: search.redirect ?? "/",
       });

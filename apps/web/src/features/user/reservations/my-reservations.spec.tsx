@@ -17,7 +17,8 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/reservations", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getListMyReservationsQueryKey: () => ["my-reservations"],
   useDeleteMyReservation: () => ({ isPending: false, mutate: vi.fn() }),
   useListMyReservations: mocks.useListMyReservations,

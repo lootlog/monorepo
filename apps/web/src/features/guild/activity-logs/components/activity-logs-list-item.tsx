@@ -17,14 +17,14 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { PlayerTile } from "@/components/tiles";
-import type { PaginatedActivitiesResponseDtoDataItem } from "@lootlog/api-client/models/activity/paginated-activities-response-dto-data-item";
+import type { PaginatedActivitiesResponseDtoDataItem } from "@lootlog/client/activity";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMembersControllerGetGuildMemberReferences } from "@lootlog/api-client/react-query/main/members";
+import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
 
 type Props = {
   activity: PaginatedActivitiesResponseDtoDataItem;

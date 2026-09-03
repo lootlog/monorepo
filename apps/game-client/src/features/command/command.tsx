@@ -5,7 +5,7 @@ import { useGameStore } from "@/store/game.store";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import { CommandActions } from "./components/command-actions";
 import {
   CommandSuggestions,

@@ -15,7 +15,7 @@ import {
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 import { cn } from "@/lib/utils";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyStore } from "@/store/party.store";
@@ -134,6 +134,7 @@ export const OnlinePlayersAccountListEntry: FC<
   const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
   const heroName = useGameStore((state) => state.game?.hero.name);
   const heroClanId = useGameStore((state) => state.game?.hero.clan?.id);
+  const currentMapName = useGameStore((state) => state.game?.map.name);
   const gameInterface = useGameStore((state) => state.game?.interface);
   const isPartyMember = usePartyStore(
     (state) =>
@@ -169,6 +170,10 @@ export const OnlinePlayersAccountListEntry: FC<
     isPartyMember,
     isSameClan,
   });
+  const visibleLocationName =
+    isSelf && !player?.location?.map && !presence.mapName && currentMapName
+      ? currentMapName
+      : locationName;
   const memberName = guildMember?.name ?? t("member.unknown");
 
   const handleInviteToParty = () => {
@@ -230,7 +235,7 @@ export const OnlinePlayersAccountListEntry: FC<
                       ) : null}
                     </span>
                     <span className="ll:text-[10px] ll:text-gray-400 ll:truncate">
-                      {locationName} • {world}
+                      {visibleLocationName} • {world}
                     </span>
                   </span>
                 </span>

@@ -16,8 +16,8 @@ import {
   getMembersControllerGetGuildMembersQueryKey,
   getMembersControllerGetMemberLootlogConfigSummaryQueryKey,
   useMembersControllerDeactivateMember,
-} from "@lootlog/api-client/react-query/main/members";
-import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
+} from "@lootlog/client/main";
+import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserX } from "lucide-react";

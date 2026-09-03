@@ -1,0 +1,21 @@
+DO $$ BEGIN CREATE TYPE "ActivityType" AS ENUM ('CONNECT_EVENT', 'DISCONNECT_EVENT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE "ActivitySource" AS ENUM ('GAME', 'WEB_APP'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS "ActivityActorSnapshot" ("id" TEXT PRIMARY KEY, "accountId" INTEGER NOT NULL, "characterId" INTEGER NOT NULL, "clanName" TEXT, "icon" TEXT NOT NULL, "lvl" INTEGER NOT NULL, "source" "ActivitySource" NOT NULL, "fingerprint" TEXT NOT NULL, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "clanId" INTEGER, "name" TEXT NOT NULL, "prof" TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS "ActivityActorSnapshot_fingerprint_key" ON "ActivityActorSnapshot" ("fingerprint");
+CREATE TABLE IF NOT EXISTS "Activity" ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "guildId" TEXT NOT NULL, "discordId" TEXT NOT NULL, "type" "ActivityType" NOT NULL, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "source" "ActivitySource" NOT NULL, "details" JSONB, "actorSnapshotId" TEXT, "world" TEXT, "idempotencyKey" TEXT NOT NULL, CONSTRAINT "Activity_pkey" PRIMARY KEY ("id", "createdAt"), CONSTRAINT "Activity_actorSnapshotId_fkey" FOREIGN KEY ("actorSnapshotId") REFERENCES "ActivityActorSnapshot"("id") ON DELETE SET NULL ON UPDATE CASCADE);
+CREATE UNIQUE INDEX IF NOT EXISTS "Activity_idempotencyKey_createdAt_key" ON "Activity" ("idempotencyKey", "createdAt");
+CREATE INDEX IF NOT EXISTS "Activity_createdAt_guildId_idx" ON "Activity" ("createdAt" DESC, "guildId");
+CREATE INDEX IF NOT EXISTS "Activity_createdAt_userId_idx" ON "Activity" ("createdAt" DESC, "userId");
+CREATE INDEX IF NOT EXISTS "Activity_createdAt_type_idx" ON "Activity" ("createdAt" DESC, "type");
+CREATE INDEX IF NOT EXISTS "Activity_guildId_createdAt_idx" ON "Activity" ("guildId", "createdAt" DESC);
+CREATE TABLE IF NOT EXISTS "MemberActivityStats" ("guildId" TEXT NOT NULL, "discordId" TEXT NOT NULL, "source" "ActivitySource" NOT NULL, "lastSeenAt" TIMESTAMPTZ, "visitCount" INTEGER NOT NULL DEFAULT 0, "activeSessionCount" INTEGER NOT NULL DEFAULT 0, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMPTZ NOT NULL, CONSTRAINT "MemberActivityStats_pkey" PRIMARY KEY ("guildId", "discordId", "source"));
+CREATE INDEX IF NOT EXISTS "MemberActivityStats_guildId_source_idx" ON "MemberActivityStats" ("guildId", "source");
+CREATE TABLE IF NOT EXISTS "MemberActivitySession" ("guildId" TEXT NOT NULL, "discordId" TEXT NOT NULL, "source" "ActivitySource" NOT NULL, "sessionId" TEXT NOT NULL, "userId" TEXT, "userAgent" TEXT, "world" TEXT, "connectedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "lastSeenAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "MemberActivitySession_pkey" PRIMARY KEY ("guildId", "discordId", "source", "sessionId"));
+CREATE INDEX IF NOT EXISTS "MemberActivitySession_guildId_discordId_source_idx" ON "MemberActivitySession" ("guildId", "discordId", "source");
+CREATE INDEX IF NOT EXISTS "MemberActivitySession_guildId_source_idx" ON "MemberActivitySession" ("guildId", "source");
+CREATE INDEX IF NOT EXISTS "MemberActivitySession_lastSeenAt_idx" ON "MemberActivitySession" ("lastSeenAt");
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+SELECT create_hypertable('"Activity"', 'createdAt', chunk_time_interval => INTERVAL '1 day', migrate_data => TRUE, if_not_exists => TRUE, create_default_indexes => FALSE);
+SELECT remove_retention_policy('"Activity"', if_exists => TRUE);
+SELECT add_retention_policy('"Activity"', INTERVAL '7 days', if_not_exists => TRUE);

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NotificationRuleFormPage } from "@/features/guild/notifications/notification-rule-form-page";
 import { NotificationCreateSkeleton } from "@/features/guild/notifications/notification-create-skeleton";
-import { getRolesControllerGetGuildRolesQueryOptions } from "@lootlog/api-client/react-query/main/roles";
+import { getRolesControllerGetGuildRolesQueryOptions } from "@lootlog/client/main";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(

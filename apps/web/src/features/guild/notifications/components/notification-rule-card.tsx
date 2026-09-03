@@ -21,9 +21,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-interval-type";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/api-client/models/main/guild-notification-rules-response-dto";
+import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
+import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
 import {
   getGuildNotificationRuleNpcCount,
   getGuildNotificationRuleScheduleTranslationKey,
@@ -43,7 +43,7 @@ import {
   useNotificationsGuildControllerDeleteGuildRule,
   useNotificationsGuildControllerRebuildGuildRuleJobs,
   useNotificationsGuildControllerTriggerGuildRuleTest,
-} from "@lootlog/api-client/react-query/main/notifications";
+} from "@lootlog/client/main";
 
 type NotificationRuleCardProps = {
   rule: GuildNotificationRulesResponseDto["items"][number];

@@ -1,92 +1,80 @@
-import { Injectable } from "@nestjs/common";
-import { Context, On, type ContextOf } from "necord";
-import { Events } from "discord.js";
-import { DiscordSyncService } from "#src/bot/discord-sync.service";
+import { Events, type Client, type GuildBasedChannel } from "discord.js";
+import { Effect } from "effect";
+import type { DiscordSync } from "#src/bot/discord-sync.service";
 
-@Injectable()
-export class BotDiscordEventsHandler {
-  constructor(private readonly discordSyncService: DiscordSyncService) {}
+type RunEvent = (event: Effect.Effect<void>) => unknown;
 
-  @On(Events.ClientReady)
-  public async handleReady(@Context() [client]: ContextOf<Events.ClientReady>) {
-    await this.discordSyncService.handleClientReady(client);
-  }
+const runEvent = (run: RunEvent, event: Effect.Effect<void, unknown>) =>
+  run(
+    event.pipe(
+      Effect.catchCause((cause) =>
+        Effect.logError("Discord event synchronization failed", cause),
+      ),
+    ),
+  );
 
-  @On(Events.GuildCreate)
-  public async handleGuildCreate(
-    @Context() [guild]: ContextOf<Events.GuildCreate>,
-  ) {
-    await this.discordSyncService.handleGuildCreate(guild);
-  }
-
-  @On(Events.GuildUpdate)
-  public async handleGuildUpdate(
-    @Context() [oldGuild, newGuild]: ContextOf<Events.GuildUpdate>,
-  ) {
-    await this.discordSyncService.handleGuildUpdate(oldGuild, newGuild);
-  }
-
-  @On(Events.GuildDelete)
-  async handleGuildDelete(@Context() [guild]: ContextOf<Events.GuildDelete>) {
-    await this.discordSyncService.handleGuildDelete(guild);
-  }
-
-  @On(Events.GuildRoleCreate)
-  async handleGuildRoleCreate(
-    @Context() [role]: ContextOf<Events.GuildRoleCreate>,
-  ) {
-    await this.discordSyncService.handleGuildRoleCreate(role);
-  }
-
-  @On(Events.GuildRoleUpdate)
-  async handleGuildRoleUpdate(
-    @Context() [oldRole, newRole]: ContextOf<Events.GuildRoleUpdate>,
-  ) {
-    await this.discordSyncService.handleGuildRoleUpdate(oldRole, newRole);
-  }
-
-  @On(Events.GuildRoleDelete)
-  async handleGuildRoleDelete(
-    @Context() [role]: ContextOf<Events.GuildRoleDelete>,
-  ) {
-    await this.discordSyncService.handleGuildRoleDelete(role);
-  }
-
-  @On(Events.ChannelCreate)
-  async handleChannelCreate(
-    @Context() [channel]: ContextOf<Events.ChannelCreate>,
-  ) {
-    if (!channel.guild) {
-      return;
-    }
-
-    await this.discordSyncService.handleChannelCreate(channel);
-  }
-
-  @On(Events.ChannelUpdate)
-  async handleChannelUpdate(
-    @Context() [oldChannel, newChannel]: ContextOf<Events.ChannelUpdate>,
-  ) {
+export const registerDiscordEventHandlers = (
+  client: Client,
+  sync: DiscordSync,
+  run: RunEvent,
+): void => {
+  client.on(
+    Events.ClientReady,
+    (readyClient) => void runEvent(run, sync.handleClientReady(readyClient)),
+  );
+  client.on(
+    Events.GuildCreate,
+    (guild) => void runEvent(run, sync.handleGuildCreate(guild)),
+  );
+  client.on(
+    Events.GuildUpdate,
+    (oldGuild, newGuild) =>
+      void runEvent(run, sync.handleGuildUpdate(oldGuild, newGuild)),
+  );
+  client.on(
+    Events.GuildDelete,
+    (guild) => void runEvent(run, sync.handleGuildDelete(guild)),
+  );
+  client.on(
+    Events.GuildRoleCreate,
+    (role) => void runEvent(run, sync.handleGuildRoleCreate(role)),
+  );
+  client.on(
+    Events.GuildRoleUpdate,
+    (oldRole, newRole) =>
+      void runEvent(run, sync.handleGuildRoleUpdate(oldRole, newRole)),
+  );
+  client.on(
+    Events.GuildRoleDelete,
+    (role) => void runEvent(run, sync.handleGuildRoleDelete(role)),
+  );
+  client.on(Events.ChannelCreate, (channel) => {
+    if ("guild" in channel && channel.guild)
+      void runEvent(
+        run,
+        sync.handleChannelCreate(channel as GuildBasedChannel),
+      );
+  });
+  client.on(Events.ChannelUpdate, (oldChannel, newChannel) => {
     if (
-      !("guild" in oldChannel) ||
-      !oldChannel.guild ||
-      !("guild" in newChannel) ||
-      !newChannel.guild
-    ) {
-      return;
-    }
-
-    await this.discordSyncService.handleChannelUpdate(oldChannel, newChannel);
-  }
-
-  @On(Events.ChannelDelete)
-  async handleChannelDelete(
-    @Context() [channel]: ContextOf<Events.ChannelDelete>,
-  ) {
-    if (!("guild" in channel) || !channel.guild) {
-      return;
-    }
-
-    await this.discordSyncService.handleChannelDelete(channel);
-  }
-}
+      "guild" in oldChannel &&
+      oldChannel.guild &&
+      "guild" in newChannel &&
+      newChannel.guild
+    )
+      void runEvent(
+        run,
+        sync.handleChannelUpdate(
+          oldChannel as GuildBasedChannel,
+          newChannel as GuildBasedChannel,
+        ),
+      );
+  });
+  client.on(Events.ChannelDelete, (channel) => {
+    if ("guild" in channel && channel.guild)
+      void runEvent(
+        run,
+        sync.handleChannelDelete(channel as GuildBasedChannel),
+      );
+  });
+};

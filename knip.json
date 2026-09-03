@@ -4,14 +4,7 @@
     ".": {
       "entry": ["tools/**/*.{js,mjs}"],
       "project": ["tools/**/*.{js,mjs}"],
-      "ignoreDependencies": [
-        "@nestjs/common",
-        "@nestjs/core",
-        "@nestjs/microservices",
-        "@nestjs/swagger",
-        "k6",
-        "zod"
-      ]
+      "ignoreDependencies": ["k6", "zod"]
     },
     "apps/*": {
       "entry": [
@@ -64,17 +57,18 @@
     }
   },
   "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
+  "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
     "@lootlog/ui",
-    "@prisma/client",
     "@tailwindcss/postcss",
     "@types/mdx",
+    "husky",
     "tailwindcss",
     "tw-animate-css"
   ],
-  "ignoreBinaries": ["k6"],
+  "ignoreBinaries": ["jq", "k6"],
   "vite": true,
   "vitest": true
 }

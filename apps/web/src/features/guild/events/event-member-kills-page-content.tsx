@@ -10,7 +10,7 @@ import {
   getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { MemberKillsFilter } from "./components/member-kills/member-kills-filter";
 import { MemberKillsList } from "./components/member-kills/member-kills-list";

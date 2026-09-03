@@ -60,7 +60,6 @@ packages/
 ├── datetime/            Shared date and time utilities
 ├── instrumentation/     Observability setup
 ├── margonem/            Margonem domain types and helpers
-├── nest-shared/         Shared NestJS modules and guards
 ├── scoring/             Event and ranking scoring
 ├── socket-parser/       Shared socket parsing
 ├── types/               Shared contracts
@@ -73,11 +72,11 @@ boundaries, deployment, and known gaps.
 
 ## Technology
 
-- pnpm workspaces and Turborepo
+- Bun workspaces and Turborepo
 - TypeScript, React 19, Vite, TanStack Start, and TanStack Router/Query
-- NestJS with Fastify and Better Auth
-- PostgreSQL, TimescaleDB, Prisma, Drizzle, and R2
-- RabbitMQ, Redis, Socket.IO, and Meilisearch
+- Effect HttpApi, Better Auth, and native Bun HTTP/WebSocket servers
+- PostgreSQL, TimescaleDB, Drizzle, and R2
+- RabbitMQ, Redis, native WebSockets, and Meilisearch
 - Oxlint, Oxfmt, Vitest, and GitHub Actions
 
 ## Local setup
@@ -85,20 +84,20 @@ boundaries, deployment, and known gaps.
 Requirements:
 
 - Node.js 26.8.1
-- pnpm 12.1.0
+- Bun 1.4.0
 - Docker with Docker Compose
 
 ```bash
 git clone https://github.com/lootlog/monorepo.git
 cd monorepo
-pnpm install
-pnpm env:generate
+bun install
+bun run env:generate
 docker compose up -d
-pnpm db:api:migrate:dev
-pnpm db:activity:migrate:dev
-pnpm db:auth:migrate:dev
-pnpm db:battlelog:push
-pnpm dev
+bun run db:api:migrate:dev
+bun run db:activity:migrate:dev
+bun run db:auth:migrate:dev
+bun run db:battlelog:push
+bun run dev
 ```
 
 `docker-compose.yml` starts local infrastructure: four PostgreSQL-compatible
@@ -108,24 +107,23 @@ production deployment.
 ## Common commands
 
 ```bash
-pnpm dev
-pnpm build
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:e2e
-pnpm format
-pnpm format:check
-pnpm changeset
+bun run dev
+bun run build
+bun run lint
+bun run typecheck
+bun run test
+bun run test:e2e
+bun run format
+bun run format:check
 ```
 
 Workspace-specific commands are documented in each app or package README.
 
 ## Releases and production
 
-Changesets version private workspaces and create immutable release artifacts.
-Merging an ordinary feature pull request may deploy development environments
-but does not create a production release.
+Merging a pull request deploys affected targets to development. Production is
+manual: choose a full commit SHA from `main` and one deployment target (or
+`all`) in the Release workflow.
 
 `dev.lootlog.pl` and `lootlog.pl` use the same repository-owned
 `@lootlog/traffic-splitter` implementation but remain separate Cloudflare
@@ -134,16 +132,18 @@ Workers. Merges to `main` can update only the development Worker. The GitHub
 Worker scripts and custom-domain updates; Pages deployments continue to use
 `CLOUDFLARE_API_TOKEN`.
 
-The Changesets version pull request is the release gate. Its merge creates tags,
-GitHub Releases, container images, and Cloudflare artifacts. Production
-promotion requires environment approval. Container services deploy through
-GitOps and ArgoCD; Cloudflare apps deploy the checksummed artifacts produced by
-the release. The production splitter is promoted before the frontend artifacts
-and rolled back after them if public asset checks fail. Rollbacks reuse
-existing artifacts.
+Production requires environment approval. Container images use immutable
+`sha-<commit>` tags and deploy through GitOps and ArgoCD. Cloudflare targets
+build and deploy in the same approved run. The production state stored in the
+infrastructure repository records image references and Cloudflare deployment
+IDs. The Roll back production workflow restores its previous revision without
+rebuilding code.
 
-Do not use `docker-compose.prod.yml` as production documentation. Self-hosting
-is community-supported until the project ships a tested distribution.
+See [CI and deployment](docs/ci-cd.md) for workflow inputs, required environment
+configuration, rollback, and the post-merge GitHub settings change.
+
+Docker Compose is limited to local infrastructure. Self-hosting is
+community-supported until the project ships a tested distribution.
 
 ## Contributing and security
 

@@ -1,4 +1,4 @@
-import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 
 type ReservationSourceOrganization = {
   calendarPath: string;

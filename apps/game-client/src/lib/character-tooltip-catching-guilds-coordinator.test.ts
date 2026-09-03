@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@lootlog/api-client/transport";
+import { ApiError } from "@lootlog/client/transport";
 import {
   CATCHING_GUILDS_CACHE_TIME_MS,
   CATCHING_GUILDS_FAILURE_TTL_MS,

@@ -1,5 +1,4 @@
 import { GatewayEvent } from "@/config/gateway";
-import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import {
   type AppSocket,
   getSocket,
@@ -51,62 +50,33 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        const { hero, map, world } = game;
+        const { hero, world } = game;
         const { accountId, characterId } = hero;
-        const socketId = socket.id;
-
-        if (!socketId) {
-          return;
-        }
-
-        const margonemAccountProof = await requestMargonemAccountProof({
-          socketId,
-          accountId,
-          characterId,
-          clanId: hero.clan?.id,
-        }).catch((error) => {
-          if (import.meta.env.DEV) {
-            console.warn("[Gateway] Failed to verify Margonem account", error);
-          }
-
-          return undefined;
-        });
-
         if (cancelled || !socket.connected) {
           return;
         }
 
-        socket.emit(GatewayEvent.JOIN, {
-          data: {
-            world,
-            name: hero.name,
-            lvl: hero.level,
-            icon: hero.icon,
-            prof: hero.profession,
-            characterId,
-            accountId,
-            clan: hero.clan
-              ? {
-                  id: hero.clan.id,
-                  name: hero.clan.name,
-                  rank: hero.clan.rank,
-                }
-              : undefined,
-            location: {
-              x: hero.x,
-              y: hero.y,
-              map: map.name,
-            },
-          },
-          ...(margonemAccountProof ? { margonemAccountProof } : {}),
+        await socket.join({
+          world,
+          name: hero.name,
+          lvl: hero.level,
+          icon: hero.icon,
+          prof: hero.profession,
+          characterId,
+          accountId,
+          clan: hero.clan
+            ? {
+                id: hero.clan.id,
+                name: hero.clan.name,
+                rank: hero.clan.rank,
+              }
+            : undefined,
         });
       }
     };
 
     void emitJoin().catch((error) => {
-      if (import.meta.env.DEV) {
-        console.warn("[Gateway] Failed to verify Margonem account", error);
-      }
+      if (import.meta.env.DEV) console.warn("[Gateway] Failed to join", error);
     });
 
     return () => {

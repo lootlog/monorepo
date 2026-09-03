@@ -1,11 +1,13 @@
 import { RateLimitError } from "@discordjs/rest";
 import {
-  HttpException,
+  ApplicationError,
+  applicationErrorStatus,
   HttpStatus,
-  NotFoundException,
-  ServiceUnavailableException,
-  UnauthorizedException,
-} from "@nestjs/common";
+  RateLimitedError,
+  ResourceNotFoundError,
+  DependencyUnavailableError,
+  AuthenticationRequiredError,
+} from "#src/shared/http/http-errors";
 import type { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import type { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 import type {
@@ -13,13 +15,13 @@ import type {
   DiscordInvalidRequestStatus,
 } from "./discord.types.js";
 
-type DiscordHttpError = {
+type DiscordApplicationError = {
   status: number;
 };
 
 export function extractHttpStatus(error: unknown): number | null {
-  if (error instanceof HttpException) {
-    return error.getStatus();
+  if (error instanceof ApplicationError) {
+    return applicationErrorStatus(error);
   }
 
   if (!hasHttpStatus(error)) {
@@ -29,7 +31,7 @@ export function extractHttpStatus(error: unknown): number | null {
   return error.status;
 }
 
-function hasHttpStatus(error: unknown): error is DiscordHttpError {
+function hasHttpStatus(error: unknown): error is DiscordApplicationError {
   if (typeof error !== "object" || error === null) {
     return false;
   }
@@ -41,19 +43,16 @@ export function isDiscordNotFoundError(error: unknown): boolean {
   return extractHttpStatus(error) === HttpStatus.NOT_FOUND;
 }
 
-export function createDiscordRateLimitException(
+export function createDiscordRateLimitError(
   retryAfterMs?: number,
-): HttpException {
+): ApplicationError {
   const retryAfterSeconds =
     retryAfterMs === undefined ? undefined : Math.ceil(retryAfterMs / 1000);
 
-  return new HttpException(
-    {
-      message: "DISCORD_RATE_LIMITED",
-      retryAfter: retryAfterSeconds,
-    },
-    HttpStatus.TOO_MANY_REQUESTS,
-  );
+  return new RateLimitedError({
+    message: "DISCORD_RATE_LIMITED",
+    retryAfter: retryAfterSeconds,
+  });
 }
 
 export async function throwIfDiscordRateLimited(
@@ -78,7 +77,7 @@ export async function throwIfDiscordRateLimited(
     ? Math.max(nextAvailableAt.getTime() - Date.now(), 0)
     : undefined;
 
-  throw createDiscordRateLimitException(retryAfterMs);
+  throw createDiscordRateLimitError(retryAfterMs);
 }
 
 export async function recordInvalidDiscordRequest(
@@ -99,49 +98,46 @@ export async function recordInvalidDiscordRequest(
   });
 }
 
-export function toDiscordRequestException(error: unknown): Error {
+export function toDiscordRequestError(error: unknown): Error {
   if (error instanceof RateLimitError) {
-    return createDiscordRateLimitException(error.retryAfter);
+    return createDiscordRateLimitError(error.retryAfter);
   }
 
-  if (error instanceof HttpException) {
+  if (error instanceof ApplicationError) {
     return error;
   }
 
   const status = extractHttpStatus(error);
   if (status === HttpStatus.UNAUTHORIZED) {
-    return new UnauthorizedException({
+    return new AuthenticationRequiredError({
       message: "DISCORD_UNAUTHORIZED",
       requiresReauth: true,
     });
   }
 
   if (status === HttpStatus.NOT_FOUND) {
-    return new NotFoundException();
+    return new ResourceNotFoundError();
   }
 
   if (status === HttpStatus.TOO_MANY_REQUESTS) {
-    return createDiscordRateLimitException();
+    return createDiscordRateLimitError();
   }
 
   if (status !== null && status >= 500) {
-    return new ServiceUnavailableException({
+    return new DependencyUnavailableError({
       message: "DISCORD_SERVICE_UNAVAILABLE",
       status,
     });
   }
 
   if (status !== null) {
-    return new HttpException(
-      {
-        message: "DISCORD_HTTP_ERROR",
-        status,
-      },
+    return new DependencyUnavailableError({
+      message: "DISCORD_HTTP_ERROR",
       status,
-    );
+    });
   }
 
-  return new ServiceUnavailableException({
+  return new DependencyUnavailableError({
     message: "DISCORD_REQUEST_FAILED",
   });
 }

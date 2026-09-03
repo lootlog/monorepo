@@ -1,8 +1,7 @@
 import {
-  HttpException,
-  HttpStatus,
-  ServiceUnavailableException,
-} from "@nestjs/common";
+  DependencyUnavailableError,
+  RequestTimeoutError,
+} from "#src/shared/http/http-errors";
 import {
   getTransientMemberSyncStatus,
   isRetryableMemberRefreshStatus,
@@ -40,7 +39,7 @@ describe("member-discord-sync-status", () => {
   it("should map auth service outages separately from Discord outages", () => {
     expect(
       getTransientMemberSyncStatus(
-        new ServiceUnavailableException({
+        new DependencyUnavailableError({
           message: MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
         }),
       ),
@@ -48,22 +47,20 @@ describe("member-discord-sync-status", () => {
 
     expect(
       getTransientMemberSyncStatus(
-        new ServiceUnavailableException(
+        new DependencyUnavailableError(
           MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
         ),
       ),
     ).toBe(MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE);
 
-    expect(
-      getTransientMemberSyncStatus(new ServiceUnavailableException()),
-    ).toBe(MEMBER_DISCORD_SYNC_STATUS.DISCORD_SERVICE_UNAVAILABLE);
+    expect(getTransientMemberSyncStatus(new DependencyUnavailableError())).toBe(
+      MEMBER_DISCORD_SYNC_STATUS.DISCORD_SERVICE_UNAVAILABLE,
+    );
   });
 
   it("should preserve unexpected HTTP status codes for diagnostics and retries", () => {
     expect(
-      getTransientMemberSyncStatus(
-        new HttpException("timeout", HttpStatus.REQUEST_TIMEOUT),
-      ),
+      getTransientMemberSyncStatus(new RequestTimeoutError("timeout")),
     ).toBe("DISCORD_HTTP_408");
   });
 });

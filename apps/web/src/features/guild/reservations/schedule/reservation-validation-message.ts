@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 
 import type { ReservationRangeValidationError } from "./reservation-settings";
 

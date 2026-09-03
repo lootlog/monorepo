@@ -1,32 +1,59 @@
-import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
-import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
-import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
-import { NPCS_INDEX } from "./constants/meilisearch.js";
-import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
-import type { npcHitSchema } from "./dto/npc-hit.schema.js";
+import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
+import {
+  attemptMeilisearch,
+  type SearchOperationFailure,
+} from "#src/meilisearch/search-operation-failure";
+import type { AppLogger } from "#src/shared/logger";
+import { getNpcTypeByWt } from "./npc-type.js";
+import type { NpcSearchQuery } from "./npc-search-query.js";
+import { NPCS_INDEX } from "./search-index.js";
+import type { IndexNpcsCommand } from "./index-npcs-command.js";
+import type { NpcHit } from "./npc-hit.js";
 
-type NpcHit = z.infer<typeof npcHitSchema>;
 type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
   margonemType?: number | null;
   prof?: string | null;
   type?: NpcHit["type"] | number | string | null;
 };
 
-@Injectable()
-export class NpcsService {
-  constructor(
-    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-  ) {}
+const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
+  const prof = npc.prof ?? "";
+  let margonemType = 0;
+  if (typeof npc.margonemType === "number") {
+    margonemType = npc.margonemType;
+  } else if (typeof npc.type === "number") {
+    margonemType = npc.type;
+  }
+  const type =
+    typeof npc.type === "string" &&
+    Object.values(NpcTypeEnum).includes(npc.type as NpcTypeEnum)
+      ? (npc.type as NpcTypeEnum)
+      : getNpcTypeByWt(npc.wt, prof, margonemType);
 
-  async getNpcs({ ids, limit, search, world }: GetNpcsDto) {
-    const index = this.meilisearch.index<RawNpcHit>(NPCS_INDEX);
+  return { ...npc, prof, margonemType, type };
+};
+
+const uniqueNpcsByNameAndType = (npcs: ReadonlyArray<NpcHit>) => {
+  const seenNpcKeys = new Set<string>();
+  return npcs.filter((npc) => {
+    const npcKey = `${npc.name}_${npc.type}`;
+    if (seenNpcKeys.has(npcKey)) return false;
+    seenNpcKeys.add(npcKey);
+    return true;
+  });
+};
+
+export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
+  const getNpcs = Effect.fn("SearchNpcs.get")(function* ({
+    ids,
+    limit,
+    search,
+    world,
+  }: NpcSearchQuery) {
+    const index = meilisearch.index<RawNpcHit>(NPCS_INDEX);
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
 
@@ -50,30 +77,31 @@ export class NpcsService {
       ...(filters.length > 0 && { filter: filters.join(" AND ") }),
     };
 
-    try {
-      const data = await index.search(searchTerm, query);
-      const hits = data.hits.map((npc) => this.normalizeNpcHit(npc));
+    return yield* attemptMeilisearch("search.npcs", () =>
+      index.search(searchTerm, query),
+    ).pipe(
+      Effect.map((response) => {
+        const hits = response.hits.map(normalizeNpcHit);
+        return ids && ids.length > 0 ? hits : uniqueNpcsByNameAndType(hits);
+      }),
+      Effect.catch((error) => {
+        logger.error("NPC search error", { error });
+        return Effect.succeed([] as NpcHit[]);
+      }),
+    );
+  });
 
-      if (ids && ids.length > 0) {
-        return hits;
-      }
-
-      return this.getUniqueNpcsByNameAndType(hits);
-    } catch (error) {
-      this.logger.error("NPC search error", { error });
-      return [];
-    }
-  }
-
-  async indexNpcs(data: IndexNpcsDto) {
-    const index = this.meilisearch.index(NPCS_INDEX);
+  const indexNpcs = Effect.fn("SearchNpcs.index")(function* (
+    data: IndexNpcsCommand,
+  ) {
+    const index = meilisearch.index(NPCS_INDEX);
 
     const validNpcs = data.npcs.filter(
       (npc) => npc.world && npc.id && npc.name,
     );
 
     if (validNpcs.length === 0) {
-      this.logger.warn("No valid npcs to index (missing required fields)", {
+      logger.warn("No valid npcs to index (missing required fields)", {
         npcs: data.npcs,
       });
       return;
@@ -83,7 +111,7 @@ export class NpcsService {
       const invalidNpcs = data.npcs.filter(
         (npc) => !npc.world || !npc.id || !npc.name,
       );
-      this.logger.warn(
+      logger.warn(
         `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
         { invalidNpcs },
       );
@@ -95,69 +123,22 @@ export class NpcsService {
       return {
         ...npc,
         prof,
-        type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
+        type: getNpcTypeByWt(npc.wt, prof, npc.margonemType),
         uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
       };
     });
 
-    try {
-      return await index.addDocuments(npcsWithUid, { primaryKey: "uid" });
-    } catch (error) {
-      this.logger.error("Error indexing npcs", { error });
-    }
-  }
+    yield* attemptMeilisearch("search.npcs.index", () =>
+      index.addDocuments(npcsWithUid, { primaryKey: "uid" }),
+    );
+  });
 
-  private normalizeNpcHit(npc: RawNpcHit): NpcHit {
-    const prof = npc.prof ?? "";
-    const margonemType = this.getMargonemType(npc);
-
-    return {
-      ...npc,
-      prof,
-      margonemType,
-      type: this.getNpcType(npc, prof, margonemType),
-    };
-  }
-
-  private getMargonemType(npc: RawNpcHit): number {
-    if (typeof npc.margonemType === "number") {
-      return npc.margonemType;
-    }
-
-    if (typeof npc.type === "number") {
-      return npc.type;
-    }
-
-    return 0;
-  }
-
-  private getNpcType(
-    npc: RawNpcHit,
-    prof: string,
-    margonemType: number,
-  ): NpcTypeEnum {
-    if (
-      typeof npc.type === "string" &&
-      Object.values(NpcTypeEnum).includes(npc.type as NpcTypeEnum)
-    ) {
-      return npc.type as NpcTypeEnum;
-    }
-
-    return getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, margonemType);
-  }
-
-  private getUniqueNpcsByNameAndType(npcs: NpcHit[]) {
-    const seenNpcKeys = new Set<string>();
-
-    return npcs.filter((npc) => {
-      const npcKey = `${npc.name}_${npc.type}`;
-
-      if (seenNpcKeys.has(npcKey)) {
-        return false;
-      }
-
-      seenNpcKeys.add(npcKey);
-      return true;
-    });
-  }
-}
+  return { getNpcs, indexNpcs } satisfies {
+    readonly getNpcs: (
+      input: NpcSearchQuery,
+    ) => Effect.Effect<ReadonlyArray<NpcHit>>;
+    readonly indexNpcs: (
+      data: IndexNpcsCommand,
+    ) => Effect.Effect<void, SearchOperationFailure>;
+  };
+};

@@ -15,10 +15,10 @@ Use the CLI seed commands to generate these files:
 
 ```bash
 # Scrape NPCs and items
-pnpm seed:scrape
+bun run seed:scrape
 
 # Generate players
-pnpm seed:generate:players
+bun run seed:generate:players
 ```
 
 ## Usage
@@ -26,9 +26,9 @@ pnpm seed:generate:players
 These files are automatically loaded by the seeding system when you run:
 
 ```bash
-pnpm seed:setup
+bun run seed:setup
 # or
-pnpm seed
+bun run seed
 ```
 
 For more information, see the [Seed CLI documentation](../../../../packages/cli/src/commands/seed/README.md).

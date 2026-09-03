@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { EventRankingFilter } from "./components/ranking/event-ranking-filter";
 import { EventRankingSummary } from "./components/ranking/event-ranking-summary";
@@ -16,11 +16,11 @@ import {
   getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@lootlog/api-client/react-query/main/members";
+} from "@lootlog/client/main";
 
 const getRankingSelection = <
   Hero extends { npcName: string },

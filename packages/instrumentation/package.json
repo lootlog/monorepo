@@ -1,51 +1,23 @@
 {
   "name": "@lootlog/instrumentation",
-  "version": "0.0.4",
+  "version": "0.0.0",
   "private": true,
-  "license": "MIT",
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "main": "dist/instrumentation-nest.cjs",
-  "module": "dist/instrumentation-nest.mjs",
-  "types": "dist/instrumentation-nest.d.mts",
+  "sideEffects": false,
   "exports": {
-    ".": {
-      "types": "./dist/instrumentation-nest.d.mts",
-      "import": "./dist/instrumentation-nest.mjs",
-      "require": "./dist/instrumentation-nest.cjs"
-    },
-    "./instrumentation-nest": {
-      "types": "./dist/instrumentation-nest.d.mts",
-      "import": "./dist/instrumentation-nest.mjs",
-      "require": "./dist/instrumentation-nest.cjs"
-    }
+    ".": "./src/instrumentation.ts"
   },
   "scripts": {
-    "build": "tsdown",
-    "lint": "oxlint src",
+    "lint": "oxlint src test",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run src"
+    "test": "bun test"
   },
   "dependencies": {
-    "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/auto-instrumentations-node": "^0.79.0",
-    "@opentelemetry/exporter-metrics-otlp-proto": "^0.221.0",
-    "@opentelemetry/exporter-trace-otlp-proto": "^0.221.0",
-    "@opentelemetry/host-metrics": "^0.39.0",
-    "@opentelemetry/instrumentation-nestjs-core": "^0.67.0",
-    "@opentelemetry/resources": "2.10.0",
-    "@opentelemetry/sdk-metrics": "2.10.0",
-    "@opentelemetry/sdk-node": "^0.221.0",
-    "@opentelemetry/sdk-trace-base": "2.10.0",
-    "@opentelemetry/semantic-conventions": "1.43.0"
+    "effect": "4.0.0-rc.112"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@types/node": "catalog:",
-    "tsdown": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   }
 }

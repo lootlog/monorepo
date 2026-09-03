@@ -1,15 +1,17 @@
 import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
 import { NpcType } from "@/api/npcs.api";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { queryClient } from "@/lib/query-client";
 import { createAutoTimer } from "@/api";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/api-client/react-query/main/user-lootlog-config";
-import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
+import {
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  type UserLootlogConfigAccountResponseDtoOutput,
+} from "@lootlog/client/main";
 
 export class NpcsDeleteProcessor {
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {

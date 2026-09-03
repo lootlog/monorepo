@@ -1,7 +1,7 @@
-import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
+import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
 import type { ReactNode } from "react";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { useTranslation } from "react-i18next";
 import { cn } from "@lootlog/ui/lib/utils";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";

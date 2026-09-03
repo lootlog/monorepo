@@ -8,13 +8,13 @@ import { getDetectorRoutingSettingsTranslations } from "@/features/settings/comp
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { DetectorRoutingRule } from "@lootlog/types";
+import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 
 const LEVEL_MIN = 0;
 const LEVEL_MAX = 500;

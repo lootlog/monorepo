@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { describe, test } from "bun:test";
 import type { EnvVariable } from "../types.js";
 import {
   enhanceVariablesWithDerivedValues,
@@ -89,7 +90,7 @@ const assertDerivedAppValues = (): void => {
       ),
     ],
     sharedValues,
-    "apps/battlelog-service",
+    "apps/battlelog",
   );
 
   assert.equal(
@@ -179,7 +180,9 @@ const assertGeneratedRootValuesCanBeReused = (): void => {
   );
 };
 
-assertDerivedAppValues();
-assertAuthValues();
-assertSearchValues();
-assertGeneratedRootValuesCanBeReused();
+describe("environment value generation", () => {
+  test("derives application connection values", assertDerivedAppValues);
+  test("derives Auth database values", assertAuthValues);
+  test("derives Search integration values", assertSearchValues);
+  test("reuses generated root values", assertGeneratedRootValuesCanBeReused);
+});

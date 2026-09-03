@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ReservationSettings } from "@lootlog/reservations";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import {
   findNearestFreeReservationRange,
   getNearestFreeReservationSearchWindow,

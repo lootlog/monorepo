@@ -2,7 +2,8 @@ import { v7 as uuidv7 } from "uuid";
 import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { getNpcTypeByWt, NpcTypeEnum } from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "../config.js";
 import type { GeneratedPlayer } from "./players-generator.js";
 import {

@@ -8,15 +8,13 @@ import { WorldSelector } from "./world-selector";
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
 
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
     "accessible-guilds",
   ],
   useUsersControllerGetCurrentUserAccessibleGuilds: () =>
     mockUseAccessibleGuilds(),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetWorldsByGuildIdQueryKey: () => ["guild-worlds"],
   useGuildsControllerGetWorldsByGuildId: () => ({
     data: ["tempest"],

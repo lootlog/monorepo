@@ -2,7 +2,7 @@ import {
   evaluateEventScoring as evaluateSharedEventScoring,
   type EventScoringContext,
   type EventScoringRules,
-} from "@lootlog/scoring";
+} from "@lootlog/domain/scoring";
 import type {
   KillDetail,
   KillDetailParticipant,

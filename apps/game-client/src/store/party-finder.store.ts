@@ -3,7 +3,7 @@ import type {
   PartyReadyRoomOrganizerProjection,
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 import { create } from "zustand";
 
 export type ReadyRoomCharacterIdentity = {

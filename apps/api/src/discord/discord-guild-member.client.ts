@@ -1,39 +1,33 @@
 import { RateLimitError, RequestMethod, parseResponse } from "@discordjs/rest";
 import {
-  HttpException,
-  Inject,
-  Injectable,
-  NotFoundException,
-  ServiceUnavailableException,
-  UnauthorizedException,
-  type OnModuleInit,
-} from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared/redis";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
+  ApplicationError,
+  ResourceNotFoundError,
+  DependencyUnavailableError,
+  AuthenticationRequiredError,
+} from "#src/shared/http/http-errors";
+import { RedisService } from "#src/redis/redis.service";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
-import { ExecutionError } from "redlock";
+import { ExecutionError, RedlockService } from "#src/redis/redlock";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 import {
   getGuildMemberCacheKeys,
   getLegacyGuildMemberCacheKeys,
   isApiGuildMember,
   type DiscordGuildMemberCacheKeys,
 } from "./discord-cache.util.js";
-import { serviceConfig } from "#src/config/service.config";
-import { RedlockService } from "#src/lib/redlock/redlock.service";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {
   isDiscordNotFoundError,
   recordInvalidDiscordRequest,
-  toDiscordRequestException,
+  toDiscordRequestError,
   throwIfDiscordRateLimited,
 } from "./discord-error.util.js";
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 
-@Injectable()
-export class DiscordGuildMemberClient implements OnModuleInit {
+export class DiscordGuildMemberClient {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
@@ -46,17 +40,18 @@ export class DiscordGuildMemberClient implements OnModuleInit {
   private readonly isLocal: boolean;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redlockService: RedlockService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
+    environment: RuntimeEnvironment,
   ) {
-    this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
+    this.isLocal = environment === RuntimeEnvironment.LOCAL;
   }
 
-  onModuleInit() {
+  initialize() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 3000,
     });
@@ -119,7 +114,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
           guildId,
           userId,
         });
-        throw new ServiceUnavailableException({
+        throw new DependencyUnavailableError({
           message: "DISCORD_MEMBER_LOCK_UNAVAILABLE",
         });
       }
@@ -143,10 +138,10 @@ export class DiscordGuildMemberClient implements OnModuleInit {
             ),
           ),
         ]);
-        throw new NotFoundException();
+        throw new ResourceNotFoundError();
       }
 
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
           message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
@@ -166,7 +161,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
         throw error;
       }
 
-      if (error instanceof HttpException) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
 
@@ -176,7 +171,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
         error,
       });
 
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     } finally {
       await this.releaseLock(lock, {
         action: "getGuildMember",
@@ -253,7 +248,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
         );
       }
 
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     }
   }
 
@@ -279,11 +274,11 @@ export class DiscordGuildMemberClient implements OnModuleInit {
     cacheKeys: Pick<DiscordGuildMemberCacheKeys, "notFound" | "unauthorized">,
   ): Promise<void> {
     if (await this.redisService.get(cacheKeys.notFound)) {
-      throw new NotFoundException();
+      throw new ResourceNotFoundError();
     }
 
     if (await this.redisService.get(cacheKeys.unauthorized)) {
-      throw new UnauthorizedException({
+      throw new AuthenticationRequiredError({
         message: "DISCORD_UNAUTHORIZED",
         requiresReauth: true,
       });
@@ -296,7 +291,7 @@ export class DiscordGuildMemberClient implements OnModuleInit {
 
   private parseCachedGuildMember(cached: string): APIGuildMember | null {
     try {
-      const parsed = JSON.parse(cached) as unknown;
+      const parsed = decodeJsonUnknown(cached);
       if (isApiGuildMember(parsed)) {
         return parsed;
       }

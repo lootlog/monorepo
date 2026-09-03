@@ -20,14 +20,14 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@lootlog/api-client/models/main/guild-kill-stats-response-dto-output-member-ranking-item";
-import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
+import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@lootlog/client/main";
+import type { NpcType } from "@lootlog/client/main";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 import {
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/api-client/react-query/main/members";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
+} from "@lootlog/client/main";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
 
 const STORAGE_KEY = "stats-podium-npc-type";
 

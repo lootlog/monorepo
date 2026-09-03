@@ -2,7 +2,7 @@ import type {
   AirTagScopeSnapshot,
   AirTagTarget,
   AirTagUpdateEvent,
-} from "@lootlog/types";
+} from "@lootlog/schema/air-tag";
 import { AirTagReceiveController } from "./air-tag-receive-controller";
 
 const createTarget = (overrides: Partial<AirTagTarget> = {}): AirTagTarget => ({

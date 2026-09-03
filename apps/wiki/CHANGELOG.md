@@ -5,7 +5,7 @@
 ### Patch Changes
 
 - Updated dependencies [1f174e8]
-  - @lootlog/api-client@5.0.5
+  - @lootlog/client@5.0.5
 
 ## 0.1.9
 
@@ -19,7 +19,7 @@
 - Updated dependencies [87c9155]
 - Updated dependencies [a49b02c]
   - @lootlog/ui@3.1.0
-  - @lootlog/api-client@5.0.4
+  - @lootlog/client@5.0.4
 
 ## 0.1.8
 
@@ -29,7 +29,7 @@
 - af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
 - Updated dependencies [f0a1338]
 - Updated dependencies [af13bc9]
-  - @lootlog/api-client@5.0.3
+  - @lootlog/client@5.0.3
   - @lootlog/ui@3.0.2
 
 ## 0.1.7
@@ -37,7 +37,7 @@
 ### Patch Changes
 
 - Updated dependencies [008ef3f]
-  - @lootlog/api-client@5.0.2
+  - @lootlog/client@5.0.2
   - @lootlog/ui@3.0.1
 
 ## 0.1.6
@@ -45,7 +45,7 @@
 ### Patch Changes
 
 - Updated dependencies [3a87411]
-  - @lootlog/api-client@5.0.1
+  - @lootlog/client@5.0.1
 
 ## 0.1.5
 
@@ -55,7 +55,7 @@
 - Updated dependencies [321b96a]
 - Updated dependencies [da456cf]
 - Updated dependencies [eaecbd3]
-  - @lootlog/api-client@5.0.0
+  - @lootlog/client@5.0.0
   - @lootlog/ui@3.0.0
 
 ## 0.1.4
@@ -65,21 +65,21 @@
 - Updated dependencies [d782374]
 - Updated dependencies [d782374]
   - @lootlog/ui@2.0.2
-  - @lootlog/api-client@4.0.1
+  - @lootlog/client@4.0.1
 
 ## 0.1.3
 
 ### Patch Changes
 
 - Updated dependencies [ed13484]
-  - @lootlog/api-client@4.0.0
+  - @lootlog/client@4.0.0
 
 ## 0.1.2
 
 ### Patch Changes
 
 - Updated dependencies [c9e3ca1]
-  - @lootlog/api-client@3.0.1
+  - @lootlog/client@3.0.1
 
 ## 0.1.1
 
@@ -92,7 +92,7 @@
 - Updated dependencies [5af6865]
 - Updated dependencies [5af6865]
 - Updated dependencies [25406a5]
-  - @lootlog/api-client@3.0.0
+  - @lootlog/client@3.0.0
   - @lootlog/ui@2.0.1
 
 ## 0.1.0
@@ -106,7 +106,7 @@
 ### Patch Changes
 
 - Updated dependencies [9096829]
-  - @lootlog/api-client@2.0.0
+  - @lootlog/client@2.0.0
   - @lootlog/ui@2.0.0
 
 ## 0.0.3
@@ -114,14 +114,14 @@
 ### Patch Changes
 
 - Updated dependencies [4b501b7]
-  - @lootlog/api-client@1.1.1
+  - @lootlog/client@1.1.1
 
 ## 0.0.2
 
 ### Patch Changes
 
 - Updated dependencies [fee6e4d]
-  - @lootlog/api-client@1.1.0
+  - @lootlog/client@1.1.0
 
 ## 0.0.1
 
@@ -129,5 +129,5 @@
 
 - 785632e: Initialize automated version tracking for all workspace packages.
 - Updated dependencies [785632e]
-  - @lootlog/api-client@1.0.1
+  - @lootlog/client@1.0.1
   - @lootlog/ui@1.0.1

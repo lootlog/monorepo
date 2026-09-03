@@ -1,12 +1,12 @@
 # @lootlog/search
 
-NestJS service for Meilisearch-backed search endpoints.
+Bun and Effect service for Meilisearch-backed search endpoints.
 
 ## Overview
 
 - Exposes search routes for `players`, `npcs`, `items`, and aggregated `all` results.
-- Registers RabbitMQ subscribers that keep Meilisearch indexes in sync.
-- Reuses shared Nest logging middleware and shared observability bootstrap from `@lootlog/instrumentation`.
+- Runs scoped RabbitMQ consumers that keep Meilisearch indexes in sync.
+- Uses Effect configuration, logging, OTLP telemetry, and resource-safe shutdown.
 
 ## Routes
 
@@ -21,16 +21,24 @@ NestJS service for Meilisearch-backed search endpoints.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/search dev
+bun run --filter @lootlog/search dev
 ```
+
+## Source layout
+
+- `src/items`, `src/npcs`, `src/players`, and `src/all` own their query, indexing, and response models.
+- `src/meilisearch` owns index composition and query translation.
+- `src/http-api/contracts` owns deployed schemas; `src/http-api/handlers` contains one thin adapter per contract group.
+- Meilisearch payloads use explicit `*Command`, `*Query`, and `*Response` names instead of local DTO folders.
 
 ## Key Scripts
 
-- `pnpm --filter @lootlog/search build`
-- `pnpm --filter @lootlog/search start`
-- `pnpm --filter @lootlog/search seed`
+- `bun run --filter @lootlog/search build`
+- `bun run --filter @lootlog/search start`
+- `bun run --filter @lootlog/search test`
+- `bun run --filter @lootlog/search openapi:generate`
 
 ## Notes
 
 - Service bootstrap lives in `src/main.ts`.
-- Seed helpers for local Meilisearch data live under `src/scripts/`.
+- Meilisearch remains a rebuildable projection; Search does not own a database.

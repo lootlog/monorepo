@@ -3,8 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
-import { io } from "socket.io-client";
-import { msgpackParser } from "@lootlog/socket-parser";
+import { RealtimeClient } from "@lootlog/client/realtime";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "../..");
@@ -21,16 +20,25 @@ const metrics = {
   fetchSuccess: 0,
   joinErrors: 0,
   joinSuccess: 0,
+  publishErrors: 0,
+  publishSuccess: 0,
   latencies: {
     connect: [],
     join: [],
     presenceFetch: [],
+    presencePublish: [],
   },
 };
 
-if (!config.authHeader && !config.cookieHeader) {
+if (config.authTickets.length === 0 && !config.cookieHeader) {
   process.stderr.write(
-    "Missing AUTH_TOKEN or AUTH_COOKIE. Put one in tools/k6/.secrets.local or export it in the shell.\n",
+    "Missing AUTH_TICKETS or AUTH_COOKIE. Put one in tools/k6/.secrets.local or export it in the shell.\n",
+  );
+  process.exit(1);
+}
+if (!config.cookieHeader && config.authTickets.length < config.connections) {
+  process.stderr.write(
+    "One unique websocket ticket is required for each connection; tickets cannot be reused.\n",
   );
   process.exit(1);
 }
@@ -46,6 +54,7 @@ printSummary();
 if (
   metrics.connectErrors > 0 ||
   metrics.joinErrors > 0 ||
+  metrics.publishErrors > 0 ||
   metrics.connects === 0
 ) {
   process.exit(1);
@@ -54,17 +63,21 @@ if (
 function runConnection(index) {
   return new Promise((resolveConnection) => {
     const startedAt = performance.now();
-    const socket = io(config.url, {
-      extraHeaders: buildHeaders(),
-      parser: msgpackParser,
+    const client = new RealtimeClient({
+      url: config.url,
       path: config.path,
-      reconnection: false,
-      timeout: config.timeoutMs,
-      transports: ["websocket"],
-      withCredentials: true,
+      requestTimeoutMs: config.timeoutMs,
+      webSocketFactory: (url, protocols) =>
+        new WebSocket(url, {
+          headers: buildHeaders(index),
+          ...(protocols?.length ? { protocols } : {}),
+        }),
     });
     let presenceInterval;
     let resolved = false;
+    let joining = false;
+    let joined = false;
+    let connectionStarted = false;
 
     const finish = () => {
       if (resolved) {
@@ -72,86 +85,126 @@ function runConnection(index) {
       }
       resolved = true;
       clearInterval(presenceInterval);
-      socket.disconnect();
+      unsubscribeState();
+      client.disconnect();
       resolveConnection();
     };
 
-    socket.on("connect", () => {
+    const join = async () => {
+      if (joining || joined) return;
+      joining = true;
       metrics.connects += 1;
       metrics.latencies.connect.push(performance.now() - startedAt);
       const joinStartedAt = performance.now();
-
-      socket.emit("join", { data: buildPlayer(index) });
-
-      socket.once("join", (result) => {
+      try {
+        const player = buildPlayer(index);
+        const result = await client.join({
+          world: player.world,
+          character: player,
+        });
         metrics.latencies.join.push(performance.now() - joinStartedAt);
-
-        if (result?.status === "success") {
-          metrics.joinSuccess += 1;
-          const guildId = config.guildId || result.guildIds?.[0] || "";
-          if (guildId) {
-            fetchPresence(socket, guildId);
-            presenceInterval = setInterval(() => {
-              socket.emit("player-presence:update", {
-                isAfk: false,
-                mapId: config.mapId,
-                mapName: config.mapName,
-              });
-              fetchPresence(socket, guildId);
-            }, config.presenceIntervalMs);
-          }
-          return;
+        const organizationIds = Array.isArray(result?.organizationIds)
+          ? result.organizationIds
+          : [];
+        const organizationId =
+          config.organizationId || organizationIds.at(0) || "";
+        if (!organizationId) {
+          throw new Error("session.join returned no authorized organization");
         }
-
+        await publishPresence(client, organizationId, player);
+        joined = true;
+        metrics.joinSuccess += 1;
+        void fetchPresence(client, organizationId);
+        presenceInterval = setInterval(() => {
+          void publishPresence(client, organizationId, player).catch(
+            (error) => {
+              process.stderr.write(
+                `[gateway] presence publish error: ${error instanceof Error ? error.message : String(error)}\n`,
+              );
+            },
+          );
+          void fetchPresence(client, organizationId);
+        }, config.presenceIntervalMs);
+      } catch (error) {
         metrics.joinErrors += 1;
-      });
+        process.stderr.write(
+          `[gateway] join error: ${error instanceof Error ? error.message : String(error)}\n`,
+        );
+        finish();
+      } finally {
+        joining = false;
+      }
+    };
+
+    const unsubscribeState = client.subscribeState((state) => {
+      if (state === "connected") void join();
+      if (
+        state === "disconnected" &&
+        connectionStarted &&
+        !joined &&
+        !resolved
+      ) {
+        metrics.connectErrors += 1;
+      }
     });
 
-    socket.on("connect_error", (error) => {
-      metrics.connectErrors += 1;
-      process.stderr.write(`[gateway] connect_error: ${error.message}\n`);
-      finish();
-    });
-
+    connectionStarted = true;
+    client.connect();
     setTimeout(finish, config.durationMs);
   });
 }
 
-function fetchPresence(socket, guildId) {
+async function publishPresence(client, organizationId, character) {
   const startedAt = performance.now();
-  socket.timeout(config.timeoutMs).emit(
-    "online-players:presence:fetch",
-    {
-      guildId,
-      world: config.world,
-    },
-    (error, response) => {
-      metrics.latencies.presenceFetch.push(performance.now() - startedAt);
-
-      if (error) {
-        metrics.fetchErrors += 1;
-        return;
-      }
-
-      if (response?.status === "forbidden") {
-        metrics.fetchForbidden += 1;
-        return;
-      }
-
-      if (response?.status === "success") {
-        metrics.fetchSuccess += 1;
-      }
-    },
-  );
+  try {
+    await client.request("presence.publish", {
+      organizationIds: [organizationId],
+      isAfk: false,
+      character,
+      location: {
+        mapId: config.mapId,
+        map: config.mapName,
+        x: 0,
+        y: 0,
+      },
+      clientObservedAt: Date.now(),
+    });
+    metrics.publishSuccess += 1;
+  } catch (error) {
+    metrics.publishErrors += 1;
+    throw error;
+  } finally {
+    metrics.latencies.presencePublish.push(performance.now() - startedAt);
+  }
 }
 
-function buildHeaders() {
+async function fetchPresence(client, organizationId) {
+  const startedAt = performance.now();
+  try {
+    await client.request("presence.fetch", {
+      organizationId,
+      world: config.world,
+    });
+    metrics.fetchSuccess += 1;
+  } catch (error) {
+    if (error?.code === "COMMAND_REJECTED") {
+      metrics.fetchForbidden += 1;
+    } else {
+      metrics.fetchErrors += 1;
+    }
+  } finally {
+    metrics.latencies.presenceFetch.push(performance.now() - startedAt);
+  }
+}
+
+function buildHeaders(connectionIndex) {
   const headers = {
     Origin: config.origin,
   };
 
-  if (config.authHeader) {
-    headers.Authorization = config.authHeader;
+  const ticket = config.authTickets[connectionIndex];
+  if (ticket) {
+    headers.Authorization = `Bearer ${ticket}`;
   }
 
   if (config.cookieHeader) {
@@ -178,38 +231,43 @@ function buildPlayer(index) {
       x: 0,
       y: 0,
     },
-    lvl: "300",
+    lvl: 300,
     name: `k6-${index}`,
     prof: "w",
     world: config.world,
   };
 }
 
+// oxlint-disable-next-line eslint/complexity -- Flat CLI/env precedence is intentionally explicit.
 function buildConfig(cliArgs, secrets) {
-  const authToken = secrets.AUTH_TOKEN || process.env.AUTH_TOKEN || "";
   const authCookie = secrets.AUTH_COOKIE || process.env.AUTH_COOKIE || "";
-  const tokenHeader = authToken
-    ? authToken.match(/^Bearer\s+/i)
-      ? authToken
-      : `Bearer ${authToken}`
-    : "";
+  const authTickets = (
+    secrets.AUTH_TICKETS ||
+    process.env.AUTH_TICKETS ||
+    secrets.AUTH_TICKET ||
+    process.env.AUTH_TICKET ||
+    secrets.AUTH_TOKEN ||
+    process.env.AUTH_TOKEN ||
+    ""
+  )
+    .split(",")
+    .map((ticket) => ticket.trim().replace(/^Bearer\s+/i, ""))
+    .filter(Boolean);
 
   return {
-    authHeader: tokenHeader,
+    authTickets,
     connections: numberValue(cliArgs.connections, "K6_GATEWAY_CONNECTIONS", 1),
     cookieHeader: authCookie,
     durationMs: durationMs(
       cliArgs.duration || process.env.K6_GATEWAY_DURATION || "30s",
     ),
-    guildId: process.env.K6_GUILD_ID || "",
+    organizationId:
+      process.env.K6_ORGANIZATION_ID || process.env.K6_GUILD_ID || "",
     mapId: numberValue(cliArgs.mapId, "K6_GATEWAY_MAP_ID", 1),
     mapName: cliArgs.mapName || process.env.K6_GATEWAY_MAP_NAME || "Ithan",
     origin:
       cliArgs.origin || process.env.K6_GATEWAY_ORIGIN || "http://localhost",
-    path:
-      cliArgs.path ||
-      process.env.K6_GATEWAY_SOCKET_PATH ||
-      "/gateway/socket.io",
+    path: cliArgs.path || process.env.K6_GATEWAY_SOCKET_PATH || "/ws",
     player: parsePlayer(process.env.K6_GATEWAY_PLAYER_JSON),
     presenceIntervalMs: durationMs(
       cliArgs.presenceInterval ||
@@ -245,6 +303,7 @@ function readSecrets(filePath) {
   );
 }
 
+// oxlint-disable-next-line eslint/complexity -- Every supported flag is parsed independently.
 function parseArgs(rawArgs) {
   const parsed = {};
 
@@ -375,10 +434,13 @@ function printSummary() {
         fetchSuccess: metrics.fetchSuccess,
         joinErrors: metrics.joinErrors,
         joinSuccess: metrics.joinSuccess,
+        publishErrors: metrics.publishErrors,
+        publishSuccess: metrics.publishSuccess,
         latencyMs: {
           connectP95: percentile(metrics.latencies.connect, 95),
           joinP95: percentile(metrics.latencies.join, 95),
           presenceFetchP95: percentile(metrics.latencies.presenceFetch, 95),
+          presencePublishP95: percentile(metrics.latencies.presencePublish, 95),
         },
       },
       null,

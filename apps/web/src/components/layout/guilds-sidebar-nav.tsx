@@ -16,10 +16,7 @@ import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
-import {
-  getListEventsQueryKey,
-  useListEvents,
-} from "@lootlog/api-client/react-query/main/events";
+import { getListEventsQueryKey, useListEvents } from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
 import {

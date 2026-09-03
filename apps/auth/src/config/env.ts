@@ -1,53 +1,89 @@
-import "dotenv/config";
-import { z } from "zod";
-import { createEnv } from "@lootlog/nest-shared/config";
-import { RuntimeEnvironment } from "@lootlog/types";
+import { Config, Context, Layer, Option, Redacted } from "effect";
 
-export const env = createEnv(
-  z.object({
-    ENV: z.nativeEnum(RuntimeEnvironment).default(RuntimeEnvironment.LOCAL),
-    PORT: z.coerce.number(),
-    SERVICE_NAME: z.string().default("auth"),
+const splitCommaSeparated = (value: string): string[] =>
+  value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 
-    TRUSTED_ORIGINS: z.string().transform((value) =>
-      value
-        .split(",")
-        .map((origin) => origin.trim())
-        .filter(Boolean),
+const optionalString = (name: string) => Config.option(Config.string(name));
+
+export interface AuthConfig {
+  readonly environment: string;
+  readonly port: number;
+  readonly serviceName: string;
+  readonly trustedOrigins: ReadonlyArray<string>;
+  readonly cookieDomain: string;
+  readonly cookiePrefix: string;
+  readonly adminAccountIds: ReadonlyArray<string>;
+  readonly authSecret: Redacted.Redacted<string>;
+  readonly appUrl: string;
+  readonly postgresql: {
+    readonly host: string;
+    readonly port: number;
+    readonly user: string;
+    readonly password: Redacted.Redacted<string>;
+    readonly database: string;
+    readonly sslCa: string | undefined;
+  };
+  readonly discordClientId: string;
+  readonly discordClientSecret: Redacted.Redacted<string>;
+  readonly redis: {
+    readonly host: string;
+    readonly port: number;
+    readonly username: string;
+    readonly password: Redacted.Redacted<string>;
+  };
+  readonly serviceNamespace: string;
+  readonly commitSha: string | undefined;
+}
+
+export const authConfig = Config.all({
+  environment: Config.literals(["local", "dev", "staging", "prod"], "ENV").pipe(
+    Config.withDefault("local"),
+  ),
+  port: Config.int("PORT"),
+  serviceName: Config.string("SERVICE_NAME").pipe(Config.withDefault("auth")),
+  trustedOrigins: Config.string("TRUSTED_ORIGINS").pipe(
+    Config.map(splitCommaSeparated),
+  ),
+  cookieDomain: Config.string("COOKIE_DOMAIN"),
+  cookiePrefix: Config.string("COOKIE_PREFIX"),
+  adminAccountIds: Config.string("ADMIN_ACCOUNT_IDS").pipe(
+    Config.map(splitCommaSeparated),
+  ),
+  authSecret: Config.redacted("AUTH_SECRET"),
+  appUrl: Config.string("APP_URL"),
+  postgresql: Config.all({
+    host: Config.string("POSTGRESQL_HOST"),
+    port: Config.int("POSTGRESQL_PORT"),
+    user: Config.string("POSTGRESQL_USER"),
+    password: Config.redacted("POSTGRESQL_PASSWORD"),
+    database: Config.string("POSTGRESQL_DATABASE"),
+    sslCa: optionalString("POSTGRESQL_SSL_CA").pipe(
+      Config.map(Option.getOrUndefined),
     ),
-    COOKIE_DOMAIN: z.string(),
-    COOKIE_PREFIX: z.string(),
-    ADMIN_ACCOUNT_IDS: z.string().transform((value) =>
-      value
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean),
-    ),
-    AUTH_SECRET: z.string(),
-
-    APP_URL: z.string(),
-
-    POSTGRESQL_PORT: z.coerce.number(),
-    POSTGRESQL_HOST: z.string(),
-    POSTGRESQL_USER: z.string(),
-    POSTGRESQL_PASSWORD: z.string(),
-    POSTGRESQL_DATABASE: z.string(),
-    POSTGRESQL_SSL_CA: z.string().optional(),
-
-    DISCORD_CLIENT_SECRET: z.string(),
-    DISCORD_CLIENT_ID: z.string(),
-
-    REDIS_HOST: z.string(),
-    REDIS_PORT: z.coerce.number(),
-    REDIS_USERNAME: z.string(),
-    REDIS_PASSWORD: z.string(),
-
-    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
-    OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
-    OTEL_NODE_RESOURCE_DETECTORS: z.string().default("env,host,os,process"),
-    OTEL_TRACES_EXPORTER: z.string().default("otlp"),
-    SERVICE_NAMESPACE: z.string().default("local"),
-
-    COMMIT_SHA: z.string().optional(),
   }),
-);
+  discordClientId: Config.string("DISCORD_CLIENT_ID"),
+  discordClientSecret: Config.redacted("DISCORD_CLIENT_SECRET"),
+  redis: Config.all({
+    host: Config.string("REDIS_HOST"),
+    port: Config.int("REDIS_PORT"),
+    username: Config.string("REDIS_USERNAME"),
+    password: Config.redacted("REDIS_PASSWORD"),
+  }),
+  serviceNamespace: Config.string("SERVICE_NAMESPACE").pipe(
+    Config.withDefault("local"),
+  ),
+  commitSha: optionalString("COMMIT_SHA").pipe(
+    Config.map(Option.getOrUndefined),
+  ),
+});
+
+export class AppConfig extends Context.Service<AppConfig, AuthConfig>()(
+  "@lootlog/auth/AppConfig",
+) {
+  static readonly layer = Layer.effect(AppConfig, authConfig);
+}
+
+export const reveal = Redacted.value;

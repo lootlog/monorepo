@@ -10,7 +10,7 @@
   the Web-first rollout. Keep partner reservations visible without letting them
   affect local availability, nearest-free suggestions, or collision checks.
 - Updated dependencies [1f174e8]
-  - @lootlog/api-client@5.0.5
+  - @lootlog/client@5.0.5
 
 ## 1.5.0
 
@@ -48,7 +48,7 @@
   - @lootlog/ui@3.1.0
   - @lootlog/reservations@1.0.1
   - @lootlog/types@3.0.2
-  - @lootlog/api-client@5.0.4
+  - @lootlog/client@5.0.4
   - @lootlog/datetime@1.0.1
   - @lootlog/scoring@1.0.1
   - @lootlog/socket-parser@1.0.2
@@ -61,7 +61,7 @@
 - af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
 - Updated dependencies [f0a1338]
 - Updated dependencies [af13bc9]
-  - @lootlog/api-client@5.0.3
+  - @lootlog/client@5.0.3
   - @lootlog/ui@3.0.2
   - @lootlog/datetime@1.0.1
   - @lootlog/scoring@1.0.1
@@ -129,7 +129,7 @@
   policy from partner calendar responses.
 - Updated dependencies [008ef3f]
   - @lootlog/types@3.0.1
-  - @lootlog/api-client@5.0.2
+  - @lootlog/client@5.0.2
   - @lootlog/ui@3.0.1
 
 ## 1.4.2
@@ -143,7 +143,7 @@
 ### Patch Changes
 
 - Updated dependencies [3a87411]
-  - @lootlog/api-client@5.0.1
+  - @lootlog/client@5.0.1
 
 ## 1.4.0
 
@@ -160,7 +160,7 @@
 - Updated dependencies [da456cf]
 - Updated dependencies [eaecbd3]
 - Updated dependencies [4ae5fe2]
-  - @lootlog/api-client@5.0.0
+  - @lootlog/client@5.0.0
   - @lootlog/types@3.0.0
   - @lootlog/ui@3.0.0
 
@@ -185,7 +185,7 @@
 - Updated dependencies [d782374]
 - Updated dependencies [d782374]
   - @lootlog/ui@2.0.2
-  - @lootlog/api-client@4.0.1
+  - @lootlog/client@4.0.1
 
 ## 1.3.0
 
@@ -197,7 +197,7 @@
 
 - ed13484: Keep reservation, event, and document controls visible while browsing, and align their empty states with the shared list pattern.
 - Updated dependencies [ed13484]
-  - @lootlog/api-client@4.0.0
+  - @lootlog/client@4.0.0
 
 ## 1.2.5
 
@@ -205,7 +205,7 @@
 
 - c9e3ca1: Improve responsive dashboard, kill statistics, and event list/detail cards including event hero navigation, management actions, and level-profession labels, align dashboard navigation, loot filters and empty states, timer controls, metadata, and empty/world-selection states, polish reservation search, list and grid cards with shared interface patterns, and refine platform-aware shortcuts, sidebar density, and pointer focus behavior.
 - Updated dependencies [c9e3ca1]
-  - @lootlog/api-client@3.0.1
+  - @lootlog/client@3.0.1
 
 ## 1.2.4
 
@@ -230,7 +230,7 @@
   - @lootlog/datetime@1.0.1
   - @lootlog/scoring@1.0.1
   - @lootlog/types@2.0.2
-  - @lootlog/api-client@3.0.0
+  - @lootlog/client@3.0.0
 
 ## 1.2.1
 
@@ -247,7 +247,7 @@
 - Updated dependencies [5af6865]
 - Updated dependencies [5af6865]
 - Updated dependencies [25406a5]
-  - @lootlog/api-client@3.0.0
+  - @lootlog/client@3.0.0
   - @lootlog/socket-parser@1.0.2
   - @lootlog/types@2.0.1
   - @lootlog/ui@2.0.1
@@ -264,7 +264,7 @@
 
 - e1e6c48: Refine the loot filters layout and search density, stabilize the search dialog height, center its feedback states, improve loot header and footer alignment, truncate long locations, prevent quick-filter layout shifts, keep the search divider visible, expand the world selector, and redesign the sidebar account control with a full-width menu and shared logout action.
 - Updated dependencies [9096829]
-  - @lootlog/api-client@2.0.0
+  - @lootlog/client@2.0.0
   - @lootlog/types@2.0.0
   - @lootlog/ui@2.0.0
 
@@ -273,7 +273,7 @@
 ### Patch Changes
 
 - Updated dependencies [4b501b7]
-  - @lootlog/api-client@1.1.1
+  - @lootlog/client@1.1.1
 
 ## 1.1.0
 
@@ -285,7 +285,7 @@
 
 - Updated dependencies [fee6e4d]
   - @lootlog/types@1.1.0
-  - @lootlog/api-client@1.1.0
+  - @lootlog/client@1.1.0
 
 ## 1.0.2
 
@@ -299,7 +299,7 @@
 
 - 785632e: Initialize automated version tracking for all workspace packages.
 - Updated dependencies [785632e]
-  - @lootlog/api-client@1.0.1
+  - @lootlog/client@1.0.1
   - @lootlog/socket-parser@1.0.1
   - @lootlog/types@1.0.1
   - @lootlog/ui@1.0.1

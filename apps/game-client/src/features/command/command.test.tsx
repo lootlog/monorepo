@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { ApiError } from "@lootlog/api-client/transport";
+import { ApiError } from "@lootlog/client/transport";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { CommandWindow } from "./command";

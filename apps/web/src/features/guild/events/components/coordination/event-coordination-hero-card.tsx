@@ -17,7 +17,7 @@ import {
 import { getAssignmentAvailability } from "../../utils/get-assignment-availability";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import { EventCoordinationPriorityBadge } from "./event-coordination-priority-badge";
-import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
+import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/client/main";
 
 interface EventCoordinationHeroCardProps {
   hero: EventCoordinationResponseDtoHeroesItem;

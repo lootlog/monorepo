@@ -9,7 +9,10 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { BookOpen, Scale } from "lucide-react";
 import { EventScoringRulesSummary } from "./event-scoring-rules-summary";
-import type { EventScoringMode, EventScoringRules } from "@lootlog/scoring";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "@lootlog/domain/scoring";
 
 interface EventRulesDialogProps {
   open: boolean;

@@ -10,6 +10,10 @@ Workers:
 Both Workers use the same route table. Their generated asset namespaces are
 explicit:
 
+The source intentionally stays flat: `src/index.ts` owns the complete Worker
+interface and `src/index.test.ts` verifies it. There is no internal module seam
+to justify another directory.
+
 | Paths                                                                   | Origin                     |
 | ----------------------------------------------------------------------- | -------------------------- |
 | `/`, legal pages, `/_next`, `/landing-assets`, `/brand`, `/screenshots` | Landing                    |
@@ -28,10 +32,10 @@ removed before forwarding or probing.
 ## Commands
 
 ```bash
-pnpm --filter @lootlog/traffic-splitter test
-pnpm --filter @lootlog/traffic-splitter typecheck
-pnpm --filter @lootlog/traffic-splitter lint
-pnpm --filter @lootlog/traffic-splitter build
+bun run --filter=@lootlog/traffic-splitter test
+bun run --filter=@lootlog/traffic-splitter typecheck
+bun run --filter=@lootlog/traffic-splitter lint
+bun run --filter=@lootlog/traffic-splitter build
 ```
 
 The `dev` command and merges to `main` target only the Wrangler `develop`

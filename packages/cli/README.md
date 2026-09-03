@@ -19,14 +19,14 @@ Monorepo CLI utilities for local Lootlog development.
 Run the currently exposed workspace script from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/cli env:generate
+bun run --filter=@lootlog/cli env:generate
 ```
 
 Useful variants:
 
-- `pnpm --filter @lootlog/cli env:generate -- --interactive`
-- `pnpm --filter @lootlog/cli env:generate -- --skip-existing`
-- `pnpm --filter @lootlog/cli env:generate -- --force`
+- `bun run --filter=@lootlog/cli env:generate -- --interactive`
+- `bun run --filter=@lootlog/cli env:generate -- --skip-existing`
+- `bun run --filter=@lootlog/cli env:generate -- --force`
 
 ## Related Docs
 

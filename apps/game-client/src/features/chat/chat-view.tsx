@@ -8,7 +8,7 @@ import { ChatMessageList } from "@/features/chat/components/chat-message-list";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { cn } from "@/lib/utils";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
@@ -23,7 +23,7 @@ import {
 import { canReplyToChatMessage } from "./chat-reply.helpers";
 import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { AsyncContent } from "@/components/async-content";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";

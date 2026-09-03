@@ -1,4 +1,5 @@
 {
   "extends": "@lootlog/typescript-config/base.json",
+  "compilerOptions": { "types": ["bun"] },
   "include": ["src"]
 }

@@ -3,8 +3,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getChatDensityStyle } from "@/features/chat/chat-density";
 import { ChatNpcMessageView } from "@/features/chat/components/chat-npc-message-view";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
-import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import type { ChatAppearanceSettings, NpcTypeColors } from "@lootlog/types";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/client/main";
+import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { useTranslation } from "react-i18next";
 
 type ChatAppearancePresetMiniPreviewProps = {

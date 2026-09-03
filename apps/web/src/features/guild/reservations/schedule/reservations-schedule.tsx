@@ -4,16 +4,16 @@ import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Permission } from "@lootlog/types";
-import { resolveReservationSettings } from "@lootlog/reservations";
+import { Permission } from "@lootlog/schema/permissions";
+import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
   getListReservationSpotsQueryKey,
   getListSpotReservationsQueryKey,
   getListSpotReservationsQueryOptions,
   useDeleteReservation,
   useListSpotReservations,
-} from "@lootlog/api-client/react-query/main/reservations";
-import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
+import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
 import {
   Empty,
   EmptyDescription,

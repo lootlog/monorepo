@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-table";
 import { Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { useUpdateRankingPoints } from "@lootlog/api-client/react-query/main/events";
+import { useUpdateRankingPoints } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Table } from "@lootlog/ui/components/table";
 import { cn } from "@lootlog/ui/lib/utils";

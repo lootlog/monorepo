@@ -2,8 +2,8 @@ import type { QueryCacheNotifyEvent, QueryClient } from "@tanstack/react-query";
 import { useMatches } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Battle } from "@/lib/api/battlelog-types";
-import { getBattlesControllerGetBattleQueryKey } from "@lootlog/api-client/react-query/battlelog/battles";
-import { getGuildsControllerGetGuildByIdQueryKey } from "@lootlog/api-client/react-query/main/guilds";
+import { getBattlesControllerGetBattleQueryKey } from "@lootlog/client/battlelog";
+import { getGuildsControllerGetGuildByIdQueryKey } from "@lootlog/client/main";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 
 type DocumentTitleUpdaterProps = {

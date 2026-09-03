@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EventCoordinationPage } from "@/features/guild/events/event-coordination-page";
 import { EventCoordinationSkeleton } from "@/features/guild/events/event-coordination-skeleton";
-import { getEventsMonitoringControllerGetCoordinationQueryOptions } from "@lootlog/api-client/react-query/main/events";
+import { getEventsMonitoringControllerGetCoordinationQueryOptions } from "@lootlog/client/main";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

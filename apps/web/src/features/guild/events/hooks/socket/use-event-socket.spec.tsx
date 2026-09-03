@@ -4,7 +4,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getListEventMapsQueryKey } from "@lootlog/api-client/react-query/main/events";
+import { getListEventMapsQueryKey } from "@lootlog/client/main";
 import { GatewayEvent } from "@/config/gateway";
 import { useEventSocket } from "./use-event-socket";
 

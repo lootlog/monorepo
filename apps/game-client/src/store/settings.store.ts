@@ -21,9 +21,14 @@ interface SettingsState {
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
   selectedGuildIdsForTimersByCharId: Record<string, string[]>;
+  presenceOrganizationIdsByCharId: Record<string, string[]>;
   ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
+  setPresenceOrganizationIds: (
+    charId: string,
+    organizationIds: string[],
+  ) => void;
   setLootDebugLoggingEnabled: (enabled: boolean) => void;
   setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
@@ -43,42 +48,44 @@ export const useSettingsStore = create<SettingsState>()(
       worldByGuildId: {},
       guildIdByCharId: {},
       selectedGuildIdsForTimersByCharId: {},
-      ensureGuildId: (charId: string, orderedGuildIds: string[]) => {
+      presenceOrganizationIdsByCharId: {},
+      ensureGuildId: (charId, orderedGuildIds) => {
         set((state) => {
           const currentGuildId = state.guildIdByCharId[charId];
-          if (
+          const hasCurrentGuild =
             currentGuildId === "all" ||
-            (currentGuildId && orderedGuildIds.includes(currentGuildId))
-          ) {
-            return state;
-          }
+            Boolean(currentGuildId && orderedGuildIds.includes(currentGuildId));
+          const selectedGuildId = hasCurrentGuild
+            ? currentGuildId
+            : orderedGuildIds[0];
+          if (!selectedGuildId) return state;
 
-          const fallbackGuildId = orderedGuildIds[0];
-          if (!fallbackGuildId) {
-            return state;
-          }
-
+          if (hasCurrentGuild) return state;
           return {
             guildIdByCharId: {
               ...state.guildIdByCharId,
-              [charId]: fallbackGuildId,
+              [charId]: selectedGuildId,
             },
           };
         });
       },
-      setGuildId: (charId: string, guildId: string) => {
+      setGuildId: (charId, guildId) =>
         set((state) => ({
-          guildIdByCharId: {
-            ...state.guildIdByCharId,
-            [charId]: guildId,
-          },
-        }));
-      },
+          guildIdByCharId: { ...state.guildIdByCharId, [charId]: guildId },
+        })),
       setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => {
         set((state) => ({
           selectedGuildIdsForTimersByCharId: {
             ...state.selectedGuildIdsForTimersByCharId,
             [charId]: guildIds,
+          },
+        }));
+      },
+      setPresenceOrganizationIds: (charId, organizationIds) => {
+        set((state) => ({
+          presenceOrganizationIdsByCharId: {
+            ...state.presenceOrganizationIdsByCharId,
+            [charId]: [...new Set(organizationIds)],
           },
         }));
       },
@@ -120,10 +127,11 @@ export const useSettingsStore = create<SettingsState>()(
         guildIdByCharId: state.guildIdByCharId,
         selectedGuildIdsForTimersByCharId:
           state.selectedGuildIdsForTimersByCharId,
+        presenceOrganizationIdsByCharId: state.presenceOrganizationIdsByCharId,
       }),
       storage: createJSONStorage(() => localStorage),
       migrate: migrateSettingsState,
-      version: 4,
+      version: 6,
     },
   ),
 );

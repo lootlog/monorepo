@@ -2,7 +2,7 @@ import type {
   SettingsDomainValue,
   SettingsSubsectionValue,
 } from "./constants/settings-tabs";
-import type { SettingsCatalogKey } from "@lootlog/types";
+import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
 
 export type SettingsIconName =
   | "settings"

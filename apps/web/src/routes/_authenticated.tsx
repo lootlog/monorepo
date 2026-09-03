@@ -7,7 +7,7 @@ import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions,
   getUsersControllerGetUserPreferencesQueryOptions,
-} from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

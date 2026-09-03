@@ -4,13 +4,13 @@ import type {
   PartyGatheringNotification,
   StoredNotification,
 } from "@/store/notifications.store";
-import {
-  getNpcTypeByWt,
-  type DetectorNpcType,
-  type MutedNpcPreference,
-  type MutedPlayerPreference,
-  type NotificationMutes,
-} from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
+import type {
+  MutedNpcPreference,
+  MutedPlayerPreference,
+  NotificationMutes,
+} from "@lootlog/schema/user-preferences";
 
 type MuteableNotification =
   | Notification

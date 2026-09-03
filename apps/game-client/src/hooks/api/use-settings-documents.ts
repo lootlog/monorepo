@@ -1,16 +1,17 @@
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
   useSettingsDocumentsControllerGetPreferences,
-} from "@lootlog/api-client/react-query/main/preferences";
-import type { SettingsDocumentsControllerGetPreferencesParams } from "@lootlog/api-client/models/main/settings-documents-controller-get-preferences-params";
-import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/api-client/models/main/settings-documents-response-dto-output";
+  type SettingsDocumentsControllerGetPreferencesParams,
+  type SettingsDocumentsResponseDtoOutput,
+} from "@lootlog/client/main";
+
 import {
   DEFAULT_NPC_TYPE_COLORS,
-  normalizeChatAppearanceSettings,
-  normalizeNpcTypeColors,
-  type ChatAppearanceSettings,
   type NpcTypeColors,
-} from "@lootlog/types";
+} from "@lootlog/schema/npc-appearance";
+import { normalizeChatAppearanceSettings } from "@lootlog/domain/chat-appearance";
+import { normalizeNpcTypeColors } from "@lootlog/domain/npc-appearance";
+import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 
 type JsonRecord = Record<string, unknown>;
 

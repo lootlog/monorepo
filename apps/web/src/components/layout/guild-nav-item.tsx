@@ -1,4 +1,4 @@
-import type { UserCurrentGuildResponseDtoOutput as Guild } from "@lootlog/api-client/models/main/user-current-guild-response-dto-output";
+import type { UserCurrentGuildResponseDtoOutput as Guild } from "@lootlog/client/main";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   Avatar,

@@ -9,11 +9,9 @@
     "dist",
     "**/*spec.ts",
     "scripts",
-    "prisma",
     "generated",
-    "prisma.config.ts",
-    "vitest.config.ts",
-    "vitest.config.e2e.ts",
-    "vitest.d.ts"
+    "src/database/drizzle/adoption.ts",
+    "src/database/drizzle/expected-catalog.ts",
+    "src/database/drizzle/migrate.ts"
   ]
 }

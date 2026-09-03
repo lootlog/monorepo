@@ -1,6 +1,6 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/api-client/models/main/user-npc-kills-response-dto-output-npcs-item";
+import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
 import { NPC_TYPE_NAMES } from "@/constants/npc";
 import { useTranslation } from "react-i18next";
 

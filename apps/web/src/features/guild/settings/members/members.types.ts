@@ -1,4 +1,4 @@
-import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
+import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 
 export type MembersStats = {
   totalMembers: number;

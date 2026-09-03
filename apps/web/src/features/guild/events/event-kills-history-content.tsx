@@ -10,8 +10,8 @@ import {
   getShowEventOverviewQueryKey,
   useEventsRankingControllerGetEventHeroStats,
   useShowEventOverview,
-} from "@lootlog/api-client/react-query/main/events";
-import type { EventHeroStatsResponseDto } from "@lootlog/api-client/models/main/event-hero-stats-response-dto";
+} from "@lootlog/client/main";
+import type { EventHeroStatsResponseDto } from "@lootlog/client/main";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventKillsFilter } from "./components/kills/event-kills-filter";
 import { EventKillsSummary } from "./components/kills/event-kills-summary";

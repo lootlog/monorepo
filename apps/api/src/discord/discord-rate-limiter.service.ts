@@ -1,8 +1,7 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import type { Logger } from "winston";
-import { RedisService } from "@lootlog/nest-shared/redis";
+import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import { RedisService } from "#src/redis/redis.service";
 import type { DiscordEndpoint } from "./discord.types.js";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 interface UserRateLimitData {
   bucket?: string | null;
@@ -21,12 +20,11 @@ interface DiscordRateLimitState {
   isBlocked: boolean;
 }
 
-@Injectable()
 export class DiscordRateLimiterService {
   private readonly RATE_LIMIT_KEY_PREFIX = "discord:ratelimit:user:";
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly logger: Logger,
     private readonly redis: RedisService,
   ) {}
 
@@ -228,7 +226,7 @@ export class DiscordRateLimiterService {
     }
 
     try {
-      const parsed = JSON.parse(data) as unknown;
+      const parsed = decodeJsonUnknown(data);
       if (isUserRateLimitData(parsed)) {
         return parsed;
       }

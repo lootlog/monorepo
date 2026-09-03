@@ -4,7 +4,7 @@ import {
   getDocsControllerGetDocumentQueryKey,
   getDocsControllerGetDocumentsQueryKey,
   getDocsControllerGetTrashQueryKey,
-} from "@lootlog/api-client/react-query/main/docs";
+} from "@lootlog/client/main";
 import {
   guildDocDetailQueryOptions,
   guildDocsListQueryOptions,

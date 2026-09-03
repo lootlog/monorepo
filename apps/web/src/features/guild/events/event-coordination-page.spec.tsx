@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Permission } from "@lootlog/types";
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventCoordinationPage } from "./event-coordination-page";
-import type { EventCoordinationResponseDto } from "@lootlog/api-client/models/main/event-coordination-response-dto";
+import type { EventCoordinationResponseDto } from "@lootlog/client/main";
 
 const mocks = vi.hoisted(() => ({
   closeRespawnWindow: vi.fn(),
@@ -57,7 +57,8 @@ vi.mock("@/hooks/api/use-guild-permissions", () => ({
   useGuildPermissions: mocks.useGuildPermissions,
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/events", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   getEventsMonitoringControllerGetCoordinationQueryKey: ({
     guildId,
     eventId,

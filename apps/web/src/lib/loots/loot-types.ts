@@ -1,11 +1,11 @@
-import { LootItemResponseDtoRarity } from "@lootlog/api-client/models/main/loot-item-response-dto-rarity";
-import type { LootItemResponseDto } from "@lootlog/api-client/models/main/loot-item-response-dto";
-import type { LootNpcResponseDto } from "@lootlog/api-client/models/main/loot-npc-response-dto";
-import type { LootPlayerResponseDto } from "@lootlog/api-client/models/main/loot-player-response-dto";
-import { LootResponseDtoSource } from "@lootlog/api-client/models/main/loot-response-dto-source";
-import type { LootCommentResponseDto } from "@lootlog/api-client/models/main/loot-comment-response-dto";
-import type { LootResponseDto } from "@lootlog/api-client/models/main/loot-response-dto";
-import type { LootShareResponseDto } from "@lootlog/api-client/models/main/loot-share-response-dto";
+import { LootItemResponseDtoRarity } from "@lootlog/client/main";
+import type { LootItemResponseDto } from "@lootlog/client/main";
+import type { LootNpcResponseDto } from "@lootlog/client/main";
+import type { LootPlayerResponseDto } from "@lootlog/client/main";
+import { LootResponseDtoSource } from "@lootlog/client/main";
+import type { LootCommentResponseDto } from "@lootlog/client/main";
+import type { LootResponseDto } from "@lootlog/client/main";
+import type { LootShareResponseDto } from "@lootlog/client/main";
 
 export type Loot = LootResponseDto;
 export type Item = LootItemResponseDto;

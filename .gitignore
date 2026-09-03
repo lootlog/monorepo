@@ -41,6 +41,7 @@ npm-debug.log*
 **/battlelog-service/generated
 **/activity/prisma/generated
 /apps/api/generated
+/apps/api/src/mocks/data/players.json
 
 .claude/settings.local.json
 analysis
@@ -53,8 +54,6 @@ example-data
 
 # Gemini
 GEMINI.md
-
-.pnpm-store
 
 prompts
 prompts/**
@@ -78,6 +77,9 @@ playground/**
 !/docs/adr/
 !/docs/adr/**
 !/docs/product-evidence.md
+!/docs/ci-cd.md
+!/docs/rewrite/
+!/docs/rewrite/**
 **/.impeccable/direction-question.json
 **/.impeccable/questions/
 .superpowers/

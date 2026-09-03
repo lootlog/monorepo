@@ -4,7 +4,7 @@ import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
   PartyReadyRoomProjectionBase,
-} from "@lootlog/types";
+} from "@lootlog/schema/party-ready-room";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 function cloneCharacter(

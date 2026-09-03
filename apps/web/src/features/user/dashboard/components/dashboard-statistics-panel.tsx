@@ -1,7 +1,7 @@
 import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
+} from "@lootlog/client/main";
 import { Card } from "@lootlog/ui/components/card";
 import { Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";

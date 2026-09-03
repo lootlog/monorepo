@@ -4,35 +4,33 @@ import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { SocketProvider } from "./socket-context";
 
-const { mockRequestMargonemAccountProof, mockSocket, mockSocketHandlers } =
-  vi.hoisted(() => {
-    const socketHandlers = {} as Record<string, (data: unknown) => void>;
+const { mockSocket, mockSocketHandlers } = vi.hoisted(() => {
+  const socketHandlers = {} as Record<string, (data: unknown) => void>;
 
-    return {
-      mockRequestMargonemAccountProof: vi.fn(),
-      mockSocketHandlers: socketHandlers,
-      mockSocket: {
-        auth: {},
-        connected: true,
-        id: "socket-1",
-        connect: vi.fn(),
-        disconnect: vi.fn(),
-        emit: vi.fn(),
-        off: vi.fn((event: string) => {
-          delete socketHandlers[event];
-        }),
-        offAny: vi.fn(),
-        on: vi.fn((event: string, handler: (data: unknown) => void) => {
-          socketHandlers[event] = handler;
-        }),
-        onAny: vi.fn(),
-      },
-    };
-  });
-
-vi.mock("@/lib/margonem-account-proof", () => ({
-  requestMargonemAccountProof: mockRequestMargonemAccountProof,
-}));
+  return {
+    mockSocketHandlers: socketHandlers,
+    mockSocket: {
+      auth: {},
+      connected: true,
+      id: "socket-1",
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      emit: vi.fn(),
+      join: vi.fn().mockResolvedValue({
+        connectionId: "connection-1",
+        organizationIds: ["guild-1"],
+      }),
+      off: vi.fn((event: string) => {
+        delete socketHandlers[event];
+      }),
+      offAny: vi.fn(),
+      on: vi.fn((event: string, handler: (data: unknown) => void) => {
+        socketHandlers[event] = handler;
+      }),
+      onAny: vi.fn(),
+    },
+  };
+});
 
 vi.mock("@/lib/socket", () => ({
   getSocket: () => mockSocket,
@@ -47,11 +45,6 @@ const expectedJoinData = {
     rank: 4,
   },
   icon: "hero-icon",
-  location: {
-    map: "Karka-han",
-    x: 1,
-    y: 2,
-  },
   lvl: 100,
   name: "Hero",
   prof: "w",
@@ -99,17 +92,7 @@ describe("SocketProvider", () => {
     });
   });
 
-  it("emits join with Margonem account proof when proof request succeeds", async () => {
-    const proof = {
-      userId: "20",
-      characterId: "10",
-      token: "token",
-      ts: 1_700_000_000,
-      validatedString: "20+token+1700000000",
-      signatureBase64: "signature",
-    };
-    mockRequestMargonemAccountProof.mockResolvedValue(proof);
-
+  it("joins through the realtime client after the game is ready", async () => {
     render(
       <SocketProvider>
         <div />
@@ -117,25 +100,11 @@ describe("SocketProvider", () => {
     );
 
     await waitFor(() => {
-      expect(mockSocket.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, {
-        data: expectedJoinData,
-        margonemAccountProof: proof,
-      });
-    });
-    expect(mockRequestMargonemAccountProof).toHaveBeenCalledWith({
-      socketId: "socket-1",
-      accountId: "20",
-      characterId: "10",
-      clanId: 30,
+      expect(mockSocket.join).toHaveBeenCalledWith(expectedJoinData);
     });
   });
 
-  it("emits join without Margonem account proof when proof request fails", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockRequestMargonemAccountProof.mockRejectedValue(
-      new Error("Margonem unavailable"),
-    );
-
+  it("does not include precise location in the session join command", async () => {
     render(
       <SocketProvider>
         <div />
@@ -143,9 +112,8 @@ describe("SocketProvider", () => {
     );
 
     await waitFor(() => {
-      expect(mockSocket.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, {
-        data: expectedJoinData,
-      });
+      expect(mockSocket.join).toHaveBeenCalledWith(expectedJoinData);
+      expect(mockSocket.join.mock.calls[0]?.[0]).not.toHaveProperty("location");
     });
   });
 

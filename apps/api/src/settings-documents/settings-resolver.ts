@@ -1,12 +1,14 @@
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
-  type SettingsDocumentLayer,
-  type SettingsDomain,
-  type SettingsDomainResolution,
-  type SettingsScope,
-  type SettingsValueSource,
-} from "@lootlog/types";
+} from "@lootlog/domain/settings-documents";
+import type {
+  SettingsDocumentLayer,
+  SettingsDomain,
+  SettingsDomainResolution,
+  SettingsScope,
+  SettingsValueSource,
+} from "@lootlog/schema/settings-documents";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -15,7 +17,7 @@ interface ApplySettingsPatchInput {
   scope: SettingsScope;
   currentOverrides: JsonRecord;
   set: JsonRecord;
-  unset: string[];
+  unset: ReadonlyArray<string>;
 }
 
 const isRecord = (value: unknown): value is JsonRecord =>
@@ -190,8 +192,8 @@ export const resolveSettingsDomain = (
 
   const updatedValues = migratedLayers
     .map((layer) => layer.updatedAt)
-    .filter((value): value is string => value !== undefined)
-    .sort();
+    .filter((value): value is Date => value !== undefined)
+    .sort((left, right) => left.getTime() - right.getTime());
   const updatedAt = updatedValues[updatedValues.length - 1];
 
   return {

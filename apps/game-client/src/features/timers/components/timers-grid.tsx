@@ -1,15 +1,14 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import type { FC } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
-import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
+
 import { useQueries } from "@tanstack/react-query";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { TimerClockProvider } from "./timer-clock-provider";

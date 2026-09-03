@@ -1,0 +1,127 @@
+import { Context, Effect, Layer, Redacted } from "effect";
+import { Meilisearch } from "meilisearch";
+import { SearchConfig } from "#src/config/search-config";
+import { makeItemsModule } from "#src/items/items.service";
+import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
+import {
+  SearchOperationFailure,
+  type SearchOperationFailure as SearchOperationFailureType,
+} from "#src/meilisearch/search-operation-failure";
+import { makeNpcsModule } from "#src/npcs/npcs.service";
+import { makePlayersModule } from "#src/players/players.service";
+import { effectLogger } from "#src/shared/logger";
+import type { IndexItemsCommand } from "#src/items/index-items-command";
+import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
+import type { IndexPlayersCommand } from "#src/players/index-players-command";
+import type {
+  AllControllerSearchAllQuery,
+  SearchAllResponseDto_Output,
+} from "./contracts/all/schemas.js";
+import type {
+  ItemsControllerGetItemsQuery,
+  SearchItemsResponseDto_Output,
+} from "./contracts/items/schemas.js";
+import type {
+  NpcsControllerGetNpcsQuery,
+  NpcHitDto_Output,
+} from "./contracts/npcs/schemas.js";
+import type {
+  PlayersControllerGetPlayersQuery,
+  PlayerHitDto_Output,
+} from "./contracts/players/schemas.js";
+
+export { SearchOperationFailure };
+
+export interface SearchOperationsValue {
+  readonly searchPlayers: (
+    query: PlayersControllerGetPlayersQuery,
+  ) => Effect.Effect<
+    ReadonlyArray<PlayerHitDto_Output>,
+    SearchOperationFailureType
+  >;
+  readonly searchNpcs: (
+    query: NpcsControllerGetNpcsQuery,
+  ) => Effect.Effect<
+    ReadonlyArray<NpcHitDto_Output>,
+    SearchOperationFailureType
+  >;
+  readonly searchItems: (
+    query: ItemsControllerGetItemsQuery,
+  ) => Effect.Effect<SearchItemsResponseDto_Output, SearchOperationFailureType>;
+  readonly searchAll: (
+    query: AllControllerSearchAllQuery,
+  ) => Effect.Effect<SearchAllResponseDto_Output, SearchOperationFailureType>;
+  readonly indexItems: (
+    data: IndexItemsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly indexNpcs: (
+    data: IndexNpcsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly indexPlayers: (
+    data: IndexPlayersCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+}
+
+export class SearchOperations extends Context.Service<
+  SearchOperations,
+  SearchOperationsValue
+>()("@lootlog/search/SearchOperations") {
+  static readonly layer = Layer.effect(
+    SearchOperations,
+    Effect.gen(function* () {
+      const config = yield* SearchConfig;
+      const meilisearch = new Meilisearch({
+        host: config.meilisearchHost,
+        apiKey: Redacted.value(config.meilisearchApiKey),
+      });
+      const items = makeItemsModule(meilisearch, effectLogger);
+      const npcs = makeNpcsModule(meilisearch, effectLogger);
+      const players = makePlayersModule(meilisearch, effectLogger);
+
+      yield* configureMeilisearchIndexes(meilisearch, effectLogger);
+
+      return SearchOperations.of({
+        searchPlayers: (query) =>
+          players.getPlayers({
+            ...query,
+            limit: query.limit ?? 10,
+            search: query.search ? [...asArray(query.search)] : undefined,
+          }),
+        searchNpcs: (query) =>
+          npcs.getNpcs({
+            ...query,
+            ids: query.ids ? [...query.ids] : undefined,
+            limit: query.limit ?? 10,
+            search: query.search ? [...asArray(query.search)] : undefined,
+          }),
+        searchItems: (query) =>
+          items.searchItems({
+            ...query,
+            facets: query.facets ? [...query.facets] : undefined,
+            filter: query.filter ? [...asArray(query.filter)] : undefined,
+            limit: query.limit ?? 20,
+            offset: query.offset ?? 0,
+            sort: query.sort ? [...query.sort] : undefined,
+          }),
+        searchAll: (query) =>
+          Effect.all(
+            {
+              items: items.getItems({ ...query, limit: query.limit ?? 10 }),
+              npcs: npcs.getNpcs({ ...query, limit: query.limit ?? 10 }),
+              players: players.getPlayers({
+                ...query,
+                limit: query.limit ?? 10,
+              }),
+            },
+            { concurrency: "unbounded" },
+          ),
+        indexItems: items.indexItems,
+        indexNpcs: npcs.indexNpcs,
+        indexPlayers: players.indexPlayers,
+      });
+    }),
+  ).pipe(Layer.provide(SearchConfig.layer));
+}
+
+const asArray = <A>(value: A | ReadonlyArray<A>): ReadonlyArray<A> =>
+  Array.isArray(value) ? value : [value as A];

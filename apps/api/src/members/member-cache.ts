@@ -1,0 +1,25 @@
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+
+export function getMemberCacheTtl(env: RuntimeEnvironment): number {
+  return env === RuntimeEnvironment.LOCAL
+    ? 1000 * 60 * 5 // 5 minutes in local
+    : 1000 * 60 * 60; // 60 minutes in prod
+}
+
+export function getMemberCacheSoftTtl(env: RuntimeEnvironment): number {
+  return env === RuntimeEnvironment.LOCAL
+    ? 1000 * 60 * 5 // 5 minutes in local
+    : 1000 * 60 * 15; // 15 minutes in prod
+}
+
+export function getRefreshPermissionsTtl(env: RuntimeEnvironment): number {
+  return env === RuntimeEnvironment.LOCAL
+    ? 1000 * 60 * 5 // 5 minutes in local
+    : 1000 * 60 * 2; // 2 minutes in prod
+}
+
+export function getAdminBulkRefreshRateLimit(env: RuntimeEnvironment): number {
+  return env === RuntimeEnvironment.LOCAL
+    ? 1000 * 60 * 5 // 5 minutes in local
+    : 1000 * 60 * 10; // 10 minutes in prod
+}

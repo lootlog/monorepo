@@ -1,4 +1,4 @@
-import { LootSource } from "../src/generated/prisma/client.js";
+import { LootSourceEnum as LootSource } from "@lootlog/schema/loot";
 
 export const TEST_GUILDS = {
   GUILD_1: {

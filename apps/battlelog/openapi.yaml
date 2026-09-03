@@ -1,0 +1,4390 @@
+openapi: 3.0.0
+info:
+  title: Battle Log API
+  version: "1.0"
+  description: The Battle Log API documentation
+  contact: {}
+paths:
+  /healthz:
+    get:
+      tags:
+        - health
+      operationId: HealthzController_healthCheck
+      parameters: []
+      responses:
+        "200":
+          description: API is healthy
+      description: Check the health status of the API
+      summary: Health check
+  /battles:
+    post:
+      tags:
+        - battles
+      operationId: BattlesController_createBattle
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleCreatedResponseDto_Output"
+      summary: Create a battle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBattleDto"
+        required: true
+  /battles/@me:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getDashboardBattles
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 20
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: &a1
+            type: boolean
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: type
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - solo
+                - group
+          required: false
+        - name: userId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: public
+          in: query
+          schema: *a1
+          required: false
+        - name: characterId
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: result
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - won
+                - lost
+                - flee
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: number
+            minimum: 1
+            maximum: 1000
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: number
+            minimum: 1
+            maximum: 1000
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattlesListResponseDto_Output"
+      summary: Get authenticated user battles
+  /battles/@me/characters:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getUserCharacters
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleCharactersResponseDto_Output"
+      summary: Get authenticated user battle characters
+  /battles/@me/analytics:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getBattleAnalytics
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleAnalyticsResponseDto_Output"
+      summary: Get authenticated user battle analytics
+  /battles/@me/abyss/seasons:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getAbyssSeasons
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AbyssSeasonResponseDto_Output"
+      summary: Get authenticated user Abyss seasons
+  /battles/@me/statistics/combat-profile:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getCombatProfile
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatProfileResponseDto_Output"
+      summary: Get combat profile statistics
+  /battles/@me/statistics/profession-win-rate:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getProfessionWinRate
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProfessionWinRateResponseDto_Output"
+      summary: Get profession win rate statistics
+  /battles/@me/statistics/head-to-head:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getHeadToHead
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeadToHeadPaginatedResponseDto_Output"
+      summary: Get head-to-head statistics
+  /battles/@me/statistics/streak:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getCurrentStreak
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakResponseDto_Output"
+      summary: Get current battle streak statistics
+  /battles/@me/statistics/duration:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getBattleDuration
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleDurationStatsResponseDto_Output"
+      summary: Get battle duration statistics
+  /battles/@me/statistics/ph-growth:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getPhGrowth
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PhGrowthDataPointResponseDto_Output"
+      summary: Get PH growth statistics
+  /battles/@me/statistics/rating-growth:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getRatingGrowth
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RatingGrowthDataPointResponseDto_Output"
+      summary: Get rating growth statistics
+  /battles/@me/statistics/rating-delta-by-opponent:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getRatingDeltaByOpponent
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RatingDeltaByOpponentResponseDto_Output"
+      summary: Get rating delta by opponent statistics
+  /battles/@me/statistics/player-vs-player:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getPlayerVsPlayerBattles
+      parameters:
+        - name: characterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+          required: false
+        - name: minLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: maxLevel
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+            default: totalBattles
+          required: false
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          required: false
+        - name: includeTotal
+          in: query
+          schema: *a1
+          required: false
+        - name: search
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: minBattles
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          required: false
+        - name: ph
+          in: query
+          schema: *a1
+          required: false
+        - name: matchmaking
+          in: query
+          schema: *a1
+          required: false
+        - name: opponentId
+          in: query
+          schema:
+            type: string
+          required: true
+        - name: excludeBattleId
+          in: query
+          schema:
+            type: string
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerVsPlayerPaginatedResponseDto_Output"
+      summary: Get player-vs-player battles
+  /battles/@me/warriors/search:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_searchWarriors
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleWarriorsSearchResponseDto_Output"
+      summary: Search warriors for authenticated user
+  /battles/@me/worlds:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getUserWorlds
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleUserWorldsResponseDto_Output"
+      summary: Get worlds used by authenticated user battles
+  /battles/{battleId}/timeline:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getBattleTimeline
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Get computed battle timeline
+  /battles/{battleId}:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getBattle
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Get a single battle
+    patch:
+      tags:
+        - battles
+      operationId: BattlesController_updateBattle
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Update battle visibility
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBattleDto"
+        required: true
+    delete:
+      tags:
+        - battles
+      operationId: BattlesController_deleteBattle
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleDeletedResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Delete a battle
+  /battles/{battleId}/raw:
+    get:
+      tags:
+        - battles
+      operationId: BattlesController_getBattleRawData
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleRawResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Get raw battle payload
+  /battles/public/{battleId}:
+    get:
+      tags:
+        - public-battles
+      operationId: PublicBattlesController_getPublicBattle
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleResponseDto_Output"
+        "404":
+          description: Public battle not found
+      summary: Get a public battle
+  /battles/public/{battleId}/raw:
+    get:
+      tags:
+        - public-battles
+      operationId: PublicBattlesController_getPublicBattleRaw
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleRawResponseDto_Output"
+        "404":
+          description: Public battle not found
+      summary: Get raw payload for a public battle
+  /battles/public/{battleId}/timeline:
+    get:
+      tags:
+        - public-battles
+      operationId: PublicBattlesController_getPublicBattleTimeline
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "404":
+          description: Public battle not found
+      summary: Get computed timeline for a public battle
+  /internal/delete-user-data:
+    post:
+      tags:
+        - internal
+      operationId: InternalController_deleteUserData
+      parameters: []
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleAcceptedResponseDto_Output"
+      summary: Queue battle data deletion for a user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteUserDataDto"
+        required: true
+components:
+  schemas:
+    CreateBattleDto:
+      type: object
+      properties:
+        accountId:
+          type: string
+        characterId:
+          type: string
+        submissionId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        world:
+          type: string
+        matchmaking:
+          type: boolean
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              party:
+                type: object
+                properties:
+                  members:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        account:
+                          type: number
+                        nick:
+                          type: string
+                        icon:
+                          type: string
+                        commander:
+                          type: number
+                      required:
+                        - id
+                        - account
+                        - nick
+                        - icon
+                required:
+                  - members
+              f:
+                type: object
+                properties:
+                  m:
+                    type: array
+                    items:
+                      type: string
+                  endBattle:
+                    type: number
+                  init:
+                    type: string
+                  auto:
+                    type: string
+                  w:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        originalId:
+                          type: number
+                        name:
+                          type: string
+                        lvl:
+                          type: number
+                        prof:
+                          type: string
+                        icon:
+                          type: string
+                        team:
+                          type: number
+                      required:
+                        - originalId
+                        - name
+                        - lvl
+                        - prof
+                        - icon
+                        - team
+              ev:
+                type: number
+              match_summary:
+                type: object
+                properties:
+                  difficulty_rank:
+                    type: number
+                  result:
+                    type: number
+                  rating_delta:
+                    type: number
+                  opponent_lvl:
+                    type: number
+                  opponent_oplvl:
+                    type: number
+                  opponent_rating:
+                    type: number
+                  rating:
+                    type: number
+                  status:
+                    type: number
+                  placement_cur:
+                    type: number
+                  placement_max:
+                    type: number
+                  points_gained:
+                    type: number
+                  daily_stage:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      points_cur:
+                        type: number
+                      points_max:
+                        type: number
+                      points_step:
+                        type: number
+                      rewards_last:
+                        type: number
+                      rewards_cur:
+                        type: number
+                      rewards_max:
+                        type: number
+                    required:
+                      - id
+                      - points_cur
+                      - points_max
+                      - points_step
+                      - rewards_last
+                      - rewards_cur
+                      - rewards_max
+                required:
+                  - difficulty_rank
+                  - result
+                  - rating_delta
+                  - opponent_lvl
+                  - opponent_oplvl
+                  - opponent_rating
+                  - rating
+                  - status
+              matchmaking_state:
+                type: number
+            required:
+              - f
+          minItems: 1
+      required:
+        - accountId
+        - characterId
+        - world
+        - events
+    BattleCreatedResponseDto_Output:
+      type: object
+      properties:
+        battleId:
+          type: string
+      required:
+        - battleId
+    BattlesListResponseDto_Output:
+      type: object
+      properties:
+        battles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              public:
+                type: boolean
+              userId:
+                type: string
+              accountId:
+                type: string
+              characterId:
+                type: string
+              world:
+                type: string
+              duration:
+                type: number
+              type:
+                type: string
+              winner:
+                type: string
+              loser:
+                type: string
+              winningTeam:
+                type: number
+              losingTeam:
+                type: number
+              honorPoints:
+                type: number
+              hasFlee:
+                type: boolean
+              matchmaking:
+                type: boolean
+              statistics:
+                type: object
+                properties:
+                  topDamageDealer:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  topTank:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  bestEfficiency:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  criticalMaster:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  evasionExpert:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  shieldWall:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  damagePerTurn:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  mostActive:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  legendaryWarrior:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                  untouchable:
+                    nullable: true
+                    type: object
+                    properties:
+                      warriorId:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: number
+                      formattedValue:
+                        type: string
+                    required:
+                      - warriorId
+                      - name
+                      - value
+                required:
+                  - topDamageDealer
+                  - topTank
+                  - bestEfficiency
+                  - criticalMaster
+                  - evasionExpert
+                  - shieldWall
+                  - damagePerTurn
+                  - mostActive
+                  - legendaryWarrior
+                  - untouchable
+              difficultyRank:
+                nullable: true
+                type: number
+              result:
+                nullable: true
+                type: number
+              ratingDelta:
+                nullable: true
+                type: number
+              opponentLvl:
+                nullable: true
+                type: number
+              opponentOplvl:
+                nullable: true
+                type: number
+              opponentRating:
+                nullable: true
+                type: number
+              rating:
+                nullable: true
+                type: number
+              status:
+                nullable: true
+                type: number
+              pointsGained:
+                nullable: true
+                type: number
+              placementCur:
+                nullable: true
+                type: number
+              placementMax:
+                nullable: true
+                type: number
+              dailyStageId:
+                nullable: true
+                type: number
+              dailyPointsCur:
+                nullable: true
+                type: number
+              dailyPointsMax:
+                nullable: true
+                type: number
+              dailyPointsStep:
+                nullable: true
+                type: number
+              dailyRewardsLast:
+                nullable: true
+                type: number
+              dailyRewardsCur:
+                nullable: true
+                type: number
+              dailyRewardsMax:
+                nullable: true
+                type: number
+              warriors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    battleId:
+                      type: string
+                    originalId:
+                      type: string
+                    name:
+                      type: string
+                    lvl:
+                      type: number
+                    prof:
+                      type: string
+                    icon:
+                      type: string
+                    team:
+                      type: number
+                    turns:
+                      type: number
+                    turnsLost:
+                      type: number
+                    steps:
+                      type: number
+                    normalAttacks:
+                      type: number
+                    spellsUsed:
+                      type: number
+                    spellsUsedMap:
+                      type: object
+                      additionalProperties:
+                        type: number
+                    isDead:
+                      type: boolean
+                    surrendered:
+                      type: boolean
+                    fled:
+                      type: boolean
+                    maxHp:
+                      type: number
+                    damageDealt:
+                      type: number
+                    distanceDamage:
+                      type: number
+                    meleeDamage:
+                      type: number
+                    auxiliaryDamage:
+                      type: number
+                    fireDamage:
+                      type: number
+                    frostDamage:
+                      type: number
+                    lightningDamage:
+                      type: number
+                    thirdAttDamage:
+                      type: number
+                    damageDealtAfterDefensive:
+                      type: number
+                    damageDealtAfterDefensivePercentage:
+                      type: number
+                    damageTaken:
+                      type: number
+                    distanceDamageTaken:
+                      type: number
+                    meleeDamageTaken:
+                      type: number
+                    auxiliaryDamageTaken:
+                      type: number
+                    fireDamageTaken:
+                      type: number
+                    frostDamageTaken:
+                      type: number
+                    lightningDamageTaken:
+                      type: number
+                    thirdAttDamageTaken:
+                      type: number
+                    flatDamageTaken:
+                      type: number
+                    rageDamageDealt:
+                      type: number
+                    trueDamageDealt:
+                      type: number
+                    trueDamageTaken:
+                      type: number
+                    stigmaDamageDealt:
+                      type: number
+                    stigmaDamageTaken:
+                      type: number
+                    passiveHealing:
+                      type: number
+                    activeHealing:
+                      type: number
+                    armorPierces:
+                      type: number
+                    criticalHits:
+                      type: number
+                    reducedArmor:
+                      type: number
+                    reducedPoisonResistance:
+                      type: number
+                    magicResistanceDestroyed:
+                      type: number
+                    evasions:
+                      type: number
+                    attacksEvaded:
+                      type: number
+                    counters:
+                      type: number
+                    fastArrows:
+                      type: number
+                    blocks:
+                      type: number
+                    attacksBlocked:
+                      type: number
+                    blockedDamage:
+                      type: number
+                    woundDamageTaken:
+                      type: number
+                    poisonDamageTaken:
+                      type: number
+                    injureDamageTaken:
+                      type: number
+                    injures:
+                      type: number
+                    critWoundDamageTaken:
+                      type: number
+                    firePassiveDamageTaken:
+                      type: number
+                    lightningPassiveDamageTaken:
+                      type: number
+                    destroyedEnergy:
+                      type: number
+                    destroyedMana:
+                      type: number
+                    regeneratedEnergy:
+                      type: number
+                    regeneratedMana:
+                      type: number
+                    reflectedDamage:
+                      type: number
+                    reflectedDamageTaken:
+                      type: number
+                    legbons:
+                      type: number
+                    legbonCurse:
+                      type: number
+                    legbonCleanse:
+                      type: number
+                    legbonLastheal:
+                      type: number
+                    legbonLasthealValue:
+                      type: number
+                    legbonGlare:
+                      type: number
+                    legbonHolytouch:
+                      type: number
+                    legbonHolytouchValue:
+                      type: number
+                    legbonCritredValue:
+                      type: number
+                    legbonFacadeValue:
+                      type: number
+                    legbonPunctureValue:
+                      type: number
+                    legbonVerycrit:
+                      type: number
+                    legbonAnguish:
+                      type: number
+                    legbonAnguishDamageTaken:
+                      type: number
+                    ph:
+                      type: number
+                  required:
+                    - id
+                    - battleId
+                    - originalId
+                    - name
+                    - lvl
+                    - prof
+                    - icon
+                    - team
+                    - turns
+                    - turnsLost
+                    - steps
+                    - normalAttacks
+                    - spellsUsed
+                    - spellsUsedMap
+                    - isDead
+                    - surrendered
+                    - fled
+                    - maxHp
+                    - damageDealt
+                    - distanceDamage
+                    - meleeDamage
+                    - auxiliaryDamage
+                    - fireDamage
+                    - frostDamage
+                    - lightningDamage
+                    - thirdAttDamage
+                    - damageDealtAfterDefensive
+                    - damageDealtAfterDefensivePercentage
+                    - damageTaken
+                    - distanceDamageTaken
+                    - meleeDamageTaken
+                    - auxiliaryDamageTaken
+                    - fireDamageTaken
+                    - frostDamageTaken
+                    - lightningDamageTaken
+                    - thirdAttDamageTaken
+                    - flatDamageTaken
+                    - rageDamageDealt
+                    - trueDamageDealt
+                    - trueDamageTaken
+                    - stigmaDamageDealt
+                    - stigmaDamageTaken
+                    - passiveHealing
+                    - activeHealing
+                    - armorPierces
+                    - criticalHits
+                    - reducedArmor
+                    - reducedPoisonResistance
+                    - magicResistanceDestroyed
+                    - evasions
+                    - attacksEvaded
+                    - counters
+                    - fastArrows
+                    - blocks
+                    - attacksBlocked
+                    - blockedDamage
+                    - woundDamageTaken
+                    - poisonDamageTaken
+                    - injureDamageTaken
+                    - injures
+                    - critWoundDamageTaken
+                    - firePassiveDamageTaken
+                    - lightningPassiveDamageTaken
+                    - destroyedEnergy
+                    - destroyedMana
+                    - regeneratedEnergy
+                    - regeneratedMana
+                    - reflectedDamage
+                    - reflectedDamageTaken
+                    - legbons
+                    - legbonCurse
+                    - legbonCleanse
+                    - legbonLastheal
+                    - legbonLasthealValue
+                    - legbonGlare
+                    - legbonHolytouch
+                    - legbonHolytouchValue
+                    - legbonCritredValue
+                    - legbonFacadeValue
+                    - legbonPunctureValue
+                    - legbonVerycrit
+                    - legbonAnguish
+                    - legbonAnguishDamageTaken
+                    - ph
+            required:
+              - id
+              - createdAt
+              - updatedAt
+              - public
+              - userId
+              - accountId
+              - characterId
+              - world
+              - duration
+              - type
+              - winner
+              - loser
+              - winningTeam
+              - losingTeam
+              - honorPoints
+              - hasFlee
+              - matchmaking
+              - statistics
+              - difficultyRank
+              - result
+              - ratingDelta
+              - opponentLvl
+              - opponentOplvl
+              - opponentRating
+              - rating
+              - status
+              - pointsGained
+              - placementCur
+              - placementMax
+              - dailyStageId
+              - dailyPointsCur
+              - dailyPointsMax
+              - dailyPointsStep
+              - dailyRewardsLast
+              - dailyRewardsCur
+              - dailyRewardsMax
+              - warriors
+        pagination:
+          type: object
+          properties:
+            size:
+              type: number
+            hasNext:
+              type: boolean
+            hasPrev:
+              type: boolean
+            nextCursor:
+              type: string
+            previousCursor:
+              type: string
+            total:
+              type: number
+          required:
+            - size
+            - hasNext
+            - hasPrev
+        meta:
+          type: object
+          properties:
+            performance:
+              type: object
+              properties:
+                queryTime:
+                  type: number
+                countTime:
+                  type: number
+                totalItems:
+                  type: number
+                estimatedTotal:
+                  type: boolean
+              required:
+                - queryTime
+          required:
+            - performance
+      required:
+        - battles
+        - pagination
+        - meta
+    BattleCharactersResponseDto_Output:
+      type: object
+      properties:
+        characters:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              world:
+                type: string
+              icon:
+                type: string
+            required:
+              - id
+              - name
+              - world
+              - icon
+      required:
+        - characters
+    BattleAnalyticsResponseDto_Output:
+      type: object
+      properties:
+        totalBattles:
+          type: number
+        wins:
+          type: number
+        losses:
+          type: number
+        winRatio:
+          type: number
+        totalPH:
+          type: number
+      required:
+        - totalBattles
+        - wins
+        - losses
+        - winRatio
+        - totalPH
+    AbyssSeasonResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        totalBattles:
+          type: number
+        wins:
+          type: number
+        losses:
+          type: number
+        winRate:
+          type: number
+        totalRatingDelta:
+          type: number
+        peakRating:
+          nullable: true
+          type: number
+        totalPointsGained:
+          nullable: true
+          type: number
+      required:
+        - id
+        - startedAt
+        - endedAt
+        - totalBattles
+        - wins
+        - losses
+        - winRate
+        - totalRatingDelta
+        - peakRating
+        - totalPointsGained
+    CombatProfileResponseDto_Output:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalBattles:
+              type: number
+            wins:
+              type: number
+            losses:
+              type: number
+            winRate:
+              type: number
+            totalPH:
+              type: number
+            totalRatingDelta:
+              type: number
+            avgTurns:
+              type: number
+            avgDuration:
+              type: number
+            damagePerTurn:
+              type: number
+            mitigationRate:
+              type: number
+            controlRate:
+              type: number
+          required:
+            - totalBattles
+            - wins
+            - losses
+            - winRate
+            - totalPH
+            - totalRatingDelta
+            - avgTurns
+            - avgDuration
+            - damagePerTurn
+            - mitigationRate
+            - controlRate
+        damageMix:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              label:
+                type: string
+              value:
+                type: number
+              share:
+                type: number
+            required:
+              - key
+              - label
+              - value
+              - share
+        mitigationMix:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              label:
+                type: string
+              value:
+                type: number
+              share:
+                type: number
+            required:
+              - key
+              - label
+              - value
+              - share
+        spellUsage:
+          type: array
+          items:
+            type: object
+            properties:
+              spell:
+                type: string
+              skillId:
+                nullable: true
+                type: number
+              casts:
+                type: number
+              share:
+                type: number
+            required:
+              - spell
+              - skillId
+              - casts
+              - share
+        matchupByProfession:
+          type: array
+          items:
+            type: object
+            properties:
+              prof:
+                type: string
+              wins:
+                type: number
+              losses:
+                type: number
+              totalBattles:
+                type: number
+              winRate:
+                type: number
+            required:
+              - prof
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+        phTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              value:
+                type: number
+              cumulativeValue:
+                type: number
+              battleId:
+                type: string
+            required:
+              - date
+              - value
+              - cumulativeValue
+              - battleId
+        ratingTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              value:
+                type: number
+              cumulativeValue:
+                type: number
+              battleId:
+                type: string
+            required:
+              - date
+              - value
+              - cumulativeValue
+              - battleId
+        highlights:
+          type: array
+          items:
+            type: object
+            properties:
+              battleId:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              type:
+                type: string
+              label:
+                type: string
+              value:
+                type: number
+            required:
+              - battleId
+              - createdAt
+              - type
+              - label
+              - value
+      required:
+        - summary
+        - damageMix
+        - mitigationMix
+        - spellUsage
+        - matchupByProfession
+        - phTrend
+        - ratingTrend
+        - highlights
+    ProfessionWinRateResponseDto_Output:
+      type: object
+      properties:
+        prof:
+          type: string
+        wins:
+          type: number
+        losses:
+          type: number
+        totalBattles:
+          type: number
+        winRate:
+          type: number
+      required:
+        - prof
+        - wins
+        - losses
+        - totalBattles
+        - winRate
+    HeadToHeadPaginatedResponseDto_Output:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              opponentId:
+                type: string
+              opponentName:
+                type: string
+              opponentIcon:
+                type: string
+              opponentProf:
+                type: string
+              opponentLvl:
+                type: number
+              lastBattleResult:
+                type: string
+                enum:
+                  - won
+                  - lost
+                  - flee
+              lastBattleUserWarrior:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                  icon:
+                    type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
+              lastBattleOpponentWarrior:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                  icon:
+                    type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
+              wins:
+                type: number
+              losses:
+                type: number
+              totalBattles:
+                type: number
+              winRate:
+                type: number
+              lastBattleDate:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              totalRatingDelta:
+                type: number
+              avgRatingDelta:
+                type: number
+            required:
+              - opponentId
+              - opponentName
+              - opponentIcon
+              - opponentProf
+              - opponentLvl
+              - lastBattleResult
+              - lastBattleUserWarrior
+              - lastBattleOpponentWarrior
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+        pagination:
+          type: object
+          properties:
+            size:
+              type: number
+            hasNext:
+              type: boolean
+            hasPrev:
+              type: boolean
+            nextCursor:
+              type: string
+            previousCursor:
+              type: string
+            total:
+              type: number
+          required:
+            - size
+            - hasNext
+            - hasPrev
+        meta:
+          type: object
+          properties:
+            performance:
+              type: object
+              properties:
+                queryTime:
+                  type: number
+                countTime:
+                  type: number
+                totalItems:
+                  type: number
+                estimatedTotal:
+                  type: boolean
+              required:
+                - queryTime
+          required:
+            - performance
+      required:
+        - records
+        - pagination
+        - meta
+    StreakResponseDto_Output:
+      type: object
+      properties:
+        current:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - wins
+                - losses
+                - none
+            count:
+              type: number
+          required:
+            - type
+            - count
+        longest:
+          type: object
+          properties:
+            wins:
+              type: number
+            losses:
+              type: number
+          required:
+            - wins
+            - losses
+      required:
+        - current
+        - longest
+    BattleDurationStatsResponseDto_Output:
+      type: object
+      properties:
+        avgWinDuration:
+          type: number
+        avgLossDuration:
+          type: number
+        fastest:
+          nullable: true
+          type: object
+          properties:
+            duration:
+              type: number
+            battleId:
+              type: string
+          required:
+            - duration
+            - battleId
+        longest:
+          nullable: true
+          type: object
+          properties:
+            duration:
+              type: number
+            battleId:
+              type: string
+          required:
+            - duration
+            - battleId
+      required:
+        - avgWinDuration
+        - avgLossDuration
+        - fastest
+        - longest
+    PhGrowthDataPointResponseDto_Output:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        ph:
+          type: number
+        cumulativePh:
+          type: number
+        battleId:
+          type: string
+      required:
+        - date
+        - ph
+        - cumulativePh
+        - battleId
+    RatingGrowthDataPointResponseDto_Output:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        ratingDelta:
+          type: number
+        rating:
+          type: number
+        battleId:
+          type: string
+      required:
+        - date
+        - ratingDelta
+        - rating
+        - battleId
+    RatingDeltaByOpponentResponseDto_Output:
+      type: object
+      properties:
+        opponentId:
+          type: string
+        opponentName:
+          type: string
+        opponentIcon:
+          type: string
+        opponentProf:
+          type: string
+        opponentLvl:
+          type: number
+        totalRatingDelta:
+          type: number
+        wins:
+          type: number
+        losses:
+          type: number
+        totalBattles:
+          type: number
+        avgRatingDelta:
+          type: number
+        lastBattleDate:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - opponentId
+        - opponentName
+        - opponentIcon
+        - opponentProf
+        - opponentLvl
+        - totalRatingDelta
+        - wins
+        - losses
+        - totalBattles
+        - avgRatingDelta
+        - lastBattleDate
+    PlayerVsPlayerPaginatedResponseDto_Output:
+      type: object
+      properties:
+        battles:
+          type: array
+          items:
+            type: object
+            properties:
+              battleId:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              duration:
+                type: number
+              winner:
+                type: string
+              loser:
+                type: string
+              hasFlee:
+                type: boolean
+              matchmaking:
+                type: boolean
+              ratingDelta:
+                nullable: true
+                type: number
+              userRating:
+                nullable: true
+                type: number
+              opponentRating:
+                nullable: true
+                type: number
+              userWarrior:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                  icon:
+                    type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
+              opponentWarrior:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                  icon:
+                    type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
+            required:
+              - battleId
+              - createdAt
+              - duration
+              - winner
+              - loser
+              - hasFlee
+              - matchmaking
+              - ratingDelta
+              - userRating
+              - opponentRating
+              - userWarrior
+              - opponentWarrior
+        pagination:
+          type: object
+          properties:
+            size:
+              type: number
+            hasNext:
+              type: boolean
+            hasPrev:
+              type: boolean
+            nextCursor:
+              type: string
+            previousCursor:
+              type: string
+            total:
+              type: number
+          required:
+            - size
+            - hasNext
+            - hasPrev
+        meta:
+          type: object
+          properties:
+            performance:
+              type: object
+              properties:
+                queryTime:
+                  type: number
+                totalItems:
+                  type: number
+              required:
+                - queryTime
+          required:
+            - performance
+      required:
+        - battles
+        - pagination
+        - meta
+    BattleWarriorsSearchResponseDto_Output:
+      type: object
+      properties:
+        warriors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              icon:
+                type: string
+              prof:
+                type: string
+              lvl:
+                type: number
+            required:
+              - name
+              - icon
+              - prof
+              - lvl
+      required:
+        - warriors
+    BattleUserWorldsResponseDto_Output:
+      type: object
+      properties:
+        worlds:
+          type: array
+          items:
+            type: string
+      required:
+        - worlds
+    BattleTimelineResponseDto_Output:
+      type: object
+      properties:
+        battleId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              turn:
+                type: number
+              attackerId:
+                nullable: true
+                type: string
+              defenderId:
+                nullable: true
+                type: string
+              attackerHpPercentage:
+                nullable: true
+                type: number
+              defenderHpPercentage:
+                nullable: true
+                type: number
+              hpByWarrior:
+                type: object
+                additionalProperties:
+                  type: number
+              teamHp:
+                type: object
+                additionalProperties:
+                  type: number
+              teamHpDelta:
+                type: object
+                additionalProperties:
+                  type: number
+              deltas:
+                type: object
+                properties:
+                  damage:
+                    type: number
+                  healing:
+                    type: number
+                  mitigation:
+                    type: number
+                  resourcePressure:
+                    type: number
+                  energyPressure:
+                    type: number
+                  manaPressure:
+                    type: number
+                  byWarrior:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        damageDealt:
+                          type: number
+                        damageTaken:
+                          type: number
+                        healingDone:
+                          type: number
+                        healingReceived:
+                          type: number
+                        mitigation:
+                          type: number
+                        resourceDelta:
+                          type: number
+                        resourcePressure:
+                          type: number
+                        energyPressure:
+                          type: number
+                        manaPressure:
+                          type: number
+                        absorbGained:
+                          type: number
+                        absorbSpent:
+                          type: number
+                        magicAbsorbGained:
+                          type: number
+                        magicAbsorbSpent:
+                          type: number
+                        controlApplied:
+                          type: number
+                        controlTaken:
+                          type: number
+                      required:
+                        - damageDealt
+                        - damageTaken
+                        - healingDone
+                        - healingReceived
+                        - mitigation
+                        - resourceDelta
+                        - resourcePressure
+                        - energyPressure
+                        - manaPressure
+                        - absorbGained
+                        - absorbSpent
+                        - magicAbsorbGained
+                        - magicAbsorbSpent
+                        - controlApplied
+                        - controlTaken
+                required:
+                  - damage
+                  - healing
+                  - mitigation
+                  - resourcePressure
+                  - energyPressure
+                  - manaPressure
+                  - byWarrior
+              cumulative:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    damageDealt:
+                      type: number
+                    damageTaken:
+                      type: number
+                    healingDone:
+                      type: number
+                    healingReceived:
+                      type: number
+                    mitigation:
+                      type: number
+                    resourceDelta:
+                      type: number
+                    resourcePressure:
+                      type: number
+                    energyPressure:
+                      type: number
+                    manaPressure:
+                      type: number
+                    absorbGained:
+                      type: number
+                    absorbSpent:
+                      type: number
+                    magicAbsorbGained:
+                      type: number
+                    magicAbsorbSpent:
+                      type: number
+                    controlApplied:
+                      type: number
+                    controlTaken:
+                      type: number
+                  required:
+                    - damageDealt
+                    - damageTaken
+                    - healingDone
+                    - healingReceived
+                    - mitigation
+                    - resourceDelta
+                    - resourcePressure
+                    - energyPressure
+                    - manaPressure
+                    - absorbGained
+                    - absorbSpent
+                    - magicAbsorbGained
+                    - magicAbsorbSpent
+                    - controlApplied
+                    - controlTaken
+              actions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    actionType:
+                      type: string
+                    param:
+                      type: string
+                    category:
+                      type: string
+                    actorId:
+                      nullable: true
+                      type: string
+                    targetId:
+                      nullable: true
+                      type: string
+                    value:
+                      type: number
+                    handled:
+                      type: boolean
+                  required:
+                    - actionType
+                    - param
+                    - category
+                    - actorId
+                    - targetId
+                    - value
+                    - handled
+              flags:
+                type: array
+                items:
+                  type: string
+              labels:
+                type: array
+                items:
+                  type: string
+              significanceScore:
+                type: number
+              reason:
+                type: string
+            required:
+              - turn
+              - attackerId
+              - defenderId
+              - attackerHpPercentage
+              - defenderHpPercentage
+              - hpByWarrior
+              - teamHp
+              - teamHpDelta
+              - deltas
+              - cumulative
+              - actions
+              - flags
+              - labels
+              - significanceScore
+              - reason
+        warriors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              battleId:
+                type: string
+              originalId:
+                type: string
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              icon:
+                type: string
+              team:
+                type: number
+              turns:
+                type: number
+              turnsLost:
+                type: number
+              steps:
+                type: number
+              normalAttacks:
+                type: number
+              spellsUsed:
+                type: number
+              spellsUsedMap:
+                type: object
+                additionalProperties:
+                  type: number
+              isDead:
+                type: boolean
+              surrendered:
+                type: boolean
+              fled:
+                type: boolean
+              maxHp:
+                type: number
+              damageDealt:
+                type: number
+              distanceDamage:
+                type: number
+              meleeDamage:
+                type: number
+              auxiliaryDamage:
+                type: number
+              fireDamage:
+                type: number
+              frostDamage:
+                type: number
+              lightningDamage:
+                type: number
+              thirdAttDamage:
+                type: number
+              damageDealtAfterDefensive:
+                type: number
+              damageDealtAfterDefensivePercentage:
+                type: number
+              damageTaken:
+                type: number
+              distanceDamageTaken:
+                type: number
+              meleeDamageTaken:
+                type: number
+              auxiliaryDamageTaken:
+                type: number
+              fireDamageTaken:
+                type: number
+              frostDamageTaken:
+                type: number
+              lightningDamageTaken:
+                type: number
+              thirdAttDamageTaken:
+                type: number
+              flatDamageTaken:
+                type: number
+              rageDamageDealt:
+                type: number
+              trueDamageDealt:
+                type: number
+              trueDamageTaken:
+                type: number
+              stigmaDamageDealt:
+                type: number
+              stigmaDamageTaken:
+                type: number
+              passiveHealing:
+                type: number
+              activeHealing:
+                type: number
+              armorPierces:
+                type: number
+              criticalHits:
+                type: number
+              reducedArmor:
+                type: number
+              reducedPoisonResistance:
+                type: number
+              magicResistanceDestroyed:
+                type: number
+              evasions:
+                type: number
+              attacksEvaded:
+                type: number
+              counters:
+                type: number
+              fastArrows:
+                type: number
+              blocks:
+                type: number
+              attacksBlocked:
+                type: number
+              blockedDamage:
+                type: number
+              woundDamageTaken:
+                type: number
+              poisonDamageTaken:
+                type: number
+              injureDamageTaken:
+                type: number
+              injures:
+                type: number
+              critWoundDamageTaken:
+                type: number
+              firePassiveDamageTaken:
+                type: number
+              lightningPassiveDamageTaken:
+                type: number
+              destroyedEnergy:
+                type: number
+              destroyedMana:
+                type: number
+              regeneratedEnergy:
+                type: number
+              regeneratedMana:
+                type: number
+              reflectedDamage:
+                type: number
+              reflectedDamageTaken:
+                type: number
+              legbons:
+                type: number
+              legbonCurse:
+                type: number
+              legbonCleanse:
+                type: number
+              legbonLastheal:
+                type: number
+              legbonLasthealValue:
+                type: number
+              legbonGlare:
+                type: number
+              legbonHolytouch:
+                type: number
+              legbonHolytouchValue:
+                type: number
+              legbonCritredValue:
+                type: number
+              legbonFacadeValue:
+                type: number
+              legbonPunctureValue:
+                type: number
+              legbonVerycrit:
+                type: number
+              legbonAnguish:
+                type: number
+              legbonAnguishDamageTaken:
+                type: number
+              ph:
+                type: number
+            required:
+              - id
+              - battleId
+              - originalId
+              - name
+              - lvl
+              - prof
+              - icon
+              - team
+              - turns
+              - turnsLost
+              - steps
+              - normalAttacks
+              - spellsUsed
+              - spellsUsedMap
+              - isDead
+              - surrendered
+              - fled
+              - maxHp
+              - damageDealt
+              - distanceDamage
+              - meleeDamage
+              - auxiliaryDamage
+              - fireDamage
+              - frostDamage
+              - lightningDamage
+              - thirdAttDamage
+              - damageDealtAfterDefensive
+              - damageDealtAfterDefensivePercentage
+              - damageTaken
+              - distanceDamageTaken
+              - meleeDamageTaken
+              - auxiliaryDamageTaken
+              - fireDamageTaken
+              - frostDamageTaken
+              - lightningDamageTaken
+              - thirdAttDamageTaken
+              - flatDamageTaken
+              - rageDamageDealt
+              - trueDamageDealt
+              - trueDamageTaken
+              - stigmaDamageDealt
+              - stigmaDamageTaken
+              - passiveHealing
+              - activeHealing
+              - armorPierces
+              - criticalHits
+              - reducedArmor
+              - reducedPoisonResistance
+              - magicResistanceDestroyed
+              - evasions
+              - attacksEvaded
+              - counters
+              - fastArrows
+              - blocks
+              - attacksBlocked
+              - blockedDamage
+              - woundDamageTaken
+              - poisonDamageTaken
+              - injureDamageTaken
+              - injures
+              - critWoundDamageTaken
+              - firePassiveDamageTaken
+              - lightningPassiveDamageTaken
+              - destroyedEnergy
+              - destroyedMana
+              - regeneratedEnergy
+              - regeneratedMana
+              - reflectedDamage
+              - reflectedDamageTaken
+              - legbons
+              - legbonCurse
+              - legbonCleanse
+              - legbonLastheal
+              - legbonLasthealValue
+              - legbonGlare
+              - legbonHolytouch
+              - legbonHolytouchValue
+              - legbonCritredValue
+              - legbonFacadeValue
+              - legbonPunctureValue
+              - legbonVerycrit
+              - legbonAnguish
+              - legbonAnguishDamageTaken
+              - ph
+      required:
+        - battleId
+        - generatedAt
+        - timeline
+        - warriors
+    BattleResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        public:
+          type: boolean
+        userId:
+          type: string
+        accountId:
+          type: string
+        characterId:
+          type: string
+        world:
+          type: string
+        duration:
+          type: number
+        type:
+          type: string
+        winner:
+          type: string
+        loser:
+          type: string
+        winningTeam:
+          type: number
+        losingTeam:
+          type: number
+        honorPoints:
+          type: number
+        hasFlee:
+          type: boolean
+        matchmaking:
+          type: boolean
+        statistics:
+          type: object
+          properties:
+            topDamageDealer:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            topTank:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            bestEfficiency:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            criticalMaster:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            evasionExpert:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            shieldWall:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            damagePerTurn:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            mostActive:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            legendaryWarrior:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            untouchable:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+          required:
+            - topDamageDealer
+            - topTank
+            - bestEfficiency
+            - criticalMaster
+            - evasionExpert
+            - shieldWall
+            - damagePerTurn
+            - mostActive
+            - legendaryWarrior
+            - untouchable
+        difficultyRank:
+          nullable: true
+          type: number
+        result:
+          nullable: true
+          type: number
+        ratingDelta:
+          nullable: true
+          type: number
+        opponentLvl:
+          nullable: true
+          type: number
+        opponentOplvl:
+          nullable: true
+          type: number
+        opponentRating:
+          nullable: true
+          type: number
+        rating:
+          nullable: true
+          type: number
+        status:
+          nullable: true
+          type: number
+        pointsGained:
+          nullable: true
+          type: number
+        placementCur:
+          nullable: true
+          type: number
+        placementMax:
+          nullable: true
+          type: number
+        dailyStageId:
+          nullable: true
+          type: number
+        dailyPointsCur:
+          nullable: true
+          type: number
+        dailyPointsMax:
+          nullable: true
+          type: number
+        dailyPointsStep:
+          nullable: true
+          type: number
+        dailyRewardsLast:
+          nullable: true
+          type: number
+        dailyRewardsCur:
+          nullable: true
+          type: number
+        dailyRewardsMax:
+          nullable: true
+          type: number
+        warriors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              battleId:
+                type: string
+              originalId:
+                type: string
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              icon:
+                type: string
+              team:
+                type: number
+              turns:
+                type: number
+              turnsLost:
+                type: number
+              steps:
+                type: number
+              normalAttacks:
+                type: number
+              spellsUsed:
+                type: number
+              spellsUsedMap:
+                type: object
+                additionalProperties:
+                  type: number
+              isDead:
+                type: boolean
+              surrendered:
+                type: boolean
+              fled:
+                type: boolean
+              maxHp:
+                type: number
+              damageDealt:
+                type: number
+              distanceDamage:
+                type: number
+              meleeDamage:
+                type: number
+              auxiliaryDamage:
+                type: number
+              fireDamage:
+                type: number
+              frostDamage:
+                type: number
+              lightningDamage:
+                type: number
+              thirdAttDamage:
+                type: number
+              damageDealtAfterDefensive:
+                type: number
+              damageDealtAfterDefensivePercentage:
+                type: number
+              damageTaken:
+                type: number
+              distanceDamageTaken:
+                type: number
+              meleeDamageTaken:
+                type: number
+              auxiliaryDamageTaken:
+                type: number
+              fireDamageTaken:
+                type: number
+              frostDamageTaken:
+                type: number
+              lightningDamageTaken:
+                type: number
+              thirdAttDamageTaken:
+                type: number
+              flatDamageTaken:
+                type: number
+              rageDamageDealt:
+                type: number
+              trueDamageDealt:
+                type: number
+              trueDamageTaken:
+                type: number
+              stigmaDamageDealt:
+                type: number
+              stigmaDamageTaken:
+                type: number
+              passiveHealing:
+                type: number
+              activeHealing:
+                type: number
+              armorPierces:
+                type: number
+              criticalHits:
+                type: number
+              reducedArmor:
+                type: number
+              reducedPoisonResistance:
+                type: number
+              magicResistanceDestroyed:
+                type: number
+              evasions:
+                type: number
+              attacksEvaded:
+                type: number
+              counters:
+                type: number
+              fastArrows:
+                type: number
+              blocks:
+                type: number
+              attacksBlocked:
+                type: number
+              blockedDamage:
+                type: number
+              woundDamageTaken:
+                type: number
+              poisonDamageTaken:
+                type: number
+              injureDamageTaken:
+                type: number
+              injures:
+                type: number
+              critWoundDamageTaken:
+                type: number
+              firePassiveDamageTaken:
+                type: number
+              lightningPassiveDamageTaken:
+                type: number
+              destroyedEnergy:
+                type: number
+              destroyedMana:
+                type: number
+              regeneratedEnergy:
+                type: number
+              regeneratedMana:
+                type: number
+              reflectedDamage:
+                type: number
+              reflectedDamageTaken:
+                type: number
+              legbons:
+                type: number
+              legbonCurse:
+                type: number
+              legbonCleanse:
+                type: number
+              legbonLastheal:
+                type: number
+              legbonLasthealValue:
+                type: number
+              legbonGlare:
+                type: number
+              legbonHolytouch:
+                type: number
+              legbonHolytouchValue:
+                type: number
+              legbonCritredValue:
+                type: number
+              legbonFacadeValue:
+                type: number
+              legbonPunctureValue:
+                type: number
+              legbonVerycrit:
+                type: number
+              legbonAnguish:
+                type: number
+              legbonAnguishDamageTaken:
+                type: number
+              ph:
+                type: number
+            required:
+              - id
+              - battleId
+              - originalId
+              - name
+              - lvl
+              - prof
+              - icon
+              - team
+              - turns
+              - turnsLost
+              - steps
+              - normalAttacks
+              - spellsUsed
+              - spellsUsedMap
+              - isDead
+              - surrendered
+              - fled
+              - maxHp
+              - damageDealt
+              - distanceDamage
+              - meleeDamage
+              - auxiliaryDamage
+              - fireDamage
+              - frostDamage
+              - lightningDamage
+              - thirdAttDamage
+              - damageDealtAfterDefensive
+              - damageDealtAfterDefensivePercentage
+              - damageTaken
+              - distanceDamageTaken
+              - meleeDamageTaken
+              - auxiliaryDamageTaken
+              - fireDamageTaken
+              - frostDamageTaken
+              - lightningDamageTaken
+              - thirdAttDamageTaken
+              - flatDamageTaken
+              - rageDamageDealt
+              - trueDamageDealt
+              - trueDamageTaken
+              - stigmaDamageDealt
+              - stigmaDamageTaken
+              - passiveHealing
+              - activeHealing
+              - armorPierces
+              - criticalHits
+              - reducedArmor
+              - reducedPoisonResistance
+              - magicResistanceDestroyed
+              - evasions
+              - attacksEvaded
+              - counters
+              - fastArrows
+              - blocks
+              - attacksBlocked
+              - blockedDamage
+              - woundDamageTaken
+              - poisonDamageTaken
+              - injureDamageTaken
+              - injures
+              - critWoundDamageTaken
+              - firePassiveDamageTaken
+              - lightningPassiveDamageTaken
+              - destroyedEnergy
+              - destroyedMana
+              - regeneratedEnergy
+              - regeneratedMana
+              - reflectedDamage
+              - reflectedDamageTaken
+              - legbons
+              - legbonCurse
+              - legbonCleanse
+              - legbonLastheal
+              - legbonLasthealValue
+              - legbonGlare
+              - legbonHolytouch
+              - legbonHolytouchValue
+              - legbonCritredValue
+              - legbonFacadeValue
+              - legbonPunctureValue
+              - legbonVerycrit
+              - legbonAnguish
+              - legbonAnguishDamageTaken
+              - ph
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - public
+        - userId
+        - accountId
+        - characterId
+        - world
+        - duration
+        - type
+        - winner
+        - loser
+        - winningTeam
+        - losingTeam
+        - honorPoints
+        - hasFlee
+        - matchmaking
+        - statistics
+        - difficultyRank
+        - result
+        - ratingDelta
+        - opponentLvl
+        - opponentOplvl
+        - opponentRating
+        - rating
+        - status
+        - pointsGained
+        - placementCur
+        - placementMax
+        - dailyStageId
+        - dailyPointsCur
+        - dailyPointsMax
+        - dailyPointsStep
+        - dailyRewardsLast
+        - dailyRewardsCur
+        - dailyRewardsMax
+        - warriors
+    BattleDeletedResponseDto_Output:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    UpdateBattleDto:
+      type: object
+      properties:
+        public:
+          type: boolean
+      required:
+        - public
+    BattleRawResponseDto_Output:
+      type: object
+      properties:
+        battleId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        rawData:
+          type: object
+          properties:
+            accountId:
+              type: string
+            characterId:
+              type: string
+            world:
+              type: string
+            events:
+              type: array
+              items:
+                type: object
+                properties:
+                  attackerId:
+                    nullable: true
+                    type: string
+                  defenderId:
+                    nullable: true
+                    type: string
+                  attackerHpPercentage:
+                    nullable: true
+                    type: number
+                  defenderHpPercentage:
+                    nullable: true
+                    type: number
+                  actions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        actionType:
+                          type: string
+                        param:
+                          type: string
+                      required:
+                        - actionType
+                        - param
+                required:
+                  - attackerId
+                  - defenderId
+                  - attackerHpPercentage
+                  - defenderHpPercentage
+                  - actions
+            sourceEvents:
+              type: array
+              items: {}
+          required:
+            - accountId
+            - characterId
+            - world
+            - events
+      required:
+        - battleId
+        - timestamp
+        - rawData
+    DeleteUserDataDto:
+      type: object
+      properties:
+        userId:
+          type: string
+      required:
+        - userId
+    BattleAcceptedResponseDto_Output:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ACCEPTED
+      required:
+        - status
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags: []
+servers: []

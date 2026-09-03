@@ -38,7 +38,8 @@ const mocks = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/users", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   useUsersControllerGetCurrentUserGuilds: () => mocks.guildsQuery,
 }));
 

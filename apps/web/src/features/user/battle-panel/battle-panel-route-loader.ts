@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { getBattlesControllerGetUserCharactersQueryOptions } from "@lootlog/api-client/react-query/battlelog/battles";
+import { getBattlesControllerGetUserCharactersQueryOptions } from "@lootlog/client/battlelog";
 
 type EnsureBattlePanelCharacterIdOptions = {
   queryClient: QueryClient;

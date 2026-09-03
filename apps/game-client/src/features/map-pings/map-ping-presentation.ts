@@ -1,4 +1,4 @@
-import type { MapPingType } from "@lootlog/types";
+import type { MapPingType } from "@lootlog/schema/map-ping";
 
 export type MapPingSymbol = "exclamation" | "crosshair" | "regroup" | "avoid";
 

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Events } from "@/features/guild/events/events";
 import { EventsPageSkeleton } from "@/features/guild/events/events-page-skeleton";
-import { getListEventsQueryOptions } from "@lootlog/api-client/react-query/main/events";
+import { getListEventsQueryOptions } from "@lootlog/client/main";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

@@ -1,0 +1,89 @@
+name: Roll back production
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  INFRA_REPOSITORY: lootlog/infra
+  INFRA_REPO_PATH: infra-repo
+  PRODUCTION_STATE: apps/prod/lootlog-deployment.json
+
+jobs:
+  rollback:
+    name: Restore previous production state
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: prod
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-bun
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ env.INFRA_REPOSITORY }}
+          ref: main
+          token: ${{ secrets.INFRA_REPO_PUSH_TOKEN }}
+          path: ${{ env.INFRA_REPO_PATH }}
+          fetch-depth: 0
+      - name: Load current and previous states
+        run: |
+          cd "$INFRA_REPO_PATH"
+          mapfile -t revisions < <(git log -2 --format=%H -- "$PRODUCTION_STATE")
+          [[ "${#revisions[@]}" -eq 2 ]] || { echo "::error::No previous production state exists"; exit 1; }
+          git show "${revisions[0]}:$PRODUCTION_STATE" > "$RUNNER_TEMP/current-production.json"
+          git show "${revisions[1]}:$PRODUCTION_STATE" > "$RUNNER_TEMP/previous-production.json"
+          input="$(jq -cn \
+            --slurpfile current "$RUNNER_TEMP/current-production.json" \
+            --slurpfile previous "$RUNNER_TEMP/previous-production.json" \
+            '{mode: "rollback", currentState: $current[0], previousState: $previous[0]}')"
+          bun scripts/deployment-targets.mjs "$input" | jq '.targets' > "$RUNNER_TEMP/rollback-targets.json"
+
+      - name: Restore Cloudflare deployments
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          while IFS= read -r target; do
+            kind="$(jq -r '.previous.kind' <<< "$target")"
+            project="$(jq -r '.previous.project' <<< "$target")"
+            deployment_id="$(jq -r '.previous.deploymentId' <<< "$target")"
+            if [[ "$kind" == "pages" ]]; then
+              curl --fail-with-body --silent --show-error --request POST \
+                --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --header "Content-Type: application/json" --data '{}' \
+                "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$project/deployments/$deployment_id/rollback"
+            else
+              bunx wrangler rollback "$deployment_id" --config "$(jq -r '.previous.configPath' <<< "$target")" \
+                --env="" --name "$project" --message "Restore previous production state" --yes
+            fi
+          done < <(jq -c '[.[] | select(.previous.kind != "docker")] | sort_by(if .id == "traffic-splitter" then 1 else 0 end)[]' "$RUNNER_TEMP/rollback-targets.json")
+
+      - name: Restore Docker references and deployment state
+        run: |
+          while IFS= read -r target; do
+            id="$(jq -r '.id' <<< "$target")"
+            image="$(jq -r '.previous.image' <<< "$target")"
+            reference="$(jq -r '.previous.reference' <<< "$target")"
+            tag="$(jq -r '.previous.reference | capture(":(?<tag>[^:]+)$").tag' <<< "$target")"
+            docker manifest inspect "$reference" >/dev/null || { echo "::error::Rollback image does not exist: $reference"; exit 1; }
+            docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="$tag" \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.3 \
+              -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
+              "apps/prod/$id/kustomization.yml"
+          done < <(jq -c '.[] | select(.previous.kind == "docker")' "$RUNNER_TEMP/rollback-targets.json")
+          cp "$RUNNER_TEMP/previous-production.json" "$INFRA_REPO_PATH/$PRODUCTION_STATE"
+
+      - name: Commit rollback
+        working-directory: ${{ env.INFRA_REPO_PATH }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/prod
+          git commit -m "ci: restore previous production deployment"
+          git pull --rebase origin main
+          git push origin HEAD:main

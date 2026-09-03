@@ -24,7 +24,7 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getLootsControllerFetchLootByIdQueryKey,
   useLootsControllerFetchLootById,
-} from "@lootlog/api-client/react-query/main/loots";
+} from "@lootlog/client/main";
 import { buildLootShareMaps } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
 const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";

@@ -6,7 +6,7 @@ import {
   getPublicBattlesControllerGetPublicBattleQueryOptions,
   getPublicBattlesControllerGetPublicBattleRawQueryOptions,
   getPublicBattlesControllerGetPublicBattleTimelineQueryOptions,
-} from "@lootlog/api-client/react-query/battlelog/public-battles";
+} from "@lootlog/client/battlelog";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

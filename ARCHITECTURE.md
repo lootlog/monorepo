@@ -6,8 +6,7 @@ gaps are listed explicitly.
 
 Read [`PRODUCT.md`](PRODUCT.md) for product direction, [`CONTEXT.md`](CONTEXT.md)
 for domain language, and [`SECURITY.md`](SECURITY.md) for mandatory security
-rules. Accepted cross-cutting decisions are indexed in
-[`docs/adr/README.md`](docs/adr/README.md).
+rules.
 
 ## System flow
 
@@ -16,7 +15,7 @@ The main loop is:
 ```text
 Margonem runtime
   -> game client observers and processors
-  -> HTTP APIs and Socket.IO gateway
+  -> HTTP APIs and the realtime v1 WebSocket gateway
   -> PostgreSQL / TimescaleDB / R2
   -> RabbitMQ domain and delivery events
   -> gateway, activity, search, Discord, and web consumers
@@ -28,27 +27,27 @@ organization operations.
 
 ## Deployable applications
 
-| Workspace                    | Responsibility                                                                                                       | Primary state or dependency           |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `@lootlog/api`               | Organizations, members, loot, kills, timers, reservations, chat, notifications, events, documents, and configuration | Lootlog PostgreSQL, Redis, RabbitMQ   |
-| `@lootlog/auth`              | Discord sign-in, sessions, JWT/JWKS, provider tokens                                                                 | Users PostgreSQL, Redis, Better Auth  |
-| `@lootlog/gateway`           | Socket.IO authentication, rooms, presence, and real-time fan-out                                                     | Redis adapter, RabbitMQ               |
-| `@lootlog/battlelog-service` | Battle ingestion, storage, retrieval, and statistics                                                                 | Battle PostgreSQL, R2                 |
-| `@lootlog/activity`          | Durable organization activity and audit records                                                                      | TimescaleDB                           |
-| `@lootlog/search`            | Public item, NPC, and player search projections                                                                      | Meilisearch                           |
-| `@lootlog/discord-bot`       | Discord membership synchronization, notifications, and commands                                                      | Discord, API, RabbitMQ                |
-| `@lootlog/game-client`       | Margonem runtime integration and in-game UI                                                                          | Browser runtime, APIs, gateway        |
-| `@lootlog/web`               | Authenticated personal and organization web app                                                                      | Generated API client, gateway         |
-| `@lootlog/landing`           | Product introduction and legal pages                                                                                 | Static TanStack Start client output   |
-| `@lootlog/docs`              | User documentation                                                                                                   | Static TanStack Start client output   |
-| `@lootlog/traffic-splitter`  | Shared edge routing for `dev.lootlog.pl` and `lootlog.pl`                                                            | Cloudflare Workers and static origins |
-| `@lootlog/wiki`              | Public Margonem knowledge and search                                                                                 | Search API                            |
-| `@lootlog/developer`         | Future developer surface; currently not a supported product                                                          | Static frontend                       |
+| Workspace                   | Responsibility                                                                                                       | Primary state or dependency           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `@lootlog/api`              | Organizations, members, loot, kills, timers, reservations, chat, notifications, events, documents, and configuration | Lootlog PostgreSQL, Redis, RabbitMQ   |
+| `@lootlog/auth`             | Discord sign-in, sessions, JWT/JWKS, provider tokens                                                                 | Users PostgreSQL, Redis, Better Auth  |
+| `@lootlog/gateway`          | Realtime v1 WebSocket authentication, subscriptions, presence, and real-time fan-out                                 | Redis federation, RabbitMQ            |
+| `@lootlog/battlelog`        | Battle ingestion, storage, retrieval, and statistics                                                                 | Battle PostgreSQL, R2                 |
+| `@lootlog/activity`         | Durable organization activity and audit records                                                                      | TimescaleDB                           |
+| `@lootlog/search`           | Public item, NPC, and player search projections                                                                      | Meilisearch                           |
+| `@lootlog/discord-bot`      | Discord membership synchronization, notifications, and commands                                                      | Discord, API, RabbitMQ                |
+| `@lootlog/game-client`      | Margonem runtime integration and in-game UI                                                                          | Browser runtime, APIs, gateway        |
+| `@lootlog/web`              | Authenticated personal and organization web app                                                                      | Generated API client, gateway         |
+| `@lootlog/landing`          | Product introduction and legal pages                                                                                 | Static TanStack Start client output   |
+| `@lootlog/docs`             | User documentation                                                                                                   | Static TanStack Start client output   |
+| `@lootlog/traffic-splitter` | Shared edge routing for `dev.lootlog.pl` and `lootlog.pl`                                                            | Cloudflare Workers and static origins |
+| `@lootlog/wiki`             | Public Margonem knowledge and search                                                                                 | Search API                            |
+| `@lootlog/developer`        | Future developer surface; currently not a supported product                                                          | Static frontend                       |
 
-Packages contain generated clients, shared API helpers, battle processing,
-Margonem models, scoring, instrumentation, UI, socket parsing, configuration,
-and CLI tools. A package does not own data merely because it defines a shared
-type.
+Packages contain generated clients, browser-safe contracts and domain logic,
+realtime and RabbitMQ protocols, scoped messaging transport, battle processing,
+Margonem models, UI, configuration, and CLI tools. A package does not own data
+merely because it defines a shared type.
 
 ## Data ownership
 
@@ -133,9 +132,7 @@ scheduled cleanup rather than a read-side mutation or full-calendar cache.
 
 An active calendar partnership extends visibility to one direct partner while
 keeping each Organization's availability, collision checks, source ownership,
-and moderation independent. It is reciprocal and non-transitive. The detailed
-disclosure and revocation contract is recorded in
-[ADR 0001](docs/adr/0001-direct-reciprocal-reservation-sharing.md).
+and moderation independent. It is reciprocal and non-transitive.
 
 Reservation reminders reuse the notification domain. A reservation stores an
 offset, not a Discord identifier. The notification boundary resolves an active
@@ -146,10 +143,10 @@ the legacy event remains accepted during the coordinated rollout.
 
 ## Real-time delivery and presence
 
-Gateway authenticates sockets before joining feature rooms. Room membership and
-per-event checks enforce the same Organization and visibility rules as HTTP.
-Redis federates Socket.IO across gateway instances; it does not make live state
-durable.
+Gateway authenticates realtime v1 WebSocket connections before accepting
+logical subscriptions. Subscription membership and per-event checks enforce
+the same Organization and visibility rules as HTTP. Redis pub/sub and ephemeral
+keys federate gateway instances; they do not make live state durable.
 
 The target Presence model includes:
 
@@ -189,12 +186,14 @@ their configured service account.
 
 ## Deployment
 
-Managed production uses immutable release artifacts:
+Managed production uses immutable source revisions:
 
 - containerized services are promoted through GitOps and rolled out by ArgoCD;
-- Cloudflare applications use checksummed artifacts built by the release;
-- the Changesets version PR creates release versions and artifacts;
-- production rollback reuses an existing artifact instead of rebuilding it.
+- container images use `sha-<commit>` tags;
+- Cloudflare applications build and deploy in one approved release run;
+- the infrastructure repository records the deployed image references and
+  Cloudflare deployment IDs;
+- production rollback restores the previous recorded state without rebuilding.
 
 The `@lootlog/traffic-splitter` route table serves `dev.lootlog.pl` and
 `lootlog.pl` through separate Cloudflare Workers and origin sets. Merges to
@@ -207,15 +206,13 @@ legacy `/_next` assets during coordinated rollouts. Landing and Docs legacy
 assets are redirected into origin-tagged aliases; cached untagged parents are
 identified with HEAD probes against only the three configured origins.
 
-Production promotes the compatible splitter artifact before Landing and Docs,
-then verifies their generated CSS and JavaScript through the public domains. A
-failed deployment or smoke check rolls frontend applications back before the
-splitter. Both Workers' Wrangler configuration in this repository is the source
-of truth for their custom domains.
+Production deploys the traffic splitter before other Cloudflare targets. A
+partial failure rolls applications back in reverse order. Both Workers'
+Wrangler configuration in this repository remains the source of truth for
+their custom domains.
 
-Docker Compose supports local infrastructure. `docker-compose.prod.yml` is not
-a supported production model and should be retired or clearly marked legacy.
-Self-hosting remains community-supported until a tested distribution exists.
+Docker Compose supports local infrastructure only. Self-hosting remains
+community-supported until a tested distribution exists.
 
 ## Service-boundary rule
 
@@ -266,7 +263,6 @@ The target contracts above expose current work rather than hiding it:
 - Discord proof is optional and availability is not represented as product
   state;
 - web tests exist but the workspace does not declare a `test` script;
-- `docker-compose.prod.yml` does not represent managed production;
 - developer portal is a placeholder rather than a supported API product.
 
 Treat each gap as migration work. Do not document a target behavior as already

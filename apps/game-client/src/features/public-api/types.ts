@@ -1,4 +1,4 @@
-import type { NpcTypeEnum as NpcType } from "@lootlog/types";
+import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 export type PublicUser = {
   avatar?: string;

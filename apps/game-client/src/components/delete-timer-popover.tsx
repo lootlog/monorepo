@@ -1,4 +1,4 @@
-import { createAccessPolicy } from "@lootlog/access-policy";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { useState, type FC } from "react";
 import { useQueries } from "@tanstack/react-query";
 import {
@@ -10,11 +10,10 @@ import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   guildsControllerGetGuildPermissions,
-} from "@lootlog/api-client/react-query/main/guilds";
-import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
+
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";

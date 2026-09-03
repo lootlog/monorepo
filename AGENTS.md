@@ -22,7 +22,6 @@ Read the documents relevant to the change:
 - [`PRODUCT.md`](PRODUCT.md) — target product, priorities, and non-goals.
 - [`CONTEXT.md`](CONTEXT.md) — canonical domain terms.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — current system, target contracts, and known gaps.
-- [`docs/adr/README.md`](docs/adr/README.md) — accepted architecture decisions and their lifecycle.
 - [`SECURITY.md`](SECURITY.md) — mandatory for auth, authorization, API, gateway,
   user content, data, public endpoints, and external integrations.
 - [`DESIGN.md`](DESIGN.md) — canonical visual system for public and product surfaces.
@@ -55,8 +54,6 @@ If `.codegraph/` does not exist, skip CodeGraph. Indexing is the user's decision
 - Avoid chained ternaries; use branches or early returns.
 - Keep imports from one module in one statement and use inline `type` specifiers.
 - Use `import type` when a symbol exists only at type level.
-- In NestJS, keep classes and tokens as value imports when dependency injection,
-  decorators, or emitted runtime metadata need them. Generated code is exempt.
 - Follow `.oxlintrc.md` and the effective Oxlint configuration.
 
 ## React and frontend
@@ -87,6 +84,17 @@ If `.codegraph/` does not exist, skip CodeGraph. Indexing is the user's decision
   contracts.
 - Never publish secrets, credentials, private reports, or private product
   evidence.
+
+## Vendored Repositories
+
+This project vendors external repositories under @repos/
+
+- Use vendored repositories as read-only reference material when working with related libraries
+- Prefer examples and patterns from the vendored source code over generated guesses or web search results
+- Do not edit files under @repos/ unless explicitly asked
+- Do not import from @repos/ - application code should continue importing from normal package dependencies
+
+When writing Effect code, inspect @repos/effect/ for examples of idiomatic usage, tests, module structure, and API design. Treat it as the source of truth for Effect patterns.
 
 ## Protected contracts
 
@@ -119,6 +127,16 @@ features do not receive compatibility by default.
 
 - Every workspace should declare `lint`, `typecheck`, and `test`, or document why
   a gate does not apply.
+- Backend tests must protect externally observable behavior, business invariants,
+  real regressions, authorization boundaries, or meaningful integration contracts.
+  Every test needs a clear answer to: “What real regression would this catch?”
+- Do not test route, handler, service, schema, field, export, or module counts;
+  symbol existence; private wiring; Effect, Bun, TypeScript, or library mechanics;
+  or guarantees already enforced by the type system. Do not use broad snapshots
+  as a substitute for behavioral assertions.
+- Do not mock the unit under test or internal application layers in E2E tests.
+  Keep fakes at genuine external boundaries and verify resulting state, not only
+  status codes. Never add a test solely to increase coverage.
 - Run the narrowest relevant checks during development and all required
   workspace checks before handoff.
 - Add contract or end-to-end coverage when a change crosses the game client,
@@ -132,27 +150,22 @@ Do not try to start the application; assume it is already running.
 ## Git, pull requests, and releases
 
 - Follow Conventional Commits and `commitlint.config.js`.
-- Write pull request titles, descriptions, Changesets, ADRs, and technical
+- Write pull request titles, descriptions, and technical
   documentation in English.
 - Never bypass hooks with `--no-verify`.
-- Add a Changeset when runtime behavior, user-facing behavior, a public contract,
-  build output, or dependencies change.
-- Tests, non-published documentation, and non-release configuration do not need
-  an empty Changeset.
-- Published docs and landing content change build output and require a normal
-  Changeset.
-- Never edit package versions or generated changelogs manually, and never run
-  `pnpm version` outside release automation.
-- Production promotions and rollbacks reuse immutable artifacts. Never rebuild
-  an existing release version.
+- Pull requests do not carry release metadata. Production workflows select an
+  immutable commit from `main`.
+- Production promotions and rollbacks reuse immutable image references and
+  Cloudflare deployments. Never rebuild a revision during rollback.
 
 ## Documentation
 
 - Update the canonical source first, then app-specific deltas and public guides.
 - Keep `CONTEXT.md` free of implementation detail.
-- Create ADRs only for decisions that are hard to reverse, surprising without
-  context, and based on a real trade-off.
-- Claims require an approved entry in `docs/product-evidence.md`.
 - Do not publish testimonials.
 - Do not create source files that only re-export symbols; update imports to the
   real module.
+
+## Tests
+
+IMPORTANT: Tautological tests are considered harmful.

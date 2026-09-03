@@ -9,7 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useLogout } from "@/hooks/auth/use-logout";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUsersControllerDeleteAccount } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerDeleteAccount } from "@lootlog/client/main";
 
 export const AccountSettings: FC = () => {
   const { t } = useTranslation();

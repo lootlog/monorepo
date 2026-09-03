@@ -1,9 +1,13 @@
-import { env } from "#src/config/env";
+import { runLogEffect } from "@lootlog/instrumentation";
+import type { ApiConfiguration } from "#src/config/api.config";
+import { Effect } from "effect";
 
 let registered = false;
 
-export function registerNodeWarningDiagnostics() {
-  if (registered || !env.NODE_WARNING_DIAGNOSTICS_ENABLED) {
+export function registerNodeWarningDiagnostics(
+  config: Pick<ApiConfiguration, "hostName" | "nodeWarningDiagnosticsEnabled">,
+) {
+  if (registered || !config.nodeWarningDiagnosticsEnabled) {
     return;
   }
 
@@ -14,15 +18,16 @@ export function registerNodeWarningDiagnostics() {
       return;
     }
 
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        event: "node.warning",
-        name: warning.name,
-        message: warning.message,
-        stack: warning.stack,
-        podName: process.env.HOSTNAME,
-      }),
+    runLogEffect(
+      Effect.logWarning("Node MaxListeners warning").pipe(
+        Effect.annotateLogs({
+          event: "node.warning",
+          name: warning.name,
+          message: warning.message,
+          stack: warning.stack,
+          podName: config.hostName,
+        }),
+      ),
     );
   });
 }

@@ -7,12 +7,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  getNpcTypeByWt,
-  type DetectorNpcType,
-  type DetectorSettings,
-  type NpcTypeColors,
-} from "@lootlog/types";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import type {
+  DetectorNpcType,
+  DetectorSettings,
+} from "@lootlog/schema/account-preferences";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type {
   GameNpcWithLocation,
   NpcDetectorState,

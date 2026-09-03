@@ -5,13 +5,11 @@ Shared TypeScript configuration presets for the Lootlog monorepo.
 ## Overview
 
 - Provides reusable `tsconfig` bases for Node-style services, Vite apps, and React libraries.
-- Provides reusable `tsconfig` bases for NestJS apps.
 - Keeps compiler defaults consistent across workspaces without duplicating JSON config.
 
 ## Available Presets
 
 - `base.json`
-- `nestjs.json`
 - `react-library.json`
 - `vite.json`
 

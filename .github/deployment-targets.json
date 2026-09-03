@@ -1,0 +1,171 @@
+[
+  {
+    "id": "activity",
+    "package": "@lootlog/activity",
+    "directory": "apps/activity",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-activity",
+    "imageTitle": "Lootlog Activity Service",
+    "imageDescription": "Activity and audit service with TimescaleDB",
+    "development": true
+  },
+  {
+    "id": "api",
+    "package": "@lootlog/api",
+    "directory": "apps/api",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-api",
+    "imageTitle": "Lootlog API Service",
+    "imageDescription": "Main API service for organizations, loot, timers, and NPCs",
+    "installFonts": true,
+    "development": true
+  },
+  {
+    "id": "auth",
+    "package": "@lootlog/auth",
+    "directory": "apps/auth",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-auth",
+    "imageTitle": "Lootlog Auth Service",
+    "imageDescription": "Authentication service with Discord OAuth and JWT",
+    "development": true
+  },
+  {
+    "id": "battlelog-service",
+    "package": "@lootlog/battlelog",
+    "directory": "apps/battlelog",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-battlelog-service",
+    "imageTitle": "Lootlog Battlelog Service",
+    "imageDescription": "Battle statistics and warrior tracking service",
+    "development": true
+  },
+  {
+    "id": "developer",
+    "package": "@lootlog/developer",
+    "directory": "apps/developer",
+    "kind": "docker",
+    "dockerfile": "docker/developer.Dockerfile",
+    "image": "kamilwronka7/lootlog-developer",
+    "imageTitle": "Lootlog Developer Portal",
+    "imageDescription": "Developer documentation portal with SSR",
+    "development": true
+  },
+  {
+    "id": "discord-bot",
+    "package": "@lootlog/discord-bot",
+    "directory": "apps/discord-bot",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-discord-bot",
+    "imageTitle": "Lootlog Discord Bot",
+    "imageDescription": "Discord bot for organization notifications and commands",
+    "development": true
+  },
+  {
+    "id": "gateway",
+    "package": "@lootlog/gateway",
+    "directory": "apps/gateway",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-gateway",
+    "imageTitle": "Lootlog Gateway Service",
+    "imageDescription": "Versioned WebSocket gateway for realtime events",
+    "development": true
+  },
+  {
+    "id": "search",
+    "package": "@lootlog/search",
+    "directory": "apps/search",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-search",
+    "imageTitle": "Lootlog Search Service",
+    "imageDescription": "Meilisearch indexing service",
+    "development": true
+  },
+  {
+    "id": "traffic-splitter",
+    "package": "@lootlog/traffic-splitter",
+    "directory": "apps/traffic-splitter",
+    "kind": "worker",
+    "artifactPath": "apps/traffic-splitter/dist",
+    "configPath": "apps/traffic-splitter/wrangler.jsonc",
+    "development": {
+      "project": "lootlog-traffic-splitter-dev",
+      "environment": "develop"
+    },
+    "production": { "project": "lootlog-route-splitter" },
+    "order": 0
+  },
+  {
+    "id": "landing",
+    "package": "@lootlog/landing",
+    "directory": "apps/landing",
+    "kind": "pages",
+    "artifactPath": "apps/landing/dist/client",
+    "development": { "project": "lootlog-landing" },
+    "production": { "project": "lootlog-landing" },
+    "order": 10
+  },
+  {
+    "id": "web",
+    "package": "@lootlog/web",
+    "directory": "apps/web",
+    "kind": "pages",
+    "artifactPath": "apps/web/dist",
+    "development": { "project": "lootlog-web-monorepo" },
+    "production": { "project": "lootlog-web-monorepo" },
+    "order": 10
+  },
+  {
+    "id": "game-client",
+    "package": "@lootlog/game-client",
+    "directory": "apps/game-client",
+    "kind": "pages",
+    "artifactPath": "apps/game-client/dist/@lootlog",
+    "development": false,
+    "production": {
+      "project": "lootlog-game-client-monorepo",
+      "requiredEnvironmentVariables": [
+        "GAME_CLIENT_GAME_CLIENT_URL",
+        "GAME_CLIENT_VITE_API_URL",
+        "GAME_CLIENT_VITE_AUTH_SERVICE_URL",
+        "GAME_CLIENT_VITE_BATTLELOG_API_URL",
+        "GAME_CLIENT_VITE_GATEWAY_URL",
+        "GAME_CLIENT_VITE_GATEWAY_SOCKET_PATH",
+        "GAME_CLIENT_VITE_LOOTLOG_APP_URL"
+      ]
+    },
+    "order": 10
+  },
+  {
+    "id": "docs",
+    "package": "@lootlog/docs",
+    "directory": "apps/docs",
+    "kind": "worker",
+    "artifactPath": "apps/docs/dist/client",
+    "configPath": "apps/docs/wrangler.jsonc",
+    "development": {
+      "project": "lootlog-docs-develop",
+      "environment": "develop"
+    },
+    "production": { "project": "lootlog-docs" },
+    "order": 10
+  },
+  {
+    "id": "wiki",
+    "package": "@lootlog/wiki",
+    "directory": "apps/wiki",
+    "kind": "worker",
+    "artifactPath": "apps/wiki/dist",
+    "configPath": "apps/wiki/wrangler.jsonc",
+    "development": false,
+    "production": { "project": "lootlog-wiki" },
+    "order": 10
+  }
+]

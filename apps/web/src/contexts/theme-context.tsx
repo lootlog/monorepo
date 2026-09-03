@@ -12,7 +12,7 @@ import {
   useSetUsersControllerGetUserPreferencesQueryData,
   useUsersControllerGetUserPreferences,
   useUsersControllerUpdateUserPreferences,
-} from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
 import {
   applyThemeClassToRoot,
   DEFAULT_THEME_ID,

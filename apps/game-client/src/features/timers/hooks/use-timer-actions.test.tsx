@@ -4,7 +4,7 @@ import {
   nestedFixtureValue,
   optionalFixtureValue,
 } from "@/test-utils/fixture-value";
-import { ApiError } from "@lootlog/api-client/transport";
+import { ApiError } from "@lootlog/client/transport";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { renderHook, waitFor } from "@testing-library/react";
 
@@ -47,7 +47,8 @@ vi.mock("@/store/timers.store", () => ({
     }),
 }));
 
-vi.mock("@lootlog/api-client/react-query/main/timers", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   timersControllerResetTimer: (pathParameters: unknown, data: unknown) =>
     mockResetTimer(pathParameters, data),
   timersControllerDeleteTimer: (pathParameters: unknown, params: unknown) =>

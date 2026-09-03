@@ -7,24 +7,24 @@
   "scripts": {
     "lint": "oxlint src",
     "typecheck": "tsc --noEmit",
-    "test": "tsx src/utils/env-generator.test.ts",
-    "env:generate": "tsx src/commands/env/generate.ts",
-    "events": "tsx src/index.ts events",
-    "events:publish": "tsx src/index.ts events publish",
-    "seed": "tsx src/index.ts seed",
-    "seed:generate:players": "tsx src/index.ts seed generate:players",
-    "seed:scrape": "tsx src/index.ts seed scrape:all",
-    "seed:scrape:items": "tsx src/index.ts seed scrape:items",
-    "seed:scrape:npcs": "tsx src/index.ts seed scrape:npcs",
-    "seed:setup": "tsx src/index.ts seed setup"
+    "test": "bun test src/utils/env-generator.test.ts",
+    "env:generate": "bun src/commands/env/generate.ts",
+    "events": "bun src/index.ts events",
+    "events:publish": "bun src/index.ts events publish",
+    "seed": "bun --env-file=../../.env src/index.ts seed",
+    "seed:generate:players": "bun --env-file=../../.env src/index.ts seed generate:players",
+    "seed:scrape": "bun --env-file=../../.env src/index.ts seed scrape:all",
+    "seed:scrape:items": "bun --env-file=../../.env src/index.ts seed scrape:items",
+    "seed:scrape:npcs": "bun --env-file=../../.env src/index.ts seed scrape:npcs",
+    "seed:setup": "bun --env-file=../../.env src/index.ts seed setup"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "@lootlog/battle-processor": "workspace:*",
-    "@lootlog/types": "workspace:*",
-    "@prisma/adapter-pg": "catalog:",
+    "@lootlog/domain": "workspace:*",
+    "@lootlog/schema": "workspace:*",
     "amqplib": "^2.0.1",
-    "drizzle-orm": "1.0.0-beta.20",
+    "drizzle-orm": "catalog:",
     "node-html-parser": "^9.0.2",
     "pg": "^8.23.0",
     "random-words": "^2.0.1",
@@ -33,10 +33,9 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
-    "dotenv": "^17.4.2",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

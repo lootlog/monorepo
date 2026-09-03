@@ -20,7 +20,7 @@ import {
   X,
   Timer,
 } from "lucide-react";
-import { Permission } from "@lootlog/types";
+import { Permission } from "@lootlog/schema/permissions";
 import { useState } from "react";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { MemberAssignmentModal } from "./components/dialogs/member-assignment-modal";
@@ -50,12 +50,12 @@ import { getAssignmentAvailability } from "./utils/get-assignment-availability";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@lootlog/api-client/react-query/main/members";
+} from "@lootlog/client/main";
 import {
   getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
   getListEventHeroTimersQueryKey,
@@ -73,11 +73,11 @@ import {
   useListEventMaps,
   useListEventRanking,
   useShowEventOverview,
-} from "@lootlog/api-client/react-query/main/events";
+} from "@lootlog/client/main";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
-import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
+import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import type { EventMapsResponse } from "./types/api";
 
 const getWindowStatusConfig = (

@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { ApiError } from "@lootlog/api-client/transport";
+import { ApiError } from "@lootlog/client/transport";
 import {
   isNotificationRateLimitError,
   useNotificationChatOrchestration,
@@ -7,7 +7,8 @@ import {
 
 const createNotification = vi.fn();
 
-vi.mock("@lootlog/api-client/react-query/main/messaging", () => ({
+vi.mock("@lootlog/client/main", async () => ({
+  ...(await vi.importActual("@lootlog/client/main")),
   useMessagingControllerSendNotification: () => ({
     mutateAsync: createNotification,
   }),

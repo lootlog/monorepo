@@ -12,7 +12,10 @@ import {
   createMutedPlayerPreference,
 } from "@/features/notifications/utils/notification-mutes";
 import type { StoredNotification } from "@/store/notifications.store";
-import type { NotificationMutes, NotificationMutesPatch } from "@lootlog/types";
+import type {
+  NotificationMutes,
+  NotificationMutesPatch,
+} from "@lootlog/schema/user-preferences";
 import { BellOff } from "lucide-react";
 import { type FC, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

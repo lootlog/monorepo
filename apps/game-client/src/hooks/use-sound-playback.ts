@@ -2,10 +2,13 @@ import { useEffect } from "react";
 import { useSoundSettings } from "@/hooks/api/use-sound-settings";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { useQueryClient } from "@tanstack/react-query";
-import type { UserSoundSettings } from "@lootlog/types";
+import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/api-client/react-query/main/sound-settings";
-import type { SoundSettingsResponseDto } from "@lootlog/api-client/models/main/sound-settings-response-dto";
+import {
+  getSoundSettingsControllerGetSettingsQueryKey,
+  type SoundSettingsResponseDto,
+} from "@lootlog/client/main";
+
 import {
   acquireSoundPlayback,
   playSoundRequest,

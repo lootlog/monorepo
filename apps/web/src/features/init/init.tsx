@@ -6,12 +6,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
-} from "@lootlog/api-client/react-query/main/guilds";
+} from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
   invalidateUsersControllerGetCurrentUserGuilds,
-} from "@lootlog/api-client/react-query/main/users";
+} from "@lootlog/client/main";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();

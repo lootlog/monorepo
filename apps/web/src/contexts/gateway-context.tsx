@@ -4,18 +4,17 @@ import React, {
   useEffectEvent,
   useState,
 } from "react";
-import type { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
-import { socket } from "@/lib/gateway-client";
+import { socket, type GatewayClient } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
-import type { GuildLootCreatedEventV2 } from "@lootlog/types";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import type { GuildLootCreatedEventV2 } from "@lootlog/schema/loot-events";
 
 export type GatewayProviderValue = {
   connected: boolean;
   joined: boolean;
-  socket: Socket;
+  socket: GatewayClient;
   lootUnreadCounts: Record<string, number>;
 };
 

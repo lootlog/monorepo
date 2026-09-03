@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useBattlesControllerGetUserWorlds } from "@lootlog/api-client/react-query/battlelog/battles";
+import { useBattlesControllerGetUserWorlds } from "@lootlog/client/battlelog";
 import { BattlesListFiltersMobile } from "./battles-list-filters-mobile";
 import { BattlesListFiltersDesktop } from "./battles-list-filters-desktop";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";

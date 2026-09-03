@@ -28,18 +28,18 @@ import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constant
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@lootlog/api-client/react-query/main/guilds";
+import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@lootlog/client/main";
 import {
   invalidateNotificationsUserControllerGetUserTargets,
   invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerCreateWatchedItem,
-} from "@lootlog/api-client/react-query/main/notifications";
+} from "@lootlog/client/main";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
-} from "@lootlog/api-client/react-query/search/items";
-import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/api-client/models/search/search-items-response-dto-output-hits-item";
-import type { WatchedItemResponseDto } from "@lootlog/api-client/models/main/watched-item-response-dto";
+} from "@lootlog/client/search";
+import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/search";
+import type { WatchedItemResponseDto } from "@lootlog/client/main";
 
 const watchFormSchema = z
   .object({

@@ -5,7 +5,7 @@ import {
   usePublicBattlesControllerGetPublicBattle,
   usePublicBattlesControllerGetPublicBattleRaw,
   usePublicBattlesControllerGetPublicBattleTimeline,
-} from "@lootlog/api-client/react-query/battlelog/public-battles";
+} from "@lootlog/client/battlelog";
 import {
   getRouteErrorMessage,
   getRouteErrorStatus,

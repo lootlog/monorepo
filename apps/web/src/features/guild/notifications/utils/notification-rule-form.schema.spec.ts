@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   NotificationScheduleAnchor,
   NotificationTriggerType,
-} from "@lootlog/types";
+} from "@lootlog/schema/notifications";
 import {
   ALL_WORLDS_VALUE,
   ruleFormSchema,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ReservationSpotsResponseDtoItem } from "@lootlog/api-client/models/main/reservation-spots-response-dto-item";
+import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import {
   getVisibleReservationSpots,
   setReservationSpotPinned,

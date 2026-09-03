@@ -1,0 +1,35 @@
+{
+  "name": "@lootlog/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./access-policy": "./src/access-policy.ts",
+    "./air-tag": "./src/air-tag.ts",
+    "./chat-appearance": "./src/chat-appearance.ts",
+    "./loot-visibility": "./src/loot-visibility.ts",
+    "./npc-appearance": "./src/npc-appearance.ts",
+    "./npc-permissions": "./src/npc-permissions.ts",
+    "./npc-routing": "./src/npc-routing.ts",
+    "./npc-type": "./src/npc-type.ts",
+    "./reservations": "./src/reservations.ts",
+    "./scoring": "./src/scoring.ts",
+    "./settings-documents": "./src/settings-documents.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@lootlog/datetime": "workspace:*",
+    "@lootlog/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

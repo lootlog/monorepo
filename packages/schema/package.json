@@ -1,0 +1,46 @@
+{
+  "name": "@lootlog/schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./account-preferences": "./src/account-preferences.ts",
+    "./air-tag": "./src/air-tag.ts",
+    "./chat": "./src/chat.ts",
+    "./chat-appearance": "./src/chat-appearance.ts",
+    "./discord": "./src/discord.ts",
+    "./item-rarity": "./src/item-rarity.ts",
+    "./loot": "./src/loot.ts",
+    "./loot-events": "./src/loot-events.ts",
+    "./map-ping": "./src/map-ping.ts",
+    "./notifications": "./src/notifications.ts",
+    "./npc-appearance": "./src/npc-appearance.ts",
+    "./npc-routing": "./src/npc-routing.ts",
+    "./npc-type": "./src/npc-type.ts",
+    "./openapi-compatibility": "./src/openapi-compatibility.ts",
+    "./party-ready-room": "./src/party-ready-room.ts",
+    "./permissions": "./src/permissions.ts",
+    "./primitives": "./src/primitives.ts",
+    "./reservation-events": "./src/reservation-events.ts",
+    "./runtime-environment": "./src/runtime-environment.ts",
+    "./settings-documents": "./src/settings-documents.ts",
+    "./sound-settings": "./src/sound-settings.ts",
+    "./timer-settings": "./src/timer-settings.ts",
+    "./user-preferences": "./src/user-preferences.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "effect": "4.0.0-rc.112"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

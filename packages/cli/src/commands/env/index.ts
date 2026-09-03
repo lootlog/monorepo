@@ -13,14 +13,14 @@ export const env = async (args: string[]): Promise<void> => {
 ${chalk.bold("env - Environment management commands")}
 
 ${chalk.bold("Usage:")}
-  pnpm env <command> [options]
+  bun run env:generate [options]
 
 ${chalk.bold("Commands:")}
   generate    Generate .env files from .env.example templates
 
 ${chalk.bold("Examples:")}
-  pnpm env generate              # Generate all .env files
-  pnpm env generate --help       # Show generate command help
+  bun run env:generate              # Generate all .env files
+  bun run env:generate --help       # Show generate command help
 
 ${chalk.bold("Global Options:")}
   -h, --help                     Show this help message
@@ -32,9 +32,7 @@ ${chalk.bold("Global Options:")}
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));
-    console.log(
-      chalk.gray(`Run 'pnpm env --help' to see available commands.\n`),
-    );
+    console.log(chalk.gray(`Run 'bun run env:generate -- --help' for help.\n`));
     process.exit(1);
   }
 

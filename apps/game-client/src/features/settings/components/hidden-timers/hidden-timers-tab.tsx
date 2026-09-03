@@ -5,7 +5,7 @@ import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidde
 import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();

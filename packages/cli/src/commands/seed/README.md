@@ -10,7 +10,7 @@ Comprehensive TypeScript-based seeding system for the Lootlog API with data scra
   - Smart caching: automatically skips re-downloading existing files
   - Force mode available for fresh data
 - **Data Generation**: Generate realistic mock data for players, guilds, loots, and timers
-- **Database Seeding**: Populate PostgreSQL database using Prisma
+- **Database Seeding**: Populate PostgreSQL databases using Drizzle
 - **CLI Interface**: Easy-to-use command-line tools
 - **TypeScript**: Fully typed with better error handling
 - **Modular Design**: Reusable generators and scrapers
@@ -38,7 +38,7 @@ packages/cli/src/commands/seed/
 The necessary dependencies are already included in `package.json`:
 
 ```bash
-pnpm install
+bun install
 ```
 
 ## Usage
@@ -48,7 +48,7 @@ pnpm install
 Run everything in one command (scrape data, generate players, seed database):
 
 ```bash
-pnpm seed:setup
+bun run seed:setup
 ```
 
 Options:
@@ -61,7 +61,7 @@ Options:
 Example:
 
 ```bash
-pnpm seed:setup --guilds 10 --loots 500 --players 2000
+bun run seed:setup --guilds 10 --loots 500 --players 2000
 ```
 
 ### Individual Commands
@@ -71,27 +71,27 @@ pnpm seed:setup --guilds 10 --loots 500 --players 2000
 **Scrape both items and NPCs:**
 
 ```bash
-pnpm seed:scrape
+bun run seed:scrape
 ```
 
 **Scrape items only:**
 
 ```bash
-pnpm seed:scrape:items
+bun run seed:scrape:items
 ```
 
 **Scrape NPCs only:**
 
 ```bash
-pnpm seed:scrape:npcs
+bun run seed:scrape:npcs
 ```
 
 **Force re-scraping (ignores existing files):**
 
 ```bash
-pnpm seed:scrape -- --force
-pnpm seed:scrape:items -- --force
-pnpm seed:scrape:npcs -- --force
+bun run seed:scrape -- --force
+bun run seed:scrape:items -- --force
+bun run seed:scrape:npcs -- --force
 ```
 
 > **Note**: By default, scrapers will skip downloading if the file already exists. Use `--force` flag to re-download.
@@ -99,7 +99,7 @@ pnpm seed:scrape:npcs -- --force
 #### 2. Generate Mock Players
 
 ```bash
-pnpm seed:generate:players
+bun run seed:generate:players
 ```
 
 This generates 1000 random players with names, professions, and levels.
@@ -107,7 +107,7 @@ This generates 1000 random players with names, professions, and levels.
 #### 3. Seed Database
 
 ```bash
-pnpm seed
+bun run seed
 ```
 
 Options:
@@ -120,7 +120,7 @@ Options:
 Example:
 
 ```bash
-pnpm seed --guilds 10 --loots 200 --no-clean
+bun run seed --guilds 10 --loots 200 --no-clean
 ```
 
 ### Advanced CLI Usage
@@ -258,30 +258,30 @@ await seed({
 
 ```bash
 # 1. Scrape fresh data from margoworld.pl
-pnpm seed:scrape
+bun run seed:scrape
 
 # 2. Generate mock players
-pnpm seed:generate:players
+bun run seed:generate:players
 
 # 3. Seed the database
-pnpm seed
+bun run seed
 ```
 
 ### Quick Reseed (using existing data)
 
 ```bash
 # Clean and reseed database with existing data files
-pnpm seed
+bun run seed
 
 # Or reseed without cleaning
-pnpm seed --no-clean
+bun run seed --no-clean
 ```
 
 ### Full Setup (automated)
 
 ```bash
 # Do everything in one command
-pnpm seed:setup
+bun run seed:setup
 ```
 
 ## Error Handling
@@ -306,20 +306,20 @@ The seeding system includes comprehensive error handling:
 
 ### "Failed to load data files"
 
-- Run `pnpm seed:scrape` to generate data files
-- Or run `pnpm seed:setup` for complete setup
+- Run `bun run seed:scrape` to generate data files
+- Or run `bun run seed:setup` for complete setup
 
 ### Scraper says "file already exists"
 
 - This is normal behavior to save time and bandwidth
 - Existing data files are automatically used
-- Use `--force` flag to re-download: `pnpm seed:scrape -- --force`
+- Use `--force` flag to re-download: `bun run seed:scrape -- --force`
 
 ### "Database connection error"
 
 - Ensure PostgreSQL is running: `docker compose up -d`
 - Check `DATABASE_URL` in `.env`
-- Run migrations: `pnpm db:api:migrate:dev`
+- Run migrations: `bun run db:api:migrate:dev`
 
 ### "Unique constraint violation"
 
@@ -329,9 +329,9 @@ The seeding system includes comprehensive error handling:
 
 ## Best Practices
 
-1. **Use setup command for first-time setup**: `pnpm seed:setup`
+1. **Use setup command for first-time setup**: `bun run seed:setup`
 2. **Scrape data weekly**: Items and NPCs may change on margoworld.pl
-   - Use `pnpm seed:scrape -- --force` to update existing data
+   - Use `bun run seed:scrape -- --force` to update existing data
 3. **Clean before seeding**: Prevents duplicate data issues
 4. **Adjust counts for dev/staging**: Use smaller counts in development
 5. **Let scrapers use cached data**: By default, scrapers reuse existing files to save time
@@ -340,18 +340,18 @@ The seeding system includes comprehensive error handling:
 
 Old `.mjs` scripts in `src/mocks/scripts/` have been replaced with TypeScript modules:
 
-| Old Script                 | New Command                  |
-| -------------------------- | ---------------------------- |
-| `scrap-items.mjs`          | `pnpm seed:scrape:items`     |
-| `scrap-npcs.mjs`           | `pnpm seed:scrape:npcs`      |
-| `generate-players.mjs`     | `pnpm seed:generate:players` |
-| `seed-through-backend.mjs` | `pnpm seed`                  |
+| Old Script                 | New Command                     |
+| -------------------------- | ------------------------------- |
+| `scrap-items.mjs`          | `bun run seed:scrape:items`     |
+| `scrap-npcs.mjs`           | `bun run seed:scrape:npcs`      |
+| `generate-players.mjs`     | `bun run seed:generate:players` |
+| `seed-through-backend.mjs` | `bun run seed`                  |
 
 The new system:
 
 - ✅ TypeScript with full type safety
 - ✅ Better error handling
-- ✅ Uses Prisma directly (faster)
+- ✅ Uses Drizzle directly for deterministic local seed data
 - ✅ Modular and reusable
 - ✅ CLI interface
 - ✅ Configurable

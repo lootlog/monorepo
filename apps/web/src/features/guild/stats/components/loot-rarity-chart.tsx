@@ -10,7 +10,7 @@ import {
 } from "@lootlog/ui/components/chart";
 import { PieChart, Pie, Cell } from "recharts";
 import { useTranslation } from "react-i18next";
-import type { LootStatsResponseDtoOutputByRarity } from "@lootlog/api-client/models/main/loot-stats-response-dto-output-by-rarity";
+import type { LootStatsResponseDtoOutputByRarity } from "@lootlog/client/main";
 
 const RARITY_COLORS: Record<"LEGENDARY" | "HEROIC", string> = {
   LEGENDARY: "#ef4444",
