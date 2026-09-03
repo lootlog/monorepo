@@ -1,7 +1,14 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-file: "3"
+    max-size: "10m"
+
 services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: "rabbitmq-lootlog"
+    restart: unless-stopped
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
@@ -11,12 +18,39 @@ services:
     volumes:
       - rabbitdata:/var/lib/rabbitmq
       - rabbitlog:/var/log/rabbitmq
+    configs:
+      - source: rabbitmq-local-resources
+        target: /etc/rabbitmq/conf.d/20-local-resources.conf
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    logging: *default-logging
 
   lootlog-users-db:
     image: postgres:17-alpine
     container_name: "lootlog-users-db"
-    restart: always
-    shm_size: 256mb
+    restart: unless-stopped
+    shm_size: 128mb
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=384MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=30
     volumes:
       - lootlog-users-db:/var/lib/postgresql/data
     environment:
@@ -25,18 +59,40 @@ services:
       POSTGRES_PASSWORD: ${USERS_DB_PASSWORD}
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     deploy:
       resources:
         limits:
-          memory: 4096M
-        reservations:
-          memory: 2048M
+          cpus: "0.5"
+          memory: 512M
+    logging: *default-logging
 
   lootlog-db:
     image: postgres:17-alpine
     container_name: "lootlog-db"
-    restart: always
-    shm_size: 2gb
+    restart: unless-stopped
+    shm_size: 512mb
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - autovacuum_work_mem=128MB
+      - -c
+      - max_connections=50
+      - -c
+      - max_wal_size=2GB
     volumes:
       - lootlog-db:/var/lib/postgresql/data
     environment:
@@ -45,18 +101,36 @@ services:
       POSTGRES_PASSWORD: ${LOOTLOG_DB_PASSWORD}
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     deploy:
       resources:
         limits:
-          memory: 4096M
-        reservations:
+          cpus: "2.0"
           memory: 2048M
+    logging: *default-logging
 
   battle-log-db:
     image: postgres:17-alpine
     container_name: "battle-log-db"
-    restart: always
-    shm_size: 256mb
+    restart: unless-stopped
+    shm_size: 128mb
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=384MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=30
     volumes:
       - battle-log-db:/var/lib/postgresql/data
     environment:
@@ -65,18 +139,36 @@ services:
       POSTGRES_PASSWORD: ${BATTLE_LOG_DB_PASSWORD}
     ports:
       - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     deploy:
       resources:
         limits:
+          cpus: "0.5"
           memory: 512M
-        reservations:
-          memory: 256M
+    logging: *default-logging
 
   activity-log-db:
     image: timescale/timescaledb:latest-pg17
     container_name: "activity-log-db"
-    restart: always
-    shm_size: 512mb
+    restart: unless-stopped
+    shm_size: 128mb
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=384MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=30
     volumes:
       - activity-log-db:/var/lib/postgresql/data
     environment:
@@ -85,29 +177,47 @@ services:
       POSTGRES_PASSWORD: ${ACTIVITY_LOG_DB_PASSWORD}
     ports:
       - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     deploy:
       resources:
         limits:
+          cpus: "1.0"
           memory: 512M
-        reservations:
-          memory: 256M
+    logging: *default-logging
 
   meilisearch:
     image: "getmeili/meilisearch:v1.22.2"
+    restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
+      MEILI_MAX_INDEXING_MEMORY: 768MiB
+      MEILI_MAX_INDEXING_THREADS: 2
     ports:
       - 7700:7700
     volumes:
       - "meilisearch:/meili_data"
     healthcheck:
       test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
-      retries: 3
+      interval: 10s
       timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+    logging: *default-logging
 
   redis:
     image: "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1"
     container_name: "redis-lootlog"
+    restart: unless-stopped
     ports:
       - "6379:6379"
     environment:
@@ -117,14 +227,34 @@ services:
       - "--cluster_mode=emulated"
       - "--lock_on_hashtags"
       - "--dir=/data"
+      - "--proactor_threads=1"
+      - "--maxmemory=256MiB"
     volumes:
       - "redis:/data"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a $$REDIS_PASSWORD --no-auth-warning ping | grep -q PONG",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+    logging: *default-logging
 
   traefik:
     image: "traefik:v3.6.10"
     container_name: "traefik"
+    restart: unless-stopped
     # network_mode: "host"
     command:
+      - "--ping=true"
       #- "--log.level=DEBUG"
       # - "--api.insecure=true"
       # - "--providers.docker=true"
@@ -138,6 +268,18 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/dev/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
       - "./traefik/dev/traefik.yml:/etc/traefik/traefik.yml:ro"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging: *default-logging
 
 volumes:
   rabbitdata:
@@ -148,3 +290,8 @@ volumes:
   redis:
   battle-log-db:
   activity-log-db:
+
+configs:
+  rabbitmq-local-resources:
+    content: |
+      vm_memory_high_watermark.absolute = 256MiB
