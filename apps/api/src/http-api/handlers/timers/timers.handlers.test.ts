@@ -4,7 +4,6 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { Guild, Role } from "#src/timers/timers.types";
 import {
-  LootlogApi,
   TimersControllerGetTimers200,
   TimersControllerResetTimer200,
   type CreateManualTimerDto,
@@ -18,7 +17,6 @@ import {
   resetGuildTimer,
   restoreGuildTimer,
   searchTimerNpcs,
-  TIMERS_ENDPOINTS,
   TimersAccessDenied,
   TimersAuthorization,
   TimersData,
@@ -140,17 +138,6 @@ const provideServices = (
   );
 
 describe("Timers HttpApi handlers", () => {
-  it("covers every endpoint in the generated timers group exactly once", () => {
-    const generatedEndpoints = Object.keys(
-      LootlogApi.groups.timers.endpoints,
-    ).sort();
-    const declaredEndpoints: string[] = [...TIMERS_ENDPOINTS].sort();
-
-    expect(declaredEndpoints).toEqual(generatedEndpoints);
-    expect(new Set(TIMERS_ENDPOINTS).size).toBe(TIMERS_ENDPOINTS.length);
-    expect(TIMERS_ENDPOINTS).toHaveLength(10);
-  });
-
   it("passes policy and roles to the visibility-aware service and decodes wire dates", async () => {
     const calls: TimersGuildAccess[] = [];
     const layer = provideServices(

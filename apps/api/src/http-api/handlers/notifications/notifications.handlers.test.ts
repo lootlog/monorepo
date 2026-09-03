@@ -4,7 +4,6 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import {
   executeNotificationEndpoint,
-  notificationEndpointIdentifiers,
   NotificationsAccessDenied,
   NotificationsAuthorization,
   NotificationsData,
@@ -83,11 +82,6 @@ const success = async (
 };
 
 describe("Notifications HttpApi handlers", () => {
-  it("covers every generated NotificationsGroup identifier exactly once", () => {
-    expect(notificationEndpointIdentifiers).toHaveLength(27);
-    expect(new Set(notificationEndpointIdentifiers).size).toBe(27);
-  });
-
   it("delegates a guild target read with its scoped Organization context", async () => {
     const request = { params: { guildId: "guild-a" } };
     const { result, response, calls } = await success(

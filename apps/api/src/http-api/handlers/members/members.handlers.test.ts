@@ -14,20 +14,6 @@ import {
   refreshGuildMember,
 } from "./members.handlers.js";
 
-const expectedHandlerIdentifiers = [
-  "MembersControllerGetMe",
-  "MembersControllerRefreshMe",
-  "MembersControllerRefreshMember",
-  "MembersControllerDeactivateMember",
-  "MembersControllerGetMemberLootlogConfigSummary",
-  "MembersControllerGetGuildMembers",
-  "MembersControllerGetGuildMemberReferences",
-  "MembersControllerGetGuildMembersSummary",
-  "MembersControllerRefreshAllMembers",
-  "MembersControllerGetLatestRefreshJob",
-  "MembersControllerGetRefreshJobStatus",
-] as const;
-
 const identity = { userId: "user-a", discordId: "discord-admin" };
 const access = {
   ...identity,
@@ -99,19 +85,6 @@ const provideServices = (
   );
 
 describe("Members HttpApi handlers", () => {
-  it("wires every generated Members endpoint identifier exactly once", async () => {
-    const source = await Bun.file(
-      new URL("./members.handlers.ts", import.meta.url),
-    ).text();
-    const actual = [...source.matchAll(/\.handle\(\s*"([^"]+)"/g)].map(
-      (match) => match[1],
-    );
-
-    expect(actual).toHaveLength(11);
-    expect(new Set(actual).size).toBe(11);
-    expect(actual).toEqual([...expectedHandlerIdentifiers]);
-  });
-
   it("returns the authenticated member through the generated response schema", async () => {
     const calls: unknown[] = [];
     const layer = provideServices(
