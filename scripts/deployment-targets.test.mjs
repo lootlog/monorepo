@@ -154,6 +154,49 @@ describe("deployment targets", () => {
     ).rejects.toThrow("Unknown deployment target: unknown");
   });
 
+  test("release keeps backend and frontend targets independent", async () => {
+    for (const target of ["gateway", "web", "game-client"]) {
+      const plan = await createDeploymentPlan({ mode: "release", target });
+      expect(plan.targets.map(({ id }) => id)).toEqual([target]);
+    }
+  });
+
+  test("release requires an explicit Auth migration confirmation", async () => {
+    await expect(
+      createDeploymentPlan({ mode: "release", target: "auth" }),
+    ).rejects.toThrow("Auth migration confirmation is required");
+    await expect(
+      createDeploymentPlan({
+        mode: "release",
+        target: "all",
+        authMigrationConfirmed: false,
+      }),
+    ).rejects.toThrow("Auth migration confirmation is required");
+
+    const plan = await createDeploymentPlan({
+      mode: "release",
+      target: "auth",
+      authMigrationConfirmed: true,
+    });
+    expect(plan.targets.map(({ id }) => id)).toEqual(["auth"]);
+  });
+
+  test("Game Client production builds declare their required public configuration", async () => {
+    const targets = await loadDeploymentTargets();
+    expect(
+      targets.find(({ id }) => id === "game-client")?.production
+        ?.requiredEnvironmentVariables,
+    ).toEqual([
+      "GAME_CLIENT_GAME_CLIENT_URL",
+      "GAME_CLIENT_VITE_API_URL",
+      "GAME_CLIENT_VITE_AUTH_SERVICE_URL",
+      "GAME_CLIENT_VITE_BATTLELOG_API_URL",
+      "GAME_CLIENT_VITE_GATEWAY_URL",
+      "GAME_CLIENT_VITE_GATEWAY_SOCKET_PATH",
+      "GAME_CLIENT_VITE_LOOTLOG_APP_URL",
+    ]);
+  });
+
   test("rollback exposes only targets changed by the last deployment", async () => {
     const unchanged = {
       kind: "docker",

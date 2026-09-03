@@ -129,7 +129,18 @@
     "kind": "pages",
     "artifactPath": "apps/game-client/dist/@lootlog",
     "development": false,
-    "production": { "project": "lootlog-game-client-monorepo" },
+    "production": {
+      "project": "lootlog-game-client-monorepo",
+      "requiredEnvironmentVariables": [
+        "GAME_CLIENT_GAME_CLIENT_URL",
+        "GAME_CLIENT_VITE_API_URL",
+        "GAME_CLIENT_VITE_AUTH_SERVICE_URL",
+        "GAME_CLIENT_VITE_BATTLELOG_API_URL",
+        "GAME_CLIENT_VITE_GATEWAY_URL",
+        "GAME_CLIENT_VITE_GATEWAY_SOCKET_PATH",
+        "GAME_CLIENT_VITE_LOOTLOG_APP_URL"
+      ]
+    },
     "order": 10
   },
   {
