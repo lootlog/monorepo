@@ -130,7 +130,9 @@ end
 redis.call("SET",KEYS[3],cjson.encode(metadata),"EX",idle)
 if redis.call("EXISTS",KEYS[1]) == 1 then redis.call("EXPIRE",KEYS[1],idle) end
 if redis.call("EXISTS",KEYS[2]) == 1 then redis.call("EXPIRE",KEYS[2],idle) end
-return cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,acceptedTargets=accepted,updates=updates})
+local encoded=cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,acceptedTargets=accepted,updates=updates})
+if #updates == 0 then encoded=string.gsub(encoded,'"updates":{}','"updates":[]',1) end
+return encoded
 `;
 
 const SNAPSHOT_SCRIPT = `
@@ -150,7 +152,9 @@ local targets={}; for _,value in ipairs(redis.call("HVALS",KEYS[1])) do table.in
 redis.call("SET",KEYS[3],cjson.encode(metadata),"EX",idle)
 if redis.call("EXISTS",KEYS[1]) == 1 then redis.call("EXPIRE",KEYS[1],idle) end
 if redis.call("EXISTS",KEYS[2]) == 1 then redis.call("EXPIRE",KEYS[2],idle) end
-return cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,targets=targets})
+local encoded=cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,targets=targets})
+if #targets == 0 then encoded=string.gsub(encoded,'"targets":{}','"targets":[]',1) end
+return encoded
 `;
 
 type RateLimitResult = [accepted: number, retryAfterMs: number];

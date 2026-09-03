@@ -1,11 +1,13 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { Clock, Effect, Schema } from "effect";
-import { ExecutionError } from "redlock";
+import {
+  ExecutionError,
+  type RedlockService,
+} from "#src/lib/redlock/redlock.service";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { mapTimerResponse } from "#src/http-api/handlers/timers/timer-response";
-import type { RedlockService } from "#src/lib/redlock/redlock.service";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";

@@ -45,7 +45,6 @@
     "bullmq": "^5.81.4",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
-    "ioredis": "^5.11.1",
     "pg": "^8.23.0",
     "yaml": "catalog:"
   },

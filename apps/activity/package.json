@@ -36,7 +36,6 @@
     "@paralleldrive/cuid2": "^3.3.0",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
-    "ioredis": "5.11.1",
     "yaml": "catalog:"
   },
   "devDependencies": {

@@ -1,7 +1,8 @@
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { Schema } from "effect";
-import { Redis } from "ioredis";
+import { Effect, Queue, Schedule, Schema } from "effect";
+import * as Redis from "effect/unstable/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
+import type { BackgroundTaskRunner } from "./background-tasks.js";
 
 type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
   readonly password: string;
@@ -59,65 +60,130 @@ const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
 );
 
 export class RedisGatewayStore {
-  readonly command: Redis;
-  readonly publisher: Redis;
-  readonly subscriber: Redis;
+  readonly command: RedisGatewayCommands;
   readonly channel: string;
 
-  constructor(config: RedisGatewayConfig) {
-    const options = {
-      host: config.host,
-      port: config.port,
-      username: config.username,
-      password: config.password,
-      keyPrefix: `${config.keyPrefix}:`,
-      lazyConnect: true,
-      maxRetriesPerRequest: 3,
-    } as const;
-    this.command = new Redis(options);
-    this.publisher = new Redis({ ...options, keyPrefix: undefined });
-    this.subscriber = new Redis({ ...options, keyPrefix: undefined });
+  constructor(
+    private readonly redis: Redis.Redis["Service"],
+    config: RedisGatewayConfig,
+    private readonly runEffect: <A>(
+      effect: Effect.Effect<A, Redis.RedisError>,
+    ) => Promise<A>,
+    private readonly runBackground: BackgroundTaskRunner,
+  ) {
+    const prefix = (key: string) => `${config.keyPrefix}:${key}`;
+    const run = this.runEffect;
+    const scripts = new Map<string, Redis.Script<any>>();
+    this.command = {
+      get: (key) => run(redis.send("GET", prefix(key))),
+      set: (key, value, ...options) =>
+        run(redis.send("SET", prefix(key), value, ...options.map(String))),
+      del: (...keys) => run(redis.send("DEL", ...keys.map(prefix))),
+      expire: (key, seconds) =>
+        run(redis.send("EXPIRE", prefix(key), String(seconds))),
+      incr: (key) => run(redis.send("INCR", prefix(key))),
+      sadd: (key, ...members) =>
+        run(redis.send("SADD", prefix(key), ...members)),
+      srem: (key, ...members) =>
+        run(redis.send("SREM", prefix(key), ...members)),
+      smembers: (key) => run(redis.send("SMEMBERS", prefix(key))),
+      mget: (keys) => run(redis.send("MGET", ...keys.map(prefix))),
+      eval: (script, numberOfKeys, ...keysAndArgs) =>
+        (() => {
+          const cacheKey = `${numberOfKeys}:${script}`;
+          let descriptor = scripts.get(cacheKey);
+          if (descriptor === undefined) {
+            descriptor = Redis.script(
+              (...parameters: ReadonlyArray<unknown>) => parameters,
+              { lua: script, numberOfKeys },
+            );
+            scripts.set(cacheKey, descriptor);
+          }
+          const parameters = keysAndArgs.map((value, index) =>
+            index < numberOfKeys ? prefix(String(value)) : String(value),
+          );
+          return run(redis.eval(descriptor)(...parameters));
+        })(),
+      flushdb: () => run(redis.send("FLUSHDB")),
+    };
     this.channel = `${config.keyPrefix}:realtime:federation:v1`;
   }
 
   async connect(): Promise<void> {
-    await Promise.all([
-      this.command.connect(),
-      this.publisher.connect(),
-      this.subscriber.connect(),
-    ]);
+    await this.runEffect(this.redis.send("PING"));
   }
 
-  async close(): Promise<void> {
-    await Promise.all([
-      this.command.quit(),
-      this.publisher.quit(),
-      this.subscriber.quit(),
-    ]);
+  close(): Promise<void> {
+    return Promise.resolve();
   }
 
   async publish(message: FederatedRealtimeMessage): Promise<void> {
-    await this.publisher.publish(this.channel, JSON.stringify(message));
+    await this.runEffect(
+      this.redis.send("PUBLISH", this.channel, JSON.stringify(message)),
+    );
   }
 
   async subscribe(
     listener: (message: FederatedRealtimeMessage) => void,
   ): Promise<void> {
-    this.subscriber.on("message", (_channel: string, raw: string) => {
-      try {
-        const message = decodeFederatedRealtimeMessage(raw);
-        if (
-          typeof message.id === "string" &&
-          typeof message.sourceInstanceId === "string" &&
-          (typeof message.frame === "string" ||
-            message.control?.type === "permissions.rebalance")
-        ) {
-          listener(message);
-        }
-      } catch {
-        // Malformed federation frames are isolated to Redis and never reach clients.
-      }
+    let markReady: () => void = () => undefined;
+    const ready = new Promise<void>((resolve) => {
+      markReady = resolve;
     });
-    await this.subscriber.subscribe(this.channel);
+    const redis = this.redis;
+    const channel = this.channel;
+    const consume = Effect.scoped(
+      Effect.gen(function* () {
+        const messages = yield* redis.subscribe(channel);
+        yield* Effect.sync(markReady);
+        while (true) {
+          const { message: raw } = yield* Queue.take(messages);
+          try {
+            const message = decodeFederatedRealtimeMessage(raw);
+            if (
+              typeof message.id === "string" &&
+              typeof message.sourceInstanceId === "string" &&
+              (typeof message.frame === "string" ||
+                message.control?.type === "permissions.rebalance")
+            ) {
+              listener(message);
+            }
+          } catch {
+            // Malformed federation frames are isolated to Redis and never reach clients.
+          }
+        }
+      }),
+    ).pipe(
+      Effect.retry(
+        Schedule.min([
+          Schedule.exponential("100 millis").pipe(Schedule.jittered),
+          Schedule.spaced("5 seconds"),
+        ]),
+      ),
+    );
+    this.runBackground("redis.subscription", consume);
+    await ready;
   }
+}
+
+export interface RedisGatewayCommands {
+  readonly get: (key: string) => Promise<string | null>;
+  readonly set: (
+    key: string,
+    value: string,
+    ...options: ReadonlyArray<string | number>
+  ) => Promise<unknown>;
+  readonly del: (...keys: string[]) => Promise<number>;
+  readonly expire: (key: string, seconds: number) => Promise<number>;
+  readonly incr: (key: string) => Promise<number>;
+  readonly sadd: (key: string, ...members: string[]) => Promise<number>;
+  readonly srem: (key: string, ...members: string[]) => Promise<number>;
+  readonly smembers: (key: string) => Promise<string[]>;
+  readonly mget: (keys: string[]) => Promise<Array<string | null>>;
+  readonly eval: <A = unknown>(
+    script: string,
+    numberOfKeys: number,
+    ...keysAndArgs: ReadonlyArray<string | number>
+  ) => Promise<A>;
+  readonly flushdb: () => Promise<unknown>;
 }

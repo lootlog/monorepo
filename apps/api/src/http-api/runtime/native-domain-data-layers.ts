@@ -49,7 +49,10 @@ import { makeKillCreation } from "#src/kills/kill-creation";
 import { makeKillStatsPersistence } from "#src/kills/kill-stats-persistence";
 import { makeMemberKillQuery } from "#src/kills/member-kill-query";
 import { makeUserKillQueries } from "#src/kills/user-kill-queries";
-import { RedlockService } from "#src/lib/redlock/redlock.service";
+import {
+  ExecutionError,
+  RedlockService,
+} from "#src/lib/redlock/redlock.service";
 import { makeLootAllocationPersistence } from "#src/loots/loot-allocation-persistence";
 import { makeLootAllocationOperations } from "#src/loots/loot-allocation.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
@@ -103,7 +106,6 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, Layer, Redacted } from "effect";
-import { ExecutionError } from "redlock";
 import { eventDataLayer } from "../handlers/events/events.data-layer.js";
 import { killsLootsDataLayer } from "../handlers/kills-loots/kills-loots.data-layer.js";
 import { notificationDataLayer } from "../handlers/notifications/notifications.data-layer.js";

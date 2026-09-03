@@ -1,6 +1,7 @@
 import { vi } from "#test/bun-test";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import { Schema } from "effect";
+import { Effect, Queue, Schema } from "effect";
+import { Redis } from "effect/unstable/persistence";
 
 type RedisCommandMock = ReturnType<
   typeof vi.fn<(...args: unknown[]) => unknown>
@@ -16,15 +17,28 @@ type RedisClientMock = {
 };
 
 const createRedisService = (client: RedisClientMock) => {
-  const service = new RedisService({
-    host: "localhost",
-    port: 6379,
-    prefix: "lootlog",
+  const redis = Redis.Redis.of({
+    send: <A>(command: string, ...args: ReadonlyArray<string>) =>
+      Effect.promise(
+        () =>
+          client[command.toLowerCase() as keyof RedisClientMock](
+            ...args,
+          ) as Promise<A>,
+      ),
+    subscribe: () => Queue.unbounded(),
+    eval:
+      (script) =>
+      (...parameters) =>
+        Effect.promise(
+          () =>
+            client.eval(
+              script.lua,
+              String(script.numberOfKeys(...parameters)),
+              ...parameters,
+            ) as Promise<unknown>,
+        ),
   });
-
-  (service as unknown as { client: RedisClientMock }).client = client;
-
-  return service;
+  return new RedisService(redis, { prefix: "lootlog" }, Effect.runPromise);
 };
 
 const redisCommandMock = (): RedisCommandMock =>
@@ -61,7 +75,7 @@ describe("RedisService", () => {
       "MATCH",
       "lootlog:timer:*",
       "COUNT",
-      500,
+      "500",
     );
     expect(client.scan).toHaveBeenNthCalledWith(
       2,
@@ -69,7 +83,7 @@ describe("RedisService", () => {
       "MATCH",
       "lootlog:timer:*",
       "COUNT",
-      500,
+      "500",
     );
     expect(client.del).toHaveBeenNthCalledWith(
       1,
@@ -139,7 +153,7 @@ describe("RedisService", () => {
       "lootlog:cache:key:single-flight",
       expect.any(String),
       "EX",
-      10,
+      "10",
       "NX",
     );
     expect(client.set).toHaveBeenNthCalledWith(
@@ -147,11 +161,11 @@ describe("RedisService", () => {
       "lootlog:cache:key",
       JSON.stringify({ value: 1 }),
       "EX",
-      60,
+      "60",
     );
     expect(client.eval).toHaveBeenCalledWith(
       expect.stringContaining('redis.call("get", KEYS[1]) == ARGV[1]'),
-      1,
+      "1",
       "lootlog:cache:key:single-flight",
       expect.any(String),
     );

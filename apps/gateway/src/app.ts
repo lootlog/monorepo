@@ -1,6 +1,8 @@
+import { BunRedis } from "@effect/platform-bun";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { HttpClient } from "effect/unstable/http";
+import { Redis } from "effect/unstable/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
 import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
 import {
@@ -51,13 +53,19 @@ export class GatewayApplication extends Context.Service<
       const runBackgroundEffect =
         yield* FiberSet.runtime(backgroundFibers)<never>();
       const runBackground = makeBackgroundTaskRunner(runBackgroundEffect);
+      const redisClient = yield* Redis.Redis;
       const redis = yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: async () => {
-            const store = new RedisGatewayStore({
-              ...config.redis,
-              password: Redacted.value(config.redis.password),
-            });
+            const store = new RedisGatewayStore(
+              redisClient,
+              {
+                ...config.redis,
+                password: Redacted.value(config.redis.password),
+              },
+              Effect.runPromise,
+              runBackground,
+            );
             await store.connect();
             return store;
           },
@@ -134,6 +142,15 @@ const RabbitLive = Layer.unwrap(
 export const GatewayApplicationLive =
   GatewayApplication.layerWithoutDependencies.pipe(
     Layer.provide(RabbitLive),
+    Layer.provide(
+      Layer.unwrap(
+        Effect.map(GatewayConfig, (config) =>
+          BunRedis.layer({
+            url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
+          }),
+        ),
+      ).pipe(Layer.provide(GatewayConfig.layer)),
+    ),
     Layer.provide(GatewayConfig.layer),
   );
 

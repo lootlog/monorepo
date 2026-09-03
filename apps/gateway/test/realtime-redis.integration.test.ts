@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test";
+import { BunRedis } from "@effect/platform-bun";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { Permission } from "@lootlog/schema/permissions";
+import { Fiber, ManagedRuntime } from "effect";
+import { Redis } from "effect/unstable/persistence";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
 import { AirTagService } from "#src/realtime/air-tag-service";
@@ -99,14 +102,38 @@ const waitFor = async (predicate: () => boolean): Promise<void> => {
 integrationTest(
   "real Redis federates two Gateway instances and preserves map/air contracts",
   async () => {
-    const firstStore = new RedisGatewayStore(configuration.redis);
-    const secondStore = new RedisGatewayStore(configuration.redis);
+    const firstRuntime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
+    );
+    const secondRuntime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
+    );
+    const firstRedis = await firstRuntime.runPromise(Redis.Redis);
+    const secondRedis = await secondRuntime.runPromise(Redis.Redis);
+    const firstBackgroundFibers: Array<Fiber.RuntimeFiber<void, unknown>> = [];
+    const secondBackgroundFibers: Array<Fiber.RuntimeFiber<void, unknown>> = [];
+    const firstStore = new RedisGatewayStore(
+      firstRedis,
+      configuration.redis,
+      (effect) => firstRuntime.runPromise(effect),
+      (_label, effect) => {
+        firstBackgroundFibers.push(firstRuntime.runFork(effect));
+      },
+    );
+    const secondStore = new RedisGatewayStore(
+      secondRedis,
+      configuration.redis,
+      (effect) => secondRuntime.runPromise(effect),
+      (_label, effect) => {
+        secondBackgroundFibers.push(secondRuntime.runFork(effect));
+      },
+    );
     await Promise.all([firstStore.connect(), secondStore.connect()]);
     try {
       await firstStore.command.flushdb();
       const firstHub = new RealtimeHub(configuration, firstStore);
       const secondHub = new RealtimeHub(configuration, secondStore);
-      await Promise.all([firstHub.start(), secondHub.start()]);
+      await secondRuntime.runPromise(secondHub.start());
       const source = makeSocket("source");
       const recipient = makeSocket("recipient");
       firstHub.register(source.socket);
@@ -140,7 +167,7 @@ integrationTest(
         }),
       ).resolves.toMatchObject({ status: "rejected", code: "rate-limited" });
       await waitFor(
-        () => eventsOfType(recipient.frames, "map-ping.received").length === 5,
+        () => eventsOfType(recipient.frames, "map-ping.received").length >= 5,
       );
       expect(eventsOfType(source.frames, "map-ping.received")).toHaveLength(0);
       expect(eventsOfType(recipient.frames, "map-ping.received")).toHaveLength(

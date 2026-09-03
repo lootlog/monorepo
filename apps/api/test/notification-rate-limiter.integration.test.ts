@@ -1,6 +1,12 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { Effect } from "effect";
+import { BunRedis } from "@effect/platform-bun";
+import { Effect, ManagedRuntime } from "effect";
+import { Redis } from "effect/unstable/persistence";
 import { RedisService } from "#src/redis/redis.service";
+import {
+  ExecutionError,
+  RedlockService,
+} from "#src/lib/redlock/redlock.service";
 import {
   buildNotificationRateLimitKey,
   consumeNotificationRateLimit,
@@ -15,6 +21,7 @@ describe("Notification rate limiter Redis integration", () => {
   let secondRedis: RedisService;
   let firstLimiter: (userId: string) => Promise<NotificationRateLimitOutcome>;
   let secondLimiter: (userId: string) => Promise<NotificationRateLimitOutcome>;
+  let redisRuntime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
 
   const limiter = (redis: RedisService) => {
     const adapter: Pick<MessagingRedis, "eval"> = {
@@ -32,28 +39,31 @@ describe("Notification rate limiter Redis integration", () => {
       Effect.runPromise(consumeNotificationRateLimit(adapter, userId));
   };
 
-  beforeAll(() => {
-    const options = {
-      host: process.env.REDIS_HOST ?? "127.0.0.1",
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      password: process.env.REDIS_PASSWORD || undefined,
-      username: process.env.REDIS_USERNAME || undefined,
-    };
-    firstRedis = new RedisService(options);
-    secondRedis = new RedisService(options);
-    firstRedis.initialize();
-    secondRedis.initialize();
+  beforeAll(async () => {
+    const username = encodeURIComponent(process.env.REDIS_USERNAME ?? "");
+    const password = encodeURIComponent(process.env.REDIS_PASSWORD ?? "");
+    redisRuntime = ManagedRuntime.make(
+      BunRedis.layer({
+        url: `redis://${username}:${password}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${Number(process.env.REDIS_PORT ?? 6379)}`,
+      }),
+    );
+    const redis = await redisRuntime.runPromise(Redis.Redis);
+    firstRedis = new RedisService(redis, {}, (effect) =>
+      redisRuntime.runPromise(effect),
+    );
+    secondRedis = new RedisService(redis, {}, (effect) =>
+      redisRuntime.runPromise(effect),
+    );
     firstLimiter = limiter(firstRedis);
     secondLimiter = limiter(secondRedis);
   });
 
-  afterAll(() => {
-    firstRedis.shutdown();
-    secondRedis.shutdown();
+  afterAll(async () => {
+    await redisRuntime.dispose();
   });
 
   beforeEach(async () => {
-    await firstRedis.getClient().flushall();
+    await firstRedis.flushall();
   });
 
   it("accepts five attempts in 5000 ms and rejects the sixth", async () => {
@@ -73,7 +83,7 @@ describe("Notification rate limiter Redis integration", () => {
       retryAfterMs: expect.any(Number),
     });
     await expect(
-      firstRedis.getClient().pttl(buildNotificationRateLimitKey("user-1")),
+      firstRedis.pttl(buildNotificationRateLimitKey("user-1")),
     ).resolves.toBeGreaterThan(0);
     expect(NOTIFICATION_RATE_LIMIT_WINDOW_MS).toBe(5_000);
   });
@@ -109,11 +119,43 @@ describe("Notification rate limiter Redis integration", () => {
   it("accepts another notification after the window expires", async () => {
     await Promise.all(Array.from({ length: 5 }, () => firstLimiter("user-1")));
     const key = buildNotificationRateLimitKey("user-1");
-    await firstRedis.getClient().pexpire(key, 1);
+    await firstRedis.pexpire(key, 1);
     await sleep(10);
 
     await expect(firstLimiter("user-1")).resolves.toEqual({
       accepted: true,
     });
+  });
+
+  it("serializes competing lock owners and permits acquisition after release", async () => {
+    const firstLocks = new RedlockService(firstRedis).createInstance({
+      retryCount: 0,
+    });
+    const secondLocks = new RedlockService(secondRedis).createInstance({
+      retryCount: 0,
+    });
+    const held = await firstLocks.acquire(["integration:lock"], 5_000);
+
+    await expect(
+      secondLocks.acquire(["integration:lock"], 5_000),
+    ).rejects.toBeInstanceOf(ExecutionError);
+
+    await held.release();
+    const acquired = await secondLocks.acquire(["integration:lock"], 5_000);
+    await acquired.release();
+  });
+
+  it("does not release a lock after its ownership token changes", async () => {
+    const locks = new RedlockService(firstRedis).createInstance({
+      retryCount: 0,
+    });
+    const held = await locks.acquire(["integration:lock"], 5_000);
+    await firstRedis.set("integration:lock", "replacement", 5);
+
+    await held.release();
+
+    await expect(firstRedis.get("integration:lock")).resolves.toBe(
+      "replacement",
+    );
   });
 });

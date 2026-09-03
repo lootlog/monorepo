@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import { Redis } from "ioredis";
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
+import * as Redis from "effect/unstable/persistence/Redis";
 
 export interface RedisOptions {
   readonly host: string;
@@ -54,41 +54,32 @@ end
 return 0
 `;
 
-export const makeRedisStore = (options: RedisOptions) => {
-  const { prefix, ...redisOptions } = options;
+export const makeRedisStore = (
+  redis: Redis.Redis["Service"],
+  runEffect: <A>(effect: Effect.Effect<A, Redis.RedisError>) => Promise<A>,
+  options: Pick<RedisOptions, "prefix"> = {},
+) => {
+  const { prefix } = options;
   const keyPrefix = prefix ?? "";
-  const client = new Redis(redisOptions);
+  const run = runEffect;
+  const scripts = new Map<string, Redis.Script<any>>();
   const prefixKey = (key: string): string =>
     keyPrefix ? `${keyPrefix}:${key}` : key;
 
   const redisStore = {
-    async connect(): Promise<void> {
-      if (client.status === "wait") {
-        await client.connect();
-      }
-    },
-
-    close(): void {
-      if (client.status !== "end" && client.status !== "close") {
-        client.disconnect(false);
-      }
-    },
-
-    getClient(): Redis {
-      return client;
-    },
-
     async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
       const prefixedKey = prefixKey(key);
       if (ttlSeconds !== undefined) {
-        await client.set(prefixedKey, value, "EX", ttlSeconds);
+        await run(
+          redis.send("SET", prefixedKey, value, "EX", String(ttlSeconds)),
+        );
         return;
       }
-      await client.set(prefixedKey, value);
+      await run(redis.send("SET", prefixedKey, value));
     },
 
     get(key: string): Promise<string | null> {
-      return client.get(prefixKey(key));
+      return run(redis.send("GET", prefixKey(key)));
     },
 
     async getJson<T>(key: string, codec: JsonCodec<T>): Promise<T | null> {
@@ -98,7 +89,7 @@ export const makeRedisStore = (options: RedisOptions) => {
       try {
         return codec.parse(cached);
       } catch {
-        await client.del(prefixKey(key));
+        await run(redis.send("DEL", prefixKey(key)));
         return null;
       }
     },
@@ -201,17 +192,22 @@ export const makeRedisStore = (options: RedisOptions) => {
       let cursor = "0";
       let deletedCount = 0;
       do {
-        const [nextCursor, keys] = await client.scan(
-          cursor,
-          "MATCH",
-          prefixedPattern,
-          "COUNT",
-          500,
+        const [nextCursor, keys] = await run(
+          redis.send<[string, string[]]>(
+            "SCAN",
+            cursor,
+            "MATCH",
+            prefixedPattern,
+            "COUNT",
+            "500",
+          ),
         );
         cursor = nextCursor;
         for (let index = 0; index < keys.length; index += batchSize) {
           const batch = keys.slice(index, index + batchSize);
-          if (batch.length > 0) deletedCount += await client.del(...batch);
+          if (batch.length > 0) {
+            deletedCount += await run(redis.send<number>("DEL", ...batch));
+          }
         }
       } while (cursor !== "0");
       return deletedCount;
@@ -225,11 +221,19 @@ export const makeRedisStore = (options: RedisOptions) => {
       const prefixedKey = prefixKey(key);
       if (ttlSeconds !== undefined) {
         return (
-          (await client.set(prefixedKey, value, "EX", ttlSeconds, "NX")) ===
-          "OK"
+          (await run(
+            redis.send(
+              "SET",
+              prefixedKey,
+              value,
+              "EX",
+              String(ttlSeconds),
+              "NX",
+            ),
+          )) === "OK"
         );
       }
-      return (await client.setnx(prefixedKey, value)) === 1;
+      return (await run(redis.send<number>("SETNX", prefixedKey, value))) === 1;
     },
 
     eval<TResult = unknown>(
@@ -238,12 +242,51 @@ export const makeRedisStore = (options: RedisOptions) => {
       args: ReadonlyArray<string | number> = [],
     ): Promise<TResult> {
       const prefixedKeys = keys.map((key) => prefixKey(key));
-      return client.eval(
-        script,
-        prefixedKeys.length,
-        ...prefixedKeys,
-        ...args,
+      const cacheKey = `${prefixedKeys.length}:${script}`;
+      let descriptor = scripts.get(cacheKey);
+      if (descriptor === undefined) {
+        descriptor = Redis.script(
+          (...parameters: ReadonlyArray<unknown>) => parameters,
+          { lua: script, numberOfKeys: prefixedKeys.length },
+        ).withReturnType<TResult>();
+        scripts.set(cacheKey, descriptor);
+      }
+      return run(
+        redis.eval(descriptor)(...prefixedKeys, ...args.map(String)),
       ) as Promise<TResult>;
+    },
+
+    del(...keys: string[]): Promise<number> {
+      return run(redis.send("DEL", ...keys.map(prefixKey)));
+    },
+
+    zadd(key: string, score: number, member: string): Promise<number> {
+      return run(redis.send("ZADD", prefixKey(key), String(score), member));
+    },
+
+    zcard(key: string): Promise<number> {
+      return run(redis.send("ZCARD", prefixKey(key)));
+    },
+
+    zrange(key: string, start: number, stop: number): Promise<string[]> {
+      return run(
+        redis.send("ZRANGE", prefixKey(key), String(start), String(stop)),
+      );
+    },
+
+    zrem(key: string, ...members: string[]): Promise<number> {
+      return run(redis.send("ZREM", prefixKey(key), ...members));
+    },
+
+    zremrangebyrank(key: string, start: number, stop: number): Promise<number> {
+      return run(
+        redis.send(
+          "ZREMRANGEBYRANK",
+          prefixKey(key),
+          String(start),
+          String(stop),
+        ),
+      );
     },
   };
 
