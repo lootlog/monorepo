@@ -110,6 +110,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup-bun
       - run: bun run client:check
 
