@@ -3,7 +3,7 @@ import { SettingsGuildSelectionGrid } from "@/features/settings/components/share
 import { type FC, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";

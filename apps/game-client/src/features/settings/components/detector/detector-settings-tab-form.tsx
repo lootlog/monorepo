@@ -13,7 +13,7 @@ import type {
 import { type FC, useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import * as z from "zod";
 
 type DetectorSettingsTabFormProps = {
   categoryKey: DetectorNpcType;
