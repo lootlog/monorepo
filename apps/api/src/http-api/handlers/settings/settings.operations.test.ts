@@ -3,6 +3,8 @@ import { Effect, Layer, Schema } from "effect";
 import { SettingsDocumentsControllerGetPreferences200 } from "../../contracts/preferences/schemas.js";
 import { SoundSettingsControllerGetSettings200 } from "../../contracts/sound-settings/schemas.js";
 import { TimerSettingsControllerGetGlobalSettings200 } from "../../contracts/timer-settings/schemas.js";
+import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
+import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
   getGlobalTimerSettings,
   getPreferences,
@@ -73,7 +75,21 @@ const provideServices = (
 
 describe("settings HttpApi handlers", () => {
   it("decodes timer and sound responses with the HTTP contracts", async () => {
-    const layer = provideServices(makeData());
+    const settingsDocuments = {
+      getPreferences: () => Effect.succeed({ domains: {} }),
+      patchPreferences: () => Effect.succeed({ domains: {} }),
+      parseDomains: () => Effect.succeed([]),
+    };
+    const timerService = makeTimerSettings(settingsDocuments);
+    const soundService = makeSoundSettings(settingsDocuments);
+    const layer = provideServices(
+      makeData({
+        getGlobalTimerSettings: (userId) =>
+          timerService.getGlobalSettings(userId).pipe(Effect.orDie),
+        getSoundSettings: (userId) =>
+          soundService.getSettings(userId).pipe(Effect.orDie),
+      }),
+    );
     const [timers, sounds] = await Effect.runPromise(
       Effect.all([getGlobalTimerSettings(), getSoundSettings()]).pipe(
         Effect.provide(layer),
