@@ -284,4 +284,33 @@ describe("PresenceStore", () => {
       isAfk: false,
     });
   });
+
+  test("heartbeat refreshes stored presence without broadcasting an unchanged profile", async () => {
+    let now = 10_000;
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    const store = new PresenceStore(
+      { command: redis } as unknown as RedisGatewayStore,
+      hub as unknown as RealtimeHub,
+      () => now,
+    );
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: ["organization-1"] }),
+    );
+    hub.presenceEvents.length = 0;
+
+    now = 20_000;
+    await Effect.runPromise(store.heartbeat(publisher, "session-1"));
+
+    expect(hub.presenceEvents).toEqual([]);
+    await expect(
+      Effect.runPromise(
+        store.snapshot(
+          session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+          "organization-1",
+        ),
+      ),
+    ).resolves.toMatchObject({ presences: [{ lastSeen: 20_000 }] });
+  });
 });

@@ -10,7 +10,7 @@ type Listener = (event: { readonly data?: unknown }) => void;
 class TestWebSocket implements RealtimeWebSocket {
   binaryType: BinaryType = "blob";
   readyState = 0;
-  readonly sent: Uint8Array[] = [];
+  readonly sent: Array<string | Uint8Array> = [];
   readonly listeners = new Map<string, Set<Listener>>();
 
   addEventListener(type: string, listener: Listener): void {
@@ -19,7 +19,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.listeners.set(type, listeners);
   }
 
-  send(data: Uint8Array): void {
+  send(data: string | Uint8Array): void {
     this.sent.push(data);
   }
 
@@ -34,7 +34,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.dispatch("open");
   }
 
-  message(data: Uint8Array): void {
+  message(data: string | Uint8Array): void {
     this.dispatch("message", { data });
   }
 
@@ -64,7 +64,8 @@ const respondToLastRequest = (
   data: unknown = undefined,
 ): void => {
   const lastRequest = socket.sent.at(-1);
-  if (!lastRequest) throw new Error("Expected a request frame");
+  if (!(lastRequest instanceof Uint8Array))
+    throw new Error("Expected a binary request frame");
   const request = decodeRealtimeFrame(lastRequest);
   if (!("requestId" in request) || !request.requestId) {
     throw new Error("Expected a request frame");
@@ -96,7 +97,8 @@ const socketAt = (sockets: TestWebSocket[], index: number): TestWebSocket => {
 
 const frameAt = (socket: TestWebSocket, index: number) => {
   const bytes = socket.sent[index];
-  if (!bytes) throw new Error(`Expected frame at index ${index}`);
+  if (!(bytes instanceof Uint8Array))
+    throw new Error(`Expected binary frame at index ${index}`);
   return decodeRealtimeFrame(bytes);
 };
 
@@ -194,6 +196,48 @@ describe("RealtimeClient", () => {
     expect(client.state).toBe("ready");
   });
 
+  it("backs off when sockets open but session joins keep failing", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+    let ticketRequests = 0;
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0,
+      ticketProvider: () => {
+        ticketRequests += 1;
+        return Promise.resolve(`ticket-${ticketRequests}`);
+      },
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+        return socket;
+      },
+    });
+
+    client.connect();
+    await flushMessages();
+    socketAt(sockets, 0).open();
+    void client.join(joinData).catch(() => undefined);
+    socketAt(sockets, 0).close();
+
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMessages();
+    socketAt(sockets, 1).open();
+    socketAt(sockets, 1).close();
+
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMessages();
+    expect(ticketRequests).toBe(2);
+    expect(sockets).toHaveLength(2);
+
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMessages();
+    expect(ticketRequests).toBe(3);
+    expect(sockets).toHaveLength(3);
+    client.disconnect();
+  });
+
   it("fetches a fresh ticket for every connection and sends it only as a subprotocol", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
@@ -225,6 +269,42 @@ describe("RealtimeClient", () => {
       `lootlog.ticket.v1.${btoa("ticket-2").replace(/=/g, "")}`,
     ]);
     client.disconnect();
+  });
+
+  it("uses readable JSON frames when requested", async () => {
+    const sockets: TestWebSocket[] = [];
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      frameEncoding: "json",
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+        return socket;
+      },
+    });
+
+    client.connect();
+    const socket = socketAt(sockets, 0);
+    socket.open();
+    const joined = client.join(joinData);
+    const request = socket.sent.at(-1);
+
+    expect(typeof request).toBe("string");
+    const frame = JSON.parse(request as string) as {
+      requestId: string;
+    };
+    socket.message(
+      JSON.stringify({
+        v: 1,
+        requestId: frame.requestId,
+        status: "success",
+        data: { organizationIds: ["org-1"] },
+      }),
+    );
+    await flushMessages();
+
+    await joined;
+    expect(client.state).toBe("ready");
   });
 
   it("stops heartbeats after an empty presence publication clears the session", async () => {

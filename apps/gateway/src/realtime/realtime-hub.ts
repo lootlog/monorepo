@@ -180,11 +180,11 @@ export class RealtimeHub {
   }
 
   sendResponse(socket: GatewaySocket, response: Response): boolean {
-    return this.send(socket, encodeRealtimeFrame(response));
+    return this.sendFrame(socket, response);
   }
 
   sendEvent(socket: GatewaySocket, event: Event): boolean {
-    return this.send(socket, encodeRealtimeFrame(event));
+    return this.sendFrame(socket, event);
   }
 
   async publishToScope(scope: Scope, event: Event): Promise<void> {
@@ -431,7 +431,16 @@ export class RealtimeHub {
     return true;
   }
 
-  private send(socket: GatewaySocket, bytes: Uint8Array): boolean {
+  private sendFrame(socket: GatewaySocket, frame: Response | Event): boolean {
+    return this.send(
+      socket,
+      socket.data.frameEncoding === "json"
+        ? JSON.stringify(frame)
+        : encodeRealtimeFrame(frame),
+    );
+  }
+
+  private send(socket: GatewaySocket, data: string | Uint8Array): boolean {
     if (socket.getBufferedAmount() > this.config.maxBackpressureBytes) {
       socket.data.backpressureStrikes += 1;
       if (
@@ -442,7 +451,7 @@ export class RealtimeHub {
       return false;
     }
     socket.data.backpressureStrikes = 0;
-    socket.send(bytes, true);
+    socket.send(data, true);
     return true;
   }
 }

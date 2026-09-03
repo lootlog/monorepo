@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@lootlog/client/realtime", () => ({
+  REALTIME_JSON_SUBPROTOCOL: "lootlog.realtime.json.v1",
+  REALTIME_SUBPROTOCOL: "lootlog.realtime.v1",
   RealtimeClient: class {
     join = mocks.join;
     request = mocks.request;

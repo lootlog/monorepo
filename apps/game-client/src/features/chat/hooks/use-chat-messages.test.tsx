@@ -139,13 +139,19 @@ describe("useChatMessagesListener", () => {
     characterData: { nick: `Sender ${id}` },
   });
 
-  it("refetches active chat histories after the socket reconnects", () => {
+  it("refetches active chat histories only after the reconnected session joins", () => {
     mocks.socketState.connected = false;
+    mocks.socketState.joined = false;
     const { rerender } = renderHook(() => useChatMessagesListener());
 
     expect(mocks.queryClient.invalidateQueries).not.toHaveBeenCalled();
 
     mocks.socketState.connected = true;
+    rerender();
+
+    expect(mocks.queryClient.invalidateQueries).not.toHaveBeenCalled();
+
+    mocks.socketState.joined = true;
     rerender();
 
     expect(mocks.queryClient.invalidateQueries).toHaveBeenCalledTimes(1);
@@ -450,8 +456,11 @@ describe("useChatMessagesListener", () => {
     );
 
     mocks.socketState.connected = false;
+    mocks.socketState.joined = false;
     rerender();
     mocks.socketState.connected = true;
+    rerender();
+    mocks.socketState.joined = true;
     rerender();
     act(() => flushAnimationFrame());
 

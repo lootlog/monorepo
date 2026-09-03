@@ -147,7 +147,6 @@ export class PresenceStore {
       socket.data.presence = presence;
       for (const organizationId of presence.organizationIds) {
         yield* self.write(organizationId, presence, socket.data.discordId);
-        yield* self.broadcastUpsert(organizationId, presence);
       }
       yield* fromPromise("presence.refresh-registry", () =>
         self.hub.refreshRegistry(socket.data),

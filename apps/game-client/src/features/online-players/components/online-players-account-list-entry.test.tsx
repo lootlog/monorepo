@@ -138,6 +138,25 @@ describe("OnlinePlayersAccountListEntry", () => {
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
 
+  it("uses the local map for the current player when gateway hides locations", () => {
+    setTestRuntimeGame({
+      hero: { characterId: "10", name: "Hero" },
+      map: { id: 42, name: "Torneg", visibility: 30 },
+    });
+    const player = createPresence().player;
+
+    render(
+      <OnlinePlayersAccountListEntry
+        presence={createPresence({
+          mapName: undefined,
+          player: player ? { ...player, location: undefined } : undefined,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Torneg • pandora")).toBeVisible();
+  });
+
   it("shows Margonem verification only for verified presence", () => {
     const { rerender } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
