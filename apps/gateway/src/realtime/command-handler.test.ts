@@ -36,7 +36,9 @@ class FakeHub {
   readonly events: unknown[] = [];
   readonly sockets: GatewaySocket[] = [];
   onPermissionRebalance(): void {}
-  async publishPermissionRebalance(): Promise<void> {}
+  publishPermissionRebalance(): Effect.Effect<void> {
+    return Effect.void;
+  }
   sendResponse(_socket: GatewaySocket, response: unknown): boolean {
     this.responses.push(response);
     return true;
@@ -60,12 +62,14 @@ class FakeHub {
 
 class FakeActivity {
   readonly calls: Array<{ type: string; ids?: ReadonlyArray<string> }> = [];
-  async publish(
+  publish(
     type: "CONNECT_EVENT" | "DISCONNECT_EVENT",
     _session: SessionData,
     ids?: ReadonlyArray<string>,
-  ): Promise<void> {
-    this.calls.push({ type, ids });
+  ): Effect.Effect<void> {
+    return Effect.sync(() => this.calls.push({ type, ids })).pipe(
+      Effect.asVoid,
+    );
   }
 }
 
@@ -121,8 +125,8 @@ describe("CommandHandler session lifecycle", () => {
       requestId: "request-1",
       data: {},
     });
-    await handler.handle(socket, Buffer.from(command));
-    await handler.handle(socket, Buffer.from(command));
+    await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
+    await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
     expect(socket.data.joined).toBe(true);
     expect(hub.responses).toHaveLength(2);
     expect(hub.events).toHaveLength(2);
@@ -142,7 +146,7 @@ describe("CommandHandler session lifecycle", () => {
     target.socket.data.guilds = [guild()];
     hub.sockets.push(target.socket);
     guilds.guilds = [];
-    await handler.rebalanceUser("discord-1", "user-1");
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
     expect(activity.calls).toEqual([
       { type: "DISCONNECT_EVENT", ids: ["organization-1"] },
     ]);
@@ -153,9 +157,11 @@ describe("CommandHandler session lifecycle", () => {
   test("closes unknown MessagePack commands as malformed protocol frames", async () => {
     const { handler } = setup();
     const target = makeSocket();
-    await handler.handle(
-      target.socket,
-      Buffer.from(encode({ v: 1, type: "rooms.join-raw", data: {} })),
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(encode({ v: 1, type: "rooms.join-raw", data: {} })),
+      ),
     );
     expect(target.closes).toEqual([1007]);
   });
@@ -163,15 +169,17 @@ describe("CommandHandler session lifecycle", () => {
   test("preserves invalid-payload acknowledgements for legacy map commands", async () => {
     const { handler, hub } = setup();
     const target = makeSocket();
-    await handler.handle(
-      target.socket,
-      Buffer.from(
-        encode({
-          v: 1,
-          type: "map-ping.send",
-          requestId: "request-invalid",
-          data: { expectedMapId: 7, type: "enemy", x: -1, y: 1 },
-        }),
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "map-ping.send",
+            requestId: "request-invalid",
+            data: { expectedMapId: 7, type: "enemy", x: -1, y: 1 },
+          }),
+        ),
       ),
     );
     expect(target.closes).toEqual([]);

@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchConfig } from "#src/config/search-config";
 import { makeItemsModule } from "#src/items/items.service";
@@ -9,7 +9,7 @@ import {
 } from "#src/meilisearch/search-operation-failure";
 import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
-import { consoleLogger } from "#src/shared/logger";
+import { effectLogger } from "#src/shared/logger";
 import type { IndexItemsDto } from "#src/items/dto/index-items.dto";
 import type { IndexNpcsDto } from "#src/npcs/dto/index-npcs.dto";
 import type { IndexPlayersDto } from "#src/players/dto/index-players.dto";
@@ -66,13 +66,13 @@ export class SearchOperations extends Context.Service<
       const config = yield* SearchConfig;
       const meilisearch = new Meilisearch({
         host: config.meilisearchHost,
-        apiKey: config.meilisearchApiKey,
+        apiKey: Redacted.value(config.meilisearchApiKey),
       });
-      const items = makeItemsModule(meilisearch, consoleLogger);
-      const npcs = makeNpcsModule(meilisearch, consoleLogger);
-      const players = makePlayersModule(meilisearch, consoleLogger);
+      const items = makeItemsModule(meilisearch, effectLogger);
+      const npcs = makeNpcsModule(meilisearch, effectLogger);
+      const players = makePlayersModule(meilisearch, effectLogger);
 
-      yield* configureMeilisearchIndexes(meilisearch, consoleLogger);
+      yield* configureMeilisearchIndexes(meilisearch, effectLogger);
 
       return SearchOperations.of({
         searchPlayers: (query) =>

@@ -1,9 +1,5 @@
-import {
-  BadRequestException,
-  NotFoundException,
-} from "#src/shared/http/http-errors";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { EventEmitter } from "./event-emitter.service.js";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import type { EventReadCache } from "./event-read-cache.service.js";
@@ -154,15 +150,6 @@ export const makeEventPoints = (
     return Math.round(value * 10000) / 10000;
   }
 
-  function normalizePointsEditComment(comment?: string | null): string | null {
-    if (typeof comment !== "string") {
-      return null;
-    }
-
-    const trimmedComment = comment.trim();
-    return trimmedComment.length > 0 ? trimmedComment : null;
-  }
-
   function resolveManualAdjustmentPoints(params: {
     existingRanking?: ExistingRankingSnapshot;
     computedTotalPoints: number;
@@ -241,20 +228,6 @@ export const makeEventPoints = (
     );
 
     return Math.round((elapsedWindowMs / fullWindowMs) * 100);
-  }
-
-  function getPresenceLogSinceFilter(since?: Date) {
-    if (!since) {
-      return {};
-    }
-
-    return {
-      OR: [
-        { startedAt: { gte: since } },
-        { endedAt: { gte: since } },
-        { endedAt: null, startedAt: { lte: since } },
-      ],
-    };
   }
 
   function calculateTrackingMetricsForKill(params: {
@@ -753,7 +726,7 @@ export const makeEventPoints = (
 
       const logs = yield* repository.findPresenceLogs(mapIds, memberIds, since);
 
-      const windowEnd = until ?? new Date();
+      const windowEnd = until ?? new Date(yield* Clock.currentTimeMillis);
       const aggregatedStatsByMemberId = new Map<number, PresenceLogAggregation>(
         memberIds.map((memberId) => [
           memberId,
@@ -1019,13 +992,9 @@ export const makeEventPoints = (
             try: () => eventReadCache.invalidateEvent(event.guildId, event.id),
             catch: (cause) => cause,
           }),
-          Effect.tryPromise({
-            try: () =>
-              eventEmitter.emit(RoutingKey.EVENT_RANKING_UPDATE, {
-                guildId: event.guildId,
-                eventId: event.id,
-              }),
-            catch: (cause) => cause,
+          eventEmitter.emit(RoutingKey.EVENT_RANKING_UPDATE, {
+            guildId: event.guildId,
+            eventId: event.id,
           }),
         ],
         { concurrency: "unbounded", discard: true },

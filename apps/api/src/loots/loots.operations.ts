@@ -4,17 +4,18 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
-import type { RedisService } from "#src/redis/redis.service";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import {
-  ForbiddenException,
-  NotFoundException,
+  PermissionDeniedError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type {
-  CreateCommentDto,
-  LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
+import {
+  type CreateCommentDto,
+  LootsControllerFetchLootsByGuildId200,
+  type LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
 } from "#src/http-api/lootlog-api";
 import type { LootQueryResult } from "./dto/loot-query-result.dto.js";
 import { ErrorKey } from "./enum/error-key.enum.js";
@@ -55,11 +56,11 @@ export class LootsOperationError extends TaggedErrorClass<LootsOperationError>()
 ) {}
 
 type LootsFailure =
-  | ForbiddenException
+  | PermissionDeniedError
   | LootPersistenceError
   | LootQueryError
   | LootsOperationError
-  | NotFoundException;
+  | ResourceNotFoundError;
 type LootsEffect<A> = Effect.Effect<A, LootsFailure>;
 
 export interface LootsOperations {
@@ -188,7 +189,7 @@ export const makeLootsOperations = ({
     Effect.tryPromise({
       try: run,
       catch: (cause) =>
-        cause instanceof NotFoundException
+        cause instanceof ResourceNotFoundError
           ? cause
           : new LootsOperationError({ operation, cause }),
     }).pipe(
@@ -240,7 +241,7 @@ export const makeLootsOperations = ({
           options.roles,
           options.lootId,
         );
-        if (!loot) return yield* Effect.fail(new NotFoundException());
+        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
         return yield* persistence.listComments(
           options.guild.id,
           options.lootId,
@@ -258,18 +259,18 @@ export const makeLootsOperations = ({
         );
         if (!loot) {
           return yield* Effect.fail(
-            new NotFoundException(ErrorKey.CANT_DELETE_LOOT),
+            new ResourceNotFoundError(ErrorKey.CANT_DELETE_LOOT),
           );
         }
         const archived = yield* persistence.archive({
           discordId: options.discordId,
           guildId: options.guild.id,
           lootId: options.lootId,
-          archivedAt: new Date(),
+          archivedAt: new Date(yield* Clock.currentTimeMillis),
         });
         if (!archived) {
           return yield* Effect.fail(
-            new NotFoundException(ErrorKey.CANT_DELETE_LOOT),
+            new ResourceNotFoundError(ErrorKey.CANT_DELETE_LOOT),
           );
         }
         yield* Effect.all(
@@ -290,7 +291,7 @@ export const makeLootsOperations = ({
           options.roles,
           options.lootId,
         );
-        if (!loot) return yield* Effect.fail(new NotFoundException());
+        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
         const comment = yield* persistence.createComment({
           discordId: options.discordId,
           guildId: options.guild.id,
@@ -313,7 +314,10 @@ export const makeLootsOperations = ({
       const key = cacheKey(guild, permissions, roles, params);
       return Effect.gen(function* () {
         const cached = yield* attempt("loots.query.listCacheRead", () =>
-          redis.getJson<CachedLootQueryResult[]>(key),
+          redis.getJson(
+            key,
+            makeJsonCodec(LootsControllerFetchLootsByGuildId200),
+          ),
         ).pipe(
           Effect.catch((error) =>
             Effect.sync(() => {

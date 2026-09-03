@@ -8,9 +8,11 @@ import {
   userKillStatsTable,
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type {
-  KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto,
-  KillsControllerGetUserNpcKillsQuery as GetUserNpcKillsDto,
+import {
+  KillsControllerGetUserKillStats200,
+  type KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto,
+  KillsControllerGetUserNpcKills200,
+  type KillsControllerGetUserNpcKillsQuery as GetUserNpcKillsDto,
 } from "#src/http-api/lootlog-api";
 import { getKillStatsPeriodStart } from "./utils/kill-stats-period.js";
 
@@ -23,7 +25,10 @@ export class UserKillQueriesError extends TaggedErrorClass<UserKillQueriesError>
 ) {}
 
 export interface UserKillQueriesCache {
-  readonly get: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly get: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly set: <A>(
     key: string,
     value: A,
@@ -135,15 +140,16 @@ export const makeUserKillQueries = (
     >;
   };
 
-  const cached = <A>(
+  const cached = <S extends Schema.ConstraintDecoder<unknown>>(
     key: string,
     label: string,
-    load: Effect.Effect<A, unknown>,
+    schema: S,
+    load: Effect.Effect<S["Type"], unknown>,
   ) =>
     protect(
       `kills.cache.${label}`,
       Effect.gen(function* () {
-        const existing = yield* cache.get<A>(key);
+        const existing = yield* cache.get(key, schema);
         if (existing !== null) {
           logger.log({
             level: "debug",
@@ -173,6 +179,7 @@ export const makeUserKillQueries = (
     return cached(
       cacheKey("user-overview", userId, { query: { ...query, npcTypes } }),
       "user kill stats",
+      KillsControllerGetUserKillStats200,
       protect(
         "kills.user-overview.query",
         Effect.suspend(() =>
@@ -239,6 +246,7 @@ export const makeUserKillQueries = (
     return cached(
       cacheKey("user-npcs", userId, { query }),
       "user npc kills",
+      KillsControllerGetUserNpcKills200,
       protect(
         "kills.user-npcs.query",
         Effect.suspend(() =>

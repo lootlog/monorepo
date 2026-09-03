@@ -1,10 +1,10 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
-  HttpException,
-  HttpStatus,
-  NotFoundException,
+  ApplicationError,
+  ApplicationErrorKind,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import sharp from "sharp";
@@ -76,8 +76,8 @@ export interface PublicGuildStatsCard {
 }
 
 type PublicGuildStatsCardFailure =
-  | HttpException
-  | NotFoundException
+  | ApplicationError
+  | ResourceNotFoundError
   | PublicGuildStatsCardAdapterError
   | PublicGuildStatsCardPersistenceError;
 
@@ -100,19 +100,22 @@ export const makePublicGuildStatsCard = (options: {
         Effect.flatMap((guild) =>
           guild?.publicStatsCardEnabled
             ? Effect.succeed(guild)
-            : Effect.fail(new NotFoundException("Guild not found")),
+            : Effect.fail(new ResourceNotFoundError("Guild not found")),
         ),
       );
   const render = (guild: GuildStatsCardGuild, guildId: string) =>
     Effect.gen(function* () {
       const stats = yield* options.repository.getLootStats(
         guildId,
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        new Date((yield* Clock.currentTimeMillis) - 30 * 24 * 60 * 60 * 1000),
       );
-      return yield* Effect.tryPromise({
-        try: () => options.image.renderCard({ guild, stats }),
-        catch: (cause) => new PublicGuildStatsCardAdapterError({ cause }),
-      });
+      return yield* options.image
+        .renderCard({ guild, stats })
+        .pipe(
+          Effect.mapError(
+            (cause) => new PublicGuildStatsCardAdapterError({ cause }),
+          ),
+        );
     });
 
   return {
@@ -135,8 +138,9 @@ export const makePublicGuildStatsCard = (options: {
     refreshStatsCard: (guildId) =>
       Effect.gen(function* () {
         const guild = yield* getCardGuild(guildId);
+        const now = yield* Clock.currentTimeMillis;
         const nextRefreshAt = new Date(
-          Date.now() + REFRESH_COOLDOWN_SECONDS * 1000,
+          now + REFRESH_COOLDOWN_SECONDS * 1000,
         ).toISOString();
         const cooldownKey = buildRefreshCooldownKey(guildId);
         const acquired = yield* options.cache.setNX(
@@ -147,12 +151,13 @@ export const makePublicGuildStatsCard = (options: {
         if (!acquired) {
           const activeNextRefreshAt = yield* options.cache.get(cooldownKey);
           return yield* Effect.fail(
-            new HttpException(
+            new ApplicationError(
+              ApplicationErrorKind.RATE_LIMITED,
               {
                 message: "Stats card refresh is rate limited",
                 nextRefreshAt: activeNextRefreshAt ?? nextRefreshAt,
               },
-              HttpStatus.TOO_MANY_REQUESTS,
+              "Stats card refresh is rate limited",
             ),
           );
         }
@@ -184,26 +189,23 @@ export const makePublicGuildStatsCard = (options: {
 export class PublicGuildStatsCardImageAdapter {
   constructor(private readonly httpClient: HttpClientValue) {}
 
-  async renderCard(data: GuildStatsCardData): Promise<Buffer> {
-    const icon = await this.fetchGuildIcon(data.guild.id, data.guild.icon);
-    const base = await sharp(Buffer.from(this.buildSvg(data, !icon)))
-      .png()
-      .toBuffer();
-
-    if (!icon) {
-      return base;
-    }
-
-    return sharp(base)
-      .composite([
-        {
-          input: icon,
-          left: ICON_LEFT,
-          top: ICON_TOP,
-        },
-      ])
-      .png()
-      .toBuffer();
+  renderCard(data: GuildStatsCardData): Effect.Effect<Buffer, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const icon = yield* self.fetchGuildIcon(data.guild.id, data.guild.icon);
+      const base = yield* Effect.tryPromise(() =>
+        sharp(Buffer.from(self.buildSvg(data, !icon)))
+          .png()
+          .toBuffer(),
+      );
+      if (!icon) return base;
+      return yield* Effect.tryPromise(() =>
+        sharp(base)
+          .composite([{ input: icon, left: ICON_LEFT, top: ICON_TOP }])
+          .png()
+          .toBuffer(),
+      );
+    });
   }
 
   private buildSvg(data: GuildStatsCardData, showInitials: boolean) {
@@ -278,40 +280,43 @@ export class PublicGuildStatsCardImageAdapter {
     `;
   }
 
-  private async fetchGuildIcon(guildId: string, icon: string | null) {
+  private fetchGuildIcon(
+    guildId: string,
+    icon: string | null,
+  ): Effect.Effect<Buffer | null> {
     const iconUrl = this.resolveGuildIconUrl(guildId, icon);
 
     if (!iconUrl) {
-      return null;
+      return Effect.succeed(null);
     }
+    return outboundHttpRequest(this.httpClient, {
+      adapter: "discord-guild-icon",
+      method: "GET",
+      responseLimitBytes: MAX_ICON_BYTES,
+      retryTimes: 1,
+      timeout: `${ICON_FETCH_TIMEOUT_MS} millis`,
+      url: iconUrl,
+    }).pipe(
+      Effect.flatMap((response) => {
+        if (response.status < 200 || response.status >= 300) {
+          return Effect.succeed(null);
+        }
 
-    try {
-      const response = await Effect.runPromise(
-        outboundHttpRequest(this.httpClient, {
-          adapter: "discord-guild-icon",
-          method: "GET",
-          responseLimitBytes: MAX_ICON_BYTES,
-          retryTimes: 1,
-          timeout: `${ICON_FETCH_TIMEOUT_MS} millis`,
-          url: iconUrl,
-        }),
-      );
+        const contentType = response.headers["content-type"] ?? "";
+        const contentLength = Number(response.headers["content-length"] ?? 0);
 
-      if (response.status < 200 || response.status >= 300) {
-        return null;
-      }
-
-      const contentType = response.headers["content-type"] ?? "";
-      const contentLength = Number(response.headers["content-length"] ?? 0);
-
-      if (!contentType.startsWith("image/") || contentLength > MAX_ICON_BYTES) {
-        return null;
-      }
-
-      return this.prepareIcon(Buffer.from(response.body));
-    } catch {
-      return null;
-    }
+        if (
+          !contentType.startsWith("image/") ||
+          contentLength > MAX_ICON_BYTES
+        ) {
+          return Effect.succeed(null);
+        }
+        return Effect.tryPromise(() =>
+          this.prepareIcon(Buffer.from(response.body)),
+        );
+      }),
+      Effect.catch(() => Effect.succeed(null)),
+    );
   }
 
   private resolveGuildIconUrl(guildId: string, icon: string | null) {

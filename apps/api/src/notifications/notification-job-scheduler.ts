@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { notificationJobTable } from "#src/database/drizzle/schema";
 import type { JsonValue } from "./notification-database.types.js";
@@ -120,7 +120,7 @@ export const makeNotificationJobScheduler = (
       discard: true,
     });
     if (jobs.length === 0) return;
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     yield* database
       .update(notificationJobTable)
       .set({
@@ -147,7 +147,7 @@ export const makeNotificationJobScheduler = (
     options: NotificationJobInput,
   ) {
     const idempotencyKey = notificationJobIdempotencyKey(options);
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const values = {
       id: randomUUID(),
       ruleId: options.notificationRule.id,

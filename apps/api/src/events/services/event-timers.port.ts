@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ExecutionError } from "redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/enum/routing-key.enum";
@@ -8,7 +8,7 @@ import { mapTimerResponse } from "#src/http-api/handlers/timers/timer-response";
 import type { RedlockService } from "#src/lib/redlock/redlock.service";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
-import { ConflictException } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/constants/respawn";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
@@ -116,14 +116,16 @@ export const makeEventTimersPort = ({
     const response = mapTimerResponse(timer);
     return Effect.all(
       [
-        external("eventTimers.rabbit.update", () =>
+        mapped(
+          "eventTimers.rabbit.update",
           amqp.publish(
             DEFAULT_EXCHANGE_NAME,
             RoutingKey.GUILDS_TIMERS_UPDATE,
             response,
           ),
         ),
-        external("eventTimers.rabbit.notification", () =>
+        mapped(
+          "eventTimers.rabbit.notification",
           amqp.publish(
             DEFAULT_EXCHANGE_NAME,
             RoutingKey.NOTIFICATIONS_TIMER_UPDATED,
@@ -151,14 +153,16 @@ export const makeEventTimersPort = ({
     };
     return Effect.all(
       [
-        external("eventTimers.rabbit.delete", () =>
+        mapped(
+          "eventTimers.rabbit.delete",
           amqp.publish(
             DEFAULT_EXCHANGE_NAME,
             RoutingKey.GUILDS_TIMERS_DELETE,
             payload,
           ),
         ),
-        external("eventTimers.rabbit.notificationDelete", () =>
+        mapped(
+          "eventTimers.rabbit.notificationDelete",
           amqp.publish(
             DEFAULT_EXCHANGE_NAME,
             RoutingKey.NOTIFICATIONS_TIMER_DELETED,
@@ -213,7 +217,7 @@ export const makeEventTimersPort = ({
       const lockKey = `timer:lock:${input.guildId}:${input.world}:${timerKey}`;
       const work = withLock(operation, lockKey, () =>
         Effect.gen(function* () {
-          const windowOpenedAt = new Date();
+          const windowOpenedAt = new Date(yield* Clock.currentTimeMillis);
           const npc = {
             id: input.npcId,
             name: input.npcName,
@@ -277,7 +281,7 @@ export const makeEventTimersPort = ({
                 timer
                   ? Effect.succeed(timer)
                   : Effect.fail(
-                      new ConflictException({
+                      new ResourceConflictError({
                         message: ErrorKey.TIMER_RACE_CONDITION,
                       }),
                     ),
@@ -319,7 +323,7 @@ export const makeEventTimersPort = ({
               cause:
                 cause instanceof EventTimersError &&
                 cause.cause instanceof ExecutionError
-                  ? new ConflictException({
+                  ? new ResourceConflictError({
                       message: ErrorKey.TIMER_RACE_CONDITION,
                     })
                   : cause,

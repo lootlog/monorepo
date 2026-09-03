@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Job, Queue as BullQueue } from "bullmq";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 
 export interface MemberRefreshJobData {
@@ -150,7 +150,7 @@ export const makeMemberRefreshScheduler = (
   ) {
     const nextRefreshAt = yield* ports.nextRefreshAt(data.userId);
     const delay = nextRefreshAt
-      ? Math.max(nextRefreshAt.getTime() - Date.now(), 0)
+      ? Math.max(nextRefreshAt.getTime() - (yield* Clock.currentTimeMillis), 0)
       : 0;
     yield* bull("members.refresh.queue", async () => {
       const id = jobId(data.userId, data.guildId);

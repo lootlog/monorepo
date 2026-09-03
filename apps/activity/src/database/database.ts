@@ -17,7 +17,7 @@ export const PgClientLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ActivityConfig;
     return PgClient.layer({
-      url: Redacted.make(config.databaseUrl),
+      url: config.databaseUrl,
       applicationName: config.serviceName,
     });
   }),

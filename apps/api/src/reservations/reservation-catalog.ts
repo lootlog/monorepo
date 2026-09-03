@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
 type ReservationCatalogCard = {
@@ -55,7 +56,7 @@ export const parseReservationCatalogPayload = (
   payload: unknown,
 ): ReservationSpot[] => {
   const decoded =
-    typeof payload === "string" ? (JSON.parse(payload) as unknown) : payload;
+    typeof payload === "string" ? decodeJsonUnknown(payload) : payload;
   if (Array.isArray(decoded)) {
     const cachedSpots = decodeCachedReservationSpots(decoded);
     if (cachedSpots.length === 0) {

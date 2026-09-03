@@ -18,6 +18,7 @@ import {
   GuildDocumentTrashResponse,
 } from "#src/docs/guild-document-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
+import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import type {
   guildTable,
   memberTable,
@@ -161,13 +162,7 @@ export class DocsData extends Context.Service<
 
   static makeService(service: DocsService): DocsData["Service"] {
     const operationFailure = (cause: unknown): DocsFailure => {
-      const status =
-        typeof cause === "object" &&
-        cause !== null &&
-        "getStatus" in cause &&
-        typeof cause.getStatus === "function"
-          ? cause.getStatus()
-          : undefined;
+      const status = applicationErrorStatusOrUndefined(cause);
 
       if (status === 404) {
         return new DocsNotFound({ status, code: "DOCS_NOT_FOUND" });

@@ -3,7 +3,7 @@ import { Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -82,7 +82,7 @@ export class LootlogConfigData extends Context.Service<
           if (!Number.isInteger(parsedNpcId)) {
             return Effect.fail(
               operationError(
-                new NotFoundException("NPC configuration not found"),
+                new ResourceNotFoundError("NPC configuration not found"),
               ),
             );
           }
@@ -106,7 +106,9 @@ export class LootlogConfigData extends Context.Service<
                   ? Effect.succeed(rows[0])
                   : Effect.fail(
                       operationError(
-                        new NotFoundException("NPC configuration not found"),
+                        new ResourceNotFoundError(
+                          "NPC configuration not found",
+                        ),
                       ),
                     ),
               ),

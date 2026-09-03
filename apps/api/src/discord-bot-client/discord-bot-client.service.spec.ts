@@ -3,13 +3,25 @@ import { Effect } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { makeDiscordBotClient } from "./discord-bot-client.js";
 
-vi.mock("#src/config/api.config", () => ({
-  apiConfig: { discordBotServiceUrl: new URL("http://discord-bot") },
-}));
-
 describe("DiscordBotClientService", () => {
   it("preserves the internal channel refresh request", async () => {
-    const payload = { channels: [], syncState: { status: "READY" } };
+    const payload = {
+      channels: [],
+      syncState: {
+        guildId: "guild-a",
+        status: "SYNCED",
+        hasRequiredPermissions: true,
+        requiredPermissions: [],
+        grantedPermissions: [],
+        missingPermissions: [],
+        channelCount: 0,
+        selectableChannelCount: 0,
+        lastAttemptAt: "2026-09-03T00:00:00.000Z",
+        lastSuccessAt: "2026-09-03T00:00:00.000Z",
+        lastError: null,
+        updatedAt: "2026-09-03T00:00:00.000Z",
+      },
+    };
     const post = vi.fn(() =>
       Effect.succeed({
         status: 200,
@@ -22,9 +34,10 @@ describe("DiscordBotClientService", () => {
 
     await expect(
       Effect.runPromise(
-        makeDiscordBotClient({
-          post,
-        } as unknown as HttpClientValue).refreshGuildChannels("guild-a"),
+        makeDiscordBotClient(
+          { post } as unknown as HttpClientValue,
+          new URL("http://discord-bot"),
+        ).refreshGuildChannels("guild-a"),
       ),
     ).resolves.toEqual(payload);
     expect(post).toHaveBeenCalledWith(
@@ -44,9 +57,10 @@ describe("DiscordBotClientService", () => {
 
     await expect(
       Effect.runPromise(
-        makeDiscordBotClient({
-          get,
-        } as unknown as HttpClientValue).getGuildSyncStatus("guild-a"),
+        makeDiscordBotClient(
+          { get } as unknown as HttpClientValue,
+          new URL("http://discord-bot"),
+        ).getGuildSyncStatus("guild-a"),
       ),
     ).rejects.toThrow("Discord Bot request failed: 503");
   });

@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, ne } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -13,7 +13,7 @@ import {
 } from "#src/database/drizzle/schema";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import type { RedisService } from "#src/redis/redis.service";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type {
   UpdateKillPointDto,
@@ -126,7 +126,9 @@ export const makeEventPointEdits = (
         );
         const ranking = scoped[0]?.ranking;
         if (!ranking)
-          return yield* Effect.fail(new NotFoundException("Ranking not found"));
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Ranking not found"),
+          );
         const delta = roundPoints(data.pointsDelta);
         if (delta === 0) return ranking;
         const totalPoints = roundPoints(ranking.totalPoints + delta);
@@ -180,7 +182,7 @@ export const makeEventPointEdits = (
                   pointsModified:
                     manualAdjustmentPoints !== 0 ||
                     manualPoints.some(countedInRanking),
-                  updatedAt: new Date(),
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .where(eq(eventRankingTable.id, rankingId))
                 .returning();
@@ -232,7 +234,7 @@ export const makeEventPointEdits = (
         const row = scoped[0];
         if (!row)
           return yield* Effect.fail(
-            new NotFoundException("Kill point not found"),
+            new ResourceNotFoundError("Kill point not found"),
           );
         const delta = roundPoints(data.pointsDelta);
         if (delta === 0)
@@ -274,7 +276,7 @@ export const makeEventPointEdits = (
                   .set({
                     totalPoints: rankingPoints,
                     pointsModified: true,
-                    updatedAt: new Date(),
+                    updatedAt: new Date(yield* Clock.currentTimeMillis),
                   })
                   .where(eq(eventRankingTable.id, ranking.id));
                 yield* transaction.insert(eventPointsEditHistoryTable).values({

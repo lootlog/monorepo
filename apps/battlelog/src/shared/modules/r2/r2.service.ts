@@ -8,6 +8,7 @@ import { gzipSync, gunzipSync } from "node:zlib";
 import type { R2Config } from "#src/config/r2.config";
 import { Logger } from "#src/platform/logger";
 import type { RedisStore } from "#src/shared/modules/redis/redis.service";
+import { Redacted } from "effect";
 
 const CACHE_PREFIX = "battle:raw";
 const LRU_KEY = "battle:raw:lru";
@@ -23,8 +24,8 @@ export const makeBattleObjectStorage = (
     region: config.region,
     endpoint: config.endpoint,
     credentials: {
-      accessKeyId: config.accessKeyId,
-      secretAccessKey: config.secretAccessKey,
+      accessKeyId: Redacted.value(config.accessKeyId),
+      secretAccessKey: Redacted.value(config.secretAccessKey),
     },
   });
 
@@ -60,7 +61,10 @@ export const makeBattleObjectStorage = (
       }
     },
 
-    async getBattleData<TData = unknown>(battleId: string): Promise<TData> {
+    async getBattleData<TData>(
+      battleId: string,
+      decodeJson: (value: string) => TData,
+    ): Promise<TData> {
       try {
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
 
@@ -68,7 +72,7 @@ export const makeBattleObjectStorage = (
         if (cachedData) {
           logger.debug(`Cache hit for battle ${battleId}`);
           await objectStorage.updateLRU(battleId);
-          return JSON.parse(cachedData) as TData;
+          return decodeJson(cachedData);
         }
 
         logger.debug(`Cache miss for battle ${battleId}, fetching from R2`);
@@ -103,14 +107,14 @@ export const makeBattleObjectStorage = (
           );
         }
 
-        const parsedData = JSON.parse(decompressedData);
+        const parsedData = decodeJson(decompressedData);
 
         await objectStorage.cacheData(battleId, decompressedData);
         logger.log(
           `Battle data retrieved from R2 and cached for battle ${battleId}`,
         );
 
-        return parsedData as TData;
+        return parsedData;
       } catch (error) {
         logger.error(`Failed to retrieve battle data for ${battleId}:`, error);
         throw error;

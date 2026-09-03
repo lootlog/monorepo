@@ -7,7 +7,7 @@ import {
 } from "@lootlog/domain/scoring";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -18,8 +18,8 @@ import {
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/constants/cache.constant";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { UpdateEventDto } from "#src/http-api/lootlog-api";
@@ -83,7 +83,7 @@ export const makeEventUpdate =
         );
       const event = rows[0];
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
       const {
         heroNpcs,
@@ -101,7 +101,7 @@ export const makeEventUpdate =
       const nextEnd = updatedDate(endsAt, event.endsAt);
       if (nextEnd && nextStart && nextEnd <= nextStart) {
         return yield* Effect.fail(
-          new BadRequestException("End date must be after start date"),
+          new InvalidRequestError("End date must be after start date"),
         );
       }
       const scoring = updatedScoring(
@@ -110,7 +110,7 @@ export const makeEventUpdate =
         scoringMode,
         scoringRules,
       );
-      const referenceTime = new Date();
+      const referenceTime = new Date(yield* Clock.currentTimeMillis);
       const clearPins =
         !isEventActiveAt(event, referenceTime) ||
         !isEventActiveAt(
@@ -158,7 +158,7 @@ export const makeEventUpdate =
                       ? rulebookMarkdown.trim()
                       : null,
                 }),
-                updatedAt: new Date(),
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
               })
               .where(eq(eventTable.id, eventId));
             for (const hero of heroNpcs ?? []) {

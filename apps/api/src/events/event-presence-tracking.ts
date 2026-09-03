@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { ExecutionError } from "redlock";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -77,7 +77,7 @@ export const makeEventPresenceTracking = (
     Effect.gen(function* () {
       const gap = yield* findOpenGap(mapId, gapType);
       if (!gap) return;
-      const endedAt = new Date();
+      const endedAt = new Date(yield* Clock.currentTimeMillis);
       yield* query(
         "events.presence.gap.close",
         database
@@ -116,7 +116,7 @@ export const makeEventPresenceTracking = (
             ),
           ),
       );
-      const endedAt = new Date();
+      const endedAt = new Date(yield* Clock.currentTimeMillis);
       yield* query(
         "events.presence.gap.closeAll",
         database.transaction((transaction) =>
@@ -146,7 +146,7 @@ export const makeEventPresenceTracking = (
     isAfk: boolean,
   ) =>
     Effect.gen(function* () {
-      const referenceTime = new Date();
+      const referenceTime = new Date(yield* Clock.currentTimeMillis);
       const [memberRows, mapRows] = yield* Effect.all(
         [
           query(
@@ -258,7 +258,7 @@ export const makeEventPresenceTracking = (
                 .map(({ memberId }) => memberId),
             );
             if (member) {
-              const endedAt = new Date();
+              const endedAt = new Date(yield* Clock.currentTimeMillis);
               yield* query(
                 "events.presence.close",
                 database
@@ -291,15 +291,11 @@ export const makeEventPresenceTracking = (
             if (!assigned) return;
             if (nonAfk.size === 0) yield* openUncoveredGap(map.id, hero.id);
             else yield* closeUncoveredGap(map.id);
-            yield* Effect.tryPromise({
-              try: () =>
-                publisher.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
-                  guildId,
-                  eventId: event.id,
-                  mapId: map.id,
-                  reason: "presence",
-                }),
-              catch: (cause) => cause,
+            yield* publisher.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+              guildId,
+              eventId: event.id,
+              mapId: map.id,
+              reason: "presence",
             });
           }),
         { concurrency: "unbounded", discard: true },

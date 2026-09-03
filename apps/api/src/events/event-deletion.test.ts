@@ -2,7 +2,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { RedisService } from "#src/redis/redis.service";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import { makeEventDeletion } from "./event-deletion.js";
 
@@ -26,7 +26,7 @@ describe("event deletion Effect module", () => {
 
     await expect(
       Effect.runPromise(removeEvent({ id: "guild-1" }, "event-1")),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
     expect(pending).not.toHaveBeenCalled();
     expect(delayed).not.toHaveBeenCalled();
   });

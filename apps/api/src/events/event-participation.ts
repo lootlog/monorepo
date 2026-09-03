@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -13,8 +13,8 @@ import {
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import type { RedisService } from "#src/redis/redis.service";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { AcknowledgeExpiredParticipationConfirmationsDto } from "#src/http-api/lootlog-api";
@@ -166,8 +166,10 @@ export const makeEventParticipation = (
             .limit(1),
         );
         if (!eventRows[0])
-          return yield* Effect.fail(new NotFoundException("Event not found"));
-        const now = new Date();
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Event not found"),
+          );
+        const now = new Date(yield* Clock.currentTimeMillis);
         const [pending, expired] = yield* Effect.all(
           [
             participationPoints(eventId, member.id, now, false),
@@ -253,7 +255,7 @@ export const makeEventParticipation = (
         );
         if (rows.length === 0) {
           return yield* Effect.fail(
-            new NotFoundException("Kill point not found"),
+            new ResourceNotFoundError("Kill point not found"),
           );
         }
         const unconfirmed = rows.filter(
@@ -262,7 +264,7 @@ export const makeEventParticipation = (
         if (unconfirmed.length === 0) {
           return { success: true as const, confirmedNow: false };
         }
-        const now = new Date();
+        const now = new Date(yield* Clock.currentTimeMillis);
         if (
           unconfirmed.some(
             ({ point }) =>
@@ -271,7 +273,7 @@ export const makeEventParticipation = (
           )
         ) {
           return yield* Effect.fail(
-            new BadRequestException("Confirmation window has expired"),
+            new InvalidRequestError("Confirmation window has expired"),
           );
         }
         const confirmable = unconfirmed.filter(

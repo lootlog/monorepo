@@ -1,13 +1,12 @@
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GetIdpTokenResponse } from "#src/auth/types/get-idp-token-response.type";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
-import { apiConfig } from "#src/config/api.config";
-import { RedisService } from "#src/redis/redis.service";
+import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
   getAuthTokenCacheKey,
@@ -17,57 +16,79 @@ import {
 } from "#src/shared/constants/cache.constant";
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
+const IdpTokenSuccess = Schema.Struct({
+  accessToken: Schema.String,
+  expiresIn: Schema.Number,
+  scopes: Schema.mutable(Schema.Array(Schema.String)),
+});
+const IdpTokenResponseJson = Schema.fromJsonString(
+  Schema.Union([IdpTokenSuccess, Schema.Struct({ error: Schema.String })]),
+);
+const decodeIdpTokenResponse = Schema.decodeUnknownSync(IdpTokenResponseJson);
+const cachedIdpTokenCodec = makeJsonCodec(IdpTokenSuccess);
+
+type IdpToken = Extract<GetIdpTokenResponse, { accessToken: string }>;
+type AuthServiceError =
+  | AccountNotFoundError
+  | AuthBadRequestError
+  | AuthServiceUnavailableError
+  | TokenExpiredError;
 
 class AuthHttpResponseError extends Error {
   constructor(
-    readonly response: { readonly status: number; readonly data: unknown },
+    readonly response: {
+      readonly status: number;
+      readonly data: GetIdpTokenResponse | undefined;
+    },
   ) {
     super(`Request failed with status code ${response.status}`);
   }
 }
 
 export class AuthService {
-  private authServiceUrl: string;
+  private readonly authServiceUrl: string;
 
   constructor(
     private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly httpClient: HttpClientValue,
+    authServiceUrl: URL,
   ) {
-    this.authServiceUrl = apiConfig.authServiceUrl
-      .toString()
-      .replace(/\/$/, "");
+    this.authServiceUrl = authServiceUrl.toString().replace(/\/$/, "");
   }
 
-  private async fetchIdpToken(
+  private fetchIdpToken(
     userId: string,
     discordId: string,
-  ): Promise<GetIdpTokenResponse> {
-    try {
+  ): Effect.Effect<GetIdpTokenResponse, AuthServiceError> {
+    return Effect.gen({ self: this }, function* () {
       const url = `${this.authServiceUrl}/auth/idp-token`;
-      const response = await Effect.runPromise(
-        outboundHttpRequest(this.httpClient, {
-          adapter: "auth-idp-token",
-          body: JSON.stringify({ userId, discordId }),
-          headers: { "content-type": "application/json" },
-          method: "POST",
-          responseLimitBytes: 1024 * 1024,
-          retryTimes: 0,
-          timeout: `${DEFAULT_REQUEST_TIMEOUT} millis`,
-          url,
-        }),
-      );
+      const response = yield* outboundHttpRequest(this.httpClient, {
+        adapter: "auth-idp-token",
+        body: JSON.stringify({ userId, discordId }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+        responseLimitBytes: 1024 * 1024,
+        retryTimes: 0,
+        timeout: `${DEFAULT_REQUEST_TIMEOUT} millis`,
+        url,
+      });
       const responseBody = new TextDecoder().decode(response.body);
       let data: GetIdpTokenResponse | undefined;
       if (responseBody) {
         try {
-          data = JSON.parse(responseBody) as GetIdpTokenResponse;
+          data = decodeIdpTokenResponse(responseBody);
         } catch {
-          data = responseBody as unknown as GetIdpTokenResponse;
+          data = undefined;
         }
       }
       if (response.status < 200 || response.status >= 300) {
-        throw new AuthHttpResponseError({ status: response.status, data });
+        return yield* Effect.fail(
+          new AuthHttpResponseError({
+            status: response.status,
+            data,
+          }),
+        );
       }
 
       if (!data) {
@@ -75,70 +96,36 @@ export class AuthService {
           level: "error",
           message: `Empty response from auth service for user ${userId}`,
         });
-        throw new AuthServiceUnavailableError(
-          "Empty response from auth service",
+        return yield* Effect.fail(
+          new AuthServiceUnavailableError("Empty response from auth service"),
         );
       }
 
       return data;
-    } catch (error) {
-      if (this.isKnownAuthError(error)) {
-        throw error;
-      }
-
-      if (this.isAccountNotFoundError(error)) {
-        this.logger.log({
-          level: "warn",
-          message: `Account not found for user ${userId}`,
-        });
-        throw new AccountNotFoundError();
-      }
-
-      if (this.isTokenError(error)) {
-        this.logger.log({
-          level: "warn",
-          message: `Token error for user ${userId}`,
-        });
-        throw new TokenExpiredError();
-      }
-
-      if (this.isClientError(error)) {
-        const errorMessage = this.getErrorMessage(error);
-        this.logger.log({
-          level: "error",
-          message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
-        });
-        throw new AuthBadRequestError(errorMessage);
-      }
-
-      const errorMessage = this.getErrorMessage(error);
-      this.logger.log({
-        level: "error",
-        message: `HTTP request failed for user ${userId}: ${errorMessage}`,
-      });
-      throw new AuthServiceUnavailableError(
-        `Failed to connect to auth service: ${errorMessage}`,
-      );
-    }
+    }).pipe(
+      Effect.catch((error) => Effect.fail(this.mapFetchError(userId, error))),
+    );
   }
 
-  async getIdpToken(
+  getIdpToken(
     userId: string,
     discordId: string,
-  ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
-    try {
+  ): Effect.Effect<IdpToken, AuthServiceError> {
+    return Effect.gen({ self: this }, function* () {
       const cacheKey = getAuthTokenCacheKey(userId, discordId);
-      const cached = await this.redisService.get(cacheKey);
+      const cached = yield* Effect.tryPromise(() =>
+        this.redisService.getJson(cacheKey, cachedIdpTokenCodec),
+      );
 
       if (cached) {
-        return JSON.parse(cached);
+        return cached;
       }
 
-      const response = await this.fetchIdpToken(userId, discordId);
+      const response = yield* this.fetchIdpToken(userId, discordId);
 
       if ("error" in response) {
         if (response.error === "ACCOUNT_NOT_FOUND") {
-          throw new AccountNotFoundError();
+          return yield* Effect.fail(new AccountNotFoundError());
         }
 
         if (
@@ -149,68 +136,122 @@ export class AuthService {
             level: "warn",
             message: `Token error for user ${userId}: ${response.error}`,
           });
-          throw new TokenExpiredError();
+          return yield* Effect.fail(new TokenExpiredError());
         }
 
         this.logger.log({
           level: "error",
           message: `Unknown error from auth service for user ${userId}: ${response.error}`,
         });
-        throw new AuthServiceUnavailableError(
-          `Auth service error: ${response.error}`,
+        return yield* Effect.fail(
+          new AuthServiceUnavailableError(
+            `Auth service error: ${response.error}`,
+          ),
         );
       }
 
-      const tokenResponse = response as Extract<
-        GetIdpTokenResponse,
-        { accessToken: string }
-      >;
-
-      await this.redisService.set(
-        cacheKey,
-        JSON.stringify(tokenResponse),
-        AUTH_TOKEN_CACHE_TTL_SECONDS,
+      yield* Effect.tryPromise(() =>
+        this.redisService.setJson(
+          cacheKey,
+          response,
+          AUTH_TOKEN_CACHE_TTL_SECONDS,
+          cachedIdpTokenCodec,
+        ),
       );
 
-      return tokenResponse;
-    } catch (error) {
-      if (this.isKnownAuthError(error)) {
-        throw error;
-      }
-
-      const errorMessage = this.getErrorMessage(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      this.logger.log({
-        level: "error",
-        message: `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
-        stack: errorStack,
-      });
-      throw new AuthServiceUnavailableError(
-        `Failed to fetch IDP token: ${errorMessage}`,
-      );
-    }
+      return response;
+    }).pipe(
+      Effect.catch((error) => Effect.fail(this.mapTokenError(userId, error))),
+    );
   }
 
-  async invalidateIdpTokenCache(
+  invalidateIdpTokenCache(
     userId: string,
     discordId?: string,
-  ): Promise<void> {
-    if (discordId) {
-      await this.redisService.del(getAuthTokenCacheKey(userId, discordId));
-      return;
+  ): Effect.Effect<void, AuthServiceUnavailableError> {
+    const invalidate = discordId
+      ? Effect.tryPromise(() =>
+          this.redisService.del(getAuthTokenCacheKey(userId, discordId)),
+        )
+      : Effect.tryPromise(() =>
+          Promise.all([
+            this.redisService.deleteByPattern(getAuthTokenCachePattern(userId)),
+            this.redisService.del(getLegacyAuthTokenCacheKey(userId)),
+          ]),
+        ).pipe(Effect.asVoid);
+
+    return invalidate.pipe(
+      Effect.mapError(
+        (error) =>
+          new AuthServiceUnavailableError(
+            `Failed to invalidate IDP token cache: ${this.getErrorMessage(error)}`,
+          ),
+      ),
+    );
+  }
+
+  private mapFetchError(userId: string, error: unknown): AuthServiceError {
+    if (this.isKnownAuthError(error)) {
+      return error;
     }
 
-    await Promise.all([
-      this.redisService.deleteByPattern(getAuthTokenCachePattern(userId)),
-      this.redisService.del(getLegacyAuthTokenCacheKey(userId)),
-    ]);
+    if (this.isAccountNotFoundError(error)) {
+      this.logger.log({
+        level: "warn",
+        message: `Account not found for user ${userId}`,
+      });
+      return new AccountNotFoundError();
+    }
+
+    if (this.isTokenError(error)) {
+      this.logger.log({
+        level: "warn",
+        message: `Token error for user ${userId}`,
+      });
+      return new TokenExpiredError();
+    }
+
+    if (this.isClientError(error)) {
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.log({
+        level: "error",
+        message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
+      });
+      return new AuthBadRequestError(errorMessage);
+    }
+
+    const errorMessage = this.getErrorMessage(error);
+    this.logger.log({
+      level: "error",
+      message: `HTTP request failed for user ${userId}: ${errorMessage}`,
+    });
+    return new AuthServiceUnavailableError(
+      `Failed to connect to auth service: ${errorMessage}`,
+    );
+  }
+
+  private mapTokenError(userId: string, error: unknown): AuthServiceError {
+    if (this.isKnownAuthError(error)) {
+      return error;
+    }
+
+    const errorMessage = this.getErrorMessage(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    this.logger.log({
+      level: "error",
+      message: `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
+      stack: errorStack,
+    });
+    return new AuthServiceUnavailableError(
+      `Failed to fetch IDP token: ${errorMessage}`,
+    );
   }
 
   private getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
   }
 
-  private isKnownAuthError(error: unknown): boolean {
+  private isKnownAuthError(error: unknown): error is AuthServiceError {
     return (
       error instanceof AuthServiceUnavailableError ||
       error instanceof AccountNotFoundError ||
@@ -221,26 +262,15 @@ export class AuthService {
 
   private getErrorResponse(
     error: unknown,
-  ): { status?: number; data?: unknown } | null {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "response" in error &&
-      typeof error.response === "object" &&
-      error.response !== null
-    ) {
-      return error.response as { status?: number; data?: unknown };
-    }
-
-    return null;
+  ): AuthHttpResponseError["response"] | undefined {
+    return error instanceof AuthHttpResponseError ? error.response : undefined;
   }
 
   private isAccountNotFoundError(error: unknown): boolean {
     const response = this.getErrorResponse(error);
 
-    if (response?.status === 400 && response.data) {
-      const data = response.data as { error?: string };
-      return data.error === "ACCOUNT_NOT_FOUND";
+    if (response?.status === 400 && response.data && "error" in response.data) {
+      return response.data.error === "ACCOUNT_NOT_FOUND";
     }
 
     return false;
@@ -259,9 +289,11 @@ export class AuthService {
   private isTokenError(error: unknown): boolean {
     const response = this.getErrorResponse(error);
 
-    if (response?.data) {
-      const data = response.data as { error?: string };
-      return data.error === "TOKEN_NOT_FOUND" || data.error === "TOKEN_EXPIRED";
+    if (response?.data && "error" in response.data) {
+      return (
+        response.data.error === "TOKEN_NOT_FOUND" ||
+        response.data.error === "TOKEN_EXPIRED"
+      );
     }
 
     return false;

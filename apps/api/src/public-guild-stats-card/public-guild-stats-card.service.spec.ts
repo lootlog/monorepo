@@ -1,5 +1,5 @@
 import { vi } from "#test/bun-test";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect } from "effect";
@@ -109,7 +109,7 @@ describe("public guild stats card Effect module", () => {
     repository.findActiveGuild.mockResolvedValue(null);
 
     await expect(service.getStatsCard("guild-1")).rejects.toBeInstanceOf(
-      NotFoundException,
+      ResourceNotFoundError,
     );
 
     expect(repository.findActiveGuild).toHaveBeenCalledWith("guild-1");
@@ -125,7 +125,7 @@ describe("public guild stats card Effect module", () => {
     });
 
     await expect(service.getStatsCard("guild-1")).rejects.toBeInstanceOf(
-      NotFoundException,
+      ResourceNotFoundError,
     );
 
     expect(redis.get).not.toHaveBeenCalled();
@@ -243,10 +243,10 @@ describe("public guild stats card Effect module", () => {
     });
 
     await expect(service.refreshStatsCard("guild-1")).rejects.toMatchObject({
+      kind: "rate-limited",
       response: {
         nextRefreshAt: "2026-05-03T23:05:00.000Z",
       },
-      status: 429,
     });
 
     expect(redis.set).not.toHaveBeenCalled();

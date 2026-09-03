@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Result, Schema } from "effect";
+import { Clock, Effect, Result, Schema } from "effect";
 import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   NotificationTargetType,
@@ -175,7 +175,7 @@ export const makeDiscordDelivery = (
           success: true,
           retryable: false,
           providerMessageId: delivery.success.id,
-          deliveredAt: new Date().toISOString(),
+          deliveredAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
         });
         return;
       }
@@ -193,7 +193,7 @@ export const makeDiscordDelivery = (
         retryable: delivery.failure.retryable,
         errorCode: delivery.failure.errorCode,
         errorMessage: delivery.failure.reason,
-        deliveredAt: new Date().toISOString(),
+        deliveredAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
       });
     },
   );

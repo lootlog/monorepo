@@ -93,6 +93,28 @@ const HTTP_METHODS = [
   "head",
   "trace",
 ] as const;
+
+// Effect stores endpoint definitions in hash-based collections. Normalize every
+// path item before serialization so operations sharing a path cannot swap order
+// between processes and make the generated client appear stale.
+for (const [path, pathItem] of Object.entries(document.paths)) {
+  document.paths[path] = Object.fromEntries(
+    Object.entries(pathItem).sort(([left], [right]) => {
+      const leftIndex = HTTP_METHODS.indexOf(
+        left as (typeof HTTP_METHODS)[number],
+      );
+      const rightIndex = HTTP_METHODS.indexOf(
+        right as (typeof HTTP_METHODS)[number],
+      );
+
+      if (leftIndex === -1 || rightIndex === -1) {
+        return left.localeCompare(right);
+      }
+
+      return leftIndex - rightIndex;
+    }),
+  );
+}
 const operationIds = Object.values(document.paths).flatMap((path) =>
   HTTP_METHODS.flatMap((method) => {
     const operation = path[method];

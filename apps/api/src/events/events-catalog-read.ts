@@ -4,7 +4,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -17,14 +17,19 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import type { RedisService } from "#src/redis/redis.service";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
 import {
   attachComputedEventActive,
   compareEventsByActivityAndStart,
 } from "./utils/event-activity.util.js";
+import {
+  EventMapsResponse,
+  EventOverviewResponse,
+  EventsListResponse,
+} from "./event-response.schema.js";
 
 const CACHE_PREFIX = "event-read:v2";
 const CACHE_TTL_SECONDS = 10;
@@ -88,14 +93,18 @@ export const makeEventsCatalogRead = (
       }),
     );
 
-  const cached = <A>(key: string, load: Effect.Effect<A, unknown>) =>
-    Effect.gen(function* () {
+  const cached = <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+    load: Effect.Effect<S["Type"], unknown>,
+  ) => {
+    const codec = makeJsonCodec(Schema.toType(schema), {
+      stringify: (value) => superjson.stringify(value),
+      parse: (text): unknown => superjson.parse(text),
+    });
+    return Effect.gen(function* () {
       const hit = yield* Effect.tryPromise({
-        try: () =>
-          redis.getJson<A>(key, {
-            stringify: (value) => superjson.stringify(value),
-            parse: <T>(text: string) => superjson.parse<T>(text),
-          }),
+        try: () => redis.getJson(key, codec),
         catch: (cause) => cause,
       }).pipe(
         Effect.catch((error) =>
@@ -108,11 +117,7 @@ export const makeEventsCatalogRead = (
       if (hit !== null) return hit;
       const value = yield* load;
       yield* Effect.tryPromise({
-        try: () =>
-          redis.setJson(key, value, CACHE_TTL_SECONDS, {
-            stringify: (entry) => superjson.stringify(entry),
-            parse: <T>(text: string) => superjson.parse<T>(text),
-          }),
+        try: () => redis.setJson(key, value, CACHE_TTL_SECONDS, codec),
         catch: (cause) => cause,
       }).pipe(
         Effect.catch((error) =>
@@ -121,6 +126,7 @@ export const makeEventsCatalogRead = (
       );
       return value;
     });
+  };
 
   const findHeroes = (eventIds: string[]) =>
     eventIds.length === 0
@@ -256,13 +262,19 @@ export const makeEventsCatalogRead = (
   const getOverview = (guildId: string, eventId: string) =>
     cached(
       cacheKey(guildId, eventId, "overview"),
+      EventOverviewResponse,
       Effect.gen(function* () {
         const event = yield* scopedEvent(guildId, eventId);
         if (!event) {
-          return yield* Effect.fail(new NotFoundException("Event not found"));
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Event not found"),
+          );
         }
         const heroNpcs = yield* findHeroes([eventId]);
-        return attachComputedEventActive({ ...event, heroNpcs }, new Date());
+        return attachComputedEventActive(
+          { ...event, heroNpcs },
+          new Date(yield* Clock.currentTimeMillis),
+        );
       }),
     );
 
@@ -278,7 +290,7 @@ export const makeEventsCatalogRead = (
       );
       const event = rows[0];
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
       const heroes = yield* findHeroes([eventId]);
       const heroNpcs = yield* Effect.forEach(
@@ -312,8 +324,9 @@ export const makeEventsCatalogRead = (
           activeOnly: onlyActive,
           world: normalizedWorld,
         }),
+        EventsListResponse,
         Effect.gen(function* () {
-          const referenceTime = new Date();
+          const referenceTime = new Date(yield* Clock.currentTimeMillis);
           const events = yield* query(
             "events.catalog.list",
             database
@@ -392,10 +405,13 @@ export const makeEventsCatalogRead = (
     ) =>
       cached(
         cacheKey(guild.id, eventId, "maps"),
+        EventMapsResponse,
         Effect.gen(function* () {
           const event = yield* scopedEvent(guild.id, eventId);
           if (!event) {
-            return yield* Effect.fail(new NotFoundException("Event not found"));
+            return yield* Effect.fail(
+              new ResourceNotFoundError("Event not found"),
+            );
           }
           const heroes = yield* findHeroes([eventId]);
           const heroNpcs = yield* Effect.forEach(

@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Predicate, Schema } from "effect";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
@@ -12,8 +13,9 @@ import {
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable, timerTable } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  NotFoundException,
+  applicationErrorStatusOrUndefined,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import {
   getGuildCacheKey,
@@ -131,7 +133,7 @@ export class UsersGuildsData extends Context.Service<
 >()("@lootlog/api/http-api/users-guilds/data") {}
 
 const invalidReservationRange = () =>
-  new BadRequestException({
+  new InvalidRequestError({
     message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
   });
 
@@ -145,7 +147,7 @@ const validateGuildConfiguration = (payload: UpdateGuildConfigDto) => {
     return invalidReservationRange();
   }
   if (payload.vanityUrl && RESTRICTED_VANITY_URLS.includes(payload.vanityUrl)) {
-    return new BadRequestException({
+    return new InvalidRequestError({
       message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
     });
   }
@@ -233,7 +235,10 @@ export class GuildConfigurationData extends Context.Service<
                 const cached = yield* cache.get(cacheKey);
                 if (cached) {
                   try {
-                    const guild = JSON.parse(cached) as Record<string, unknown>;
+                    const decoded = decodeJsonUnknown(cached);
+                    if (!Predicate.isObject(decoded) || Array.isArray(decoded))
+                      throw new Error("Invalid guild cache");
+                    const guild = decoded;
                     return { ...guild, ...resolveReservationSettings(guild) };
                   } catch {
                     yield* cache.del(cacheKey);
@@ -256,7 +261,7 @@ export class GuildConfigurationData extends Context.Service<
                 const guild = rows[0];
                 if (!guild) {
                   return yield* Effect.fail(
-                    new NotFoundException({
+                    new ResourceNotFoundError({
                       message: ErrorKey.GUILD_NOT_FOUND,
                     }),
                   );
@@ -308,7 +313,7 @@ export class GuildConfigurationData extends Context.Service<
                 const guild = updatedRows[0];
                 if (!guild) {
                   return yield* Effect.fail(
-                    new NotFoundException({
+                    new ResourceNotFoundError({
                       message: ErrorKey.GUILD_NOT_FOUND,
                     }),
                   );
@@ -389,13 +394,7 @@ const orDieHttpFailure = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
 
 const isStatus = (error: unknown, status: number) => {
   const cause = defectCause(error);
-  return (
-    typeof cause === "object" &&
-    cause !== null &&
-    "getStatus" in cause &&
-    typeof cause.getStatus === "function" &&
-    cause.getStatus() === status
-  );
+  return applicationErrorStatusOrUndefined(cause) === status;
 };
 
 export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(

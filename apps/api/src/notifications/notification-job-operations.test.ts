@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { makeNotificationJobOperations } from "./notification-job-operations.js";
 
 describe("notification job operations Effect module", () => {
@@ -19,7 +19,7 @@ describe("notification job operations Effect module", () => {
 
     await expect(
       Effect.runPromise(operations.cancelGuild("guild-1", "job-1")),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
     expect(cancel).not.toHaveBeenCalled();
   });
 });

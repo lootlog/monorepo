@@ -2,8 +2,9 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { Logger } from "#src/shared/http/http-errors";
-import { RedisService } from "#src/redis/redis.service";
+import { Logger } from "#src/shared/logging/application-logger";
+import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { LootStatsResponseDto_Output } from "#src/http-api/lootlog-api";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";
@@ -91,7 +92,11 @@ export class LootStatsService {
     return Effect.gen(
       function* (this: LootStatsService) {
         const cached = yield* Effect.tryPromise({
-          try: () => this.redis.getJson<LootStatsResponse>(cacheKey),
+          try: () =>
+            this.redis.getJson(
+              cacheKey,
+              makeJsonCodec(LootStatsResponseDto_Output),
+            ),
           catch: (cause) => cause,
         });
         if (cached !== null) {

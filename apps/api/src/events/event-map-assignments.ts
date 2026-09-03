@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -17,8 +17,8 @@ import {
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import type { RedisService } from "#src/redis/redis.service";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { EventTimersPort } from "./services/event-timers.port.js";
@@ -272,7 +272,7 @@ export const makeEventMapAssignments = (
       Effect.gen(function* () {
         const scoped = yield* scopedMap(guild.id, eventId, mapId);
         if (!scoped)
-          return yield* Effect.fail(new NotFoundException("Map not found"));
+          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
         const members = yield* assignedMembers(mapId);
         if (members.some(({ id }) => id === memberId))
           return yield* hydratedMap(mapId);
@@ -290,7 +290,9 @@ export const makeEventMapAssignments = (
             .limit(1),
         );
         if (!memberRows[0])
-          return yield* Effect.fail(new NotFoundException("Member not found"));
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Member not found"),
+          );
         const effectiveNpcId =
           scoped.hero.npcId ?? getSyntheticNpcId(scoped.hero.id);
         const timer = yield* timers.getEventRespawnTimer({
@@ -301,14 +303,14 @@ export const makeEventMapAssignments = (
         });
         if (!timer)
           return yield* Effect.fail(
-            new BadRequestException(
+            new InvalidRequestError(
               "Cannot assign members without an active respawn window",
             ),
           );
-        const now = new Date();
+        const now = new Date(yield* Clock.currentTimeMillis);
         if (now >= new Date(timer.maxSpawnTime))
           return yield* Effect.fail(
-            new BadRequestException(
+            new InvalidRequestError(
               "Cannot assign members after the respawn window is overdue",
             ),
           );
@@ -318,14 +320,14 @@ export const makeEventMapAssignments = (
         );
         if (now < enabledAt)
           return yield* Effect.fail(
-            new BadRequestException(
+            new InvalidRequestError(
               "Cannot assign members before the assignment window opens",
             ),
           );
         const cap = scoped.event.mapAssignmentCap;
         if (cap && cap > 0 && members.length >= cap)
           return yield* Effect.fail(
-            new BadRequestException(
+            new InvalidRequestError(
               `Map assignment limit reached (${cap} members max)`,
             ),
           );
@@ -393,8 +395,8 @@ export const makeEventMapAssignments = (
       Effect.gen(function* () {
         const scoped = yield* scopedMap(guild.id, eventId, mapId);
         if (!scoped)
-          return yield* Effect.fail(new NotFoundException("Map not found"));
-        const now = new Date();
+          return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
+        const now = new Date(yield* Clock.currentTimeMillis);
         yield* query(
           "events.assignments.unassign.transaction",
           database.transaction((transaction) =>

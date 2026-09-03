@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "#test/bun-test";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
-import { makeReservationCatalogAdapter } from "./reservation-catalog.adapter.js";
+import {
+  makeReservationCatalogAdapter,
+  type ReservationCatalogCache,
+} from "./reservation-catalog.adapter.js";
 
 const makeHttpClient = (status: number, payload: unknown) =>
   ({
@@ -15,8 +18,14 @@ const makeHttpClient = (status: number, payload: unknown) =>
       }),
   }) as unknown as HttpClientValue;
 
-const emptyCache = () => ({
-  getJson: <A>() => Effect.succeed(null as A | null),
+const emptyCache = (): ReservationCatalogCache => ({
+  getJson: () => Effect.succeed(null),
+  setJson: vi.fn(() => Effect.succeed(undefined)),
+});
+
+const cacheWith = (value: unknown): ReservationCatalogCache => ({
+  getJson: (_key, schema) =>
+    Effect.sync(() => Schema.decodeUnknownSync(schema)(value)),
   setJson: vi.fn(() => Effect.succeed(undefined)),
 });
 
@@ -32,10 +41,7 @@ describe("reservation catalog Effect adapter", () => {
       },
     ];
     const adapter = makeReservationCatalogAdapter({
-      cache: {
-        getJson: <A>() => Effect.succeed(cachedSpots as A),
-        setJson: vi.fn(() => Effect.succeed(undefined)),
-      },
+      cache: cacheWith(cachedSpots),
       httpClient: makeHttpClient(500, null),
       url: "http://catalog.test/cards",
     });
@@ -45,11 +51,7 @@ describe("reservation catalog Effect adapter", () => {
 
   it("rejects an invalid cached catalog instead of trusting its shape", async () => {
     const adapter = makeReservationCatalogAdapter({
-      cache: {
-        getJson: <A>() =>
-          Effect.succeed([{ id: "titan-a", name: "Titan A", level: -1 }] as A),
-        setJson: vi.fn(() => Effect.succeed(undefined)),
-      },
+      cache: cacheWith([{ id: "titan-a", name: "Titan A", level: -1 }]),
       httpClient: makeHttpClient(500, null),
       url: "http://catalog.test/cards",
     });

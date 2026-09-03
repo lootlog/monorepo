@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -31,8 +31,9 @@ import {
 } from "#src/database/drizzle/schema";
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import {
-  ForbiddenException,
-  NotFoundException,
+  applicationErrorStatusOrUndefined,
+  PermissionDeniedError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { getPermissionsCachePattern } from "#src/shared/constants/cache.constant";
 import {
@@ -188,7 +189,7 @@ export class MyReservationsData extends Context.Service<
                   (guildOrder.get(left) ?? Number.MAX_SAFE_INTEGER) -
                   (guildOrder.get(right) ?? Number.MAX_SAFE_INTEGER),
               );
-            const now = new Date();
+            const now = new Date(yield* Clock.currentTimeMillis);
             const timeCondition =
               query.status === "past"
                 ? and(
@@ -339,7 +340,8 @@ export class RolesData extends Context.Service<
                   )
                   .limit(1);
                 const role = roles[0];
-                if (!role) return yield* Effect.fail(new NotFoundException());
+                if (!role)
+                  return yield* Effect.fail(new ResourceNotFoundError());
 
                 const owners = yield* database
                   .select({ ownerId: guildTable.ownerId })
@@ -356,7 +358,7 @@ export class RolesData extends Context.Service<
                   roleIsAdministrative !== newPermissionsAreAdministrative &&
                   owners[0]?.ownerId !== discordId
                 ) {
-                  return yield* Effect.fail(new ForbiddenException());
+                  return yield* Effect.fail(new PermissionDeniedError());
                 }
 
                 const updated = yield* database
@@ -365,7 +367,7 @@ export class RolesData extends Context.Service<
                     permissions: [...payload.permissions],
                     lvlRangeFrom: payload.lvlRangeFrom,
                     lvlRangeTo: payload.lvlRangeTo,
-                    updatedAt: new Date(),
+                    updatedAt: new Date(yield* Clock.currentTimeMillis),
                   })
                   .where(
                     and(
@@ -475,15 +477,7 @@ const errorStatus = (error: unknown): number | undefined => {
     return error.status;
   }
   const cause = defectCause(error);
-  if (
-    typeof cause === "object" &&
-    cause !== null &&
-    "getStatus" in cause &&
-    typeof cause.getStatus === "function"
-  ) {
-    return cause.getStatus();
-  }
-  return undefined;
+  return applicationErrorStatusOrUndefined(cause);
 };
 
 const declaredEmptyError = <A, E, R>(

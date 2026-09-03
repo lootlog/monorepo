@@ -23,6 +23,7 @@ import {
   WatchedItemResponse,
 } from "#src/notifications/notification-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
+import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   NotificationsAccessDenied,
@@ -64,13 +65,7 @@ const operationIds = Object.fromEntries(
 ) as Record<NotificationEndpointIdentifier, string>;
 
 const operationFailure = (cause: unknown): NotificationFailure => {
-  const status =
-    typeof cause === "object" &&
-    cause !== null &&
-    "getStatus" in cause &&
-    typeof cause.getStatus === "function"
-      ? cause.getStatus()
-      : undefined;
+  const status = applicationErrorStatusOrUndefined(cause);
 
   if (status === 400) {
     return new NotificationsBadRequest({ status, code: "BAD_REQUEST" });

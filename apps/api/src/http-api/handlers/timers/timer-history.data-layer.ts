@@ -13,7 +13,7 @@ import {
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/utils/timer-key";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import {
   type TimersGuildAccess,
   TimersOperationError,
@@ -49,7 +49,7 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
           );
         if (matches.length > 1) {
           return yield* Effect.fail(
-            new BadRequestException({
+            new InvalidRequestError({
               message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
             }),
           );

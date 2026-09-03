@@ -1,9 +1,9 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, or } from "drizzle-orm";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Predicate, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { apiConfig } from "#src/config/api.config";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/schema";
 import { getMemberCacheSoftTtl } from "#src/members/constants/member-cache.constant";
@@ -15,6 +15,8 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/constants/cache.constant";
 import { MembersData } from "../handlers/members/members.handlers.js";
+import { ApiRuntimeConfig } from "./api-runtime-config.js";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 type GuildRecord = typeof guildTable.$inferSelect;
 
@@ -51,6 +53,7 @@ const parseDate = (value: unknown): Date | null => {
 
 const cachedContextIsFresh = (
   context: unknown,
+  environment: RuntimeEnvironment,
 ): context is OrganizationContext => {
   if (
     typeof context !== "object" ||
@@ -67,16 +70,18 @@ const cachedContextIsFresh = (
   const lastSync = parseDate(context.member.lastDiscordSyncAt);
   return Boolean(
     lastSync &&
-    lastSync.getTime() >=
-      Date.now() - getMemberCacheSoftTtl(apiConfig.environment),
+    lastSync.getTime() >= Date.now() - getMemberCacheSoftTtl(environment),
   );
 };
 
 const decodeCachedContext = (
   value: string,
+  environment: RuntimeEnvironment,
 ): Effect.Effect<OrganizationContext | null> =>
-  Effect.try(() => JSON.parse(value) as unknown).pipe(
-    Effect.map((context) => (cachedContextIsFresh(context) ? context : null)),
+  Effect.try(() => decodeJsonUnknown(value)).pipe(
+    Effect.map((context) =>
+      cachedContextIsFresh(context, environment) ? context : null,
+    ),
     Effect.catch(() => Effect.succeed(null)),
   );
 
@@ -98,6 +103,7 @@ export class OrganizationContextLookup extends Context.Service<
     return Layer.effect(
       OrganizationContextLookup,
       Effect.gen(function* () {
+        const config = yield* ApiRuntimeConfig;
         const database = yield* ApiDatabase;
         const members = yield* MembersData;
 
@@ -108,9 +114,12 @@ export class OrganizationContextLookup extends Context.Service<
               .get(key)
               .pipe(Effect.catch(() => Effect.succeed(null)));
             if (cached) {
-              const parsed = yield* Effect.try(
-                () => JSON.parse(cached) as GuildRecord,
-              ).pipe(Effect.option);
+              const parsed = yield* Effect.try(() => {
+                const decoded = decodeJsonUnknown(cached);
+                if (!Predicate.isObject(decoded) || Array.isArray(decoded))
+                  throw new Error("Invalid guild cache");
+                return decoded as GuildRecord;
+              }).pipe(Effect.option);
               if (parsed._tag === "Some") return parsed.value;
               yield* cache.del(key).pipe(Effect.ignore);
             }
@@ -169,7 +178,10 @@ export class OrganizationContextLookup extends Context.Service<
                 .get(permissionsKey)
                 .pipe(Effect.catch(() => Effect.succeed(null)));
               if (cached) {
-                const context = yield* decodeCachedContext(cached);
+                const context = yield* decodeCachedContext(
+                  cached,
+                  config.environment,
+                );
                 if (context) return context;
                 yield* cache.del(permissionsKey).pipe(Effect.ignore);
               }

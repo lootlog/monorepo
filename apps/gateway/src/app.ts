@@ -1,5 +1,5 @@
 import { RabbitMessaging } from "@lootlog/messaging";
-import { Context, Effect, FiberSet, Layer } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
 import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
@@ -54,30 +54,29 @@ export class GatewayApplication extends Context.Service<
       const redis = yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: async () => {
-            const store = new RedisGatewayStore(config.redis);
+            const store = new RedisGatewayStore({
+              ...config.redis,
+              password: Redacted.value(config.redis.password),
+            });
             await store.connect();
             return store;
           },
           catch: (cause) =>
             new Error("Failed to connect Gateway Redis", { cause }),
         }),
-        (store) => Effect.promise(() => store.close()),
+        (store) => Effect.tryPromise(() => store.close()),
       );
       const auth = makeGatewayAuth(config, httpClient);
       const hub = new RealtimeHub(config, redis, runBackground);
-      yield* Effect.promise(() => hub.start());
+      yield* hub.start();
       const coverage = new CoveragePublisher(messaging);
-      const presence = new PresenceStore(
-        redis,
-        hub,
-        Date.now,
-        coverage,
-        runBackground,
-      );
-      yield* Effect.acquireRelease(
-        Effect.sync(() => presence.start()),
-        () => Effect.sync(() => presence.stop()),
-      );
+      const presence = new PresenceStore(redis, hub, Date.now, coverage);
+      yield* presence
+        .sweepExpired()
+        .pipe(
+          Effect.repeat(Schedule.spaced(presence.sweepSchedule)),
+          Effect.forkScoped,
+        );
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
@@ -125,7 +124,7 @@ const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* GatewayConfig;
     return RabbitMessaging.layer({
-      uri: config.rabbitmqUri,
+      uri: Redacted.value(config.rabbitmqUri),
       connectionName: `${config.serviceName}-${config.environment}`,
       queues: gatewayQueueDefinitions,
     });
@@ -232,7 +231,7 @@ export const GatewayServer = Layer.effectDiscard(
     const application = yield* GatewayApplication;
     const httpBoundary = yield* Effect.acquireRelease(
       Effect.sync(makeGatewayHttpBoundary),
-      (boundary) => Effect.promise(boundary.dispose),
+      (boundary) => Effect.tryPromise(boundary.dispose),
     );
     const fetch = createGatewayFetch(application, httpBoundary.handler);
     const server = yield* Effect.acquireRelease(
@@ -249,23 +248,26 @@ export const GatewayServer = Layer.effectDiscard(
               application.hub.register(socket);
             },
             message(socket, message) {
-              application.runBackground("websocket.message", () =>
+              application.runBackground(
+                "websocket.message",
                 application.commands.handle(socket, message),
               );
             },
             close(socket) {
               application.hub.unregister(socket);
-              application.runBackground("websocket.disconnect-activity", () =>
+              application.runBackground(
+                "websocket.disconnect-activity",
                 application.activity.publish("DISCONNECT_EVENT", socket.data),
               );
-              application.runBackground("websocket.disconnect-presence", () =>
+              application.runBackground(
+                "websocket.disconnect-presence",
                 application.presence.disconnect(socket.data),
               );
             },
           },
         }),
       ),
-      (activeServer) => Effect.promise(() => activeServer.stop(true)),
+      (activeServer) => Effect.tryPromise(() => activeServer.stop(true)),
     );
     yield* Effect.logInfo("Gateway WebSocket server listening").pipe(
       Effect.annotateLogs({

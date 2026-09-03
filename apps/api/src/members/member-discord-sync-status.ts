@@ -1,6 +1,7 @@
 import {
-  HttpException,
-  ServiceUnavailableException,
+  ApplicationError,
+  applicationErrorStatus,
+  DependencyUnavailableError,
 } from "#src/shared/http/http-errors";
 
 export const MEMBER_DISCORD_SYNC_STATUS = {
@@ -62,9 +63,9 @@ export function isRetryableMemberRefreshStatus(
 }
 
 export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
-  if (error instanceof ServiceUnavailableException) {
+  if (error instanceof DependencyUnavailableError) {
     if (
-      getHttpExceptionMessage(error) ===
+      getApplicationErrorMessage(error) ===
       MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE
     ) {
       return MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE;
@@ -73,14 +74,14 @@ export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
     return MEMBER_DISCORD_SYNC_STATUS.DISCORD_SERVICE_UNAVAILABLE;
   }
 
-  if (error instanceof HttpException) {
-    return toDiscordHttpSyncStatus(error.getStatus());
+  if (error instanceof ApplicationError) {
+    return toDiscordHttpSyncStatus(applicationErrorStatus(error));
   }
 
   return MEMBER_DISCORD_SYNC_STATUS.ERROR;
 }
 
-function getHttpExceptionMessage(error: HttpException): string | null {
+function getApplicationErrorMessage(error: ApplicationError): string | null {
   const response = error.getResponse();
 
   if (typeof response === "string") {

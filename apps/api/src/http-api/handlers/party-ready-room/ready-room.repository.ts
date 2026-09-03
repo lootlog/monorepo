@@ -1,4 +1,5 @@
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
+import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room";
 import {
   COMMIT_READY_ROOM_SCRIPT,
   CREATE_READY_ROOM_SCRIPT,
@@ -32,7 +33,10 @@ const CHARACTER_PREFIX = "party-ready-room:v3:character:";
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
 export interface ReadyRoomRedis {
-  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly eval: <A>(
     script: string,
     keys: ReadonlyArray<string>,
@@ -115,7 +119,7 @@ export const makeReadyRoomRepository = (
   clock: () => number = Date.now,
 ): ReadyRoomEffectRepository => {
   const get = (notificationId: string) =>
-    redis.getJson<ReadyRoomAggregate>(roomKey(notificationId));
+    redis.getJson(roomKey(notificationId), PartyReadyRoomAggregateSchema);
   return {
     get,
     findForUser: (discordId) =>

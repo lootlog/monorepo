@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
+import { Effect } from "effect";
 import { PresenceStore } from "./presence-store.js";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
@@ -110,23 +111,29 @@ describe("PresenceStore", () => {
       () => 10_000,
     );
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    await store.publish(publisher, {
-      organizationIds: ["organization-1", "unauthorized-organization"],
-      isAfk: false,
-      clientObservedAt: 1,
-      location: { mapId: 42, map: "Kwieciste Przejście", x: 4, y: 7 },
-    });
-
-    const basic = await store.snapshot(
-      session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
-      "organization-1",
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1", "unauthorized-organization"],
+        isAfk: false,
+        clientObservedAt: 1,
+        location: { mapId: 42, map: "Kwieciste Przejście", x: 4, y: 7 },
+      }),
     );
-    const precise = await store.snapshot(
-      session([
-        Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-        Permission.LOOTLOG_PRESENCE_LOCATION_READ,
-      ]),
-      "organization-1",
+
+    const basic = await Effect.runPromise(
+      store.snapshot(
+        session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+        "organization-1",
+      ),
+    );
+    const precise = await Effect.runPromise(
+      store.snapshot(
+        session([
+          Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+          Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+        ]),
+        "organization-1",
+      ),
     );
     expect(basic.presences[0]?.lastSeen).toBe(10_000);
     expect("location" in (basic.presences[0] ?? {})).toBe(false);
@@ -144,15 +151,18 @@ describe("PresenceStore", () => {
       hub as unknown as RealtimeHub,
       () => now,
     );
-    await store.publish(
-      socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ])),
-      { organizationIds: ["organization-1"] },
+    await Effect.runPromise(
+      store.publish(socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ])), {
+        organizationIds: ["organization-1"],
+      }),
     );
     now = 61_001;
-    await store.sweepExpired();
-    const snapshot = await store.snapshot(
-      session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
-      "organization-1",
+    await Effect.runPromise(store.sweepExpired());
+    const snapshot = await Effect.runPromise(
+      store.snapshot(
+        session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+        "organization-1",
+      ),
     );
     expect(snapshot.presences).toEqual([]);
     expect(snapshot.revision).toBe(2);

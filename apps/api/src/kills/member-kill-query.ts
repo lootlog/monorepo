@@ -2,7 +2,10 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { KillsControllerGetMemberKillsQuery as GetMemberKillsDto } from "#src/http-api/lootlog-api";
+import {
+  KillsControllerGetMemberKills200,
+  type KillsControllerGetMemberKillsQuery as GetMemberKillsDto,
+} from "#src/http-api/lootlog-api";
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,
@@ -64,6 +67,7 @@ export const makeMemberKillQuery =
         visibility: visibilityCacheScope(accessPolicy, visibleRoles),
       }),
       label: "member kills",
+      schema: KillsControllerGetMemberKills200,
       load: Effect.gen(function* () {
         const member = yield* persistence.findMember(guildId, memberId);
         if (!member) return null;

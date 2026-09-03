@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -14,8 +14,8 @@ import {
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import type { RedisService } from "#src/redis/redis.service";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type {
@@ -153,7 +153,9 @@ export const makeEventRespawnCommands = (
         );
         const row = heroRows[0];
         if (!row)
-          return yield* Effect.fail(new NotFoundException("Hero not found"));
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Hero not found"),
+          );
         const memberRows = yield* query(
           "events.respawn.open.member",
           database
@@ -165,7 +167,7 @@ export const makeEventRespawnCommands = (
         const memberId = memberRows[0]?.id;
         if (memberId === undefined)
           return yield* Effect.fail(
-            new BadRequestException("No members found in guild"),
+            new InvalidRequestError("No members found in guild"),
           );
         const minSpawnTime = new Date(data.minSpawnTime);
         const maxSpawnTime = new Date(data.maxSpawnTime);
@@ -203,7 +205,8 @@ export const makeEventRespawnCommands = (
                   .where(eq(eventMapTable.heroNpcId, heroId)),
               );
         const assignedMapIds = new Set(assignments.map(({ mapId }) => mapId));
-        const windowOpenedAt = timer.windowOpenedAt ?? new Date();
+        const windowOpenedAt =
+          timer.windowOpenedAt ?? new Date(yield* Clock.currentTimeMillis);
         yield* Effect.forEach(
           maps,
           (map) => {
@@ -290,7 +293,9 @@ export const makeEventRespawnCommands = (
         );
         const row = heroRows[0];
         if (!row) {
-          return yield* Effect.fail(new NotFoundException("Hero not found"));
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Hero not found"),
+          );
         }
         const timerLookup = {
           guildId: guild.id,
@@ -323,7 +328,7 @@ export const makeEventRespawnCommands = (
         if (data.createNewWindow) {
           if (!data.newMinSpawnTime || !data.newMaxSpawnTime) {
             return yield* Effect.fail(
-              new BadRequestException(
+              new InvalidRequestError(
                 "Missing spawn window bounds for new window",
               ),
             );

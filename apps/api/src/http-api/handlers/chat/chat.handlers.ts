@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import {
   Permission,
@@ -104,14 +105,8 @@ const errorStatus = (error: unknown): number | undefined => {
     return error.status;
   }
   const cause = defectCause(error);
-  if (
-    typeof cause === "object" &&
-    cause !== null &&
-    "getStatus" in cause &&
-    typeof cause.getStatus === "function"
-  ) {
-    return cause.getStatus();
-  }
+  const applicationStatus = applicationErrorStatusOrUndefined(cause);
+  if (applicationStatus !== undefined) return applicationStatus;
   return undefined;
 };
 

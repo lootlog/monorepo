@@ -10,14 +10,17 @@ const program = Effect.gen(function* () {
     `SELECT to_regclass('"Activity"') IS NOT NULL AS exists`,
   );
   if (!table[0]?.exists) {
-    const migration = yield* Effect.promise(() =>
-      Bun.file(
-        new URL(
-          "../../drizzle/migrations/0000_activity_legacy_baseline.sql",
-          import.meta.url,
-        ),
-      ).text(),
-    );
+    const migration = yield* Effect.tryPromise({
+      try: () =>
+        Bun.file(
+          new URL(
+            "../../drizzle/migrations/0000_activity_legacy_baseline.sql",
+            import.meta.url,
+          ),
+        ).text(),
+      catch: (cause) =>
+        new Error("Failed to read baseline migration", { cause }),
+    });
     yield* sql.unsafe(migration).unprepared;
   }
   yield* verifyAndAdoptDatabase();

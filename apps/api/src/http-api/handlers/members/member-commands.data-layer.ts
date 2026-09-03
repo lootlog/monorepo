@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, isNotNull, or } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -8,7 +8,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { apiConfig } from "#src/config/api.config";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import {
   getAdminBulkRefreshRateLimit,
   getMemberCacheSoftTtl,
@@ -25,10 +25,9 @@ import type {
   StoredMemberWithRoles,
 } from "#src/members/member.types";
 import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/enum/error-key.enum";
 import {
@@ -129,11 +128,12 @@ const useStaleMember = (
 const throwSyncError = (attempt: MemberRefreshAttempt) =>
   attempt.error instanceof Error
     ? Effect.fail(attempt.error)
-    : Effect.fail(
-        new HttpException("Discord member sync failed", HttpStatus.CONFLICT),
-      );
+    : Effect.fail(new ResourceConflictError("Discord member sync failed"));
 
-export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
+export const makeMembersDataLayer = (
+  ports: MemberCommandsPorts,
+  environment: RuntimeEnvironment,
+) =>
   Layer.effect(
     MembersData,
     Effect.map(ApiDatabase, (database) => {
@@ -161,14 +161,16 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
           const desiredGuildId = guildRows[0]?.id;
           if (!desiredGuildId) {
             return yield* Effect.fail(
-              new NotFoundException({ message: GuildErrorKey.GUILD_NOT_FOUND }),
+              new ResourceNotFoundError({
+                message: GuildErrorKey.GUILD_NOT_FOUND,
+              }),
             );
           }
 
-          const now = new Date();
+          const now = new Date(yield* Clock.currentTimeMillis);
           const ttl = options.refresh
-            ? getRefreshPermissionsTtl(apiConfig.environment)
-            : getMemberCacheSoftTtl(apiConfig.environment);
+            ? getRefreshPermissionsTtl(environment)
+            : getMemberCacheSoftTtl(environment);
           const stored = yield* memberWithRoles(
             database,
             options.identity.discordId,
@@ -177,7 +179,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
           const fresh = isFresh(stored, new Date(now.getTime() - ttl));
           if (stored && options.refresh && fresh) {
             return yield* Effect.fail(
-              new BadRequestException(ErrorKey.MEMBER_TTL_ACTIVE),
+              new InvalidRequestError(ErrorKey.MEMBER_TTL_ACTIVE),
             );
           }
           if (fresh) return stored;
@@ -232,15 +234,15 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
               );
               if (!stored) {
                 return yield* Effect.fail(
-                  new NotFoundException("Member not found"),
+                  new ResourceNotFoundError("Member not found"),
                 );
               }
               if (!stored.active) {
                 return yield* Effect.fail(
-                  new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED),
+                  new InvalidRequestError(ErrorKey.MEMBER_ALREADY_DEACTIVATED),
                 );
               }
-              const now = new Date();
+              const now = new Date(yield* Clock.currentTimeMillis);
               const rows = yield* transaction
                 .update(memberTable)
                 .set({
@@ -255,7 +257,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
               const updated = rows[0];
               if (!updated) {
                 return yield* Effect.fail(
-                  new NotFoundException("Member not found"),
+                  new ResourceNotFoundError("Member not found"),
                 );
               }
               yield* transaction
@@ -288,7 +290,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
 
       const createBulkRefresh = (guildId: string, requestedBy: string) =>
         Effect.gen(function* () {
-          const rateLimit = getAdminBulkRefreshRateLimit(apiConfig.environment);
+          const rateLimit = getAdminBulkRefreshRateLimit(environment);
           const recent = yield* database
             .select()
             .from(memberRefreshJobTable)
@@ -297,7 +299,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
                 eq(memberRefreshJobTable.guildId, guildId),
                 gte(
                   memberRefreshJobTable.createdAt,
-                  new Date(Date.now() - rateLimit),
+                  new Date((yield* Clock.currentTimeMillis) - rateLimit),
                 ),
               ),
             )
@@ -305,7 +307,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
             .limit(1);
           if (recent[0]) {
             return yield* Effect.fail(
-              new BadRequestException({
+              new InvalidRequestError({
                 message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
                 nextAvailableAt: new Date(
                   recent[0].createdAt.getTime() + rateLimit,
@@ -323,7 +325,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
                 isNotNull(memberTable.globalUserId),
               ),
             );
-          const now = new Date();
+          const now = new Date(yield* Clock.currentTimeMillis);
           const inserted = yield* database
             .insert(memberRefreshJobTable)
             .values({
@@ -348,7 +350,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
             .pipe(
               Effect.catch((error) =>
                 Effect.gen(function* () {
-                  const completedAt = new Date();
+                  const completedAt = new Date(yield* Clock.currentTimeMillis);
                   yield* database
                     .update(memberRefreshJobTable)
                     .set({
@@ -413,7 +415,7 @@ export const makeMembersDataLayer = (ports: MemberCommandsPorts) =>
               const userId = rows[0]?.userId;
               if (!userId) {
                 return yield* Effect.fail(
-                  new NotFoundException(
+                  new ResourceNotFoundError(
                     "Member not found or global user ID is missing",
                   ),
                 );

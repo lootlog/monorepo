@@ -1,11 +1,11 @@
-import { Config, Context, Effect, Layer } from "effect";
+import { Config, Context, Effect, Layer, type Redacted } from "effect";
 
 export interface SearchConfigValue {
   readonly port: number;
   readonly serviceName: string;
   readonly meilisearchHost: string;
-  readonly meilisearchApiKey: string;
-  readonly rabbitmqUri: string;
+  readonly meilisearchApiKey: Redacted.Redacted<string>;
+  readonly rabbitmqUri: Redacted.Redacted<string>;
 }
 
 export class SearchConfig extends Context.Service<
@@ -21,8 +21,8 @@ export class SearchConfig extends Context.Service<
           Config.withDefault("search"),
         ),
         meilisearchHost: Config.string("MEILISEARCH_HOST"),
-        meilisearchApiKey: Config.string("MEILISEARCH_API_KEY"),
-        rabbitmqUri: Config.string("RABBITMQ_URI"),
+        meilisearchApiKey: Config.redacted("MEILISEARCH_API_KEY"),
+        rabbitmqUri: Config.redacted("RABBITMQ_URI"),
       });
       return SearchConfig.of(value);
     }),

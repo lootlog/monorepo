@@ -30,6 +30,7 @@ import {
   NullableCoverageGapResponse,
 } from "#src/events/event-monitoring-response.schema";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
+import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   EventsAccessDenied,
@@ -68,13 +69,7 @@ const operationIds = Object.fromEntries(
 ) as Record<EventEndpointIdentifier, string>;
 
 const operationFailure = (cause: unknown): EventFailure => {
-  const status =
-    typeof cause === "object" &&
-    cause !== null &&
-    "getStatus" in cause &&
-    typeof cause.getStatus === "function"
-      ? cause.getStatus()
-      : undefined;
+  const status = applicationErrorStatusOrUndefined(cause);
 
   if (status === 400) {
     return new EventsBadRequest({ status, code: "BAD_REQUEST" });

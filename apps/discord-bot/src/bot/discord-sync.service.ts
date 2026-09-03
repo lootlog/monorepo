@@ -10,7 +10,7 @@ import {
   type DiscordGuildSyncState,
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/schema/notifications";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ChannelType, DiscordAPIError, PermissionsBitField } from "discord.js";
 import type {
   Client,
@@ -257,7 +257,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     options?: { excludeChannelId?: string; syncedAt?: string },
   ) =>
     Effect.gen(function* () {
-      const syncedAt = options?.syncedAt ?? new Date().toISOString();
+      const syncedAt =
+        options?.syncedAt ??
+        new Date(yield* Clock.currentTimeMillis).toISOString();
       const botMember =
         guild.members.me ??
         (yield* discordSdkRead("fetchBotMember", () =>
@@ -399,7 +401,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       yield* publish(RoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED, {
         guildId: guild.id,
         status: state.status,
-        lastAttemptAt: state.lastAttemptAt ?? new Date().toISOString(),
+        lastAttemptAt:
+          state.lastAttemptAt ??
+          new Date(yield* Clock.currentTimeMillis).toISOString(),
         lastError: state.lastError ?? "Bot no longer has access to this guild",
       } satisfies DiscordGuildChannelsSyncFailedEvent);
     });

@@ -2,7 +2,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import { NotificationTargetType } from "@lootlog/schema/notifications";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { makeNotificationGuildTargets } from "./notification-guild-targets.js";
 
 describe("notification guild targets Effect module", () => {
@@ -26,7 +26,7 @@ describe("notification guild targets Effect module", () => {
           targetType: NotificationTargetType.DM,
         }),
       ),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
     expect(selectable).not.toHaveBeenCalled();
     expect(cancel).not.toHaveBeenCalled();
   });

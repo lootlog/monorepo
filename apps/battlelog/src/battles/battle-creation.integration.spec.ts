@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Logger } from "#src/platform/logger";
 import type { RedisStore } from "#src/shared/modules/redis/redis.service";
-import { makeBattlelogOperations } from "./battles.controller.js";
+import { makeBattlelogOperations } from "./battlelog-operations.js";
 import { makeBattles, type Battles } from "./battles.service.js";
 import type { BattleAnalytics } from "./services/battle-analytics.service.js";
 import type { BattleListFilter } from "./services/battle-list-filter.service.js";
@@ -13,7 +13,10 @@ import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.servic
 import { battles, battleWarriors } from "#src/shared/modules/drizzle/schema";
 import type { BattleObjectStorage } from "#src/shared/modules/r2/r2.service";
 import { makeBattlelogTestBoundary } from "../http/battlelog-http.js";
-import { runEffectService } from "../../test/effect-service.js";
+import {
+  effectDatabaseBoundary,
+  runEffectService,
+} from "../../test/effect-service.js";
 
 const vi = {
   fn: mock,
@@ -362,7 +365,9 @@ const createTestApplication = async ({
   redis?: ReturnType<typeof createRedisBoundary>;
 } = {}) => {
   const database = createDatabaseBoundary({ beforeTransaction });
-  const drizzle = database.service as unknown as DrizzleDatabase;
+  const drizzle = effectDatabaseBoundary(
+    database.service.db,
+  ) as unknown as DrizzleDatabase;
   const redisService = redis as unknown as RedisStore;
   const analyticsService = {
     invalidateAnalyticsCache: vi.fn(() => Effect.void),

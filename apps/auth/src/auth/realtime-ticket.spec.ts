@@ -66,6 +66,29 @@ describe("realtime tickets", () => {
     ).resolves.toBeNull();
   });
 
+  it("consumes and rejects a ticket whose stored identity violates the schema", async () => {
+    const redis = new FakeRedis();
+    const { ticket } = await issueRealtimeTicket(
+      redis,
+      { userId: "user-1", discordId: "discord-1" },
+      "https://classic.margonem.pl",
+    );
+    const [key] = redis.values.keys();
+    redis.values.set(
+      key ?? "missing",
+      JSON.stringify({
+        userId: "user-1",
+        discordId: 42,
+        origin: "https://classic.margonem.pl",
+      }),
+    );
+
+    await expect(
+      consumeRealtimeTicket(redis, ticket, "https://classic.margonem.pl"),
+    ).resolves.toBeNull();
+    expect(redis.values.size).toBe(0);
+  });
+
   it("cannot consume a ticket after the requested Redis TTL", async () => {
     let now = 0;
     let stored: { key: string; value: string; expiresAt: number } | null = null;

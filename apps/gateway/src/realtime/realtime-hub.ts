@@ -7,6 +7,7 @@ import type {
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
+import { Effect, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -25,6 +26,15 @@ type Event = typeof ServerEvent.Type;
 type Response = typeof RealtimeResponse.Type;
 
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
+const ConnectionRegistration = Schema.Struct({
+  connectionId: Schema.String,
+  instanceId: Schema.String,
+  userId: Schema.String,
+  discordId: Schema.String,
+});
+const decodeConnectionRegistration = Schema.decodeUnknownSync(
+  Schema.fromJsonString(ConnectionRegistration),
+);
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -60,7 +70,7 @@ export class RealtimeHub {
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
   private readonly permissionRebalanceListeners = new Set<
-    (discordId: string, userId: string) => Promise<void>
+    (discordId: string, userId: string) => Effect.Effect<void, unknown>
   >();
   readonly instanceId = crypto.randomUUID();
 
@@ -70,28 +80,43 @@ export class RealtimeHub {
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
-  async start(): Promise<void> {
-    await this.redis.subscribe((message) => this.receiveFederated(message));
+  start(): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () =>
+        this.redis.subscribe((message) => this.receiveFederated(message)),
+      catch: (cause) => cause,
+    });
   }
 
   register(socket: GatewaySocket): void {
     this.sockets.set(socket.data.connectionId, socket);
-    this.runBackground("registry.register", () =>
-      this.refreshRegistry(socket.data),
+    this.runBackground(
+      "registry.register",
+      Effect.tryPromise({
+        try: () => this.refreshRegistry(socket.data),
+        catch: (cause) => cause,
+      }),
     );
   }
 
   unregister(socket: GatewaySocket): void {
     this.sockets.delete(socket.data.connectionId);
-    this.runBackground("registry.unregister", async () => {
-      await Promise.all([
-        this.redis.command.del(this.connectionKey(socket.data.connectionId)),
-        this.redis.command.srem(
-          this.userConnectionsKey(socket.data.userId),
-          socket.data.connectionId,
-        ),
-      ]);
-    });
+    this.runBackground(
+      "registry.unregister",
+      Effect.tryPromise({
+        try: () =>
+          Promise.all([
+            this.redis.command.del(
+              this.connectionKey(socket.data.connectionId),
+            ),
+            this.redis.command.srem(
+              this.userConnectionsKey(socket.data.userId),
+              socket.data.connectionId,
+            ),
+          ]).then(() => undefined),
+        catch: (cause) => cause,
+      }),
+    );
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -147,7 +172,7 @@ export class RealtimeHub {
     return values.flatMap((value) => {
       if (!value) return [];
       try {
-        return [JSON.parse(value)];
+        return [decodeConnectionRegistration(value)];
       } catch {
         return [];
       }
@@ -205,19 +230,26 @@ export class RealtimeHub {
   }
 
   onPermissionRebalance(
-    listener: (discordId: string, userId: string) => Promise<void>,
+    listener: (
+      discordId: string,
+      userId: string,
+    ) => Effect.Effect<void, unknown>,
   ): void {
     this.permissionRebalanceListeners.add(listener);
   }
 
-  async publishPermissionRebalance(
+  publishPermissionRebalance(
     discordId: string,
     userId: string,
-  ): Promise<void> {
-    await this.redis.publish({
-      id: crypto.randomUUID(),
-      sourceInstanceId: this.instanceId,
-      control: { type: "permissions.rebalance", discordId, userId },
+  ): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () =>
+        this.redis.publish({
+          id: crypto.randomUUID(),
+          sourceInstanceId: this.instanceId,
+          control: { type: "permissions.rebalance", discordId, userId },
+        }),
+      catch: (cause) => cause,
     });
   }
 
@@ -306,8 +338,9 @@ export class RealtimeHub {
     if (message.control) {
       if (!this.remember(message.id)) return;
       for (const listener of this.permissionRebalanceListeners) {
-        this.runBackground("permissions.rebalance", () =>
-          listener(message.control!.discordId, message.control!.userId),
+        this.runBackground(
+          "permissions.rebalance",
+          listener(message.control.discordId, message.control.userId),
         );
       }
       return;

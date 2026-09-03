@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -9,7 +9,8 @@ import {
   eventTable,
   memberTable,
 } from "#src/database/drizzle/schema";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { HeroPresenceStatsResponse } from "./event-monitoring-response.schema.js";
 import type { EventReadCache } from "./services/event-read-cache.service.js";
 
 export const makeEventPresenceStats = (
@@ -32,7 +33,7 @@ export const makeEventPresenceStats = (
         .limit(1);
       const hero = heroRows[0];
       if (!hero) {
-        return yield* Effect.fail(new NotFoundException("Hero not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
 
       const maps = yield* database
@@ -66,7 +67,8 @@ export const makeEventPresenceStats = (
       );
 
       const eventStart = hero.event.startsAt ?? hero.event.createdAt;
-      const eventEnd = hero.event.endsAt ?? new Date();
+      const eventEnd =
+        hero.event.endsAt ?? new Date(yield* Clock.currentTimeMillis);
       const totalEventSeconds = Math.max(
         0,
         Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),
@@ -91,7 +93,7 @@ export const makeEventPresenceStats = (
         });
       }
 
-      const now = new Date();
+      const now = new Date(yield* Clock.currentTimeMillis);
       let totalCoverageMs = 0;
       for (const { log, member } of presenceRows) {
         const duration = Math.max(
@@ -148,13 +150,11 @@ export const makeEventPresenceStats = (
       const key = cache.getEventKey(guildId, eventId, "hero-presence", {
         heroNpcId,
       });
-      return Effect.tryPromise({
-        try: () =>
-          cache.getOrSet(key, () =>
-            Effect.runPromise(load(guildId, eventId, heroNpcId)),
-          ),
-        catch: (cause) => cause,
-      }).pipe(Effect.withSpan("events.presence.heroStats"));
+      return cache
+        .getOrSet(key, HeroPresenceStatsResponse, () =>
+          load(guildId, eventId, heroNpcId),
+        )
+        .pipe(Effect.withSpan("events.presence.heroStats"));
     },
   };
 };

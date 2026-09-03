@@ -1,9 +1,12 @@
-import { apiConfig } from "#src/config/api.config";
+import type { ApiConfiguration } from "#src/config/api.config";
+import { Effect } from "effect";
 
 let registered = false;
 
-export function registerNodeWarningDiagnostics() {
-  if (registered || !apiConfig.nodeWarningDiagnosticsEnabled) {
+export function registerNodeWarningDiagnostics(
+  config: Pick<ApiConfiguration, "hostName" | "nodeWarningDiagnosticsEnabled">,
+) {
+  if (registered || !config.nodeWarningDiagnosticsEnabled) {
     return;
   }
 
@@ -14,15 +17,16 @@ export function registerNodeWarningDiagnostics() {
       return;
     }
 
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        event: "node.warning",
-        name: warning.name,
-        message: warning.message,
-        stack: warning.stack,
-        podName: apiConfig.hostName,
-      }),
+    Effect.runFork(
+      Effect.logWarning("Node MaxListeners warning").pipe(
+        Effect.annotateLogs({
+          event: "node.warning",
+          name: warning.name,
+          message: warning.message,
+          stack: warning.stack,
+          podName: config.hostName,
+        }),
+      ),
     );
   });
 }

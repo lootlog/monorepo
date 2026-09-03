@@ -1,5 +1,5 @@
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { Config, Effect, Option, type Redacted, Schema } from "effect";
+import { Config, Option, type Redacted, Schema } from "effect";
 
 const optionalRedacted = (name: string) =>
   Config.option(Config.redacted(name)).pipe(Config.map(Option.getOrUndefined));
@@ -143,6 +143,3 @@ export const apiConfiguration = Config.all({
     Config.map(Option.getOrUndefined),
   ),
 }) satisfies Config.Config<ApiConfiguration>;
-
-/** Compatibility value for non-Effect classes while their construction is layer-owned. */
-export const apiConfig = Effect.runSync(apiConfiguration);

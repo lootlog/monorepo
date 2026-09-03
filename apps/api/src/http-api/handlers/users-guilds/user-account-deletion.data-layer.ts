@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
@@ -27,7 +27,7 @@ import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
 } from "#src/shared/constants/cache.constant";
-import { ServiceUnavailableException } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import {
   type AuthenticatedIdentity,
   UsersGuildsOperationError,
@@ -105,7 +105,7 @@ const deletePersistedAccount = (
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));
 
-      const deactivatedAt = new Date();
+      const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
       for (const member of members) {
         yield* transaction
           .delete(memberToRoleTable)
@@ -193,7 +193,7 @@ export const makeUserAccountDeletion = (
     yield* ports.cleanupBattlelog(identity.userId).pipe(
       Effect.catch(() =>
         Effect.fail(
-          new ServiceUnavailableException({
+          new DependencyUnavailableError({
             message: "BATTLELOG_SERVICE_UNAVAILABLE",
             retryAfter: 60,
           }),

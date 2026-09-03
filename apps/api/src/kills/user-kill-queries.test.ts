@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
@@ -35,9 +35,9 @@ describe("user kill queries Effect module", () => {
     };
     let observedKey = "";
     const cache: UserKillQueriesCache = {
-      get: <A>(key: string) => {
+      get: (key, schema) => {
         observedKey = key;
-        return Effect.succeed(expected as A);
+        return Effect.sync(() => Schema.decodeUnknownSync(schema)(expected));
       },
       set: () => Effect.die("cache set must not run on a hit"),
     };

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Redis } from "ioredis";
+import { Schema } from "effect";
 
 export interface RedisOptions {
   readonly host: string;
@@ -11,9 +12,9 @@ export interface RedisOptions {
   readonly lazyConnect?: boolean;
 }
 
-export interface JsonCodec {
+export interface JsonCodec<T> {
   stringify(value: unknown): string;
-  parse<T>(text: string): T;
+  parse(text: string): T;
 }
 
 export interface RedisGetOrSetJsonOptions<T> {
@@ -23,7 +24,7 @@ export interface RedisGetOrSetJsonOptions<T> {
   readonly lockTtlSeconds?: number;
   readonly waitTimeoutMs?: number;
   readonly waitIntervalMs?: number;
-  readonly codec?: JsonCodec;
+  readonly codec: JsonCodec<T>;
 }
 
 export interface RedisGetOrSetJsonBestEffortOptions<
@@ -32,9 +33,18 @@ export interface RedisGetOrSetJsonBestEffortOptions<
   readonly onError?: (error: unknown) => void;
 }
 
-const defaultJsonCodec: JsonCodec = {
-  stringify: (value) => JSON.stringify(value),
-  parse: <T>(text: string) => JSON.parse(text) as T,
+const decodeJsonUnknown = Schema.decodeUnknownSync(
+  Schema.fromJsonString(Schema.Unknown),
+);
+
+export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
+  schema: S,
+): JsonCodec<S["Type"]> => {
+  const decodeValue = Schema.decodeUnknownSync(schema);
+  return {
+    stringify: (value) => JSON.stringify(value),
+    parse: (text) => decodeValue(decodeJsonUnknown(text)),
+  };
 };
 
 const releaseLockScript = `
@@ -81,12 +91,12 @@ export const makeRedisStore = (options: RedisOptions) => {
       return client.get(prefixKey(key));
     },
 
-    async getJson<T>(key: string, codec = defaultJsonCodec): Promise<T | null> {
+    async getJson<T>(key: string, codec: JsonCodec<T>): Promise<T | null> {
       const cached = await redisStore.get(key);
       if (cached === null) return null;
 
       try {
-        return codec.parse<T>(cached);
+        return codec.parse(cached);
       } catch {
         await client.del(prefixKey(key));
         return null;
@@ -97,9 +107,13 @@ export const makeRedisStore = (options: RedisOptions) => {
       key: string,
       value: T,
       ttlSeconds?: number,
-      codec = defaultJsonCodec,
+      codec?: JsonCodec<T>,
     ): Promise<void> {
-      await redisStore.set(key, codec.stringify(value), ttlSeconds);
+      await redisStore.set(
+        key,
+        codec?.stringify(value) ?? JSON.stringify(value),
+        ttlSeconds,
+      );
     },
 
     async getOrSetJson<T>({
@@ -109,7 +123,7 @@ export const makeRedisStore = (options: RedisOptions) => {
       lockTtlSeconds = 10,
       waitTimeoutMs = 2_000,
       waitIntervalMs = 50,
-      codec = defaultJsonCodec,
+      codec,
     }: RedisGetOrSetJsonOptions<T>): Promise<T> {
       const cached = await redisStore.getJson<T>(key, codec);
       if (cached !== null) return cached;

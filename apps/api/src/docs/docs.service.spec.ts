@@ -1,8 +1,8 @@
 import { vi } from "#test/bun-test";
 import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { Effect } from "effect";
 import { makeDocsService, type DocsService } from "./docs.service.js";
@@ -106,12 +106,12 @@ const createRepositoryAdapter = (
       const guild = await tx.guild.findUnique({
         where: { id: options.guildId },
       });
-      if (!guild) throw new NotFoundException("Guild not found");
+      if (!guild) throw new ResourceNotFoundError("Guild not found");
       const used = await tx.guildDocument.count({
         where: { guildId: options.guildId },
       });
       if (used >= Math.max(0, guild.documentLimit ?? options.defaultLimit)) {
-        throw new ConflictException("Guild document limit reached");
+        throw new ResourceConflictError("Guild document limit reached");
       }
       const document = await tx.guildDocument.create({
         data: {
@@ -156,7 +156,7 @@ const createRepositoryAdapter = (
           deletedAt: null,
         },
       });
-      if (!document) throw new NotFoundException("Document not found");
+      if (!document) throw new ResourceNotFoundError("Document not found");
       if (
         document.title === options.title &&
         JSON.stringify(document.content) === JSON.stringify(options.content)
@@ -219,9 +219,9 @@ const createRepositoryAdapter = (
               }
             : { id: options.documentId, guildId: options.guildId },
       });
-      if (!document) throw new NotFoundException("Document not found");
+      if (!document) throw new ResourceNotFoundError("Document not found");
       if (options.action === "RESTORE" && !document.deletedAt) {
-        throw new ConflictException("Document is not in trash");
+        throw new ResourceConflictError("Document is not in trash");
       }
       const now = new Date();
       const data =
@@ -258,9 +258,9 @@ const createRepositoryAdapter = (
     const document = await database.guildDocument.findFirst({
       where: { id: documentId, guildId },
     });
-    if (!document) throw new NotFoundException("Document not found");
+    if (!document) throw new ResourceNotFoundError("Document not found");
     if (!document.deletedAt)
-      throw new ConflictException("Document is not in trash");
+      throw new ResourceConflictError("Document is not in trash");
     await database.guildDocument.delete({ where: { id: documentId } });
   },
   findEditors(guildId: string, memberIds: string[]) {
@@ -365,7 +365,7 @@ describe("docs Effect module", () => {
 
     await expect(
       service.createDocument("guild-1", "discord-1", { title: "Plan" }),
-    ).rejects.toBeInstanceOf(ConflictException);
+    ).rejects.toBeInstanceOf(ResourceConflictError);
 
     expect(database.guildDocument.create).not.toHaveBeenCalled();
     expect(database.guildDocumentHistory.create).not.toHaveBeenCalled();
@@ -376,7 +376,7 @@ describe("docs Effect module", () => {
       service.createDocument("guild-1", "discord-1", {
         title: "x".repeat(121),
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
 
     expect(database.$transaction).not.toHaveBeenCalled();
   });
@@ -393,7 +393,7 @@ describe("docs Effect module", () => {
         title: "Plan",
         content: longContent,
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
 
     expect(database.$transaction).not.toHaveBeenCalled();
   });
@@ -518,7 +518,7 @@ describe("docs Effect module", () => {
 
     await expect(
       service.getHistorySnapshot("guild-1", "doc-1", "history-1"),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
 
   it("returns history metadata without content in list results", async () => {
@@ -643,7 +643,7 @@ describe("docs Effect module", () => {
 
     await expect(
       service.restoreDocument("guild-1", "doc-1", "discord-admin"),
-    ).rejects.toBeInstanceOf(ConflictException);
+    ).rejects.toBeInstanceOf(ResourceConflictError);
 
     expect(database.guildDocument.update).not.toHaveBeenCalled();
   });
@@ -670,7 +670,7 @@ describe("docs Effect module", () => {
 
     await expect(
       service.purgeDocument("guild-1", "doc-1"),
-    ).rejects.toBeInstanceOf(ConflictException);
+    ).rejects.toBeInstanceOf(ResourceConflictError);
 
     expect(database.guildDocument.delete).not.toHaveBeenCalled();
   });

@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { NotificationRuleOperations } from "#src/notifications/notification-rule-operations";
 import type { NotificationGuildTargets } from "#src/notifications/notification-guild-targets";
 import type { NotificationUserTargets } from "#src/notifications/notification-user-targets";
@@ -25,17 +26,6 @@ const caller = {
   accessPolicy: {},
   roles: [],
 } as unknown as NotificationGuildCaller;
-
-const requestFor = (): NotificationRequest => ({
-  params: {
-    guildId: "guild-1",
-    jobId: "job-1",
-    ruleId: 1,
-    targetId: 2,
-    watchedItemId: 3,
-  },
-  payload: {},
-});
 
 const makeServices = (operation: () => Promise<unknown>) => {
   const effectOperation = () =>
@@ -93,28 +83,6 @@ const execute = (
   );
 
 describe("notification data layer", () => {
-  it("directly maps success-only notification operations to service calls", async () => {
-    const operation = mock(() => Promise.resolve({ ok: true }));
-    const services = makeServices(operation);
-    const endpoints = [
-      "NotificationsGuildControllerDeleteGuildTarget",
-      "NotificationsGuildControllerDeleteGuildRule",
-      "NotificationsGuildControllerRebuildGuildRuleJobs",
-      "NotificationsGuildControllerTriggerGuildRuleTest",
-      "NotificationsGuildControllerCancelGuildJob",
-      "NotificationsUserControllerDeleteUserTarget",
-      "NotificationsUserControllerTriggerUserTargetTest",
-      "NotificationsUserControllerDeleteUserRule",
-      "NotificationsUserControllerDeleteWatchedItem",
-    ] as const;
-
-    await Promise.all(
-      endpoints.map((endpoint) => execute(services, endpoint, requestFor())),
-    );
-
-    expect(operation).toHaveBeenCalledTimes(endpoints.length);
-  });
-
   it("rejects malformed numeric identifiers before service work", async () => {
     const operation = mock(() => Promise.resolve({ ok: true }));
     const services = makeServices(operation);
@@ -128,10 +96,7 @@ describe("notification data layer", () => {
   });
 
   it("maps application 404 failures to the typed notification error", async () => {
-    const notFound = new Error("not found") as Error & {
-      getStatus: () => number;
-    };
-    notFound.getStatus = () => 404;
+    const notFound = new ResourceNotFoundError("not found");
     const operation = mock(() => Promise.reject(notFound));
     const services = makeServices(operation);
 

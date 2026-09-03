@@ -11,7 +11,7 @@ import {
   isNull,
   or,
 } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Clock, Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -23,9 +23,9 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import {
-  ConflictException,
-  GoneException,
-  NotFoundException,
+  ResourceConflictError,
+  ResourceGoneError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { getGuildIconUrl } from "#src/reservations/reservation-presentation";
 import {
@@ -139,20 +139,20 @@ export const makeReservationSharingDataLayer = (
           const row = rows[0];
           if (!row) {
             return yield* Effect.fail(
-              new NotFoundException({ code: "INVITATION_NOT_FOUND" }),
+              new ResourceNotFoundError({ code: "INVITATION_NOT_FOUND" }),
             );
           }
           if (row.invitation.acceptedAt) {
             return yield* Effect.fail(
-              new ConflictException({ code: "INVITATION_ALREADY_USED" }),
+              new ResourceConflictError({ code: "INVITATION_ALREADY_USED" }),
             );
           }
           if (
             row.invitation.revokedAt ||
-            row.invitation.expiresAt <= new Date()
+            row.invitation.expiresAt <= new Date(yield* Clock.currentTimeMillis)
           ) {
             return yield* Effect.fail(
-              new GoneException({ code: "INVITATION_EXPIRED" }),
+              new ResourceGoneError({ code: "INVITATION_EXPIRED" }),
             );
           }
           return { ...row.invitation, sourceGuild: row.sourceGuild };
@@ -170,7 +170,7 @@ export const makeReservationSharingDataLayer = (
         listShares: (guildId) =>
           operation(
             Effect.gen(function* () {
-              const now = new Date();
+              const now = new Date(yield* Clock.currentTimeMillis);
               const [shares, pendingInvitations] = yield* Effect.all([
                 findActiveShares(guildId),
                 database
@@ -243,7 +243,9 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const token = randomBytes(32).toString("base64url");
-              const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
+              const expiresAt = new Date(
+                (yield* Clock.currentTimeMillis) + INVITATION_TTL_MS,
+              );
               const rows = yield* database
                 .insert(reservationShareInvitationTable)
                 .values({
@@ -252,7 +254,7 @@ export const makeReservationSharingDataLayer = (
                   tokenHash: hashToken(token),
                   createdByUserId: userId,
                   expiresAt,
-                  updatedAt: new Date(),
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .returning();
               const invitation = rows[0];
@@ -276,7 +278,7 @@ export const makeReservationSharingDataLayer = (
         revokeInvitation: (guildId, invitationId) =>
           operation(
             Effect.gen(function* () {
-              const now = new Date();
+              const now = new Date(yield* Clock.currentTimeMillis);
               const rows = yield* database
                 .update(reservationShareInvitationTable)
                 .set({ revokedAt: now, updatedAt: now })
@@ -291,7 +293,7 @@ export const makeReservationSharingDataLayer = (
                 .returning({ id: reservationShareInvitationTable.id });
               if (rows.length === 0) {
                 return yield* Effect.fail(
-                  new NotFoundException({ code: "INVITATION_NOT_FOUND" }),
+                  new ResourceNotFoundError({ code: "INVITATION_NOT_FOUND" }),
                 );
               }
             }),
@@ -316,12 +318,12 @@ export const makeReservationSharingDataLayer = (
               const share = shares[0];
               if (!share) {
                 return yield* Effect.fail(
-                  new NotFoundException({
+                  new ResourceNotFoundError({
                     code: "RESERVATION_SHARE_NOT_FOUND",
                   }),
                 );
               }
-              const now = new Date();
+              const now = new Date(yield* Clock.currentTimeMillis);
               yield* database
                 .update(reservationShareTable)
                 .set({ revokedAt: now, updatedAt: now })
@@ -372,14 +374,14 @@ export const makeReservationSharingDataLayer = (
               );
               if (!targetGuild) {
                 return yield* Effect.fail(
-                  new NotFoundException({
+                  new ResourceNotFoundError({
                     code: "TARGET_ORGANIZATION_NOT_FOUND",
                   }),
                 );
               }
               if (targetGuild.id === invitation.sourceGuildId) {
                 return yield* Effect.fail(
-                  new ConflictException({
+                  new ResourceConflictError({
                     code: "RESERVATION_SHARE_WITH_SELF",
                   }),
                 );
@@ -390,7 +392,7 @@ export const makeReservationSharingDataLayer = (
               );
               const result = yield* database.transaction((transaction) =>
                 Effect.gen(function* () {
-                  const acceptedAt = new Date();
+                  const acceptedAt = new Date(yield* Clock.currentTimeMillis);
                   const claimed = yield* transaction
                     .update(reservationShareInvitationTable)
                     .set({
@@ -425,7 +427,7 @@ export const makeReservationSharingDataLayer = (
                   if (existing[0] && !existing[0].revokedAt) {
                     return { kind: "exists" } as const;
                   }
-                  const now = new Date();
+                  const now = new Date(yield* Clock.currentTimeMillis);
                   const rows = yield* transaction
                     .insert(reservationShareTable)
                     .values({
@@ -456,12 +458,14 @@ export const makeReservationSharingDataLayer = (
               );
               if (result.kind === "expired") {
                 return yield* Effect.fail(
-                  new GoneException({ code: "INVITATION_EXPIRED" }),
+                  new ResourceGoneError({ code: "INVITATION_EXPIRED" }),
                 );
               }
               if (result.kind === "exists") {
                 return yield* Effect.fail(
-                  new ConflictException({ code: "RESERVATION_SHARE_EXISTS" }),
+                  new ResourceConflictError({
+                    code: "RESERVATION_SHARE_EXISTS",
+                  }),
                 );
               }
               if (result.kind === "insert-failed") {

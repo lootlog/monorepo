@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Predicate, Schema } from "effect";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
@@ -37,7 +38,10 @@ export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuild
 
 export interface InternalGuildsCache {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly set: (
     key: string,
     value: string,
@@ -86,7 +90,10 @@ export const makeInternalGuildsData = (
       const cached = yield* cache.get(cacheKey);
       if (cached) {
         try {
-          const guild = JSON.parse(cached) as Record<string, unknown>;
+          const decoded = decodeJsonUnknown(cached);
+          if (!Predicate.isObject(decoded) || Array.isArray(decoded))
+            throw new Error("Invalid guild cache");
+          const guild = decoded;
           return { ...guild, ...resolveReservationSettings(guild) };
         } catch {
           yield* cache.del(cacheKey);
@@ -115,7 +122,10 @@ export const makeInternalGuildsData = (
   const getUserPermissions = (discordId: string, userId: string) =>
     Effect.gen(function* () {
       const cacheKey = `user:${userId}:discord:${discordId}:guild-permissions`;
-      const cached = yield* cache.getJson<unknown[]>(cacheKey);
+      const cached = yield* cache.getJson(
+        cacheKey,
+        GuildsInternalControllerGetUserPermissions200,
+      );
       if (cached !== null) return cached;
 
       const guilds = yield* persistence.findGuildsForPermissions(discordId);

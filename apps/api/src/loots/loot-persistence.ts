@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootCommentTable,
@@ -9,7 +9,7 @@ import {
   organizationLootRecordTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { ForbiddenException } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { CreateCommentDto } from "#src/http-api/lootlog-api";
 import { ErrorKey } from "./enum/error-key.enum.js";
 
@@ -18,7 +18,7 @@ export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-type PersistenceFailure = ForbiddenException | LootPersistenceError;
+type PersistenceFailure = PermissionDeniedError | LootPersistenceError;
 type PersistenceEffect<A> = Effect.Effect<A, PersistenceFailure>;
 
 export interface LootPersistence {
@@ -47,7 +47,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
     effect.pipe(
       Effect.mapError(
         (cause): PersistenceFailure =>
-          cause instanceof ForbiddenException
+          cause instanceof PermissionDeniedError
             ? cause
             : new LootPersistenceError({ operation, cause }),
       ),
@@ -193,7 +193,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               const record = records[0];
               if (!record) {
                 return yield* Effect.fail(
-                  new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT),
+                  new PermissionDeniedError(ErrorKey.CANT_CREATE_COMMENT),
                 );
               }
               const members = yield* transaction
@@ -221,7 +221,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   organizationLootRecordId: record.id,
                   memberId: member.id,
                   content: options.body.content,
-                  updatedAt: new Date(),
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .returning();
               const comment = comments[0];

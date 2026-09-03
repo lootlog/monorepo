@@ -1,10 +1,17 @@
-import { Effect, Layer, Redacted } from "effect";
+import { Clock, Effect, Layer, Redacted, Schema } from "effect";
 import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import {
   RabbitMessaging,
   type FailurePolicy,
   type RabbitDelivery,
 } from "@lootlog/messaging";
+import {
+  decodeRabbitEventJson,
+  type CanonicalRabbitEventRoutingKey,
+  type GuildCreated,
+  type GuildDeleted,
+  type GuildUpdated,
+} from "@lootlog/protocol/rabbit/events";
 import {
   RabbitRoutingKey,
   type RabbitRoutingKeyName,
@@ -29,7 +36,6 @@ import {
 import { Queue as ApiQueue } from "#src/enum/queue.enum";
 import { EVENT_HERO_KILL_QUEUE } from "#src/events/constants/event-hero-kill-queue.constant";
 import { makeEventHeroKillProcessor } from "#src/events/event-hero-kill.processor";
-import type { CreateGuildDto } from "#src/guilds/dto/create-guild.dto";
 import { makeGuildLifecycle } from "#src/guilds/guild-lifecycle.operations";
 import {
   MEMBER_BULK_REFRESH_QUEUE,
@@ -46,14 +52,15 @@ import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { ApiRedis } from "./api-redis.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
 import { forkCronTask } from "./cron.js";
+import { nativeLogger } from "./native-core-data-layers.js";
 import {
-  makeAmqpAdapter,
   NativeEventsServices,
+  NativeNotificationsServices,
+} from "./native-domain-data-layers.js";
+import {
   NativeGuildDiscordSync,
   NativeMemberServices,
-  NativeNotificationsServices,
-  nativeLogger,
-} from "./native-http-data-layers.js";
+} from "./native-member-data-layers.js";
 
 interface PresenceCoveragePayload {
   readonly guildId: string;
@@ -89,8 +96,8 @@ const rabbitRetryPolicy = (
   retryRoutingKey,
   deadLetterRoutingKey,
 });
-const decodeRabbitJson = <Payload>(delivery: RabbitDelivery): Payload =>
-  JSON.parse(new TextDecoder().decode(delivery.content)) as Payload;
+const decodeRabbitText = (delivery: RabbitDelivery): string =>
+  new TextDecoder().decode(delivery.content);
 
 export const NativeRabbitConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
@@ -129,6 +136,7 @@ export const NativeRabbitConsumers = Layer.effectDiscard(
 
     const consume = <Payload>(
       queue: string,
+      routingKey: CanonicalRabbitEventRoutingKey,
       handler: (
         payload: Payload,
         delivery: RabbitDelivery,
@@ -136,15 +144,55 @@ export const NativeRabbitConsumers = Layer.effectDiscard(
       failurePolicy: FailurePolicy = { strategy: "nack" },
     ) =>
       Effect.acquireRelease(
-        rabbit.consume({ queue, failurePolicy }, (delivery) => {
-          const result = handler(decodeRabbitJson<Payload>(delivery), delivery);
-          return Effect.isEffect(result)
-            ? result.pipe(Effect.asVoid)
-            : Effect.tryPromise({
-                try: () => Promise.resolve(result),
-                catch: (cause) => cause,
-              });
-        }),
+        rabbit.consume({ queue, failurePolicy }, (delivery) =>
+          Effect.try({
+            try: () =>
+              decodeRabbitEventJson(
+                routingKey,
+                decodeRabbitText(delivery),
+              ) as Payload,
+            catch: (cause) => cause,
+          }).pipe(
+            Effect.flatMap((payload) => {
+              const result = handler(payload, delivery);
+              return Effect.isEffect(result)
+                ? result.pipe(Effect.asVoid)
+                : Effect.tryPromise({
+                    try: () => Promise.resolve(result),
+                    catch: (cause) => cause,
+                  });
+            }),
+          ),
+        ),
+        ({ cancel }) => cancel.pipe(Effect.ignore),
+      );
+
+    const consumeDeadLetter = (queue: string) =>
+      Effect.acquireRelease(
+        rabbit.consume(
+          { queue, failurePolicy: { strategy: "nack" } },
+          (delivery) =>
+            Effect.try({
+              try: () =>
+                Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Unknown))(
+                  decodeRabbitText(delivery),
+                ),
+              catch: (cause) => cause,
+            }).pipe(
+              Effect.flatMap((data) =>
+                Effect.logError(
+                  "RabbitMQ DLQ message requires manual intervention",
+                ).pipe(
+                  Effect.annotateLogs({
+                    queue,
+                    data,
+                    retryCount:
+                      delivery.properties.headers?.["x-lootlog-retry-count"],
+                  }),
+                ),
+              ),
+            ),
+        ),
         ({ cancel }) => cancel.pipe(Effect.ignore),
       );
 
@@ -175,33 +223,39 @@ export const NativeRabbitConsumers = Layer.effectDiscard(
       ),
     } as const;
 
-    yield* consume<CreateGuildDto>(
+    yield* consume<GuildCreated>(
       ApiQueue.GUILDS_CREATE,
+      RabbitRoutingKey.GUILDS_CREATE,
       (data) => guildLifecycle.createGuild(data),
       retry.guildCreate,
     );
-    yield* consume<CreateGuildDto>(
+    yield* consume<GuildUpdated>(
       ApiQueue.GUILDS_UPDATE,
+      RabbitRoutingKey.GUILDS_UPDATE,
       (data) => guildLifecycle.updateGuild(data),
       retry.guildUpdate,
     );
-    yield* consume<CreateGuildDto>(
+    yield* consume<GuildDeleted>(
       ApiQueue.GUILDS_DELETE,
+      RabbitRoutingKey.GUILDS_DELETE,
       (data) => guildLifecycle.deleteGuild(data),
       retry.guildDelete,
     );
     yield* consume<CreateRoleDto>(
       ApiQueue.GUILDS_CREATE_ROLE,
+      RabbitRoutingKey.GUILDS_CREATE_ROLE,
       (data) => guildLifecycle.upsertRole(data),
       retry.roleCreate,
     );
     yield* consume<UpdateRoleDto>(
       ApiQueue.GUILDS_UPDATE_ROLE,
+      RabbitRoutingKey.GUILDS_UPDATE_ROLE,
       (data) => guildLifecycle.upsertRole(data),
       retry.roleUpdate,
     );
     yield* consume<DeleteRoleDto>(
       ApiQueue.GUILDS_DELETE_ROLE,
+      RabbitRoutingKey.GUILDS_DELETE_ROLE,
       (data) => guildLifecycle.deleteRole(data),
       retry.roleDelete,
     );
@@ -215,91 +269,80 @@ export const NativeRabbitConsumers = Layer.effectDiscard(
       ApiQueue.GUILDS_DELETE_ROLE_DLQ,
     ] as const;
     for (const queue of dlqQueues) {
-      yield* consume<Record<string, unknown>>(queue, (data, delivery) =>
-        Effect.runSync(
-          Effect.logError(
-            "RabbitMQ DLQ message requires manual intervention",
-          ).pipe(
-            Effect.annotateLogs({
-              queue,
-              data,
-              retryCount:
-                delivery.properties.headers?.["x-lootlog-retry-count"],
-            }),
-          ),
-        ),
-      );
+      yield* consumeDeadLetter(queue);
     }
 
     yield* consume<DiscordGuildChannelsSyncedEvent>(
       "backend-discord-guild-channels-synced",
+      RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
       (data) => guildSync.handleGuildChannelsSynced(data),
     );
     yield* consume<DiscordGuildChannelUpsertedEvent>(
       "backend-discord-guild-channel-upserted",
+      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
       (data) => guildSync.handleGuildChannelUpserted(data),
     );
     yield* consume<DiscordGuildChannelDeletedEvent>(
       "backend-discord-guild-channel-deleted",
+      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       (data) => guildSync.handleGuildChannelDeleted(data),
     );
     yield* consume<DiscordGuildChannelsSyncFailedEvent>(
       "backend-discord-guild-channels-sync-failed",
+      RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
       (data) => guildSync.handleGuildChannelsSyncFailed(data),
     );
     yield* consume<DiscordGuildSyncStateUpdatedEvent>(
       "backend-discord-guild-sync-state-updated",
+      RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
       (data) => guildSync.handleGuildSyncStateUpdated(data),
     );
 
     yield* consume<PresenceCoveragePayload>(
       ApiQueue.PRESENCE_COVERAGE_CHECK,
-      async ({ guildId, mapName, discordId, hasPlayer, isAfk }) => {
-        try {
-          await Effect.runPromise(
-            tracking.handlePlayerPresenceChange(
-              guildId,
-              mapName,
-              discordId,
-              hasPlayer,
-              isAfk ?? false,
-            ),
-          );
-        } catch (error) {
-          nativeLogger.log({
-            level: "error",
-            message: "Failed to handle player presence change",
-            error: error instanceof Error ? error.message : error,
+      RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
+      ({ guildId, mapName, discordId, hasPlayer, isAfk }) =>
+        tracking
+          .handlePlayerPresenceChange(
             guildId,
             mapName,
-          });
-        }
-      },
+            discordId,
+            hasPlayer,
+            isAfk ?? false,
+          )
+          .pipe(
+            Effect.catch((error) =>
+              Effect.logError("Failed to handle player presence change").pipe(
+                Effect.annotateLogs({ error, guildId, mapName }),
+              ),
+            ),
+          ),
     );
 
     yield* consume<TimerUpdatedPayload>(
       "backend-notifications-timer-updated",
-      (data) => Effect.runPromise(notificationEvents.handleTimerUpdated(data)),
+      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+      (data) => notificationEvents.handleTimerUpdated(data),
     );
     yield* consume<TimerDeletedPayload>(
       "backend-notifications-timer-deleted",
-      (data) => Effect.runPromise(notificationEvents.handleTimerDeleted(data)),
+      RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
+      (data) => notificationEvents.handleTimerDeleted(data),
     );
     yield* consume<LootCreatedNotificationEventV2>(
       "backend-notifications-loot-created",
-      (data) => Effect.runPromise(notificationEvents.handleLootCreated(data)),
+      RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
+      (data) => notificationEvents.handleLootCreated(data),
     );
     yield* consume<DiscordNotificationDeliveryResultEvent>(
       "backend-notifications-delivery-result",
-      (data) =>
-        Effect.runPromise(notificationEvents.handleDeliveryResult(data)),
+      RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
+      (data) => notificationEvents.handleDeliveryResult(data),
     );
     yield* consume<DiscordGuildChannelDeletedEvent>(
       "backend-notifications-discord-guild-channel-deleted",
-      (data) =>
-        Effect.runPromise(
-          notificationEvents.handleDiscordGuildChannelDeleted(data),
-        ),
+      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+      (data) => notificationEvents.handleDiscordGuildChannelDeleted(data),
     );
   }),
 );
@@ -345,8 +388,12 @@ export const NativeBullWorkers = Layer.effectDiscard(
           const nextRefreshAt = yield* scheduler.getNextRefreshAt(
             job.data.userId,
           );
-          if (nextRefreshAt && nextRefreshAt.getTime() > Date.now()) {
-            const waitMs = nextRefreshAt.getTime() - Date.now();
+          if (
+            nextRefreshAt &&
+            nextRefreshAt.getTime() > (yield* Clock.currentTimeMillis)
+          ) {
+            const waitMs =
+              nextRefreshAt.getTime() - (yield* Clock.currentTimeMillis);
             yield* scheduler.extendUserRefreshLock(
               job.data.userId,
               lockOwner,
@@ -452,7 +499,10 @@ export const NativeBullWorkers = Layer.effectDiscard(
         const { jobId, guildId, memberIds } = job.data;
         yield* database
           .update(memberRefreshJobTable)
-          .set({ status: "PROCESSING", updatedAt: new Date() })
+          .set({
+            status: "PROCESSING",
+            updatedAt: new Date(yield* Clock.currentTimeMillis),
+          })
           .where(eq(memberRefreshJobTable.id, jobId));
         yield* emitRefreshJobUpdate(jobId);
         const refreshedIds: string[] = [];
@@ -473,7 +523,7 @@ export const NativeBullWorkers = Layer.effectDiscard(
               .update(memberRefreshJobTable)
               .set({
                 failedMembers: sql`${memberRefreshJobTable.failedMembers} + 1`,
-                updatedAt: new Date(),
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
               })
               .where(eq(memberRefreshJobTable.id, jobId));
             continue;
@@ -488,12 +538,15 @@ export const NativeBullWorkers = Layer.effectDiscard(
           if (processedMembers % 5 === 0) {
             yield* database
               .update(memberRefreshJobTable)
-              .set({ processedMembers, updatedAt: new Date() })
+              .set({
+                processedMembers,
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
+              })
               .where(eq(memberRefreshJobTable.id, jobId));
             yield* emitRefreshJobUpdate(jobId);
           }
         }
-        const completedAt = new Date();
+        const completedAt = new Date(yield* Clock.currentTimeMillis);
         yield* database
           .update(memberRefreshJobTable)
           .set({
@@ -511,7 +564,7 @@ export const NativeBullWorkers = Layer.effectDiscard(
       }).pipe(
         Effect.catch((error) =>
           Effect.gen(function* () {
-            const failedAt = new Date();
+            const failedAt = new Date(yield* Clock.currentTimeMillis);
             yield* database
               .update(memberRefreshJobTable)
               .set({
@@ -576,7 +629,7 @@ export const NativeBullWorkers = Layer.effectDiscard(
         return workers;
       }),
       (workers) =>
-        Effect.promise(() =>
+        Effect.tryPromise(() =>
           Promise.all(workers.map((worker) => worker.close())),
         ),
     );
@@ -590,7 +643,7 @@ export const NativeScheduledJobs = Layer.effectDiscard(
 
     const cleanupReservations = Effect.gen(function* () {
       if (config.reservationsCleanup.enabled === "false") return;
-      const cutoff = new Date();
+      const cutoff = new Date(yield* Clock.currentTimeMillis);
       cutoff.setDate(
         cutoff.getDate() - config.reservationsCleanup.retentionDays,
       );
@@ -614,7 +667,7 @@ export const NativeScheduledJobs = Layer.effectDiscard(
 
     const cleanupTimers = Effect.gen(function* () {
       if (config.timerCleanup.enabled === "false") return;
-      const cutoff = new Date();
+      const cutoff = new Date(yield* Clock.currentTimeMillis);
       cutoff.setDate(cutoff.getDate() - config.timerCleanup.retentionDays);
       const deleted = yield* database
         .delete(timerTable)

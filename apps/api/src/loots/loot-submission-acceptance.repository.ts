@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from "#src/shared/http/http-errors";
+import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import {
   and,
   arrayOverlaps,
@@ -10,7 +10,7 @@ import {
   ne,
   or,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   itemSnapshotTable,
@@ -319,7 +319,7 @@ export const makeLootSubmissionAcceptancePersistence = (
     const guildIds = [...new Set(submissions.map(({ guildId }) => guildId))];
     return database.transaction((transaction) =>
       Effect.gen(function* () {
-        const now = new Date();
+        const now = new Date(yield* Clock.currentTimeMillis);
         if (guildIds.length > 0) {
           yield* transaction
             .insert(organizationLootRecordTable)
@@ -361,7 +361,7 @@ export const makeLootSubmissionAcceptancePersistence = (
             submission.guildId,
           );
           if (organizationLootRecordId === undefined) {
-            throw new ServiceUnavailableException(
+            throw new DependencyUnavailableError(
               "Failed to resolve Organization Loot record",
             );
           }
@@ -390,7 +390,7 @@ export const makeLootSubmissionAcceptancePersistence = (
   createNewLoot: (data) =>
     database.transaction((transaction) =>
       Effect.gen(function* () {
-        const now = new Date();
+        const now = new Date(yield* Clock.currentTimeMillis);
         const createdLoots = yield* transaction
           .insert(lootTable)
           .values({
@@ -405,7 +405,9 @@ export const makeLootSubmissionAcceptancePersistence = (
           .returning({ id: lootTable.id });
         const loot = createdLoots[0];
         if (!loot) {
-          throw new ServiceUnavailableException("Failed to create loot");
+          return yield* Effect.fail(
+            new DependencyUnavailableError("Failed to create loot"),
+          );
         }
 
         for (const item of data.items) {
@@ -440,8 +442,8 @@ export const makeLootSubmissionAcceptancePersistence = (
                 .limit(1);
           const snapshot = existing[0];
           if (!snapshot) {
-            throw new ServiceUnavailableException(
-              "Failed to resolve item snapshot",
+            return yield* Effect.fail(
+              new DependencyUnavailableError("Failed to resolve item snapshot"),
             );
           }
           yield* transaction.insert(lootItemTable).values({
@@ -488,8 +490,10 @@ export const makeLootSubmissionAcceptancePersistence = (
                 .limit(1);
           const snapshot = existing[0];
           if (!snapshot) {
-            throw new ServiceUnavailableException(
-              "Failed to resolve player snapshot",
+            return yield* Effect.fail(
+              new DependencyUnavailableError(
+                "Failed to resolve player snapshot",
+              ),
             );
           }
           yield* transaction.insert(lootPlayerTable).values({
@@ -521,8 +525,8 @@ export const makeLootSubmissionAcceptancePersistence = (
                 .limit(1);
           const snapshot = existing[0];
           if (!snapshot) {
-            throw new ServiceUnavailableException(
-              "Failed to resolve NPC snapshot",
+            return yield* Effect.fail(
+              new DependencyUnavailableError("Failed to resolve NPC snapshot"),
             );
           }
           yield* transaction.insert(lootNpcTable).values({
@@ -553,7 +557,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               submission.guildId,
             );
             if (organizationLootRecordId === undefined) {
-              throw new ServiceUnavailableException(
+              throw new DependencyUnavailableError(
                 "Failed to resolve Organization Loot record",
               );
             }

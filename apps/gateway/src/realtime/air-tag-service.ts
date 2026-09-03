@@ -2,6 +2,7 @@ import {
   AIR_TAG_CLAN_ENEMY_RELATION,
   AIR_TAG_ENEMY_RELATION,
   AIR_TAG_MAX_BATCH_SIZE,
+  AirTagTargetSchema,
   isAirTagObservation,
   type AirTagObservationAck,
   type AirTagObservation,
@@ -10,6 +11,7 @@ import {
   type AirTagTarget,
   type AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
+import { Schema } from "effect";
 import { Logger } from "#src/platform/logger";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
@@ -158,16 +160,28 @@ interface MergeResult {
   acceptedTargets: number;
   updates: Array<{ revision: number; target: AirTagTarget }>;
 }
-interface SnapshotResult {
-  epochId: string;
-  epochStartedAt: number;
-  revision: number;
-  targets: AirTagTarget[];
-}
 interface ObservationBatch {
   readonly expectedMapId: number;
   readonly observations: ReadonlyArray<AirTagObservation>;
 }
+const MergeResultJson = Schema.fromJsonString(
+  Schema.Struct({
+    epochId: Schema.String,
+    epochStartedAt: Schema.Number,
+    acceptedTargets: Schema.Number,
+    updates: Schema.Array(
+      Schema.Struct({ revision: Schema.Number, target: AirTagTargetSchema }),
+    ),
+  }),
+);
+const SnapshotResultJson = Schema.fromJsonString(
+  Schema.Struct({
+    epochId: Schema.String,
+    epochStartedAt: Schema.Number,
+    revision: Schema.Number,
+    targets: Schema.Array(AirTagTargetSchema),
+  }),
+);
 
 export class AirTagService {
   private readonly logger = new Logger(AirTagService.name);
@@ -442,16 +456,8 @@ export class AirTagService {
       AIR_TAG_ENEMY_RELATION,
       AIR_TAG_CLAN_ENEMY_RELATION,
     );
-    const parsed = JSON.parse(String(result)) as Omit<
-      MergeResult,
-      "updates"
-    > & {
-      readonly updates: unknown;
-    };
-    return {
-      ...parsed,
-      updates: Array.isArray(parsed.updates) ? parsed.updates : [],
-    } as MergeResult;
+    const parsed = Schema.decodeUnknownSync(MergeResultJson)(String(result));
+    return { ...parsed, updates: [...parsed.updates] };
   }
 
   private async loadSnapshot(scope: AirTagScope): Promise<AirTagScopeSnapshot> {
@@ -462,21 +468,15 @@ export class AirTagService {
       crypto.randomUUID(),
       IDLE_TTL_SECONDS,
     );
-    const parsed = JSON.parse(String(result)) as Omit<
-      SnapshotResult,
-      "targets"
-    > & {
-      readonly targets: unknown;
-    };
-    const snapshot = {
-      ...parsed,
-      targets: Array.isArray(parsed.targets) ? parsed.targets : [],
-    } as SnapshotResult;
+    const snapshot = Schema.decodeUnknownSync(SnapshotResultJson)(
+      String(result),
+    );
     return {
       guildId: scope.guildId,
       world: scope.world,
       mapId: scope.mapId,
       ...snapshot,
+      targets: [...snapshot.targets],
     };
   }
 }

@@ -1,17 +1,21 @@
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import {
   parseReservationCatalogPayload,
   type ReservationSpot,
 } from "#src/reservations/reservation-catalog";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const CACHE_KEY = "reservations:catalog:v2";
 const CACHE_TTL_SECONDS = 60 * 60;
 
 export interface ReservationCatalogCache {
-  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly setJson: (
     key: string,
     value: unknown,
@@ -30,7 +34,7 @@ export const makeReservationCatalogAdapter = (options: {
   readonly url: string;
 }): ReservationCatalogAdapter => {
   const getSpots = Effect.suspend(() =>
-    options.cache.getJson<unknown>(CACHE_KEY).pipe(
+    options.cache.getJson(CACHE_KEY, Schema.Unknown).pipe(
       Effect.catch(() => Effect.succeed(null)),
       Effect.flatMap((cached) => {
         if (cached !== null) {
@@ -52,9 +56,9 @@ export const makeReservationCatalogAdapter = (options: {
               ? Effect.try({
                   try: () =>
                     parseReservationCatalogPayload(
-                      JSON.parse(
+                      decodeJsonUnknown(
                         new TextDecoder().decode(response.body),
-                      ) as unknown,
+                      ),
                     ),
                   catch: (error) => error,
                 })
@@ -85,7 +89,9 @@ export const makeReservationCatalogAdapter = (options: {
           return spot
             ? Effect.succeed(spot)
             : Effect.fail(
-                new NotFoundException({ code: "RESERVATION_SPOT_NOT_FOUND" }),
+                new ResourceNotFoundError({
+                  code: "RESERVATION_SPOT_NOT_FOUND",
+                }),
               );
         }),
       ),

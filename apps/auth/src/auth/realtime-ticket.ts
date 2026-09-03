@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { Schema } from "effect";
 
 export const REALTIME_TICKET_TTL_SECONDS = 30;
 
@@ -10,6 +11,17 @@ export interface RealtimeTicketIdentity {
 interface StoredRealtimeTicket extends RealtimeTicketIdentity {
   readonly origin: string;
 }
+
+const StoredRealtimeTicketSchema = Schema.fromJsonString(
+  Schema.Struct({
+    userId: Schema.NonEmptyString,
+    discordId: Schema.NonEmptyString,
+    origin: Schema.String,
+  }),
+);
+const decodeStoredRealtimeTicket = Schema.decodeUnknownSync(
+  StoredRealtimeTicketSchema,
+);
 
 export interface RealtimeTicketRedis {
   readonly set: (
@@ -54,15 +66,8 @@ export const consumeRealtimeTicket = async (
   const raw = await redis.getdel(keyFor(ticket));
   if (!raw) return null;
   try {
-    const stored = JSON.parse(raw) as Partial<StoredRealtimeTicket>;
-    if (
-      stored.origin !== origin ||
-      typeof stored.userId !== "string" ||
-      stored.userId.length === 0 ||
-      typeof stored.discordId !== "string" ||
-      stored.discordId.length === 0
-    )
-      return null;
+    const stored = decodeStoredRealtimeTicket(raw);
+    if (stored.origin !== origin) return null;
     return { userId: stored.userId, discordId: stored.discordId };
   } catch {
     return null;

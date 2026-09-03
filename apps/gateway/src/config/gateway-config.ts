@@ -9,13 +9,13 @@ export interface GatewayConfiguration {
   readonly authUrl: string;
   readonly margonemSigningKeyUrl: string;
   readonly margonemAccountProofRequired: boolean;
-  readonly rabbitmqUri: string;
-  readonly activityEventSignatureSecret: string;
+  readonly rabbitmqUri: Redacted.Redacted<string>;
+  readonly activityEventSignatureSecret: Redacted.Redacted<string>;
   readonly redis: {
     readonly host: string;
     readonly port: number;
     readonly username: string;
-    readonly password: string;
+    readonly password: Redacted.Redacted<string>;
     readonly keyPrefix: string;
   };
   readonly websocketPath: string;
@@ -39,9 +39,7 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
   const serviceName = yield* Config.string("SERVICE_NAME").pipe(
     Config.withDefault("gateway"),
   );
-  const redisPassword = Redacted.value(
-    yield* Config.redacted("REDIS_PASSWORD"),
-  );
+  const redisPassword = yield* Config.redacted("REDIS_PASSWORD");
 
   return {
     environment,
@@ -60,9 +58,9 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
     margonemAccountProofRequired: yield* Config.boolean(
       "MARGONEM_ACCOUNT_PROOF_REQUIRED",
     ).pipe(Config.withDefault(false)),
-    rabbitmqUri: Redacted.value(yield* Config.redacted("RABBITMQ_URI")),
-    activityEventSignatureSecret: Redacted.value(
-      yield* Config.redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
+    rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
+    activityEventSignatureSecret: yield* Config.redacted(
+      "ACTIVITY_EVENT_SIGNATURE_SECRET",
     ),
     redis: {
       host: yield* Config.string("REDIS_HOST"),

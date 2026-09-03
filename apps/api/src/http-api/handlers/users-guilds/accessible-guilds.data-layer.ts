@@ -7,9 +7,9 @@ import {
   isNotNull,
   or,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { apiConfig } from "#src/config/api.config";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -27,7 +27,7 @@ import {
 
 const CACHE_TTL_SECONDS = 30;
 
-type GuildSummary = {
+export type GuildSummary = {
   readonly id: string;
   readonly name: string;
   readonly icon: string | null;
@@ -37,6 +37,21 @@ type GuildSummary = {
   readonly hasLootlogAccess: boolean;
   readonly isAccessDataStale: boolean;
 };
+
+export const GuildSummaryCacheSchema = Schema.mutable(
+  Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      name: Schema.String,
+      icon: Schema.NullOr(Schema.String),
+      vanityUrl: Schema.NullOr(Schema.String),
+      ownerId: Schema.String,
+      publicStatsCardEnabled: Schema.Boolean,
+      hasLootlogAccess: Schema.Boolean,
+      isAccessDataStale: Schema.Boolean,
+    }),
+  ),
+);
 
 export interface AccessibleGuildPorts {
   readonly getCached: (
@@ -59,6 +74,7 @@ export interface AccessibleGuildPorts {
 export const makeAccessibleGuilds = (
   database: typeof ApiDatabase.Service,
   ports: AccessibleGuildPorts,
+  environment: RuntimeEnvironment,
 ) => {
   const queue = (
     identity: AuthenticatedIdentity,
@@ -161,7 +177,7 @@ export const makeAccessibleGuilds = (
       ]),
     );
     const staleThreshold =
-      Date.now() - getMemberCacheSoftTtl(apiConfig.environment);
+      (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment);
     const summaries = guilds
       .map((guild): GuildSummary => {
         const member = memberByGuild.get(guild.id);

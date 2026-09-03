@@ -1,8 +1,8 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { APIGuild } from "discord-api-types/v10";
 import { Permission } from "@lootlog/schema/permissions";
-import { apiConfig } from "#src/config/api.config";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -14,7 +14,10 @@ import {
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import { getMemberCacheSoftTtl } from "#src/members/constants/member-cache.constant";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
-import { HttpException, HttpStatus } from "#src/shared/http/http-errors";
+import {
+  ApplicationError,
+  ApplicationErrorKind,
+} from "#src/shared/http/http-errors";
 import {
   type AuthenticatedIdentity,
   UsersGuildsOperationError,
@@ -60,12 +63,12 @@ export interface CurrentUserGuildPorts {
 }
 
 const fallbackEligible = (error: unknown) => {
-  if (!(error instanceof HttpException)) return false;
-  const status = error.getStatus();
+  if (!(error instanceof ApplicationError)) return false;
   return (
-    status === HttpStatus.TOO_MANY_REQUESTS ||
-    status === HttpStatus.REQUEST_TIMEOUT ||
-    status >= HttpStatus.INTERNAL_SERVER_ERROR
+    error.kind === ApplicationErrorKind.RATE_LIMITED ||
+    error.kind === ApplicationErrorKind.TIMEOUT ||
+    error.kind === ApplicationErrorKind.DEPENDENCY_UNAVAILABLE ||
+    error.kind === ApplicationErrorKind.INTERNAL
   );
 };
 
@@ -86,6 +89,7 @@ const discordAdmin = (guild: APIGuild) => {
 export const makeCurrentUserGuilds = (
   database: typeof ApiDatabase.Service,
   ports: CurrentUserGuildPorts,
+  environment: RuntimeEnvironment,
 ) => {
   const readMembers = (discordId: string, guildIds: ReadonlyArray<string>) =>
     Effect.gen(function* () {
@@ -179,7 +183,7 @@ export const makeCurrentUserGuilds = (
       members.map((member) => [member.guildId, member]),
     );
     const staleThreshold =
-      Date.now() - getMemberCacheSoftTtl(apiConfig.environment);
+      (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment);
     const discordById = new Map(apiGuilds.map((guild) => [guild.id, guild]));
     const candidates = guilds
       .flatMap((guild) => {

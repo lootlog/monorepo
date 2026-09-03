@@ -33,6 +33,34 @@ Baseline behavior is pinned to
   deterministic Discord issuer plus the `(issuer, accountId)` uniqueness
   contract with collision preflight.
 
+## Effect migration hardening audit
+
+The post-rewrite audit removed the remaining migration-shaped implementation
+debt rather than treating the absence of NestJS imports as sufficient:
+
+- active RabbitMQ routes decode with canonical schemas before consumer logic;
+- Battlelog no longer uses a production `ManagedRuntime` or Promise database
+  facade, and its Redis/R2 boundaries use schema-backed decoders;
+- Gateway lifecycle and background work compose Effects, with Promise
+  conversion confined to Bun, Redis, Rabbit, BullMQ, Discord, and WebSocket
+  callback boundaries;
+- secrets remain `Redacted` until an external SDK client is constructed;
+- semantic tagged failures are mapped to HTTP only at the transport edge;
+- API Redis reads require explicit typed codecs, and Auth decodes consumed
+  realtime tickets with Effect Schema; its IDP-token flow is Effect-native up
+  to the Discord SDK boundary;
+- rejectable infrastructure Promises use `Effect.tryPromise`, keeping failures
+  in the typed error channel; the architecture gate rejects `Effect.promise`
+  in production backend code;
+- current-time decisions in Effect generators use `Clock`, and expected
+  failures use `Effect.fail`; AST checks prevent direct wall-clock reads and
+  uncaught throws from returning inside generators;
+- tautological endpoint-dispatch tests that shared one mock across unrelated
+  operations were removed rather than preserved as misleading coverage;
+- API native composition is split into focused responsibility modules; and
+- the CI `architecture:effect` gate prevents the removed NestJS and
+  anti-Effect patterns from returning.
+
 ## Preserved contracts
 
 - Five OpenAPI specifications contain 244 operation IDs: the 243 baseline
@@ -40,7 +68,8 @@ Baseline behavior is pinned to
   status codes, security declarations, public battle links, and all other
   operation IDs remain at parity.
 - Orval `mode: "single"` generates one TypeScript file for each of the five API
-  inputs instead of 1,176 files. Two-pass generation is deterministic.
+  inputs instead of 1,176 files. Battlelog path items are normalized before
+  serialization and two-pass generation is deterministic.
 - API preserves the Traefik `forwardAuth` boundary. Auth validates the JWT or
   session, then API requires the complete trusted `x-auth-user-id` and
   `x-auth-discord-id` pair. Bearer authentication directly against API fails
@@ -84,7 +113,7 @@ Baseline behavior is pinned to
 
 - API's native Bun/Effect listener serves all 26 groups and 199 operations.
   RabbitMQ consumers, BullMQ workers, scheduled jobs, data layers, and shutdown
-  are scoped Effect resources. The gate passes 337 unit tests, 136 Effect
+  are scoped Effect resources. The gate passes 259 unit tests, 138 Effect
   boundary tests, and 9 real PostgreSQL/Redis E2E tests.
 - API archives the legacy schema and 139 migrations with 140 checked SHA-256
   entries. Real PostgreSQL verification covers a clean baseline, adoption,
@@ -96,7 +125,7 @@ Baseline behavior is pinned to
   database-to-R2 failure window. The Drizzle seed CLI was also exercised against
   PostgreSQL.
 - Web, Game Client, Wiki, and generated clients use the new HTTP and realtime
-  boundaries. Web passes 610 tests, Game Client 1,300, and Client 19.
+  boundaries. Web passes 622 tests, Game Client 1,300, and Client 19.
 
 ## Delivery evidence
 

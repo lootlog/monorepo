@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import {
   DiscordGuildSyncStatus,
   type DiscordGuildChannelSnapshot,
@@ -12,7 +12,7 @@ import {
   guildTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
-import { HttpException, HttpStatus } from "#src/shared/http/http-errors";
+import { RateLimitedError } from "#src/shared/http/http-errors";
 import { UsersGuildsOperationError } from "./users-guilds.handlers.js";
 
 type SyncPayload = {
@@ -200,7 +200,7 @@ const recordFailure = (
       .where(eq(guildTable.id, guildId))
       .limit(1);
     if (!guild[0]) return;
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     yield* database
       .insert(discordGuildSyncStateTable)
       .values({
@@ -271,12 +271,12 @@ export const makeGuildDiscordSyncData = (
     const current = yield* loadState(database, guildId);
     if (
       current &&
-      Date.now() - current.updatedAt.getTime() < REFRESH_COOLDOWN_MS
+      (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() <
+        REFRESH_COOLDOWN_MS
     ) {
       return yield* Effect.fail(
-        new HttpException(
+        new RateLimitedError(
           "Discord sync can only be refreshed once every 5 minutes",
-          HttpStatus.TOO_MANY_REQUESTS,
         ),
       );
     }
@@ -307,7 +307,8 @@ export const makeGuildDiscordSyncData = (
     }
     const stale =
       current.status === DiscordGuildSyncStatus.STALE ||
-      Date.now() - current.updatedAt.getTime() > ports.staleAfterMs;
+      (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() >
+        ports.staleAfterMs;
     return stale
       ? {
           ...current,

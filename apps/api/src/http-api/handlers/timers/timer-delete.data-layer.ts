@@ -1,5 +1,5 @@
 import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -11,8 +11,8 @@ import {
   timerTable,
 } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
@@ -65,15 +65,21 @@ export const makeDeleteTimer = (
           .from(timerTable)
           .where(timerCondition);
         if (timers.length > 1) {
-          throw new BadRequestException({
-            message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
-          });
+          return yield* Effect.fail(
+            new InvalidRequestError({
+              message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+            }),
+          );
         }
         const timer = timers[0];
         if (!timer) {
-          throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
+          return yield* Effect.fail(
+            new ResourceNotFoundError({
+              message: ErrorKey.TIMER_NOT_FOUND,
+            }),
+          );
         }
-        const now = new Date();
+        const now = new Date(yield* Clock.currentTimeMillis);
         const activeEventHero = yield* transaction
           .select({ id: eventHeroNpcTable.id })
           .from(eventHeroNpcTable)
@@ -95,9 +101,11 @@ export const makeDeleteTimer = (
           )
           .limit(1);
         if (activeEventHero.length > 0) {
-          throw new BadRequestException({
-            message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
-          });
+          return yield* Effect.fail(
+            new InvalidRequestError({
+              message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
+            }),
+          );
         }
         const manual =
           Number(npcField(timer.npc, "margonemType")) ===
@@ -115,7 +123,9 @@ export const makeDeleteTimer = (
             .limit(1);
           const actorMemberId = actors[0]?.id;
           if (actorMemberId === undefined) {
-            throw new Error("Timer history actor member was not found");
+            return yield* Effect.fail(
+              new Error("Timer history actor member was not found"),
+            );
           }
           yield* transaction.insert(timerHistoryEntryTable).values({
             guildId: access.guild.id,
@@ -164,7 +174,11 @@ export const makeDeleteTimer = (
             .where(timerCondition)
             .returning();
           if (!updated[0]) {
-            throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
+            return yield* Effect.fail(
+              new ResourceNotFoundError({
+                message: ErrorKey.TIMER_NOT_FOUND,
+              }),
+            );
           }
         } else {
           const deleted = yield* transaction
@@ -172,7 +186,11 @@ export const makeDeleteTimer = (
             .where(timerCondition)
             .returning();
           if (!deleted[0]) {
-            throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
+            return yield* Effect.fail(
+              new ResourceNotFoundError({
+                message: ErrorKey.TIMER_NOT_FOUND,
+              }),
+            );
           }
         }
         return timer;
@@ -211,7 +229,9 @@ export const makeDeleteTimer = (
         )
       : Effect.fail(
           new TimersOperationError({
-            cause: new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND }),
+            cause: new ResourceNotFoundError({
+              message: ErrorKey.TIMER_NOT_FOUND,
+            }),
           }),
         );
 };

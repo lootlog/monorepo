@@ -8,7 +8,7 @@ import {
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { BattlelogApplication } from "#src/app.factory";
-import type { BattlelogOperations } from "#src/battles/battles.controller";
+import type { BattlelogOperations } from "#src/battles/battlelog-operations";
 import { BattlelogOperationFailure } from "../battles/battlelog-operation.js";
 import {
   CreateBattleSchema,
@@ -28,7 +28,7 @@ import {
 import {
   DeleteUserDataSchema,
   type DeleteUserData,
-} from "#src/battles/internal.controller";
+} from "#src/battles/internal-operations";
 import {
   BattlelogApi,
   BearerSecurityMiddleware,
@@ -37,7 +37,11 @@ import {
   type BattlesControllerGetDashboardBattlesQuery,
   type BattlesControllerGetPlayerVsPlayerBattlesQuery,
 } from "../http-api/battlelog-api.js";
-import { HttpError, UnauthorizedException } from "#src/platform/http-error";
+import {
+  ApplicationError,
+  AuthenticationRequiredError,
+  applicationErrorStatus,
+} from "#src/platform/http-error";
 import { Logger } from "#src/platform/logger";
 
 export type { BattlelogOperations };
@@ -52,7 +56,7 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
     return yield* Effect.fail(
       new BattlelogOperationFailure({
         operation: "Battlelog.currentUserId",
-        cause: new UnauthorizedException(),
+        cause: new AuthenticationRequiredError(),
       }),
     );
   }
@@ -71,14 +75,15 @@ const errorResponse = (error: unknown) => {
       { status: 400 },
     );
   }
-  if (error instanceof HttpError) {
+  if (error instanceof ApplicationError) {
+    const status = applicationErrorStatus(error);
     return HttpServerResponse.jsonUnsafe(
       {
         error: error.name.replace(/Exception$/, ""),
         message: error.message,
-        statusCode: error.statusCode,
+        statusCode: status,
       },
-      { status: error.statusCode },
+      { status },
     );
   }
   logger.error("Unhandled request failure", error);
@@ -399,7 +404,7 @@ const openApiFile = async (): Promise<Blob> => {
 // oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.
 const DocumentationRoutes = HttpRouter.use((router) =>
   Effect.gen(function* () {
-    const yaml = yield* Effect.promise(openApiFile);
+    const yaml = yield* Effect.tryPromise(openApiFile);
     yield* router.addAll([
       HttpRouter.route(
         "GET",

@@ -12,7 +12,7 @@ import {
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { Client, IntentsBitField } from "discord.js";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import {
   HttpRouter,
   HttpServer,
@@ -87,7 +87,7 @@ export class BotServices extends Context.Service<
             const active = new Client({
               intents: [IntentsBitField.Flags.Guilds],
             });
-            await active.login(config.discordBotToken);
+            await active.login(Redacted.value(config.discordBotToken));
             return active;
           },
           catch: (cause) => cause,
@@ -215,7 +215,7 @@ const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* BotConfig;
     return RabbitMessaging.layer({
-      uri: config.rabbitmqUri,
+      uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
       queues: [notificationQueue],
     });

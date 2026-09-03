@@ -1,14 +1,17 @@
 import { randomUUID } from "node:crypto";
 import {
-  ForbiddenException,
-  HttpError,
-  NotFoundException,
-  ServiceUnavailableException,
+  PermissionDeniedError,
+  ApplicationError,
+  ResourceNotFoundError,
+  DependencyUnavailableError,
 } from "#src/platform/http-error";
 import { Logger } from "#src/platform/logger";
-import type { RedisStore } from "#src/shared/modules/redis/redis.service";
+import {
+  makeJsonCodec,
+  type RedisStore,
+} from "#src/shared/modules/redis/redis.service";
 import { and, eq, lt } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleDto } from "#src/battles/dto/create-battle.dto";
 import type { BattleTimelineResponseInput } from "#src/battles/dto/battle-response.dto";
 import type { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
@@ -42,13 +45,12 @@ import {
   type ParsedMove,
   type BattleWarriorSnapshot,
 } from "@lootlog/battle-processor";
-import type {
-  BattleWithRelations,
-  CreateBattleParams,
-  CreateBattleResult,
-  DeleteBattleResult,
-  GetAllBattlesResult,
-  RawBattleData,
+import {
+  decodeRawBattleDataJson,
+  type BattleWithRelations,
+  type CreateBattleParams,
+  type CreateBattleResult,
+  type RawBattleData,
 } from "./interfaces/battle-service.interface.js";
 
 export interface BattleDeduplicationTiming {
@@ -66,6 +68,9 @@ const defaultBattleDeduplicationTiming: BattleDeduplicationTiming = {
   waitIntervalMs: 50,
   waitTimeoutMs: 30_000,
 };
+const CreateBattleResultCodec = makeJsonCodec(
+  Schema.Struct({ battleId: Schema.String }),
+);
 const EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("expire", KEYS[1], ARGV[2])
@@ -89,10 +94,18 @@ const queryEffect = <A, E>(
         catch: (cause) => cause,
       });
 
-const adapter = <A>(operation: string, run: () => PromiseLike<A>) =>
-  Effect.tryPromise({
-    try: () => Promise.resolve(run()),
-    catch: (cause) => cause,
+const adapter = <A, E>(
+  operation: string,
+  run: () => Effect.Effect<A, E> | PromiseLike<A>,
+) =>
+  Effect.suspend(() => {
+    const result = run();
+    return Effect.isEffect(result)
+      ? result
+      : Effect.tryPromise({
+          try: () => Promise.resolve(result),
+          catch: (cause) => cause,
+        });
   }).pipe(
     Effect.withSpan(operation, {
       attributes: { adapter: "battlelog-infrastructure", retryCount: 0 },
@@ -140,7 +153,7 @@ export const makeBattles = (
       }).pipe(
         Effect.mapError((error) => {
           logger.error(`Failed to create battle for user ${userId}:`, error);
-          if (error instanceof HttpError) return error;
+          if (error instanceof ApplicationError) return error;
           return new Error(
             `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -208,19 +221,24 @@ export const makeBattles = (
     ) {
       const cacheKey = `battle-submission:${semanticFingerprint}`;
       const lockKey = `${cacheKey}:lock`;
-      const deadline = Date.now() + deduplicationTiming.waitTimeoutMs;
-
-      const attempt = (): Effect.Effect<CreateBattleResult, unknown> =>
+      const attempt = (
+        deadline?: number,
+      ): Effect.Effect<CreateBattleResult, unknown> =>
         Effect.gen(function* () {
+          const currentTime = yield* Clock.currentTimeMillis;
+          const activeDeadline =
+            deadline ?? currentTime + deduplicationTiming.waitTimeoutMs;
           const cachedResult =
             yield* battlesModule.requireBattleDeduplicationRedis(() =>
-              redisService.getJson<CreateBattleResult>(cacheKey),
+              redisService.getJson(cacheKey, CreateBattleResultCodec),
             );
           if (cachedResult) {
             yield* reconcileCachedBattle(cachedResult);
             return cachedResult;
           }
-          yield* battlesModule.throwIfBattleDeduplicationTimedOut(deadline);
+          yield* battlesModule.throwIfBattleDeduplicationTimedOut(
+            activeDeadline,
+          );
 
           const lockToken = randomUUID();
           const lockAcquired =
@@ -240,7 +258,7 @@ export const makeBattles = (
                 Effect.gen(function* () {
                   const cachedAfterLock =
                     yield* battlesModule.requireBattleDeduplicationRedis(() =>
-                      redisService.getJson<CreateBattleResult>(cacheKey),
+                      redisService.getJson(cacheKey, CreateBattleResultCodec),
                     );
                   if (cachedAfterLock) {
                     yield* reconcileCachedBattle(cachedAfterLock);
@@ -269,7 +287,7 @@ export const makeBattles = (
           }
 
           yield* Effect.sleep(`${deduplicationTiming.waitIntervalMs} millis`);
-          return yield* attempt();
+          return yield* attempt(activeDeadline);
         });
       return attempt();
     },
@@ -295,7 +313,7 @@ export const makeBattles = (
           Effect.flatMap((extended) => {
             if (extended !== 1) {
               return Effect.fail(
-                new ServiceUnavailableException(
+                new DependencyUnavailableError(
                   "Battle deduplication lock was lost; retry the request",
                 ),
               );
@@ -315,15 +333,11 @@ export const makeBattles = (
       if (duration <= 0) return Effect.void;
 
       return adapter("Battles_preserveDuration", () =>
-        drizzle.run(
-          drizzle.db
-            .update(battles)
-            .set({ duration, updatedAt: new Date() })
-            .where(
-              and(eq(battles.id, battleId), lt(battles.duration, duration)),
-            )
-            .returning({ id: battles.id }),
-        ),
+        drizzle
+          .update(battles)
+          .set({ duration, updatedAt: new Date() })
+          .where(and(eq(battles.id, battleId), lt(battles.duration, duration)))
+          .returning({ id: battles.id }),
       ).pipe(
         Effect.flatMap((updated) =>
           updated.length > 0
@@ -334,21 +348,24 @@ export const makeBattles = (
     },
 
     throwIfBattleDeduplicationTimedOut(deadline: number) {
-      if (Date.now() >= deadline) {
-        return Effect.fail(
-          new ServiceUnavailableException(
-            "Battle deduplication timed out; retry the request",
-          ),
-        );
-      }
-      return Effect.void;
+      return Clock.currentTimeMillis.pipe(
+        Effect.flatMap((now) =>
+          now >= deadline
+            ? Effect.fail(
+                new DependencyUnavailableError(
+                  "Battle deduplication timed out; retry the request",
+                ),
+              )
+            : Effect.void,
+        ),
+      );
     },
 
     requireBattleDeduplicationRedis<Result>(operation: () => Promise<Result>) {
       return adapter("Battles_deduplicationRedis", operation).pipe(
         Effect.mapError(
           (error) =>
-            new ServiceUnavailableException(
+            new DependencyUnavailableError(
               "Battle deduplication is temporarily unavailable",
               { cause: error },
             ),
@@ -373,22 +390,26 @@ export const makeBattles = (
       semanticFingerprint: string,
       userId: string,
     ) {
-      const createdAfter = new Date(
-        Date.now() - deduplicationTiming.cacheTtlSeconds * 1_000,
-      );
-      return adapter("Battles_findRecentFingerprint", () =>
-        drizzle.run(
-          drizzle.db.query.battles.findFirst({
-            where: {
-              createdAt: { gte: createdAfter },
-              semanticFingerprint,
-              userId,
-            },
-            columns: { id: true },
-            orderBy: { createdAt: "desc" },
-          }),
+      return Clock.currentTimeMillis.pipe(
+        Effect.flatMap((now) =>
+          adapter("Battles_findRecentFingerprint", () =>
+            drizzle.query.battles.findFirst({
+              where: {
+                createdAt: {
+                  gte: new Date(
+                    now - deduplicationTiming.cacheTtlSeconds * 1_000,
+                  ),
+                },
+                semanticFingerprint,
+                userId,
+              },
+              columns: { id: true },
+              orderBy: { createdAt: "desc" },
+            }),
+          ),
         ),
-      ).pipe(Effect.map((battle) => battle?.id ?? null));
+        Effect.map((battle) => battle?.id ?? null),
+      );
     },
 
     getExistingBattleBySubmissionId(submissionId: string | undefined) {
@@ -397,12 +418,10 @@ export const makeBattles = (
       }
 
       return adapter("Battles_findSubmission", () =>
-        drizzle.run(
-          drizzle.db.query.battles.findFirst({
-            where: { submissionId },
-            with: { warriors: true },
-          }),
-        ),
+        drizzle.query.battles.findFirst({
+          where: { submissionId },
+          with: { warriors: true },
+        }),
       ).pipe(
         Effect.map((battle) =>
           battle ? inflateBattleWarriorsInBattle(battle) : null,
@@ -499,7 +518,7 @@ export const makeBattles = (
 
         const rawData = yield* adapter(
           "BattleObjectStorage_getBattleData",
-          () => r2Service.getBattleData<RawBattleData>(battleId),
+          () => r2Service.getBattleData(battleId, decodeRawBattleDataJson),
         );
         return battlesModule.normalizeRawBattleData(rawData);
       }).pipe(
@@ -532,17 +551,16 @@ export const makeBattles = (
           yield* battlesModule.checkBattleAccess(battleId, requestingUserId);
         }
         const battle = yield* adapter("Battles_getFromDatabase", () =>
-          drizzle.run(
-            drizzle.db.query.battles.findFirst({
-              where: { id: battleId },
-              with: { warriors: true },
-            }),
-          ),
+          drizzle.query.battles.findFirst({
+            where: { id: battleId },
+            with: { warriors: true },
+          }),
         );
 
-        if (!battle) {
-          throw new NotFoundException(`Battle with ID ${battleId} not found`);
-        }
+        if (!battle)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+          );
 
         yield* battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
 
@@ -552,7 +570,7 @@ export const makeBattles = (
 
     buildTimelineResponse(battle: BattleWithRelations) {
       return adapter("BattleObjectStorage_getTimelineData", () =>
-        r2Service.getBattleData<RawBattleData>(battle.id),
+        r2Service.getBattleData(battle.id, decodeRawBattleDataJson),
       ).pipe(
         Effect.map((rawBattleData) => {
           const processor = new BattleProcessor();
@@ -650,34 +668,32 @@ export const makeBattles = (
     updateBattle(battleId: string, updateData: UpdateBattleDto) {
       return Effect.gen(function* () {
         const updated = yield* adapter("Battles_update", () =>
-          drizzle.run(
-            drizzle.db
-              .update(battles)
-              .set({
-                public: updateData.public,
-                updatedAt: new Date(),
-              })
-              .where(eq(battles.id, battleId))
-              .returning(),
-          ),
+          drizzle
+            .update(battles)
+            .set({
+              public: updateData.public,
+              updatedAt: new Date(),
+            })
+            .where(eq(battles.id, battleId))
+            .returning(),
         );
 
-        if (updated.length === 0) {
-          throw new NotFoundException(`Battle with ID ${battleId} not found`);
-        }
+        if (updated.length === 0)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+          );
 
         const battle = yield* adapter("Battles_findUpdated", () =>
-          drizzle.run(
-            drizzle.db.query.battles.findFirst({
-              where: { id: battleId },
-              with: { warriors: true },
-            }),
-          ),
+          drizzle.query.battles.findFirst({
+            where: { id: battleId },
+            with: { warriors: true },
+          }),
         );
 
-        if (!battle) {
-          throw new NotFoundException(`Battle with ID ${battleId} not found`);
-        }
+        if (!battle)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+          );
 
         return inflateBattleWarriorsInBattle(battle);
       });
@@ -686,40 +702,32 @@ export const makeBattles = (
     deleteUserBattles(userId: string) {
       return Effect.gen(function* () {
         const userBattles = yield* adapter("Battles_findUserBattles", () =>
-          drizzle.run(
-            drizzle.db
-              .select({ id: battles.id })
-              .from(battles)
-              .where(eq(battles.userId, userId)),
-          ),
+          drizzle
+            .select({ id: battles.id })
+            .from(battles)
+            .where(eq(battles.userId, userId)),
         );
 
         const battleIds = userBattles.map((b) => b.id);
 
         if (battleIds.length === 0) {
           yield* adapter("Battles_deleteUserCharacters", () =>
-            drizzle.run(
-              drizzle.db
-                .delete(userCharacters)
-                .where(eq(userCharacters.userId, userId)),
-            ),
+            drizzle
+              .delete(userCharacters)
+              .where(eq(userCharacters.userId, userId)),
           );
 
           return { deletedCount: 0 };
         }
 
         yield* adapter("Battles_deleteUserBattles", () =>
-          drizzle.run(
-            drizzle.db.delete(battles).where(eq(battles.userId, userId)),
-          ),
+          drizzle.delete(battles).where(eq(battles.userId, userId)),
         );
 
         yield* adapter("Battles_deleteUserCharacters", () =>
-          drizzle.run(
-            drizzle.db
-              .delete(userCharacters)
-              .where(eq(userCharacters.userId, userId)),
-          ),
+          drizzle
+            .delete(userCharacters)
+            .where(eq(userCharacters.userId, userId)),
         );
 
         yield* adapter("BattleObjectStorage_deleteBatch", () =>
@@ -744,26 +752,23 @@ export const makeBattles = (
     deleteBattle(battleId: string) {
       return Effect.gen(function* () {
         const battle = yield* adapter("Battles_findForDelete", () =>
-          drizzle.run(
-            drizzle.db.query.battles.findFirst({
-              where: { id: battleId },
-              columns: { userId: true },
-            }),
-          ),
+          drizzle.query.battles.findFirst({
+            where: { id: battleId },
+            columns: { userId: true },
+          }),
         );
 
         const deleted = yield* adapter("Battles_delete", () =>
-          drizzle.run(
-            drizzle.db
-              .delete(battles)
-              .where(eq(battles.id, battleId))
-              .returning({ id: battles.id }),
-          ),
+          drizzle
+            .delete(battles)
+            .where(eq(battles.id, battleId))
+            .returning({ id: battles.id }),
         );
 
-        if (deleted.length === 0) {
-          throw new NotFoundException(`Battle with ID ${battleId} not found`);
-        }
+        if (deleted.length === 0)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+          );
 
         if (battle) {
           yield* battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
@@ -787,17 +792,15 @@ export const makeBattles = (
 
     getPublicBattle(battleId: string) {
       return adapter("Battles_getPublic", () =>
-        drizzle.run(
-          drizzle.db.query.battles.findFirst({
-            where: { id: battleId, public: true },
-            with: { warriors: true },
-          }),
-        ),
+        drizzle.query.battles.findFirst({
+          where: { id: battleId, public: true },
+          with: { warriors: true },
+        }),
       ).pipe(
         Effect.flatMap((battle) => {
           if (!battle) {
             return Effect.fail(
-              new NotFoundException(
+              new ResourceNotFoundError(
                 `Public battle with ID ${battleId} not found`,
               ),
             );
@@ -811,22 +814,21 @@ export const makeBattles = (
     getPublicBattleRaw(battleId: string) {
       return Effect.gen(function* () {
         const battle = yield* adapter("Battles_getPublicRaw", () =>
-          drizzle.run(
-            drizzle.db.query.battles.findFirst({
-              where: { id: battleId, public: true },
-              columns: { id: true },
-            }),
-          ),
+          drizzle.query.battles.findFirst({
+            where: { id: battleId, public: true },
+            columns: { id: true },
+          }),
         );
 
-        if (!battle) {
-          throw new NotFoundException(
-            `Public battle with ID ${battleId} not found`,
+        if (!battle)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(
+              `Public battle with ID ${battleId} not found`,
+            ),
           );
-        }
 
         const rawData = yield* adapter("BattleObjectStorage_getPublicRaw", () =>
-          r2Service.getBattleData<RawBattleData>(battle.id),
+          r2Service.getBattleData(battle.id, decodeRawBattleDataJson),
         );
 
         return battlesModule.normalizeRawBattleData(rawData);
@@ -876,23 +878,21 @@ export const makeBattles = (
 
     checkBattleAccess(battleId: string, requestingUserId: string) {
       return adapter("Battles_checkAccess", () =>
-        drizzle.run(
-          drizzle.db.query.battles.findFirst({
-            where: { id: battleId },
-            columns: { userId: true, public: true },
-          }),
-        ),
+        drizzle.query.battles.findFirst({
+          where: { id: battleId },
+          columns: { userId: true, public: true },
+        }),
       ).pipe(
         Effect.flatMap((battle) => {
           if (!battle) {
             return Effect.fail(
-              new NotFoundException(`Battle with ID ${battleId} not found`),
+              new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
             );
           }
 
           if (!battle.public && battle.userId !== requestingUserId) {
             return Effect.fail(
-              new ForbiddenException("Access denied: Battle is private"),
+              new PermissionDeniedError("Access denied: Battle is private"),
             );
           }
           return Effect.void;
@@ -902,23 +902,21 @@ export const makeBattles = (
 
     assertBattleOwner(battleId: string, requestingUserId: string) {
       return adapter("Battles_assertOwner", () =>
-        drizzle.run(
-          drizzle.db.query.battles.findFirst({
-            where: { id: battleId },
-            columns: { userId: true },
-          }),
-        ),
+        drizzle.query.battles.findFirst({
+          where: { id: battleId },
+          columns: { userId: true },
+        }),
       ).pipe(
         Effect.flatMap((battle) => {
           if (!battle) {
             return Effect.fail(
-              new NotFoundException(`Battle with ID ${battleId} not found`),
+              new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
             );
           }
 
           if (battle.userId !== requestingUserId) {
             return Effect.fail(
-              new ForbiddenException("You can only modify your own battles"),
+              new PermissionDeniedError("You can only modify your own battles"),
             );
           }
           return Effect.void;
@@ -947,159 +945,158 @@ export const makeBattles = (
         }
 
         const battle = yield* adapter("Battles_storeTransaction", () =>
-          drizzle.run(
-            drizzle.db.transaction((tx) =>
-              Effect.gen(function* () {
-                const [insertedBattle] = yield* queryEffect(
-                  tx
-                    .insert(battles)
-                    .values({
-                      userId,
-                      updatedAt: new Date(),
-                      accountId: data.accountId,
-                      characterId: data.characterId,
-                      semanticFingerprint,
-                      ...(data.submissionId && {
-                        submissionId: data.submissionId,
-                      }),
-                      world: data.world,
-                      duration: analysis.duration,
-                      type: analysis.type,
-                      winner: analysis.outcome.winner,
-                      loser: analysis.outcome.loser,
-                      winningTeam: analysis.outcome.winningTeam!,
-                      losingTeam: analysis.outcome.losingTeam!,
-                      hasFlee: analysis.outcome.hasFlee,
-                      matchmaking: !!analysis.matchmaking,
-                      statistics: analysis.statistics,
-                      ...(analysis.matchmaking && {
-                        difficultyRank: analysis.matchmaking.difficultyRank,
-                        result: analysis.matchmaking.result,
-                        ratingDelta: analysis.matchmaking.ratingDelta,
-                        opponentLvl: analysis.matchmaking.opponentLvl,
-                        opponentOplvl: analysis.matchmaking.opponentOplvl,
-                        opponentRating: analysis.matchmaking.opponentRating,
-                        rating: analysis.matchmaking.rating,
-                        status: analysis.matchmaking.status,
-                        pointsGained: analysis.matchmaking.pointsGained,
-                        placementCur: analysis.matchmaking.placementCur,
-                        placementMax: analysis.matchmaking.placementMax,
-                        dailyStageId: analysis.matchmaking.dailyStageId,
-                        dailyPointsCur: analysis.matchmaking.dailyPointsCur,
-                        dailyPointsMax: analysis.matchmaking.dailyPointsMax,
-                        dailyPointsStep: analysis.matchmaking.dailyPointsStep,
-                        dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
-                        dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
-                        dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
-                      }),
-                    })
-                    .returning(),
+          drizzle.transaction((tx) =>
+            Effect.gen(function* () {
+              const [insertedBattle] = yield* queryEffect(
+                tx
+                  .insert(battles)
+                  .values({
+                    userId,
+                    updatedAt: new Date(yield* Clock.currentTimeMillis),
+                    accountId: data.accountId,
+                    characterId: data.characterId,
+                    semanticFingerprint,
+                    ...(data.submissionId && {
+                      submissionId: data.submissionId,
+                    }),
+                    world: data.world,
+                    duration: analysis.duration,
+                    type: analysis.type,
+                    winner: analysis.outcome.winner,
+                    loser: analysis.outcome.loser,
+                    winningTeam: analysis.outcome.winningTeam!,
+                    losingTeam: analysis.outcome.losingTeam!,
+                    hasFlee: analysis.outcome.hasFlee,
+                    matchmaking: !!analysis.matchmaking,
+                    statistics: analysis.statistics,
+                    ...(analysis.matchmaking && {
+                      difficultyRank: analysis.matchmaking.difficultyRank,
+                      result: analysis.matchmaking.result,
+                      ratingDelta: analysis.matchmaking.ratingDelta,
+                      opponentLvl: analysis.matchmaking.opponentLvl,
+                      opponentOplvl: analysis.matchmaking.opponentOplvl,
+                      opponentRating: analysis.matchmaking.opponentRating,
+                      rating: analysis.matchmaking.rating,
+                      status: analysis.matchmaking.status,
+                      pointsGained: analysis.matchmaking.pointsGained,
+                      placementCur: analysis.matchmaking.placementCur,
+                      placementMax: analysis.matchmaking.placementMax,
+                      dailyStageId: analysis.matchmaking.dailyStageId,
+                      dailyPointsCur: analysis.matchmaking.dailyPointsCur,
+                      dailyPointsMax: analysis.matchmaking.dailyPointsMax,
+                      dailyPointsStep: analysis.matchmaking.dailyPointsStep,
+                      dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
+                      dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
+                      dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
+                    }),
+                  })
+                  .returning(),
+              );
+
+              if (!insertedBattle) {
+                return yield* Effect.fail(
+                  new Error("Battle insert did not return a row"),
                 );
+              }
 
-                if (!insertedBattle) {
-                  throw new Error("Battle insert did not return a row");
-                }
+              const warriorValues = analysis.warriors.map(
+                (warrior: Warrior) => ({
+                  battleId: insertedBattle.id,
+                  originalId: warrior.originalId,
+                  name: warrior.name,
+                  lvl: warrior.lvl,
+                  prof: warrior.prof,
+                  icon: warrior.icon,
+                  team: warrior.team,
+                  isDead: warrior.isDead,
+                  surrendered: warrior.surrendered,
+                  fled: warrior.fled,
+                  maxHp: warrior.maxHp,
+                  turns: warrior.turns,
+                  turnsLost: warrior.turnsLost,
+                  steps: warrior.steps,
+                  normalAttacks: warrior.normalAttacks,
+                  spellsUsed: warrior.spellsUsed,
+                  spellsUsedMap: warrior.spellsUsedMap,
+                  stats: buildBattleWarriorStats(warrior),
+                  statsVersion: BATTLE_WARRIOR_STATS_VERSION,
+                  damageDealt: warrior.damageDealt,
+                  distanceDamage: warrior.distanceDamage,
+                  meleeDamage: warrior.meleeDamage,
+                  auxiliaryDamage: warrior.auxiliaryDamage,
+                  fireDamage: warrior.fireDamage,
+                  frostDamage: warrior.frostDamage,
+                  lightningDamage: warrior.lightningDamage,
+                  thirdAttDamage: warrior.thirdAttDamage,
+                  damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
+                  damageDealtAfterDefensivePercentage:
+                    warrior.damageDealtAfterDefensivePercentage,
+                  damageTaken: warrior.damageTaken,
+                  distanceDamageTaken: warrior.distanceDamageTaken,
+                  meleeDamageTaken: warrior.meleeDamageTaken,
+                  auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
+                  fireDamageTaken: warrior.fireDamageTaken,
+                  frostDamageTaken: warrior.frostDamageTaken,
+                  lightningDamageTaken: warrior.lightningDamageTaken,
+                  thirdAttDamageTaken: warrior.thirdAttDamageTaken,
+                  flatDamageTaken: warrior.flatDamageTaken,
+                  rageDamageDealt: warrior.rageDamageDealt,
+                  trueDamageDealt: warrior.trueDamageDealt,
+                  trueDamageTaken: warrior.trueDamageTaken,
+                  stigmaDamageDealt: warrior.stigmaDamageDealt,
+                  stigmaDamageTaken: warrior.stigmaDamageTaken,
+                  passiveHealing: warrior.passiveHealing,
+                  activeHealing: warrior.activeHealing,
+                  armorPierces: warrior.armorPierces,
+                  criticalHits: warrior.criticalHits,
+                  reducedArmor: warrior.reducedArmor,
+                  reducedPoisonResistance: warrior.reducedPoisonResistance,
+                  magicResistanceDestroyed: warrior.magicResistanceDestroyed,
+                  evasions: warrior.evasions,
+                  attacksEvaded: warrior.attacksEvaded,
+                  counters: warrior.counters,
+                  fastArrows: warrior.fastArrows,
+                  blocks: warrior.blocks,
+                  attacksBlocked: warrior.attacksBlocked,
+                  blockedDamage: warrior.blockedDamage,
+                  woundDamageTaken: warrior.woundDamageTaken,
+                  poisonDamageTaken: warrior.poisonDamageTaken,
+                  injureDamageTaken: warrior.injureDamageTaken,
+                  injures: warrior.injures,
+                  critWoundDamageTaken: warrior.critWoundDamageTaken,
+                  firePassiveDamageTaken: warrior.firePassiveDamageTaken,
+                  lightningPassiveDamageTaken:
+                    warrior.lightningPassiveDamageTaken,
+                  destroyedEnergy: warrior.destroyedEnergy,
+                  destroyedMana: warrior.destroyedMana,
+                  regeneratedEnergy: warrior.regeneratedEnergy,
+                  regeneratedMana: warrior.regeneratedMana,
+                  reflectedDamage: warrior.reflectedDamage,
+                  reflectedDamageTaken: warrior.reflectedDamageTaken,
+                  legbonCurse: warrior.legbonCurse,
+                  legbonCleanse: warrior.legbonCleanse,
+                  legbonLastheal: warrior.legbonLastheal,
+                  legbonLasthealValue: warrior.legbonLasthealValue,
+                  legbonGlare: warrior.legbonGlare,
+                  legbonHolytouch: warrior.legbonHolytouch,
+                  legbonHolytouchValue: warrior.legbonHolytouchValue,
+                  legbonCritredValue: warrior.legbonCritredValue,
+                  legbonVerycrit: warrior.legbonVerycrit,
+                  legbonAnguish: warrior.legbonAnguish,
+                  legbonFacadeValue: warrior.legbonFacadeValue,
+                  legbonPunctureValue: warrior.legbonPunctureValue,
+                  legbons: warrior.legbons,
+                  legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
+                  ph: warrior.ph,
+                }),
+              );
 
-                const warriorValues = analysis.warriors.map(
-                  (warrior: Warrior) => ({
-                    battleId: insertedBattle.id,
-                    originalId: warrior.originalId,
-                    name: warrior.name,
-                    lvl: warrior.lvl,
-                    prof: warrior.prof,
-                    icon: warrior.icon,
-                    team: warrior.team,
-                    isDead: warrior.isDead,
-                    surrendered: warrior.surrendered,
-                    fled: warrior.fled,
-                    maxHp: warrior.maxHp,
-                    turns: warrior.turns,
-                    turnsLost: warrior.turnsLost,
-                    steps: warrior.steps,
-                    normalAttacks: warrior.normalAttacks,
-                    spellsUsed: warrior.spellsUsed,
-                    spellsUsedMap: warrior.spellsUsedMap,
-                    stats: buildBattleWarriorStats(warrior),
-                    statsVersion: BATTLE_WARRIOR_STATS_VERSION,
-                    damageDealt: warrior.damageDealt,
-                    distanceDamage: warrior.distanceDamage,
-                    meleeDamage: warrior.meleeDamage,
-                    auxiliaryDamage: warrior.auxiliaryDamage,
-                    fireDamage: warrior.fireDamage,
-                    frostDamage: warrior.frostDamage,
-                    lightningDamage: warrior.lightningDamage,
-                    thirdAttDamage: warrior.thirdAttDamage,
-                    damageDealtAfterDefensive:
-                      warrior.damageDealtAfterDefensive,
-                    damageDealtAfterDefensivePercentage:
-                      warrior.damageDealtAfterDefensivePercentage,
-                    damageTaken: warrior.damageTaken,
-                    distanceDamageTaken: warrior.distanceDamageTaken,
-                    meleeDamageTaken: warrior.meleeDamageTaken,
-                    auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
-                    fireDamageTaken: warrior.fireDamageTaken,
-                    frostDamageTaken: warrior.frostDamageTaken,
-                    lightningDamageTaken: warrior.lightningDamageTaken,
-                    thirdAttDamageTaken: warrior.thirdAttDamageTaken,
-                    flatDamageTaken: warrior.flatDamageTaken,
-                    rageDamageDealt: warrior.rageDamageDealt,
-                    trueDamageDealt: warrior.trueDamageDealt,
-                    trueDamageTaken: warrior.trueDamageTaken,
-                    stigmaDamageDealt: warrior.stigmaDamageDealt,
-                    stigmaDamageTaken: warrior.stigmaDamageTaken,
-                    passiveHealing: warrior.passiveHealing,
-                    activeHealing: warrior.activeHealing,
-                    armorPierces: warrior.armorPierces,
-                    criticalHits: warrior.criticalHits,
-                    reducedArmor: warrior.reducedArmor,
-                    reducedPoisonResistance: warrior.reducedPoisonResistance,
-                    magicResistanceDestroyed: warrior.magicResistanceDestroyed,
-                    evasions: warrior.evasions,
-                    attacksEvaded: warrior.attacksEvaded,
-                    counters: warrior.counters,
-                    fastArrows: warrior.fastArrows,
-                    blocks: warrior.blocks,
-                    attacksBlocked: warrior.attacksBlocked,
-                    blockedDamage: warrior.blockedDamage,
-                    woundDamageTaken: warrior.woundDamageTaken,
-                    poisonDamageTaken: warrior.poisonDamageTaken,
-                    injureDamageTaken: warrior.injureDamageTaken,
-                    injures: warrior.injures,
-                    critWoundDamageTaken: warrior.critWoundDamageTaken,
-                    firePassiveDamageTaken: warrior.firePassiveDamageTaken,
-                    lightningPassiveDamageTaken:
-                      warrior.lightningPassiveDamageTaken,
-                    destroyedEnergy: warrior.destroyedEnergy,
-                    destroyedMana: warrior.destroyedMana,
-                    regeneratedEnergy: warrior.regeneratedEnergy,
-                    regeneratedMana: warrior.regeneratedMana,
-                    reflectedDamage: warrior.reflectedDamage,
-                    reflectedDamageTaken: warrior.reflectedDamageTaken,
-                    legbonCurse: warrior.legbonCurse,
-                    legbonCleanse: warrior.legbonCleanse,
-                    legbonLastheal: warrior.legbonLastheal,
-                    legbonLasthealValue: warrior.legbonLasthealValue,
-                    legbonGlare: warrior.legbonGlare,
-                    legbonHolytouch: warrior.legbonHolytouch,
-                    legbonHolytouchValue: warrior.legbonHolytouchValue,
-                    legbonCritredValue: warrior.legbonCritredValue,
-                    legbonVerycrit: warrior.legbonVerycrit,
-                    legbonAnguish: warrior.legbonAnguish,
-                    legbonFacadeValue: warrior.legbonFacadeValue,
-                    legbonPunctureValue: warrior.legbonPunctureValue,
-                    legbons: warrior.legbons,
-                    legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
-                    ph: warrior.ph,
-                  }),
-                );
+              const insertedWarriors = yield* queryEffect(
+                tx.insert(battleWarriors).values(warriorValues).returning(),
+              );
 
-                const insertedWarriors = yield* queryEffect(
-                  tx.insert(battleWarriors).values(warriorValues).returning(),
-                );
-
-                return { ...insertedBattle, warriors: insertedWarriors };
-              }),
-            ),
+              return { ...insertedBattle, warriors: insertedWarriors };
+            }),
           ),
         );
 

@@ -1,4 +1,4 @@
-import { NotFoundException } from "#src/platform/http-error";
+import { ResourceNotFoundError } from "#src/platform/http-error";
 import {
   and,
   eq,
@@ -10,7 +10,7 @@ import {
   lte,
   type SQL,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { BattleAnalyticsCache } from "#src/battles/services/battle-analytics-cache.service";
 import type {
   AnalyticsDateRange,
@@ -23,6 +23,9 @@ import {
 } from "#src/shared/modules/drizzle/schema";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const decodeCharacterIdsJson = Schema.decodeUnknownSync(
+  Schema.fromJsonString(Schema.mutable(Schema.Array(Schema.String))),
+);
 
 export const makeBattleAnalyticsQuery = (
   drizzle: DrizzleDatabase,
@@ -33,7 +36,7 @@ export const makeBattleAnalyticsQuery = (
     ...conditions: (SQL | undefined)[]
   ) =>
     exists(
-      drizzle.db
+      drizzle
         .select({ one: eq(battleWarriors.id, battleWarriors.id) })
         .from(battleWarriors)
         .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
@@ -45,45 +48,30 @@ export const makeBattleAnalyticsQuery = (
   ) =>
     Effect.gen(function* () {
       if (query.characterId) {
-        const userCharacter = yield* Effect.tryPromise({
-          try: () =>
-            Promise.resolve(
-              drizzle.run(
-                drizzle.db.query.userCharacters.findFirst({
-                  where: {
-                    userId,
-                    characterId: query.characterId,
-                    ...(query.world && { world: query.world }),
-                  },
-                }),
-              ),
-            ),
-          catch: (cause) => cause,
+        const userCharacter = yield* drizzle.query.userCharacters.findFirst({
+          where: {
+            userId,
+            characterId: query.characterId,
+            ...(query.world && { world: query.world }),
+          },
         });
 
-        if (!userCharacter) {
-          throw new NotFoundException(
-            `Character ${query.characterId} not found for user`,
+        if (!userCharacter)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(
+              `Character ${query.characterId} not found for user`,
+            ),
           );
-        }
 
         return [query.characterId];
       }
 
-      const userChars = yield* Effect.tryPromise({
-        try: () =>
-          Promise.resolve(
-            drizzle.run(
-              drizzle.db.query.userCharacters.findMany({
-                where: {
-                  userId,
-                  ...(query.world && { world: query.world }),
-                },
-                columns: { characterId: true },
-              }),
-            ),
-          ),
-        catch: (cause) => cause,
+      const userChars = yield* drizzle.query.userCharacters.findMany({
+        where: {
+          userId,
+          ...(query.world && { world: query.world }),
+        },
+        columns: { characterId: true },
       });
 
       return userChars.map((character) => character.characterId);
@@ -121,6 +109,7 @@ export const makeBattleAnalyticsQuery = (
     cache.getOrSetJson(
       cache.buildQueryCacheKey("battle-characters", "ids", userId, query),
       () => getCharacterIdsUncached(userId, query),
+      decodeCharacterIdsJson,
     );
 
   const getDateRangeFilter = (query: DateRangeQuery): AnalyticsDateRange => {

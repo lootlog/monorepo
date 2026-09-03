@@ -2,6 +2,10 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import {
+  PermissionDeniedError,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
+import {
   ReservationResponseDto,
   ReservationSharesResponseDto,
   RoleResponseDto_Output,
@@ -308,10 +312,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
   });
 
   it("preserves the role service rejection for non-owner admin-bit changes", async () => {
-    const serviceForbidden = {
-      getStatus: () => 403,
-      message: "Forbidden",
-    };
+    const serviceForbidden = new PermissionDeniedError("Forbidden");
     const failure = new ReservationsRolesOperationError({
       cause: serviceForbidden,
     });
@@ -406,10 +407,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
   });
 
   it("preserves invalid single-use invitation status and code", async () => {
-    const invitationNotFound = {
-      getStatus: () => 404,
-      response: { code: "INVITATION_NOT_FOUND" },
-    };
+    const invitationNotFound = new ResourceNotFoundError({
+      code: "INVITATION_NOT_FOUND",
+    });
     const failure = new ReservationsRolesOperationError({
       cause: invitationNotFound,
     });
@@ -435,10 +435,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
   });
 
   it("keeps an unauthorized target Organization hidden during invitation acceptance", async () => {
-    const targetHidden = {
-      getStatus: () => 404,
-      response: { code: "TARGET_ORGANIZATION_NOT_FOUND" },
-    };
+    const targetHidden = new ResourceNotFoundError({
+      code: "TARGET_ORGANIZATION_NOT_FOUND",
+    });
     const failure = new ReservationsRolesOperationError({
       cause: targetHidden,
     });

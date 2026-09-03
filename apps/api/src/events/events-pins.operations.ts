@@ -1,7 +1,7 @@
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import {
-  ConflictException,
-  NotFoundException,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { PinnedEventsPersistence } from "./services/pinned-events.repository.js";
 import { attachComputedEventActive } from "./utils/event-activity.util.js";
@@ -9,7 +9,7 @@ import { attachComputedEventActive } from "./utils/event-activity.util.js";
 export const makeEventsPins = (persistence: PinnedEventsPersistence) => ({
   listPinnedEvents: (userId: string, guildData: { id: string }) =>
     Effect.gen(function* () {
-      const referenceTime = new Date();
+      const referenceTime = new Date(yield* Clock.currentTimeMillis);
       yield* persistence.removeInactive(userId, guildData.id, referenceTime);
       const pinnedEvents = yield* persistence.findActive(
         userId,
@@ -24,21 +24,23 @@ export const makeEventsPins = (persistence: PinnedEventsPersistence) => ({
 
   pinEvent: (userId: string, guildData: { id: string }, eventId: string) =>
     Effect.gen(function* () {
-      const referenceTime = new Date();
+      const referenceTime = new Date(yield* Clock.currentTimeMillis);
       const event = yield* persistence.findEvent(eventId, guildData.id);
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
       const activeEvent = attachComputedEventActive(event, referenceTime);
       if (!activeEvent.active) {
         yield* persistence.remove(userId, eventId);
         return yield* Effect.fail(
-          new ConflictException("Only active events can be pinned"),
+          new ResourceConflictError("Only active events can be pinned"),
         );
       }
       const pinnedEvent = yield* persistence.pin(userId, eventId);
       if (!pinnedEvent) {
-        return yield* Effect.fail(new NotFoundException("Event pin not found"));
+        return yield* Effect.fail(
+          new ResourceNotFoundError("Event pin not found"),
+        );
       }
       return { pinnedAt: pinnedEvent.pinnedAt, event: activeEvent };
     }).pipe(Effect.withSpan("EventsPins.pinEvent")),

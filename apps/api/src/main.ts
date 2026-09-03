@@ -1,5 +1,5 @@
 import { BunRuntime } from "@effect/platform-bun";
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import {
   OtlpLogger,
@@ -7,9 +7,8 @@ import {
   OtlpTracer,
 } from "effect/unstable/observability";
 import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
+import { apiConfiguration } from "#src/config/api.config";
 import { ApiApplicationLive } from "./http-api/runtime/api-application.js";
-
-registerNodeWarningDiagnostics();
 
 const ObservabilityLive = Layer.merge(
   OtlpTracer.layerFromConfig({ resource: { serviceName: "api" } }),
@@ -23,10 +22,14 @@ const ObservabilityLive = Layer.merge(
 );
 
 BunRuntime.runMain(
-  Layer.launch(
-    ApiApplicationLive.pipe(
-      Layer.provide(FetchHttpClient.layer),
-      Layer.provide(ObservabilityLive),
-    ),
-  ),
+  Effect.gen(function* () {
+    const config = yield* apiConfiguration;
+    yield* Effect.sync(() => registerNodeWarningDiagnostics(config));
+    yield* Layer.launch(
+      ApiApplicationLive.pipe(
+        Layer.provide(FetchHttpClient.layer),
+        Layer.provide(ObservabilityLive),
+      ),
+    );
+  }),
 );
