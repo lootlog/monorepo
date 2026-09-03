@@ -1,6 +1,6 @@
 import { v6 } from "uuid";
 import { and, eq, isNotNull } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Schema } from "effect";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import {
@@ -22,11 +22,12 @@ import {
 } from "#src/chat/chat-message-permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
+import { SendMessageDto } from "#src/http-api/lootlog-api";
 import type { ChatMessageViewer } from "#src/chat/types/chat-message-viewer.type";
 import { canViewChatMessage } from "#src/shared/utils/can-view-chat-message";
 import {
-  ForbiddenException,
-  NotFoundException,
+  PermissionDeniedError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { ChatData, ChatOperationError } from "./chat.handlers.js";
 
@@ -67,7 +68,16 @@ export interface ChatEvents {
 
 const messageKey = (guildId: string) => `guild:${guildId}:messages`;
 
-const parseStored = (value: string) => JSON.parse(value) as ChatStoredMessage;
+const ChatStoredMessageJson = Schema.fromJsonString(
+  Schema.Struct({
+    ...SendMessageDto.fields,
+    id: Schema.String,
+    senderId: Schema.String,
+    timestamp: Schema.String,
+    guildId: Schema.String,
+  }),
+);
+const parseStored = Schema.decodeUnknownSync(ChatStoredMessageJson);
 
 const routingFor = (message: Pick<ChatStoredMessage, "type" | "npc">) => {
   const hasNpcRouting =
@@ -246,7 +256,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
               }).allows(Capability.ADMIN)
             ) {
               return yield* Effect.fail(
-                new ForbiddenException("Only OWNER or ADMIN can clear chat"),
+                new PermissionDeniedError("Only OWNER or ADMIN can clear chat"),
               );
             }
             yield* redis.del(messageKey(guildId));
@@ -265,20 +275,20 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             );
             if (index < 0) {
               return yield* Effect.fail(
-                new NotFoundException("Message not found"),
+                new ResourceNotFoundError("Message not found"),
               );
             }
             const element = elements.at(index);
             if (!element) {
               return yield* Effect.fail(
-                new NotFoundException("Message not found"),
+                new ResourceNotFoundError("Message not found"),
               );
             }
             const message = parseStored(element);
             const currentViewer = yield* viewer(discordId, guildId);
             if (!currentViewer || !canEditChatMessage(currentViewer, message)) {
               return yield* Effect.fail(
-                new ForbiddenException("Not allowed to manage this message"),
+                new PermissionDeniedError("Not allowed to manage this message"),
               );
             }
             yield* redis.lset(
@@ -310,7 +320,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             );
             if (!target) {
               return yield* Effect.fail(
-                new NotFoundException("Message not found"),
+                new ResourceNotFoundError("Message not found"),
               );
             }
             const message = parseStored(target);
@@ -320,7 +330,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
               !canDeleteChatMessage(currentViewer, message)
             ) {
               return yield* Effect.fail(
-                new ForbiddenException("Not allowed to manage this message"),
+                new PermissionDeniedError("Not allowed to manage this message"),
               );
             }
             yield* redis.lrem(messageKey(guildId), 1, target);

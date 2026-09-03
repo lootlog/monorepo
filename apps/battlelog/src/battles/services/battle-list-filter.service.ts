@@ -27,7 +27,7 @@ export const makeBattleListFilter = (drizzle: DrizzleDatabase) => {
     ...conditions: (SQL | undefined)[]
   ) =>
     exists(
-      drizzle.db
+      drizzle
         .select({ one: eq(battleWarriors.id, battleWarriors.id) })
         .from(battleWarriors)
         .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
@@ -144,17 +144,9 @@ export const makeBattleListFilter = (drizzle: DrizzleDatabase) => {
     Effect.gen(function* () {
       let characterIds = query.characterId ?? [];
       if (query.result?.length && !characterIds.length && userId) {
-        const userChars = yield* Effect.tryPromise({
-          try: () =>
-            Promise.resolve(
-              drizzle.run(
-                drizzle.db.query.userCharacters.findMany({
-                  where: { userId },
-                  columns: { characterId: true },
-                }),
-              ),
-            ),
-          catch: (cause) => cause,
+        const userChars = yield* drizzle.query.userCharacters.findMany({
+          where: { userId },
+          columns: { characterId: true },
         });
         characterIds = userChars.map((character) => character.characterId);
       }

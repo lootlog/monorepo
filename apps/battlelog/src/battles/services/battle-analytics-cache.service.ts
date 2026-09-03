@@ -52,13 +52,13 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     return enabled ? enabledSegment : `not-${enabledSegment}`;
   };
 
-  const getJson = <T>(cacheKey: string) =>
+  const getJson = <T>(cacheKey: string, decodeJson: (value: string) => T) =>
     Effect.tryPromise({
       try: () => Promise.resolve(redisService.get(cacheKey)),
       catch: (cause) => cause,
     }).pipe(
       Effect.map((cachedResult) =>
-        cachedResult ? (JSON.parse(cachedResult) as T) : null,
+        cachedResult ? decodeJson(cachedResult) : null,
       ),
       Effect.withSpan("BattleAnalyticsCache_getJson", {
         attributes: { adapter: "redis", retryCount: 0 },
@@ -85,9 +85,10 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
   const getOrSetJson = <T>(
     cacheKey: string,
     factory: () => Effect.Effect<T, unknown>,
+    decodeJson: (value: string) => T,
   ) =>
     Effect.gen(function* () {
-      const cached = yield* getJson<T>(cacheKey).pipe(
+      const cached = yield* getJson(cacheKey, decodeJson).pipe(
         Effect.catch((error) => {
           logger.warn("Battle analytics cache unavailable", error);
           return Effect.succeed(null);

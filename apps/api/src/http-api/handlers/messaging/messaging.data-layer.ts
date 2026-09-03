@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { v4 as uuid } from "uuid";
 import { and, arrayOverlaps, eq, isNotNull, or } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import {
   RabbitRoutingKey,
@@ -17,11 +17,10 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  ForbiddenException,
-  HttpException,
-  HttpStatus,
-  ServiceUnavailableException,
+  InvalidRequestError,
+  PermissionDeniedError,
+  DependencyUnavailableError,
+  RateLimitedError,
 } from "#src/shared/http/http-errors";
 import {
   MessagingData,
@@ -59,6 +58,16 @@ type NotificationMetadata = {
   readonly guildIds: ReadonlyArray<string>;
   readonly createdAt: string;
 };
+const NotificationMetadataJson = Schema.fromJsonString(
+  Schema.Struct({
+    discordId: Schema.String,
+    guildIds: Schema.Array(Schema.String),
+    createdAt: Schema.String,
+  }),
+);
+const decodeNotificationMetadata = Schema.decodeUnknownSync(
+  NotificationMetadataJson,
+);
 
 export interface MessagingRedis {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
@@ -100,7 +109,7 @@ export type NotificationRateLimitOutcome =
 export const consumeNotificationRateLimit = (
   redis: Pick<MessagingRedis, "eval">,
   userId: string,
-): Effect.Effect<NotificationRateLimitOutcome, ServiceUnavailableException> =>
+): Effect.Effect<NotificationRateLimitOutcome, DependencyUnavailableError> =>
   redis
     .eval<unknown>(
       RATE_LIMIT_SCRIPT,
@@ -112,10 +121,10 @@ export const consumeNotificationRateLimit = (
       ],
     )
     .pipe(
-      Effect.mapError(() => new ServiceUnavailableException()),
+      Effect.mapError(() => new DependencyUnavailableError()),
       Effect.flatMap((result) => {
         if (!Array.isArray(result) || result.length !== 2) {
-          return Effect.fail(new ServiceUnavailableException());
+          return Effect.fail(new DependencyUnavailableError());
         }
         const accepted = Number(result[0]);
         const retryAfterMs = Number(result[1]);
@@ -123,7 +132,7 @@ export const consumeNotificationRateLimit = (
           (accepted !== 0 && accepted !== 1) ||
           !Number.isFinite(retryAfterMs)
         ) {
-          return Effect.fail(new ServiceUnavailableException());
+          return Effect.fail(new DependencyUnavailableError());
         }
         return Effect.succeed(
           accepted === 1
@@ -185,7 +194,7 @@ export const makeMessagingDataLayer = (
           Effect.map((value): NotificationMetadata | null => {
             if (!value) return null;
             try {
-              return JSON.parse(value) as NotificationMetadata;
+              return decodeNotificationMetadata(value);
             } catch {
               return null;
             }
@@ -202,41 +211,40 @@ export const makeMessagingDataLayer = (
               );
               if (rateLimit.accepted === false) {
                 return yield* Effect.fail(
-                  new HttpException(
-                    {
-                      message: "NOTIFICATION_RATE_LIMITED",
-                      retryAfterMs: rateLimit.retryAfterMs,
-                    },
-                    HttpStatus.TOO_MANY_REQUESTS,
-                  ),
+                  new RateLimitedError({
+                    message: "NOTIFICATION_RATE_LIMITED",
+                    retryAfterMs: rateLimit.retryAfterMs,
+                  }),
                 );
               }
               if (!data.message && !data.npc) {
                 return yield* Effect.fail(
-                  new BadRequestException("MISSING_MESSAGE_OR_NPC"),
+                  new InvalidRequestError("MISSING_MESSAGE_OR_NPC"),
                 );
               }
               if (data.message && data.npc) {
                 return yield* Effect.fail(
-                  new BadRequestException("EITHER_MESSAGE_OR_NPC"),
+                  new InvalidRequestError("EITHER_MESSAGE_OR_NPC"),
                 );
               }
               const authorized = yield* guildIdsFor(discordId);
               if (authorized.length === 0) {
-                return yield* Effect.fail(new ForbiddenException());
+                return yield* Effect.fail(new PermissionDeniedError());
               }
               const guildIds = authorized.filter((id) =>
                 data.guildIds.includes(id),
               );
               if (guildIds.length === 0) {
-                return yield* Effect.fail(new ForbiddenException());
+                return yield* Effect.fail(new PermissionDeniedError());
               }
               const notificationId = uuid();
-              const createdAt = new Date().toISOString();
+              const createdAt = new Date(
+                yield* Clock.currentTimeMillis,
+              ).toISOString();
               if (data.isGatheringParty) {
                 if (!data.character) {
                   return yield* Effect.fail(
-                    new BadRequestException(
+                    new InvalidRequestError(
                       "Party gathering notifications require a character",
                     ),
                   );
@@ -296,18 +304,20 @@ export const makeMessagingDataLayer = (
               const stored = yield* metadata(notificationId);
               if (!stored) {
                 return yield* Effect.fail(
-                  new BadRequestException("Notification expired or not found"),
+                  new InvalidRequestError("Notification expired or not found"),
                 );
               }
               if (data.targetDiscordId !== stored.discordId) {
                 return yield* Effect.fail(
-                  new ForbiddenException("Invalid target"),
+                  new PermissionDeniedError("Invalid target"),
                 );
               }
               const guildIds = yield* guildIdsFor(discordId);
               if (!guildIds.some((id) => stored.guildIds.includes(id))) {
                 return yield* Effect.fail(
-                  new ForbiddenException("Not a member of notification guild"),
+                  new PermissionDeniedError(
+                    "Not a member of notification guild",
+                  ),
                 );
               }
               yield* events

@@ -14,7 +14,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -340,13 +340,16 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
             if (item.kind === "update")
               yield* transaction
                 .update(eventRankingTable)
-                .set({ ...item.data, updatedAt: new Date() })
+                .set({
+                  ...item.data,
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
+                })
                 .where(eq(eventRankingTable.id, item.id));
             else if (item.kind === "create")
               yield* transaction.insert(eventRankingTable).values({
                 ...item.data,
                 id: randomUUID(),
-                updatedAt: new Date(),
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
               });
             else
               yield* transaction

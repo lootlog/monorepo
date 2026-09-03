@@ -1,5 +1,5 @@
 import { RabbitMessaging } from "@lootlog/messaging";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 import {
   ActivityConsumers,
   activityQueues,
@@ -16,7 +16,7 @@ const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ActivityConfig;
     return RabbitMessaging.layer({
-      uri: config.rabbitmqUri,
+      uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
       queues: activityQueues,
     });

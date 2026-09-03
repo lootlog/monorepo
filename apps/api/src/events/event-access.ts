@@ -12,7 +12,7 @@ import {
   eventTable,
   type roleTable,
 } from "#src/database/drizzle/schema";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { filterHeroesByLevel } from "#src/shared/utils/can-view-event-hero";
 
 type Role = typeof roleTable.$inferSelect;
@@ -82,7 +82,7 @@ export const makeEventAccess = (database: typeof ApiDatabase.Service) => {
           const hero = rows[0]?.hero;
           return hero && visible(hero, roles, accessPolicy)
             ? Effect.succeed(hero)
-            : Effect.fail(new NotFoundException("Hero not found"));
+            : Effect.fail(new ResourceNotFoundError("Hero not found"));
         }),
       ),
 
@@ -116,7 +116,7 @@ export const makeEventAccess = (database: typeof ApiDatabase.Service) => {
           const row = rows[0];
           return row && visible(row.heroNpc, roles, accessPolicy)
             ? Effect.succeed({ ...row.map, heroNpc: row.heroNpc })
-            : Effect.fail(new NotFoundException("Map not found"));
+            : Effect.fail(new ResourceNotFoundError("Map not found"));
         }),
       ),
   };

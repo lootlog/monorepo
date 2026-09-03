@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { APIGuild } from "discord-api-types/v10";
-import { apiConfig } from "#src/config/api.config";
+import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -62,6 +62,7 @@ export interface UserGuildListPorts {
 export const makeUserGuildList = (
   database: typeof ApiDatabase.Service,
   ports: UserGuildListPorts,
+  environment: RuntimeEnvironment,
 ) => {
   const queueStale = (
     identity: AuthenticatedIdentity,
@@ -72,7 +73,7 @@ export const makeUserGuildList = (
       const throttleKey = `member:sync:throttle:${identity.discordId}`;
       if (yield* ports.getCache(throttleKey)) return;
       const staleThreshold = new Date(
-        Date.now() - getMemberCacheSoftTtl(apiConfig.environment),
+        (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment),
       );
       const stale = yield* database
         .select({

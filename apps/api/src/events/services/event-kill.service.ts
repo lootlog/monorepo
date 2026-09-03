@@ -1,5 +1,11 @@
-import { Logger, NotFoundException } from "#src/shared/http/http-errors";
-import { Effect } from "effect";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { Logger } from "#src/shared/logging/application-logger";
+import { Clock, Effect, Schema } from "effect";
+import {
+  EventHeroStatsResponse,
+  EventKillHistoryResponse,
+  EventMemberKillHistoryResponse,
+} from "../event-kill-response.schema.js";
 
 import type { Queue } from "bullmq";
 import type {
@@ -122,7 +128,7 @@ export const makeEventKills = (
       const event = yield* repository.findEventWithHeroes(guildId, eventId);
 
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
       if (event.heroNpcs.length === 0) {
@@ -307,14 +313,13 @@ export const makeEventKills = (
   }
 
   function getEventHeroStats(guildId: string, eventId: string) {
-    return Effect.tryPromise({
-      try: () =>
-        eventReadCache.getOrSet(
-          eventReadCache.getEventKey(guildId, eventId, "hero-stats-v2"),
-          () => Effect.runPromise(getEventHeroStatsUncached(guildId, eventId)),
-        ),
-      catch: (cause) => cause,
-    }).pipe(Effect.withSpan("events.kills.heroStats"));
+    return eventReadCache
+      .getOrSet(
+        eventReadCache.getEventKey(guildId, eventId, "hero-stats-v2"),
+        Schema.Array(EventHeroStatsResponse),
+        () => getEventHeroStatsUncached(guildId, eventId),
+      )
+      .pipe(Effect.withSpan("events.kills.heroStats"));
   }
 
   function getEventHeroStatsUncached(guildId: string, eventId: string) {
@@ -322,7 +327,7 @@ export const makeEventKills = (
       const event = yield* repository.findEventWithHeroStats(guildId, eventId);
 
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
       const npcIds = event.heroNpcs.flatMap((hero) =>
@@ -619,7 +624,7 @@ export const makeEventKills = (
     isManualClose = false,
   ) {
     return Effect.gen(function* () {
-      const killedAt = new Date();
+      const killedAt = new Date(yield* Clock.currentTimeMillis);
       const minSpawnTimeAtKill = timerData.previousMinSpawnTime ?? killedAt;
       const maxSpawnTimeAtKill = timerData.previousMaxSpawnTime ?? killedAt;
       const effectiveKilledAt = getEffectiveWindowEndAt(
@@ -848,44 +853,44 @@ export const makeEventKills = (
       yield* runPromiseAdapter("redis.eventReadCache.invalidate", () =>
         eventReadCache.invalidateEvent(guildId, event.id),
       );
-      yield* runPromiseAdapter("rabbit.eventEmitter.emit", () =>
-        eventEmitter.emit(RoutingKey.EVENT_HERO_KILLED, {
+      yield* eventEmitter
+        .emit(RoutingKey.EVENT_HERO_KILLED, {
           guildId,
           eventId: event.id,
           killId: kill.kill.id,
-        }),
-      );
+        })
+        .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
 
       if (!isManualClose) {
-        yield* runPromiseAdapter("rabbit.eventEmitter.emit", () =>
-          eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
+        yield* eventEmitter
+          .emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
             guildId,
             eventId: event.id,
             heroId: eventHero.id,
-          }),
-        );
+          })
+          .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
 
         if (timerData.minSpawnTime && timerData.maxSpawnTime) {
-          yield* runPromiseAdapter("rabbit.eventEmitter.emit", () =>
-            eventEmitter.emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
+          yield* eventEmitter
+            .emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
               guildId,
               eventId: event.id,
               heroId: eventHero.id,
-            }),
-          );
+            })
+            .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
         }
       }
 
       yield* Effect.forEach(
         heroMaps,
         (map) =>
-          runPromiseAdapter("rabbit.eventEmitter.emit", () =>
-            eventEmitter.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+          eventEmitter
+            .emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
               guildId,
               eventId: event.id,
               mapId: map.id,
-            }),
-          ),
+            })
+            .pipe(Effect.withSpan("rabbit.eventEmitter.emit")),
         { concurrency: "unbounded", discard: true },
       );
 
@@ -953,27 +958,18 @@ export const makeEventKills = (
     limit = 20,
     cursor?: string,
   ) {
-    return Effect.tryPromise({
-      try: () =>
-        eventReadCache.getOrSet(
-          eventReadCache.getEventKey(guildId, eventId, "hero-kill-history", {
-            cursor,
-            heroId,
-            limit,
-          }),
-          () =>
-            Effect.runPromise(
-              getHeroKillHistoryUncached(
-                guildId,
-                eventId,
-                heroId,
-                limit,
-                cursor,
-              ),
-            ),
-        ),
-      catch: (cause) => cause,
-    }).pipe(Effect.withSpan("events.kills.heroHistory"));
+    return eventReadCache
+      .getOrSet(
+        eventReadCache.getEventKey(guildId, eventId, "hero-kill-history", {
+          cursor,
+          heroId,
+          limit,
+        }),
+        EventKillHistoryResponse,
+        () =>
+          getHeroKillHistoryUncached(guildId, eventId, heroId, limit, cursor),
+      )
+      .pipe(Effect.withSpan("events.kills.heroHistory"));
   }
 
   function getHeroKillHistoryUncached(
@@ -987,7 +983,7 @@ export const makeEventKills = (
       const hero = yield* repository.findHero(guildId, eventId, heroId);
 
       if (!hero) {
-        return yield* Effect.fail(new NotFoundException("Hero not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
 
       const kills = yield* repository.findKills({
@@ -1026,27 +1022,18 @@ export const makeEventKills = (
     cursor?: string,
     heroId?: string,
   ) {
-    return Effect.tryPromise({
-      try: () =>
-        eventReadCache.getOrSet(
-          eventReadCache.getEventKey(guildId, eventId, "event-kill-history", {
-            cursor,
-            heroId,
-            limit,
-          }),
-          () =>
-            Effect.runPromise(
-              getEventKillHistoryUncached(
-                guildId,
-                eventId,
-                limit,
-                cursor,
-                heroId,
-              ),
-            ),
-        ),
-      catch: (cause) => cause,
-    }).pipe(Effect.withSpan("events.kills.eventHistory"));
+    return eventReadCache
+      .getOrSet(
+        eventReadCache.getEventKey(guildId, eventId, "event-kill-history", {
+          cursor,
+          heroId,
+          limit,
+        }),
+        EventKillHistoryResponse,
+        () =>
+          getEventKillHistoryUncached(guildId, eventId, limit, cursor, heroId),
+      )
+      .pipe(Effect.withSpan("events.kills.eventHistory"));
   }
 
   function getEventKillHistoryUncached(
@@ -1060,7 +1047,7 @@ export const makeEventKills = (
       const event = yield* repository.findEvent(guildId, eventId);
 
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
       const kills = yield* repository.findKills({
@@ -1100,29 +1087,26 @@ export const makeEventKills = (
     cursor?: string,
     heroId?: string,
   ) {
-    return Effect.tryPromise({
-      try: () =>
-        eventReadCache.getOrSet(
-          eventReadCache.getEventKey(guildId, eventId, "member-kill-history", {
+    return eventReadCache
+      .getOrSet(
+        eventReadCache.getEventKey(guildId, eventId, "member-kill-history", {
+          cursor,
+          heroId,
+          limit,
+          memberId,
+        }),
+        EventMemberKillHistoryResponse,
+        () =>
+          getMemberKillHistoryUncached(
+            guildId,
+            eventId,
+            memberId,
+            limit,
             cursor,
             heroId,
-            limit,
-            memberId,
-          }),
-          () =>
-            Effect.runPromise(
-              getMemberKillHistoryUncached(
-                guildId,
-                eventId,
-                memberId,
-                limit,
-                cursor,
-                heroId,
-              ),
-            ),
-        ),
-      catch: (cause) => cause,
-    }).pipe(Effect.withSpan("events.kills.memberHistory"));
+          ),
+      )
+      .pipe(Effect.withSpan("events.kills.memberHistory"));
   }
 
   function getMemberKillHistoryUncached(
@@ -1137,13 +1121,15 @@ export const makeEventKills = (
       const event = yield* repository.findEvent(guildId, eventId);
 
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
       const member = yield* repository.findMember(guildId, memberId);
 
       if (!member) {
-        return yield* Effect.fail(new NotFoundException("Member not found"));
+        return yield* Effect.fail(
+          new ResourceNotFoundError("Member not found"),
+        );
       }
 
       const kills = yield* repository.findKills({
@@ -1218,7 +1204,7 @@ export const makeEventKills = (
       );
 
       if (!kill) {
-        return yield* Effect.fail(new NotFoundException("Kill not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Kill not found"));
       }
 
       const heroMaps = yield* repository.findMaps(heroId);
@@ -1670,7 +1656,7 @@ export const makeEventKills = (
       );
 
       if (!kill) {
-        return yield* Effect.fail(new NotFoundException("Kill not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Kill not found"));
       }
 
       const summary = yield* repository.findWindowSummary(killId);

@@ -1,5 +1,6 @@
-import { Effect } from "effect";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { Clock, Effect } from "effect";
+import { HeroRespawnConfigResponse } from "../event-monitoring-response.schema.js";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
 import type { EventReadCache } from "./event-read-cache.service.js";
 import type { EventRespawnStore } from "./event-respawn.repository.js";
@@ -14,10 +15,10 @@ export const makeEventRespawn = (
     Effect.gen(function* () {
       const hero = yield* repository.findHero(guildId, eventId, heroId);
       if (!hero) {
-        return yield* Effect.fail(new NotFoundException("Hero not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
 
-      const now = new Date();
+      const now = new Date(yield* Clock.currentTimeMillis);
       const timer = yield* timers.getEventRespawnTimer({
         guildId,
         world: hero.event.world,
@@ -72,13 +73,11 @@ export const makeEventRespawn = (
         "hero-respawn-config",
         { heroId },
       );
-      return Effect.tryPromise({
-        try: () =>
-          eventReadCache.getOrSet(cacheKey, () =>
-            Effect.runPromise(load(guildId, eventId, heroId)),
-          ),
-        catch: (cause) => cause,
-      }).pipe(Effect.withSpan("events.respawn.config"));
+      return eventReadCache
+        .getOrSet(cacheKey, HeroRespawnConfigResponse, () =>
+          load(guildId, eventId, heroId),
+        )
+        .pipe(Effect.withSpan("events.respawn.config"));
     },
   };
 };

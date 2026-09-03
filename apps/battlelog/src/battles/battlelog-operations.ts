@@ -21,7 +21,7 @@ import type {
   GetAllBattlesResult,
 } from "#src/battles/interfaces/battle-service.interface";
 import type { BattleAnalytics } from "#src/battles/services/battle-analytics.service";
-import type { DeleteUserData } from "./internal.controller.js";
+import type { DeleteUserData } from "./internal-operations.js";
 
 const normalizeBattleResponse = (
   battle: BattleWithRelations,

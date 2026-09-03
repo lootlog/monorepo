@@ -3,7 +3,13 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
-import type { KillsControllerGetGuildKillStatsQuery as GetGuildKillStatsDto } from "#src/http-api/lootlog-api";
+import {
+  KillsControllerGetGuildKillStats200,
+  KillsControllerGetGuildTopKillersByType200,
+  KillsControllerGetGuildTopNpcs200,
+  KillsControllerGetNpcKillers200,
+  type KillsControllerGetGuildKillStatsQuery as GetGuildKillStatsDto,
+} from "#src/http-api/lootlog-api";
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,
@@ -78,6 +84,7 @@ export const makeGuildKillQueries = (
           visibility: visibility.cacheScope,
         }),
         label: "guild kill stats",
+        schema: KillsControllerGetGuildKillStats200,
         load: Effect.gen(function* () {
           const [memberStats, guildSummary] = yield* Effect.all(
             [
@@ -190,6 +197,7 @@ export const makeGuildKillQueries = (
           world,
         }),
         label: "guild top npcs",
+        schema: KillsControllerGetGuildTopNpcs200,
         load: persistence
           .findGuildSummaries(
             {
@@ -274,6 +282,7 @@ export const makeGuildKillQueries = (
           visibility: visibility.cacheScope,
         }),
         label: "guild top killers",
+        schema: KillsControllerGetGuildTopKillersByType200,
         load: persistence
           .findMemberStats(
             {
@@ -368,6 +377,7 @@ export const makeGuildKillQueries = (
           world,
         }),
         label: "npc killers",
+        schema: KillsControllerGetNpcKillers200,
         load: Effect.gen(function* () {
           const [stats, summaries] = yield* Effect.all(
             [

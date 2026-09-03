@@ -211,6 +211,9 @@ jobs:
       - name: Check dependencies
         run: bun run deps:check
 
+      - name: Check Effect architecture boundaries
+        run: bun run architecture:effect
+
       - name: Lint, typecheck, and build affected workspaces
         env:
           PACKAGES: ${{ needs.plan.outputs.packages }}

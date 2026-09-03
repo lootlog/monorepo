@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationRuleTable,
@@ -19,8 +19,8 @@ import {
 } from "./notification-enums.js";
 import type { JsonValue } from "./notification-database.types.js";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { hasOwnField } from "#src/shared/utils/has-own-field";
 
@@ -105,7 +105,7 @@ export const makeNotificationGuildTargets = (
           rows[0]
             ? Effect.succeed(rows[0])
             : Effect.fail(
-                new NotFoundException(
+                new ResourceNotFoundError(
                   NotificationError.NOTIFICATION_TARGET_NOT_FOUND,
                 ),
               ),
@@ -138,14 +138,14 @@ export const makeNotificationGuildTargets = (
   ) {
     if (data.targetType !== NotificationTargetType.CHANNEL) {
       return yield* Effect.fail(
-        new BadRequestException(
+        new InvalidRequestError(
           NotificationError.GUILD_TARGETS_MUST_BE_CHANNELS,
         ),
       );
     }
     if (!data.externalId) {
       return yield* Effect.fail(
-        new BadRequestException(
+        new InvalidRequestError(
           NotificationError.GUILD_CHANNEL_TARGET_REQUIRES_EXTERNAL_ID,
         ),
       );
@@ -156,12 +156,12 @@ export const makeNotificationGuildTargets = (
     );
     if (!selected) {
       return yield* Effect.fail(
-        new BadRequestException(
+        new InvalidRequestError(
           NotificationError.SELECTED_DISCORD_CHANNEL_NOT_AVAILABLE,
         ),
       );
     }
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const rows = yield* database
       .insert(notificationTargetTable)
       .values({
@@ -221,7 +221,11 @@ export const makeNotificationGuildTargets = (
       : {};
     const rows = yield* database
       .update(notificationTargetTable)
-      .set({ ...displayName, active: data.active, updatedAt: new Date() })
+      .set({
+        ...displayName,
+        active: data.active,
+        updatedAt: new Date(yield* Clock.currentTimeMillis),
+      })
       .where(
         and(
           eq(notificationTargetTable.id, targetId),

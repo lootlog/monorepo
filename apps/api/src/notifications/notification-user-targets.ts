@@ -9,7 +9,7 @@ import {
   inArray,
   isNotNull,
 } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationJobTable,
@@ -19,9 +19,9 @@ import {
   watchedItemTable,
 } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { hasOwnField } from "#src/shared/utils/has-own-field";
 import {
@@ -108,7 +108,7 @@ export const makeNotificationUserTargets = (
           rows[0]
             ? Effect.succeed(rows[0])
             : Effect.fail(
-                new NotFoundException(
+                new ResourceNotFoundError(
                   NotificationError.NOTIFICATION_TARGET_NOT_FOUND,
                 ),
               ),
@@ -118,7 +118,9 @@ export const makeNotificationUserTargets = (
   const recentUsage = (targetIds: number[]) =>
     Effect.gen(function* () {
       if (targetIds.length === 0) return new Map<number, Date[]>();
-      const threshold = new Date(Date.now() - TEST_WINDOW_MS);
+      const threshold = new Date(
+        (yield* Clock.currentTimeMillis) - TEST_WINDOW_MS,
+      );
       const rows = yield* database
         .select({
           targetId: notificationJobTable.targetId,
@@ -188,19 +190,19 @@ export const makeNotificationUserTargets = (
   ) {
     if (data.targetType !== NotificationTargetType.DM) {
       return yield* Effect.fail(
-        new BadRequestException(
+        new InvalidRequestError(
           NotificationError.USER_TARGETS_MUST_BE_DISCORD_DMS,
         ),
       );
     }
     if (data.externalId && data.externalId !== discordId) {
       return yield* Effect.fail(
-        new BadRequestException(
+        new InvalidRequestError(
           NotificationError.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
         ),
       );
     }
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const target = yield* database
       .transaction((transaction) =>
         Effect.gen(function* () {
@@ -279,7 +281,11 @@ export const makeNotificationUserTargets = (
       : {};
     const rows = yield* database
       .update(notificationTargetTable)
-      .set({ ...displayName, active: data.active, updatedAt: new Date() })
+      .set({
+        ...displayName,
+        active: data.active,
+        updatedAt: new Date(yield* Clock.currentTimeMillis),
+      })
       .where(
         and(
           eq(notificationTargetTable.id, targetId),
@@ -365,7 +371,7 @@ export const makeNotificationUserTargets = (
             .limit(1);
           let rule = existing[0];
           if (!rule) {
-            const now = new Date();
+            const now = new Date(yield* Clock.currentTimeMillis);
             const rows = yield* transaction
               .insert(notificationRuleTable)
               .values({
@@ -404,14 +410,14 @@ export const makeNotificationUserTargets = (
       const target = yield* find(discordId, targetId);
       if (target.targetType !== NotificationTargetType.DM) {
         return yield* Effect.fail(
-          new BadRequestException(
+          new InvalidRequestError(
             NotificationError.USER_TEST_TARGET_MUST_BE_DISCORD_DM,
           ),
         );
       }
       if (!target.active || !target.canSend) {
         return yield* Effect.fail(
-          new ConflictException(
+          new ResourceConflictError(
             NotificationError.USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND,
           ),
         );
@@ -421,7 +427,7 @@ export const makeNotificationUserTargets = (
       );
       if (usage.remaining <= 0) {
         return yield* Effect.fail(
-          new ConflictException({
+          new ResourceConflictError({
             message: NotificationError.USER_DM_TEST_TRIGGER_LIMIT_REACHED,
             limit: usage.limit,
             windowSeconds: usage.windowSeconds,
@@ -430,7 +436,7 @@ export const makeNotificationUserTargets = (
         );
       }
       const rule = yield* getOrCreateTestRule(discordId, targetId);
-      const scheduledFor = new Date();
+      const scheduledFor = new Date(yield* Clock.currentTimeMillis);
       const job = yield* jobs.create({
         notificationRule: rule,
         target,
@@ -448,7 +454,7 @@ export const makeNotificationUserTargets = (
       });
       if (!job) {
         return yield* Effect.fail(
-          new ConflictException(
+          new ResourceConflictError(
             NotificationError.NO_TEST_JOB_CREATED_FOR_TARGET,
           ),
         );

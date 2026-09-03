@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -9,9 +9,9 @@ import {
   timerTable,
 } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
 import { TimerHistoryAction } from "#src/timers/timers.types";
@@ -53,9 +53,11 @@ export const makeRestoreTimer = (
           .limit(1);
         const entry = historyRows[0];
         if (!entry) {
-          throw new NotFoundException({
-            message: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
-          });
+          return yield* Effect.fail(
+            new ResourceNotFoundError({
+              message: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
+            }),
+          );
         }
         if (
           entry.action !== TimerHistoryAction.DELETE ||
@@ -65,9 +67,11 @@ export const makeRestoreTimer = (
           entry.latestRespBaseSeconds === null ||
           entry.latestRespawnRandomness === null
         ) {
-          throw new BadRequestException({
-            message: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
-          });
+          return yield* Effect.fail(
+            new InvalidRequestError({
+              message: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
+            }),
+          );
         }
         const existingRows = yield* transaction
           .select()
@@ -81,9 +85,11 @@ export const makeRestoreTimer = (
           )
           .limit(1);
         if (existingRows[0]?.deletedAt === null) {
-          throw new ConflictException({ message: ErrorKey.EXISTING_TIMER });
+          return yield* Effect.fail(
+            new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),
+          );
         }
-        const now = new Date();
+        const now = new Date(yield* Clock.currentTimeMillis);
         const restoredRows = yield* transaction
           .insert(timerTable)
           .values({
@@ -125,7 +131,8 @@ export const makeRestoreTimer = (
           })
           .returning();
         const restored = restoredRows[0];
-        if (!restored) throw new Error("Timer restore returned no row");
+        if (!restored)
+          return yield* Effect.fail(new Error("Timer restore returned no row"));
         const actors = yield* transaction
           .select()
           .from(memberTable)
@@ -137,7 +144,10 @@ export const makeRestoreTimer = (
           )
           .limit(1);
         const actor = actors[0];
-        if (!actor) throw new Error("Timer history actor member was not found");
+        if (!actor)
+          return yield* Effect.fail(
+            new Error("Timer history actor member was not found"),
+          );
         yield* transaction.insert(timerHistoryEntryTable).values({
           guildId: access.guild.id,
           world: entry.world,

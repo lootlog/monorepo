@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationJobTable,
@@ -155,11 +155,17 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.gen(function* () {
           const target = transaction
             .update(notificationTargetTable)
-            .set({ ...options.target, updatedAt: new Date() })
+            .set({
+              ...options.target,
+              updatedAt: new Date(yield* Clock.currentTimeMillis),
+            })
             .where(eq(notificationTargetTable.id, options.targetId));
           const job = transaction
             .update(notificationJobTable)
-            .set({ ...options.job, updatedAt: new Date() })
+            .set({
+              ...options.job,
+              updatedAt: new Date(yield* Clock.currentTimeMillis),
+            })
             .where(eq(notificationJobTable.id, options.jobId));
           if (options.targetFirst ?? true) {
             yield* target;

@@ -1,10 +1,10 @@
-import { Config, Context, Effect, Layer } from "effect";
+import { Config, Context, Effect, Layer, type Redacted } from "effect";
 
 export interface BotConfigValue {
   readonly port: number;
   readonly serviceName: string;
-  readonly discordBotToken: string;
-  readonly rabbitmqUri: string;
+  readonly discordBotToken: Redacted.Redacted<string>;
+  readonly rabbitmqUri: Redacted.Redacted<string>;
 }
 export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
   "@lootlog/discord-bot/BotConfig",
@@ -17,8 +17,8 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
         serviceName: Config.string("SERVICE_NAME").pipe(
           Config.withDefault("discord-bot"),
         ),
-        discordBotToken: Config.string("DISCORD_BOT_TOKEN"),
-        rabbitmqUri: Config.string("RABBITMQ_URI"),
+        discordBotToken: Config.redacted("DISCORD_BOT_TOKEN"),
+        rabbitmqUri: Config.redacted("RABBITMQ_URI"),
       });
       return BotConfig.of(value);
     }),

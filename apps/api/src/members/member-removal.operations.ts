@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { memberTable, memberToRoleTable } from "#src/database/drizzle/schema";
 import type {
@@ -94,7 +94,7 @@ export const makeMemberRemoval = (
     );
     if (missing.length === 0) return 0;
     const ids = missing.map(({ id }) => id);
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     yield* operation(
       "members.deactivateMissing.transaction",
       database.transaction((transaction) =>

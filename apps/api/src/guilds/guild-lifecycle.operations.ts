@@ -2,7 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, eq } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   discordGuildSyncStateTable,
@@ -14,9 +14,11 @@ import {
   npcTypeEnum,
   roleTable,
 } from "#src/database/drizzle/schema";
-import type { CreateGuildDto } from "./dto/create-guild.dto.js";
-import type { DeleteGuildDto } from "./dto/delete-guild.dto.js";
-import type { UpdateGuildDto } from "./dto/update-guild.dto.js";
+import type {
+  GuildCreated,
+  GuildDeleted,
+  GuildUpdated,
+} from "@lootlog/protocol/rabbit/events";
 import type { CreateRoleDto } from "#src/roles/dto/create-role.dto";
 import type { DeleteRoleDto } from "#src/roles/dto/delete-role.dto";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/constants/member-discord-status.constant";
@@ -67,9 +69,9 @@ export const makeGuildLifecycle = (
     );
 
   const createGuild = Effect.fn("guildLifecycle.create")(function* (
-    data: CreateGuildDto,
+    data: GuildCreated,
   ) {
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const guild = yield* operation(
       "guildLifecycle.create.transaction",
       database.transaction((transaction) =>
@@ -160,7 +162,7 @@ export const makeGuildLifecycle = (
   });
 
   const updateGuild = Effect.fn("guildLifecycle.update")(function* (
-    data: UpdateGuildDto,
+    data: GuildUpdated,
   ) {
     const oldGuild = yield* operation(
       "guildLifecycle.update.read",
@@ -179,7 +181,7 @@ export const makeGuildLifecycle = (
           name: data.name,
           icon: data.icon,
           ownerId: data.ownerId,
-          updatedAt: new Date(),
+          updatedAt: new Date(yield* Clock.currentTimeMillis),
         })
         .where(eq(guildTable.id, data.guildId)),
     );
@@ -197,9 +199,9 @@ export const makeGuildLifecycle = (
   });
 
   const deleteGuild = Effect.fn("guildLifecycle.delete")(function* (
-    data: DeleteGuildDto,
+    data: GuildDeleted,
   ) {
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const deletion = yield* operation(
       "guildLifecycle.delete.transaction",
       database.transaction((transaction) =>
@@ -287,7 +289,7 @@ export const makeGuildLifecycle = (
           Capability.ADMIN,
         )
       : false;
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     yield* operation(
       "guildLifecycle.role.upsert.write",
       database

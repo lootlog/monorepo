@@ -1,6 +1,11 @@
-import type { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { Schema } from "effect";
 import { Redis } from "ioredis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
+
+type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
+  readonly password: string;
+};
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
@@ -24,13 +29,42 @@ export interface FederatedRealtimeMessage {
   };
 }
 
+const FederatedRealtimeMessageJson = Schema.fromJsonString(
+  Schema.Struct({
+    id: Schema.String,
+    sourceInstanceId: Schema.String,
+    scopeKey: Schema.optional(Schema.String),
+    scope: Schema.optional(SubscriptionScope),
+    scopes: Schema.optional(Schema.Array(SubscriptionScope)),
+    userId: Schema.optional(Schema.String),
+    discordId: Schema.optional(Schema.String),
+    excludeConnectionId: Schema.optional(Schema.String),
+    recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
+    recipientWorld: Schema.optional(Schema.String),
+    recipientMapId: Schema.optional(Schema.Number),
+    presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
+    organizationId: Schema.optional(Schema.String),
+    frame: Schema.optional(Schema.String),
+    control: Schema.optional(
+      Schema.Struct({
+        type: Schema.Literal("permissions.rebalance"),
+        discordId: Schema.String,
+        userId: Schema.String,
+      }),
+    ),
+  }),
+);
+const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
+  FederatedRealtimeMessageJson,
+);
+
 export class RedisGatewayStore {
   readonly command: Redis;
   readonly publisher: Redis;
   readonly subscriber: Redis;
   readonly channel: string;
 
-  constructor(config: GatewayConfiguration["redis"]) {
+  constructor(config: RedisGatewayConfig) {
     const options = {
       host: config.host,
       port: config.port,
@@ -71,7 +105,7 @@ export class RedisGatewayStore {
   ): Promise<void> {
     this.subscriber.on("message", (_channel: string, raw: string) => {
       try {
-        const message = JSON.parse(raw) as FederatedRealtimeMessage;
+        const message = decodeFederatedRealtimeMessage(raw);
         if (
           typeof message.id === "string" &&
           typeof message.sourceInstanceId === "string" &&

@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import type { Queue } from "bullmq";
-import { makeBattlelogOperations } from "./battles.controller.js";
+import { makeBattlelogOperations } from "./battlelog-operations.js";
 import type { DeleteUserBattlesJobData } from "./delete-user-battles.processor.js";
 import type { Battles } from "./battles.service.js";
 import type { BattleAnalytics } from "./services/battle-analytics.service.js";

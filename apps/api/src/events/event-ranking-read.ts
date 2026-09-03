@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventPointsEditHistoryTable,
@@ -9,11 +9,38 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 import type { EventReadCache } from "./services/event-read-cache.service.js";
 
 const roundPoints = (value: number) =>
   Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
+
+const CachedEventRankingResponse = Schema.Array(
+  Schema.Struct({
+    id: Schema.String,
+    eventId: Schema.String,
+    memberId: Schema.Number,
+    heroNpcName: Schema.String,
+    totalPoints: Schema.Number,
+    manualAdjustmentPoints: Schema.Number,
+    totalKills: Schema.Number,
+    totalTimeSeconds: Schema.Number,
+    avgAfkPercentage: Schema.Number,
+    pointsModified: Schema.Boolean,
+    updatedAt: isoDatetimeCodec,
+    member: Schema.Struct({
+      id: Schema.Number,
+      name: Schema.String,
+      roles: Schema.Array(
+        Schema.Struct({
+          position: Schema.Number,
+          color: Schema.NullOr(Schema.Number),
+        }),
+      ),
+    }),
+  }),
+);
 
 export const makeEventRankingRead = (
   database: typeof ApiDatabase.Service,
@@ -27,7 +54,7 @@ export const makeEventRankingRead = (
         .where(and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)))
         .limit(1);
       if (!eventRows[0]) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
       const rows = yield* database
         .select({ ranking: eventRankingTable, member: memberTable })
@@ -69,13 +96,11 @@ export const makeEventRankingRead = (
   return {
     getRanking(guildId: string, eventId: string) {
       const key = cache.getEventKey(guildId, eventId, "ranking");
-      return Effect.tryPromise({
-        try: () =>
-          cache.getOrSet(key, () =>
-            Effect.runPromise(getRankingUncached(guildId, eventId)),
-          ),
-        catch: (cause) => cause,
-      }).pipe(Effect.withSpan("events.ranking.read"));
+      return cache
+        .getOrSet(key, CachedEventRankingResponse, () =>
+          getRankingUncached(guildId, eventId),
+        )
+        .pipe(Effect.withSpan("events.ranking.read"));
     },
 
     getEditHistories(guildId: string, eventId: string, rankingIds: string[]) {

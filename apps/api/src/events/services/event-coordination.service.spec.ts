@@ -1,5 +1,5 @@
 import { vi } from "#test/bun-test";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Effect } from "effect";
 import type { EventTimersPort } from "./event-timers.port.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
@@ -66,7 +66,7 @@ describe("EventCoordination", () => {
 
     await expect(
       Effect.runPromise(service.getCoordination(guildId, eventId)),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(ResourceNotFoundError);
   });
 
   it("marks heroes without timers as idle and uses assigned maps as coverage", async () => {

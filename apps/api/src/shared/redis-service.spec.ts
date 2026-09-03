@@ -1,5 +1,6 @@
 import { vi } from "#test/bun-test";
-import { RedisService } from "#src/redis/redis.service";
+import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { Schema } from "effect";
 
 type RedisCommandMock = ReturnType<
   typeof vi.fn<(...args: unknown[]) => unknown>
@@ -39,6 +40,9 @@ const createRedisClient = (): RedisClientMock => ({
 });
 
 describe("RedisService", () => {
+  const valueCodec = makeJsonCodec(Schema.Struct({ value: Schema.Number }));
+  const cachedCodec = makeJsonCodec(Schema.Struct({ cached: Schema.Boolean }));
+  const freshCodec = makeJsonCodec(Schema.Struct({ fresh: Schema.Boolean }));
   it("deletes pattern matches with SCAN batches instead of KEYS", async () => {
     const client = createRedisClient();
     client.scan
@@ -95,7 +99,18 @@ describe("RedisService", () => {
     client.del.mockResolvedValueOnce(1);
     const service = createRedisService(client);
 
-    await expect(service.getJson("cache:key")).resolves.toBeNull();
+    await expect(service.getJson("cache:key", valueCodec)).resolves.toBeNull();
+
+    expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
+  });
+
+  it("removes syntactically valid cache values that violate their schema", async () => {
+    const client = createRedisClient();
+    client.get.mockResolvedValueOnce(JSON.stringify({ value: "not-a-number" }));
+    client.del.mockResolvedValueOnce(1);
+    const service = createRedisService(client);
+
+    await expect(service.getJson("cache:key", valueCodec)).resolves.toBeNull();
 
     expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
   });
@@ -114,6 +129,7 @@ describe("RedisService", () => {
       key: "cache:key",
       ttlSeconds: 60,
       factory,
+      codec: valueCodec,
     });
 
     expect(result).toEqual({ value: 1 });
@@ -156,6 +172,7 @@ describe("RedisService", () => {
       key: "cache:key",
       ttlSeconds: 60,
       factory,
+      codec: cachedCodec,
       waitIntervalMs: 0,
       waitTimeoutMs: 100,
     });
@@ -178,6 +195,7 @@ describe("RedisService", () => {
       key: "cache:key",
       ttlSeconds: 60,
       factory,
+      codec: freshCodec,
       onError,
     });
 
@@ -203,6 +221,7 @@ describe("RedisService", () => {
         key: "cache:key",
         ttlSeconds: 60,
         factory,
+        codec: freshCodec,
         onError,
       }),
     ).rejects.toThrow(factoryError);

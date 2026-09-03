@@ -1,7 +1,10 @@
 import type { APIGuild } from "discord-api-types/v10";
 import { Effect } from "effect";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
-import { HttpException, HttpStatus } from "#src/shared/http/http-errors";
+import {
+  ApplicationError,
+  ApplicationErrorKind,
+} from "#src/shared/http/http-errors";
 import {
   type AuthenticatedIdentity,
   UsersGuildsOperationError,
@@ -16,8 +19,8 @@ export const makeManageableGuilds = (
     function* (identity: AuthenticatedIdentity) {
       const guilds = yield* getDiscordGuilds(identity).pipe(
         Effect.catch((error) =>
-          error instanceof HttpException &&
-          error.getStatus() === HttpStatus.UNAUTHORIZED
+          error instanceof ApplicationError &&
+          error.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
             ? Effect.succeed([])
             : Effect.fail(error),
         ),

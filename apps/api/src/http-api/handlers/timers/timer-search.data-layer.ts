@@ -1,6 +1,9 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { Effect } from "effect";
-import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { Effect, Schema } from "effect";
+import {
+  NpcTypeEnum as NpcType,
+  NpcTypeSchema,
+} from "@lootlog/schema/npc-type";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
@@ -10,10 +13,10 @@ const parseNpc = (
   npc: unknown,
 ): { readonly lvl: number; readonly type: NpcType } | null => {
   if (!npc) return null;
-  if (typeof npc === "string") {
-    return JSON.parse(npc) as { lvl: number; type: NpcType };
-  }
-  return npc as { lvl: number; type: NpcType };
+  const schema = Schema.Struct({ lvl: Schema.Number, type: NpcTypeSchema });
+  return Schema.decodeUnknownSync(
+    typeof npc === "string" ? Schema.fromJsonString(schema) : schema,
+  )(npc);
 };
 
 export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {

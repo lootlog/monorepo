@@ -4,14 +4,14 @@ import {
   RabbitRoutingKey,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 import { SearchConfig } from "#src/config/search-config";
 import { decodeIndexItemsPayload } from "#src/items/dto/index-items.dto";
 import { decodeIndexNpcsPayload } from "#src/npcs/dto/index-npcs.dto";
 import { decodeIndexPlayersPayload } from "#src/players/dto/index-players.dto";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
-import { consoleLogger } from "#src/shared/logger";
+import { effectLogger } from "#src/shared/logger";
 
 const queue = (
   name: string,
@@ -50,7 +50,7 @@ export const SearchConsumers = Layer.effectDiscard(
           try {
             items = decode(decodeJson(delivery.content));
           } catch (error) {
-            consoleLogger.error(
+            effectLogger.error(
               `Validation error in ${queueName} handler`,
               error,
             );
@@ -81,7 +81,7 @@ const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* SearchConfig;
     return RabbitMessaging.layer({
-      uri: config.rabbitmqUri,
+      uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
       queues: searchQueues,
     });

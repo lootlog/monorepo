@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import { Effect } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type {
   FederatedRealtimeMessage,
@@ -91,13 +92,17 @@ describe("RealtimeHub federation", () => {
       config,
       new FakeRedisStore(bus) as unknown as RedisGatewayStore,
     );
-    await first.start();
-    await second.start();
+    await Effect.runPromise(first.start());
+    await Effect.runPromise(second.start());
     const received: string[] = [];
-    second.onPermissionRebalance(async (discordId, userId) => {
-      received.push(`${discordId}:${userId}`);
-    });
-    await first.publishPermissionRebalance("discord-1", "user-1");
+    second.onPermissionRebalance((discordId, userId) =>
+      Effect.sync(() => received.push(`${discordId}:${userId}`)).pipe(
+        Effect.asVoid,
+      ),
+    );
+    await Effect.runPromise(
+      first.publishPermissionRebalance("discord-1", "user-1"),
+    );
     await Bun.sleep(0);
     expect(received).toEqual(["discord-1:user-1"]);
   });
@@ -112,8 +117,8 @@ describe("RealtimeHub federation", () => {
       config,
       new FakeRedisStore(bus) as unknown as RedisGatewayStore,
     );
-    await first.start();
-    await second.start();
+    await Effect.runPromise(first.start());
+    await Effect.runPromise(second.start());
     const scope = {
       topic: "organization.chat",
       organizationId: "organization-1",
@@ -140,7 +145,7 @@ describe("RealtimeHub federation", () => {
       { ...config, maxBackpressureBytes: 1 } as GatewayConfiguration,
       new FakeRedisStore(bus) as unknown as RedisGatewayStore,
     );
-    await hub.start();
+    await Effect.runPromise(hub.start());
     const scope = {
       topic: "organization.chat",
       organizationId: "organization-1",

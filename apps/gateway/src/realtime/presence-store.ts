@@ -1,20 +1,17 @@
 import {
+  BasicPresence,
   PRESENCE_EXPIRY_MS,
-  type BasicPresence,
   type PresenceSnapshot,
-  type PresenceWithLocation,
+  PresenceWithLocation,
   type PublishedPresence,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
-import {
-  type BackgroundTaskRunner,
-  unmanagedBackgroundTaskRunner,
-} from "#src/platform/background-tasks";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
+import { Effect, Schema } from "effect";
 
 type Basic = typeof BasicPresence.Type;
 type Precise = typeof PresenceWithLocation.Type;
@@ -24,6 +21,18 @@ type Event = typeof ServerEvent.Type;
 
 const REDIS_TTL_SECONDS = Math.ceil(PRESENCE_EXPIRY_MS / 1_000);
 const SWEEP_INTERVAL_MS = 5_000;
+const PresenceJson = Schema.fromJsonString(
+  Schema.Union([PresenceWithLocation, BasicPresence]),
+);
+const PresenceMetadataJson = Schema.fromJsonString(
+  Schema.Struct({ userId: Schema.String, discordId: Schema.String }),
+);
+const decodePresence = Schema.decodeUnknownSync(PresenceJson);
+const decodePresenceMetadata = Schema.decodeUnknownSync(PresenceMetadataJson);
+const fromPromise = <A>(
+  evaluate: () => Promise<A>,
+): Effect.Effect<A, unknown> =>
+  Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
 
 const withoutLocation = (presence: Basic | Precise): Basic => {
   const { location: _location, ...basic } = presence as Precise;
@@ -31,321 +40,379 @@ const withoutLocation = (presence: Basic | Precise): Basic => {
 };
 
 export class PresenceStore {
-  private sweepTimer?: ReturnType<typeof setInterval>;
-
   constructor(
     private readonly redis: RedisGatewayStore,
     private readonly hub: RealtimeHub,
     private readonly now: () => number = Date.now,
     private readonly coverage?: CoveragePublisher,
-    private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
-  start(): void {
-    this.sweepTimer = setInterval(() => {
-      this.runBackground("presence.sweep", () => this.sweepExpired());
-    }, SWEEP_INTERVAL_MS);
-  }
+  readonly sweepSchedule = SWEEP_INTERVAL_MS;
 
-  stop(): void {
-    if (this.sweepTimer) clearInterval(this.sweepTimer);
-  }
-
-  async publish(
+  publish(
     socket: GatewaySocket,
     data: Published,
-  ): Promise<Basic | Precise> {
-    const allowedOrganizationIds = new Set(
-      socket.data.guilds.map(({ guild }) => guild.id),
-    );
-    const selectedOrganizationIds = [
-      ...new Set(
-        data.organizationIds.filter((id) => allowedOrganizationIds.has(id)),
-      ),
-    ];
-    await this.removeFromUnselectedOrganizations(
-      socket,
-      selectedOrganizationIds,
-    );
-    if (selectedOrganizationIds.length === 0) {
-      throw new Error("presence publication has no authorized organization");
-    }
-
-    const previousPresence = socket.data.presence;
-    const presence: Basic | Precise = {
-      userId: socket.data.userId,
-      sessionId: socket.data.connectionId,
-      organizationIds: selectedOrganizationIds,
-      platform: socket.data.platform,
-      status: "online",
-      confidence: socket.data.confidence,
-      isAfk: data.isAfk ?? false,
-      lastSeen: this.now(),
-      character: socket.data.character ?? data.character,
-      ...(data.location ? { location: data.location } : {}),
-    };
-    socket.data.presence = presence;
-
-    for (const organizationId of selectedOrganizationIds) {
-      await this.write(organizationId, presence, socket.data.discordId);
-      await this.broadcastUpsert(organizationId, presence);
-      await this.publishCoverageChange(
-        socket.data.discordId,
-        organizationId,
-        previousPresence,
-        presence,
+  ): Effect.Effect<Basic | Precise, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const allowedOrganizationIds = new Set(
+        socket.data.guilds.map(({ guild }) => guild.id),
       );
-    }
-    return presence;
-  }
-
-  async heartbeat(socket: GatewaySocket, sessionId: string): Promise<number> {
-    if (sessionId !== socket.data.connectionId || !socket.data.presence) {
-      throw new Error("heartbeat session does not match the connection");
-    }
-    const presence = { ...socket.data.presence, lastSeen: this.now() };
-    socket.data.presence = presence;
-    for (const organizationId of presence.organizationIds) {
-      await this.write(organizationId, presence, socket.data.discordId);
-      await this.broadcastUpsert(organizationId, presence);
-    }
-    await this.hub.refreshRegistry(socket.data);
-    return presence.lastSeen;
-  }
-
-  async disconnect(session: SessionData): Promise<void> {
-    const presence = session.presence;
-    if (!presence) return;
-    for (const organizationId of presence.organizationIds) {
-      if ("location" in presence && presence.location?.map) {
-        await this.coverage?.publish({
-          guildId: organizationId,
-          mapName: presence.location.map,
-          discordId: session.discordId,
-          hasPlayer: false,
-          isAfk: presence.isAfk,
-        });
+      const selectedOrganizationIds = [
+        ...new Set(
+          data.organizationIds.filter((id) => allowedOrganizationIds.has(id)),
+        ),
+      ];
+      yield* self.removeFromUnselectedOrganizations(
+        socket,
+        selectedOrganizationIds,
+      );
+      if (selectedOrganizationIds.length === 0) {
+        return yield* Effect.fail(
+          new Error("presence publication has no authorized organization"),
+        );
       }
-      await this.remove(organizationId, presence.userId, presence.sessionId);
-    }
+
+      const previousPresence = socket.data.presence;
+      const presence: Basic | Precise = {
+        userId: socket.data.userId,
+        sessionId: socket.data.connectionId,
+        organizationIds: selectedOrganizationIds,
+        platform: socket.data.platform,
+        status: "online",
+        confidence: socket.data.confidence,
+        isAfk: data.isAfk ?? false,
+        lastSeen: self.now(),
+        character: socket.data.character ?? data.character,
+        ...(data.location ? { location: data.location } : {}),
+      };
+      socket.data.presence = presence;
+
+      for (const organizationId of selectedOrganizationIds) {
+        yield* self.write(organizationId, presence, socket.data.discordId);
+        yield* self.broadcastUpsert(organizationId, presence);
+        yield* self.publishCoverageChange(
+          socket.data.discordId,
+          organizationId,
+          previousPresence,
+          presence,
+        );
+      }
+      return presence;
+    });
   }
 
-  async snapshot(
+  heartbeat(
+    socket: GatewaySocket,
+    sessionId: string,
+  ): Effect.Effect<number, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (sessionId !== socket.data.connectionId || !socket.data.presence) {
+        return yield* Effect.fail(
+          new Error("heartbeat session does not match the connection"),
+        );
+      }
+      const presence = { ...socket.data.presence, lastSeen: self.now() };
+      socket.data.presence = presence;
+      for (const organizationId of presence.organizationIds) {
+        yield* self.write(organizationId, presence, socket.data.discordId);
+        yield* self.broadcastUpsert(organizationId, presence);
+      }
+      yield* fromPromise(() => self.hub.refreshRegistry(socket.data));
+      return presence.lastSeen;
+    });
+  }
+
+  disconnect(session: SessionData): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const presence = session.presence;
+      if (!presence) return;
+      for (const organizationId of presence.organizationIds) {
+        if ("location" in presence && presence.location?.map) {
+          if (self.coverage)
+            yield* self.coverage.publish({
+              guildId: organizationId,
+              mapName: presence.location.map,
+              discordId: session.discordId,
+              hasPlayer: false,
+              isAfk: presence.isAfk,
+            });
+        }
+        yield* self.remove(organizationId, presence.userId, presence.sessionId);
+      }
+    });
+  }
+
+  snapshot(
     viewer: SessionData,
     organizationId: string,
     world?: string,
-  ): Promise<Snapshot> {
-    const presences = await this.readOrganization(organizationId);
-    const includeLocation = canReadPreciseLocation(viewer, organizationId);
-    const filtered = presences
-      .filter(
-        (presence) =>
-          world === undefined || presence.character?.world === world,
-      )
-      .map((presence) =>
-        includeLocation ? presence : withoutLocation(presence),
-      );
-    return {
-      organizationId,
-      world,
-      revision: await this.getRevision(organizationId),
-      presences: filtered,
-    };
+  ): Effect.Effect<Snapshot, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const presences = yield* self.readOrganization(organizationId);
+      const includeLocation = canReadPreciseLocation(viewer, organizationId);
+      const filtered = presences
+        .filter(
+          (presence) =>
+            world === undefined || presence.character?.world === world,
+        )
+        .map((presence) =>
+          includeLocation ? presence : withoutLocation(presence),
+        );
+      return {
+        organizationId,
+        world,
+        revision: yield* self.getRevision(organizationId),
+        presences: filtered,
+      };
+    });
   }
 
-  async sweepExpired(): Promise<void> {
-    const organizations = await this.redis.command.smembers(
-      "presence:organizations",
-    );
-    for (const organizationId of organizations) {
-      const lock = await this.redis.command.set(
-        `presence:sweep-lock:${organizationId}`,
-        this.hub.instanceId,
-        "EX",
-        10,
-        "NX",
+  sweepExpired(): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const organizations = yield* fromPromise(() =>
+        self.redis.command.smembers("presence:organizations"),
       );
-      if (lock !== "OK") continue;
-      const keys = await this.redis.command.smembers(
-        this.indexKey(organizationId),
-      );
-      if (keys.length === 0) continue;
-      const values = await this.redis.command.mget(keys);
-      for (const [index, value] of values.entries()) {
-        const key = keys[index];
-        if (!key) continue;
-        let expired = value === null;
-        if (value) {
-          try {
-            const presence = JSON.parse(value) as Basic | Precise;
-            expired = this.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS;
-          } catch {
-            expired = true;
+      for (const organizationId of organizations) {
+        const lock = yield* fromPromise(() =>
+          self.redis.command.set(
+            `presence:sweep-lock:${organizationId}`,
+            self.hub.instanceId,
+            "EX",
+            10,
+            "NX",
+          ),
+        );
+        if (lock !== "OK") continue;
+        const keys = yield* fromPromise(() =>
+          self.redis.command.smembers(self.indexKey(organizationId)),
+        );
+        if (keys.length === 0) continue;
+        const values = yield* fromPromise(() => self.redis.command.mget(keys));
+        for (const [index, value] of values.entries()) {
+          const key = keys[index];
+          if (!key) continue;
+          let expired = value === null;
+          if (value) {
+            try {
+              const presence = decodePresence(value);
+              expired = self.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS;
+            } catch {
+              expired = true;
+            }
           }
+          if (!expired) continue;
+          const sessionId = key.slice(key.lastIndexOf(":") + 1);
+          const metadata = yield* self.readMetadata(organizationId, sessionId);
+          const userId = metadata?.userId;
+          if (userId) yield* self.remove(organizationId, userId, sessionId);
+          else
+            yield* fromPromise(() =>
+              self.redis.command.srem(self.indexKey(organizationId), key),
+            );
         }
-        if (!expired) continue;
-        const sessionId = key.slice(key.lastIndexOf(":") + 1);
-        const metadata = await this.readMetadata(organizationId, sessionId);
-        const userId = metadata?.userId;
-        if (userId) await this.remove(organizationId, userId, sessionId);
-        else await this.redis.command.srem(this.indexKey(organizationId), key);
       }
-    }
+    });
   }
 
-  async coverageForMap(
+  coverageForMap(
     organizationId: string,
     mapName: string,
-  ): Promise<Array<{ readonly discordId: string; readonly isAfk: boolean }>> {
-    const presences = await this.readOrganization(organizationId);
-    const result: Array<{
-      readonly discordId: string;
-      readonly isAfk: boolean;
-    }> = [];
-    for (const presence of presences) {
-      if (!("location" in presence) || presence.location?.map !== mapName)
-        continue;
-      const metadata = await this.readMetadata(
-        organizationId,
-        presence.sessionId,
-      );
-      if (metadata)
-        result.push({ discordId: metadata.discordId, isAfk: presence.isAfk });
-    }
-    return result;
+  ): Effect.Effect<
+    Array<{ readonly discordId: string; readonly isAfk: boolean }>,
+    unknown
+  > {
+    const self = this;
+    return Effect.gen(function* () {
+      const presences = yield* self.readOrganization(organizationId);
+      const result: Array<{
+        readonly discordId: string;
+        readonly isAfk: boolean;
+      }> = [];
+      for (const presence of presences) {
+        if (!("location" in presence) || presence.location?.map !== mapName)
+          continue;
+        const metadata = yield* self.readMetadata(
+          organizationId,
+          presence.sessionId,
+        );
+        if (metadata)
+          result.push({ discordId: metadata.discordId, isAfk: presence.isAfk });
+      }
+      return result;
+    });
   }
 
-  private async removeFromUnselectedOrganizations(
+  private removeFromUnselectedOrganizations(
     socket: GatewaySocket,
     selected: ReadonlyArray<string>,
-  ): Promise<void> {
-    const previous = socket.data.presence?.organizationIds ?? [];
-    const selectedSet = new Set(selected);
-    for (const organizationId of previous) {
-      if (!selectedSet.has(organizationId)) {
-        await this.remove(
-          organizationId,
-          socket.data.userId,
-          socket.data.connectionId,
-        );
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const previous = socket.data.presence?.organizationIds ?? [];
+      const selectedSet = new Set(selected);
+      for (const organizationId of previous) {
+        if (!selectedSet.has(organizationId)) {
+          yield* self.remove(
+            organizationId,
+            socket.data.userId,
+            socket.data.connectionId,
+          );
+        }
       }
-    }
+    });
   }
 
-  private async write(
+  private write(
     organizationId: string,
     presence: Basic | Precise,
     discordId: string,
-  ): Promise<void> {
+  ): Effect.Effect<void, unknown> {
     const key = this.presenceKey(organizationId, presence.sessionId);
-    await Promise.all([
-      this.redis.command.set(
-        key,
-        JSON.stringify(presence),
-        "EX",
-        REDIS_TTL_SECONDS,
-      ),
-      this.redis.command.sadd(this.indexKey(organizationId), key),
-      this.redis.command.sadd("presence:organizations", organizationId),
-      this.redis.command.set(
-        this.metadataKey(organizationId, presence.sessionId),
-        JSON.stringify({
-          userId: presence.userId,
-          discordId,
-        }),
-        "EX",
-        REDIS_TTL_SECONDS * 2,
-      ),
-    ]);
-  }
-
-  private async remove(
-    organizationId: string,
-    userId: string,
-    sessionId: string,
-  ): Promise<void> {
-    const key = this.presenceKey(organizationId, sessionId);
-    await Promise.all([
-      this.redis.command.del(key),
-      this.redis.command.del(this.metadataKey(organizationId, sessionId)),
-      this.redis.command.srem(this.indexKey(organizationId), key),
-    ]);
-    const revision = await this.nextRevision(organizationId);
-    const event = {
-      v: 1,
-      type: "presence.delta",
-      sequence: revision,
-      data: {
-        organizationId,
-        revision,
-        changes: [{ action: "remove", userId, sessionId }],
-      },
-    } satisfies Event;
-    await this.hub.publishToScope(
-      { topic: "organization.presence", organizationId },
-      event,
+    return Effect.all(
+      [
+        fromPromise(() =>
+          this.redis.command.set(
+            key,
+            JSON.stringify(presence),
+            "EX",
+            REDIS_TTL_SECONDS,
+          ),
+        ),
+        fromPromise(() =>
+          this.redis.command.sadd(this.indexKey(organizationId), key),
+        ),
+        fromPromise(() =>
+          this.redis.command.sadd("presence:organizations", organizationId),
+        ),
+        fromPromise(() =>
+          this.redis.command.set(
+            this.metadataKey(organizationId, presence.sessionId),
+            JSON.stringify({
+              userId: presence.userId,
+              discordId,
+            }),
+            "EX",
+            REDIS_TTL_SECONDS * 2,
+          ),
+        ),
+      ],
+      { concurrency: "unbounded", discard: true },
     );
   }
 
-  private async broadcastUpsert(
+  private remove(
     organizationId: string,
-    presence: Basic | Precise,
-  ): Promise<void> {
-    const revision = await this.nextRevision(organizationId);
-    const makeEvent = (value: Basic | Precise) =>
-      ({
+    userId: string,
+    sessionId: string,
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const key = self.presenceKey(organizationId, sessionId);
+      yield* Effect.all(
+        [
+          fromPromise(() => self.redis.command.del(key)),
+          fromPromise(() =>
+            self.redis.command.del(self.metadataKey(organizationId, sessionId)),
+          ),
+          fromPromise(() =>
+            self.redis.command.srem(self.indexKey(organizationId), key),
+          ),
+        ],
+        { concurrency: "unbounded", discard: true },
+      );
+      const revision = yield* self.nextRevision(organizationId);
+      const event = {
         v: 1,
         type: "presence.delta",
         sequence: revision,
         data: {
           organizationId,
           revision,
-          changes: [{ action: "upsert", presence: value }],
+          changes: [{ action: "remove", userId, sessionId }],
         },
-      }) satisfies Event;
-    await this.hub.publishPresence(
-      { topic: "organization.presence", organizationId },
-      makeEvent(withoutLocation(presence)),
-      makeEvent(presence),
-    );
+      } satisfies Event;
+      yield* fromPromise(() =>
+        self.hub.publishToScope(
+          { topic: "organization.presence", organizationId },
+          event,
+        ),
+      );
+    });
   }
 
-  private async readOrganization(
+  private broadcastUpsert(
     organizationId: string,
-  ): Promise<Array<Basic | Precise>> {
-    const keys = await this.redis.command.smembers(
-      this.indexKey(organizationId),
-    );
-    if (keys.length === 0) return [];
-    const values = await this.redis.command.mget(keys);
-    const presences: Array<Basic | Precise> = [];
-    for (const value of values) {
-      if (!value) {
-        continue;
-      }
-      try {
-        const presence = JSON.parse(value) as Basic | Precise;
-        if (this.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS) {
+    presence: Basic | Precise,
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const revision = yield* self.nextRevision(organizationId);
+      const makeEvent = (value: Basic | Precise) =>
+        ({
+          v: 1,
+          type: "presence.delta",
+          sequence: revision,
+          data: {
+            organizationId,
+            revision,
+            changes: [{ action: "upsert", presence: value }],
+          },
+        }) satisfies Event;
+      yield* fromPromise(() =>
+        self.hub.publishPresence(
+          { topic: "organization.presence", organizationId },
+          makeEvent(withoutLocation(presence)),
+          makeEvent(presence),
+        ),
+      );
+    });
+  }
+
+  private readOrganization(
+    organizationId: string,
+  ): Effect.Effect<Array<Basic | Precise>, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      const keys = yield* fromPromise(() =>
+        self.redis.command.smembers(self.indexKey(organizationId)),
+      );
+      if (keys.length === 0) return [];
+      const values = yield* fromPromise(() => self.redis.command.mget(keys));
+      const presences: Array<Basic | Precise> = [];
+      for (const value of values) {
+        if (!value) {
           continue;
-        } else {
-          presences.push(presence);
         }
-      } catch {
-        continue;
+        try {
+          const presence = decodePresence(value);
+          if (self.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS) {
+            continue;
+          } else {
+            presences.push(presence);
+          }
+        } catch {
+          continue;
+        }
       }
-    }
-    return presences;
+      return presences;
+    });
   }
 
-  private nextRevision(organizationId: string): Promise<number> {
-    return this.redis.command.incr(`presence:revision:${organizationId}`);
-  }
-
-  private async getRevision(organizationId: string): Promise<number> {
-    const value = await this.redis.command.get(
-      `presence:revision:${organizationId}`,
+  private nextRevision(organizationId: string): Effect.Effect<number, unknown> {
+    return fromPromise(() =>
+      this.redis.command.incr(`presence:revision:${organizationId}`),
     );
-    return Number(value ?? 0);
+  }
+
+  private getRevision(organizationId: string): Effect.Effect<number, unknown> {
+    return fromPromise(() =>
+      this.redis.command.get(`presence:revision:${organizationId}`),
+    ).pipe(Effect.map((value) => Number(value ?? 0)));
   }
 
   private presenceKey(organizationId: string, sessionId: string): string {
@@ -360,51 +427,63 @@ export class PresenceStore {
     return `presence:metadata:${organizationId}:${sessionId}`;
   }
 
-  private async readMetadata(
+  private readMetadata(
     organizationId: string,
     sessionId: string,
-  ): Promise<{ readonly userId: string; readonly discordId: string } | null> {
-    const value = await this.redis.command.get(
-      this.metadataKey(organizationId, sessionId),
+  ): Effect.Effect<
+    { readonly userId: string; readonly discordId: string } | null,
+    unknown
+  > {
+    return fromPromise(() =>
+      this.redis.command.get(this.metadataKey(organizationId, sessionId)),
+    ).pipe(
+      Effect.map((value) => {
+        if (!value) return null;
+        try {
+          return decodePresenceMetadata(value);
+        } catch {
+          return null;
+        }
+      }),
     );
-    if (!value) return null;
-    try {
-      const parsed = JSON.parse(value) as Record<string, unknown>;
-      return typeof parsed.userId === "string" &&
-        typeof parsed.discordId === "string"
-        ? { userId: parsed.userId, discordId: parsed.discordId }
-        : null;
-    } catch {
-      return null;
-    }
   }
 
-  private async publishCoverageChange(
+  private publishCoverageChange(
     discordId: string,
     organizationId: string,
     previous: Basic | Precise | undefined,
     current: Basic | Precise,
-  ): Promise<void> {
+  ): Effect.Effect<void, unknown> {
     const oldMap =
       previous && "location" in previous ? previous.location.map : undefined;
     const newMap = "location" in current ? current.location?.map : undefined;
-    if (oldMap && oldMap !== newMap) {
-      await this.coverage?.publish({
-        guildId: organizationId,
-        mapName: oldMap,
-        discordId,
-        hasPlayer: false,
-        isAfk: current.isAfk,
-      });
+    const updates: Array<Effect.Effect<void, unknown>> = [];
+    if (oldMap && oldMap !== newMap && this.coverage) {
+      updates.push(
+        this.coverage.publish({
+          guildId: organizationId,
+          mapName: oldMap,
+          discordId,
+          hasPlayer: false,
+          isAfk: current.isAfk,
+        }),
+      );
     }
-    if (newMap && (oldMap !== newMap || previous?.isAfk !== current.isAfk)) {
-      await this.coverage?.publish({
-        guildId: organizationId,
-        mapName: newMap,
-        discordId,
-        hasPlayer: true,
-        isAfk: current.isAfk,
-      });
+    if (
+      newMap &&
+      (oldMap !== newMap || previous?.isAfk !== current.isAfk) &&
+      this.coverage
+    ) {
+      updates.push(
+        this.coverage.publish({
+          guildId: organizationId,
+          mapName: newMap,
+          discordId,
+          hasPlayer: true,
+          isAfk: current.isAfk,
+        }),
+      );
     }
+    return Effect.all(updates, { concurrency: "unbounded", discard: true });
   }
 }

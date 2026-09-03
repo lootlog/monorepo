@@ -33,7 +33,7 @@ export class AuthDatabase extends Context.Service<
 
       return yield* Effect.acquireRelease(
         Effect.sync(() => AuthDatabase.of(createAuthDatabase(config))),
-        ({ pool }) => Effect.promise(() => pool.end()),
+        ({ pool }) => Effect.tryPromise(() => pool.end()),
       );
     }),
   ).pipe(Layer.provide(AppConfig.layer));

@@ -4,7 +4,10 @@ import {
   type BattlePagination,
 } from "./pagination.service.js";
 import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
-import { runEffectService } from "../../../test/effect-service.js";
+import {
+  effectDatabaseBoundary,
+  runEffectService,
+} from "../../../test/effect-service.js";
 
 describe("battle pagination", () => {
   let service: ReturnType<typeof runEffectService<BattlePagination>>;
@@ -114,7 +117,11 @@ describe("battle pagination", () => {
     };
 
     service = runEffectService(
-      makeBattlePagination(mockDrizzleService as unknown as DrizzleDatabase),
+      makeBattlePagination(
+        effectDatabaseBoundary(
+          mockDrizzleService.db,
+        ) as unknown as DrizzleDatabase,
+      ),
     );
     drizzleService = mockDrizzleService;
   });

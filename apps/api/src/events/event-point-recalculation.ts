@@ -5,7 +5,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { eventTable } from "#src/database/drizzle/schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/constants/cache.constant";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 
 export interface EventPointRecalculator {
@@ -50,7 +50,7 @@ export const makeEventPointRecalculation =
         );
       const event = rows[0];
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
       yield* points.recalculate(event.id, event.basePointsPerKill);
       yield* Effect.forEach(

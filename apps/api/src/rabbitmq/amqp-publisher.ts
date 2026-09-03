@@ -9,5 +9,6 @@ export interface AmqpPublisher {
     routingKey: string,
     payload: unknown,
     options?: AmqpPublishOptions,
-  ): Promise<unknown>;
+  ): Effect.Effect<unknown, unknown>;
 }
+import type { Effect } from "effect";

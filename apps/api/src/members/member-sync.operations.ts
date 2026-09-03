@@ -1,10 +1,10 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import {
-  HttpException,
-  HttpStatus,
-  NotFoundException,
+  ApplicationError,
+  ApplicationErrorKind,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { DiscordOperationFailure } from "#src/discord/discord.operations";
@@ -62,7 +62,7 @@ export const makeMemberSync = (
         status: options.status,
         deactivate: options.deactivate ?? false,
         markSynced: options.markSynced ?? false,
-        attemptedAt: new Date(),
+        attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
       if (options.deactivate && existing.active) {
         yield* removal.notifyMemberRemoved({
@@ -81,7 +81,7 @@ export const makeMemberSync = (
       readonly globalUserId: string;
     },
   ) {
-    const syncTimestamp = new Date();
+    const syncTimestamp = new Date(yield* Clock.currentTimeMillis);
     const existingRoleIds = yield* store.findExistingRoleIds(
       discordMember.roles,
       discordMember.guildId,
@@ -142,7 +142,7 @@ export const makeMemberSync = (
         result.failure instanceof DiscordOperationFailure
           ? result.failure.cause
           : result.failure;
-      if (error instanceof NotFoundException) {
+      if (error instanceof ResourceNotFoundError) {
         const member = yield* markAttempt({
           discordId: options.discordId,
           guildId: options.guildId,
@@ -158,8 +158,8 @@ export const makeMemberSync = (
         } satisfies MemberSyncResult;
       }
       if (
-        error instanceof HttpException &&
-        error.getStatus() === HttpStatus.UNAUTHORIZED
+        error instanceof ApplicationError &&
+        error.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
       ) {
         const member = yield* markAttempt({
           discordId: options.discordId,
@@ -174,8 +174,8 @@ export const makeMemberSync = (
         } satisfies MemberSyncResult;
       }
       if (
-        error instanceof HttpException &&
-        error.getStatus() === HttpStatus.TOO_MANY_REQUESTS
+        error instanceof ApplicationError &&
+        error.kind === ApplicationErrorKind.RATE_LIMITED
       ) {
         const nextRefreshAt = yield* ports.nextRefreshAt(options.userId);
         yield* markAttempt({

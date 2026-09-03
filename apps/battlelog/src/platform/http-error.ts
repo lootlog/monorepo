@@ -1,39 +1,74 @@
-export class HttpError extends Error {
-  readonly statusCode: number;
+import { Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
-  constructor(statusCode: number, message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = new.target.name;
-    this.statusCode = statusCode;
+export const ApplicationErrorKind = {
+  AUTHENTICATION_REQUIRED: "authentication-required",
+  DEPENDENCY_UNAVAILABLE: "dependency-unavailable",
+  FORBIDDEN: "forbidden",
+  INVALID_REQUEST: "invalid-request",
+  NOT_FOUND: "not-found",
+} as const;
+type ApplicationErrorKind =
+  (typeof ApplicationErrorKind)[keyof typeof ApplicationErrorKind];
+
+export class ApplicationError extends TaggedErrorClass<ApplicationError>()(
+  "ApplicationError",
+  {
+    kind: Schema.Literals(Object.values(ApplicationErrorKind)),
+    message: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+  },
+) {
+  constructor(
+    readonly kind: ApplicationErrorKind,
+    message: string,
+    options?: ErrorOptions,
+  ) {
+    super({ kind, message, cause: options?.cause });
   }
 }
 
-export class BadRequestException extends HttpError {
+export class InvalidRequestError extends ApplicationError {
   constructor(message = "Bad Request", options?: ErrorOptions) {
-    super(400, message, options);
+    super(ApplicationErrorKind.INVALID_REQUEST, message, options);
   }
 }
 
-export class UnauthorizedException extends HttpError {
+export class AuthenticationRequiredError extends ApplicationError {
   constructor(message = "Unauthorized", options?: ErrorOptions) {
-    super(401, message, options);
+    super(ApplicationErrorKind.AUTHENTICATION_REQUIRED, message, options);
   }
 }
 
-export class ForbiddenException extends HttpError {
+export class PermissionDeniedError extends ApplicationError {
   constructor(message = "Forbidden", options?: ErrorOptions) {
-    super(403, message, options);
+    super(ApplicationErrorKind.FORBIDDEN, message, options);
   }
 }
 
-export class NotFoundException extends HttpError {
+export class ResourceNotFoundError extends ApplicationError {
   constructor(message = "Not Found", options?: ErrorOptions) {
-    super(404, message, options);
+    super(ApplicationErrorKind.NOT_FOUND, message, options);
   }
 }
 
-export class ServiceUnavailableException extends HttpError {
+export class DependencyUnavailableError extends ApplicationError {
   constructor(message = "Service Unavailable", options?: ErrorOptions) {
-    super(503, message, options);
+    super(ApplicationErrorKind.DEPENDENCY_UNAVAILABLE, message, options);
   }
 }
+
+export const applicationErrorStatus = (error: ApplicationError): number => {
+  switch (error.kind) {
+    case ApplicationErrorKind.INVALID_REQUEST:
+      return 400;
+    case ApplicationErrorKind.AUTHENTICATION_REQUIRED:
+      return 401;
+    case ApplicationErrorKind.FORBIDDEN:
+      return 403;
+    case ApplicationErrorKind.NOT_FOUND:
+      return 404;
+    case ApplicationErrorKind.DEPENDENCY_UNAVAILABLE:
+      return 503;
+  }
+};

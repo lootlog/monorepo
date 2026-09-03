@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { NotFoundException } from "#src/platform/http-error";
+import { ResourceNotFoundError } from "#src/platform/http-error";
 import {
   makeBattleAnalytics,
   type BattleAnalytics,
@@ -22,7 +22,10 @@ import type {
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
 } from "#src/battles/dto/query-battle-statistics.dto";
-import { runEffectService } from "../../../test/effect-service.js";
+import {
+  effectDatabaseBoundary,
+  runEffectService,
+} from "../../../test/effect-service.js";
 
 const statisticsQuery = (
   overrides: Partial<QueryBattleStatisticsDto> = {},
@@ -148,7 +151,9 @@ describe("battle analytics", () => {
       ),
     };
 
-    const drizzle = mockDrizzleService as unknown as DrizzleDatabase;
+    const drizzle = effectDatabaseBoundary(
+      mockDrizzleService.db,
+    ) as unknown as DrizzleDatabase;
     const redis = mockRedisService as unknown as RedisStore;
     const cacheService = makeBattleAnalyticsCache(redis);
     const domain = battleAnalyticsDomain;
@@ -250,13 +255,13 @@ describe("battle analytics", () => {
       expect(redisService.set).toHaveBeenCalled();
     });
 
-    it("should throw NotFoundException when character not found", async () => {
+    it("should throw ResourceNotFoundError when character not found", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getBattleAnalytics({ characterId: "nonexistent" }, mockUserId),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(ResourceNotFoundError);
     });
 
     it("should return zeros when no characters found", async () => {
@@ -825,9 +830,15 @@ describe("battle analytics", () => {
         {
           opponentId: "opponent-1",
           opponentName: "Opponent1",
+          opponentIcon: "warrior.gif",
+          opponentProf: "w",
+          opponentLvl: 100,
           totalRatingDelta: 50,
           wins: 2,
           losses: 0,
+          totalBattles: 2,
+          avgRatingDelta: 25,
+          lastBattleDate: "2024-01-01T00:00:00.000Z",
         },
       ]);
       redisService.get.mockResolvedValue(cachedData);

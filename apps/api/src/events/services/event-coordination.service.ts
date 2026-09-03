@@ -1,5 +1,5 @@
-import { NotFoundException } from "#src/shared/http/http-errors";
-import { Effect } from "effect";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { Clock, Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
 import type { EventTimersPort } from "./event-timers.port.js";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
@@ -78,10 +78,10 @@ export const makeEventCoordination = (
       const event = yield* repository.findEvent(guildId, eventId);
 
       if (!event) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
-      const now = new Date();
+      const now = new Date(yield* Clock.currentTimeMillis);
       const [timers, activeGaps] = yield* Effect.all(
         [
           timersService.getTimersForEventHeroFilters(

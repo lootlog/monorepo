@@ -6,6 +6,43 @@ Baseline: `633f8f0157cca04ef2b609ba0e2f1903b1c28949`.
 Deployment and promotion evidence remains in
 [`DEPLOYMENT_HANDOFF.md`](DEPLOYMENT_HANDOFF.md).
 
+## Effect hardening audit (2026-09-03)
+
+The follow-up migration audit is complete in the repository:
+
+- every active RabbitMQ route has a canonical Effect Schema decoder applied at
+  ingress;
+- Battlelog database queries execute as Effects without a production
+  `ManagedRuntime` or Promise database facade, and Redis/R2 reads use explicit
+  decoders;
+- Gateway lifecycle, recurring work, command handling, presence, and Rabbit
+  handling compose Effects; Promise conversion remains only at external
+  callback/SDK boundaries;
+- application errors are semantic tagged errors and HTTP status selection is
+  confined to handler boundaries;
+- Redis JSON reads require an explicit typed codec, and public, integration,
+  and private versioned cache contracts are validated with Effect Schema;
+- Auth validates consumed realtime tickets with Effect Schema instead of a
+  TypeScript assertion, and the API's IDP-token flow composes Effect directly
+  until the Discord SDK adapter boundary;
+- rejectable Promise operations use `Effect.tryPromise`; `Effect.promise` is
+  prohibited in production backend sources so infrastructure rejection cannot
+  bypass the typed error channel;
+- Effect generators use the `Clock` service for current time and fail through
+  `Effect.fail`; an AST-backed CI rule rejects direct system-clock reads and
+  uncaught `throw` inside generators;
+- two endpoint-dispatch tests that reused one mock for unrelated operations
+  were removed because they could not detect incorrect routing; retained tests
+  assert independent contracts, authorization decisions, errors, or effects;
+- API runtime composition is split into focused core, member, timer, and
+  event/notification modules; and
+- CI runs `architecture:effect` to reject Nest imports, Nest-style exception
+  names, `ManagedRuntime`, synchronous or unapproved nested Effect runtimes,
+  unchecked JSON assertions, untyped Promise rejection, unmanaged forks, and
+  production console logging.
+- Battlelog OpenAPI path items are normalized before serialization, preventing
+  hash-collection iteration order from making generated clients flap in CI.
+
 | Slice                                           | State    | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
 | ----------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Baseline identity and inventory                 | complete | 30 baseline workspaces; five OpenAPI files; 243 operation IDs; RabbitMQ, realtime, DB, jobs, environment names, and key families recorded                                                                                                                                                                                                                                                              |
@@ -20,7 +57,7 @@ Deployment and promotion evidence remains in
 | Activity Effect/Drizzle slice                   | complete | Real Timescale DDL adoption checks, transactions, one-day chunks, seven-day retention, nine HttpApi operations, a bounded/retrying Effect HttpClient adapter for API health and permissions, and 16 tests pass                                                                                                                                                                                         |
 | Gateway WebSocket v1                            | complete | MessagePack, bounded backpressure, origin-bound one-time tickets, two-hub Redis federation, reconnect, resubscribe, map-ping, and air-tag tests pass; Auth, Organization permission, and Margonem proof requests use interruptible Effect HttpClient modules                                                                                                                                           |
 | Presence target model                           | complete | Heartbeat/expiry, monotonic revisions, verified/reported trust, precise-location permission and backfill, Organization selection, rejoin, and rebalance tests pass                                                                                                                                                                                                                                     |
-| Web, Game Client, and Wiki consumers            | complete | Web 610, Game Client 1,300, and Client 19 tests plus builds pass on HTTP and realtime v1; no active Socket.IO imports remain                                                                                                                                                                                                                                                                           |
+| Web, Game Client, and Wiki consumers            | complete | Web 622, Game Client 1,300, and Client 19 tests plus builds pass on HTTP and realtime v1; no active Socket.IO imports remain                                                                                                                                                                                                                                                                           |
 | Docker, Cloudflare, and CI                      | complete | Eight Bun image targets build as non-root with healthchecks and `dumb-init`; recorded Trivy scans have zero fixed high or critical findings; Wiki and Traffic Splitter dry-runs pass                                                                                                                                                                                                                   |
 | Legacy dependency cleanup                       | complete | Obsolete framework packages and adapters are removed; archived database migration evidence remains for fail-closed Drizzle adoption                                                                                                                                                                                                                                                                    |
 | ADRs, Changeset, and handoff reports            | complete | ADRs 0003–0008, the runtime/contract/presence Changeset, deployment handoff, verification report, and final report are present                                                                                                                                                                                                                                                                         |

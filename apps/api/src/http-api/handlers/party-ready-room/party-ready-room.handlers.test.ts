@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import {
+  PermissionDeniedError,
+  ResourceConflictError,
+} from "#src/shared/http/http-errors";
+import {
   PartyReadyRoomClientUpdateDto_Output,
   PartyReadyRoomProjectionDto_Output,
 } from "../../lootlog-api.js";
@@ -166,10 +170,9 @@ describe("Party Ready Room HttpApi handlers", () => {
   });
 
   it("preserves stale revision conflicts from the Ready Room service", async () => {
-    const conflictCause = {
-      getStatus: () => 409,
-      response: { code: "REVISION_CONFLICT" },
-    };
+    const conflictCause = new ResourceConflictError({
+      code: "REVISION_CONFLICT",
+    });
     const conflict = new ReadyRoomOperationError({ cause: conflictCause });
     const calls: string[] = [];
     const layer = provideServices(
@@ -201,7 +204,7 @@ describe("Party Ready Room HttpApi handlers", () => {
 
   it("hides unauthorized rooms before organizer mutations", async () => {
     const forbidden = new ReadyRoomOperationError({
-      cause: { getStatus: () => 403, response: { code: "FORBIDDEN" } },
+      cause: new PermissionDeniedError({ code: "FORBIDDEN" }),
     });
     let removeCalled = false;
     const layer = provideServices(

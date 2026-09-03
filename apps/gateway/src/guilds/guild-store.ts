@@ -1,9 +1,9 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
+import { Clock, Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type {
-  CachedGuildData,
   GetUserGuildsOptions,
   UserGuildData,
 } from "#src/guilds/types/guild.types";
@@ -14,6 +14,15 @@ import {
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 
 const RESPONSE_LIMIT_BYTES = 1024 * 1024;
+const UserGuildsJson = Schema.fromJsonString(
+  Schema.Array(UserGuildPermissionsDtoSchema),
+);
+const CachedGuildDataJson = Schema.fromJsonString(
+  Schema.Struct({
+    guilds: Schema.Array(UserGuildPermissionsDtoSchema),
+    cachedAt: Schema.Number,
+  }),
+);
 
 export class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
   "GuildStoreFailure",
@@ -47,24 +56,10 @@ const failure = (
     status: options?.status,
   });
 
-const isUserGuildData = (value: unknown): value is UserGuildData => {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Record<string, unknown>;
-  if (!candidate.guild || typeof candidate.guild !== "object") return false;
-  const guild = candidate.guild as Record<string, unknown>;
-  return (
-    typeof guild.id === "string" &&
-    typeof guild.ownerId === "string" &&
-    Array.isArray(candidate.roles)
-  );
-};
-
 const decodeGuilds = (body: ArrayBuffer): UserGuildData[] => {
-  const parsed: unknown = JSON.parse(new TextDecoder().decode(body));
-  if (!Array.isArray(parsed) || !parsed.every(isUserGuildData)) {
-    throw new Error("invalid guild permissions response");
-  }
-  return parsed;
+  return [
+    ...Schema.decodeUnknownSync(UserGuildsJson)(new TextDecoder().decode(body)),
+  ];
 };
 
 export const makeGuildStore = (
@@ -132,11 +127,7 @@ export const makeGuildStore = (
         Effect.try({
           try: () => {
             if (!value) return null;
-            const parsed = JSON.parse(value) as CachedGuildData;
-            return Array.isArray(parsed.guilds) &&
-              Number.isFinite(parsed.cachedAt)
-              ? parsed
-              : null;
+            return Schema.decodeUnknownSync(CachedGuildDataJson)(value);
           },
           catch: () => null,
         }),
@@ -147,20 +138,18 @@ export const makeGuildStore = (
   const loadUserGuilds = Effect.fn("GuildStore_getUserGuilds")(function* (
     options: GetUserGuildsOptions,
   ) {
+    const now = yield* Clock.currentTimeMillis;
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
     const cached = yield* readCache(cacheKey);
-    if (
-      cached &&
-      Date.now() - cached.cachedAt <= CACHE_TTL.USER_GUILDS * 1_000
-    ) {
-      return cached.guilds;
+    if (cached && now - cached.cachedAt <= CACHE_TTL.USER_GUILDS * 1_000) {
+      return [...cached.guilds];
     }
 
     const guilds = yield* fetchGuilds(options).pipe(Effect.option);
     if (guilds._tag === "Some") {
       const value = JSON.stringify({
         guilds: guilds.value,
-        cachedAt: Date.now(),
+        cachedAt: now,
       });
       yield* Effect.tryPromise(() =>
         redis.command.set(cacheKey, value, "EX", CACHE_TTL.USER_GUILDS * 2),
@@ -169,9 +158,9 @@ export const makeGuildStore = (
     }
     if (
       cached &&
-      Date.now() - cached.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
+      now - cached.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
     ) {
-      return cached.guilds;
+      return [...cached.guilds];
     }
     return [];
   });

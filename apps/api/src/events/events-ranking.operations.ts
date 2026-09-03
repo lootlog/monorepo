@@ -1,5 +1,5 @@
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
@@ -217,7 +217,7 @@ export const makeEventsRanking = (
       const parsedMemberId = Number.parseInt(memberId, 10);
 
       if (Number.isNaN(parsedMemberId)) {
-        return yield* Effect.fail(new BadRequestException("Invalid member ID"));
+        return yield* Effect.fail(new InvalidRequestError("Invalid member ID"));
       }
 
       if (heroId) {

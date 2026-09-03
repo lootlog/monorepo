@@ -2,17 +2,14 @@ import { Effect } from "effect";
 
 export type BackgroundTaskRunner = (
   label: string,
-  task: () => Promise<void>,
+  task: Effect.Effect<void, unknown>,
 ) => void;
 
 export const makeBackgroundTaskRunner =
   (run: (effect: Effect.Effect<void>) => void): BackgroundTaskRunner =>
   (label, task) =>
     run(
-      Effect.tryPromise({
-        try: task,
-        catch: (cause) => cause,
-      }).pipe(
+      task.pipe(
         Effect.catch((cause) =>
           Effect.logError("Gateway background task failed", cause).pipe(
             Effect.annotateLogs({ task: label }),
@@ -22,8 +19,16 @@ export const makeBackgroundTaskRunner =
     );
 
 export const unmanagedBackgroundTaskRunner: BackgroundTaskRunner = (
-  _label,
+  label,
   task,
 ) => {
-  task().catch(() => undefined);
+  Effect.runFork(
+    task.pipe(
+      Effect.catch((cause) =>
+        Effect.logError("Gateway background task failed", cause).pipe(
+          Effect.annotateLogs({ task: label }),
+        ),
+      ),
+    ),
+  );
 };

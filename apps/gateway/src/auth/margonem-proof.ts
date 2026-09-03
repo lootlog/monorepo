@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
-import { Effect, Option, Schema } from "effect";
+import { Clock, Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 
@@ -103,7 +103,7 @@ export const makeMargonemProofVerifier = (
   const getKey = Effect.fn("MargonemProofVerifier_getKey")(function* (
     forceRefresh: boolean,
   ) {
-    const now = Date.now();
+    const now = yield* Clock.currentTimeMillis;
     if (!forceRefresh && cachedKey && cachedKey.expiresAt > now) {
       return cachedKey.pem;
     }
@@ -206,7 +206,7 @@ export const makeMargonemProofVerifier = (
     if (!NONCE_PATTERN.test(payload.nonce))
       return invalid("invalid proof nonce");
     const timestampMs = proof.ts < 10_000_000_000 ? proof.ts * 1_000 : proof.ts;
-    const now = Date.now();
+    const now = yield* Clock.currentTimeMillis;
     if (!Number.isFinite(timestampMs) || timestampMs <= 0) {
       return invalid("invalid proof timestamp");
     }

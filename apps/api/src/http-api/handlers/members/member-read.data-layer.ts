@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, isNotNull, or } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -11,7 +11,7 @@ import {
   roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { apiConfig } from "#src/config/api.config";
+import { ApiRuntimeConfig } from "#src/http-api/runtime/api-runtime-config";
 import { getAdminBulkRefreshRateLimit } from "#src/members/constants/member-cache.constant";
 import { ErrorKey } from "#src/members/enum/error-key.enum";
 import {
@@ -19,15 +19,23 @@ import {
   getGuildMembersSummaryCacheKey,
   getMemberLootlogConfigSummaryCacheKey,
 } from "#src/shared/constants/cache.constant";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   MemberReadData,
   MemberRefreshJobData,
   MembersOperationError,
 } from "./members.handlers.js";
+import {
+  MembersControllerGetGuildMemberReferences200,
+  MembersControllerGetGuildMembersSummary200,
+  MembersControllerGetMemberLootlogConfigSummary200,
+} from "../../lootlog-api.js";
 
 export interface MemberReadCache {
-  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly setJson: (
     key: string,
     value: unknown,
@@ -94,12 +102,13 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
               .map(({ role }) => role),
           }));
         });
-      const cached = <A>(
+      const cached = <S extends Schema.ConstraintDecoder<unknown>, A>(
         key: string,
         ttl: number,
+        schema: S,
         load: Effect.Effect<A, unknown>,
       ) =>
-        cache.getJson<A>(key).pipe(
+        cache.getJson(key, schema).pipe(
           Effect.catch(() => Effect.succeed(null)),
           Effect.flatMap((value) =>
             value === null
@@ -120,6 +129,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getGuildMemberReferencesCacheKey(guildId, includeInactive),
               30,
+              MembersControllerGetGuildMemberReferences200,
               membersWithRoles(guildId, includeInactive).pipe(
                 Effect.map((members) =>
                   members.map(
@@ -141,6 +151,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getGuildMembersSummaryCacheKey(guildId),
               30,
+              MembersControllerGetGuildMembersSummary200,
               Effect.gen(function* () {
                 const owners = yield* database
                   .select({ ownerId: guildTable.ownerId })
@@ -180,6 +191,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getMemberLootlogConfigSummaryCacheKey(guildId, discordId),
               60,
+              MembersControllerGetMemberLootlogConfigSummary200,
               Effect.gen(function* () {
                 const members = yield* database
                   .select()
@@ -194,7 +206,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                 const member = members[0];
                 if (!member) {
                   return yield* Effect.fail(
-                    new NotFoundException("Member not found"),
+                    new ResourceNotFoundError("Member not found"),
                   );
                 }
                 const configs = yield* database
@@ -307,12 +319,14 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
 
 export const MemberRefreshJobDataLive = Layer.effect(
   MemberRefreshJobData,
-  Effect.map(ApiDatabase, (database) => {
+  Effect.gen(function* () {
+    const database = yield* ApiDatabase;
+    const config = yield* ApiRuntimeConfig;
     const withCooldown = (job: typeof memberRefreshJobTable.$inferSelect) => ({
       ...job,
       nextAvailableAt: new Date(
         job.createdAt.getTime() +
-          getAdminBulkRefreshRateLimit(apiConfig.environment),
+          getAdminBulkRefreshRateLimit(config.environment),
       ),
     });
     const operation = <A, E>(effect: Effect.Effect<A, E>) =>
@@ -349,7 +363,7 @@ export const MemberRefreshJobDataLive = Layer.effect(
             return job
               ? withCooldown(job)
               : yield* Effect.fail(
-                  new NotFoundException({
+                  new ResourceNotFoundError({
                     message: ErrorKey.REFRESH_JOB_NOT_FOUND,
                   }),
                 );

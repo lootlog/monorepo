@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray, or } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   itemSnapshotTable,
@@ -10,9 +10,9 @@ import {
   watchedItemTable,
 } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type {
   CreateWatchedItemDto,
@@ -228,7 +228,7 @@ export const makeNotificationWatchedItems = (
       const uniqueIds = [...new Set(inputIds)];
       if (uniqueIds.length === 0) {
         return yield* Effect.fail(
-          new BadRequestException(
+          new InvalidRequestError(
             NotificationError.AT_LEAST_ONE_GUILD_REQUIRED,
           ),
         );
@@ -242,7 +242,7 @@ export const makeNotificationWatchedItems = (
       );
       if (resolved.some((id) => id === null)) {
         return yield* Effect.fail(
-          new BadRequestException(
+          new InvalidRequestError(
             NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
           ),
         );
@@ -284,7 +284,7 @@ export const makeNotificationWatchedItems = (
     const targetIds = yield* activeTargetIds(discordId);
     if (targetIds.length === 0) {
       return yield* Effect.fail(
-        new ConflictException(
+        new ResourceConflictError(
           NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
         ),
       );
@@ -312,7 +312,7 @@ export const makeNotificationWatchedItems = (
       const currentCount = rows[0]?.value ?? 0;
       if (currentCount >= WATCHED_ITEM_LIMIT) {
         return yield* Effect.fail(
-          new ConflictException({
+          new ResourceConflictError({
             message: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
             watchedItemLimit: WATCHED_ITEM_LIMIT,
             watchedItemCount: currentCount,
@@ -323,7 +323,7 @@ export const makeNotificationWatchedItems = (
     yield* database
       .transaction((transaction) =>
         Effect.gen(function* () {
-          const now = new Date();
+          const now = new Date(yield* Clock.currentTimeMillis);
           let ruleId = existing?.notificationRuleId ?? null;
           if (ruleId === null) {
             const rules = yield* transaction
@@ -437,7 +437,7 @@ export const makeNotificationWatchedItems = (
     const item = rows[0];
     if (!item) {
       return yield* Effect.fail(
-        new NotFoundException(NotificationError.WATCHED_ITEM_NOT_FOUND),
+        new ResourceNotFoundError(NotificationError.WATCHED_ITEM_NOT_FOUND),
       );
     }
     if (item.notificationRuleId !== null) {

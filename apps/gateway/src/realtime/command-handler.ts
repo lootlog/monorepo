@@ -86,17 +86,17 @@ export class CommandHandler {
     );
   }
 
-  async handle(socket: GatewaySocket, input: string | Buffer): Promise<void> {
+  handle(socket: GatewaySocket, input: string | Buffer): Effect.Effect<void> {
     if (typeof input === "string") {
-      socket.close(1003, "binary MessagePack frames required");
-      return;
+      return Effect.sync(() =>
+        socket.close(1003, "binary MessagePack frames required"),
+      );
     }
     let decoded: unknown;
     try {
       decoded = decode(new Uint8Array(input));
     } catch {
-      socket.close(1007, "malformed realtime frame");
-      return;
+      return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
     }
     let command: Command;
     try {
@@ -104,190 +104,235 @@ export class CommandHandler {
     } catch {
       const rejection = invalidLegacyPayloadResponse(decoded);
       if (rejection) {
-        this.hub.sendResponse(socket, rejection);
-        return;
-      }
-      socket.close(1007, "malformed realtime frame");
-      return;
-    }
-
-    try {
-      const data = await this.dispatch(socket, command);
-      if (command.requestId) {
-        this.hub.sendResponse(socket, {
-          v: 1,
-          requestId: command.requestId,
-          status: "success",
-          data,
+        return Effect.sync(() => {
+          this.hub.sendResponse(socket, rejection);
         });
       }
-    } catch (error) {
-      if (command.requestId) {
-        this.hub.sendResponse(
-          socket,
-          errorResponse(
-            command.requestId,
-            "COMMAND_REJECTED",
-            error instanceof Error ? error.message : "command rejected",
-          ),
-        );
-      }
+      return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
     }
-  }
-
-  async rebalanceUser(discordId: string, userId: string): Promise<void> {
-    await Effect.runPromise(this.guilds.invalidate({ discordId, userId }));
-    const updatedGuilds = await Effect.runPromise(
-      this.guilds.getUserGuilds({ discordId, userId }),
+    return this.dispatch(socket, command).pipe(
+      Effect.tap((data) =>
+        Effect.sync(() => {
+          if (command.requestId)
+            this.hub.sendResponse(socket, {
+              v: 1,
+              requestId: command.requestId,
+              status: "success",
+              data,
+            });
+        }),
+      ),
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          if (command.requestId)
+            this.hub.sendResponse(
+              socket,
+              errorResponse(
+                command.requestId,
+                "COMMAND_REJECTED",
+                error instanceof Error ? error.message : "command rejected",
+              ),
+            );
+        }),
+      ),
+      Effect.asVoid,
     );
-    for (const socket of this.hub.getLocalSocketsForUser(userId)) {
-      if (socket.data.discordId !== discordId) continue;
-      const updatedIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
-      const removedIds = socket.data.guilds
-        .map(({ guild }) => guild.id)
-        .filter((id) => !updatedIds.has(id));
-      if (removedIds.length > 0) {
-        await this.activity.publish(
-          "DISCONNECT_EVENT",
-          socket.data,
-          removedIds,
-        );
-      }
-      socket.data.guilds = updatedGuilds;
-      this.airTags.clearSubscription(socket);
-      const scopes = defaultScopes(socket.data);
-      this.hub.replaceSubscriptions(socket, scopes);
-      const event = {
-        v: 1,
-        type: "permissions.updated",
-        data: {
-          organizationIds: organizationIds(socket.data),
-          subscriptionScopes: scopes,
-        },
-      } satisfies Event;
-      this.hub.sendEvent(socket, event);
-      if (updatedGuilds.length === 0)
-        socket.close(1008, "organization access removed");
-    }
   }
 
-  async rebalanceAcrossInstances(
+  rebalanceUser(
     discordId: string,
     userId: string,
-  ): Promise<void> {
-    await this.rebalanceUser(discordId, userId);
-    await this.hub.publishPermissionRebalance(discordId, userId);
+  ): Effect.Effect<void, unknown> {
+    const { activity, airTags, guilds, hub } = this;
+    return Effect.gen(function* () {
+      yield* guilds.invalidate({ discordId, userId });
+      const updatedGuilds = yield* guilds.getUserGuilds({
+        discordId,
+        userId,
+      });
+      for (const socket of hub.getLocalSocketsForUser(userId)) {
+        if (socket.data.discordId !== discordId) continue;
+        const updatedIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
+        const removedIds = socket.data.guilds
+          .map(({ guild }) => guild.id)
+          .filter((id) => !updatedIds.has(id));
+        if (removedIds.length > 0) {
+          yield* activity.publish("DISCONNECT_EVENT", socket.data, removedIds);
+        }
+        socket.data.guilds = updatedGuilds;
+        airTags.clearSubscription(socket);
+        const scopes = defaultScopes(socket.data);
+        hub.replaceSubscriptions(socket, scopes);
+        const event = {
+          v: 1,
+          type: "permissions.updated",
+          data: {
+            organizationIds: organizationIds(socket.data),
+            subscriptionScopes: scopes,
+          },
+        } satisfies Event;
+        hub.sendEvent(socket, event);
+        if (updatedGuilds.length === 0)
+          socket.close(1008, "organization access removed");
+      }
+    });
   }
 
-  private async dispatch(
+  rebalanceAcrossInstances(
+    discordId: string,
+    userId: string,
+  ): Effect.Effect<void, unknown> {
+    return this.rebalanceUser(discordId, userId).pipe(
+      Effect.andThen(this.hub.publishPermissionRebalance(discordId, userId)),
+    );
+  }
+
+  private dispatch(
     socket: GatewaySocket,
     command: Command,
-  ): Promise<unknown> {
+  ): Effect.Effect<unknown, unknown> {
+    const fromPromise = <A>(evaluate: () => Promise<A>) =>
+      Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
+    const requireJoined = this.requireJoined(socket);
     switch (command.type) {
       case "session.join":
         return this.join(socket, command.data);
       case "presence.heartbeat":
-        this.requireJoined(socket);
-        return {
-          lastSeen: await this.presence.heartbeat(
-            socket,
-            command.data.sessionId,
+        return requireJoined.pipe(
+          Effect.andThen(
+            this.presence.heartbeat(socket, command.data.sessionId),
           ),
-        };
+          Effect.map((lastSeen) => ({ lastSeen })),
+        );
       case "presence.publish":
-        this.requireJoined(socket);
-        return this.presence.publish(socket, command.data);
+        return requireJoined.pipe(
+          Effect.andThen(this.presence.publish(socket, command.data)),
+        );
       case "presence.fetch": {
-        this.requireJoined(socket);
         const scope = {
           topic: "organization.presence",
           organizationId: command.data.organizationId,
         } satisfies Scope;
         if (!canSubscribe(socket.data, scope))
-          throw new Error("presence access denied");
-        const snapshot = await this.presence.snapshot(
-          socket.data,
-          command.data.organizationId,
-          command.data.world,
+          return Effect.fail(new Error("presence access denied"));
+        return requireJoined.pipe(
+          Effect.andThen(
+            this.presence.snapshot(
+              socket.data,
+              command.data.organizationId,
+              command.data.world,
+            ),
+          ),
+          Effect.tap((snapshot) =>
+            Effect.sync(() =>
+              this.hub.sendEvent(socket, {
+                v: 1,
+                type: "presence.snapshot",
+                sequence: snapshot.revision,
+                data: snapshot,
+              }),
+            ),
+          ),
         );
-        this.hub.sendEvent(socket, {
-          v: 1,
-          type: "presence.snapshot",
-          sequence: snapshot.revision,
-          data: snapshot,
-        });
-        return snapshot;
       }
       case "subscription.subscribe":
-        this.requireJoined(socket);
         if (!canSubscribe(socket.data, command.data))
-          throw new Error("subscription access denied");
-        this.hub.subscribe(socket, command.data);
-        return { scope: command.data };
+          return Effect.fail(new Error("subscription access denied"));
+        return requireJoined.pipe(
+          Effect.andThen(
+            Effect.sync(() => {
+              this.hub.subscribe(socket, command.data);
+              return { scope: command.data };
+            }),
+          ),
+        );
       case "subscription.unsubscribe":
-        this.requireJoined(socket);
-        this.hub.unsubscribe(socket, command.data);
-        return { scope: command.data };
+        return requireJoined.pipe(
+          Effect.andThen(
+            Effect.sync(() => {
+              this.hub.unsubscribe(socket, command.data);
+              return { scope: command.data };
+            }),
+          ),
+        );
       case "map-ping.send":
-        this.requireJoined(socket);
-        return this.mapPings.send(socket, command.data);
+        return requireJoined.pipe(
+          Effect.andThen(
+            fromPromise(() => this.mapPings.send(socket, command.data)),
+          ),
+        );
       case "air-tag.subscription":
-        this.requireJoined(socket);
-        return this.airTags.updateSubscription(socket, command.data);
+        return requireJoined.pipe(
+          Effect.andThen(
+            Effect.sync(() =>
+              this.airTags.updateSubscription(socket, command.data),
+            ),
+          ),
+        );
       case "air-tag.observation":
-        this.requireJoined(socket);
-        return this.airTags.publishObservations(socket, command.data);
+        return requireJoined.pipe(
+          Effect.andThen(
+            fromPromise(() =>
+              this.airTags.publishObservations(socket, command.data),
+            ),
+          ),
+        );
     }
   }
 
-  private async join(
+  private join(
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
-  ): Promise<unknown> {
-    const wasJoined = socket.data.joined;
-    if (socket.data.platform === "game" && !data.character) {
-      throw new Error("game sessions require a character");
-    }
-    socket.data.character = data.character;
-    socket.data.confidence = "reported";
-    if (data.character) {
-      const verification = await Effect.runPromise(
-        this.proofVerifier.verify({
+  ): Effect.Effect<unknown, unknown> {
+    const { activity, config, guilds, hub, proofVerifier } = this;
+    return Effect.gen(function* () {
+      const wasJoined = socket.data.joined;
+      if (socket.data.platform === "game" && !data.character)
+        return yield* Effect.fail(
+          new Error("game sessions require a character"),
+        );
+      socket.data.character = data.character;
+      socket.data.confidence = "reported";
+      if (data.character) {
+        const verification = yield* proofVerifier.verify({
           proof: data.margonemAccountProof,
           socketId: socket.data.connectionId,
           accountId: data.character.accountId,
           characterId: data.character.characterId,
           clanId: data.character.clan?.id,
-        }),
-      );
-      if (verification.valid) socket.data.confidence = "verified";
-      if (!verification.valid && this.config.margonemAccountProofRequired) {
-        throw new Error("Margonem account proof is required");
+        });
+        if (verification.valid) socket.data.confidence = "verified";
+        if (!verification.valid && config.margonemAccountProofRequired) {
+          return yield* Effect.fail(
+            new Error("Margonem account proof is required"),
+          );
+        }
       }
-    }
-    const guilds = await Effect.runPromise(
-      this.guilds.getUserGuilds(socket.data),
-    );
-    if (guilds.length === 0) throw new Error("no authorized organizations");
-    socket.data.guilds = guilds;
-    socket.data.joined = true;
-    const scopes = defaultScopes(socket.data);
-    this.hub.replaceSubscriptions(socket, scopes);
-    const event = {
-      v: 1,
-      type: "session.joined",
-      data: {
-        connectionId: socket.data.connectionId,
-        organizationIds: organizationIds(socket.data),
-        subscriptionScopes: scopes,
-      },
-    } satisfies Event;
-    this.hub.sendEvent(socket, event);
-    if (!wasJoined) await this.activity.publish("CONNECT_EVENT", socket.data);
-    return event.data;
+      const authorizedGuilds = yield* guilds.getUserGuilds(socket.data);
+      if (authorizedGuilds.length === 0)
+        return yield* Effect.fail(new Error("no authorized organizations"));
+      socket.data.guilds = authorizedGuilds;
+      socket.data.joined = true;
+      const scopes = defaultScopes(socket.data);
+      hub.replaceSubscriptions(socket, scopes);
+      const event = {
+        v: 1,
+        type: "session.joined",
+        data: {
+          connectionId: socket.data.connectionId,
+          organizationIds: organizationIds(socket.data),
+          subscriptionScopes: scopes,
+        },
+      } satisfies Event;
+      hub.sendEvent(socket, event);
+      if (!wasJoined) yield* activity.publish("CONNECT_EVENT", socket.data);
+      return event.data;
+    });
   }
 
-  private requireJoined(socket: GatewaySocket): void {
-    if (!socket.data.joined) throw new Error("session.join is required");
+  private requireJoined(socket: GatewaySocket): Effect.Effect<void, Error> {
+    return socket.data.joined
+      ? Effect.void
+      : Effect.fail(new Error("session.join is required"));
   }
 }

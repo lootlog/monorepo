@@ -1,6 +1,6 @@
 # Independent rewrite verification report
 
-Verified: 2026-09-02
+Verified: 2026-09-03
 
 Branch: `feature/bun-effect-rewrite`
 
@@ -20,6 +20,20 @@ operations in a local HttpApi group. API's compatibility Layers, controller
 dispatcher, static route table, and adapted Promise application graph are
 deleted. Battlelog and Discord Bot expose Effect application modules; Promises
 remain only at actual SDK, database, Redis, R2, BullMQ, or server boundaries.
+
+The 2026-09-03 follow-up audit also verifies implementation shape: active
+Rabbit payload schemas are enforced at ingress, Battlelog database operations
+remain in the Effect error/context model, Gateway recurring work is scoped,
+known external JSON and cache contracts are schema-decoded, and semantic
+application errors are translated to HTTP only at the boundary. CI now runs
+`architecture:effect` so removed NestJS and anti-Effect patterns cannot
+silently return. API Redis reads require explicit typed codecs, Auth consumes
+realtime tickets through an Effect Schema decoder, API IDP-token acquisition
+stays in Effect until the Discord SDK adapter, and rejectable Promises cannot
+bypass the typed error channel through `Effect.promise`. Battlelog normalizes
+OpenAPI path-item ordering before client generation. Two misleading dispatch
+tests that mapped unrelated endpoints to one mock were removed under the
+repository's prohibition on tautological tests.
 
 Open findings after the safe remediations in this audit:
 
@@ -330,7 +344,7 @@ bun run client:check
 Every Turbo task in the final sequence bypassed cache and passed. API E2E passed
 9 tests; Activity 4, Battlelog 2, and Discord Bot 8. A second complete HttpApi,
 OpenAPI, and client generation produced the same aggregate SHA-256
-(`74e139d1140b4c67b71103d3ea420d080ff051c28c5cfd0dd2f200af424dd512`).
+(`3d741db08c30e4df56b97074dd1002da2cc90e58b543c5129850e9d72194c739`).
 
 Non-blocking warnings remain in existing UI/CLI lint, Vite native config, large
 frontend chunks, and Turbo outputs for typecheck-only package builds.

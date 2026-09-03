@@ -16,7 +16,7 @@ import {
   ne,
   sql as drizzleSql,
 } from "drizzle-orm";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { createHash } from "node:crypto";
 import { ActivityDatabase } from "#src/database/database";
 import {
@@ -183,7 +183,7 @@ export class ActivityRepository extends Context.Service<
                 return yield* Effect.fail(
                   new Error("Activity session identifier is missing"),
                 );
-              const now = new Date();
+              const now = new Date(yield* Clock.currentTimeMillis);
               const inserted = yield* tx
                 .insert(memberActivitySessions)
                 .values({
@@ -262,7 +262,10 @@ export class ActivityRepository extends Context.Service<
                   ))[0]?.value ?? 0;
               yield* tx
                 .update(memberActivityStats)
-                .set({ activeSessionCount: active, updatedAt: new Date() })
+                .set({
+                  activeSessionCount: active,
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
+                })
                 .where(
                   and(
                     eq(memberActivityStats.guildId, dto.guildId),
@@ -319,7 +322,10 @@ export class ActivityRepository extends Context.Service<
               );
             yield* tx
               .update(memberActivityStats)
-              .set({ activeSessionCount: 0, updatedAt: new Date() })
+              .set({
+                activeSessionCount: 0,
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
+              })
               .where(
                 and(
                   eq(memberActivityStats.guildId, member.guildId),

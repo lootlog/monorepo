@@ -27,6 +27,10 @@ interface GameMap {
   readonly id: number;
   readonly name: string;
 }
+const GameMapsJson = Schema.fromJsonString(
+  Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
+);
+const decodeGameMapsJson = Schema.decodeUnknownSync(GameMapsJson);
 
 export interface MapsOperationOptions {
   readonly httpClient: HttpClientValue;
@@ -77,7 +81,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
         }),
         Effect.flatMap((body) =>
           Effect.try({
-            try: () => JSON.parse(new TextDecoder().decode(body)) as GameMap[],
+            try: () => decodeGameMapsJson(new TextDecoder().decode(body)),
             catch: () => failure("invalid-response"),
           }),
         ),
@@ -101,7 +105,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
     });
     if (cached) {
       return yield* Effect.try({
-        try: () => JSON.parse(cached) as GameMap[],
+        try: () => decodeGameMapsJson(cached),
         catch: () => failure("cache"),
       });
     }

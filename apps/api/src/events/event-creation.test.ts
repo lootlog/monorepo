@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { RedisService } from "#src/redis/redis.service";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import { makeEventCreation } from "./event-creation.js";
 
@@ -29,6 +29,6 @@ describe("event creation Effect module", () => {
           { id: "guild-1" },
         ),
       ),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
   });
 });

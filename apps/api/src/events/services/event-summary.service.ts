@@ -1,4 +1,4 @@
-import { Logger } from "#src/shared/http/http-errors";
+import { Logger } from "#src/shared/logging/application-logger";
 import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
 import { clipToWindow } from "../utils/tracking-window.util.js";

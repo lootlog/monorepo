@@ -5,7 +5,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { eventTable } from "#src/database/drizzle/schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/constants/cache.constant";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 
 interface EventDeletionJob {
@@ -49,7 +49,7 @@ export const makeEventDeletion =
           ),
         );
       if (!rows[0]) {
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
       const jobs = yield* Effect.all({

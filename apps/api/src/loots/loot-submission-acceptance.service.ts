@@ -6,8 +6,8 @@ import type {
 } from "@lootlog/schema/loot-events";
 import type { LootCreatedNotificationEventV2 } from "@lootlog/schema/notifications";
 import {
-  BadRequestException,
-  ForbiddenException,
+  InvalidRequestError,
+  PermissionDeniedError,
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
@@ -167,7 +167,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         ),
       });
       if (guilds.length === 0) {
-        return yield* Effect.fail(new ForbiddenException());
+        return yield* Effect.fail(new PermissionDeniedError());
       }
 
       const whitelistedGuildIds = new Set(
@@ -177,11 +177,14 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         .filter((guild) => whitelistedGuildIds.has(guild.id))
         .map((guild) => guild.id);
       if (filteredGuildIds.length === 0) {
-        self.throwBadRequest(
-          ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
-          guilds.map((guild) =>
-            self.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
-          ),
+        return yield* Effect.fail(
+          new InvalidRequestError({
+            message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
+            submittedGuilds: [],
+            rejectedGuilds: guilds.map((guild) =>
+              self.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
+            ),
+          }),
         );
       }
 
@@ -192,9 +195,17 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           filteredGuildIds,
         ),
       });
-      const npcData = self.processNpcs(options.submission.npcs);
+      const npcData = yield* Effect.try({
+        try: () => self.processNpcs(options.submission.npcs),
+        catch: (error) =>
+          error instanceof InvalidRequestError
+            ? error
+            : new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
+      });
       if (npcData.primary.wt < 10) {
-        throw new BadRequestException(ErrorKey.NPC_WT_TOO_LOW);
+        return yield* Effect.fail(
+          new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
+        );
       }
 
       const primaryNpcType = getNpcTypeByWt(
@@ -212,9 +223,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         whitelistedGuildIds,
       });
       if (outcome.submissionData.length === 0) {
-        self.throwBadRequest(
-          ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
-          outcome.rejectedGuilds,
+        return yield* Effect.fail(
+          new InvalidRequestError({
+            message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+            submittedGuilds: [],
+            rejectedGuilds: outcome.rejectedGuilds,
+          }),
         );
       }
 
@@ -549,7 +563,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
     const primary = sorted[0];
     if (!primary) {
-      throw new BadRequestException(ErrorKey.NPC_WT_TOO_LOW);
+      throw new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW);
     }
     return {
       primary,
@@ -732,17 +746,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       submittedGuilds: outcome.submittedGuilds,
       rejectedGuilds: outcome.rejectedGuilds,
     };
-  }
-
-  private throwBadRequest(
-    message: ErrorKey,
-    rejectedGuilds: CreateLootRejectedGuild[],
-  ): never {
-    throw new BadRequestException({
-      message,
-      submittedGuilds: [],
-      rejectedGuilds,
-    });
   }
 
   private getNewSubmissions(

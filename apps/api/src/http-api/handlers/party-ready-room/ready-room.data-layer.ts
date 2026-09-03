@@ -22,10 +22,10 @@ import {
 } from "#src/messaging/ready-room/ready-room-projection";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import {
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-  UnprocessableEntityException,
+  ResourceConflictError,
+  PermissionDeniedError,
+  ResourceNotFoundError,
+  InvalidEntityError,
 } from "#src/shared/http/http-errors";
 import {
   ReadyRoomData,
@@ -89,7 +89,7 @@ export const createReadyRoomForNotification = (
       Effect.flatMap((result) => {
         if (result.status === "active-room-exists") {
           return Effect.fail(
-            new ConflictException({
+            new ResourceConflictError({
               code: "ACTIVE_GATHERING_EXISTS",
               notificationId: result.notificationId,
             }),
@@ -97,7 +97,7 @@ export const createReadyRoomForNotification = (
         }
         if (result.status === "joined-elsewhere") {
           return Effect.fail(
-            new ConflictException({
+            new ResourceConflictError({
               code: "ALREADY_JOINED_ELSEWHERE",
               notificationId: result.notificationId,
             }),
@@ -105,7 +105,7 @@ export const createReadyRoomForNotification = (
         }
         if (result.status === "room-exists") {
           return Effect.fail(
-            new ConflictException({ code: "REVISION_CONFLICT" }),
+            new ResourceConflictError({ code: "REVISION_CONFLICT" }),
           );
         }
         const envelope: PartyReadyRoomUpdateEnvelope = {
@@ -175,13 +175,13 @@ export const makeReadyRoomDataLayer = (
           Effect.flatMap((aggregate) => {
             if (!aggregate || Date.parse(aggregate.expiresAt) <= clock()) {
               return Effect.fail(
-                new NotFoundException({ code: "ROOM_EXPIRED" }),
+                new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
               );
             }
             return aggregate.status === "ACTIVE"
               ? Effect.succeed(aggregate)
               : Effect.fail(
-                  new UnprocessableEntityException({
+                  new InvalidEntityError({
                     code: "INVALID_STATE_TRANSITION",
                   }),
                 );
@@ -193,21 +193,25 @@ export const makeReadyRoomDataLayer = (
         revision: number,
       ) => {
         if (aggregate.organizerDiscordId !== discordId) {
-          return Effect.fail(new ForbiddenException({ code: "FORBIDDEN" }));
+          return Effect.fail(new PermissionDeniedError({ code: "FORBIDDEN" }));
         }
         return aggregate.revision === revision
           ? Effect.void
-          : Effect.fail(new ConflictException({ code: "REVISION_CONFLICT" }));
+          : Effect.fail(
+              new ResourceConflictError({ code: "REVISION_CONFLICT" }),
+            );
       };
       const assertCommitted = <A extends { readonly status: string }>(
         result: A,
       ) => {
         if (result.status === "missing") {
-          return Effect.fail(new NotFoundException({ code: "ROOM_EXPIRED" }));
+          return Effect.fail(
+            new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
+          );
         }
         if (result.status === "conflict") {
           return Effect.fail(
-            new ConflictException({ code: "REVISION_CONFLICT" }),
+            new ResourceConflictError({ code: "REVISION_CONFLICT" }),
           );
         }
         return Effect.succeed(result as A & { readonly status: "committed" });
@@ -253,7 +257,7 @@ export const makeReadyRoomDataLayer = (
             aggregate.organizerCharacter.characterId === character.characterId
           ) {
             return yield* Effect.fail(
-              new ConflictException({ code: "CHARACTER_ALREADY_JOINED" }),
+              new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
             );
           }
           const sharesGuild = guildIds.some((id) =>
@@ -266,7 +270,7 @@ export const makeReadyRoomDataLayer = (
               character.lvl <= aggregate.maxLvl);
           if (!sharesGuild || world !== aggregate.world || !meetsLevel) {
             return yield* Effect.fail(
-              new ForbiddenException({ code: "INELIGIBLE_CHARACTER" }),
+              new PermissionDeniedError({ code: "INELIGIBLE_CHARACTER" }),
             );
           }
           const existing = Object.values(aggregate.participants).find(
@@ -279,7 +283,7 @@ export const makeReadyRoomDataLayer = (
               existing.character.accountId !== character.accountId
             ) {
               return yield* Effect.fail(
-                new ConflictException({ code: "CHARACTER_ALREADY_JOINED" }),
+                new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
               );
             }
             return createReadyRoomProjection(aggregate, discordId);
@@ -303,7 +307,7 @@ export const makeReadyRoomDataLayer = (
           const result = yield* repository.join(aggregate, next, participantId);
           if (result.status === "joined-elsewhere") {
             return yield* Effect.fail(
-              new ConflictException({
+              new ResourceConflictError({
                 code: "ALREADY_JOINED_ELSEWHERE",
                 notificationId: result.notificationId,
               }),
@@ -311,13 +315,13 @@ export const makeReadyRoomDataLayer = (
           }
           if (result.status === "missing") {
             return yield* Effect.fail(
-              new NotFoundException({ code: "ROOM_EXPIRED" }),
+              new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
             );
           }
           if (result.status === "conflict") {
             return attempt + 1 >= MAX_CAS_ATTEMPTS
               ? yield* Effect.fail(
-                  new ConflictException({ code: "REVISION_CONFLICT" }),
+                  new ResourceConflictError({ code: "REVISION_CONFLICT" }),
                 )
               : yield* joinWithRetry(
                   discordId,
@@ -346,7 +350,7 @@ export const makeReadyRoomDataLayer = (
           const participant = aggregate.participants[participantId];
           if (!participant || participant.discordId !== discordId) {
             return yield* Effect.fail(
-              new ForbiddenException({ code: "FORBIDDEN" }),
+              new PermissionDeniedError({ code: "FORBIDDEN" }),
             );
           }
           const recipients = getReadyRoomActiveRecipientDiscordIds(aggregate);
@@ -365,13 +369,13 @@ export const makeReadyRoomDataLayer = (
           );
           if (result.status === "missing") {
             return yield* Effect.fail(
-              new NotFoundException({ code: "ROOM_EXPIRED" }),
+              new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
             );
           }
           if (result.status === "conflict") {
             return attempt + 1 >= MAX_CAS_ATTEMPTS
               ? yield* Effect.fail(
-                  new ConflictException({ code: "REVISION_CONFLICT" }),
+                  new ResourceConflictError({ code: "REVISION_CONFLICT" }),
                 )
               : yield* withdrawWithRetry(
                   discordId,
@@ -400,7 +404,7 @@ export const makeReadyRoomDataLayer = (
             aggregate.organizerCharacter.characterId !== organizerCharacterId
           ) {
             return yield* Effect.fail(
-              new ForbiddenException({ code: "FORBIDDEN" }),
+              new PermissionDeniedError({ code: "FORBIDDEN" }),
             );
           }
           const memberIds = new Set(memberCharacterIds);
@@ -429,13 +433,13 @@ export const makeReadyRoomDataLayer = (
           const result = yield* repository.commit(aggregate, next);
           if (result.status === "missing") {
             return yield* Effect.fail(
-              new NotFoundException({ code: "ROOM_EXPIRED" }),
+              new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
             );
           }
           if (result.status === "conflict") {
             return attempt + 1 >= MAX_CAS_ATTEMPTS
               ? yield* Effect.fail(
-                  new ConflictException({ code: "REVISION_CONFLICT" }),
+                  new ResourceConflictError({ code: "REVISION_CONFLICT" }),
                 )
               : yield* observeWithRetry(
                   discordId,
@@ -484,7 +488,7 @@ export const makeReadyRoomDataLayer = (
               const result = yield* repository.create(aggregate);
               if (result.status === "active-room-exists") {
                 return yield* Effect.fail(
-                  new ConflictException({
+                  new ResourceConflictError({
                     code: "ACTIVE_GATHERING_EXISTS",
                     notificationId: result.notificationId,
                   }),
@@ -492,7 +496,7 @@ export const makeReadyRoomDataLayer = (
               }
               if (result.status === "joined-elsewhere") {
                 return yield* Effect.fail(
-                  new ConflictException({
+                  new ResourceConflictError({
                     code: "ALREADY_JOINED_ELSEWHERE",
                     notificationId: result.notificationId,
                   }),
@@ -500,7 +504,7 @@ export const makeReadyRoomDataLayer = (
               }
               if (result.status === "room-exists") {
                 return yield* Effect.fail(
-                  new ConflictException({ code: "REVISION_CONFLICT" }),
+                  new ResourceConflictError({ code: "REVISION_CONFLICT" }),
                 );
               }
               yield* publish(result.aggregate, [identity.discordId]);
@@ -552,7 +556,9 @@ export const makeReadyRoomDataLayer = (
                 );
                 return projection && sharesGuild
                   ? Effect.succeed(projection)
-                  : Effect.fail(new ForbiddenException({ code: "FORBIDDEN" }));
+                  : Effect.fail(
+                      new PermissionDeniedError({ code: "FORBIDDEN" }),
+                    );
               }),
             ),
           ),
@@ -587,7 +593,7 @@ export const makeReadyRoomDataLayer = (
               );
               if (!aggregate.participants[payload.participantId]) {
                 return yield* Effect.fail(
-                  new UnprocessableEntityException({
+                  new InvalidEntityError({
                     code: "INVALID_STATE_TRANSITION",
                   }),
                 );
@@ -618,7 +624,7 @@ export const makeReadyRoomDataLayer = (
               const aggregate = yield* getLive(notificationId);
               if (aggregate.organizerDiscordId !== identity.discordId) {
                 return yield* Effect.fail(
-                  new ForbiddenException({ code: "FORBIDDEN" }),
+                  new PermissionDeniedError({ code: "FORBIDDEN" }),
                 );
               }
               const characters = new Set<string>();

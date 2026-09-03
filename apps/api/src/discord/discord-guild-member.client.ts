@@ -1,28 +1,28 @@
 import { RateLimitError, RequestMethod, parseResponse } from "@discordjs/rest";
 import {
-  HttpException,
-  NotFoundException,
-  ServiceUnavailableException,
-  UnauthorizedException,
+  ApplicationError,
+  ResourceNotFoundError,
+  DependencyUnavailableError,
+  AuthenticationRequiredError,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 import {
   getGuildMemberCacheKeys,
   getLegacyGuildMemberCacheKeys,
   isApiGuildMember,
   type DiscordGuildMemberCacheKeys,
 } from "./discord-cache.util.js";
-import { apiConfig } from "#src/config/api.config";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {
   isDiscordNotFoundError,
   recordInvalidDiscordRequest,
-  toDiscordRequestException,
+  toDiscordRequestError,
   throwIfDiscordRateLimited,
 } from "./discord-error.util.js";
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
@@ -47,8 +47,9 @@ export class DiscordGuildMemberClient {
     private readonly redlockService: RedlockService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
+    environment: RuntimeEnvironment,
   ) {
-    this.isLocal = apiConfig.environment === RuntimeEnvironment.LOCAL;
+    this.isLocal = environment === RuntimeEnvironment.LOCAL;
   }
 
   initialize() {
@@ -114,7 +115,7 @@ export class DiscordGuildMemberClient {
           guildId,
           userId,
         });
-        throw new ServiceUnavailableException({
+        throw new DependencyUnavailableError({
           message: "DISCORD_MEMBER_LOCK_UNAVAILABLE",
         });
       }
@@ -138,10 +139,10 @@ export class DiscordGuildMemberClient {
             ),
           ),
         ]);
-        throw new NotFoundException();
+        throw new ResourceNotFoundError();
       }
 
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
           message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
@@ -161,7 +162,7 @@ export class DiscordGuildMemberClient {
         throw error;
       }
 
-      if (error instanceof HttpException) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
 
@@ -171,7 +172,7 @@ export class DiscordGuildMemberClient {
         error,
       });
 
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     } finally {
       await this.releaseLock(lock, {
         action: "getGuildMember",
@@ -248,7 +249,7 @@ export class DiscordGuildMemberClient {
         );
       }
 
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     }
   }
 
@@ -274,11 +275,11 @@ export class DiscordGuildMemberClient {
     cacheKeys: Pick<DiscordGuildMemberCacheKeys, "notFound" | "unauthorized">,
   ): Promise<void> {
     if (await this.redisService.get(cacheKeys.notFound)) {
-      throw new NotFoundException();
+      throw new ResourceNotFoundError();
     }
 
     if (await this.redisService.get(cacheKeys.unauthorized)) {
-      throw new UnauthorizedException({
+      throw new AuthenticationRequiredError({
         message: "DISCORD_UNAUTHORIZED",
         requiresReauth: true,
       });
@@ -291,7 +292,7 @@ export class DiscordGuildMemberClient {
 
   private parseCachedGuildMember(cached: string): APIGuildMember | null {
     try {
-      const parsed = JSON.parse(cached) as unknown;
+      const parsed = decodeJsonUnknown(cached);
       if (isApiGuildMember(parsed)) {
         return parsed;
       }

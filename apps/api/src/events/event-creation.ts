@@ -5,7 +5,7 @@ import {
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
 import { randomUUID } from "node:crypto";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -13,7 +13,7 @@ import {
   eventTable,
 } from "#src/database/drizzle/schema";
 import type { RedisService } from "#src/redis/redis.service";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { CreateEventDto } from "#src/http-api/lootlog-api";
 import { attachComputedEventActive } from "./utils/event-activity.util.js";
@@ -40,11 +40,11 @@ export const makeEventCreation =
         } = data;
         const normalizedWorld = world.trim().toLowerCase();
         if (!normalizedWorld)
-          throw new BadRequestException("World is required");
+          throw new InvalidRequestError("World is required");
         const startDate = startsAt ? new Date(startsAt) : new Date();
         const endDate = endsAt ? new Date(endsAt) : null;
         if (endDate && endDate <= startDate) {
-          throw new BadRequestException("End date must be after start date");
+          throw new InvalidRequestError("End date must be after start date");
         }
         const normalizedScoringMode = normalizeEventScoringMode(scoringMode);
         const trimmedRulebook = rulebookMarkdown?.trim();
@@ -68,7 +68,7 @@ export const makeEventCreation =
         };
       },
       catch: (cause) =>
-        cause instanceof BadRequestException
+        cause instanceof InvalidRequestError
           ? cause
           : new EventCreationError({
               operation: "events.create.normalize",
@@ -94,7 +94,7 @@ export const makeEventCreation =
                 scoringMode: input.scoringMode,
                 scoringRules: input.scoringRules,
                 rulebookMarkdown: input.rulebookMarkdown,
-                updatedAt: new Date(),
+                updatedAt: new Date(yield* Clock.currentTimeMillis),
               })
               .returning();
             const event = eventRows[0];
@@ -166,7 +166,10 @@ export const makeEventCreation =
           ),
         ),
       );
-      return attachComputedEventActive(created, new Date());
+      return attachComputedEventActive(
+        created,
+        new Date(yield* Clock.currentTimeMillis),
+      );
     }).pipe(Effect.withSpan("EventsController_createEvent"));
   };
 

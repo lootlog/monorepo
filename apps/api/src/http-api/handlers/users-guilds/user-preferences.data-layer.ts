@@ -1,6 +1,6 @@
 /* oxlint-disable eslint/complexity -- preference migrations intentionally normalize every optional legacy field at one boundary. */
 import { and, eq } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import {
   mergeChatAppearanceSettings,
   normalizeChatAppearanceSettings,
@@ -468,7 +468,7 @@ export const makeUserPreferencesData = (
             : current.mutes.npcs,
         }
       : current.mutes;
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const settingsUpdate = {
       ...(payload.guildsOrder === undefined
         ? {}
@@ -648,7 +648,7 @@ export const makeUserPreferencesData = (
       ...(hasStoredPings ? { pings } : {}),
       ...(hasStoredAirTags ? { airTags } : {}),
     };
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     yield* database
       .insert(userGameAccountSettingsTable)
       .values({ userId, accountId, settings, createdAt: now, updatedAt: now })

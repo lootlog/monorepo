@@ -1,6 +1,6 @@
 import type { RabbitMessagingService } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Effect } from "effect";
+import type { Effect } from "effect";
 
 export interface CoverageUpdate {
   readonly guildId: string;
@@ -13,12 +13,10 @@ export interface CoverageUpdate {
 export class CoveragePublisher {
   constructor(private readonly messaging: RabbitMessagingService) {}
 
-  async publish(update: CoverageUpdate): Promise<void> {
-    await Effect.runPromise(
-      this.messaging.publish({
-        routingKey: RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
-        content: new TextEncoder().encode(JSON.stringify(update)),
-      }),
-    );
+  publish(update: CoverageUpdate): Effect.Effect<void, unknown> {
+    return this.messaging.publish({
+      routingKey: RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
+      content: new TextEncoder().encode(JSON.stringify(update)),
+    });
   }
 }

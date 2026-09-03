@@ -1,6 +1,7 @@
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { RedisService } from "#src/redis/redis.service";
 import type { DiscordEndpoint } from "./discord.types.js";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 interface UserRateLimitData {
   bucket?: string | null;
@@ -225,7 +226,7 @@ export class DiscordRateLimiterService {
     }
 
     try {
-      const parsed = JSON.parse(data) as unknown;
+      const parsed = decodeJsonUnknown(data);
       if (isUserRateLimitData(parsed)) {
         return parsed;
       }

@@ -2,17 +2,17 @@ import {
   RuntimeEnvironment,
   RuntimeEnvironmentSchema,
 } from "@lootlog/schema/runtime-environment";
-import { Config, Context, Effect, Layer } from "effect";
+import { Config, Context, Effect, Layer, Redacted } from "effect";
 
 export interface ActivityConfigValue {
   readonly environment: RuntimeEnvironment;
   readonly port: number;
   readonly serviceName: string;
-  readonly databaseUrl: string;
-  readonly rabbitmqUri: string;
-  readonly redisUrl?: string;
+  readonly databaseUrl: Redacted.Redacted<string>;
+  readonly rabbitmqUri: Redacted.Redacted<string>;
+  readonly redisUrl?: Redacted.Redacted<string>;
   readonly apiServiceUrl: string;
-  readonly signatureSecret: string;
+  readonly signatureSecret: Redacted.Redacted<string>;
 }
 
 export class ActivityConfig extends Context.Service<
@@ -27,21 +27,23 @@ export class ActivityConfig extends Context.Service<
         "ENV",
       ).pipe(Config.withDefault(RuntimeEnvironment.LOCAL));
       const configuredSecret = yield* Config.option(
-        Config.string("ACTIVITY_EVENT_SIGNATURE_SECRET"),
+        Config.redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
       );
       const signatureSecret =
         configuredSecret._tag === "Some"
           ? configuredSecret.value
           : environment === RuntimeEnvironment.PROD ||
               environment === RuntimeEnvironment.STAGING
-            ? yield* Effect.die(
+            ? yield* Effect.fail(
                 new Error(
                   `ACTIVITY_EVENT_SIGNATURE_SECRET is required when ENV=${environment}`,
                 ),
               )
-            : "local-development-activity-event-signature-secret";
-      if (signatureSecret.length < 32)
-        return yield* Effect.die(
+            : Redacted.make(
+                "local-development-activity-event-signature-secret",
+              );
+      if (Redacted.value(signatureSecret).length < 32)
+        return yield* Effect.fail(
           new Error(
             "ACTIVITY_EVENT_SIGNATURE_SECRET must contain at least 32 characters",
           ),
@@ -62,14 +64,16 @@ export class ActivityConfig extends Context.Service<
         serviceName: yield* Config.string("SERVICE_NAME").pipe(
           Config.withDefault("activity"),
         ),
-        databaseUrl: yield* Config.string("POSTGRESQL_CONNECTION_URI"),
-        rabbitmqUri: yield* Config.string("RABBITMQ_URI"),
+        databaseUrl: yield* Config.redacted("POSTGRESQL_CONNECTION_URI"),
+        rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
         redisUrl:
           redisHost._tag === "Some"
-            ? `redis://${encodeURIComponent(redisUsername)}:${encodeURIComponent(redisPassword)}@${redisHost.value}:${redisPort}`
+            ? Redacted.make(
+                `redis://${encodeURIComponent(redisUsername)}:${encodeURIComponent(redisPassword)}@${redisHost.value}:${redisPort}`,
+              )
             : environment === RuntimeEnvironment.LOCAL
               ? undefined
-              : yield* Effect.die(
+              : yield* Effect.fail(
                   new Error(`REDIS_HOST is required when ENV=${environment}`),
                 ),
         apiServiceUrl: yield* Config.string("API_SERVICE_URL"),

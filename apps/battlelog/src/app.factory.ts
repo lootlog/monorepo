@@ -1,9 +1,10 @@
+import { PgClient } from "@effect/sql-pg";
 import { Queue, Worker } from "bullmq";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import {
   makeBattlelogOperations,
   type BattlelogOperations,
-} from "#src/battles/battles.controller";
+} from "#src/battles/battlelog-operations";
 import { makeBattles, type Battles } from "#src/battles/battles.service";
 import { DELETE_USER_BATTLES_QUEUE } from "#src/battles/constants/delete-user-battles-queue.constant";
 import {
@@ -28,6 +29,11 @@ import { makeDrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service
 import { makeBattleObjectStorage } from "#src/shared/modules/r2/r2.service";
 import { makeRedisStore } from "#src/shared/modules/redis/redis.service";
 
+const redisConnectionOptions = (config: BattlelogConfiguration) => ({
+  ...config.redis,
+  password: Redacted.value(config.redis.password),
+});
+
 export interface BattlelogApplicationService {
   readonly port: number;
   readonly operations: BattlelogOperations;
@@ -41,7 +47,7 @@ export class BattlelogApplication extends Context.Service<
     BattlelogApplication,
     Effect.gen(function* () {
       const config = yield* BattlelogConfig;
-      const drizzle = yield* acquireDrizzle(config);
+      const drizzle = yield* makeDrizzleDatabase;
       const redis = yield* acquireRedis(config);
 
       const cacheService = makeBattleAnalyticsCache(redis);
@@ -96,28 +102,25 @@ export class BattlelogApplication extends Context.Service<
   );
 
   static readonly layer = this.layerWithoutConfig.pipe(
+    Layer.provide(
+      Layer.unwrap(
+        Effect.map(BattlelogConfig, (config) =>
+          PgClient.layer({
+            url: config.postgresqlConnectionUri,
+            applicationName: config.serviceName,
+          }),
+        ),
+      ),
+    ),
     Layer.provide(BattlelogConfig.layer),
   );
 }
-
-const acquireDrizzle = (config: BattlelogConfiguration) =>
-  Effect.acquireRelease(
-    Effect.tryPromise({
-      try: async () => {
-        const drizzle = makeDrizzleDatabase(config.postgresqlConnectionUri);
-        await drizzle.connect();
-        return drizzle;
-      },
-      catch: (cause) => new Error("Failed to initialize PostgreSQL", { cause }),
-    }),
-    (drizzle) => Effect.promise(() => drizzle.close()),
-  );
 
 const acquireRedis = (config: BattlelogConfiguration) =>
   Effect.acquireRelease(
     Effect.tryPromise({
       try: async () => {
-        const redis = makeRedisStore(config.redis);
+        const redis = makeRedisStore(redisConnectionOptions(config));
         await redis.connect();
         return redis;
       },
@@ -131,11 +134,11 @@ const acquireDeleteQueue = (config: BattlelogConfiguration) =>
     Effect.sync(
       () =>
         new Queue<DeleteUserBattlesJobData>(DELETE_USER_BATTLES_QUEUE, {
-          connection: config.redis,
+          connection: redisConnectionOptions(config),
           prefix: "{bull}",
         }),
     ),
-    (queue) => Effect.promise(() => queue.close()),
+    (queue) => Effect.tryPromise(() => queue.close()),
   );
 
 const acquireDeleteWorker = (
@@ -148,8 +151,8 @@ const acquireDeleteWorker = (
       return new Worker<DeleteUserBattlesJobData>(
         DELETE_USER_BATTLES_QUEUE,
         (job) => Effect.runPromise(processor.process(job)),
-        { connection: config.redis, prefix: "{bull}" },
+        { connection: redisConnectionOptions(config), prefix: "{bull}" },
       );
     }),
-    (worker) => Effect.promise(() => worker.close()),
+    (worker) => Effect.tryPromise(() => worker.close()),
   );

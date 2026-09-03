@@ -7,7 +7,7 @@ import {
   isNotNull,
   or,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -20,11 +20,15 @@ import {
   type AuthenticatedIdentity,
   UsersGuildsOperationError,
 } from "./users-guilds.handlers.js";
+import { GuildsControllerGetUserGuildsWithPermissions200 } from "../../lootlog-api.js";
 
 const CACHE_TTL_SECONDS = 60;
 
 export interface UserGuildPermissionsCache {
-  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly setJson: (
     key: string,
     value: unknown,
@@ -40,7 +44,10 @@ export const makeUserGuildPermissions = (
     identity: AuthenticatedIdentity,
   ) {
     const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:guild-permissions`;
-    const cached = yield* cache.getJson<unknown[]>(cacheKey);
+    const cached = yield* cache.getJson(
+      cacheKey,
+      GuildsControllerGetUserGuildsWithPermissions200,
+    );
     if (cached !== null) return cached;
 
     const guildRows = yield* database

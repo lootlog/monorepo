@@ -1,15 +1,49 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import type {
-  DiscordGuildChannelSnapshot,
-  DiscordGuildSyncState,
+import {
+  DiscordGuildSyncStatusSchema,
+  type DiscordGuildChannelSnapshot,
+  type DiscordGuildSyncState,
 } from "@lootlog/schema/notifications";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
-import { apiConfig } from "#src/config/api.config";
 import {
   outboundHttpRequest,
   type OutboundHttpFailure,
 } from "#src/shared/http/outbound-http";
+const DiscordGuildChannelSnapshotSchema = Schema.Struct({
+  guildId: Schema.String,
+  channelId: Schema.String,
+  name: Schema.String,
+  channelType: Schema.String,
+  parentId: Schema.NullOr(Schema.String),
+  position: Schema.Number,
+  active: Schema.Boolean,
+  canView: Schema.Boolean,
+  canSend: Schema.Boolean,
+  hasRequiredPermissions: Schema.Boolean,
+  requiredPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  grantedPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  missingPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  lastSyncedAt: Schema.String,
+});
+const DiscordGuildSyncStateSchema = Schema.Struct({
+  guildId: Schema.String,
+  status: DiscordGuildSyncStatusSchema,
+  hasRequiredPermissions: Schema.Boolean,
+  requiredPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  grantedPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  missingPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  channelCount: Schema.Number,
+  selectableChannelCount: Schema.Number,
+  lastAttemptAt: Schema.NullOr(Schema.String),
+  lastSuccessAt: Schema.NullOr(Schema.String),
+  lastError: Schema.NullOr(Schema.String),
+  updatedAt: Schema.String,
+});
+const DiscordGuildChannelsResponse = Schema.Struct({
+  channels: Schema.mutable(Schema.Array(DiscordGuildChannelSnapshotSchema)),
+  syncState: DiscordGuildSyncStateSchema,
+});
 
 type GuildChannels = {
   readonly channels: DiscordGuildChannelSnapshot[];
@@ -41,8 +75,14 @@ export interface DiscordBotClient {
 
 export const makeDiscordBotClient = (
   httpClient: HttpClientValue,
+  discordBotServiceUrl: URL,
 ): DiscordBotClient => {
-  const request = <A>(url: string, method: "GET" | "POST", timeout: number) =>
+  const request = <A>(
+    decodeJson: (value: string) => A,
+    url: string,
+    method: "GET" | "POST",
+    timeout: number,
+  ) =>
     outboundHttpRequest(httpClient, {
       adapter: "discord-bot",
       body: method === "POST" ? "{}" : undefined,
@@ -56,8 +96,7 @@ export const makeDiscordBotClient = (
       Effect.flatMap((response) =>
         response.status >= 200 && response.status < 300
           ? Effect.try({
-              try: () =>
-                JSON.parse(new TextDecoder().decode(response.body)) as A,
+              try: () => decodeJson(new TextDecoder().decode(response.body)),
               catch: () =>
                 new DiscordBotClientFailure({
                   reason: "invalid-response",
@@ -74,24 +113,31 @@ export const makeDiscordBotClient = (
       ),
     );
 
-  const serviceUrl = apiConfig.discordBotServiceUrl
-    .toString()
-    .replace(/\/$/, "");
+  const serviceUrl = discordBotServiceUrl.toString().replace(/\/$/, "");
   return {
     getGuildChannels: (guildId) =>
-      request<GuildChannels>(
+      request(
+        Schema.decodeUnknownSync(
+          Schema.fromJsonString(DiscordGuildChannelsResponse),
+        ),
         `${serviceUrl}/internal/guilds/${guildId}/channels`,
         "GET",
         5000,
       ),
     refreshGuildChannels: (guildId) =>
-      request<GuildChannels>(
+      request(
+        Schema.decodeUnknownSync(
+          Schema.fromJsonString(DiscordGuildChannelsResponse),
+        ),
         `${serviceUrl}/internal/guilds/${guildId}/channels/refresh`,
         "POST",
         10_000,
       ),
     getGuildSyncStatus: (guildId) =>
-      request<DiscordGuildSyncState>(
+      request(
+        Schema.decodeUnknownSync(
+          Schema.fromJsonString(DiscordGuildSyncStateSchema),
+        ),
         `${serviceUrl}/internal/guilds/${guildId}/sync-status`,
         "GET",
         5000,

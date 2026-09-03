@@ -7,8 +7,10 @@ export interface BattlelogConfiguration {
   readonly port: number;
   readonly serviceName: string;
   readonly serviceNamespace: string;
-  readonly postgresqlConnectionUri: string;
-  readonly redis: RedisOptions;
+  readonly postgresqlConnectionUri: Redacted.Redacted<string>;
+  readonly redis: Omit<RedisOptions, "password"> & {
+    readonly password: Redacted.Redacted<string>;
+  };
   readonly r2: R2Config;
 }
 
@@ -23,21 +25,15 @@ const loadConfiguration = Effect.gen(function* () {
   const serviceNamespace = yield* Config.string("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
   );
-  const postgresqlConnectionUri = Redacted.value(
-    yield* Config.redacted("POSTGRESQL_CONNECTION_URI"),
+  const postgresqlConnectionUri = yield* Config.redacted(
+    "POSTGRESQL_CONNECTION_URI",
   );
   const redisHost = yield* Config.string("REDIS_HOST");
   const redisPort = yield* Config.port("REDIS_PORT");
-  const redisPassword = Redacted.value(
-    yield* Config.redacted("REDIS_PASSWORD"),
-  );
+  const redisPassword = yield* Config.redacted("REDIS_PASSWORD");
   const redisUsername = yield* Config.string("REDIS_USERNAME");
-  const r2AccessKeyId = Redacted.value(
-    yield* Config.redacted("R2_ACCESS_KEY_ID"),
-  );
-  const r2SecretAccessKey = Redacted.value(
-    yield* Config.redacted("R2_SECRET_ACCESS_KEY"),
-  );
+  const r2AccessKeyId = yield* Config.redacted("R2_ACCESS_KEY_ID");
+  const r2SecretAccessKey = yield* Config.redacted("R2_SECRET_ACCESS_KEY");
   const r2Endpoint = yield* Config.string("R2_ENDPOINT");
   const r2Region = yield* Config.string("R2_REGION").pipe(
     Config.withDefault("auto"),

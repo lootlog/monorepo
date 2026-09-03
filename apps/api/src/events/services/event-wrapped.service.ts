@@ -1,5 +1,6 @@
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Logger, NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { Logger } from "#src/shared/logging/application-logger";
 import type { Permission } from "@lootlog/schema/permissions";
 import type {
   guildTable,
@@ -8,8 +9,9 @@ import type {
 } from "#src/database/drizzle/schema";
 import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
 import type { LootsOperations } from "#src/loots/loots.operations";
-import { Effect } from "effect";
-import { RedisService } from "#src/redis/redis.service";
+import { Clock, Effect } from "effect";
+import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
+import { EventWrappedApiResponseDto_Output } from "#src/http-api/lootlog-api";
 import { clipToWindowSeconds } from "../utils/tracking-window.util.js";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,
@@ -131,7 +133,11 @@ export const makeEventWrapped = (
     const load = getWrappedUncached(guild, eventId, permissions, roles);
     return Effect.gen(function* () {
       const cached = yield* Effect.tryPromise({
-        try: () => redis.getJson<EventWrappedResponseDto>(cacheKey),
+        try: () =>
+          redis.getJson(
+            cacheKey,
+            makeJsonCodec(EventWrappedApiResponseDto_Output),
+          ),
         catch: (error) => error,
       }).pipe(
         Effect.catch((error) =>
@@ -167,12 +173,12 @@ export const makeEventWrapped = (
     return Effect.gen(function* () {
       const event = yield* repository.findEvent(guild.id, eventId);
 
-      if (!event) {
-        throw new NotFoundException("Event not found");
-      }
+      if (!event)
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
 
       const eventWindowStart = event.startsAt ?? event.createdAt;
-      const eventWindowEnd = event.endsAt ?? new Date();
+      const eventWindowEnd =
+        event.endsAt ?? new Date(yield* Clock.currentTimeMillis);
       const heroIds = event.heroNpcs.map((hero) => hero.id);
       const heroByName = new Map(
         event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
@@ -294,7 +300,7 @@ export const makeEventWrapped = (
       const memberList = Array.from(members.values());
 
       const response: EventWrappedResponseDto = {
-        generatedAt: new Date().toISOString(),
+        generatedAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
         event: {
           id: event.id,
           name: event.name,

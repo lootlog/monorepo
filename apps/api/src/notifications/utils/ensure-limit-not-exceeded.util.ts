@@ -1,4 +1,4 @@
-import { ConflictException } from "#src/shared/http/http-errors";
+import { ResourceConflictError } from "#src/shared/http/http-errors";
 
 export function ensureLimitNotExceeded(params: {
   currentCount: number;
@@ -7,7 +7,7 @@ export function ensureLimitNotExceeded(params: {
   metadata?: Record<string, unknown>;
 }) {
   if (params.currentCount >= params.limit) {
-    throw new ConflictException({
+    throw new ResourceConflictError({
       message: params.errorMessage,
       ...params.metadata,
     });

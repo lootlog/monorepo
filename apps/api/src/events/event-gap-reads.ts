@@ -9,9 +9,14 @@ import {
   eventMapTable,
   eventTable,
 } from "#src/database/drizzle/schema";
-import type { RedisService } from "#src/redis/redis.service";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
+import {
+  CoverageGapResponse,
+  HeroCoverageGapResponse,
+  NullableCoverageGapResponse,
+} from "./event-monitoring-response.schema.js";
 
 export class EventGapReadError extends TaggedErrorClass<EventGapReadError>()(
   "EventGapReadError",
@@ -43,12 +48,13 @@ export const makeEventGapReads = (
         attributes: { adapter: "events.gaps.drizzle", retryCount: 0 },
       }),
     );
-  const cached = <A>(
+  const cached = <S extends Schema.ConstraintDecoder<unknown>>(
     guildId: string,
     eventId: string,
     scope: string,
     params: Record<string, unknown>,
-    load: Effect.Effect<A, unknown>,
+    schema: S,
+    load: Effect.Effect<S["Type"], unknown>,
   ) => {
     const key = [
       "event-read:v2",
@@ -57,13 +63,13 @@ export const makeEventGapReads = (
       scope,
       Buffer.from(stableSerialize(params)).toString("base64url"),
     ].join(":");
-    const codec = {
+    const codec = makeJsonCodec(Schema.toType(schema), {
       stringify: (value: unknown) => superjson.stringify(value),
-      parse: <T>(text: string) => superjson.parse<T>(text),
-    };
+      parse: (text): unknown => superjson.parse(text),
+    });
     return Effect.gen(function* () {
       const hit = yield* Effect.tryPromise({
-        try: () => redis.getJson<A>(key, codec),
+        try: () => redis.getJson(key, codec),
         catch: (error) => error,
       }).pipe(
         Effect.catch((error) =>
@@ -113,7 +119,7 @@ export const makeEventGapReads = (
       Effect.flatMap((rows) =>
         rows[0]
           ? Effect.void
-          : Effect.fail(new NotFoundException("Map not found")),
+          : Effect.fail(new ResourceNotFoundError("Map not found")),
       ),
     );
 
@@ -128,6 +134,7 @@ export const makeEventGapReads = (
         eventId,
         "map-gaps",
         { mapId },
+        Schema.Array(CoverageGapResponse),
         Effect.gen(function* () {
           yield* requireMap(guild.id, eventId, mapId);
           return yield* query(
@@ -151,6 +158,7 @@ export const makeEventGapReads = (
         eventId,
         "map-active-gap",
         { mapId },
+        NullableCoverageGapResponse,
         Effect.gen(function* () {
           yield* requireMap(guild.id, eventId, mapId);
           const rows = yield* query(
@@ -180,6 +188,7 @@ export const makeEventGapReads = (
         eventId,
         "hero-gaps",
         { heroNpcId: heroId },
+        Schema.Array(HeroCoverageGapResponse),
         query(
           "events.gaps.heroHistory",
           database
@@ -215,6 +224,7 @@ export const makeEventGapReads = (
         eventId,
         "hero-active-gaps",
         { heroNpcId: heroId },
+        Schema.Array(CoverageGapResponse),
         query(
           "events.gaps.heroActive",
           database

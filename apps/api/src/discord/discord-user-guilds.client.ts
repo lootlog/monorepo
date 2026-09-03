@@ -6,14 +6,26 @@ import {
 } from "@discordjs/rest";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
-  HttpException,
-  ServiceUnavailableException,
-  UnauthorizedException,
+  ApplicationError,
+  DependencyUnavailableError,
+  AuthenticationRequiredError,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import { Routes, type APIGuild } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
+import { Schema } from "effect";
+import { decodeJsonUnknown } from "#src/shared/schema/json";
+
+const decodeFreshCompleteHandoff = Schema.decodeUnknownSync(
+  Schema.fromJsonString(
+    Schema.Struct({
+      guilds: Schema.Unknown,
+      fresh: Schema.Literal(true),
+      complete: Schema.Literal(true),
+    }),
+  ),
+);
 import {
   getFreshCompleteUserGuildsHandoffKey,
   getFreshCompleteUserGuildsLockKey,
@@ -23,13 +35,12 @@ import {
   getUserGuildsLockKey,
   isApiGuildArray,
 } from "./discord-cache.util.js";
-import { apiConfig } from "#src/config/api.config";
 import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
 import {
   recordInvalidDiscordRequest,
-  toDiscordRequestException,
+  toDiscordRequestError,
   throwIfDiscordRateLimited,
 } from "./discord-error.util.js";
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
@@ -65,8 +76,9 @@ export class DiscordUserGuildsClient {
     private readonly redlockService: RedlockService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
+    environment: RuntimeEnvironment,
   ) {
-    this.isLocal = apiConfig.environment === RuntimeEnvironment.LOCAL;
+    this.isLocal = environment === RuntimeEnvironment.LOCAL;
   }
 
   initialize() {
@@ -111,12 +123,12 @@ export class DiscordUserGuildsClient {
           message: `Lock acquisition failed for getUserGuilds`,
           userId,
         });
-        throw new ServiceUnavailableException({
+        throw new DependencyUnavailableError({
           message: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
         });
       }
 
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
           message: `User authentication failed for userId: ${userId}`,
@@ -125,7 +137,7 @@ export class DiscordUserGuildsClient {
         throw error;
       }
 
-      if (error instanceof HttpException) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
 
@@ -134,7 +146,7 @@ export class DiscordUserGuildsClient {
         message: `Failed to fetch user guilds for userId: ${userId}`,
         error,
       });
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     } finally {
       await this.releaseLock(lock, {
         action: "getUserGuilds",
@@ -199,7 +211,7 @@ export class DiscordUserGuildsClient {
         complete: true,
       };
     } catch (error: unknown) {
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
           level: "warn",
           message: `User authentication failed for userId: ${userId}`,
@@ -208,7 +220,7 @@ export class DiscordUserGuildsClient {
         throw error;
       }
 
-      if (error instanceof HttpException) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
 
@@ -217,7 +229,7 @@ export class DiscordUserGuildsClient {
         message: `Failed to fetch fresh user guilds for userId: ${userId}`,
         error,
       });
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     }
   }
 
@@ -256,7 +268,7 @@ export class DiscordUserGuildsClient {
           message: "Fresh complete guild lookup is already in progress",
           userId,
         });
-        throw new ServiceUnavailableException({
+        throw new DependencyUnavailableError({
           message: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
         });
       }
@@ -303,13 +315,9 @@ export class DiscordUserGuildsClient {
     }
 
     try {
-      const parsed = JSON.parse(cached) as FreshCompleteUserGuildsResult;
-      if (
-        parsed.fresh === true &&
-        parsed.complete === true &&
-        isApiGuildArray(parsed.guilds)
-      ) {
-        return parsed;
+      const parsed = decodeFreshCompleteHandoff(cached);
+      if (isApiGuildArray(parsed.guilds)) {
+        return { guilds: parsed.guilds, fresh: true, complete: true };
       }
     } catch (error) {
       this.logger.log({
@@ -334,7 +342,7 @@ export class DiscordUserGuildsClient {
     }
 
     try {
-      const parsed = JSON.parse(cached) as unknown;
+      const parsed = decodeJsonUnknown(cached);
       if (isApiGuildArray(parsed)) {
         return parsed;
       }
@@ -422,7 +430,7 @@ export class DiscordUserGuildsClient {
 
     const lastGuild = page[page.length - 1];
     if (!lastGuild || lastGuild.id === after) {
-      throw new ServiceUnavailableException({
+      throw new DependencyUnavailableError({
         message: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
       });
     }
@@ -468,7 +476,7 @@ export class DiscordUserGuildsClient {
         );
       }
 
-      throw toDiscordRequestException(error);
+      throw toDiscordRequestError(error);
     }
   }
 }

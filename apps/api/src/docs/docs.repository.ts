@@ -1,9 +1,9 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
-  ConflictException,
-  HttpException,
-  NotFoundException,
+  ResourceConflictError,
+  ApplicationError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import {
   and,
@@ -15,7 +15,7 @@ import {
   isNull,
   sql,
 } from "drizzle-orm";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildDocumentHistoryTable,
@@ -36,7 +36,7 @@ export class DocsPersistenceError extends TaggedErrorClass<DocsPersistenceError>
   { cause: Schema.Defect() },
 ) {}
 
-export type DocsRepositoryFailure = HttpException | DocsPersistenceError;
+export type DocsRepositoryFailure = ApplicationError | DocsPersistenceError;
 
 export interface DocsRepositoryService {
   readonly listDocuments: (
@@ -106,7 +106,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
     effect.pipe(
       Effect.mapError(
         (error): DocsRepositoryFailure =>
-          error instanceof HttpException
+          error instanceof ApplicationError
             ? error
             : new DocsPersistenceError({ cause: error }),
       ),
@@ -203,7 +203,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             .limit(1);
           const guild = guildRows[0];
           if (!guild)
-            return yield* Effect.fail(new NotFoundException("Guild not found"));
+            return yield* Effect.fail(
+              new ResourceNotFoundError("Guild not found"),
+            );
           const usedRows = yield* transaction
             .select({ value: count() })
             .from(guildDocumentTable)
@@ -214,10 +216,10 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           );
           if ((usedRows[0]?.value ?? 0) >= limit) {
             return yield* Effect.fail(
-              new ConflictException("Guild document limit reached"),
+              new ResourceConflictError("Guild document limit reached"),
             );
           }
-          const now = new Date();
+          const now = new Date(yield* Clock.currentTimeMillis);
           const rows = yield* transaction
             .insert(guildDocumentTable)
             .values({
@@ -283,7 +285,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const document = rows[0];
           if (!document)
             return yield* Effect.fail(
-              new NotFoundException("Document not found"),
+              new ResourceNotFoundError("Document not found"),
             );
           if (
             document.title === options.title &&
@@ -291,7 +293,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           ) {
             return document;
           }
-          const now = new Date();
+          const now = new Date(yield* Clock.currentTimeMillis);
           const updatedRows = yield* transaction
             .update(guildDocumentTable)
             .set({
@@ -394,14 +396,14 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const document = rows[0];
           if (!document)
             return yield* Effect.fail(
-              new NotFoundException("Document not found"),
+              new ResourceNotFoundError("Document not found"),
             );
           if (options.action === "RESTORE" && !document.deletedAt) {
             return yield* Effect.fail(
-              new ConflictException("Document is not in trash"),
+              new ResourceConflictError("Document is not in trash"),
             );
           }
-          const now = new Date();
+          const now = new Date(yield* Clock.currentTimeMillis);
           const updatedRows = yield* transaction
             .update(guildDocumentTable)
             .set({
@@ -452,11 +454,11 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
         const document = rows[0];
         if (!document)
           return yield* Effect.fail(
-            new NotFoundException("Document not found"),
+            new ResourceNotFoundError("Document not found"),
           );
         if (!document.deletedAt) {
           return yield* Effect.fail(
-            new ConflictException("Document is not in trash"),
+            new ResourceConflictError("Document is not in trash"),
           );
         }
         yield* protect(

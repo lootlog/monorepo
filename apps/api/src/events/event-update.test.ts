@@ -2,7 +2,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { RedisService } from "#src/redis/redis.service";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import type { UpdateEventDto } from "#src/http-api/lootlog-api";
 import type { EventsCatalogRead } from "./events-catalog-read.js";
@@ -43,7 +43,7 @@ describe("event update Effect module", () => {
           endsAt: "2026-09-02T12:00:00.000Z",
         } as UpdateEventDto),
       ),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
     expect(transaction).not.toHaveBeenCalled();
   });
 });

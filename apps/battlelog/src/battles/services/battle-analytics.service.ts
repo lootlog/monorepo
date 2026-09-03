@@ -1,23 +1,15 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
 import type {
   QueryAbyssSeasonsDto,
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
 } from "#src/battles/dto/query-battle-statistics.dto";
-import type {
-  AbyssSeasonDto,
-  BattleAnalyticsDto,
-  BattleDurationStatsDto,
-  CombatProfileDto,
-  HeadToHeadPaginatedResponse,
-  PhGrowthDataPointDto,
-  PlayerVsPlayerPaginatedResponse,
-  ProfessionWinRateDto,
-  RatingDeltaByOpponentDto,
-  RatingGrowthDataPointDto,
-  StreakDto,
+import {
+  BattleStatisticsResponseSchemas,
+  type HeadToHeadPaginatedResponse,
+  type PlayerVsPlayerPaginatedResponse,
 } from "#src/battles/dto/battle-statistics-response.dto";
 import type { BattleAnalyticsCache } from "#src/battles/services/battle-analytics-cache.service";
 import type { BattleAnalyticsDomain } from "#src/battles/services/battle-analytics-domain.service";
@@ -26,7 +18,6 @@ import type { BattleAnalyticsQuery } from "#src/battles/services/battle-analytic
 import type {
   AnalyticsBattleOrderBy,
   DateRangeQuery,
-  InflatedBattleWithWarriors,
 } from "#src/battles/services/battle-analytics.types";
 import type { BattleSummaryCalculator } from "#src/battles/services/battle-summary-calculator.service";
 import type { CombatProfileCalculator } from "#src/battles/services/combat-profile-calculator.service";
@@ -35,6 +26,52 @@ import type { PlayerVsPlayerCalculator } from "#src/battles/services/player-vs-p
 import type { AbyssSeasonCalculator } from "#src/battles/services/abyss-season-calculator.service";
 import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
 import { battleWarriors, battles } from "#src/shared/modules/drizzle/schema";
+
+const analyticsDecoders = {
+  abyssSeasons: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Array(BattleStatisticsResponseSchemas.abyssSeason),
+    ),
+  ),
+  analytics: Schema.decodeUnknownSync(
+    Schema.fromJsonString(BattleStatisticsResponseSchemas.analytics),
+  ),
+  combatProfile: Schema.decodeUnknownSync(
+    Schema.fromJsonString(BattleStatisticsResponseSchemas.combatProfile),
+  ),
+  duration: Schema.decodeUnknownSync(
+    Schema.fromJsonString(BattleStatisticsResponseSchemas.duration),
+  ),
+  headToHead: Schema.decodeUnknownSync(
+    Schema.fromJsonString(BattleStatisticsResponseSchemas.headToHead),
+  ),
+  phGrowth: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Array(BattleStatisticsResponseSchemas.phGrowth),
+    ),
+  ),
+  playerVsPlayer: Schema.decodeUnknownSync(
+    Schema.fromJsonString(BattleStatisticsResponseSchemas.playerVsPlayer),
+  ),
+  professionWinRate: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Array(BattleStatisticsResponseSchemas.professionWinRate),
+    ),
+  ),
+  ratingDeltaByOpponent: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Array(BattleStatisticsResponseSchemas.ratingDeltaByOpponent),
+    ),
+  ),
+  ratingGrowth: Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Array(BattleStatisticsResponseSchemas.ratingGrowth),
+    ),
+  ),
+  streak: Schema.decodeUnknownSync(
+    Schema.fromJsonString(BattleStatisticsResponseSchemas.streak),
+  ),
+} as const;
 
 type AnalyticsBattleFilters = DateRangeQuery & {
   world?: string;
@@ -73,7 +110,10 @@ export const makeBattleAnalytics = (
   const getBattleAnalytics = (query: QueryBattleAnalyticsDto, userId: string) =>
     Effect.gen(function* () {
       const cacheKey = cache.buildAnalyticsCacheKey(userId, query);
-      const cachedResult = yield* cache.getJson<BattleAnalyticsDto>(cacheKey);
+      const cachedResult = yield* cache.getJson(
+        cacheKey,
+        analyticsDecoders.analytics,
+      );
       if (cachedResult) return cachedResult;
 
       const characterIds = yield* queryModule.getCharacterIds(userId, query);
@@ -106,6 +146,7 @@ export const makeBattleAnalytics = (
     cache.getOrSetJson(
       cache.buildQueryCacheKey("statistics", "abyss-seasons:v1", userId, query),
       () => getAbyssSeasonsUncached(query, userId),
+      analyticsDecoders.abyssSeasons,
     );
 
   const calculateProfessionWinRate = (
@@ -114,6 +155,7 @@ export const makeBattleAnalytics = (
   ) =>
     getCachedStatisticsResult(
       cache.buildStatisticsCacheKey("profession-win-rate", userId, query),
+      analyticsDecoders.professionWinRate,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -138,6 +180,7 @@ export const makeBattleAnalytics = (
   const getCombatProfile = (query: QueryBattleStatisticsDto, userId: string) =>
     getCachedStatisticsResult(
       cache.buildStatisticsCacheKey("combat-profile", userId, query),
+      analyticsDecoders.combatProfile,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -165,11 +208,13 @@ export const makeBattleAnalytics = (
     cache.getOrSetJson(
       cache.buildQueryCacheKey("statistics", "head-to-head:v2", userId, query),
       () => getHeadToHeadUncached(query, userId),
+      analyticsDecoders.headToHead,
     );
 
   const getCurrentStreak = (query: QueryBattleStatisticsDto, userId: string) =>
     getCachedStatisticsResult(
       cache.buildStatisticsCacheKey("streak", userId, query),
+      analyticsDecoders.streak,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -198,6 +243,7 @@ export const makeBattleAnalytics = (
   ) =>
     getCachedStatisticsResult(
       cache.buildStatisticsCacheKey("duration", userId, query),
+      analyticsDecoders.duration,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -226,6 +272,7 @@ export const makeBattleAnalytics = (
   ) =>
     getCachedStatisticsResult(
       cache.buildStatisticsCacheKey("ph-growth", userId, query),
+      analyticsDecoders.phGrowth,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -259,6 +306,7 @@ export const makeBattleAnalytics = (
       cache.buildStatisticsCacheKey("rating-growth", userId, query, {
         includeBattleFilters: false,
       }),
+      analyticsDecoders.ratingGrowth,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -292,6 +340,7 @@ export const makeBattleAnalytics = (
       cache.buildStatisticsCacheKey("rating-delta-by-opponent", userId, query, {
         includeBattleFilters: false,
       }),
+      analyticsDecoders.ratingDeltaByOpponent,
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
@@ -330,6 +379,7 @@ export const makeBattleAnalytics = (
         query,
       ),
       () => getPlayerVsPlayerBattlesUncached(query, userId),
+      analyticsDecoders.playerVsPlayer,
     );
 
   const getAbyssSeasonsUncached = (
@@ -340,26 +390,20 @@ export const makeBattleAnalytics = (
       const characterIds = yield* queryModule.getCharacterIds(userId, query);
       if (characterIds.length === 0) return [];
 
-      const fetchedBattles = yield* Effect.tryPromise({
-        try: () =>
-          drizzle.run(
-            drizzle.db.query.battles.findMany({
-              where: {
-                RAW: (table: typeof battles) =>
-                  and(
-                    eq(table.userId, userId),
-                    eq(table.matchmaking, true),
-                    queryModule.warriorExists(
-                      table,
-                      inArray(battleWarriors.originalId, characterIds),
-                    ),
-                  ),
-              },
-              with: { warriors: true },
-              orderBy: { createdAt: "asc" },
-            }),
-          ),
-        catch: (cause) => cause,
+      const fetchedBattles = yield* drizzle.query.battles.findMany({
+        where: {
+          RAW: (table: typeof battles) =>
+            and(
+              eq(table.userId, userId),
+              eq(table.matchmaking, true),
+              queryModule.warriorExists(
+                table,
+                inArray(battleWarriors.originalId, characterIds),
+              ),
+            ),
+        },
+        with: { warriors: true },
+        orderBy: { createdAt: "asc" },
       });
 
       return abyssSeasonCalculator.calculateSeasons(
@@ -373,14 +417,15 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     Effect.gen(function* () {
-      const startTime = Date.now();
+      const startTime = yield* Clock.currentTimeMillis;
       const characterContext = yield* getCharacterContext(userId, {
         characterId: query.characterId,
         world: query.world,
       });
 
       if (!characterContext) {
-        return getEmptyHeadToHeadResponse(query, startTime);
+        const finishedAt = yield* Clock.currentTimeMillis;
+        return getEmptyHeadToHeadResponse(query, finishedAt - startTime);
       }
 
       const filteredBattles = yield* getFilteredAnalyticsBattles({
@@ -402,7 +447,7 @@ export const makeBattleAnalytics = (
         pagination: paginated.pagination,
         meta: {
           performance: {
-            queryTime: Date.now() - startTime,
+            queryTime: (yield* Clock.currentTimeMillis) - startTime,
             ...(query.includeTotal && { totalItems: paginated.totalRecords }),
           },
         },
@@ -414,14 +459,15 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     Effect.gen(function* () {
-      const startTime = Date.now();
+      const startTime = yield* Clock.currentTimeMillis;
       const characterContext = yield* getCharacterContext(userId, {
         characterId: query.characterId,
         world: query.world,
       });
 
       if (!characterContext) {
-        return getEmptyPlayerVsPlayerResponse(query, startTime);
+        const finishedAt = yield* Clock.currentTimeMillis;
+        return getEmptyPlayerVsPlayerResponse(query, finishedAt - startTime);
       }
 
       const fetchedBattles = yield* getFilteredAnalyticsBattles({
@@ -443,7 +489,7 @@ export const makeBattleAnalytics = (
         pagination: paginated.pagination,
         meta: {
           performance: {
-            queryTime: Date.now() - startTime,
+            queryTime: (yield* Clock.currentTimeMillis) - startTime,
             ...(query.includeTotal && { totalItems: paginated.totalRecords }),
           },
         },
@@ -452,10 +498,11 @@ export const makeBattleAnalytics = (
 
   const getCachedStatisticsResult = <T>(
     cacheKey: string,
+    decodeJsonValue: (value: string) => T,
     factory: () => Effect.Effect<T, unknown>,
   ) =>
     Effect.gen(function* () {
-      const cachedResult = yield* cache.getJson<T>(cacheKey);
+      const cachedResult = yield* cache.getJson(cacheKey, decodeJsonValue);
       if (cachedResult) {
         return cachedResult;
       }
@@ -490,38 +537,32 @@ export const makeBattleAnalytics = (
   const getFilteredAnalyticsBattles = (options: AnalyticsFetchOptions) =>
     Effect.gen(function* () {
       const dateRange = queryModule.getDateRangeFilter(options.query);
-      const fetchedBattles = yield* Effect.tryPromise({
-        try: () =>
-          drizzle.run(
-            drizzle.db.query.battles.findMany({
-              where: {
-                RAW: (table: typeof battles) =>
-                  options.whereMode === "combat-profile"
-                    ? queryModule.buildCombatProfileWhere(table, {
-                        userId: options.userId,
-                        world: options.query.world,
-                        ...dateRange,
-                        matchmaking: options.query.matchmaking,
-                        characterIds: options.characterIds,
-                        phFilter: options.phFilter ?? options.query.ph,
-                      })
-                    : queryModule.buildAnalyticsWhere(table, {
-                        userId: options.userId,
-                        world: options.query.world,
-                        ...dateRange,
-                        matchmaking: options.query.matchmaking,
-                        characterIds: options.characterIds,
-                        phFilter: options.phFilter ?? options.query.ph,
-                        hasFlee: options.hasFlee,
-                        ratingDeltaNotNull: options.ratingDeltaNotNull,
-                        ratingNotNull: options.ratingNotNull,
-                      }),
-              },
-              with: { warriors: true },
-              ...(options.orderBy ? { orderBy: options.orderBy } : {}),
-            }),
-          ),
-        catch: (cause) => cause,
+      const fetchedBattles = yield* drizzle.query.battles.findMany({
+        where: {
+          RAW: (table: typeof battles) =>
+            options.whereMode === "combat-profile"
+              ? queryModule.buildCombatProfileWhere(table, {
+                  userId: options.userId,
+                  world: options.query.world,
+                  ...dateRange,
+                  matchmaking: options.query.matchmaking,
+                  characterIds: options.characterIds,
+                  phFilter: options.phFilter ?? options.query.ph,
+                })
+              : queryModule.buildAnalyticsWhere(table, {
+                  userId: options.userId,
+                  world: options.query.world,
+                  ...dateRange,
+                  matchmaking: options.query.matchmaking,
+                  characterIds: options.characterIds,
+                  phFilter: options.phFilter ?? options.query.ph,
+                  hasFlee: options.hasFlee,
+                  ratingDeltaNotNull: options.ratingDeltaNotNull,
+                  ratingNotNull: options.ratingNotNull,
+                }),
+        },
+        with: { warriors: true },
+        ...(options.orderBy ? { orderBy: options.orderBy } : {}),
       });
 
       const inflatedBattles = domain.inflateBattleRows(fetchedBattles);
@@ -549,7 +590,7 @@ export const makeBattleAnalytics = (
 
   const getEmptyHeadToHeadResponse = (
     query: QueryBattleStatisticsDto,
-    startTime: number,
+    queryTime: number,
   ): HeadToHeadPaginatedResponse => {
     return {
       records: [],
@@ -560,7 +601,7 @@ export const makeBattleAnalytics = (
       },
       meta: {
         performance: {
-          queryTime: Date.now() - startTime,
+          queryTime,
         },
       },
     };
@@ -568,7 +609,7 @@ export const makeBattleAnalytics = (
 
   const getEmptyPlayerVsPlayerResponse = (
     query: QueryPlayerVsPlayerDto,
-    startTime: number,
+    queryTime: number,
   ): PlayerVsPlayerPaginatedResponse => {
     return {
       battles: [],
@@ -579,7 +620,7 @@ export const makeBattleAnalytics = (
       },
       meta: {
         performance: {
-          queryTime: Date.now() - startTime,
+          queryTime,
         },
       },
     };

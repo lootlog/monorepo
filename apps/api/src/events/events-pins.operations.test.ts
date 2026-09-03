@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import {
-  ConflictException,
-  NotFoundException,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { makeEventsPins } from "./events-pins.operations.js";
 import type { PinnedEventsPersistence } from "./services/pinned-events.repository.js";
@@ -74,7 +74,7 @@ describe("event pins Effect module", () => {
       Effect.runPromise(
         operations.pinEvent("user-1", { id: "guild-1" }, "missing"),
       ),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
     expect(pin).not.toHaveBeenCalled();
   });
 
@@ -92,7 +92,7 @@ describe("event pins Effect module", () => {
       Effect.runPromise(
         operations.pinEvent("user-1", { id: "guild-1" }, "event-1"),
       ),
-    ).rejects.toBeInstanceOf(ConflictException);
+    ).rejects.toBeInstanceOf(ResourceConflictError);
     expect(remove).toHaveBeenCalledWith("user-1", "event-1");
   });
 });

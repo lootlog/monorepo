@@ -169,3 +169,5 @@ Do not try to start the application; assume it is already running.
 - Do not publish testimonials.
 - Do not create source files that only re-export symbols; update imports to the
   real module.
+
+IMPORTANT: Tautological tests are considered harmful.

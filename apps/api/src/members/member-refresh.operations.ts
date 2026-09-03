@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import {
   isRetryableMemberRefreshStatus,
   MEMBER_DISCORD_SYNC_STATUS,
@@ -54,12 +54,16 @@ export const makeMemberRefresh = (
     readonly reason: string;
     readonly throwOnUnexpectedError?: boolean;
   }) {
-    const lockOwner = `request:${options.guildId}:${Date.now()}:${Math.random()
+    const lockOwner = `request:${options.guildId}:${yield* Clock.currentTimeMillis}:${Math.random()
       .toString(36)
       .slice(2)}`;
     const nextRefreshAt = yield* ports.nextRefreshAt(options.userId);
     const locked = yield* scheduler.isUserRefreshLocked(options.userId);
-    if ((nextRefreshAt && nextRefreshAt.getTime() > Date.now()) || locked) {
+    if (
+      (nextRefreshAt &&
+        nextRefreshAt.getTime() > (yield* Clock.currentTimeMillis)) ||
+      locked
+    ) {
       const scheduled = yield* queueMemberRefresh(options);
       if (nextRefreshAt) {
         yield* ports.recordMetric({
@@ -73,7 +77,10 @@ export const makeMemberRefresh = (
           ? MEMBER_DISCORD_SYNC_STATUS.RATE_LIMITED
           : MEMBER_DISCORD_SYNC_STATUS.QUEUED,
         refreshQueued: scheduled.queued,
-        nextRefreshAt: scheduled.nextRefreshAt ?? nextRefreshAt ?? new Date(),
+        nextRefreshAt:
+          scheduled.nextRefreshAt ??
+          nextRefreshAt ??
+          new Date(yield* Clock.currentTimeMillis),
       };
     }
     const acquired = yield* scheduler.acquireUserRefreshLock(
@@ -91,7 +98,10 @@ export const makeMemberRefresh = (
     }
     const execute = Effect.gen(function* () {
       const blockedUntil = yield* ports.nextRefreshAt(options.userId);
-      if (blockedUntil && blockedUntil.getTime() > Date.now()) {
+      if (
+        blockedUntil &&
+        blockedUntil.getTime() > (yield* Clock.currentTimeMillis)
+      ) {
         const scheduled = yield* queueMemberRefresh(options);
         yield* ports.recordMetric({
           outcome: "rate_limited",

@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -27,9 +27,9 @@ import {
   updateNotificationRuleValues,
 } from "./notification-rule-policy.js";
 import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceConflictError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 
 const TEST_LIMIT = 10;
@@ -157,7 +157,7 @@ export const makeNotificationRuleOperations = (
             eq(notificationJobTable.jobKind, NotificationJobKind.TEST),
             gte(
               notificationJobTable.createdAt,
-              new Date(Date.now() - TEST_WINDOW_MS),
+              new Date((yield* Clock.currentTimeMillis) - TEST_WINDOW_MS),
             ),
           ),
         )
@@ -275,7 +275,7 @@ export const makeNotificationRuleOperations = (
           rows[0]
             ? Effect.succeed(rows[0])
             : Effect.fail(
-                new NotFoundException(
+                new ResourceNotFoundError(
                   NotificationError.NOTIFICATION_RULE_NOT_FOUND,
                 ),
               ),
@@ -293,7 +293,7 @@ export const makeNotificationRuleOperations = (
         return rule
           ? Effect.succeed(rule)
           : Effect.fail(
-              new NotFoundException(
+              new ResourceNotFoundError(
                 NotificationError.NOTIFICATION_RULE_NOT_FOUND,
               ),
             );
@@ -308,7 +308,7 @@ export const makeNotificationRuleOperations = (
     Effect.gen(function* () {
       if (targetIds.length === 0) {
         return yield* Effect.fail(
-          new BadRequestException(
+          new InvalidRequestError(
             NotificationError.AT_LEAST_ONE_TARGET_REQUIRED,
           ),
         );
@@ -326,7 +326,7 @@ export const makeNotificationRuleOperations = (
         );
       if (rows.length !== targetIds.length) {
         return yield* Effect.fail(
-          new BadRequestException(
+          new InvalidRequestError(
             NotificationError.INVALID_NOTIFICATION_TARGETS,
           ),
         );
@@ -334,7 +334,7 @@ export const makeNotificationRuleOperations = (
       return [...targetIds];
     }).pipe(
       Effect.mapError((cause) =>
-        cause instanceof BadRequestException
+        cause instanceof InvalidRequestError
           ? cause
           : new NotificationRuleOperationFailure({
               operation: "notifications.rules.validateTargets",
@@ -361,7 +361,7 @@ export const makeNotificationRuleOperations = (
       if (ownerType === NotificationOwnerType.USER) {
         if (ruleCount >= USER_RULE_LIMIT) {
           return yield* Effect.fail(
-            new ConflictException({
+            new ResourceConflictError({
               message: NotificationError.USER_NOTIFICATION_RULE_LIMIT_REACHED,
               ruleLimit: USER_RULE_LIMIT,
               ruleCount,
@@ -378,12 +378,12 @@ export const makeNotificationRuleOperations = (
       const guild = guilds[0];
       if (!guild) {
         return yield* Effect.fail(
-          new NotFoundException(NotificationError.GUILD_NOT_FOUND),
+          new ResourceNotFoundError(NotificationError.GUILD_NOT_FOUND),
         );
       }
       if (ruleCount >= guild.notificationRuleLimit) {
         return yield* Effect.fail(
-          new ConflictException({
+          new ResourceConflictError({
             message: NotificationError.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
             ruleLimit: guild.notificationRuleLimit,
             ruleCount,
@@ -407,7 +407,7 @@ export const makeNotificationRuleOperations = (
       try: () => createNotificationRuleValues(ownerType, ownerId, data),
       catch: (cause) => cause,
     });
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const rule = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const rows = yield* transaction
@@ -449,7 +449,10 @@ export const makeNotificationRuleOperations = (
       Effect.gen(function* () {
         yield* transaction
           .update(notificationRuleTable)
-          .set({ ...values, updatedAt: new Date() })
+          .set({
+            ...values,
+            updatedAt: new Date(yield* Clock.currentTimeMillis),
+          })
           .where(eq(notificationRuleTable.id, ruleId));
         if (targetIds) {
           yield* transaction
@@ -490,12 +493,14 @@ export const makeNotificationRuleOperations = (
     const rule = rules.find((candidate) => candidate.id === ruleId);
     if (!rule) {
       return yield* Effect.fail(
-        new NotFoundException(NotificationError.NOTIFICATION_RULE_NOT_FOUND),
+        new ResourceNotFoundError(
+          NotificationError.NOTIFICATION_RULE_NOT_FOUND,
+        ),
       );
     }
     if (!rule.enabled) {
       return yield* Effect.fail(
-        new ConflictException(
+        new ResourceConflictError(
           NotificationError.ONLY_ENABLED_RULES_CAN_BE_TEST_TRIGGERED,
         ),
       );
@@ -505,7 +510,7 @@ export const makeNotificationRuleOperations = (
       .filter((target) => target.active && target.canSend);
     if (activeTargets.length === 0) {
       return yield* Effect.fail(
-        new ConflictException(
+        new ResourceConflictError(
           NotificationError.NOTIFICATION_RULE_REQUIRES_ACTIVE_SENDABLE_TARGET,
         ),
       );
@@ -520,7 +525,7 @@ export const makeNotificationRuleOperations = (
         usage,
       );
       return yield* Effect.fail(
-        new ConflictException({
+        new ResourceConflictError({
           message: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
           limit: worst.limit,
           windowSeconds: worst.windowSeconds,
@@ -528,7 +533,7 @@ export const makeNotificationRuleOperations = (
         }),
       );
     }
-    const scheduledFor = new Date();
+    const scheduledFor = new Date(yield* Clock.currentTimeMillis);
     const sourceEventId = `test:${rule.id}:${randomUUID()}`;
     const jobs = yield* Effect.forEach(
       sendableTargets,
@@ -568,7 +573,9 @@ export const makeNotificationRuleOperations = (
     });
     if (created.length === 0) {
       return yield* Effect.fail(
-        new ConflictException(NotificationError.NO_TEST_JOBS_CREATED_FOR_RULE),
+        new ResourceConflictError(
+          NotificationError.NO_TEST_JOBS_CREATED_FOR_RULE,
+        ),
       );
     }
     return { success: true as const };

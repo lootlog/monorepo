@@ -6,7 +6,7 @@ import type {
   SettingsScope,
 } from "@lootlog/schema/settings-documents";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
 import {
   memberTable,
@@ -142,7 +142,7 @@ export class SettingsDocumentsRepository extends Context.Service<
                   overrides: nextOverrides,
                   schemaVersion:
                     SETTINGS_CATALOG[operation.domain].schemaVersion,
-                  updatedAt: new Date(),
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
                 };
                 if (current) {
                   yield* transaction

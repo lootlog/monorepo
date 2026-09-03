@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -10,7 +10,7 @@ import {
 } from "#src/database/drizzle/schema";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import { generateUniqueIntId } from "#src/shared/utils/generate-unique-int-id";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { buildTimerKey } from "#src/timers/utils/timer-key";
 import type { CreateManualTimerDto } from "../../lootlog-api.js";
@@ -59,7 +59,7 @@ const spawnWindow = (payload: CreateManualTimerDto, now: Date) => {
           : 0,
     };
   }
-  throw new BadRequestException({
+  throw new InvalidRequestError({
     message:
       "Either minSeconds/maxSeconds or customMinSpawnTime/customMaxSpawnTime must be provided",
   });
@@ -73,8 +73,14 @@ export const makeManualTimer = (
     access: TimersGuildAccess,
     payload: CreateManualTimerDto,
   ) {
-    const now = new Date();
-    const window = spawnWindow(payload, now);
+    const now = new Date(yield* Clock.currentTimeMillis);
+    const window = yield* Effect.try({
+      try: () => spawnWindow(payload, now),
+      catch: (cause) =>
+        cause instanceof InvalidRequestError
+          ? cause
+          : new InvalidRequestError({ message: "Invalid timer window" }),
+    });
     const npcId = generateUniqueIntId();
     const timerKey = buildTimerKey(npcId, payload.name);
     const projection = yield* database.transaction((transaction) =>
@@ -90,7 +96,8 @@ export const makeManualTimer = (
           )
           .limit(1);
         const member = members[0];
-        if (!member) throw new Error("Timer member was not found");
+        if (!member)
+          return yield* Effect.fail(new Error("Timer member was not found"));
 
         let actorCharacter: typeof playerSnapshotTable.$inferSelect | null =
           null;
@@ -164,7 +171,10 @@ export const makeManualTimer = (
           })
           .returning();
         const timer = insertedTimers[0];
-        if (!timer) throw new Error("Manual timer insert returned no row");
+        if (!timer)
+          return yield* Effect.fail(
+            new Error("Manual timer insert returned no row"),
+          );
         return { ...timer, member, actorCharacter };
       }),
     );

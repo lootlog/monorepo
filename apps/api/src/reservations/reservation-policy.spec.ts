@@ -33,10 +33,10 @@ describe("reservation policy", () => {
         now: new Date("2026-08-26T12:00:00.000Z"),
         settings,
       }),
-    ).toThrowError(expect.objectContaining({ status: 422 }));
+    ).toThrowError(expect.objectContaining({ kind: "invalid-entity" }));
   });
 
-  it("preserves the HTTP error contract for a past start", () => {
+  it("classifies a past start as an invalid entity", () => {
     expect(() =>
       validateReservationTime({
         startsAt: new Date("2026-08-26T11:45:00.000Z"),
@@ -47,12 +47,12 @@ describe("reservation policy", () => {
     ).toThrowError(
       expect.objectContaining({
         response: { code: "RESERVATION_START_IN_PAST" },
-        status: 422,
+        kind: "invalid-entity",
       }),
     );
   });
 
-  it("preserves Organization settings in HTTP error details", () => {
+  it("preserves Organization settings in domain error details", () => {
     expect(() =>
       validateReservationTime({
         startsAt: new Date("2026-08-26T12:15:00.000Z"),
@@ -66,7 +66,7 @@ describe("reservation policy", () => {
           code: "RESERVATION_TOO_SHORT",
           minimumMinutes: 15,
         },
-        status: 422,
+        kind: "invalid-entity",
       }),
     );
   });
@@ -77,6 +77,6 @@ describe("reservation policy", () => {
         "2026-08-01T00:00:00.000Z",
         "2026-09-02T00:00:00.000Z",
       ),
-    ).toThrowError(expect.objectContaining({ status: 400 }));
+    ).toThrowError(expect.objectContaining({ kind: "invalid-request" }));
   });
 });

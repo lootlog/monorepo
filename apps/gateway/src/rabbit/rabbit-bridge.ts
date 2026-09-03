@@ -5,7 +5,8 @@ import {
   type RabbitDelivery,
 } from "@lootlog/messaging";
 import {
-  decodeRabbitEvent,
+  decodeRabbitEventJson,
+  type CanonicalRabbitEventRoutingKey,
   type GuildLootCreatedEventV2,
   type GuildLootShareUpdatedEventV2,
   type ReservationChangedEventV2,
@@ -31,7 +32,7 @@ type Scope = typeof SubscriptionScope.Type;
 
 interface ConsumerSpec {
   readonly queue: string;
-  readonly routingKey: RabbitRoutingKeyName;
+  readonly routingKey: CanonicalRabbitEventRoutingKey;
   readonly retryRoutingKey?: RabbitRoutingKeyName;
   readonly deadLetterRoutingKey?: RabbitRoutingKeyName;
   readonly installRetryQueue?: boolean;
@@ -39,7 +40,7 @@ interface ConsumerSpec {
 
 const retryable = (
   queue: string,
-  routingKey: RabbitRoutingKeyName,
+  routingKey: CanonicalRabbitEventRoutingKey,
   retryRoutingKey: RabbitRoutingKeyName,
   deadLetterRoutingKey: RabbitRoutingKeyName,
   installRetryQueue = true,
@@ -248,8 +249,11 @@ export const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
     : [],
 );
 
-const parseJson = (delivery: RabbitDelivery): unknown =>
-  JSON.parse(new TextDecoder().decode(delivery.content));
+const decodeDelivery = (
+  routingKey: CanonicalRabbitEventRoutingKey,
+  delivery: RabbitDelivery,
+): unknown =>
+  decodeRabbitEventJson(routingKey, new TextDecoder().decode(delivery.content));
 
 const record = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -303,10 +307,7 @@ export class RabbitBridge {
                 : { strategy: "nack" },
           },
           (delivery: RabbitDelivery) =>
-            Effect.tryPromise({
-              try: () => handle(spec.routingKey, parseJson(delivery)),
-              catch: (cause) => cause,
-            }),
+            handle(spec.routingKey, decodeDelivery(spec.routingKey, delivery)),
         );
         consumers.push(consumer);
       }
@@ -339,26 +340,31 @@ export class RabbitBridge {
     }).pipe(Effect.tap(() => Effect.sync(() => (this.consumers = []))));
   }
 
-  private async handle(
-    routingKey: RabbitRoutingKeyName,
+  private handle(
+    routingKey: CanonicalRabbitEventRoutingKey,
     payload: unknown,
-  ): Promise<void> {
+  ): Effect.Effect<void, unknown> {
+    const fromPromise = <A>(evaluate: () => Promise<A>) =>
+      Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
     if (routingKey === RabbitRoutingKey.PRESENCE_CHECK_REQUEST) {
       const guildId = requiredString(payload, "guildId");
       const mapName = requiredString(payload, "mapName");
-      const presences = await this.presence.coverageForMap(guildId, mapName);
-      await Promise.all(
-        presences.map((presence) =>
-          this.coverage.publish({
-            guildId,
-            mapName,
-            discordId: presence.discordId,
-            hasPlayer: true,
-            isAfk: presence.isAfk,
-          }),
+      return this.presence.coverageForMap(guildId, mapName).pipe(
+        Effect.flatMap((presences) =>
+          Effect.forEach(
+            presences,
+            (presence) =>
+              this.coverage.publish({
+                guildId,
+                mapName,
+                discordId: presence.discordId,
+                hasPlayer: true,
+                isAfk: presence.isAfk,
+              }),
+            { concurrency: "unbounded", discard: true },
+          ),
         ),
       );
-      return;
     }
     if (
       routingKey === RabbitRoutingKey.GUILDS_MEMBERS_UPDATE ||
@@ -366,48 +372,44 @@ export class RabbitBridge {
       routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE ||
       routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE
     ) {
-      await this.commands.rebalanceAcrossInstances(
+      return this.commands.rebalanceAcrossInstances(
         requiredString(payload, "discordId"),
         requiredString(payload, "userId"),
       );
-      return;
     }
-    if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) return;
+    if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) return Effect.void;
 
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-      const data = decodeRabbitEvent(
-        routingKey,
-        payload,
-      ) as GuildLootCreatedEventV2;
-      await this.hub.publishToScope(
-        { topic: "organization.loots", organizationId: data.guildId },
-        { v: 1, type: "loot.created", data },
+      const data = payload as GuildLootCreatedEventV2;
+      return fromPromise(() =>
+        this.hub.publishToScope(
+          { topic: "organization.loots", organizationId: data.guildId },
+          { v: 1, type: "loot.created", data },
+        ),
       );
-      return;
     }
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE) {
-      const data = decodeRabbitEvent(
-        routingKey,
-        payload,
-      ) as GuildLootShareUpdatedEventV2;
-      await this.hub.publishToScope(
-        { topic: "organization.loots", organizationId: data.guildId },
-        { v: 1, type: "loot.share-updated", data },
+      const data = payload as GuildLootShareUpdatedEventV2;
+      return fromPromise(() =>
+        this.hub.publishToScope(
+          { topic: "organization.loots", organizationId: data.guildId },
+          { v: 1, type: "loot.share-updated", data },
+        ),
       );
-      return;
     }
     if (routingKey === RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2) {
-      const data = decodeRabbitEvent(
-        routingKey,
-        payload,
-      ) as ReservationChangedEventV2;
-      for (const organizationId of new Set(data.audienceGuildIds)) {
-        await this.hub.publishToScope(
-          { topic: "organization.reservations", organizationId },
-          { v: 1, type: "reservation.changed", data },
-        );
-      }
-      return;
+      const data = payload as ReservationChangedEventV2;
+      return Effect.forEach(
+        new Set(data.audienceGuildIds),
+        (organizationId) =>
+          fromPromise(() =>
+            this.hub.publishToScope(
+              { topic: "organization.reservations", organizationId },
+              { v: 1, type: "reservation.changed", data },
+            ),
+          ),
+        { discard: true },
+      );
     }
 
     const data = record(payload);
@@ -425,27 +427,33 @@ export class RabbitBridge {
             (id): id is string => typeof id === "string",
           )
         : [];
-      for (const id of eligible) {
-        await this.hub.publishToDiscord(
-          recipientDiscordId,
-          organizationEvent("party-ready-room.updated", id, data.update),
-        );
-      }
-      return;
+      return Effect.forEach(
+        eligible,
+        (id) =>
+          fromPromise(() =>
+            this.hub.publishToDiscord(
+              recipientDiscordId,
+              organizationEvent("party-ready-room.updated", id, data.update),
+            ),
+          ),
+        { discard: true },
+      );
     }
-    if (!organizationId) return;
+    if (!organizationId) return Effect.void;
 
     const routed = this.routeOrganizationEvent(
       routingKey,
       organizationId,
       payload,
     );
-    if (!routed) return;
-    await this.hub.publishToScope(routed.scope, routed.event);
+    if (!routed) return Effect.void;
+    return fromPromise(() =>
+      this.hub.publishToScope(routed.scope, routed.event),
+    );
   }
 
   private routeOrganizationEvent(
-    routingKey: RabbitRoutingKeyName,
+    routingKey: CanonicalRabbitEventRoutingKey,
     organizationId: string,
     payload: unknown,
   ): { readonly scope: Scope; readonly event: Event } | null {

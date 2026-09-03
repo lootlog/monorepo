@@ -8,8 +8,8 @@ import {
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import {
   NotificationFiltersResponse,
@@ -148,12 +148,12 @@ export const makeNotificationJobOperations = (
     const job = rows[0];
     if (!job) {
       return yield* Effect.fail(
-        new NotFoundException(NotificationError.NOTIFICATION_JOB_NOT_FOUND),
+        new ResourceNotFoundError(NotificationError.NOTIFICATION_JOB_NOT_FOUND),
       );
     }
     if (!cancelableStatuses.includes(job.status as never)) {
       return yield* Effect.fail(
-        new BadRequestException(
+        new InvalidRequestError(
           NotificationError.ONLY_PENDING_NOTIFICATION_JOBS_CAN_BE_CANCELED,
         ),
       );

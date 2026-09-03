@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { and, arrayOverlaps, desc, eq, isNotNull, or } from "drizzle-orm";
@@ -43,7 +43,10 @@ type Operation = Effect.Effect<unknown, UserLootlogConfigOperationError>;
 const CACHE_TTL_SECONDS = 60;
 
 export interface UserLootlogConfigCache {
-  readonly getJson: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly setJson: (
     key: string,
     value: unknown,
@@ -77,8 +80,13 @@ export class UserLootlogConfigData extends Context.Service<
               (cause) => new UserLootlogConfigOperationError({ cause }),
             ),
           );
-        const cacheRead = <A>(key: string) =>
-          cache.getJson<A>(key).pipe(Effect.catch(() => Effect.succeed(null)));
+        const cacheRead = <S extends Schema.ConstraintDecoder<unknown>>(
+          key: string,
+          schema: S,
+        ) =>
+          cache
+            .getJson(key, schema)
+            .pipe(Effect.catch(() => Effect.succeed(null)));
         const cacheWrite = (key: string, value: unknown) =>
           cache.setJson(key, value, CACHE_TTL_SECONDS).pipe(Effect.ignore);
         const findGuilds = (discordId: string, permission: Permission) =>
@@ -114,7 +122,10 @@ export class UserLootlogConfigData extends Context.Service<
             operation(
               Effect.gen(function* () {
                 const cacheKey = `user-lootlog-config:${discordId}:account:${accountId}`;
-                const cached = yield* cacheRead<unknown>(cacheKey);
+                const cached = yield* cacheRead(
+                  cacheKey,
+                  UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
+                );
                 if (cached !== null) return cached;
 
                 const [configs, guilds] = yield* Effect.all([
@@ -165,7 +176,7 @@ export class UserLootlogConfigData extends Context.Service<
                 const catchingGuildIds = [
                   ...new Set(payload.catchingGuildIds),
                 ].filter((id) => writableGuildIds.has(id));
-                const now = new Date();
+                const now = new Date(yield* Clock.currentTimeMillis);
                 const rows = yield* database
                   .insert(userCharactersLootlogSettingsTable)
                   .values({

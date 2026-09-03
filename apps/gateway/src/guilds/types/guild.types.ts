@@ -1,25 +1,25 @@
 import { Permission } from "@lootlog/schema/permissions";
 
 export interface GuildRole {
-  id: string;
-  lvlRangeFrom: number;
-  lvlRangeTo: number;
-  permissions: Permission[];
+  readonly id: string;
+  readonly lvlRangeFrom: number;
+  readonly lvlRangeTo: number;
+  readonly permissions: ReadonlyArray<Permission>;
 }
 
 export interface Guild {
-  id: string;
-  ownerId: string;
+  readonly id: string;
+  readonly ownerId: string;
 }
 
 export interface UserGuildData {
-  guild: Guild;
-  roles: GuildRole[];
+  readonly guild: Guild;
+  readonly roles: ReadonlyArray<GuildRole>;
 }
 
 export interface CachedGuildData {
-  guilds: UserGuildData[];
-  cachedAt: number;
+  readonly guilds: ReadonlyArray<UserGuildData>;
+  readonly cachedAt: number;
 }
 
 export interface GetUserGuildsOptions {

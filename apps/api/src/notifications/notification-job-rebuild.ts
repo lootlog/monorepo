@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type {
   NotificationJobStore,
   NotificationRuleWithTargets,
@@ -104,7 +104,10 @@ export const makeNotificationJobRebuild = (
     const calculated = new Date(
       anchor.getTime() - rule.scheduleOffsetMinutes * 60_000,
     );
-    const scheduledFor = calculated < new Date() ? new Date() : calculated;
+    const scheduledFor =
+      calculated < new Date(yield* Clock.currentTimeMillis)
+        ? new Date(yield* Clock.currentTimeMillis)
+        : calculated;
     yield* Effect.forEach(
       rule.targets,
       ({ target }) => {
@@ -150,7 +153,7 @@ export const makeNotificationJobRebuild = (
       const rule = yield* store.findRule(ruleId, true);
       if (!rule?.enabled || !rule.scheduledAt) return;
       const scheduledAt = rule.scheduledAt;
-      if (scheduledAt < new Date()) return;
+      if (scheduledAt < new Date(yield* Clock.currentTimeMillis)) return;
       if (rule.scheduledUntil && scheduledAt > rule.scheduledUntil) return;
       const permitted =
         rule.ownerType === NotificationOwnerType.USER

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
+import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ChatMessageResponseDto_Output } from "../../lootlog-api.js";
 import {
   ChatAccessDenied,
@@ -196,7 +197,7 @@ describe("Chat HttpApi handlers", () => {
           });
           return Effect.fail(
             new ChatOperationError({
-              cause: { getStatus: () => 403, message: "not owner" },
+              cause: new PermissionDeniedError("not owner"),
             }),
           );
         },

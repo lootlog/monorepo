@@ -1,7 +1,8 @@
 import { Logger } from "#src/platform/logger";
 import type { RedisStore } from "#src/shared/modules/redis/redis.service";
 import { and, desc, eq, ilike } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
+import { makeJsonCodec } from "#src/shared/modules/redis/redis.service";
 import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
 import {
   battles,
@@ -9,22 +10,22 @@ import {
   userCharacters,
 } from "#src/shared/modules/drizzle/schema";
 
-type UserCharactersResponse = {
-  characters: Array<{
-    id: string;
-    name: string;
-    world: string;
-    icon: string;
-  }>;
-};
+const UserCharactersResponseSchema = Schema.Struct({
+  characters: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      name: Schema.String,
+      world: Schema.String,
+      icon: Schema.String,
+    }),
+  ),
+});
+type UserCharactersResponse = typeof UserCharactersResponseSchema.Type;
 
-type UserWorldsResponse = {
-  worlds: string[];
-};
-
-type WarriorsSearchResponse = {
-  warriors: Array<{ name: string; icon: string; prof: string; lvl: number }>;
-};
+const UserWorldsResponseSchema = Schema.Struct({
+  worlds: Schema.Array(Schema.String),
+});
+type UserWorldsResponse = typeof UserWorldsResponseSchema.Type;
 
 const USER_METADATA_CACHE_TTL_SECONDS = 5 * 60;
 
@@ -39,70 +40,68 @@ export const makeBattleMetadata = (
     `battle-worlds:${userId}:list`;
 
   const getUserCharactersUncached = (userId: string) =>
-    Effect.tryPromise({
-      try: () =>
-        drizzle.run(
-          drizzle.db.query.userCharacters.findMany({
-            where: { userId },
-            orderBy: { lastSeenAt: "desc" },
-            columns: {
-              characterId: true,
-              name: true,
-              world: true,
-              icon: true,
-            },
-          }),
+    drizzle.query.userCharacters
+      .findMany({
+        where: { userId },
+        orderBy: { lastSeenAt: "desc" },
+        columns: {
+          characterId: true,
+          name: true,
+          world: true,
+          icon: true,
+        },
+      })
+      .pipe(
+        Effect.mapError((error) => {
+          logger.error("Failed to retrieve user characters:", error);
+          return new Error(
+            `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+        }),
+        Effect.map(
+          (results) =>
+            ({
+              characters: results.map((character) => ({
+                id: character.characterId,
+                name: character.name,
+                world: character.world,
+                icon: character.icon,
+              })),
+            }) satisfies UserCharactersResponse,
         ),
-      catch: (error) => {
-        logger.error("Failed to retrieve user characters:", error);
-        return new Error(
-          `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      },
-    }).pipe(
-      Effect.map(
-        (results) =>
-          ({
-            characters: results.map((character) => ({
-              id: character.characterId,
-              name: character.name,
-              world: character.world,
-              icon: character.icon,
-            })),
-          }) satisfies UserCharactersResponse,
-      ),
-    );
+      );
 
   const getUserWorldsUncached = (userId: string) =>
+    drizzle
+      .selectDistinctOn([userCharacters.world], {
+        world: userCharacters.world,
+      })
+      .from(userCharacters)
+      .where(eq(userCharacters.userId, userId))
+      .orderBy(userCharacters.world)
+      .pipe(
+        Effect.mapError((error) => {
+          logger.error("Failed to retrieve user worlds:", error);
+          return new Error(
+            `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+        }),
+        Effect.map(
+          (results) =>
+            ({
+              worlds: results.map((character) => character.world),
+            }) satisfies UserWorldsResponse,
+        ),
+      );
+
+  const cached = <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    load: Effect.Effect<S["Type"], unknown>,
+    schema: S,
+  ) =>
     Effect.tryPromise({
       try: () =>
-        drizzle.run(
-          drizzle.db
-            .selectDistinctOn([userCharacters.world], {
-              world: userCharacters.world,
-            })
-            .from(userCharacters)
-            .where(eq(userCharacters.userId, userId))
-            .orderBy(userCharacters.world),
-        ),
-      catch: (error) => {
-        logger.error("Failed to retrieve user worlds:", error);
-        return new Error(
-          `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      },
-    }).pipe(
-      Effect.map(
-        (results) =>
-          ({
-            worlds: results.map((character) => character.world),
-          }) satisfies UserWorldsResponse,
-      ),
-    );
-
-  const cached = <A>(key: string, load: Effect.Effect<A, unknown>) =>
-    Effect.tryPromise({
-      try: () => Promise.resolve(redisService.getJson<A>(key)),
+        Promise.resolve(redisService.getJson(key, makeJsonCodec(schema))),
       catch: (cause) => cause,
     }).pipe(
       Effect.catch((error) => {
@@ -130,10 +129,15 @@ export const makeBattleMetadata = (
     cached(
       getUserCharactersCacheKey(userId),
       getUserCharactersUncached(userId),
+      UserCharactersResponseSchema,
     );
 
   const getUserWorlds = (userId: string) =>
-    cached(getUserWorldsCacheKey(userId), getUserWorldsUncached(userId));
+    cached(
+      getUserWorldsCacheKey(userId),
+      getUserWorldsUncached(userId),
+      UserWorldsResponseSchema,
+    );
 
   const upsertUserCharacter = ({
     characterId,
@@ -148,47 +152,42 @@ export const makeBattleMetadata = (
     userId: string;
     world: string;
   }) =>
-    Effect.tryPromise({
-      try: () =>
-        drizzle.run(
-          drizzle.db
-            .insert(userCharacters)
-            .values({
-              userId,
-              characterId,
-              name,
-              world,
-              icon,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                userCharacters.userId,
-                userCharacters.characterId,
-                userCharacters.world,
-              ],
-              set: {
-                name,
-                icon,
-                lastSeenAt: new Date(),
-                updatedAt: new Date(),
-              },
-            }),
-        ),
-      catch: (cause) => cause,
-    }).pipe(
-      Effect.asVoid,
-      Effect.catch((error) => {
-        logger.warn(
-          `Failed to upsert character ${characterId} for user ${userId}`,
-          error,
-        );
-        return Effect.void;
-      }),
-      Effect.withSpan("BattleMetadata_upsertCharacter", {
-        attributes: { adapter: "drizzle", retryCount: 0 },
-      }),
-    );
+    drizzle
+      .insert(userCharacters)
+      .values({
+        userId,
+        characterId,
+        name,
+        world,
+        icon,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [
+          userCharacters.userId,
+          userCharacters.characterId,
+          userCharacters.world,
+        ],
+        set: {
+          name,
+          icon,
+          lastSeenAt: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      .pipe(
+        Effect.asVoid,
+        Effect.catch((error) => {
+          logger.warn(
+            `Failed to upsert character ${characterId} for user ${userId}`,
+            error,
+          );
+          return Effect.void;
+        }),
+        Effect.withSpan("BattleMetadata_upsertCharacter", {
+          attributes: { adapter: "drizzle", retryCount: 0 },
+        }),
+      );
 
   const searchWarriors = (query: string, userId: string) =>
     Effect.gen(function* () {
@@ -196,29 +195,23 @@ export const makeBattleMetadata = (
         return { warriors: [] };
       }
 
-      const results = yield* Effect.tryPromise({
-        try: () =>
-          drizzle.run(
-            drizzle.db
-              .selectDistinctOn([battleWarriors.name], {
-                name: battleWarriors.name,
-                icon: battleWarriors.icon,
-                prof: battleWarriors.prof,
-                lvl: battleWarriors.lvl,
-              })
-              .from(battleWarriors)
-              .innerJoin(battles, eq(battleWarriors.battleId, battles.id))
-              .where(
-                and(
-                  eq(battles.userId, userId),
-                  ilike(battleWarriors.name, `%${query.trim()}%`),
-                ),
-              )
-              .orderBy(battleWarriors.name, desc(battleWarriors.id))
-              .limit(10),
+      const results = yield* drizzle
+        .selectDistinctOn([battleWarriors.name], {
+          name: battleWarriors.name,
+          icon: battleWarriors.icon,
+          prof: battleWarriors.prof,
+          lvl: battleWarriors.lvl,
+        })
+        .from(battleWarriors)
+        .innerJoin(battles, eq(battleWarriors.battleId, battles.id))
+        .where(
+          and(
+            eq(battles.userId, userId),
+            ilike(battleWarriors.name, `%${query.trim()}%`),
           ),
-        catch: (cause) => cause,
-      });
+        )
+        .orderBy(battleWarriors.name, desc(battleWarriors.id))
+        .limit(10);
 
       return { warriors: results };
     }).pipe(

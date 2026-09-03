@@ -1527,28 +1527,6 @@ paths:
         "404":
           description: Battle not found
       summary: Get a single battle
-    delete:
-      tags:
-        - battles
-      operationId: BattlesController_deleteBattle
-      parameters:
-        - name: battleId
-          in: path
-          schema:
-            type: string
-          required: true
-      security:
-        - bearer: []
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BattleDeletedResponseDto_Output"
-        "404":
-          description: Battle not found
-      summary: Delete a battle
     patch:
       tags:
         - battles
@@ -1577,6 +1555,28 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateBattleDto"
         required: true
+    delete:
+      tags:
+        - battles
+      operationId: BattlesController_deleteBattle
+      parameters:
+        - name: battleId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleDeletedResponseDto_Output"
+        "404":
+          description: Battle not found
+      summary: Delete a battle
   /battles/{battleId}/raw:
     get:
       tags:

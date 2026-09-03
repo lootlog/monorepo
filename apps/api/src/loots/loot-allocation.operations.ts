@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
   GuildLootEventNpc,
@@ -16,10 +16,10 @@ import {
 } from "#src/loots/constants/loot-share-msg-regex";
 import { ErrorKey } from "#src/loots/enum/error-key.enum";
 import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  ServiceUnavailableException,
+  InvalidRequestError,
+  ResourceConflictError,
+  PermissionDeniedError,
+  DependencyUnavailableError,
 } from "#src/shared/http/http-errors";
 import type { LootShare } from "#src/loots/loot-response.schema";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
@@ -150,7 +150,7 @@ export const makeLootAllocationOperations = (options: {
       }),
     ).pipe(
       Effect.andThen(
-        Effect.fail(new ConflictException("Conflicting loot share")),
+        Effect.fail(new ResourceConflictError("Conflicting loot share")),
       ),
     );
   };
@@ -163,7 +163,9 @@ export const makeLootAllocationOperations = (options: {
     protect(
       "loot-allocation.confirm-from-chat",
       Effect.gen(function* () {
-        const submissionCutoff = new Date(Date.now() - SUBMISSION_WINDOW_MS);
+        const submissionCutoff = new Date(
+          (yield* Clock.currentTimeMillis) - SUBMISSION_WINDOW_MS,
+        );
         const authorized = yield* options.persistence.findAuthorizedLoot({
           actorUserId: input.actorUserId,
           lootId: input.lootId,
@@ -171,13 +173,13 @@ export const makeLootAllocationOperations = (options: {
         });
         if (!authorized) {
           return yield* Effect.fail(
-            new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT),
+            new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT),
           );
         }
         const parsed = parseChatAllocation(input.message);
         if (Object.keys(parsed).length === 0) {
           return yield* Effect.fail(
-            new BadRequestException(ErrorKey.MISSING_LOOT_SHARE),
+            new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE),
           );
         }
         const players = authorized.lootPlayers.map(
@@ -205,7 +207,7 @@ export const makeLootAllocationOperations = (options: {
         const allocation = resolveChatAllocation(parsed, players, items);
         if (Object.keys(allocation).length === 0) {
           return yield* Effect.fail(
-            new BadRequestException(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER),
+            new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER),
           );
         }
         if (authorized.lootShareSource === LootShareSource.CHAT_MESSAGE) {
@@ -237,12 +239,12 @@ export const makeLootAllocationOperations = (options: {
             });
           if (!state) {
             return yield* Effect.fail(
-              new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT),
+              new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT),
             );
           }
           if (state.lootShareSource !== LootShareSource.CHAT_MESSAGE) {
             return yield* Effect.fail(
-              new ServiceUnavailableException("Failed to persist loot share"),
+              new DependencyUnavailableError("Failed to persist loot share"),
             );
           }
           yield* assertMatching(input.lootId, state.lootShare, allocation);

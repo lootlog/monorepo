@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, arrayOverlaps, desc, eq, isNotNull, or, sql } from "drizzle-orm";
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
@@ -280,7 +280,7 @@ export const makeKillCreation = (
   ) {
     const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
-    const killedAt = new Date();
+    const killedAt = new Date(yield* Clock.currentTimeMillis);
     const periodStart = getKillStatsBucketStart(killedAt);
     const input: KillInput = {
       userId: discordId,

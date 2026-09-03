@@ -1,6 +1,6 @@
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { Effect, Schema } from "effect";
 import {
@@ -70,8 +70,8 @@ type HistoryRecord = {
 
 type DocsFailure =
   | DocsRepositoryFailure
-  | BadRequestException
-  | NotFoundException;
+  | InvalidRequestError
+  | ResourceNotFoundError;
 type DocsEffect = Effect.Effect<unknown, DocsFailure>;
 
 export interface DocsService {
@@ -111,10 +111,10 @@ export interface DocsService {
 const normalizeTitle = (title: string) => {
   const normalizedTitle = title.trim();
   if (!normalizedTitle) {
-    return Effect.fail(new BadRequestException("Document title is required"));
+    return Effect.fail(new InvalidRequestError("Document title is required"));
   }
   if (normalizedTitle.length > GUILD_DOCUMENT_TITLE_MAX_LENGTH) {
-    return Effect.fail(new BadRequestException("Document title is too long"));
+    return Effect.fail(new InvalidRequestError("Document title is too long"));
   }
   return Effect.succeed(normalizedTitle);
 };
@@ -126,7 +126,7 @@ const normalizeContent = (content: JsonValue) => {
       content,
     );
   } catch {
-    return Effect.fail(new BadRequestException("Invalid document content"));
+    return Effect.fail(new InvalidRequestError("Invalid document content"));
   }
 
   let stringifiedContent: string;
@@ -134,11 +134,11 @@ const normalizeContent = (content: JsonValue) => {
     stringifiedContent = JSON.stringify(decodedContent);
   } catch {
     return Effect.fail(
-      new BadRequestException("Document content is not serializable"),
+      new InvalidRequestError("Document content is not serializable"),
     );
   }
   return stringifiedContent.length > GUILD_DOCUMENT_CONTENT_MAX_LENGTH
-    ? Effect.fail(new BadRequestException("Document content is too long"))
+    ? Effect.fail(new InvalidRequestError("Document content is too long"))
     : Effect.succeed(decodedContent);
 };
 
@@ -245,7 +245,7 @@ export const makeDocsService = (
         Effect.flatMap((document) =>
           document
             ? Effect.succeed(document as DocumentRecord)
-            : Effect.fail(new NotFoundException("Document not found")),
+            : Effect.fail(new ResourceNotFoundError("Document not found")),
         ),
       );
 
@@ -259,7 +259,9 @@ export const makeDocsService = (
           documents: DocumentRecord[];
         };
         if (!result.guild) {
-          return yield* Effect.fail(new NotFoundException("Guild not found"));
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Guild not found"),
+          );
         }
         const max = Math.max(
           0,
@@ -322,7 +324,7 @@ export const makeDocsService = (
         );
         if (!history) {
           return yield* Effect.fail(
-            new NotFoundException("Document history not found"),
+            new ResourceNotFoundError("Document history not found"),
           );
         }
         return yield* mapHistoryRecord(guildId, history as HistoryRecord);

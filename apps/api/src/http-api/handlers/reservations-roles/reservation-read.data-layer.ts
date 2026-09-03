@@ -1,5 +1,5 @@
 import { and, asc, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -10,7 +10,7 @@ import {
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import { parseReservationWindow } from "#src/reservations/reservation-policy";
 import { canModerateReservations } from "#src/reservations/reservation-viewer";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   ReservationReadData,
   ReservationsRolesOperationError,
@@ -78,7 +78,9 @@ export const makeReservationReadDataLayer = (
           return spot
             ? Effect.succeed(spot)
             : Effect.fail(
-                new NotFoundException({ code: "RESERVATION_SPOT_NOT_FOUND" }),
+                new ResourceNotFoundError({
+                  code: "RESERVATION_SPOT_NOT_FOUND",
+                }),
               );
         });
 
@@ -86,7 +88,7 @@ export const makeReservationReadDataLayer = (
         listSpots: (context) =>
           operation(
             Effect.gen(function* () {
-              const now = new Date();
+              const now = new Date(yield* Clock.currentTimeMillis);
               const [spots, guildIds, pinnedSpots] = yield* Effect.all([
                 catalog.getSpots,
                 visibleGuildIds(context.guildId),

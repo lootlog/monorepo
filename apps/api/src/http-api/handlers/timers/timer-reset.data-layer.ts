@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -13,8 +13,8 @@ import {
 } from "#src/database/drizzle/schema";
 import { getProfByShortname } from "#src/shared/utils/get-prof-by-shortname";
 import {
-  BadRequestException,
-  NotFoundException,
+  InvalidRequestError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { ErrorKey } from "#src/timers/enum/error-key.enum";
@@ -114,15 +114,19 @@ export const makeResetTimer = (
       .from(timerTable)
       .where(timerCondition);
     if (matches.length > 1) {
-      throw new BadRequestException({
-        message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
-      });
+      return yield* Effect.fail(
+        new InvalidRequestError({
+          message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+        }),
+      );
     }
     const resolved = matches[0];
     if (!resolved) {
-      throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
+      return yield* Effect.fail(
+        new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+      );
     }
-    const now = new Date();
+    const now = new Date(yield* Clock.currentTimeMillis);
     const activeEventHero = yield* database
       .select({ id: eventHeroNpcTable.id })
       .from(eventHeroNpcTable)
@@ -144,9 +148,11 @@ export const makeResetTimer = (
       )
       .limit(1);
     if (activeEventHero.length > 0) {
-      throw new BadRequestException({
-        message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
-      });
+      return yield* Effect.fail(
+        new InvalidRequestError({
+          message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+        }),
+      );
     }
     const projection = yield* ports.withLock(
       `timer:lock:${access.guild.id}:${payload.world}:${resolved.timerKey}`,
@@ -165,7 +171,11 @@ export const makeResetTimer = (
             .limit(1);
           const current = currentRows[0];
           if (!current) {
-            throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
+            return yield* Effect.fail(
+              new ResourceNotFoundError({
+                message: ErrorKey.TIMER_NOT_FOUND,
+              }),
+            );
           }
           const respawnMilliseconds = current.latestRespBaseSeconds * 1000;
           const variance = Math.round(
@@ -188,7 +198,8 @@ export const makeResetTimer = (
             )
             .limit(1);
           const member = members[0];
-          if (!member) throw new Error("Timer member was not found");
+          if (!member)
+            return yield* Effect.fail(new Error("Timer member was not found"));
           const actor = payload.actorCharacter;
           const actorCharacter = yield* upsertActorCharacter(
             transaction,
@@ -222,7 +233,11 @@ export const makeResetTimer = (
             .returning();
           const updated = updatedRows[0];
           if (!updated) {
-            throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
+            return yield* Effect.fail(
+              new ResourceNotFoundError({
+                message: ErrorKey.TIMER_NOT_FOUND,
+              }),
+            );
           }
           const manual =
             Number(npcField(updated.npc, "margonemType")) ===

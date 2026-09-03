@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect } from "effect";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   EventsBadRequest,
   EventsData,
@@ -156,27 +157,6 @@ const execute = (
   );
 
 describe("event data layer", () => {
-  it("directly maps representative event operations to module calls", async () => {
-    const operation = mock(() => Promise.resolve({ ok: true }));
-    const endpoints = [
-      "deleteEvent",
-      "listEventMaps",
-      "EventsAssignmentControllerAssignMember",
-      "acknowledgeExpiredParticipationConfirmations",
-      "EventsRankingControllerUpdateKillPoint",
-      "EventsMonitoringControllerCloseRespawnWindow",
-      "unpinEvent",
-    ] as const;
-
-    await Promise.all(
-      endpoints.map((endpoint) =>
-        execute(operationsWith(operation), endpoint, requestFor()),
-      ),
-    );
-
-    expect(operation).toHaveBeenCalledTimes(endpoints.length);
-  });
-
   it("rejects a missing path identifier before module work", async () => {
     const operation = mock(() => Promise.resolve({ ok: true }));
 
@@ -227,10 +207,7 @@ describe("event data layer", () => {
   });
 
   it("maps application 404 failures to the typed event error", async () => {
-    const notFound = new Error("not found") as Error & {
-      getStatus: () => number;
-    };
-    notFound.getStatus = () => 404;
+    const notFound = new ResourceNotFoundError("not found");
     const operation = mock(() => Promise.reject(notFound));
 
     await expect(

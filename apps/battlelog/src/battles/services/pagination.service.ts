@@ -1,5 +1,5 @@
 import { Logger } from "#src/platform/logger";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import {
   and,
   count,
@@ -14,11 +14,9 @@ import {
 } from "drizzle-orm";
 import type { DrizzleDatabase } from "#src/shared/modules/drizzle/drizzle.service";
 import { battles } from "#src/shared/modules/drizzle/schema";
-import type { StoredBattleWithWarriors } from "./battle-analytics.types.js";
 import type {
   CursorPagination,
   PaginationOptions,
-  PaginationResult,
 } from "../interfaces/pagination.interface.js";
 
 type WhereBuilder = (table: typeof battles) => SQL | undefined;
@@ -53,28 +51,22 @@ export const makeBattlePagination = (drizzle: DrizzleDatabase) => {
     options: PaginationOptions,
   ) =>
     Effect.gen(function* () {
-      const startTime = Date.now();
+      const startTime = yield* Clock.currentTimeMillis;
       const { size = 20, cursor, includeTotal } = options;
       const decodedCursor = decodeOptionalCursor(cursor);
 
       const order = options.sortOrder === "asc" ? "asc" : "desc";
 
-      const results = yield* Effect.tryPromise({
-        try: () =>
-          drizzle.run(
-            drizzle.db.query.battles.findMany({
-              where: {
-                RAW: (table: typeof battles) => {
-                  const base = whereBuilder(table);
-                  return buildCursorWhere(table, base, decodedCursor, options);
-                },
-              },
-              limit: size + 1,
-              with: { warriors: true },
-              orderBy: { createdAt: order, id: order },
-            }),
-          ),
-        catch: (cause) => cause,
+      const results = yield* drizzle.query.battles.findMany({
+        where: {
+          RAW: (table: typeof battles) => {
+            const base = whereBuilder(table);
+            return buildCursorWhere(table, base, decodedCursor, options);
+          },
+        },
+        limit: size + 1,
+        with: { warriors: true },
+        orderBy: { createdAt: order, id: order },
       });
 
       const hasNext = results.length > size;
@@ -92,11 +84,12 @@ export const makeBattlePagination = (drizzle: DrizzleDatabase) => {
       );
 
       let total: number | undefined;
-      const countStartTime = Date.now();
+      const countStartTime = yield* Clock.currentTimeMillis;
       if (includeTotal) {
         total = yield* getEstimatedCount(whereBuilder(battles));
       }
-      const countTime = Date.now() - countStartTime;
+      const countFinishedAt = yield* Clock.currentTimeMillis;
+      const countTime = countFinishedAt - countStartTime;
 
       const pagination: CursorPagination = {
         size,
@@ -107,7 +100,8 @@ export const makeBattlePagination = (drizzle: DrizzleDatabase) => {
         total,
       };
 
-      const queryTime = Date.now() - startTime;
+      const queryFinishedAt = yield* Clock.currentTimeMillis;
+      const queryTime = queryFinishedAt - startTime;
 
       return {
         data: items,
@@ -157,26 +151,15 @@ export const makeBattlePagination = (drizzle: DrizzleDatabase) => {
 
       const size = options.size ?? 20;
       const reverseOrder = options.sortOrder === "asc" ? "desc" : "asc";
-      const previousWindow = yield* Effect.tryPromise({
-        try: () =>
-          drizzle.run(
-            drizzle.db.query.battles.findMany({
-              where: {
-                RAW: (table: typeof battles) => {
-                  const base = whereBuilder(table);
-                  return buildPreviousCursorWhere(
-                    table,
-                    base,
-                    decoded,
-                    options,
-                  );
-                },
-              },
-              limit: size + 1,
-              orderBy: { createdAt: reverseOrder, id: reverseOrder },
-            }),
-          ),
-        catch: (cause) => cause,
+      const previousWindow = yield* drizzle.query.battles.findMany({
+        where: {
+          RAW: (table: typeof battles) => {
+            const base = whereBuilder(table);
+            return buildPreviousCursorWhere(table, base, decoded, options);
+          },
+        },
+        limit: size + 1,
+        orderBy: { createdAt: reverseOrder, id: reverseOrder },
       });
 
       if (previousWindow.length <= size) {
@@ -227,39 +210,28 @@ export const makeBattlePagination = (drizzle: DrizzleDatabase) => {
   const getEstimatedCount = (where: SQL | undefined) =>
     Effect.gen(function* () {
       if (!where) {
-        const result = yield* Effect.tryPromise({
-          try: () =>
-            drizzle.run(
-              drizzle.db.execute<{ estimated_count: string }>(sql`
+        const result = yield* drizzle.execute<{ estimated_count: string }>(sql`
             SELECT reltuples::BIGINT AS estimated_count
             FROM pg_class
             WHERE relname = 'battles'
-          `),
-            ),
-          catch: (cause) => cause,
-        });
+          `);
         const row = result[0];
         return Number(row?.estimated_count ?? 0);
       }
 
-      const result = yield* Effect.tryPromise({
-        try: () =>
-          drizzle.run(
-            drizzle.db.select({ count: count() }).from(battles).where(where),
-          ),
-        catch: (cause) => cause,
-      });
+      const result = yield* drizzle
+        .select({ count: count() })
+        .from(battles)
+        .where(where);
       return result[0]?.count ?? 0;
     }).pipe(
       Effect.catch((error) => {
         logger.warn("Failed to get estimated count, falling back", error);
-        return Effect.tryPromise({
-          try: () =>
-            drizzle.run(
-              drizzle.db.select({ count: count() }).from(battles).where(where),
-            ),
-          catch: (cause) => cause,
-        }).pipe(Effect.map((result) => result[0]?.count ?? 0));
+        return drizzle
+          .select({ count: count() })
+          .from(battles)
+          .where(where)
+          .pipe(Effect.map((result) => result[0]?.count ?? 0));
       }),
     );
 

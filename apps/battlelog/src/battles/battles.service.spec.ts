@@ -8,7 +8,10 @@ import { makeBattleListFilter } from "./services/battle-list-filter.service.js";
 import { makeBattleMetadata } from "./services/battle-metadata.service.js";
 import type { RedisStore } from "#src/shared/modules/redis/redis.service";
 import { Effect } from "effect";
-import { runEffectService } from "../../test/effect-service.js";
+import {
+  effectDatabaseBoundary,
+  runEffectService,
+} from "../../test/effect-service.js";
 
 describe("battles module", () => {
   let service: ReturnType<typeof runEffectService<Battles>>;
@@ -130,7 +133,9 @@ describe("battles module", () => {
       ),
     };
 
-    const drizzle = mockDrizzleService as unknown as DrizzleDatabase;
+    const drizzle = effectDatabaseBoundary(
+      mockDrizzleService.db,
+    ) as unknown as DrizzleDatabase;
     const redis = mockRedisService as unknown as RedisStore;
     service = runEffectService(
       makeBattles(

@@ -1,7 +1,7 @@
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/logging/application-logger";
 import type { KillStatsFilter } from "./kill-stats-persistence.js";
@@ -9,7 +9,10 @@ import type { KillStatsFilter } from "./kill-stats-persistence.js";
 export type KillQueryRole = typeof roleTable.$inferSelect;
 
 export interface KillQueryCache {
-  readonly get: <A>(key: string) => Effect.Effect<A | null, unknown>;
+  readonly get: <S extends Schema.ConstraintDecoder<unknown>>(
+    key: string,
+    schema: S,
+  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly set: <A>(
     key: string,
     value: A,
@@ -101,15 +104,18 @@ export const visibilityCacheScope = (
           .sort((left, right) => left.id.localeCompare(right.id)),
       };
 
-export const cachedKillQuery = <A>(options: {
+export const cachedKillQuery = <
+  S extends Schema.ConstraintDecoder<unknown>,
+>(options: {
   readonly cache: KillQueryCache;
   readonly logger: ApplicationLogger;
   readonly key: string;
   readonly label: string;
-  readonly load: Effect.Effect<A, unknown>;
+  readonly schema: S;
+  readonly load: Effect.Effect<S["Type"], unknown>;
 }) =>
   Effect.gen(function* () {
-    const existing = yield* options.cache.get<A>(options.key);
+    const existing = yield* options.cache.get(options.key, options.schema);
     if (existing !== null) {
       options.logger.log({
         level: "debug",

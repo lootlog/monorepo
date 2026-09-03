@@ -4,14 +4,24 @@ export interface AppLogger {
   readonly info: (message: string, context?: unknown) => void;
 }
 
-export const consoleLogger: AppLogger = {
+export const effectLogger: AppLogger = {
   error: (message, context) =>
-    process.stderr.write(
-      `${message} ${context === undefined ? "" : String(context)}\n`,
+    Effect.runFork(
+      Effect.logError(message, context).pipe(
+        Effect.annotateLogs({ context: "Search" }),
+      ),
     ),
-  warn: (message, context) => console.warn(message, context ?? ""),
+  warn: (message, context) =>
+    Effect.runFork(
+      Effect.logWarning(message, context).pipe(
+        Effect.annotateLogs({ context: "Search" }),
+      ),
+    ),
   info: (message, context) =>
-    process.stdout.write(
-      `${message} ${context === undefined ? "" : String(context)}\n`,
+    Effect.runFork(
+      Effect.logInfo(message, context).pipe(
+        Effect.annotateLogs({ context: "Search" }),
+      ),
     ),
 };
+import { Effect } from "effect";

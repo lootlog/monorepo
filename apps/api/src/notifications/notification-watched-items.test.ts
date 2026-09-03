@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { BadRequestException } from "#src/shared/http/http-errors";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { makeNotificationWatchedItems } from "./notification-watched-items.js";
 
 describe("notification watched items Effect module", () => {
@@ -23,7 +23,7 @@ describe("notification watched items Effect module", () => {
           guildIds: [],
         }),
       ),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
     expect(listGuilds).not.toHaveBeenCalled();
     expect(cancel).not.toHaveBeenCalled();
   });

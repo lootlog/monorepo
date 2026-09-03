@@ -26,24 +26,24 @@ import {
 } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 import { Permission } from "@lootlog/schema/permissions";
-import { ForbiddenException } from "#src/shared/http/http-errors";
+import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import {
   type TimersGuildAccess,
   TimersOperationError,
 } from "./timers.handlers.js";
 import {
+  type CachedTimerProjection,
   mapTimerResponse,
   parseTimerNpc,
-  type TimerProjection,
 } from "./timer-response.js";
 
 export interface TimerListCache {
   readonly get: (
     key: string,
-  ) => Effect.Effect<ReadonlyArray<TimerProjection> | null, unknown>;
+  ) => Effect.Effect<ReadonlyArray<CachedTimerProjection> | null, unknown>;
   readonly set: (
     key: string,
-    value: ReadonlyArray<TimerProjection>,
+    value: ReadonlyArray<CachedTimerProjection>,
     ttlSeconds: number,
   ) => Effect.Effect<unknown, unknown>;
 }
@@ -157,7 +157,7 @@ export const makeGuildTimerList = (
   ) {
     const cacheKey = `timer:list:${access.guild.id}:${access.userId}:${world || "all"}`;
     const cached = yield* cache.get(cacheKey);
-    let timers: ReadonlyArray<TimerProjection>;
+    let timers: ReadonlyArray<CachedTimerProjection>;
     if (cached !== null) {
       timers = cached;
     } else {
@@ -220,7 +220,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
         ),
       );
     if (guildRows.length === 0) {
-      return yield* Effect.fail(new ForbiddenException());
+      return yield* Effect.fail(new PermissionDeniedError());
     }
     const guildIds = guildRows.map(({ guild }) => guild.id);
     const members = yield* database

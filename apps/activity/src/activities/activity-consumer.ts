@@ -6,7 +6,7 @@ import {
   makeRetryQueue,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 import { ActivityRepository } from "./activity-repository.js";
 import {
   decodeCreateActivity,
@@ -116,7 +116,7 @@ export const ActivityConsumers = Layer.effectDiscard(
           if (
             !verifyActivityEventSignature({
               payload: input,
-              secret: config.signatureSecret,
+              secret: Redacted.value(config.signatureSecret),
               signature: header(delivery, ACTIVITY_EVENT_SIGNATURE_HEADER),
             })
           ) {

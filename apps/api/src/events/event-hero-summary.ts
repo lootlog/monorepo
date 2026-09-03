@@ -9,10 +9,11 @@ import {
   eventTable,
   npcKillStatsTable,
 } from "#src/database/drizzle/schema";
-import type { RedisService } from "#src/redis/redis.service";
-import { NotFoundException } from "#src/shared/http/http-errors";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/logging/application-logger";
 import type { EventTimersPort } from "./services/event-timers.port.js";
+import { EventHeroStatsResponse } from "./event-kill-response.schema.js";
 
 export class EventHeroSummaryError extends TaggedErrorClass<EventHeroSummaryError>()(
   "EventHeroSummaryError",
@@ -48,7 +49,7 @@ export const makeEventHeroSummary = (
       );
       const event = events[0];
       if (!event)
-        return yield* Effect.fail(new NotFoundException("Event not found"));
+        return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       const heroNpcs = yield* query(
         "events.heroSummary.heroes",
         database
@@ -58,19 +59,20 @@ export const makeEventHeroSummary = (
       );
       return { event, heroNpcs };
     });
-  const cachedStats = <A>(
+  const cachedStats = <S extends Schema.ConstraintDecoder<unknown>>(
     guildId: string,
     eventId: string,
-    load: Effect.Effect<A, unknown>,
+    schema: S,
+    load: Effect.Effect<S["Type"], unknown>,
   ) => {
     const key = `event-read:v2:${guildId}:${eventId}:hero-stats-v2:e30`;
-    const codec = {
+    const codec = makeJsonCodec(Schema.toType(schema), {
       stringify: (value: unknown) => superjson.stringify(value),
-      parse: <T>(text: string) => superjson.parse<T>(text),
-    };
+      parse: (text): unknown => superjson.parse(text),
+    });
     return Effect.gen(function* () {
       const hit = yield* Effect.tryPromise({
-        try: () => redis.getJson<A>(key, codec),
+        try: () => redis.getJson(key, codec),
         catch: (error) => error,
       }).pipe(
         Effect.catch((error) =>
@@ -131,6 +133,7 @@ export const makeEventHeroSummary = (
       cachedStats(
         guild.id,
         eventId,
+        Schema.Array(EventHeroStatsResponse),
         Effect.gen(function* () {
           const { event, heroNpcs } = yield* eventWithHeroes(guild.id, eventId);
           const heroIds = heroNpcs.map(({ id }) => id);

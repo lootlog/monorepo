@@ -14,7 +14,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Clock, Effect, Layer } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
@@ -34,10 +34,10 @@ import {
 import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
 import {
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-  UnprocessableEntityException,
+  ResourceConflictError,
+  PermissionDeniedError,
+  ResourceNotFoundError,
+  InvalidEntityError,
 } from "#src/shared/http/http-errors";
 import type {
   CreateReservationDto,
@@ -181,9 +181,9 @@ const prepareReminder = (
     const scheduledFor = new Date(
       options.startsAt.getTime() - options.reminderMinutesBefore * 60_000,
     );
-    if (scheduledFor.getTime() <= Date.now()) {
+    if (scheduledFor.getTime() <= (yield* Clock.currentTimeMillis)) {
       return yield* Effect.fail(
-        new UnprocessableEntityException({ code: "REMINDER_TIME_ELAPSED" }),
+        new InvalidEntityError({ code: "REMINDER_TIME_ELAPSED" }),
       );
     }
     const targets = yield* database
@@ -204,7 +204,7 @@ const prepareReminder = (
     const target = targets[0];
     if (!target) {
       return yield* Effect.fail(
-        new UnprocessableEntityException({ code: "DM_TARGET_REQUIRED" }),
+        new InvalidEntityError({ code: "DM_TARGET_REQUIRED" }),
       );
     }
     return { target, scheduledFor };
@@ -254,7 +254,7 @@ const getOrCreateReminderRule = (
             name: RULE_NAME,
             scheduleStrategy: "FIXED_DATETIME",
             enabled: true,
-            updatedAt: new Date(),
+            updatedAt: new Date(yield* Clock.currentTimeMillis),
           })
           .returning();
         const rule = rules[0];
@@ -295,8 +295,8 @@ const cancelReminder = (
         .update(notificationJobTable)
         .set({
           status: "CANCELED",
-          processedAt: new Date(),
-          updatedAt: new Date(),
+          processedAt: new Date(yield* Clock.currentTimeMillis),
+          updatedAt: new Date(yield* Clock.currentTimeMillis),
         })
         .where(
           inArray(
@@ -324,7 +324,7 @@ const scheduleReminder = (
     const rule = yield* getOrCreateReminderRule(database, options.discordId);
     if (!rule) {
       return yield* Effect.fail(
-        new UnprocessableEntityException({ code: "DM_TARGET_REQUIRED" }),
+        new InvalidEntityError({ code: "DM_TARGET_REQUIRED" }),
       );
     }
     const startsAtDiscord = formatDiscordRelativeTimestamp(options.startsAt);
@@ -361,7 +361,7 @@ const scheduleReminder = (
         startsAt: options.startsAt.toISOString(),
       },
       blockedReason: null,
-      updatedAt: new Date(),
+      updatedAt: new Date(yield* Clock.currentTimeMillis),
     };
     const inserted = yield* database
       .insert(notificationJobTable)
@@ -397,7 +397,11 @@ const scheduleReminder = (
     yield* ports
       .enqueueNotification(
         job.id,
-        Math.max(0, options.context.scheduledFor.getTime() - Date.now()),
+        Math.max(
+          0,
+          options.context.scheduledFor.getTime() -
+            (yield* Clock.currentTimeMillis),
+        ),
       )
       .pipe(
         Effect.catch((error) =>
@@ -630,7 +634,9 @@ export const makeReservationMutationsDataLayer = (
           ]);
           if (!member || !guild) {
             return yield* Effect.fail(
-              new ForbiddenException({ code: "RESERVATION_MEMBER_REQUIRED" }),
+              new PermissionDeniedError({
+                code: "RESERVATION_MEMBER_REQUIRED",
+              }),
             );
           }
           const settings = resolveReservationSettings(guild);
@@ -672,7 +678,10 @@ export const makeReservationMutationsDataLayer = (
                   and(
                     eq(reservationTable.guildId, context.guildId),
                     eq(reservationTable.spotId, spot.id),
-                    gt(reservationTable.endsAt, new Date()),
+                    gt(
+                      reservationTable.endsAt,
+                      new Date(yield* Clock.currentTimeMillis),
+                    ),
                     or(
                       eq(reservationTable.createdByUserId, context.userId),
                       eq(
@@ -704,7 +713,7 @@ export const makeReservationMutationsDataLayer = (
                   ),
                   reminderMinutesBefore,
                   comment: data.comment || null,
-                  updatedAt: new Date(),
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .returning();
               return rows[0]
@@ -714,12 +723,12 @@ export const makeReservationMutationsDataLayer = (
           );
           if (createResult.kind === "overlap") {
             return yield* Effect.fail(
-              new ConflictException({ code: "RESERVATION_OVERLAP" }),
+              new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
             );
           }
           if (createResult.kind === "active-limit") {
             return yield* Effect.fail(
-              new UnprocessableEntityException({
+              new InvalidEntityError({
                 code: "ACTIVE_LIMIT_REACHED",
                 limit: settings.reservationActiveLimitPerSpot,
               }),
@@ -772,7 +781,7 @@ export const makeReservationMutationsDataLayer = (
           const reservation = yield* findOwned({ ...options, guildIds });
           if (!reservation) {
             return yield* Effect.fail(
-              new NotFoundException({ code: "RESERVATION_NOT_FOUND" }),
+              new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
             );
           }
           const range = {
@@ -850,7 +859,7 @@ export const makeReservationMutationsDataLayer = (
                   ...range,
                   comment,
                   reminderMinutesBefore,
-                  updatedAt: new Date(),
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .where(eq(reservationTable.id, reservation.id))
                 .returning();
@@ -859,7 +868,7 @@ export const makeReservationMutationsDataLayer = (
           );
           if (!updateResult) {
             return yield* Effect.fail(
-              new ConflictException({ code: "RESERVATION_OVERLAP" }),
+              new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
             );
           }
           const updated = { ...updateResult, guild: reservation.guild };
@@ -927,7 +936,7 @@ export const makeReservationMutationsDataLayer = (
               const reservation = yield* findVisible(reservationId, visible);
               if (!reservation) {
                 return yield* Effect.fail(
-                  new NotFoundException({ code: "RESERVATION_NOT_FOUND" }),
+                  new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
                 );
               }
               const isOwned =
@@ -938,7 +947,7 @@ export const makeReservationMutationsDataLayer = (
                 canModerateReservations(context);
               if (!isOwned && !canModerateSource) {
                 return yield* Effect.fail(
-                  new ForbiddenException({
+                  new PermissionDeniedError({
                     code: "RESERVATION_DELETE_FORBIDDEN",
                   }),
                 );
@@ -968,7 +977,7 @@ export const makeReservationMutationsDataLayer = (
               });
               if (!reservation) {
                 return yield* Effect.fail(
-                  new NotFoundException({ code: "RESERVATION_NOT_FOUND" }),
+                  new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
                 );
               }
               yield* deletePersisted({
