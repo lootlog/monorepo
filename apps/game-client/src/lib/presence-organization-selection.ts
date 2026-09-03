@@ -2,16 +2,19 @@ export interface PresenceOrganizationCandidate {
   readonly id: string;
 }
 
+export const getPresenceClanKey = (world: string, clanId: number): string =>
+  `${world}:${clanId}`;
+
 export const resolvePresenceOrganizationIds = ({
   accessibleOrganizations,
-  currentClanId,
+  currentClanKey,
+  defaultOrganizationIdByClanKey,
   explicitlySelectedIds,
-  preferredOrganizationId,
 }: {
   readonly accessibleOrganizations: ReadonlyArray<PresenceOrganizationCandidate>;
-  readonly currentClanId?: number;
+  readonly currentClanKey?: string;
+  readonly defaultOrganizationIdByClanKey?: Readonly<Record<string, string>>;
   readonly explicitlySelectedIds?: ReadonlyArray<string>;
-  readonly preferredOrganizationId?: string;
 }): string[] => {
   const accessibleIds = new Set(
     accessibleOrganizations.map((organization) => organization.id),
@@ -21,12 +24,10 @@ export const resolvePresenceOrganizationIds = ({
       accessibleIds.has(id),
     );
   }
-  if (
-    currentClanId === undefined ||
-    preferredOrganizationId === undefined ||
-    !accessibleIds.has(preferredOrganizationId)
-  ) {
-    return [];
-  }
-  return [preferredOrganizationId];
+  if (currentClanKey === undefined) return [];
+  const defaultOrganizationId =
+    defaultOrganizationIdByClanKey?.[currentClanKey];
+  return defaultOrganizationId && accessibleIds.has(defaultOrganizationId)
+    ? [defaultOrganizationId]
+    : [];
 };

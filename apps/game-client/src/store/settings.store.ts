@@ -20,10 +20,19 @@ interface SettingsState {
   allowWorldSelection?: boolean;
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
+  presenceDefaultOrganizationIdByClanKey: Record<string, string>;
   selectedGuildIdsForTimersByCharId: Record<string, string[]>;
   presenceOrganizationIdsByCharId: Record<string, string[]>;
-  ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
-  setGuildId: (charId: string, guildId: string) => void;
+  ensureGuildId: (
+    charId: string,
+    orderedGuildIds: string[],
+    currentClanKey?: string,
+  ) => void;
+  setGuildId: (
+    charId: string,
+    guildId: string,
+    currentClanKey?: string,
+  ) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
   setPresenceOrganizationIds: (
     charId: string,
@@ -47,38 +56,67 @@ export const useSettingsStore = create<SettingsState>()(
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
+      presenceDefaultOrganizationIdByClanKey: {},
       selectedGuildIdsForTimersByCharId: {},
       presenceOrganizationIdsByCharId: {},
-      ensureGuildId: (charId: string, orderedGuildIds: string[]) => {
+      ensureGuildId: (charId, orderedGuildIds, currentClanKey) => {
         set((state) => {
           const currentGuildId = state.guildIdByCharId[charId];
-          if (
+          const hasCurrentGuild =
             currentGuildId === "all" ||
-            (currentGuildId && orderedGuildIds.includes(currentGuildId))
-          ) {
-            return state;
-          }
+            Boolean(currentGuildId && orderedGuildIds.includes(currentGuildId));
+          const selectedGuildId = hasCurrentGuild
+            ? currentGuildId
+            : orderedGuildIds[0];
+          if (!selectedGuildId) return state;
 
-          const fallbackGuildId = orderedGuildIds[0];
-          if (!fallbackGuildId) {
-            return state;
-          }
+          const currentDefaults =
+            state.presenceDefaultOrganizationIdByClanKey ?? {};
+          const shouldSetPresenceDefault =
+            currentClanKey !== undefined &&
+            selectedGuildId !== "all" &&
+            (hasCurrentGuild || orderedGuildIds.length === 1) &&
+            currentDefaults[currentClanKey] === undefined;
+
+          if (hasCurrentGuild && !shouldSetPresenceDefault) return state;
 
           return {
-            guildIdByCharId: {
-              ...state.guildIdByCharId,
-              [charId]: fallbackGuildId,
-            },
+            ...(hasCurrentGuild
+              ? {}
+              : {
+                  guildIdByCharId: {
+                    ...state.guildIdByCharId,
+                    [charId]: selectedGuildId,
+                  },
+                }),
+            ...(shouldSetPresenceDefault
+              ? {
+                  presenceDefaultOrganizationIdByClanKey: {
+                    ...currentDefaults,
+                    [currentClanKey]: selectedGuildId,
+                  },
+                }
+              : {}),
           };
         });
       },
-      setGuildId: (charId: string, guildId: string) => {
-        set((state) => ({
-          guildIdByCharId: {
-            ...state.guildIdByCharId,
-            [charId]: guildId,
-          },
-        }));
+      setGuildId: (charId, guildId, currentClanKey) => {
+        set((state) => {
+          return {
+            guildIdByCharId: {
+              ...state.guildIdByCharId,
+              [charId]: guildId,
+            },
+            ...(currentClanKey !== undefined && guildId !== "all"
+              ? {
+                  presenceDefaultOrganizationIdByClanKey: {
+                    ...state.presenceDefaultOrganizationIdByClanKey,
+                    [currentClanKey]: guildId,
+                  },
+                }
+              : {}),
+          };
+        });
       },
       setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => {
         set((state) => ({
@@ -132,13 +170,15 @@ export const useSettingsStore = create<SettingsState>()(
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,
+        presenceDefaultOrganizationIdByClanKey:
+          state.presenceDefaultOrganizationIdByClanKey,
         selectedGuildIdsForTimersByCharId:
           state.selectedGuildIdsForTimersByCharId,
         presenceOrganizationIdsByCharId: state.presenceOrganizationIdsByCharId,
       }),
       storage: createJSONStorage(() => localStorage),
       migrate: migrateSettingsState,
-      version: 5,
+      version: 6,
     },
   ),
 );

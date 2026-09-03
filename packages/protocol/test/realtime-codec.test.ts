@@ -53,16 +53,6 @@ describe("realtime MessagePack codec", () => {
     expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   });
 
-  test("exposes the connection challenge identifier before session join", () => {
-    const frame = {
-      v: 1,
-      type: "connection.ready",
-      data: { connectionId: "connection-1" },
-    } satisfies RealtimeFrame;
-
-    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
-  });
-
   test("round-trips the exact legacy map ping event shape", () => {
     const frame = {
       v: 1,

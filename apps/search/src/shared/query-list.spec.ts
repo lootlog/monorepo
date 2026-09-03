@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import {
   parseCommaSeparatedQueryList,
   parseSearchTermsQuery,
@@ -35,4 +36,3 @@ describe("query list utils", () => {
     });
   });
 });
-import { describe, expect, it } from "bun:test";

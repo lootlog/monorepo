@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import {
   buildMeilisearchSearchTermFilter,
   buildMeilisearchStringInFilter,
@@ -60,4 +61,3 @@ describe("buildMeilisearchSearchTermFilter", () => {
     });
   });
 });
-import { describe, expect, it } from "bun:test";
