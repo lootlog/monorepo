@@ -1,4 +1,5 @@
 import {
+  decodeRealtimeFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   REALTIME_PROTOCOL_VERSION,
   type ClientCommand,
@@ -31,7 +32,7 @@ export interface RealtimeWebSocket {
     type: "open" | "close" | "error" | "message",
     listener: (event: { readonly data?: unknown }) => void,
   ): void;
-  send(data: Uint8Array): void;
+  send(data: string | Uint8Array): void;
   close(code?: number, reason?: string): void;
 }
 
@@ -45,6 +46,7 @@ export interface RealtimeClientOptions {
   readonly path?: string;
   readonly protocols?: ReadonlyArray<string>;
   readonly ticketProvider?: () => Promise<string | undefined>;
+  readonly frameEncoding?: "json" | "messagepack";
   readonly requestTimeoutMs?: number;
   readonly reconnectBaseDelayMs?: number;
   readonly reconnectMaxDelayMs?: number;
@@ -133,6 +135,7 @@ export class RealtimeClient {
   private readonly random: () => number;
   private readonly webSocketFactory: RealtimeWebSocketFactory;
   private readonly ticketProvider?: () => Promise<string | undefined>;
+  private readonly frameEncoding: "json" | "messagepack";
   private readonly eventListeners = new Set<(event: ServerEvent) => void>();
   private readonly stateListeners = new Set<
     (state: RealtimeConnectionState) => void
@@ -160,6 +163,7 @@ export class RealtimeClient {
     this.random = options.random ?? Math.random;
     this.webSocketFactory = options.webSocketFactory ?? nativeWebSocketFactory;
     this.ticketProvider = options.ticketProvider;
+    this.frameEncoding = options.frameEncoding ?? "messagepack";
   }
 
   get state(): RealtimeConnectionState {
@@ -244,7 +248,7 @@ export class RealtimeClient {
       this.pending.set(requestId, { type, resolve, reject, timeout });
       try {
         activeSocket.send(
-          encodeRealtimeFrame({
+          this.encodeFrame({
             v: REALTIME_PROTOCOL_VERSION,
             type,
             requestId,
@@ -263,7 +267,7 @@ export class RealtimeClient {
     const activeSocket = this.socket;
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
     activeSocket.send(
-      encodeRealtimeFrame({
+      this.encodeFrame({
         v: REALTIME_PROTOCOL_VERSION,
         type,
         data,
@@ -298,13 +302,12 @@ export class RealtimeClient {
     this.socket = socket;
     socket.addEventListener("open", () => {
       if (this.socket !== socket) return;
-      this.reconnectAttempt = 0;
       this.setState("connected");
       if (this.joinData) {
         const rejoin =
           this.rejoinHandler ??
           (() => this.performJoin().then(() => undefined));
-        void rejoin().catch(() => socket.close(1008, "session rejoin failed"));
+        void rejoin().catch(() => socket.close(4008, "session rejoin failed"));
       }
     });
     socket.addEventListener("message", (event) => {
@@ -335,18 +338,17 @@ export class RealtimeClient {
           this.request("subscription.subscribe", scope),
         ),
       );
+      this.reconnectAttempt = 0;
       this.setState("ready");
       return result;
     } catch (error) {
-      if (this.connected) this.socket?.close(1008, "session join failed");
+      if (this.connected) this.socket?.close(4008, "session join failed");
       throw error;
     }
   }
 
   private async handleMessage(data: unknown): Promise<void> {
-    const decoded = tryDecodeRealtimeFrame(await toBytes(data));
-    if (decoded._tag === "Failure") throw decoded.failure;
-    const frame = decoded.success;
+    const frame = await this.decodeFrame(data);
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);
       if (!pending) return;
@@ -373,6 +375,23 @@ export class RealtimeClient {
     if (!("type" in frame) || frame.type === "session.join") return;
     const event = frame as ServerEvent;
     for (const listener of this.eventListeners) listener(event);
+  }
+
+  private encodeFrame(frame: ClientCommand): string | Uint8Array {
+    return this.frameEncoding === "json"
+      ? JSON.stringify(frame)
+      : encodeRealtimeFrame(frame);
+  }
+
+  private async decodeFrame(data: unknown) {
+    if (this.frameEncoding === "json") {
+      if (typeof data !== "string")
+        throw new Error("Gateway returned a non-text realtime frame");
+      return decodeRealtimeFrame(JSON.parse(data));
+    }
+    const decoded = tryDecodeRealtimeFrame(await toBytes(data));
+    if (decoded._tag === "Failure") throw decoded.failure;
+    return decoded.success;
   }
 
   private scheduleReconnect(): void {

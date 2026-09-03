@@ -68,4 +68,44 @@ describe("gateway HTTP boundary", () => {
       "sec-websocket-protocol": "lootlog.realtime.v1",
     });
   });
+
+  test("uses readable JSON frames locally when the browser strips public subprotocols", async () => {
+    let upgradeOptions:
+      | {
+          readonly data: { readonly frameEncoding?: string };
+          readonly headers?: HeadersInit;
+        }
+      | undefined;
+    const authenticated = {
+      config: { websocketPath: "/ws", environment: "local" },
+      runPromise: Effect.runPromise,
+      auth: {
+        isAllowedOrigin: () => true,
+        readCredential: () => ({
+          kind: "one-time-ticket",
+          value: "ticket",
+          origin: "https://classic.margonem.pl",
+        }),
+        verify: () =>
+          Effect.succeed({ userId: "user-1", discordId: "discord-1" }),
+        getPlatform: () => "game",
+      },
+    } as unknown as GatewayApplicationService;
+    const request = new Request("https://gateway.example/ws", {
+      headers: {
+        origin: "https://classic.margonem.pl",
+        "sec-websocket-protocol": "lootlog.ticket.v1.c2VjcmV0",
+      },
+    });
+
+    await createGatewayFetch(authenticated)(request, {
+      upgrade: (_request, options) => {
+        upgradeOptions = options;
+        return true;
+      },
+    });
+
+    expect(upgradeOptions?.data.frameEncoding).toBe("json");
+    expect(upgradeOptions?.headers).toBeUndefined();
+  });
 });

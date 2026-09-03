@@ -82,6 +82,37 @@ const makeSocket = (
 };
 
 describe("RealtimeHub federation", () => {
+  test("sends readable JSON to local diagnostic sockets", () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()) as unknown as RedisGatewayStore,
+    );
+    const data = { ...makeSession("json"), frameEncoding: "json" } as const;
+    const sent: string[] = [];
+    const socket = {
+      data,
+      getBufferedAmount: () => 0,
+      send: (frame: string) => sent.push(frame),
+    } as unknown as GatewaySocket;
+
+    hub.sendEvent(socket, {
+      v: 1,
+      type: "chat.created",
+      data: { organizationId: "organization-1", payload: { id: "message-1" } },
+    });
+
+    expect(sent).toEqual([
+      JSON.stringify({
+        v: 1,
+        type: "chat.created",
+        data: {
+          organizationId: "organization-1",
+          payload: { id: "message-1" },
+        },
+      }),
+    ]);
+  });
+
   test("fans permission rebalance out to every instance once", async () => {
     const bus = new FederationBus();
     const first = new RealtimeHub(

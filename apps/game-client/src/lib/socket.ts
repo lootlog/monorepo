@@ -7,11 +7,14 @@ import { resolvePresenceOrganizationIds } from "@/lib/presence-organization-sele
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import {
+  REALTIME_JSON_SUBPROTOCOL,
+  REALTIME_SUBPROTOCOL,
   RealtimeClient,
   type BasicPresence,
   type PresenceWithLocation,
   type ServerEvent,
 } from "@lootlog/client/realtime";
+import { APP_ENVIRONMENT } from "@/config/app";
 import {
   requestMargonemAccountProof,
   type MargonemAccountProof,
@@ -108,11 +111,19 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
 };
 
 export class AppSocket {
+  private static readonly useReadableLocalFrames =
+    APP_ENVIRONMENT === "development" || APP_ENVIRONMENT === "production-local";
+
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: ["lootlog.realtime.v1"],
+    protocols: [
+      AppSocket.useReadableLocalFrames
+        ? REALTIME_JSON_SUBPROTOCOL
+        : REALTIME_SUBPROTOCOL,
+    ],
     ticketProvider: requestRealtimeTicket,
+    frameEncoding: AppSocket.useReadableLocalFrames ? "json" : "messagepack",
   });
   private readonly listeners = new Map<GatewayEvent, Set<Listener>>();
   private joinedOrganizationIds: string[] = [];

@@ -137,6 +137,32 @@ const setup = () => {
 };
 
 describe("CommandHandler session lifecycle", () => {
+  test("accepts readable JSON commands for local diagnostic sockets", async () => {
+    const { handler, hub } = setup();
+    const target = makeSocket();
+    Object.assign(target.socket.data, { frameEncoding: "json" });
+
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        JSON.stringify({
+          v: 1,
+          type: "session.join",
+          requestId: "request-json",
+          data: {},
+        }),
+      ),
+    );
+
+    expect(target.closes).toEqual([]);
+    expect(hub.responses).toContainEqual(
+      expect.objectContaining({
+        requestId: "request-json",
+        status: "success",
+      }),
+    );
+  });
+
   test("keeps game sessions available when Margonem proof is unavailable", async () => {
     const { handler, hub } = setup();
     const { socket } = makeSocket();

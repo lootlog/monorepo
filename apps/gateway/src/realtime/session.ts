@@ -23,6 +23,7 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly connectionId: string;
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
+  readonly frameEncoding?: "json";
   joined: boolean;
   guilds: UserGuildData[];
   subscriptions: Map<string, typeof SubscriptionScope.Type>;

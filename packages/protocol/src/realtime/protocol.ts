@@ -17,6 +17,8 @@ import {
 } from "../rabbit/events.js";
 
 export const REALTIME_PROTOCOL_VERSION = 1;
+export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
+export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
 export const PRESENCE_EXPIRY_MS = 60_000;
 

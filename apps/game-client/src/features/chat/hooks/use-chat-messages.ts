@@ -55,7 +55,7 @@ export const useChatMessagesListener = (
   });
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
-  const wasConnectedRef = useRef(connected);
+  const wasJoinedRef = useRef(joined);
   const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeAccountId}`;
   const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
   useEffect(
@@ -81,12 +81,12 @@ export const useChatMessagesListener = (
   ]);
 
   useEffect(() => {
-    if (connected && !wasConnectedRef.current) {
+    if (joined && !wasJoinedRef.current) {
       void invalidateChatMessagesQueries(queryClient);
     }
 
-    wasConnectedRef.current = connected;
-  }, [connected, queryClient]);
+    wasJoinedRef.current = joined;
+  }, [joined, queryClient]);
 
   useEffect(() => {
     if (previousAccountCacheIdentityRef.current !== accountCacheIdentity) {

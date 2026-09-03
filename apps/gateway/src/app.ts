@@ -1,6 +1,10 @@
 import { BunRedis } from "@effect/platform-bun";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
+import {
+  REALTIME_JSON_SUBPROTOCOL,
+  REALTIME_SUBPROTOCOL,
+} from "@lootlog/protocol/realtime";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
@@ -175,13 +179,16 @@ interface UpgradeServer {
 
 const websocketResponseHeaders = (
   request: Request,
+  frameEncoding: SessionData["frameEncoding"],
 ): HeadersInit | undefined => {
   const protocols = request.headers
     .get("sec-websocket-protocol")
     ?.split(",")
     .map((protocol) => protocol.trim());
-  return protocols?.includes("lootlog.realtime.v1")
-    ? { "sec-websocket-protocol": "lootlog.realtime.v1" }
+  const selectedProtocol =
+    frameEncoding === "json" ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL;
+  return protocols?.includes(selectedProtocol)
+    ? { "sec-websocket-protocol": selectedProtocol }
     : undefined;
 };
 
@@ -256,12 +263,15 @@ export const createGatewayFetch =
       );
 
     const connectionId = crypto.randomUUID();
+    const frameEncoding =
+      application.config.environment === "local" ? "json" : undefined;
     const upgraded = activeServer.upgrade(request, {
       data: {
         ...identity,
         connectionId,
         platform: application.auth.getPlatform(origin ?? ""),
         userAgent: request.headers.get("user-agent") ?? undefined,
+        frameEncoding,
         joined: false,
         guilds: [],
         subscriptions: new Map(),
@@ -269,7 +279,7 @@ export const createGatewayFetch =
         confidence: "reported",
         backpressureStrikes: 0,
       },
-      headers: websocketResponseHeaders(request),
+      headers: websocketResponseHeaders(request, frameEncoding),
     });
     return complete(
       upgraded

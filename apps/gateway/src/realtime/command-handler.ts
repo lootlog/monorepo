@@ -95,16 +95,33 @@ export class CommandHandler {
   }
 
   handle(socket: GatewaySocket, input: string | Buffer): Effect.Effect<void> {
-    if (typeof input === "string") {
-      return Effect.sync(() =>
-        socket.close(1003, "binary MessagePack frames required"),
-      );
-    }
     let decoded: unknown;
-    try {
-      decoded = decode(new Uint8Array(input));
-    } catch {
-      return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
+    if (socket.data.frameEncoding === "json") {
+      if (typeof input !== "string") {
+        return Effect.sync(() =>
+          socket.close(1003, "text JSON frames required"),
+        );
+      }
+      try {
+        decoded = JSON.parse(input);
+      } catch {
+        return Effect.sync(() =>
+          socket.close(1007, "malformed realtime frame"),
+        );
+      }
+    } else {
+      if (typeof input === "string") {
+        return Effect.sync(() =>
+          socket.close(1003, "binary MessagePack frames required"),
+        );
+      }
+      try {
+        decoded = decode(new Uint8Array(input));
+      } catch {
+        return Effect.sync(() =>
+          socket.close(1007, "malformed realtime frame"),
+        );
+      }
     }
     let command: Command;
     try {
