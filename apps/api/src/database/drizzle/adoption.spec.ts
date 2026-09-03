@@ -243,11 +243,6 @@ describe("generated API database evidence", () => {
       .update(JSON.stringify(EXPECTED_API_CATALOG))
       .digest("hex");
     expect(hash).toBe(EXPECTED_API_CATALOG_SHA256);
-    expect(EXPECTED_API_CATALOG.tables).toHaveLength(60);
-    expect(EXPECTED_API_CATALOG.columns).toHaveLength(600);
-    expect(EXPECTED_API_CATALOG.enums).toHaveLength(25);
-    expect(EXPECTED_API_CATALOG.indexes).toHaveLength(166);
-    expect(EXPECTED_API_CATALOG.constraints).toHaveLength(136);
   });
 
   it("pins the baseline SQL and legacy migration evidence", async () => {

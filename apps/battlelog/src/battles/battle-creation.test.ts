@@ -407,7 +407,7 @@ const createTestApplication = async ({
   return { app, database };
 };
 
-describe("battle creation API deduplication", () => {
+describe("battle creation deduplication", () => {
   let app: TestApplication;
 
   afterEach(async () => {

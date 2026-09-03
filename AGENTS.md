@@ -132,6 +132,16 @@ features do not receive compatibility by default.
 
 - Every workspace should declare `lint`, `typecheck`, and `test`, or document why
   a gate does not apply.
+- Backend tests must protect externally observable behavior, business invariants,
+  real regressions, authorization boundaries, or meaningful integration contracts.
+  Every test needs a clear answer to: “What real regression would this catch?”
+- Do not test route, handler, service, schema, field, export, or module counts;
+  symbol existence; private wiring; Effect, Bun, TypeScript, or library mechanics;
+  or guarantees already enforced by the type system. Do not use broad snapshots
+  as a substitute for behavioral assertions.
+- Do not mock the unit under test or internal application layers in E2E tests.
+  Keep fakes at genuine external boundaries and verify resulting state, not only
+  status codes. Never add a test solely to increase coverage.
 - Run the narrowest relevant checks during development and all required
   workspace checks before handoff.
 - Add contract or end-to-end coverage when a change crosses the game client,

@@ -6,11 +6,22 @@ import { LootlogApiHandlers } from "../handlers/handlers-layer.js";
 import { LootlogApi } from "../lootlog-api.js";
 import { ForwardAuthMiddlewareLive } from "./forward-auth-middleware.js";
 import { ApiRuntimeConfig } from "./api-runtime-config.js";
-import { NativeApiDataLayers } from "./native-api-data-layers.js";
+import {
+  NativeApiDataLayers,
+  NativeApiRequestDataLayers,
+} from "./native-api-data-layers.js";
 import { OrganizationAuthorizationLayers } from "./organization-authorization-layers.js";
 import { RequestIdentityLayers } from "./request-identity-layers.js";
 
 const HandlerInfrastructure = Layer.mergeAll(
+  NativeApiRequestDataLayers,
+  OrganizationAuthorizationLayers.pipe(
+    Layer.provide(NativeApiRequestDataLayers),
+  ),
+  RequestIdentityLayers,
+);
+
+const ProcessHandlerInfrastructure = Layer.mergeAll(
   NativeApiDataLayers,
   OrganizationAuthorizationLayers.pipe(Layer.provide(NativeApiDataLayers)),
   RequestIdentityLayers,
@@ -30,8 +41,13 @@ export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   Layer.provide(ForwardAuthMiddlewareLive),
 );
 
-export const LootlogApiHttp = HttpRouter.serve(LootlogApiRoutes).pipe(
+/** Complete in-process router used by both the Bun server and HTTP integration tests. */
+export const LootlogApiRouter = LootlogApiRoutes.pipe(
   Layer.provide(HandlerInfrastructure),
+);
+
+export const LootlogApiHttp = HttpRouter.serve(LootlogApiRoutes).pipe(
+  Layer.provide(ProcessHandlerInfrastructure),
 );
 
 export const ApiHttpServerLive = Layer.unwrap(

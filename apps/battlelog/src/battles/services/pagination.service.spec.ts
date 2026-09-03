@@ -142,7 +142,6 @@ describe("battle pagination", () => {
         hasNext: false,
         hasPrev: false,
       });
-      expect(result.performance.queryTime).toBeDefined();
     });
 
     it("should return paginated results with next cursor when more results exist", async () => {
@@ -244,36 +243,6 @@ describe("battle pagination", () => {
 
       expect(result.pagination.total).toBeUndefined();
       expect(result.performance.countTime).toBeUndefined();
-    });
-  });
-
-  describe("performance metrics", () => {
-    it("should track query time", async () => {
-      drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
-
-      const result = await service.paginateBattles(() => undefined, {
-        size: 10,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
-
-      expect(result.performance.queryTime).toBeDefined();
-      expect(typeof result.performance.queryTime).toBe("number");
-    });
-
-    it("should track count time when includeTotal is true", async () => {
-      drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
-      drizzleService.db.execute.mockResolvedValue([{ estimated_count: "100" }]);
-
-      const result = await service.paginateBattles(() => undefined, {
-        size: 10,
-        sortOrder: "desc",
-        includeTotal: true,
-      });
-
-      expect(result.performance.countTime).toBeDefined();
-      expect(typeof result.performance.countTime).toBe("number");
-      expect(result.pagination.total).toBe(100);
     });
   });
 });

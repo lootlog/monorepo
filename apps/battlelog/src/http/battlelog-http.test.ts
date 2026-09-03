@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "bun:test";
-import { makeBattlelogTestBoundary } from "../src/http/battlelog-http.js";
+import { makeBattlelogTestBoundary } from "./battlelog-http.js";
 
 const boundary = makeBattlelogTestBoundary({
   battles: {} as never,

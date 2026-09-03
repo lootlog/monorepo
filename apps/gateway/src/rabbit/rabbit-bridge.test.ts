@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { RabbitExchange } from "@lootlog/protocol/rabbit/topology";
 import {
   gatewayConsumerSpecs,
-  gatewayDeadLetterSpecs,
   gatewayQueueDefinitions,
 } from "./rabbit-bridge.js";
 
@@ -12,7 +11,6 @@ describe("Gateway RabbitMQ topology", () => {
     expect(new Set(names).size).toBe(names.length);
     expect(names).toContain("gateway-guilds-loots-create");
     expect(names).toContain("gateway-presence-check-request");
-    expect(gatewayDeadLetterSpecs).toHaveLength(17);
   });
 
   test("installs retry and dead-letter queues for retryable deliveries", () => {
@@ -25,9 +23,24 @@ describe("Gateway RabbitMQ topology", () => {
     expect(lootRetry?.exchange).toBe(RabbitExchange.RETRY);
     expect(lootRetry?.messageTtl).toBe(30_000);
     expect(lootDlq?.exchange).toBe(RabbitExchange.DEAD_LETTER);
-    expect(
-      gatewayQueueDefinitions.filter((queue) => queue.name.endsWith(".retry")),
-    ).toHaveLength(15);
+    for (const spec of gatewayConsumerSpecs) {
+      if (
+        spec.retryRoutingKey === undefined ||
+        spec.deadLetterRoutingKey === undefined
+      ) {
+        continue;
+      }
+      expect(
+        gatewayQueueDefinitions.some(
+          (queue) => queue.name === `${spec.queue}.dlq`,
+        ),
+      ).toBe(true);
+      expect(
+        gatewayQueueDefinitions.some(
+          (queue) => queue.name === `${spec.queue}.retry`,
+        ),
+      ).toBe(spec.installRetryQueue !== false);
+    }
     expect(
       gatewayQueueDefinitions.some(
         (queue) =>

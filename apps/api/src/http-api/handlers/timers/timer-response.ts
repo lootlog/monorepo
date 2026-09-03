@@ -1,7 +1,4 @@
-import {
-  NpcTypeEnum as NpcType,
-  NpcTypeSchema,
-} from "@lootlog/schema/npc-type";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Schema } from "effect";
 import type { Member, PlayerSnapshot, Timer } from "#src/timers/timers.types";
 import {
@@ -10,9 +7,6 @@ import {
 } from "#src/shared/schema/response-codecs";
 
 const NPC_TYPE_VALUES = new Set<string>(Object.values(NpcType));
-const TimerNpc = Schema.Struct({ lvl: Schema.Number, type: NpcTypeSchema });
-const TimerNpcJson = Schema.fromJsonString(TimerNpc);
-
 export type TimerProjection = Timer & {
   readonly member?: Member | null;
   readonly actorCharacter?: PlayerSnapshot | null;
@@ -57,15 +51,6 @@ export const CachedTimerProjectionSchema = Schema.Struct({
 });
 export type CachedTimerProjection = typeof CachedTimerProjectionSchema.Type;
 
-export const parseTimerNpc = (
-  npc: unknown,
-): { readonly lvl: number; readonly type: NpcType } | null => {
-  if (!npc) return null;
-  return Schema.decodeUnknownSync(
-    typeof npc === "string" ? TimerNpcJson : TimerNpc,
-  )(npc);
-};
-
 export const mapTimerNpc = (npc: unknown) => {
   if (!npc || typeof npc !== "object" || Array.isArray(npc)) return null;
   const value = npc as Record<string, unknown>;
@@ -89,6 +74,21 @@ export const mapTimerNpc = (npc: unknown) => {
         ? value.margonemType
         : String(value.margonemType ?? ""),
   };
+};
+
+export const parseTimerNpc = (
+  npc: unknown,
+): { readonly lvl: number; readonly type: NpcType } | null => {
+  let value = npc;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  const mapped = mapTimerNpc(value);
+  return mapped === null ? null : { lvl: mapped.lvl, type: mapped.type };
 };
 
 export const toTimerDate = (value: Date | string | null | undefined) => {
@@ -129,20 +129,25 @@ export const mapTimerMember = (member: CachedTimerProjection["member"]) =>
       }
     : undefined;
 
-export const mapTimerResponse = (timer: CachedTimerProjection) => ({
-  guildId: timer.guildId,
-  npcId: timer.npcId,
-  timerKey: timer.timerKey,
-  world: timer.world,
-  minSpawnTime: toTimerDate(timer.minSpawnTime) ?? new Date(),
-  maxSpawnTime: toTimerDate(timer.maxSpawnTime) ?? new Date(),
-  npc: mapTimerNpc(timer.npc),
-  wasReset: timer.wasReset,
-  member: mapTimerMember(timer.member),
-  actorCharacter: mapTimerCharacter(
+export const mapTimerResponse = (timer: CachedTimerProjection) => {
+  const member = mapTimerMember(timer.member);
+  const actorCharacter = mapTimerCharacter(
     timer.actorCharacter,
     timer.actorCharacterLvl,
-  ),
-  deletedAt: toTimerDate(timer.deletedAt),
-  updatedAt: toTimerDate(timer.updatedAt) ?? new Date(),
-});
+  );
+
+  return {
+    guildId: timer.guildId,
+    npcId: timer.npcId,
+    timerKey: timer.timerKey,
+    world: timer.world,
+    minSpawnTime: toTimerDate(timer.minSpawnTime) ?? new Date(),
+    maxSpawnTime: toTimerDate(timer.maxSpawnTime) ?? new Date(),
+    npc: mapTimerNpc(timer.npc),
+    wasReset: timer.wasReset,
+    ...(member === undefined ? {} : { member }),
+    ...(actorCharacter === undefined ? {} : { actorCharacter }),
+    deletedAt: toTimerDate(timer.deletedAt),
+    updatedAt: toTimerDate(timer.updatedAt) ?? new Date(),
+  };
+};
