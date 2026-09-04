@@ -83,7 +83,7 @@ boundaries, deployment, and known gaps.
 Requirements:
 
 - Node.js 26.8.1
-- Bun 1.4.0
+- Bun 1.4.1
 - Docker with Docker Compose
 
 ```bash
