@@ -7,7 +7,7 @@ import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import { AuthService } from "#src/auth/auth-service";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
-import { AuthDatabase } from "#src/database/drizzle";
+import { AuthDatabaseLive } from "#src/database/drizzle";
 import { AuthHttpServer } from "#src/http/server";
 
 const ObservabilityLive = Layer.unwrap(
@@ -34,7 +34,7 @@ const ObservabilityLive = Layer.unwrap(
 );
 
 const InfrastructureLive = Layer.merge(
-  AuthDatabase.layer,
+  AuthDatabaseLive,
   AuthRedisStorage.layer,
 ).pipe(
   Layer.provide(

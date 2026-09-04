@@ -1,0 +1,30 @@
+{
+  "name": "@lootlog/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/postgres.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --path-ignore-patterns='**/*.integration.*'",
+    "test:integration": "bun test test/postgres.integration.test.ts"
+  },
+  "dependencies": {
+    "@effect/sql-pg": "catalog:",
+    "effect": "catalog:",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@testcontainers/postgresql": "^12.1.0",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
+    "drizzle-orm": "catalog:",
+    "typescript": "catalog:"
+  }
+}

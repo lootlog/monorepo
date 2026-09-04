@@ -419,23 +419,18 @@ export class AuthService extends Context.Service<
           auth,
           appUrl: config.appUrl,
           findDiscordAccountId: (request) =>
-            Effect.tryPromise({
-              try: async () => {
-                const rows = await database.db
-                  .select({ id: authAccounts.id })
-                  .from(authAccounts)
-                  .where(
-                    and(
-                      eq(authAccounts.userId, request.userId),
-                      eq(authAccounts.providerId, "discord"),
-                      eq(authAccounts.accountId, request.discordId),
-                    ),
-                  )
-                  .limit(1);
-                return rows[0]?.id ?? null;
-              },
-              catch: (cause) => cause,
-            }),
+            database
+              .select({ id: authAccounts.id })
+              .from(authAccounts)
+              .where(
+                and(
+                  eq(authAccounts.userId, request.userId),
+                  eq(authAccounts.providerId, "discord"),
+                  eq(authAccounts.accountId, request.discordId),
+                ),
+              )
+              .limit(1)
+              .pipe(Effect.map((rows) => rows[0]?.id ?? null)),
           realtimeTicketRedis: redis.client,
         }),
       );

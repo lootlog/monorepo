@@ -42,6 +42,7 @@
     "@discordjs/rest": "^2.6.3",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
+    "@lootlog/database": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",

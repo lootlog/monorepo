@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type pg from "pg";
+import type { PgClient } from "@effect/sql-pg";
+import { Effect } from "effect";
 import {
   AUTH_SCHEMA_FINGERPRINT,
   AUTH_SCHEMA_FINGERPRINT_IMPORTED_V1_6,
@@ -31,60 +32,50 @@ const makePool = ({
 } = {}) => {
   const queries: Array<RecordedQuery> = [];
   const pool = {
-    query(sql: string, values?: unknown[]) {
+    unsafe(sql: string, values?: unknown[]) {
       queries.push({ sql, values });
 
       if (sql.includes("to_regclass")) {
-        return Promise.resolve({
-          rows: [
-            { relation: trackedHashes ? "drizzle.__drizzle_migrations" : null },
-          ],
-        });
+        return Effect.succeed([
+          { relation: trackedHashes ? "drizzle.__drizzle_migrations" : null },
+        ]);
       }
 
       if (
         sql.includes("SELECT hash") &&
         sql.includes("FROM drizzle.__drizzle_migrations")
       ) {
-        return Promise.resolve({
-          rows: (trackedHashes ?? []).map((hash) => ({ hash })),
-        });
+        return Effect.succeed((trackedHashes ?? []).map((hash) => ({ hash })));
       }
 
       if (sql.includes("FROM drizzle.__drizzle_migrations")) {
-        return Promise.resolve({
-          rows: [{ count: String(trackedHashes?.length ?? 0) }],
-        });
+        return Effect.succeed([{ count: String(trackedHashes?.length ?? 0) }]);
       }
 
       if (sql.includes("FROM information_schema.tables")) {
-        return Promise.resolve({
-          rows: [{ count: String(existingAuthTableCount) }],
-        });
+        return Effect.succeed([{ count: String(existingAuthTableCount) }]);
       }
 
       if (sql.includes("FROM information_schema.columns")) {
-        return Promise.resolve({ rows: fingerprint });
+        return Effect.succeed(fingerprint);
       }
 
       if (sql.includes("FROM pg_catalog.pg_index")) {
-        return Promise.resolve({ rows: indexes });
+        return Effect.succeed(indexes);
       }
 
       if (sql.includes("FROM pg_catalog.pg_constraint")) {
-        return Promise.resolve({ rows: foreignKeys });
+        return Effect.succeed(foreignKeys);
       }
 
       const matchingCount = Object.entries(counts).find(([fragment]) =>
         sql.includes(fragment),
       )?.[1];
-      return Promise.resolve({
-        rows: sql.includes("COUNT(*)")
-          ? [{ count: String(matchingCount ?? 0) }]
-          : [],
-      });
+      return Effect.succeed(
+        sql.includes("COUNT(*)") ? [{ count: String(matchingCount ?? 0) }] : [],
+      );
     },
-  } as unknown as pg.Pool;
+  } as unknown as PgClient.PgClient;
 
   return { pool, queries };
 };
@@ -101,7 +92,7 @@ describe("Better Auth migration preflight", () => {
       },
     });
 
-    expect(await planAuthMigration(pool)).toMatchObject({
+    expect(await Effect.runPromise(planAuthMigration(pool))).toMatchObject({
       status: "ready",
       source: "better-auth-1.6",
       userCount: 10,
@@ -120,7 +111,7 @@ describe("Better Auth migration preflight", () => {
       indexes: AUTH_SCHEMA_INDEXES_IMPORTED_V1_6,
     });
 
-    expect(await planAuthMigration(pool)).toMatchObject({
+    expect(await Effect.runPromise(planAuthMigration(pool))).toMatchObject({
       status: "ready",
       source: "better-auth-1.6-imported",
       timestampNormalizationColumns: 14,
@@ -145,7 +136,7 @@ describe("Better Auth migration preflight", () => {
       },
     });
 
-    expect(await planAuthMigration(pool)).toMatchObject({
+    expect(await Effect.runPromise(planAuthMigration(pool))).toMatchObject({
       status: "blocked",
       source: "better-auth-1.6",
       integrityViolations: [
@@ -158,9 +149,9 @@ describe("Better Auth migration preflight", () => {
   it("blocks a partial schema before creating migration tracking", async () => {
     const { pool, queries } = makePool({ fingerprint: [] });
 
-    await expect(initializeAuthMigrations(pool)).rejects.toThrow(
-      "Auth migration preflight is blocked",
-    );
+    await expect(
+      Effect.runPromise(initializeAuthMigrations(pool)),
+    ).rejects.toThrow("Auth migration preflight is blocked");
     expect(queries.some(({ sql }) => sql.includes("CREATE SCHEMA"))).toBe(
       false,
     );
@@ -177,14 +168,14 @@ describe("Better Auth migration preflight", () => {
       trackedHashes: ["unknown-migration"],
     });
 
-    expect(await planAuthMigration(pool)).toMatchObject({
+    expect(await Effect.runPromise(planAuthMigration(pool))).toMatchObject({
       status: "blocked",
       source: "fresh",
       integrityViolations: [{ code: "MIGRATION_TRACKING_MISMATCH", count: 1 }],
     });
-    await expect(initializeAuthMigrations(pool)).rejects.toThrow(
-      "MIGRATION_TRACKING_MISMATCH=1",
-    );
+    await expect(
+      Effect.runPromise(initializeAuthMigrations(pool)),
+    ).rejects.toThrow("MIGRATION_TRACKING_MISMATCH=1");
     expect(queries.some(({ sql }) => sql.includes("CREATE SCHEMA"))).toBe(
       false,
     );
@@ -195,7 +186,7 @@ describe("initializeAuthMigrations", () => {
   it("adopts all migrations only after the complete 1.7 contract matches", async () => {
     const { pool, queries } = makePool();
 
-    await initializeAuthMigrations(pool);
+    await Effect.runPromise(initializeAuthMigrations(pool));
 
     const migrationInserts = queries.filter(({ sql }) =>
       sql.includes("INSERT INTO drizzle.__drizzle_migrations"),
@@ -220,7 +211,7 @@ describe("initializeAuthMigrations", () => {
       variants.map(async (variant) => {
         const { pool, queries } = makePool(variant);
 
-        await initializeAuthMigrations(pool);
+        await Effect.runPromise(initializeAuthMigrations(pool));
 
         expect(
           queries.filter(({ sql }) =>
@@ -234,7 +225,7 @@ describe("initializeAuthMigrations", () => {
   it("leaves a fresh database for Drizzle to create from scratch", async () => {
     const { pool, queries } = makePool({ existingAuthTableCount: 0 });
 
-    await initializeAuthMigrations(pool);
+    await Effect.runPromise(initializeAuthMigrations(pool));
 
     expect(
       queries.some(({ sql }) =>

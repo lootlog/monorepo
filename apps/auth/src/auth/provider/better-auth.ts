@@ -5,11 +5,9 @@ import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
 import { Context, Effect, Layer } from "effect";
 import { AppConfig, reveal, type AuthConfig } from "#src/config/env";
-import {
-  AuthDatabase,
-  betterAuthSchema,
-  type AuthDatabaseConnection,
-} from "#src/database/drizzle";
+import { PostgresPool } from "@lootlog/database";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { betterAuthSchema } from "#src/database/drizzle.schema";
 import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import { resolveBetterAuthBaseURL } from "./better-auth-url.js";
 import { createDiscordAuthOptions } from "./discord-auth-options.js";
@@ -27,7 +25,7 @@ export const createLootlogAuth = ({
   secondaryStorage,
 }: {
   readonly config: AuthConfig;
-  readonly database: AuthDatabaseConnection["db"];
+  readonly database: ReturnType<typeof drizzle>;
   readonly secondaryStorage?: AuthRedisStorage["Service"]["secondaryStorage"];
 }) => {
   const betterAuthBaseURL = resolveBetterAuthBaseURL(config.appUrl);
@@ -115,13 +113,14 @@ export class BetterAuthRuntime extends Context.Service<
     BetterAuthRuntime,
     Effect.gen(function* () {
       const config = yield* AppConfig;
-      const database = yield* AuthDatabase;
+      const pool = yield* PostgresPool;
       const redis = yield* AuthRedisStorage;
 
       return BetterAuthRuntime.of(
         createLootlogAuth({
           config,
-          database: database.db,
+          // Better Auth requires Promise-based Drizzle; reuse the Effect-owned pool.
+          database: drizzle({ client: pool }),
           secondaryStorage: redis.secondaryStorage,
         }),
       );

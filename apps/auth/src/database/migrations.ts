@@ -2,9 +2,11 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import type pg from "pg";
-import type { AuthDatabaseConnection } from "./drizzle.js";
+import { migrate } from "drizzle-orm/effect-postgres/migrator";
+import type { PgClient } from "@effect/sql-pg";
+import { Effect } from "effect";
+import type { SqlError } from "effect/unstable/sql/SqlError";
+import type { AuthDatabaseValue } from "./drizzle.js";
 
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
@@ -378,42 +380,48 @@ function readLocalMigrations(): LocalMigration[] {
   });
 }
 
-async function ensureMigrationTracking(pool: pg.Pool) {
-  await pool.query(`CREATE SCHEMA IF NOT EXISTS ${migrationsSchema}`);
-  await pool.query(`
+const ensureMigrationTracking = Effect.fn("ensureMigrationTracking")(function* (
+  client: PgClient.PgClient,
+) {
+  yield* client.unsafe(`CREATE SCHEMA IF NOT EXISTS ${migrationsSchema}`);
+  yield* client.unsafe(`
     CREATE TABLE IF NOT EXISTS ${migrationsSchema}.${migrationsTable} (
       id SERIAL PRIMARY KEY,
       hash text NOT NULL,
       created_at bigint
     )
   `);
-}
+});
 
-async function getTrackedMigrationCount(pool: pg.Pool) {
-  const result = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM ${migrationsSchema}.${migrationsTable}`,
-  );
+const getTrackedMigrationCount = Effect.fn("getTrackedMigrationCount")(
+  function* (client: PgClient.PgClient) {
+    const result = yield* client.unsafe<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM ${migrationsSchema}.${migrationsTable}`,
+    );
 
-  return Number(result.rows[0]?.count ?? "0");
-}
+    return Number(result[0]?.count ?? "0");
+  },
+);
 
-async function readTrackedMigrations(pool: pg.Pool) {
-  const relation = await pool.query<{ relation: string | null }>(
+const readTrackedMigrations = Effect.fn("readTrackedMigrations")(function* (
+  client: PgClient.PgClient,
+) {
+  const relation = yield* client.unsafe<{ relation: string | null }>(
     `SELECT to_regclass($1)::text AS relation`,
     [`${migrationsSchema}.${migrationsTable}`],
   );
 
-  if (!relation.rows[0]?.relation) {
+  if (!relation[0]?.relation) {
     return [];
   }
 
-  const result = await pool.query<{ hash: string }>(`
+  const result = yield* client.unsafe<{ hash: string }>(`
     SELECT hash
     FROM ${migrationsSchema}.${migrationsTable}
     ORDER BY created_at, id
   `);
-  return result.rows.map(({ hash }) => hash);
-}
+  return result.map(({ hash }) => hash);
+});
 
 function hasCompatibleMigrationTracking(
   source: AuthMigrationPlan["source"],
@@ -450,23 +458,26 @@ function hasCompatibleMigrationTracking(
   return false;
 }
 
-async function getExistingAuthTableCount(pool: pg.Pool) {
-  const result = await pool.query<{ count: string }>(
-    `
+const getExistingAuthTableCount = Effect.fn("getExistingAuthTableCount")(
+  function* (client: PgClient.PgClient) {
+    const result = yield* client.unsafe<{ count: string }>(
+      `
       SELECT COUNT(*)::text AS count
       FROM information_schema.tables
       WHERE table_schema = 'public'
         AND table_name = ANY($1::text[])
     `,
-    [authTableNames],
-  );
+      [authTableNames],
+    );
 
-  return Number(result.rows[0]?.count ?? "0");
-}
+    return Number(result[0]?.count ?? "0");
+  },
+);
 
-async function readAuthSchemaFingerprint(pool: pg.Pool) {
-  const result = await pool.query<SchemaColumn>(
-    `
+const readAuthSchemaFingerprint = Effect.fn("readAuthSchemaFingerprint")(
+  function* (client: PgClient.PgClient) {
+    const result = yield* client.unsafe<SchemaColumn>(
+      `
       SELECT
         table_name AS "tableName",
         column_name AS "columnName",
@@ -478,14 +489,17 @@ async function readAuthSchemaFingerprint(pool: pg.Pool) {
         AND table_name = ANY($1::text[])
       ORDER BY table_name, column_name
     `,
-    [authTableNames],
-  );
+      [authTableNames],
+    );
 
-  return result.rows;
-}
+    return result;
+  },
+);
 
-async function readAuthIndexes(pool: pg.Pool) {
-  const result = await pool.query<SchemaIndex>(
+const readAuthIndexes = Effect.fn("readAuthIndexes")(function* (
+  client: PgClient.PgClient,
+) {
+  const result = yield* client.unsafe<SchemaIndex>(
     `
       SELECT
         table_relation.relname AS "tableName",
@@ -518,11 +532,13 @@ async function readAuthIndexes(pool: pg.Pool) {
     [authTableNames],
   );
 
-  return result.rows;
-}
+  return result;
+});
 
-async function readAuthForeignKeys(pool: pg.Pool) {
-  const result = await pool.query<SchemaForeignKey>(
+const readAuthForeignKeys = Effect.fn("readAuthForeignKeys")(function* (
+  client: PgClient.PgClient,
+) {
+  const result = yield* client.unsafe<SchemaForeignKey>(
     `
       SELECT
         constraint_table.relname AS "tableName",
@@ -567,8 +583,8 @@ async function readAuthForeignKeys(pool: pg.Pool) {
     [authTableNames],
   );
 
-  return result.rows;
-}
+  return result;
+});
 
 function matchesSchemaPart<T>(
   actual: ReadonlyArray<T>,
@@ -595,12 +611,18 @@ function matchesSchemaVariant(
   );
 }
 
-async function readCount(pool: pg.Pool, sql: string) {
-  const result = await pool.query<{ count: string }>(sql);
-  return Number(result.rows[0]?.count ?? "0");
-}
+const readCount = Effect.fn("readCount")(function* (
+  client: PgClient.PgClient,
+  sql: string,
+) {
+  const result = yield* client.unsafe<{ count: string }>(sql);
+  return Number(result[0]?.count ?? "0");
+});
 
-async function readIntegrityViolations(pool: pg.Pool, hasIssuer: boolean) {
+const readIntegrityViolations = Effect.fn("readIntegrityViolations")(function* (
+  client: PgClient.PgClient,
+  hasIssuer: boolean,
+) {
   const checks: ReadonlyArray<{
     code: AuthMigrationViolation["code"];
     sql: string;
@@ -679,15 +701,16 @@ async function readIntegrityViolations(pool: pg.Pool, hasIssuer: boolean) {
     },
   ];
 
-  const counts = await Promise.all(
-    checks.map(async (check) => ({
-      code: check.code,
-      count: await readCount(pool, check.sql),
-    })),
+  const counts = yield* Effect.all(
+    checks.map((check) =>
+      readCount(client, check.sql).pipe(
+        Effect.map((count) => ({ code: check.code, count })),
+      ),
+    ),
   );
 
   return counts.filter(({ count }) => count > 0);
-}
+});
 
 function blockedPlanError(plan: AuthMigrationPlan) {
   const violationCodes = plan.integrityViolations
@@ -713,13 +736,13 @@ function getPlanStatus(
   return "ready";
 }
 
-export async function planAuthMigration(
-  pool: pg.Pool,
-): Promise<AuthMigrationPlan> {
-  const existingAuthTableCount = await getExistingAuthTableCount(pool);
+export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
+  client: PgClient.PgClient,
+): Effect.fn.Return<AuthMigrationPlan, SqlError> {
+  const existingAuthTableCount = yield* getExistingAuthTableCount(client);
   const localMigrations = readLocalMigrations();
   const localMigrationCount = localMigrations.length;
-  const trackedHashes = await readTrackedMigrations(pool);
+  const trackedHashes = yield* readTrackedMigrations(client);
 
   if (existingAuthTableCount === 0) {
     const migrationTrackingMatches = hasCompatibleMigrationTracking(
@@ -760,10 +783,10 @@ export async function planAuthMigration(
     };
   }
 
-  const [columns, indexes, foreignKeys] = await Promise.all([
-    readAuthSchemaFingerprint(pool),
-    readAuthIndexes(pool),
-    readAuthForeignKeys(pool),
+  const [columns, indexes, foreignKeys] = yield* Effect.all([
+    readAuthSchemaFingerprint(client),
+    readAuthIndexes(client),
+    readAuthForeignKeys(client),
   ]);
   const schema = { columns, indexes, foreignKeys };
 
@@ -822,11 +845,11 @@ export async function planAuthMigration(
     source === "better-auth-1.7" ||
     source === "better-auth-1.7-pre-jwks-metadata";
   const [userCount, accountCount, sessionCount, dataViolations] =
-    await Promise.all([
-      readCount(pool, `SELECT COUNT(*)::text AS count FROM "user"`),
-      readCount(pool, `SELECT COUNT(*)::text AS count FROM "account"`),
-      readCount(pool, `SELECT COUNT(*)::text AS count FROM "session"`),
-      readIntegrityViolations(pool, hasIssuer),
+    yield* Effect.all([
+      readCount(client, `SELECT COUNT(*)::text AS count FROM "user"`),
+      readCount(client, `SELECT COUNT(*)::text AS count FROM "account"`),
+      readCount(client, `SELECT COUNT(*)::text AS count FROM "session"`),
+      readIntegrityViolations(client, hasIssuer),
     ]);
   const integrityViolations = hasCompatibleMigrationTracking(
     source,
@@ -864,8 +887,8 @@ export async function planAuthMigration(
     sessionCount,
     issuerBackfillCount: hasIssuer ? 0 : accountCount,
     verificationTimestampBackfillCount: isImported
-      ? await readCount(
-          pool,
+      ? yield* readCount(
+          client,
           `
             SELECT COUNT(*)::text AS count
             FROM "verification"
@@ -877,25 +900,29 @@ export async function planAuthMigration(
     missingIndexes,
     integrityViolations,
   };
-}
+});
 
-export async function assertAuthSchemaFingerprint(pool: pg.Pool) {
-  const plan = await planAuthMigration(pool);
+export const assertAuthSchemaFingerprint = Effect.fn(
+  "assertAuthSchemaFingerprint",
+)(function* (client: PgClient.PgClient) {
+  const plan = yield* planAuthMigration(client);
 
   if (plan.status !== "up-to-date" || plan.source !== "better-auth-1.7") {
-    throw new Error(
-      "Auth database schema does not match the Better Auth 1.7 Drizzle schema.",
+    return yield* Effect.fail(
+      new Error(
+        "Auth database schema does not match the Better Auth 1.7 Drizzle schema.",
+      ),
     );
   }
-}
+});
 
-async function markMigrationsAsApplied(
-  pool: pg.Pool,
+const markMigrationsAsApplied = Effect.fn("markMigrationsAsApplied")(function* (
+  client: PgClient.PgClient,
   localMigrations: ReadonlyArray<LocalMigration>,
 ) {
-  await Promise.all(
+  yield* Effect.all(
     localMigrations.map((migration) =>
-      pool.query(
+      client.unsafe(
         `
           INSERT INTO ${migrationsSchema}.${migrationsTable} (hash, created_at)
           VALUES ($1, $2)
@@ -905,62 +932,66 @@ async function markMigrationsAsApplied(
       ),
     ),
   );
-}
+});
 
-export async function initializeAuthMigrations(
-  pool: pg.Pool,
-  preflightPlan?: AuthMigrationPlan,
-) {
-  const plan = preflightPlan ?? (await planAuthMigration(pool));
+export const initializeAuthMigrations = Effect.fn("initializeAuthMigrations")(
+  function* (client: PgClient.PgClient, preflightPlan?: AuthMigrationPlan) {
+    const plan = preflightPlan ?? (yield* planAuthMigration(client));
 
-  if (plan.status === "blocked") {
-    throw blockedPlanError(plan);
-  }
-
-  await ensureMigrationTracking(pool);
-  const trackedMigrationCount = await getTrackedMigrationCount(pool);
-
-  if (trackedMigrationCount > 0 || plan.source === "fresh") {
-    return;
-  }
-
-  const localMigrations = readLocalMigrations();
-  if (
-    plan.source === "better-auth-1.6" ||
-    plan.source === "better-auth-1.6-imported"
-  ) {
-    const baselineMigration = localMigrations[0];
-    if (!baselineMigration) {
-      throw new Error("Missing Better Auth 1.6 baseline migration.");
+    if (plan.status === "blocked") {
+      return yield* Effect.fail(blockedPlanError(plan));
     }
-    await markMigrationsAsApplied(pool, [baselineMigration]);
-    return;
-  }
 
-  if (plan.source === "better-auth-1.7-pre-jwks-metadata") {
-    await markMigrationsAsApplied(
-      pool,
-      localMigrations.slice(0, preJwksMetadataMigrationCount),
-    );
-    return;
-  }
+    yield* ensureMigrationTracking(client);
+    const trackedMigrationCount = yield* getTrackedMigrationCount(client);
 
-  if (plan.source === "better-auth-1.7") {
-    await markMigrationsAsApplied(pool, localMigrations);
-  }
-}
+    if (trackedMigrationCount > 0 || plan.source === "fresh") {
+      return;
+    }
 
-export async function runAuthMigrations(connection: AuthDatabaseConnection) {
-  const preflightPlan = await planAuthMigration(connection.pool);
+    const localMigrations = readLocalMigrations();
+    if (
+      plan.source === "better-auth-1.6" ||
+      plan.source === "better-auth-1.6-imported"
+    ) {
+      const baselineMigration = localMigrations[0];
+      if (!baselineMigration) {
+        return yield* Effect.fail(
+          new Error("Missing Better Auth 1.6 baseline migration."),
+        );
+      }
+      yield* markMigrationsAsApplied(client, [baselineMigration]);
+      return;
+    }
+
+    if (plan.source === "better-auth-1.7-pre-jwks-metadata") {
+      yield* markMigrationsAsApplied(
+        client,
+        localMigrations.slice(0, preJwksMetadataMigrationCount),
+      );
+      return;
+    }
+
+    if (plan.source === "better-auth-1.7") {
+      yield* markMigrationsAsApplied(client, localMigrations);
+    }
+  },
+);
+
+export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
+  database: AuthDatabaseValue,
+  client: PgClient.PgClient,
+) {
+  const preflightPlan = yield* planAuthMigration(client);
   if (preflightPlan.status === "blocked") {
-    throw blockedPlanError(preflightPlan);
+    return yield* Effect.fail(blockedPlanError(preflightPlan));
   }
 
-  await initializeAuthMigrations(connection.pool, preflightPlan);
-  await migrate(connection.db, {
+  yield* initializeAuthMigrations(client, preflightPlan);
+  yield* migrate(database, {
     migrationsFolder,
     migrationsSchema,
     migrationsTable,
   });
-  await assertAuthSchemaFingerprint(connection.pool);
-}
+  yield* assertAuthSchemaFingerprint(client);
+});

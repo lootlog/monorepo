@@ -1,7 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import fs from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-import { PgClient } from "@effect/sql-pg";
+import { makePostgresLayer } from "@lootlog/database";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
@@ -9,15 +7,9 @@ import {
 import { Effect, Layer, Redacted } from "effect";
 import pg from "pg";
 import { ActivityDatabase } from "#src/database/database";
+import { migrateActivityDatabase } from "#src/database/migrate";
 import { ActivitySource, ActivityType } from "#src/database/schema";
 import { ActivityRepository } from "./activity-repository.js";
-
-const baselinePath = fileURLToPath(
-  new URL(
-    "../../drizzle/migrations/0000_activity_legacy_baseline.sql",
-    import.meta.url,
-  ),
-);
 
 describe("ActivityRepository", () => {
   let postgres: StartedPostgreSqlContainer;
@@ -33,7 +25,22 @@ describe("ActivityRepository", () => {
       .withStartupTimeout(60_000)
       .start();
     pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
-    await pool.query(await fs.readFile(baselinePath, "utf8"));
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* migrateActivityDatabase;
+        yield* migrateActivityDatabase;
+      }).pipe(
+        Effect.provide(
+          makePostgresLayer({
+            url: Redacted.make(postgres.getConnectionUri()),
+          }),
+        ),
+      ),
+    );
+    expect(
+      (await pool.query('SELECT component FROM "__lootlog_drizzle_adoption"'))
+        .rows,
+    ).toEqual([{ component: "activity" }]);
   }, 60_000);
 
   afterAll(async () => {
@@ -44,7 +51,7 @@ describe("ActivityRepository", () => {
   it("persists a redelivered activity exactly once", async () => {
     const databaseLayer = ActivityDatabase.layer.pipe(
       Layer.provide(
-        PgClient.layer({ url: Redacted.make(postgres.getConnectionUri()) }),
+        makePostgresLayer({ url: Redacted.make(postgres.getConnectionUri()) }),
       ),
     );
     const repositoryLayer = ActivityRepository.layer.pipe(
@@ -91,7 +98,7 @@ describe("ActivityRepository", () => {
       Layer.provide(
         ActivityDatabase.layer.pipe(
           Layer.provide(
-            PgClient.layer({
+            makePostgresLayer({
               url: Redacted.make(postgres.getConnectionUri()),
             }),
           ),
