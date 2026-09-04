@@ -21,6 +21,7 @@
     "auth:migrate:plan": "bun scripts/migration-plan.ts",
     "auth:migrate:apply": "bun scripts/migration-apply.ts",
     "db:generate": "bunx drizzle-kit generate",
+    "db:pull": "bunx drizzle-kit pull --config drizzle.config.ts",
     "db:migrate:dev": "bun scripts/migrate.ts",
     "db:migrate:deploy": "bun scripts/migrate.ts",
     "db:migrate:init": "bun scripts/migrate-init.ts",

@@ -141,6 +141,11 @@
     "auth:migrate:apply": {
       "cache": false
     },
+    "db:pull": {
+      "cache": false,
+      "interactive": true,
+      "passThroughEnv": ["POSTGRESQL_*"]
+    },
     "db:push": {
       "cache": false,
       "interactive": true

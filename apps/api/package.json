@@ -33,6 +33,7 @@
     "test:watch": "bun --conditions=development test --watch src",
     "openapi:generate": "bun --conditions=development src/openapi/generate-effect-openapi.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "db:pull": "bunx drizzle-kit pull --config drizzle.config.ts",
     "db:migrate:dev": "bun src/database/drizzle/migrate.ts",
     "db:migrate:deploy": "bun src/database/drizzle/migrate.ts",
     "db:studio": "drizzle-kit studio --config drizzle.config.ts"
