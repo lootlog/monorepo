@@ -64,21 +64,60 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.cloudflare-targets) }}
-    env:
-      VITE_ACTIVITY_API_URL: ${{ vars.VITE_ACTIVITY_API_URL }}
-      VITE_ADDON_INSTALL_URL: ${{ vars.VITE_ADDON_INSTALL_URL }}
-      VITE_ADDON_URL: ${{ vars.VITE_ADDON_URL }}
-      VITE_API_URL: ${{ vars.VITE_API_URL }}
-      VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
-      VITE_BATTLELOG_API_URL: ${{ vars.VITE_BATTLELOG_API_URL }}
-      VITE_BATTLELOG_PUBLIC_URL: ${{ vars.VITE_BATTLELOG_PUBLIC_URL }}
-      VITE_DISCORD_BOT_PERMISSIONS: ${{ vars.VITE_DISCORD_BOT_PERMISSIONS }}
-      VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
-      VITE_GATEWAY_URL: ${{ vars.VITE_GATEWAY_URL }}
-      VITE_SEARCH_API_URL: ${{ vars.VITE_SEARCH_API_URL }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-bun
+      - name: Load Cloudflare preview variables
+        if: matrix.kind == 'pages'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PACKAGE: ${{ matrix.package }}
+          PROJECT: ${{ matrix.development.project }}
+        run: |
+          settings="$(
+            curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT"
+          )"
+
+          case "$PACKAGE" in
+            @lootlog/landing)
+              keys=(VITE_ADDON_URL VITE_AUTH_SERVICE_URL)
+              ;;
+            @lootlog/web)
+              keys=(
+                VITE_ACTIVITY_API_URL
+                VITE_ADDON_INSTALL_URL
+                VITE_API_URL
+                VITE_AUTH_SERVICE_URL
+                VITE_BATTLELOG_API_URL
+                VITE_BATTLELOG_PUBLIC_URL
+                VITE_DISCORD_BOT_PERMISSIONS
+                VITE_DISCORD_CLIENT_ID
+                VITE_GATEWAY_URL
+                VITE_SEARCH_API_URL
+              )
+              ;;
+            *)
+              echo "::error::Unsupported Cloudflare Pages package: $PACKAGE"
+              exit 1
+              ;;
+          esac
+
+          for key in "${keys[@]}"; do
+            value="$(
+              jq --exit-status --raw-output \
+                --arg key "$key" \
+                '.result.deployment_configs.preview.env_vars[$key] | select(.type == "plain_text") | .value' \
+                <<< "$settings"
+            )"
+            if [[ "$value" == *$'\n'* ]]; then
+              echo "::error::Cloudflare variable $key contains a newline."
+              exit 1
+            fi
+            echo "$key=$value" >> "$GITHUB_ENV"
+          done
       - name: Build target
         run: bunx turbo run build --filter='${{ matrix.package }}'
       - name: Deploy target
