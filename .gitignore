@@ -80,6 +80,4 @@ playground/**
 !/docs/ci-cd.md
 !/docs/rewrite/
 !/docs/rewrite/**
-**/.impeccable/direction-question.json
-**/.impeccable/questions/
 .superpowers/
