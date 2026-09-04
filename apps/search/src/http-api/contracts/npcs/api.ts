@@ -1,7 +1,9 @@
+import { SearchUnavailable } from "../search-unavailable.js";
 /** Endpoints owned by the npcs HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
 import {
@@ -11,6 +13,7 @@ import {
 
 export class NPCsGroup extends HttpApiGroup.make("NPCs").add(
   HttpApiEndpoint.get("NpcsControllerGetNpcs", "/npcs", {
+    error: SearchUnavailable.pipe(HttpApiSchema.status(503)),
     query: NpcsControllerGetNpcsQuery,
     success: NpcsControllerGetNpcs200,
   })

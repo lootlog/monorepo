@@ -107,7 +107,7 @@ import {
   UpdateEventRequestJson,
   UpdateRankingPointsPathParams,
   UpdateRankingPointsRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/events/schemas";
 
 export class EventsGroup extends HttpApiGroup.make("events").add(
   HttpApiEndpoint.get("listEvents", "/guilds/:guildId/events", {

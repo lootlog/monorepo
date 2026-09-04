@@ -32,7 +32,7 @@ import {
   LootsControllerUpdateLoot200,
   LootsControllerUpdateLootPathParams,
   LootsControllerUpdateLootRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/loots/schemas";
 
 export class LootsGroup extends HttpApiGroup.make("loots").add(
   HttpApiEndpoint.get(

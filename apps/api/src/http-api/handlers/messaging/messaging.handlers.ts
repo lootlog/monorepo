@@ -8,7 +8,7 @@ import {
   MessagingControllerSendNotification201,
   type CreateNotificationDto,
   type CreateVolunteerDto,
-} from "../../contracts/messaging/schemas.js";
+} from "#src/contracts/messaging/schemas";
 
 export type MessagingCaller = {
   readonly userId: string;

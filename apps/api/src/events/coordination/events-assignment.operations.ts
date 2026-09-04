@@ -10,7 +10,7 @@ import {
   ReorderLocationsDto,
   UpdateHeroDto,
   UpdateLocationDto,
-} from "#src/http-api/contracts/events/schemas";
+} from "#src/contracts/events/schemas";
 import { Effect } from "effect";
 import type { EventAccess } from "#src/events/event-access";
 import type { EventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";

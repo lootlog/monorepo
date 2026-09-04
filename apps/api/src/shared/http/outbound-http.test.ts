@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "#test/bun-test";
+import { describe, expect, it, vi } from "bun:test";
 import { Effect, Fiber } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { outboundHttpRequest } from "./outbound-http.js";

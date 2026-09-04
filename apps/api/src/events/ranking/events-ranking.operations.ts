@@ -8,7 +8,7 @@ import {
   AcknowledgeExpiredParticipationConfirmationsDto,
   UpdateKillPointDto,
   UpdateRankingPointsDto,
-} from "#src/http-api/contracts/events/schemas";
+} from "#src/contracts/events/schemas";
 import type { EventKills } from "#src/events/kills/event-kill.service";
 import type { EventRankingRead } from "#src/events/ranking/event-ranking-read";
 import { Effect } from "effect";

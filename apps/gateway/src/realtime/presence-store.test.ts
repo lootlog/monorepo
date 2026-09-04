@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
+import { TestClock } from "effect/testing";
 import { PresenceStore } from "./presence-store.js";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
@@ -14,7 +15,7 @@ class MemoryRedis {
   async set(
     key: string,
     value: string,
-    ...options: string[]
+    ...options: Array<string | number>
   ): Promise<string | null> {
     if (options.includes("NX") && this.values.has(key)) return null;
     this.values.set(key, value);
@@ -63,7 +64,7 @@ class MemoryRedis {
 }
 
 class RecordingHub {
-  readonly instanceId = "instance-1";
+  readonly instanceId = "00000000-0000-4000-8000-000000000001";
   readonly presenceEvents: unknown[] = [];
   readonly events: unknown[] = [];
 
@@ -117,6 +118,7 @@ const session = (permissions: Permission[]): SessionData => ({
     },
   ],
   subscriptions: new Map(),
+  airTagScopes: [],
   confidence: "reported",
   backpressureStrikes: 0,
 });
@@ -313,4 +315,26 @@ describe("PresenceStore", () => {
       ),
     ).resolves.toMatchObject({ presences: [{ lastSeen: 20_000 }] });
   });
+});
+
+test("expiry cleanup resumes after a transient Redis failure", async () => {
+  let attempts = 0;
+  class RecoveringRedis extends MemoryRedis {
+    override async smembers(key: string) {
+      attempts++;
+      if (attempts === 1) throw new Error("Redis temporarily unavailable");
+      return super.smembers(key);
+    }
+  }
+  const store = new PresenceStore(
+    { command: new RecoveringRedis() },
+    new RecordingHub(),
+  );
+  await Effect.runPromise(
+    Effect.gen(function* () {
+      yield* store.runExpirySweep().pipe(Effect.forkScoped);
+      yield* TestClock.adjust(store.sweepSchedule);
+      expect(attempts).toBe(2);
+    }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
+  );
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { MessagingControllerSendNotification201 } from "../../contracts/messaging/schemas.js";
+import { MessagingControllerSendNotification201 } from "#src/contracts/messaging/schemas";
 import {
   MessagingAccessDenied,
   MessagingData,

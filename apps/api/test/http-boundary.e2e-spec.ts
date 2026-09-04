@@ -11,15 +11,27 @@ import {
   type RabbitMessagingService,
 } from "@lootlog/messaging";
 import { Permission } from "@lootlog/schema/permissions";
-import { BunRedis } from "@effect/platform-bun";
+import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { RedisService } from "#src/redis/redis.service";
-import { LootlogApiRouter } from "../src/http-api/runtime/application/http-routes.js";
-import { ApiRedis } from "../src/http-api/runtime/infrastructure/api-redis.js";
-import { ApiRuntimeConfig } from "../src/http-api/runtime/infrastructure/api-runtime-config.js";
-import { TestDatabase } from "./test-database.js";
+import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
+import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
+import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
+import { count, sql } from "drizzle-orm";
+import {
+  ApiDatabase,
+  ApiDatabaseLive,
+  type ApiDatabaseValue,
+} from "../src/database/drizzle/database.js";
+import {
+  guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+  timerTable,
+} from "../src/database/drizzle/schema.js";
 
 const caller = {
   userId: "user-1",
@@ -44,7 +56,10 @@ const RuntimeBoundaries = Layer.mergeAll(
 );
 
 const boundary = HttpRouter.toWebHandler(
-  LootlogApiRouter.pipe(Layer.provide(RuntimeBoundaries)),
+  LootlogApiRouter.pipe(
+    Layer.provide(RuntimeBoundaries),
+    Layer.provide(BunHttpServer.layerHttpServices),
+  ),
   { disableLogger: true },
 );
 
@@ -64,12 +79,19 @@ const request = (path: string, init?: RequestInit) =>
   );
 
 describe("API HTTP boundary", () => {
-  let database: TestDatabase;
+  const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
+  let database: ApiDatabaseValue;
+  const countTimers = async () =>
+    (
+      await databaseRuntime.runPromise(
+        database.select({ value: count() }).from(timerTable),
+      )
+    )[0]?.value;
   let redis: RedisService;
   let redisRuntime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
 
   beforeAll(async () => {
-    database = await new TestDatabase().initialize();
+    database = await databaseRuntime.runPromise(ApiDatabase);
     const username = encodeURIComponent(process.env.REDIS_USERNAME ?? "");
     const password = encodeURIComponent(process.env.REDIS_PASSWORD ?? "");
     redisRuntime = ManagedRuntime.make(
@@ -86,66 +108,75 @@ describe("API HTTP boundary", () => {
 
   beforeEach(async () => {
     await redis.flushall();
-    await database.truncate("Guild");
-
-    const updatedAt = new Date();
-    await database.guild.create({
-      data: {
-        id: authorizedGuildId,
-        name: "Authorized Organization",
-        ownerId: "different-owner",
-        updatedAt,
-      },
-    });
-    await database.guild.create({
-      data: {
-        id: forbiddenGuildId,
-        name: "Forbidden Organization",
-        ownerId: "different-owner",
-        updatedAt,
-      },
-    });
-    await database.role.create({
-      data: {
-        id: "timer-maintainer",
-        guildId: authorizedGuildId,
-        name: "Timer maintainer",
-        permissions: [
-          Permission.ADMIN,
-          Permission.LOOTLOG_EVENTS_READ,
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_TIMERS_WRITE,
-          Permission.LOOTLOG_MANAGE,
-        ],
-        updatedAt,
-      },
-    });
-    await database.member.create({
-      data: {
-        userId: caller.discordId,
-        globalUserId: caller.userId,
-        guildId: authorizedGuildId,
-        name: "Authorized member",
-        lastDiscordSyncAt: updatedAt,
-        updatedAt,
-        roles: { connect: { id: "timer-maintainer" } },
-      },
-    });
-    await database.member.create({
-      data: {
-        userId: caller.discordId,
-        globalUserId: caller.userId,
-        guildId: forbiddenGuildId,
-        name: "Member without timer permissions",
-        lastDiscordSyncAt: updatedAt,
-        updatedAt,
-      },
-    });
+    await databaseRuntime.runPromise(
+      Effect.gen(function* () {
+        yield* database.execute(
+          sql`TRUNCATE TABLE "Guild" RESTART IDENTITY CASCADE`,
+        );
+        const updatedAt = new Date();
+        yield* database.insert(guildTable).values([
+          {
+            id: authorizedGuildId,
+            name: "Authorized Organization",
+            ownerId: "different-owner",
+            updatedAt,
+          },
+          {
+            id: forbiddenGuildId,
+            name: "Forbidden Organization",
+            ownerId: "different-owner",
+            updatedAt,
+          },
+        ]);
+        yield* database.insert(roleTable).values({
+          id: "timer-maintainer",
+          guildId: authorizedGuildId,
+          name: "Timer maintainer",
+          updatedAt,
+          permissions: [
+            Permission.ADMIN,
+            Permission.LOOTLOG_EVENTS_READ,
+            Permission.LOOTLOG_TIMERS_READ,
+            Permission.LOOTLOG_TIMERS_WRITE,
+            Permission.LOOTLOG_MANAGE,
+          ],
+        });
+        const members = yield* database
+          .insert(memberTable)
+          .values([
+            {
+              userId: caller.discordId,
+              globalUserId: caller.userId,
+              guildId: authorizedGuildId,
+              name: "Authorized member",
+              lastDiscordSyncAt: updatedAt,
+              updatedAt,
+            },
+            {
+              userId: caller.discordId,
+              globalUserId: caller.userId,
+              guildId: forbiddenGuildId,
+              name: "Member without timer permissions",
+              lastDiscordSyncAt: updatedAt,
+              updatedAt,
+            },
+          ])
+          .returning();
+        const authorizedMember = members.find(
+          (member) => member.guildId === authorizedGuildId,
+        );
+        if (!authorizedMember)
+          throw new Error("Authorized member was not created");
+        yield* database
+          .insert(memberToRoleTable)
+          .values({ A: authorizedMember.id, B: "timer-maintainer" });
+      }),
+    );
   });
 
   afterAll(async () => {
     await redisRuntime.dispose();
-    await database.dispose();
+    await databaseRuntime.dispose();
     await boundary.dispose();
   });
 
@@ -180,7 +211,7 @@ describe("API HTTP boundary", () => {
       world,
       npc: { name: "Test boss" },
     });
-    expect(await database.timer.count()).toBe(1);
+    expect(await countTimers()).toBe(1);
 
     const listedResponse = await request(
       `/guilds/${authorizedGuildId}/timers?world=${world}`,
@@ -195,7 +226,7 @@ describe("API HTTP boundary", () => {
       { method: "DELETE" },
     );
     expect(deletedResponse.status).toBe(200);
-    expect(await database.timer.count()).toBe(0);
+    expect(await countTimers()).toBe(0);
 
     const afterDeleteResponse = await request(
       `/guilds/${authorizedGuildId}/timers?world=${world}`,
@@ -218,7 +249,7 @@ describe("API HTTP boundary", () => {
     );
 
     expect(response.status).toBe(403);
-    expect(await database.timer.count()).toBe(0);
+    expect(await countTimers()).toBe(0);
   });
 
   it("enforces Organization access for events and notifications", async () => {

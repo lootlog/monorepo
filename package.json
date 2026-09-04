@@ -162,7 +162,8 @@
   },
   "packageManager": "bun@1.4.1",
   "patchedDependencies": {
-    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
+    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
+    "@effect/platform-bun@4.0.0-rc.112": "patches/@effect%2Fplatform-bun@4.0.0-rc.112.patch"
   },
   "trustedDependencies": [
     "@scarf/scarf",

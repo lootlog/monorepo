@@ -11,7 +11,7 @@ import {
 import type {
   CreateGuildDocumentDto,
   UpdateGuildDocumentDto,
-} from "#src/http-api/contracts/docs/schemas";
+} from "#src/contracts/docs/schemas";
 import {
   GuildDocumentContentSchema,
   type GuildDocumentContent,

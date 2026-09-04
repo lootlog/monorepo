@@ -13,7 +13,7 @@ const gameClientPackage = JSON.parse(
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, __dirname, "");
+  const env = loadEnv(mode, import.meta.dirname, "");
   const shouldAnalyzeBundle =
     env.ANALYZE === "1" || process.env.ANALYZE === "1";
   const useFastLocalMinifier =
@@ -48,11 +48,11 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: [
-        { find: "@", replacement: path.resolve(__dirname, "./src") },
+        { find: "@", replacement: path.resolve(import.meta.dirname, "./src") },
         {
           find: /^use-sync-external-store\/shim\/with-selector(\.js)?$/,
           replacement: path.resolve(
-            __dirname,
+            import.meta.dirname,
             "./src/shims/use-sync-external-store-with-selector.ts",
           ),
         },
@@ -105,7 +105,7 @@ export default defineConfig(({ mode }) => {
         ? [
             visualizer({
               filename: path.resolve(
-                __dirname,
+                import.meta.dirname,
                 "../../artifacts/game-client/bundle-stats.html",
               ),
               gzipSize: true,

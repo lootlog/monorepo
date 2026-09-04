@@ -23,3 +23,32 @@ The adoption routine compares tables, columns, physical types, nullability,
 database defaults, enum labels, index names, and constraint names with the
 generated expected catalog. Any missing, additional, or changed catalog object
 aborts the transaction before the baseline migration is recorded.
+
+## Durable loot publications
+
+Apply `20260904193330_loot_publication_outbox` before deploying the API that
+uses it. Loot acceptance commits the loot, Organization records, submissions,
+and publication intents in one transaction. The API process dispatches pending
+intents in bounded batches; broker or cache failures retain them for retry after
+restart. Request-only test layers do not start this worker.
+
+Delivery is at least once: a process can stop after broker confirmation but
+before deleting the intent. The stable `loot-publication:<id>` message identifier
+and existing source identifiers must be preserved on replay. Search writes are
+upserts; instant notification jobs deduplicate by source event, rule, and target.
+Pending notification jobs can be re-enqueued, while terminal jobs stay terminal.
+
+Inspect pending work without exposing event bodies:
+
+```sql
+SELECT "id", "lootId", "organizationIds", "createdAt", "lastAttemptAt"
+FROM "LootPublicationOutbox"
+ORDER BY "createdAt";
+```
+
+After repairing the failed dependency, leave pending rows in place; the worker
+retries them automatically. An archived/deleted Organization loot record no
+longer receives pending metadata. Do not delete the table during rollback:
+older API versions do not drain it, so retain a compatible dispatcher until its
+backlog is empty. The migration cannot reconstruct publications lost before it
+was installed; those require reconciliation from their owning data domains.

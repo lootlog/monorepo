@@ -5,9 +5,9 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { ReservationResponseDto } from "../../contracts/reservations/schemas.js";
-import { ReservationSharesResponseDto } from "../../contracts/reservation-sharing/schemas.js";
-import { RoleResponseDto_Output } from "../../contracts/roles/schemas.js";
+import { ReservationResponseDto } from "#src/contracts/reservations/schemas";
+import { ReservationSharesResponseDto } from "#src/contracts/reservation-sharing/schemas";
+import { RoleResponseDto_Output } from "#src/contracts/roles/schemas";
 import {
   acceptReservationShareInvitation,
   createReservation,

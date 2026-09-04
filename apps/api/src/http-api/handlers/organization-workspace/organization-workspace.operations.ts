@@ -41,7 +41,7 @@ import {
   ListReservationShares200,
   PreviewReservationShareInvitation200,
   type AcceptReservationShareInvitationDto,
-} from "../../contracts/reservation-sharing/schemas.js";
+} from "#src/contracts/reservation-sharing/schemas";
 import {
   CreateReservation201,
   ListMyReservations200,
@@ -52,12 +52,12 @@ import {
   type ListMyReservationsQuery,
   type ListSpotReservationsQuery,
   type UpdateReservationDto,
-} from "../../contracts/reservations/schemas.js";
+} from "#src/contracts/reservations/schemas";
 import {
   RolesControllerGetGuildRoles200,
   RolesControllerUpdateGuildRole200,
   type UpdateRolePermissionsDto,
-} from "../../contracts/roles/schemas.js";
+} from "#src/contracts/roles/schemas";
 
 export type OrganizationWorkspaceIdentity = {
   readonly userId: string;

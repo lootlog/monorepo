@@ -1,4 +1,5 @@
-import { RedisService } from "#src/redis/redis.service";
+import { Effect } from "effect";
+import type { RedisService } from "#src/redis/redis.service";
 
 interface RedlockOptions {
   driftFactor?: number;
@@ -48,7 +49,7 @@ export class ExecutionError extends Error {}
 
 class RedisLock {
   constructor(
-    private readonly redis: RedisService,
+    private readonly redis: Pick<RedisService, "eval">,
     readonly resources: string[],
     readonly value: string,
   ) {}
@@ -73,7 +74,7 @@ class RedisLockManager {
   private readonly options: Required<RedlockOptions>;
 
   constructor(
-    private readonly redis: RedisService,
+    private readonly redis: Pick<RedisService, "eval">,
     options: RedlockOptions,
   ) {
     this.options = {
@@ -116,40 +117,53 @@ class RedisLockManager {
     });
   }
 
-  async using<A>(
+  using<A, E, R>(
     resources: string[],
     duration: number,
-    routine: (signal: AbortSignal & { error?: Error }) => Promise<A>,
-  ): Promise<A> {
-    const lock = await this.acquire(resources, duration);
-    const controller = new AbortController();
-    const signal = controller.signal as AbortSignal & { error?: Error };
-    const refreshAfter = Math.max(
-      1,
-      duration - this.options.automaticExtensionThreshold,
+    routine: Effect.Effect<A, E, R>,
+  ) {
+    const self = this;
+    return Effect.scoped(
+      Effect.gen(function* () {
+        const lock = yield* Effect.acquireRelease(
+          Effect.tryPromise({
+            try: () => self.acquire(resources, duration),
+            catch: (cause) =>
+              cause instanceof ExecutionError
+                ? cause
+                : new ExecutionError("Unable to acquire Redis lock", { cause }),
+          }),
+          (activeLock) =>
+            Effect.tryPromise(() => activeLock.release()).pipe(
+              Effect.catch((cause) =>
+                Effect.logWarning("Failed to release Redis lock", cause),
+              ),
+            ),
+        );
+        const refreshAfter = Math.max(
+          1,
+          duration - self.options.automaticExtensionThreshold,
+        );
+        const renew = Effect.sleep(refreshAfter).pipe(
+          Effect.andThen(
+            Effect.tryPromise({
+              try: () => lock.extend(duration),
+              catch: (cause) =>
+                cause instanceof ExecutionError
+                  ? cause
+                  : new ExecutionError("Redis lock renewal failed", { cause }),
+            }),
+          ),
+          Effect.forever,
+        );
+        return yield* Effect.raceFirst(routine, renew);
+      }),
     );
-    const timer = setInterval(() => {
-      void lock.extend(duration).catch((cause) => {
-        const error =
-          cause instanceof Error ? cause : new ExecutionError(String(cause));
-        Object.defineProperty(signal, "error", { value: error });
-        controller.abort(error);
-      });
-    }, refreshAfter);
-
-    try {
-      const result = await routine(signal);
-      if (signal.aborted) throw signal.error;
-      return result;
-    } finally {
-      clearInterval(timer);
-      await lock.release().catch(() => undefined);
-    }
   }
 }
 
 export class RedlockService {
-  constructor(private readonly redis: RedisService) {}
+  constructor(private readonly redis: Pick<RedisService, "eval">) {}
 
   createInstance(options: RedlockOptions = {}): RedisLockManager {
     return new RedisLockManager(this.redis, options);

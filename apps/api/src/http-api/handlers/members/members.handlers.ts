@@ -21,7 +21,7 @@ import {
   MembersControllerRefreshAllMembers201,
   MembersControllerRefreshMe200,
   MembersControllerRefreshMember200,
-} from "../../contracts/members/schemas.js";
+} from "#src/contracts/members/schemas";
 
 export type MembersIdentity = {
   readonly userId: string;

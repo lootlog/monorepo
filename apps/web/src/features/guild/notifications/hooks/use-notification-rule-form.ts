@@ -494,6 +494,10 @@ export const useNotificationRuleForm = () => {
     npcSearch,
     setNpcSearch,
     npcOptions,
+    npcSearchError:
+      selectedNpcQuery.isError || searchedNpcQuery.isError
+        ? t("common.searchUnavailable")
+        : undefined,
     searchedNpcQuery,
     targetOptions,
     worldOptions,

@@ -16,7 +16,7 @@ import {
   TimerSettingsControllerUpdateGuildSettings200,
   TimerSettingsControllerUpdateGuildSettingsPathParams,
   TimerSettingsControllerUpdateGuildSettingsRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/timer-settings/schemas";
 
 export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
   HttpApiEndpoint.get(

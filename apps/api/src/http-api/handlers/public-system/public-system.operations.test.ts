@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { AuthenticatedGuildStatsCardControllerRefreshStatsCard200 } from "../../contracts/guild-stats-card/schemas.js";
-import { MapsControllerGetMaps200 } from "../../contracts/maps/schemas.js";
+import { AuthenticatedGuildStatsCardControllerRefreshStatsCard200 } from "#src/contracts/guild-stats-card/schemas";
+import { MapsControllerGetMaps200 } from "#src/contracts/maps/schemas";
 import {
   getMaps,
   getPublicStatsCard,

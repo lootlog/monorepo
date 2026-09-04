@@ -17,7 +17,7 @@ import {
   MapTemplatesControllerUpdateTemplate200,
   MapTemplatesControllerUpdateTemplatePathParams,
   MapTemplatesControllerUpdateTemplateRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/map-templates/schemas";
 
 export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
   HttpApiEndpoint.get(

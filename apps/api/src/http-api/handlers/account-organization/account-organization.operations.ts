@@ -29,11 +29,11 @@ import {
   GuildsControllerGetUserGuildsWithPermissions200,
   GuildsControllerGetWorldsByGuildId200,
   type UpdateGuildConfigDto,
-} from "../../contracts/guilds/schemas.js";
+} from "#src/contracts/guilds/schemas";
 import {
   GuildResponseDto_Output,
   StatusOkResponseDto_Output,
-} from "../../contracts/shared.js";
+} from "#src/contracts/shared";
 import {
   UserGameAccountPreferencesResponseDto_Output,
   UserPreferencesResponseDto_Output,
@@ -41,7 +41,7 @@ import {
   UsersControllerGetCurrentUserGuilds200,
   type UpdateUserGameAccountPreferencesDto,
   type UpdateUserPreferencesDto,
-} from "../../contracts/users/schemas.js";
+} from "#src/contracts/users/schemas";
 
 export type AuthenticatedIdentity = {
   readonly userId: string;

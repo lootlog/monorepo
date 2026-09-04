@@ -199,17 +199,13 @@ export const makeNotificationsEvents = (options: {
             );
           });
           return process.pipe(
-            Effect.result,
-            Effect.tap((result) =>
-              result._tag === "Failure"
-                ? Effect.sync(() =>
-                    options.logger.error(
-                      `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${causeMessage(result.failure)}`,
-                    ),
-                  )
-                : Effect.void,
+            Effect.tapError((cause) =>
+              Effect.sync(() =>
+                options.logger.error(
+                  `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${causeMessage(cause)}`,
+                ),
+              ),
             ),
-            Effect.asVoid,
           );
         },
         { concurrency: "unbounded", discard: true },

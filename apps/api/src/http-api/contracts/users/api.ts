@@ -18,7 +18,7 @@ import {
   UsersControllerUpdateUserGameAccountPreferencesRequestJson,
   UsersControllerUpdateUserPreferences200,
   UsersControllerUpdateUserPreferencesRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/users/schemas";
 
 export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.delete("UsersControllerDeleteAccount", "/users/@me", {

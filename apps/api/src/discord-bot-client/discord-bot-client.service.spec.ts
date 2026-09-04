@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "#test/bun-test";
+import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
+import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { makeDiscordBotClient } from "./discord-bot-client.js";
@@ -9,7 +10,7 @@ describe("DiscordBotClientService", () => {
       channels: [],
       syncState: {
         guildId: "guild-a",
-        status: "SYNCED",
+        status: DiscordGuildSyncStatus.SYNCED,
         hasRequiredPermissions: true,
         requiredPermissions: [],
         grantedPermissions: [],

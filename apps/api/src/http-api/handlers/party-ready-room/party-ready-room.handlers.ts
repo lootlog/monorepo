@@ -21,7 +21,7 @@ import {
   type PartyReadyRoomParticipantActionDto,
   type PartyReadyRoomParticipantIdentityDto,
   type PartyReadyRoomResolveInvitationTargetsDto,
-} from "../../contracts/party-ready-room/schemas.js";
+} from "#src/contracts/party-ready-room/schemas";
 
 export type ReadyRoomIdentity = {
   readonly userId: string;

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { ExecutionError, type RedlockService } from "#src/redis/redlock";
+import { type RedlockService } from "#src/redis/redlock";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -13,7 +13,6 @@ import {
   memberTable,
 } from "#src/database/drizzle/schema";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
@@ -28,7 +27,6 @@ export const makeEventPresenceTracking = (
   timers: EventTimersPort,
   redlockService: RedlockService,
   publisher: EventEmitter,
-  logger: Logger,
 ) => {
   const redlock = redlockService.createInstance();
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
@@ -312,32 +310,17 @@ export const makeEventPresenceTracking = (
       isAfk = false,
     ) {
       const lockKey = `presence:lock:${guildId}:${mapName}:${discordId}`;
-      return Effect.context<never>().pipe(
-        Effect.flatMap((context) =>
-          Effect.tryPromise({
-            try: () =>
-              redlock.using([lockKey], 5_000, () =>
-                Effect.runPromiseWith(context)(
-                  handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
-                ),
-              ),
-            catch: (cause) => cause,
+      return redlock
+        .using(
+          [lockKey],
+          5_000,
+          handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
+        )
+        .pipe(
+          Effect.withSpan("events.presence.lock", {
+            attributes: { adapter: "events.redlock", retryCount: 0 },
           }),
-        ),
-        Effect.catch((error) => {
-          if (!(error instanceof ExecutionError)) return Effect.fail(error);
-          return Effect.sync(() =>
-            logger.warn("Failed to acquire presence lock, skipping update", {
-              guildId,
-              mapName,
-              discordId,
-            }),
-          );
-        }),
-        Effect.withSpan("events.presence.lock", {
-          attributes: { adapter: "events.redlock", retryCount: 0 },
-        }),
-      );
+        );
     },
   };
 };

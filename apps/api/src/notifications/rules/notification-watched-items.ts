@@ -17,7 +17,7 @@ import {
 import type {
   CreateWatchedItemDto,
   CreateWatchedItemQuickAddDto,
-} from "#src/http-api/contracts/notifications/schemas";
+} from "#src/contracts/notifications/schemas";
 import {
   NotificationFiltersResponse,
   WatchedItemSnapshotResponse,

@@ -16,7 +16,7 @@
   "dependencies": {
     "@lootlog/protocol": "workspace:*",
     "amqplib": "^2.0.1",
-    "effect": "4.0.0-rc.112"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

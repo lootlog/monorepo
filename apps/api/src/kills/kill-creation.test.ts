@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import type { CreateKillDto } from "#src/http-api/contracts/kills/schemas";
+import type { CreateKillDto } from "#src/contracts/kills/schemas";
 import {
   KillCreationError,
   makeKillCreation,

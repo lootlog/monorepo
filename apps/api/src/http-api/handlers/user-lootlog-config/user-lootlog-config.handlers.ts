@@ -21,7 +21,7 @@ import {
   UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
   type CreateOrUpdateLootlogCharacterConfigDto,
   type UserLootlogPlayersCatchingGuildsRequestDto,
-} from "../../contracts/user-lootlog-config/schemas.js";
+} from "#src/contracts/user-lootlog-config/schemas";
 
 export class UserLootlogConfigAccessDenied extends TaggedErrorClass<UserLootlogConfigAccessDenied>()(
   "UserLootlogConfigAccessDenied",

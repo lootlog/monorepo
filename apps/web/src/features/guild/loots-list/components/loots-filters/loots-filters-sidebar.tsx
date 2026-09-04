@@ -553,6 +553,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           onSearchChange={setDebouncedNpcsSearchValue}
                           searchValue={debouncedNpcsSearchValue}
                           loading={npcsQuery.isLoading}
+                          searchError={npcsQuery.isError}
                         />
                       </div>
 
@@ -698,6 +699,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           onSearchChange={setDebouncedItemsSearchValue}
                           searchValue={debouncedItemsSearchValue}
                           loading={itemsQuery.isLoading}
+                          searchError={itemsQuery.isError}
                           minimumSearchLength={2}
                         />
                       </div>
@@ -799,6 +801,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           onSearchChange={setDebouncedPlayersSearchValue}
                           searchValue={debouncedPlayersSearchValue}
                           loading={playersQuery.isLoading}
+                          searchError={playersQuery.isError}
                         />
                       </div>
 

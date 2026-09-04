@@ -4,7 +4,7 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { RedisService } from "#src/redis/redis.service";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import type { UpdateEventDto } from "#src/http-api/contracts/events/schemas";
+import type { UpdateEventDto } from "#src/contracts/events/schemas";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventUpdate } from "#src/events/catalog/event-update";
 

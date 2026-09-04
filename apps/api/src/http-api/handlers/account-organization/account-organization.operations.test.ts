@@ -3,13 +3,11 @@ import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { Etag, HttpPlatform } from "effect/unstable/http";
 import { HttpApiTest } from "effect/unstable/httpapi";
-import {
-  BearerSecurityMiddleware,
-  GuildResponseDto_Output,
-} from "../../contracts/shared.js";
+import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { GuildResponseDto_Output } from "#src/contracts/shared";
 import { LootlogApi } from "../../lootlog-api.js";
-import { UserPreferencesResponseDto_Output } from "../../contracts/users/schemas.js";
-import { ForwardAuthIdentity } from "../../runtime/auth/forward-auth-identity.js";
+import { UserPreferencesResponseDto_Output } from "#src/contracts/users/schemas";
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { GuildsHandlers } from "../guilds/guilds.handlers.js";
 import {
   GuildConfigurationData,

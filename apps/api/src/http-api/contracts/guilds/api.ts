@@ -26,7 +26,7 @@ import {
   GuildsControllerUpdateGuildConfig200,
   GuildsControllerUpdateGuildConfigPathParams,
   GuildsControllerUpdateGuildConfigRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/guilds/schemas";
 
 export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get("GuildsControllerGetUserGuilds", "/guilds/@me", {

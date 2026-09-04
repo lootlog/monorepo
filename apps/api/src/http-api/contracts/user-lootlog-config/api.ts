@@ -14,7 +14,7 @@ import {
   UserLootlogConfigControllerGetPlayersCatchingGuildsRequestJson,
   UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
   UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParams,
-} from "./schemas.js";
+} from "#src/contracts/user-lootlog-config/schemas";
 
 export class UserLootlogConfigGroup extends HttpApiGroup.make(
   "user-lootlog-config",

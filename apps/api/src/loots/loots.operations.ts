@@ -17,7 +17,7 @@ import {
   type CreateCommentDto,
   LootsControllerFetchLootsByGuildId200,
   type LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
-} from "#src/http-api/contracts/loots/schemas";
+} from "#src/contracts/loots/schemas";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { ErrorKey } from "#src/loots/error-key";
 import type {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "#test/bun-test";
+import { describe, expect, it } from "bun:test";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
 describe("normalizeReservationSpotId", () => {

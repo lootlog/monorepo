@@ -41,7 +41,7 @@ import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
 import type {
   UpdateUserGameAccountPreferencesDto,
   UpdateUserPreferencesDto,
-} from "../../contracts/users/schemas.js";
+} from "#src/contracts/users/schemas";
 import { AccountOrganizationOperationError } from "./account-organization.operations.js";
 
 const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";

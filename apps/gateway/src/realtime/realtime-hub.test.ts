@@ -53,6 +53,7 @@ const makeSession = (connectionId: string): SessionData => ({
   joined: true,
   guilds: [],
   subscriptions: new Map(),
+  airTagScopes: [],
   confidence: "reported",
   backpressureStrikes: 0,
 });

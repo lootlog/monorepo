@@ -6,8 +6,8 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
-import { AuthenticatedGuildStatsCardControllerRefreshStatsCard200 } from "../../contracts/guild-stats-card/schemas.js";
-import { MapsControllerGetMaps200 } from "../../contracts/maps/schemas.js";
+import { AuthenticatedGuildStatsCardControllerRefreshStatsCard200 } from "#src/contracts/guild-stats-card/schemas";
+import { MapsControllerGetMaps200 } from "#src/contracts/maps/schemas";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 const LOCAL_CACHE_CONTROL = "no-store";

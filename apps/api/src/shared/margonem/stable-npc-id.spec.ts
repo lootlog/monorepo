@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { getStableNpcId } from "./stable-npc-id.js";
 

@@ -1,5 +1,6 @@
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
 
 type FilterComboboxProps = {
@@ -13,6 +14,7 @@ type FilterComboboxProps = {
   name: string;
   onSearchChange?: (value: string) => void;
   loading?: boolean;
+  searchError?: boolean;
   searchValue?: string;
   minimumSearchLength?: number;
 };
@@ -27,10 +29,12 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
   defaultValue,
   name,
   loading,
+  searchError,
   searchValue,
   minimumSearchLength,
   onSearchChange,
 }) => {
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
   const selectedOptions = defaultValue ?? [];
 
@@ -55,6 +59,7 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
       onSearchChange={onSearchChange}
       searchValue={searchValue}
       loading={loading}
+      errorMessage={searchError ? t("common.searchUnavailable") : undefined}
       minimumSearchLength={minimumSearchLength}
     />
   );

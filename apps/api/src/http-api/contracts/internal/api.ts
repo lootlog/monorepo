@@ -9,7 +9,7 @@ import {
   GuildsInternalControllerGetGuildByIdOrVanityUrlPathParams,
   GuildsInternalControllerGetUserPermissions200,
   GuildsInternalControllerGetUserPermissionsQuery,
-} from "./schemas.js";
+} from "#src/contracts/internal/schemas";
 
 export class InternalGroup extends HttpApiGroup.make("internal").add(
   HttpApiEndpoint.get(

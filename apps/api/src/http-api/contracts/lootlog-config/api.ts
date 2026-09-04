@@ -12,7 +12,7 @@ import {
   LootlogConfigControllerUpdateNpc200,
   LootlogConfigControllerUpdateNpcPathParams,
   LootlogConfigControllerUpdateNpcRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/lootlog-config/schemas";
 
 export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
   HttpApiEndpoint.get(

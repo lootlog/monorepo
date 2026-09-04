@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { notificationMatchingPolicy as service } from "#src/notifications/rules/notification-matching.service";

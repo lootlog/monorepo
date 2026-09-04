@@ -82,6 +82,17 @@ export const battles = pgTable(
   ],
 );
 
+export const battleObjectDeletions = pgTable(
+  "battle_object_deletions",
+  {
+    battleId: text("battleId").primaryKey(),
+    userId: text("userId").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    retryAt: timestamp("retryAt").defaultNow().notNull(),
+  },
+  (table) => [index("battle_object_deletions_retryAt_idx").on(table.retryAt)],
+);
+
 export const userCharacters = pgTable(
   "user_characters",
   {

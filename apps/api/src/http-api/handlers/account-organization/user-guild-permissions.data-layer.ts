@@ -20,7 +20,7 @@ import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
 } from "./account-organization.operations.js";
-import { GuildsControllerGetUserGuildsWithPermissions200 } from "../../contracts/guilds/schemas.js";
+import { GuildsControllerGetUserGuildsWithPermissions200 } from "#src/contracts/guilds/schemas";
 
 const CACHE_TTL_SECONDS = 60;
 

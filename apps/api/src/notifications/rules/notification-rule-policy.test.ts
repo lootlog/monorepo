@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import type {
   CreateNotificationRuleDto,
   UpdateNotificationRuleDto,
-} from "#src/http-api/contracts/notifications/schemas";
+} from "#src/contracts/notifications/schemas";
 import {
   NotificationOwnerType,
   NotificationScheduleIntervalType,

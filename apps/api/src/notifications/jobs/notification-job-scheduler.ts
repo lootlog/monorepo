@@ -184,6 +184,11 @@ export const makeNotificationJobScheduler = (
       .limit(1)
       .pipe(Effect.mapError(failure("notifications.scheduler.findExisting")));
     const existing = existingRows[0];
+    if (options.jobKind === NotificationJobKind.INSTANT && existing) {
+      return existing.status === NotificationJobStatus.PENDING
+        ? existing
+        : null;
+    }
     if (!existing || existing.status !== NotificationJobStatus.CANCELED) {
       return null;
     }

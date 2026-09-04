@@ -30,7 +30,7 @@ import {
 import type {
   CreateNotificationTargetDto,
   UpdateNotificationTargetDto,
-} from "#src/http-api/contracts/notifications/schemas";
+} from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
 import type {
   JsonObject,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import { ChatMessageResponseDto_Output } from "../../contracts/chat/schemas.js";
+import { ChatMessageResponseDto_Output } from "#src/contracts/chat/schemas";
 import {
   ChatAccessDenied,
   ChatAuthorization,

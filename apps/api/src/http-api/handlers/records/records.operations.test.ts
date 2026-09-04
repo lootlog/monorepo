@@ -5,12 +5,12 @@ import { Effect, Layer } from "effect";
 import type {
   KillsControllerCreateKill201,
   KillsControllerCreateKillRequestJson,
-} from "../../contracts/kills/schemas.js";
+} from "#src/contracts/kills/schemas";
 import type {
   LootsControllerCreateComment201,
   LootsControllerCreateCommentRequestJson,
   LootsControllerFetchLootById200,
-} from "../../contracts/loots/schemas.js";
+} from "#src/contracts/loots/schemas";
 import {
   createComment,
   createKill,

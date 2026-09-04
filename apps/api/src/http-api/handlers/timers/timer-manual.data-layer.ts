@@ -13,14 +13,14 @@ import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { buildTimerKey } from "#src/timers/timer-key";
-import type { CreateManualTimerDto } from "../../contracts/timers/schemas.js";
+import type { CreateManualTimerDto } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
   TimersInvariantViolation,
   TimersMemberNotFound,
   toTimersDataFailure,
 } from "./timer-errors.js";
-import { mapTimerResponse } from "./timer-response.js";
+import { mapTimerResponse } from "#src/timers/timer-projection";
 
 export interface ManualTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;

@@ -12,7 +12,7 @@ import {
   MessagingControllerSendNotificationRequestJson,
   MessagingControllerVolunteerPathParams,
   MessagingControllerVolunteerRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/messaging/schemas";
 
 export class MessagingGroup extends HttpApiGroup.make("messaging").add(
   HttpApiEndpoint.post("MessagingControllerSendNotification", "/messaging", {

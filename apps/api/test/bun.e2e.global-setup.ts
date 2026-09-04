@@ -1,17 +1,12 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import { Client } from "pg";
 import {
   GenericContainer,
   type StartedTestContainer,
   Wait,
 } from "testcontainers";
-import { BASELINE_MIGRATION_NAME } from "../src/database/drizzle/expected-catalog.js";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const apiRoot = path.resolve(dirname, "..");
+import { Effect } from "effect";
+import { ApiDatabaseLive } from "../src/database/drizzle/database.js";
+import { migrateApiDatabase } from "../src/database/drizzle/migrate.js";
 
 export default async function setup() {
   const postgres = await new PostgreSqlContainer("postgres:17-alpine")
@@ -20,53 +15,45 @@ export default async function setup() {
     .withPassword("lootlog")
     .withStartupTimeout(60_000)
     .start();
-  const redis = await new GenericContainer(
-    "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
-  )
-    .withCommand([
-      "--requirepass=test",
-      "--logtostderr",
-      "--proactor_threads=2",
-    ])
-    .withExposedPorts(6379)
-    .withWaitStrategy(Wait.forListeningPorts())
-    .withStartupTimeout(60_000)
-    .start();
-
-  process.env.POSTGRESQL_CONNECTION_URI = postgres.getConnectionUri();
-  process.env.PORT = "4000";
-  process.env.SERVICE_NAME = "api-e2e";
-  process.env.SERVICE_NAMESPACE = "test";
-  process.env.RABBITMQ_URI = "amqp://unused.test:5672";
-  process.env.REDIS_HOST = redis.getHost();
-  process.env.REDIS_PORT = String(redis.getMappedPort(6379));
-  process.env.REDIS_USERNAME = "default";
-  process.env.REDIS_PASSWORD = "test";
-  process.env.AUTH_SERVICE_URL = "http://auth.test";
-  process.env.BATTLELOG_SERVICE_URL = "http://battlelog.test";
-  process.env.DISCORD_BOT_SERVICE_URL = "http://discord-bot.test";
-  process.env.RESERVATIONS_CARDS_URL = "http://cards.test";
-  process.env.MAPS_API_URL = "http://maps.test";
-
-  const migrationsRoot = path.join(apiRoot, "drizzle/migrations");
-  const migrationSql = await readFile(
-    path.join(migrationsRoot, BASELINE_MIGRATION_NAME, "migration.sql"),
-    "utf8",
-  );
-  const client = new Client({ connectionString: postgres.getConnectionUri() });
-  await client.connect();
+  let redis: StartedTestContainer | undefined;
   try {
-    await client.query(migrationSql);
-  } finally {
-    await client.end();
+    redis = await new GenericContainer(
+      "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",
+    )
+      .withCommand([
+        "--requirepass=test",
+        "--logtostderr",
+        "--proactor_threads=2",
+      ])
+      .withExposedPorts(6379)
+      .withWaitStrategy(Wait.forListeningPorts())
+      .withStartupTimeout(60_000)
+      .start();
+
+    process.env.POSTGRESQL_CONNECTION_URI = postgres.getConnectionUri();
+    process.env.PORT = "4000";
+    process.env.SERVICE_NAME = "api-e2e";
+    process.env.SERVICE_NAMESPACE = "test";
+    process.env.RABBITMQ_URI = "amqp://unused.test:5672";
+    process.env.REDIS_HOST = redis.getHost();
+    process.env.REDIS_PORT = String(redis.getMappedPort(6379));
+    process.env.REDIS_USERNAME = "default";
+    process.env.REDIS_PASSWORD = "test";
+    process.env.AUTH_SERVICE_URL = "http://auth.test";
+    process.env.BATTLELOG_SERVICE_URL = "http://battlelog.test";
+    process.env.DISCORD_BOT_SERVICE_URL = "http://discord-bot.test";
+    process.env.RESERVATIONS_CARDS_URL = "http://cards.test";
+    process.env.MAPS_API_URL = "http://maps.test";
+
+    await Effect.runPromise(
+      migrateApiDatabase.pipe(Effect.scoped, Effect.provide(ApiDatabaseLive)),
+    );
+
+    return async () => {
+      await Promise.all([redis?.stop(), postgres.stop()]);
+    };
+  } catch (error) {
+    await Promise.allSettled([redis?.stop(), postgres.stop()]);
+    throw error;
   }
-
-  return async () => {
-    await stopContainer(redis);
-    await postgres.stop();
-  };
-}
-
-async function stopContainer(container: StartedTestContainer) {
-  await container.stop();
 }

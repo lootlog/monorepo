@@ -7,7 +7,7 @@ import {
 import {
   PartyReadyRoomClientUpdateDto_Output,
   PartyReadyRoomProjectionDto_Output,
-} from "../../contracts/party-ready-room/schemas.js";
+} from "#src/contracts/party-ready-room/schemas";
 import {
   ReadyRoomAccessDenied,
   ReadyRoomAuthorization,

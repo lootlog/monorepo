@@ -8,7 +8,7 @@ import type {
   MigrateTimerSettingsDto,
   UpdateGuildTimerSettingsDto,
   UpdateTimerSettingsDto,
-} from "#src/http-api/contracts/timer-settings/schemas";
+} from "#src/contracts/timer-settings/schemas";
 
 const APPEARANCE_FIELDS = [
   "displayConfig",

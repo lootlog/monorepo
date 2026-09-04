@@ -1,7 +1,9 @@
+import { SearchUnavailable } from "../search-unavailable.js";
 /** Endpoints owned by the all HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
 import {
@@ -11,6 +13,7 @@ import {
 
 export class AllGroup extends HttpApiGroup.make("All").add(
   HttpApiEndpoint.get("AllControllerSearchAll", "/all", {
+    error: SearchUnavailable.pipe(HttpApiSchema.status(503)),
     query: AllControllerSearchAllQuery,
     success: AllControllerSearchAll200,
   })

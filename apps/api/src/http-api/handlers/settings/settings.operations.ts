@@ -13,7 +13,7 @@ import {
   SoundSettingsControllerGetSettings200,
   SoundSettingsControllerUpdateSettings200,
   type UpdateSoundSettingsDto,
-} from "../../contracts/sound-settings/schemas.js";
+} from "#src/contracts/sound-settings/schemas";
 import {
   TimerSettingsControllerGetGlobalSettings200,
   TimerSettingsControllerGetGuildSettings200,
@@ -22,11 +22,11 @@ import {
   type MigrateTimerSettingsDto,
   type UpdateGuildTimerSettingsDto,
   type UpdateTimerSettingsDto,
-} from "../../contracts/timer-settings/schemas.js";
+} from "#src/contracts/timer-settings/schemas";
 import type {
   PatchSettingsDocumentsDto,
   SettingsDocumentsControllerGetPreferencesQuery,
-} from "../../contracts/preferences/schemas.js";
+} from "#src/contracts/preferences/schemas";
 
 export class SettingsAccessDenied extends TaggedErrorClass<SettingsAccessDenied>()(
   "SettingsAccessDenied",

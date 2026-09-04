@@ -13,17 +13,20 @@
       "default": "./dist/src/*.js"
     }
   },
+  "exports": {
+    "./database/schema": "./src/database/schema.ts"
+  },
   "scripts": {
-    "dev": "bun --env-file=.env --watch src/main.ts",
-    "build": "tsc -p tsconfig.build.json && cp openapi.yaml dist/openapi.yaml",
+    "dev": "bun --conditions=development --env-file=.env --watch src/main.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp openapi.yaml dist/openapi.yaml",
     "start": "bun dist/src/main.js",
-    "start:debug": "bun --env-file=.env --inspect --watch src/main.ts",
+    "start:debug": "bun --conditions=development --env-file=.env --inspect --watch src/main.ts",
     "lint": "oxlint src test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "oxfmt src test",
-    "test": "bun --conditions=development test src test",
-    "test:debug": "bun --conditions=development test --inspect-brk src test",
-    "test:watch": "bun --conditions=development test --watch src test",
+    "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' src test",
+    "test:debug": "bun --conditions=development test --path-ignore-patterns=dist --inspect-brk src test",
+    "test:watch": "bun --conditions=development test --path-ignore-patterns=dist --watch src test",
     "openapi:generate": "bun src/openapi/generate-openapi.ts",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate:deploy": "bunx drizzle-kit migrate",
@@ -32,7 +35,8 @@
     "db:push": "bunx drizzle-kit push --force",
     "db:studio": "bunx drizzle-kit studio",
     "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
-    "maintenance:backfill-warrior-stats": "bun --env-file=.env scripts/backfill-battle-warrior-stats.ts"
+    "maintenance:backfill-warrior-stats": "bun --env-file=.env scripts/backfill-battle-warrior-stats.ts",
+    "test:integration": "bun --conditions=development test src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1120.0",
@@ -48,10 +52,12 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@testcontainers/postgresql": "^12.1.0",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "catalog:",
+    "testcontainers": "^12.1.0",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }

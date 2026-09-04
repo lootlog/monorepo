@@ -10,7 +10,7 @@ import {
   SettingsDocumentsControllerGetPreferencesQuery,
   SettingsDocumentsControllerPatchPreferences200,
   SettingsDocumentsControllerPatchPreferencesRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/preferences/schemas";
 
 export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
   HttpApiEndpoint.get(
