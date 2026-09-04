@@ -46,12 +46,12 @@ describe("deployment targets", () => {
     );
   });
 
-  test("development selects only affected targets enabled for dev", async () => {
+  test("development selects affected targets enabled for dev", async () => {
     const plan = await createDeploymentPlan({
       mode: "dev",
       affectedPackages: ["@lootlog/api", "@lootlog/game-client"],
     });
-    expect(plan.targets.map(({ id }) => id)).toEqual(["api"]);
+    expect(plan.targets.map(({ id }) => id)).toEqual(["api", "game-client"]);
   });
 
   test("development redeploys enabled targets after pipeline changes", async () => {

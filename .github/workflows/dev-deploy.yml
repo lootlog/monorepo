@@ -99,6 +99,17 @@ jobs:
                 VITE_SEARCH_API_URL
               )
               ;;
+            @lootlog/game-client)
+              keys=(
+                GAME_CLIENT_URL
+                VITE_API_URL
+                VITE_AUTH_SERVICE_URL
+                VITE_BATTLELOG_API_URL
+                VITE_GATEWAY_URL
+                VITE_LOOTLOG_APP_URL
+              )
+              echo "VITE_GATEWAY_SOCKET_PATH=/ws" >> "$GITHUB_ENV"
+              ;;
             *)
               echo "::error::Unsupported Cloudflare Pages package: $PACKAGE"
               exit 1
