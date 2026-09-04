@@ -52,7 +52,7 @@ import {
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
-import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { makeMembersDataLayer } from "#src/http-api/handlers/members/member-commands.data-layer";
 import {
@@ -72,7 +72,10 @@ import { makeUserGuildList } from "#src/http-api/handlers/account-organization/u
 import { makeUserGuildPermissions } from "#src/http-api/handlers/account-organization/user-guild-permissions.data-layer";
 import { makeUserPreferencesData } from "#src/http-api/handlers/account-organization/user-preferences.data-layer";
 import { AccountOrganizationData } from "#src/http-api/handlers/account-organization/account-organization.operations";
-import { ApiRedis } from "#src/http-api/runtime/infrastructure/api-redis";
+import {
+  ApiRedis,
+  redisUrl,
+} from "#src/http-api/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
 import {
   OrganizationContextLookup,
@@ -113,14 +116,7 @@ export const memberServicesLive = Layer.effect(
     const database = yield* ApiDatabase;
     const fibers = yield* FiberSet.make<unknown, unknown>();
     const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
-    const queueConnection = {
-      host: config.redis.host,
-      port: config.redis.port,
-      username: config.redis.username,
-      password: Redacted.value(config.redis.password),
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-    };
+    const queueConnection = { url: redisUrl(config.redis) };
     const adapter = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
 

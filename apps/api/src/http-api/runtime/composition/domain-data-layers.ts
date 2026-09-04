@@ -103,11 +103,14 @@ import { PgClient } from "@effect/sql-pg";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { eventDataLayer } from "#src/http-api/handlers/events/events.data-layer";
 import { recordsDataLayer } from "#src/http-api/handlers/records/records.data-layer";
 import { notificationDataLayer } from "#src/http-api/handlers/notifications/notifications.data-layer";
-import { ApiRedis } from "#src/http-api/runtime/infrastructure/api-redis";
+import {
+  ApiRedis,
+  redisUrl,
+} from "#src/http-api/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
 
 import { makeAmqpAdapter } from "#src/http-api/runtime/composition/core-data-layers";
@@ -297,14 +300,7 @@ export const eventsServicesLive = Layer.effect(
     const timers = yield* EventTimers;
     const { loots } = yield* RecordsServices;
     const queueOptions = {
-      connection: {
-        host: config.redis.host,
-        port: config.redis.port,
-        username: config.redis.username,
-        password: Redacted.value(config.redis.password),
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-      },
+      connection: { url: redisUrl(config.redis) },
       prefix: "{bull}",
     } as const;
     const queues = yield* Effect.acquireRelease(
@@ -560,14 +556,7 @@ export const notificationsServicesLive = Layer.effect(
       Effect.sync(
         () =>
           new Queue(NOTIFICATIONS_DISPATCH_QUEUE, {
-            connection: {
-              host: config.redis.host,
-              port: config.redis.port,
-              username: config.redis.username,
-              password: Redacted.value(config.redis.password),
-              maxRetriesPerRequest: null,
-              enableReadyCheck: false,
-            },
+            connection: { url: redisUrl(config.redis) },
             prefix: "{bull}",
           }),
       ),

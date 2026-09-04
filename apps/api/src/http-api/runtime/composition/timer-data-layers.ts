@@ -19,7 +19,7 @@ import { applicationLogger } from "#src/shared/application-logger";
 import { ErrorKey } from "#src/timers/error-key";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { Queue } from "bullmq";
-import { Context, Effect, Layer, Redacted, Schema } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { makeReservationCatalogAdapter } from "#src/http-api/handlers/organization-workspace/reservation-catalog.adapter";
 import { makeReservationMutationsDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-mutations.data-layer";
@@ -36,7 +36,10 @@ import { makeRestoreTimer } from "#src/http-api/handlers/timers/timer-restore.da
 import { makeTimerSearch } from "#src/http-api/handlers/timers/timer-search.data-layer";
 import { CachedTimerProjectionSchema } from "#src/http-api/handlers/timers/timer-response";
 import { TimersData } from "#src/http-api/handlers/timers/timers.handlers";
-import { ApiRedis } from "#src/http-api/runtime/infrastructure/api-redis";
+import {
+  ApiRedis,
+  redisUrl,
+} from "#src/http-api/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
 
 import { makeAmqpAdapter } from "#src/http-api/runtime/composition/core-data-layers";
@@ -50,14 +53,7 @@ export const reservationMutationsData = Layer.unwrap(
       Effect.sync(
         () =>
           new Queue(NOTIFICATIONS_DISPATCH_QUEUE, {
-            connection: {
-              host: config.redis.host,
-              port: config.redis.port,
-              username: config.redis.username,
-              password: Redacted.value(config.redis.password),
-              maxRetriesPerRequest: null,
-              enableReadyCheck: false,
-            },
+            connection: { url: redisUrl(config.redis) },
             prefix: "{bull}",
           }),
       ),
@@ -136,14 +132,7 @@ export const timersData = Layer.unwrap(
       Effect.sync(
         () =>
           new Queue(EVENT_HERO_KILL_QUEUE, {
-            connection: {
-              host: config.redis.host,
-              port: config.redis.port,
-              username: config.redis.username,
-              password: Redacted.value(config.redis.password),
-              maxRetriesPerRequest: null,
-              enableReadyCheck: false,
-            },
+            connection: { url: redisUrl(config.redis) },
             prefix: "{bull}",
           }),
       ),
