@@ -139,6 +139,10 @@ inputs and deployment steps.
 Docker Compose is limited to local infrastructure. Self-hosting is
 community-supported until the project ships a tested distribution.
 
+## Testing
+
+Tautological tests are considered harmful. Tests should be meaningful, reproducible, and fast. They should not be brittle or require manual intervention. Tests should be run in CI and locally before merging.
+
 ## Contributing and security
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) before changing
