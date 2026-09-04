@@ -80,6 +80,61 @@ bun run format:check
 Use the narrowest relevant workspace checks while developing. Run every gate
 required by the affected workspace before handoff.
 
+## API architecture and checks
+
+Backend TypeScript schemas and types are maintained by hand in all seven services:
+API, Auth, Gateway, Battlelog, Activity, Search, and Discord bot. Effect schemas
+define HTTP validation; infer their TypeScript types from those schemas. Reuse
+schemas from their owning module instead of copying fields or adding endpoint
+aliases. Existing OpenAPI component identifiers remain stable for client compatibility.
+
+Routine backend generation is limited to SQL migrations and OpenAPI YAML. Drizzle migration
+snapshots and other migration metadata, immutable migration archives, and compiled
+`dist` output are retained. Edit Drizzle schemas manually before generating SQL;
+do not use auth tooling to overwrite TypeScript source.
+
+Manual database introspection is also available for API, Auth, Activity, and
+Battlelog. Run `bun run db:pull` within the service or `bun run db:api:pull`,
+`bun run db:auth:pull`, `bun run db:activity:pull`, or
+`bun run db:battlelog:pull` from the repository root. Each command uses the
+service's Drizzle configuration and writes introspection artifacts to its configured
+`out` directory. PostgreSQL environment overrides are forwarded through Turbo,
+so a database copy can be inspected independently of local defaults. Review the
+resulting files before using them; introspection does not validate or apply
+migrations, and the handwritten source schemas remain authoritative.
+Client generation in `packages/client` consumes the exported OpenAPI documents.
+
+In `apps/api/src`, feature modules own business operations and persistence.
+`contracts/` contains shared input/output schemas used by those modules and HTTP
+adapters. `http-api/` owns route declarations, authentication middleware contracts,
+and handlers. Domain code must not import HTTP handlers or runtime composition.
+
+`runtime/features/` assembles each feature's live dependencies;
+`runtime/api-data-layers.ts` joins those layers for requests and background work.
+`runtime/application/` owns application lifetime, `runtime/background/` owns workers
+and consumers, and `runtime/infrastructure/` owns external clients. Shared timer
+projections live with their feature in `timers/timer-projection.ts`.
+Member refresh job processors live in `members/`; timer and reservation retention
+operations live in `timers/` and `reservations/`. Background runtime code only wires
+these operations to scoped workers, consumers, and schedules.
+
+Run API checks from `apps/api`:
+
+```bash
+bun run typecheck
+bun run test
+bun run test:integration
+bun run test:e2e
+bun run lint
+bun run build
+```
+
+Typecheck includes source and tests. Unit tests run from `src`, including runtime
+and contract tests. Integration and HTTP E2E tests start isolated PostgreSQL and
+Dragonfly containers and apply the complete migration chain; Docker must be
+available. Repository integration tests exercise real database operations, while
+service tests replace dependencies at their public interfaces.
+
 ## Releases
 
 Pull requests do not carry release metadata. Production releases select an

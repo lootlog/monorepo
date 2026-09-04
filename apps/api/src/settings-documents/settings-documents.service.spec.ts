@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "#test/bun-test";
+import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
 import type { SettingsDocumentsRepositoryService } from "./settings-documents.repository.js";
 import { makeSettingsDocuments } from "./settings-documents.service.js";

@@ -2,7 +2,7 @@ import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
 import { RedisClient } from "bun";
 import { createBunRedisClient, Queue, RedisConnection, Worker } from "bullmq";
-import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import {
   makeBattlelogOperations,
@@ -74,6 +74,13 @@ export class BattlelogApplication extends Context.Service<
         analyticsService,
         makeBattleListFilter(drizzle),
         metadataService,
+      );
+      yield* battlesService.drainObjectDeletions.pipe(
+        Effect.catch((cause) =>
+          Effect.logError("Battle object cleanup retry failed", cause),
+        ),
+        Effect.repeat(Schedule.spaced("5 seconds")),
+        Effect.forkScoped,
       );
       const queue = yield* acquireDeleteQueue(config);
       yield* acquireDeleteWorker(config, battlesService);

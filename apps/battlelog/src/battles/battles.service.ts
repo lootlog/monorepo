@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { makeBattleDeletion } from "#src/battles/deletion/battle-deletion";
 import {
   PermissionDeniedError,
   ApplicationError,
@@ -28,7 +29,7 @@ import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.s
 import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import type { BattlePagination } from "#src/battles/analytics/pagination.service";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors, userCharacters } from "#src/database/schema";
+import { battles, battleWarriors } from "#src/database/schema";
 import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import {
   createBattleSemanticFingerprint,
@@ -119,6 +120,11 @@ export const makeBattles = (
   deduplicationTiming: BattleDeduplicationTiming = defaultBattleDeduplicationTiming,
 ) => {
   const logger = new Logger("Battles");
+  const deletion = makeBattleDeletion(
+    drizzle,
+    r2Service,
+    battleAnalyticsService,
+  );
   const battlesModule = {
     createBattle(params: CreateBattleParams) {
       const { data, userId } = params;
@@ -695,96 +701,9 @@ export const makeBattles = (
       });
     },
 
-    deleteUserBattles(userId: string) {
-      return Effect.gen(function* () {
-        const userBattles = yield* adapter("Battles_findUserBattles", () =>
-          drizzle
-            .select({ id: battles.id })
-            .from(battles)
-            .where(eq(battles.userId, userId)),
-        );
-
-        const battleIds = userBattles.map((b) => b.id);
-
-        if (battleIds.length === 0) {
-          yield* adapter("Battles_deleteUserCharacters", () =>
-            drizzle
-              .delete(userCharacters)
-              .where(eq(userCharacters.userId, userId)),
-          );
-
-          return { deletedCount: 0 };
-        }
-
-        yield* adapter("Battles_deleteUserBattles", () =>
-          drizzle.delete(battles).where(eq(battles.userId, userId)),
-        );
-
-        yield* adapter("Battles_deleteUserCharacters", () =>
-          drizzle
-            .delete(userCharacters)
-            .where(eq(userCharacters.userId, userId)),
-        );
-
-        yield* adapter("BattleObjectStorage_deleteBatch", () =>
-          r2Service.deleteBattleDataBatch(battleIds),
-        ).pipe(
-          Effect.catch((error) => {
-            logger.warn(
-              `Failed to delete R2 data for user ${userId}: ${battleIds.length} battles`,
-              error,
-            );
-            return Effect.void;
-          }),
-        );
-
-        logger.log(`Deleted ${battleIds.length} battles for user ${userId}`);
-        yield* battleAnalyticsService.invalidateAnalyticsCache(userId);
-
-        return { deletedCount: battleIds.length };
-      });
-    },
-
-    deleteBattle(battleId: string) {
-      return Effect.gen(function* () {
-        const battle = yield* adapter("Battles_findForDelete", () =>
-          drizzle.query.battles.findFirst({
-            where: { id: battleId },
-            columns: { userId: true },
-          }),
-        );
-
-        const deleted = yield* adapter("Battles_delete", () =>
-          drizzle
-            .delete(battles)
-            .where(eq(battles.id, battleId))
-            .returning({ id: battles.id }),
-        );
-
-        if (deleted.length === 0)
-          return yield* Effect.fail(
-            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
-          );
-
-        if (battle) {
-          yield* battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
-        }
-
-        yield* adapter("BattleObjectStorage_delete", () =>
-          r2Service.deleteBattleData(battleId),
-        ).pipe(
-          Effect.catch((error) => {
-            logger.warn(
-              `Failed to delete R2 data for battle ${battleId}`,
-              error,
-            );
-            return Effect.void;
-          }),
-        );
-
-        return { message: "Battle deleted successfully" };
-      });
-    },
+    deleteUserBattles: deletion.deleteUserBattles,
+    deleteBattle: deletion.deleteBattle,
+    drainObjectDeletions: deletion.drain,
 
     getPublicBattle(battleId: string) {
       return adapter("Battles_getPublic", () =>
@@ -1180,6 +1099,7 @@ export type Battles = Pick<
   | "createBattle"
   | "deleteBattle"
   | "deleteUserBattles"
+  | "drainObjectDeletions"
   | "getBattleFromDatabase"
   | "getBattleRawData"
   | "getBattleTimeline"

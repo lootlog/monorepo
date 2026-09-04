@@ -7,14 +7,13 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
-  UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParams,
-  UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigRequestJson,
-  UserLootlogConfigControllerGetPlayersCatchingGuilds200,
-  UserLootlogConfigControllerGetPlayersCatchingGuildsRequestJson,
-  UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
-  UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParams,
-} from "./schemas.js";
+  CharacterLootlogConfigResponse,
+  LootlogAccountPath,
+  UpdateCharacterLootlogConfigRequest,
+  PlayersCatchingOrganizationsResponse,
+  PlayersCatchingOrganizationsRequest,
+  AccountLootlogConfigResponse,
+} from "#src/contracts/user-lootlog-config/schemas";
 
 export class UserLootlogConfigGroup extends HttpApiGroup.make(
   "user-lootlog-config",
@@ -23,9 +22,8 @@ export class UserLootlogConfigGroup extends HttpApiGroup.make(
     "UserLootlogConfigControllerGetUserLootlogConfigByAccountId",
     "/users/@me/lootlog-config/accounts/:accountId",
     {
-      params:
-        UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParams,
-      success: UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
+      params: LootlogAccountPath,
+      success: AccountLootlogConfigResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -43,12 +41,9 @@ export class UserLootlogConfigGroup extends HttpApiGroup.make(
     "UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
     "/users/@me/lootlog-config/accounts/:accountId",
     {
-      params:
-        UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParams,
-      payload:
-        UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigRequestJson,
-      success:
-        UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
+      params: LootlogAccountPath,
+      payload: UpdateCharacterLootlogConfigRequest,
+      success: CharacterLootlogConfigResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -68,8 +63,8 @@ export class UserLootlogConfigGroup extends HttpApiGroup.make(
     "UserLootlogConfigControllerGetPlayersCatchingGuilds",
     "/users/@me/lootlog-config/players/catching-guilds/batch",
     {
-      payload: UserLootlogConfigControllerGetPlayersCatchingGuildsRequestJson,
-      success: UserLootlogConfigControllerGetPlayersCatchingGuilds200,
+      payload: PlayersCatchingOrganizationsRequest,
+      success: PlayersCatchingOrganizationsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)

@@ -7,9 +7,9 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
-  AuthenticatedGuildStatsCardControllerRefreshStatsCardPathParams,
-} from "./schemas.js";
+  RefreshStatsCardResponse,
+  StatsCardOrganizationPath,
+} from "#src/contracts/guild-stats-card/schemas";
 
 export class GuildStatsCardGroup extends HttpApiGroup.make(
   "guild-stats-card",
@@ -18,8 +18,8 @@ export class GuildStatsCardGroup extends HttpApiGroup.make(
     "AuthenticatedGuildStatsCardControllerRefreshStatsCard",
     "/guilds/:guildId/stats-card/refresh",
     {
-      params: AuthenticatedGuildStatsCardControllerRefreshStatsCardPathParams,
-      success: AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
+      params: StatsCardOrganizationPath,
+      success: RefreshStatsCardResponse,
       error: [HttpApiSchema.Empty(404), HttpApiSchema.Empty(429)],
     },
   )

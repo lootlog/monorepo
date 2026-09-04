@@ -27,9 +27,9 @@ import {
   MessagingOperationError,
 } from "./messaging.handlers.js";
 import type {
-  CreateNotificationDto,
-  CreateVolunteerDto,
-} from "../../contracts/messaging/schemas.js";
+  SendNotificationRequest,
+  VolunteerForPartyRequest,
+} from "#src/contracts/messaging/schemas";
 
 const NOTIFICATION_TTL_SECONDS = 1800;
 export const NOTIFICATION_RATE_LIMIT_WINDOW_MS = 5_000;
@@ -95,7 +95,7 @@ export interface MessagingReadyRoom {
     readonly notificationId: string;
     readonly organizerDiscordId: string;
     readonly organizerCharacter: NonNullable<
-      CreateNotificationDto["character"]
+      SendNotificationRequest["character"]
     >;
     readonly guildIds: ReadonlyArray<string>;
     readonly world: string;
@@ -298,7 +298,11 @@ export const makeMessagingDataLayer = (
               }),
             ),
           ),
-        volunteer: (discordId, notificationId, data: CreateVolunteerDto) =>
+        volunteer: (
+          discordId,
+          notificationId,
+          data: VolunteerForPartyRequest,
+        ) =>
           operation(
             Effect.gen(function* () {
               const stored = yield* metadata(notificationId);

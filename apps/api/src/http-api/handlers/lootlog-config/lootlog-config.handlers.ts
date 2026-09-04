@@ -16,10 +16,10 @@ import {
 } from "#src/database/drizzle/schema";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  LootlogConfigControllerGetLootlogConfig200,
-  LootlogConfigControllerUpdateNpc200,
-  type UpdateLootlogConfigNpcDto,
-} from "../../contracts/lootlog-config/schemas.js";
+  LootlogConfigResponse,
+  NpcLootlogConfigResponse,
+  type UpdateNpcLootlogConfigRequest,
+} from "#src/contracts/lootlog-config/schemas";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",
@@ -53,7 +53,7 @@ export class LootlogConfigData extends Context.Service<
     readonly updateNpc: (
       guildId: string,
       npcId: string,
-      payload: UpdateLootlogConfigNpcDto,
+      payload: UpdateNpcLootlogConfigRequest,
     ) => Effect.Effect<unknown, LootlogConfigOperationError>;
   }
 >()("@lootlog/api/http-api/lootlog-config/data") {
@@ -145,22 +145,19 @@ export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
 ) {
   const { guildId } = yield* authorize(requestedGuildId);
   const data = yield* LootlogConfigData;
-  return yield* decode(
-    LootlogConfigControllerGetLootlogConfig200,
-    yield* data.get(guildId),
-  );
+  return yield* decode(LootlogConfigResponse, yield* data.get(guildId));
 });
 
 export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
   function* (
     requestedGuildId: unknown,
     npcId: string,
-    payload: UpdateLootlogConfigNpcDto,
+    payload: UpdateNpcLootlogConfigRequest,
   ) {
     const { guildId } = yield* authorize(requestedGuildId);
     const data = yield* LootlogConfigData;
     return yield* decode(
-      LootlogConfigControllerUpdateNpc200,
+      NpcLootlogConfigResponse,
       yield* data.updateNpc(guildId, npcId, payload),
     );
   },

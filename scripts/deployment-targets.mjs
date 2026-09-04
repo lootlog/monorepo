@@ -12,10 +12,13 @@ const clientProducers = new Set([
   "@lootlog/auth",
   "@lootlog/battlelog",
   "@lootlog/client",
+  "@lootlog/gateway",
+  "@lootlog/discord-bot",
   "@lootlog/search",
 ]);
 
 const integrationPackages = new Set([
+  "@lootlog/battlelog",
   "@lootlog/activity",
   "@lootlog/api",
   "@lootlog/auth",

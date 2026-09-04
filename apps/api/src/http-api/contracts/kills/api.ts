@@ -7,33 +7,31 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  KillsControllerCreateKill201,
-  KillsControllerCreateKillRequestJson,
-  KillsControllerGetGuildKillStats200,
-  KillsControllerGetGuildKillStatsPathParams,
-  KillsControllerGetGuildKillStatsQuery,
-  KillsControllerGetGuildTopKillersByType200,
-  KillsControllerGetGuildTopKillersByTypePathParams,
-  KillsControllerGetGuildTopKillersByTypeQuery,
-  KillsControllerGetGuildTopNpcs200,
-  KillsControllerGetGuildTopNpcsPathParams,
-  KillsControllerGetGuildTopNpcsQuery,
-  KillsControllerGetMemberKills200,
-  KillsControllerGetMemberKillsPathParams,
-  KillsControllerGetMemberKillsQuery,
-  KillsControllerGetNpcKillers200,
-  KillsControllerGetNpcKillersPathParams,
-  KillsControllerGetNpcKillersQuery,
-  KillsControllerGetUserKillStats200,
-  KillsControllerGetUserKillStatsQuery,
-  KillsControllerGetUserNpcKills200,
-  KillsControllerGetUserNpcKillsQuery,
-} from "./schemas.js";
+  CreateKillResponse,
+  CreateKillRequest,
+  GuildKillStatsResponse,
+  KillOrganizationPath,
+  GuildKillStatsQuery,
+  GuildTopKillersByTypeResponse,
+  GuildTopKillersQuery,
+  GuildTopNpcsResponse,
+  GuildTopNpcsQuery,
+  MemberKillsResponse,
+  MemberKillsPath,
+  MemberKillsQuery,
+  NpcKillersResponse,
+  NpcKillersPath,
+  NpcKillersQuery,
+  UserKillStatsResponse,
+  UserKillStatsQuery,
+  UserNpcKillsResponse,
+  UserNpcKillsQuery,
+} from "#src/contracts/kills/schemas";
 
 export class KillsGroup extends HttpApiGroup.make("kills").add(
   HttpApiEndpoint.post("KillsControllerCreateKill", "/kills", {
-    payload: KillsControllerCreateKillRequestJson,
-    success: KillsControllerCreateKill201.pipe(HttpApiSchema.status(201)),
+    payload: CreateKillRequest,
+    success: CreateKillResponse.pipe(HttpApiSchema.status(201)),
     error: HttpApiSchema.Empty(400),
   })
     .middleware(BearerSecurityMiddleware)
@@ -47,9 +45,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetGuildKillStats",
     "/guilds/:guildId/stats/kills",
     {
-      params: KillsControllerGetGuildKillStatsPathParams,
-      query: KillsControllerGetGuildKillStatsQuery,
-      success: KillsControllerGetGuildKillStats200,
+      params: KillOrganizationPath,
+      query: GuildKillStatsQuery,
+      success: GuildKillStatsResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -64,8 +62,8 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetUserKillStats",
     "/users/@me/stats/kills",
     {
-      query: KillsControllerGetUserKillStatsQuery,
-      success: KillsControllerGetUserKillStats200,
+      query: UserKillStatsQuery,
+      success: UserKillStatsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -79,8 +77,8 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetUserNpcKills",
     "/users/@me/kills/npcs",
     {
-      query: KillsControllerGetUserNpcKillsQuery,
-      success: KillsControllerGetUserNpcKills200,
+      query: UserNpcKillsQuery,
+      success: UserNpcKillsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -94,9 +92,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetGuildTopNpcs",
     "/guilds/:guildId/stats/kills/top-npcs",
     {
-      params: KillsControllerGetGuildTopNpcsPathParams,
-      query: KillsControllerGetGuildTopNpcsQuery,
-      success: KillsControllerGetGuildTopNpcs200,
+      params: KillOrganizationPath,
+      query: GuildTopNpcsQuery,
+      success: GuildTopNpcsResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -111,9 +109,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetGuildTopKillersByType",
     "/guilds/:guildId/stats/kills/top-killers",
     {
-      params: KillsControllerGetGuildTopKillersByTypePathParams,
-      query: KillsControllerGetGuildTopKillersByTypeQuery,
-      success: KillsControllerGetGuildTopKillersByType200,
+      params: KillOrganizationPath,
+      query: GuildTopKillersQuery,
+      success: GuildTopKillersByTypeResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -128,9 +126,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetNpcKillers",
     "/guilds/:guildId/stats/kills/npcs/:npcId/killers",
     {
-      params: KillsControllerGetNpcKillersPathParams,
-      query: KillsControllerGetNpcKillersQuery,
-      success: KillsControllerGetNpcKillers200,
+      params: NpcKillersPath,
+      query: NpcKillersQuery,
+      success: NpcKillersResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -145,9 +143,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     "KillsControllerGetMemberKills",
     "/guilds/:guildId/stats/kills/members/:memberId",
     {
-      params: KillsControllerGetMemberKillsPathParams,
-      query: KillsControllerGetMemberKillsQuery,
-      success: KillsControllerGetMemberKills200,
+      params: MemberKillsPath,
+      query: MemberKillsQuery,
+      success: MemberKillsResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )

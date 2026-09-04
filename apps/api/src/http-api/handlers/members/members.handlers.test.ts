@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { MemberResponseDto } from "../../contracts/members/schemas.js";
+import { MemberResponse } from "#src/contracts/members/schemas";
 import {
   deactivateGuildMember,
   getCurrentMember,
@@ -105,7 +105,7 @@ describe("Members HttpApi handlers", () => {
       { current: identity, guildId: "guild-a", refresh: false },
     ]);
     expect(response?.updatedAt).toBe("2026-09-02T12:00:00.000Z");
-    expect(Schema.is(MemberResponseDto)(response)).toBe(true);
+    expect(Schema.is(MemberResponse)(response)).toBe(true);
   });
 
   it("fails closed before a privileged refresh when capability checks fail", async () => {

@@ -7,20 +7,20 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  LootlogConfigControllerGetLootlogConfig200,
-  LootlogConfigControllerGetLootlogConfigPathParams,
-  LootlogConfigControllerUpdateNpc200,
-  LootlogConfigControllerUpdateNpcPathParams,
-  LootlogConfigControllerUpdateNpcRequestJson,
-} from "./schemas.js";
+  LootlogConfigResponse,
+  LootlogConfigOrganizationPath,
+  NpcLootlogConfigResponse,
+  NpcLootlogConfigPath,
+  UpdateNpcLootlogConfigRequest,
+} from "#src/contracts/lootlog-config/schemas";
 
 export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
   HttpApiEndpoint.get(
     "LootlogConfigControllerGetLootlogConfig",
     "/guilds/:guildId/lootlog-config",
     {
-      params: LootlogConfigControllerGetLootlogConfigPathParams,
-      success: LootlogConfigControllerGetLootlogConfig200,
+      params: LootlogConfigOrganizationPath,
+      success: LootlogConfigResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -35,9 +35,9 @@ export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
     "LootlogConfigControllerUpdateNpc",
     "/guilds/:guildId/lootlog-config/:npcId",
     {
-      params: LootlogConfigControllerUpdateNpcPathParams,
-      payload: LootlogConfigControllerUpdateNpcRequestJson,
-      success: LootlogConfigControllerUpdateNpc200,
+      params: NpcLootlogConfigPath,
+      payload: UpdateNpcLootlogConfigRequest,
+      success: NpcLootlogConfigResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { AuthenticatedGuildStatsCardControllerRefreshStatsCard200 } from "../../contracts/guild-stats-card/schemas.js";
-import { MapsControllerGetMaps200 } from "../../contracts/maps/schemas.js";
+import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
+import { GameMapsResponse } from "#src/contracts/maps/schemas";
+
 import {
   getMaps,
   getPublicStatsCard,
@@ -55,7 +56,7 @@ describe("public system HttpApi handlers", () => {
 
     expect(health).toBeUndefined();
     expect(maps).toEqual([{ id: 1, name: "Ithan" }]);
-    expect(Schema.is(MapsControllerGetMaps200)(maps)).toBe(true);
+    expect(Schema.is(GameMapsResponse)(maps)).toBe(true);
   });
 
   it("requires OWNER or ADMIN before refreshing an Organization card", async () => {
@@ -92,11 +93,7 @@ describe("public system HttpApi handlers", () => {
       },
     ]);
     expect(refreshedGuilds).toEqual(["guild-a"]);
-    expect(
-      Schema.is(AuthenticatedGuildStatsCardControllerRefreshStatsCard200)(
-        response,
-      ),
-    ).toBe(true);
+    expect(Schema.is(RefreshStatsCardResponse)(response)).toBe(true);
   });
 
   it("fails closed before a forbidden stats-card refresh reaches data", async () => {

@@ -38,6 +38,18 @@ export interface PlayerHitDtoOutput {
   world: string;
 }
 
+export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
+
+
+export const _SearchUnavailableEncodedTag = {
+  SearchUnavailable: 'SearchUnavailable',
+} as const;
+
+export interface SearchUnavailableEncoded {
+  _tag: _SearchUnavailableEncodedTag;
+  message: string;
+}
+
 export type NpcHitDtoOutputType = typeof NpcHitDtoOutputType[keyof typeof NpcHitDtoOutputType];
 
 
@@ -414,7 +426,7 @@ export const getPlayersControllerGetPlayersQueryKey = (params?: PlayersControlle
     }
 
 
-export const getPlayersControllerGetPlayersQueryOptions = <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<unknown>>(params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+export const getPlayersControllerGetPlayersQueryOptions = <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<SearchUnavailableEncoded>>(params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -433,10 +445,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PlayersControllerGetPlayersQueryResult = NonNullable<Awaited<ReturnType<typeof playersControllerGetPlayers>>>
-export type PlayersControllerGetPlayersQueryError = ErrorType<unknown>
+export type PlayersControllerGetPlayersQueryError = ErrorType<SearchUnavailableEncoded>
 
 
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<unknown>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params: undefined |  PlayersControllerGetPlayersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof playersControllerGetPlayers>>,
@@ -446,7 +458,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<unknown>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof playersControllerGetPlayers>>,
@@ -456,7 +468,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<unknown>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -464,7 +476,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
  * @summary Search players by name
  */
 
-export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<unknown>>(
+export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -479,7 +491,7 @@ export function usePlayersControllerGetPlayers<TData = Awaited<ReturnType<typeof
 /**
  * @summary Search players by name
  */
-export const prefetchPlayersControllerGetPlayersQuery = async <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<unknown>>(
+export const prefetchPlayersControllerGetPlayersQuery = async <TData = Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError = ErrorType<SearchUnavailableEncoded>>(
  queryClient: QueryClient, params?: PlayersControllerGetPlayersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof playersControllerGetPlayers>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 
   ): Promise<QueryClient> => {
@@ -572,7 +584,7 @@ export const getNpcsControllerGetNpcsQueryKey = (params?: NpcsControllerGetNpcsP
     }
 
 
-export const getNpcsControllerGetNpcsQueryOptions = <TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<unknown>>(params?: NpcsControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+export const getNpcsControllerGetNpcsQueryOptions = <TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<SearchUnavailableEncoded>>(params?: NpcsControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -591,10 +603,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type NpcsControllerGetNpcsQueryResult = NonNullable<Awaited<ReturnType<typeof npcsControllerGetNpcs>>>
-export type NpcsControllerGetNpcsQueryError = ErrorType<unknown>
+export type NpcsControllerGetNpcsQueryError = ErrorType<SearchUnavailableEncoded>
 
 
-export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<unknown>>(
+export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params: undefined |  NpcsControllerGetNpcsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof npcsControllerGetNpcs>>,
@@ -604,7 +616,7 @@ export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsC
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<unknown>>(
+export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: NpcsControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof npcsControllerGetNpcs>>,
@@ -614,7 +626,7 @@ export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsC
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<unknown>>(
+export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: NpcsControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -622,7 +634,7 @@ export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsC
  * @summary Search NPCs by name
  */
 
-export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<unknown>>(
+export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: NpcsControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -637,7 +649,7 @@ export function useNpcsControllerGetNpcs<TData = Awaited<ReturnType<typeof npcsC
 /**
  * @summary Search NPCs by name
  */
-export const prefetchNpcsControllerGetNpcsQuery = async <TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<unknown>>(
+export const prefetchNpcsControllerGetNpcsQuery = async <TData = Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError = ErrorType<SearchUnavailableEncoded>>(
  queryClient: QueryClient, params?: NpcsControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof npcsControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 
   ): Promise<QueryClient> => {
@@ -730,7 +742,7 @@ export const getItemsControllerGetItemsQueryKey = (params?: ItemsControllerGetIt
     }
 
 
-export const getItemsControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(params?: ItemsControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+export const getItemsControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<SearchUnavailableEncoded>>(params?: ItemsControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -749,10 +761,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ItemsControllerGetItemsQueryResult = NonNullable<Awaited<ReturnType<typeof itemsControllerGetItems>>>
-export type ItemsControllerGetItemsQueryError = ErrorType<unknown>
+export type ItemsControllerGetItemsQueryError = ErrorType<SearchUnavailableEncoded>
 
 
-export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
+export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params: undefined |  ItemsControllerGetItemsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof itemsControllerGetItems>>,
@@ -762,7 +774,7 @@ export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof ite
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
+export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: ItemsControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof itemsControllerGetItems>>,
@@ -772,7 +784,7 @@ export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof ite
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
+export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: ItemsControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -780,7 +792,7 @@ export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof ite
  * @summary Search items with filters, sorting, and facets
  */
 
-export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
+export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: ItemsControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -795,7 +807,7 @@ export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof ite
 /**
  * @summary Search items with filters, sorting, and facets
  */
-export const prefetchItemsControllerGetItemsQuery = async <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
+export const prefetchItemsControllerGetItemsQuery = async <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<SearchUnavailableEncoded>>(
  queryClient: QueryClient, params?: ItemsControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 
   ): Promise<QueryClient> => {
@@ -880,7 +892,7 @@ export const getAllControllerSearchAllQueryKey = (params?: AllControllerSearchAl
     }
 
 
-export const getAllControllerSearchAllQueryOptions = <TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<unknown>>(params?: AllControllerSearchAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+export const getAllControllerSearchAllQueryOptions = <TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<SearchUnavailableEncoded>>(params?: AllControllerSearchAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -899,10 +911,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type AllControllerSearchAllQueryResult = NonNullable<Awaited<ReturnType<typeof allControllerSearchAll>>>
-export type AllControllerSearchAllQueryError = ErrorType<unknown>
+export type AllControllerSearchAllQueryError = ErrorType<SearchUnavailableEncoded>
 
 
-export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<unknown>>(
+export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params: undefined |  AllControllerSearchAllParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof allControllerSearchAll>>,
@@ -912,7 +924,7 @@ export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allC
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<unknown>>(
+export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: AllControllerSearchAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof allControllerSearchAll>>,
@@ -922,7 +934,7 @@ export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allC
       >, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<unknown>>(
+export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: AllControllerSearchAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -930,7 +942,7 @@ export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allC
  * @summary Search across all categories
  */
 
-export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<unknown>>(
+export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<SearchUnavailableEncoded>>(
  params?: AllControllerSearchAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -945,7 +957,7 @@ export function useAllControllerSearchAll<TData = Awaited<ReturnType<typeof allC
 /**
  * @summary Search across all categories
  */
-export const prefetchAllControllerSearchAllQuery = async <TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<unknown>>(
+export const prefetchAllControllerSearchAllQuery = async <TData = Awaited<ReturnType<typeof allControllerSearchAll>>, TError = ErrorType<SearchUnavailableEncoded>>(
  queryClient: QueryClient, params?: AllControllerSearchAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof allControllerSearchAll>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
 
   ): Promise<QueryClient> => {

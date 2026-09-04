@@ -1,19 +1,19 @@
 import { describe, expect, it } from "bun:test";
 import { Result, Schema } from "effect";
 import {
-  CloseRespawnWindowDto,
-  CreateEventDto,
-  OpenRespawnWindowDto,
-} from "./contracts/events/schemas.js";
+  CloseRespawnWindowRequest,
+  CreateEventRequest,
+  OpenRespawnWindowRequest,
+} from "#src/contracts/events/schemas";
 import {
-  CreateNotificationRuleDto,
-  UpdateNotificationRuleDto,
-} from "./contracts/notifications/schemas.js";
+  CreateNotificationRuleRequest,
+  UpdateNotificationRuleRequest,
+} from "#src/contracts/notifications/schemas";
 import {
-  KillsControllerGetGuildKillStatsQuery,
-  KillsControllerGetUserNpcKillsQuery,
-} from "./contracts/kills/schemas.js";
-import { UpdateReservationDto } from "./contracts/reservations/schemas.js";
+  GuildKillStatsQuery,
+  UserNpcKillsQuery,
+} from "#src/contracts/kills/schemas";
+import { UpdateReservationRequest } from "#src/contracts/reservations/schemas";
 
 const rejects = (schema: Schema.ConstraintDecoder<unknown>, value: unknown) =>
   Result.isFailure(Schema.decodeUnknownResult(schema)(value));
@@ -21,7 +21,7 @@ const rejects = (schema: Schema.ConstraintDecoder<unknown>, value: unknown) =>
 describe("HttpApi contract refinements", () => {
   it("preserves event and respawn time ordering", () => {
     expect(
-      rejects(CreateEventDto, {
+      rejects(CreateEventRequest, {
         name: "event",
         world: "gordion",
         startsAt: "2026-09-03T12:00:00Z",
@@ -29,37 +29,37 @@ describe("HttpApi contract refinements", () => {
       }),
     ).toBe(true);
     expect(
-      rejects(OpenRespawnWindowDto, {
+      rejects(OpenRespawnWindowRequest, {
         minSpawnTime: "2026-09-03T12:00:00Z",
         maxSpawnTime: "2026-09-03T11:00:00Z",
       }),
     ).toBe(true);
-    expect(rejects(CloseRespawnWindowDto, { createNewWindow: true })).toBe(
+    expect(rejects(CloseRespawnWindowRequest, { createNewWindow: true })).toBe(
       true,
     );
   });
 
   it("preserves non-empty and cross-field mutation requirements", () => {
-    expect(rejects(UpdateReservationDto, {})).toBe(true);
+    expect(rejects(UpdateReservationRequest, {})).toBe(true);
     expect(
-      rejects(CreateNotificationRuleDto, {
+      rejects(CreateNotificationRuleRequest, {
         triggerType: "NPC_SPAWNED",
         targetIds: [],
       }),
     ).toBe(true);
-    expect(rejects(UpdateNotificationRuleDto, { world: "  " })).toBe(true);
-    expect(rejects(UpdateNotificationRuleDto, { npcIds: [] })).toBe(true);
+    expect(rejects(UpdateNotificationRuleRequest, { world: "  " })).toBe(true);
+    expect(rejects(UpdateNotificationRuleRequest, { npcIds: [] })).toBe(true);
   });
 
   it("preserves minimum and maximum level ordering", () => {
     expect(
-      rejects(KillsControllerGetGuildKillStatsQuery, {
+      rejects(GuildKillStatsQuery, {
         minLvl: 100,
         maxLvl: 50,
       }),
     ).toBe(true);
     expect(
-      rejects(KillsControllerGetUserNpcKillsQuery, {
+      rejects(UserNpcKillsQuery, {
         minLvl: 100,
         maxLvl: 50,
       }),

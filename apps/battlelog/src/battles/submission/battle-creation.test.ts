@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
+import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
@@ -18,53 +19,39 @@ import {
   runEffectService,
 } from "../../../test/effect-service.js";
 
-const vi = {
-  fn: mock,
-  spyOn,
+type TestApplication = ReturnType<typeof makeBattlelogTestBoundary> & {
+  battles: ReturnType<typeof runEffectService<Battles>>;
 };
 
-type TestApplication = {
-  close(): Promise<void>;
-  get(_token: typeof makeBattles): ReturnType<typeof runEffectService<Battles>>;
-  getHttpServer(): (request: Request) => Promise<Response>;
+const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
+  handler: TestApplication["handler"],
+  method: "GET" | "POST",
+  path: string,
+  schema: S,
+  expectedStatus: number,
+  body?: unknown,
+) => {
+  const response = await handler(
+    new Request(`http://battlelog.test${path}`, {
+      method,
+      headers: { "content-type": "application/json", ...authHeaders },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    }),
+  );
+  expect(response.status).toBe(expectedStatus);
+  return { body: Schema.decodeUnknownSync(schema)(await response.json()) };
 };
-
-const request = (handler: (request: Request) => Promise<Response>) => {
-  const makeRequest = (method: "GET" | "POST", path: string) => {
-    let body: unknown;
-    let headers: Record<string, string> = {};
-    const execute = async (expectedStatus: number) => {
-      const response = await handler(
-        new Request(`http://battlelog.test${path}`, {
-          method,
-          headers: { "content-type": "application/json", ...headers },
-          ...(method === "POST" && body !== undefined
-            ? { body: JSON.stringify(body) }
-            : {}),
-        }),
-      );
-      expect(response.status).toBe(expectedStatus);
-      return { body: (await response.json()) as any };
-    };
-    const chain = {
-      set(nextHeaders: Record<string, string>) {
-        headers = nextHeaders;
-        return chain;
-      },
-      send(nextBody: unknown) {
-        body = nextBody;
-        return chain;
-      },
-      expect: execute,
-    };
-    return chain;
-  };
-
-  return {
-    get: (path: string) => makeRequest("GET", path),
-    post: (path: string) => makeRequest("POST", path),
-  };
-};
+const postBattle = (handler: TestApplication["handler"], body: unknown) =>
+  requestJson(
+    handler,
+    "POST",
+    "/battles",
+    Schema.Struct({ battleId: Schema.String }),
+    201,
+    body,
+  );
+const getBattle = (handler: TestApplication["handler"], path: string) =>
+  requestJson(handler, "GET", path, BattleResponseSchemas.battle, 200);
 
 const warriors = {
   "220": {
@@ -264,7 +251,7 @@ const createDatabaseBoundary = ({
 
   return {
     service: {
-      run: vi.fn((query) =>
+      run: mock((query) =>
         Effect.isEffect(query)
           ? Effect.runPromise(query as Effect.Effect<unknown, unknown, never>)
           : Promise.resolve(query),
@@ -272,10 +259,10 @@ const createDatabaseBoundary = ({
       db: {
         query: {
           battles: {
-            findFirst: vi.fn(async (query) => findBattle(query) ?? null),
+            findFirst: mock(async (query) => findBattle(query) ?? null),
           },
         },
-        transaction: vi.fn(async (factory) => {
+        transaction: mock(async (factory) => {
           await beforeTransaction?.();
           const result = factory({ insert: createInsert });
           return Effect.isEffect(result)
@@ -284,7 +271,7 @@ const createDatabaseBoundary = ({
               )
             : result;
         }),
-        update: vi.fn(createUpdate),
+        update: mock(createUpdate),
       },
     },
     storedBattles,
@@ -303,9 +290,9 @@ const createRedisBoundary = ({
   const locks = new Map<string, { expiresAt: number | null; token: string }>();
 
   return {
-    del: vi.fn(async (key: string) => (values.delete(key) ? 1 : 0)),
-    deleteByPattern: vi.fn(),
-    eval: vi.fn(
+    del: mock(async (key: string) => (values.delete(key) ? 1 : 0)),
+    deleteByPattern: mock(),
+    eval: mock(
       async (_script: string, keys: string[], args: Array<string | number>) => {
         const [key] = keys;
         const [token, ttlSeconds] = args;
@@ -326,7 +313,7 @@ const createRedisBoundary = ({
         return 0;
       },
     ),
-    getJson: vi.fn(async (key: string) => {
+    getJson: mock(async (key: string) => {
       const cached = values.get(key);
       if (!cached) return null;
       if (cached.expiresAt !== null && cached.expiresAt <= now()) {
@@ -335,16 +322,16 @@ const createRedisBoundary = ({
       }
       return cached.value;
     }),
-    getOrSetJsonBestEffort: vi.fn(
+    getOrSetJsonBestEffort: mock(
       ({ factory }: { factory: () => Promise<unknown> }) => factory(),
     ),
-    setJson: vi.fn(async (key: string, value: unknown, ttlSeconds?: number) => {
+    setJson: mock(async (key: string, value: unknown, ttlSeconds?: number) => {
       values.set(key, {
         expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
         value,
       });
     }),
-    setNX: vi.fn(async (key: string, token: string, ttlSeconds?: number) => {
+    setNX: mock(async (key: string, token: string, ttlSeconds?: number) => {
       const existingLock = locks.get(key);
       if (
         existingLock &&
@@ -376,20 +363,20 @@ const createTestApplication = async ({
   ) as unknown as DrizzleDatabase;
   const redisService = redis as unknown as RedisStore;
   const analyticsService = {
-    invalidateAnalyticsCache: vi.fn(() => Effect.void),
+    invalidateAnalyticsCache: mock(() => Effect.void),
   } as unknown as BattleAnalytics;
   const battlesModule = makeBattles(
     drizzle,
     {
-      uploadBattleData: vi.fn(),
-      getBattleData: vi.fn(),
+      uploadBattleData: mock(),
+      getBattleData: mock(),
     } as unknown as BattleObjectStorage,
     redisService,
     {} as BattlePagination,
     analyticsService,
     {} as BattleListFilter,
     {
-      upsertUserCharacter: vi.fn(() => Effect.void),
+      upsertUserCharacter: mock(() => Effect.void),
     } as unknown as BattleMetadata,
     {
       cacheTtlSeconds: 10,
@@ -402,13 +389,12 @@ const createTestApplication = async ({
   const battlesService = runEffectService(battlesModule);
   const boundary = makeBattlelogTestBoundary(
     makeBattlelogOperations(battlesModule, analyticsService, {
-      add: vi.fn(),
+      add: mock(),
     } as never),
   );
   const app: TestApplication = {
-    close: boundary.dispose,
-    get: () => battlesService,
-    getHttpServer: () => boundary.handler,
+    ...boundary,
+    battles: battlesService,
   };
   return { app, database };
 };
@@ -417,7 +403,11 @@ describe("battle creation deduplication", () => {
   let app: TestApplication;
 
   afterEach(async () => {
-    await app?.close();
+    try {
+      await app?.dispose();
+    } finally {
+      mock.restore();
+    }
   });
 
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
@@ -427,32 +417,24 @@ describe("battle creation deduplication", () => {
     app = testApplication.app;
 
     const [firstResponse, secondResponse] = await Promise.all([
-      request(app.getHttpServer())
-        .post("/battles")
-        .set(authHeaders)
-        .send({
-          ...battleContext,
-          submissionId: "incremental-submission",
-          events: [battleEvent, battleEvent],
-        })
-        .expect(201),
-      request(app.getHttpServer())
-        .post("/battles")
-        .set(authHeaders)
-        .send({
-          ...battleContext,
-          submissionId: "compact-submission",
-          events: [{ ...battleEvent, ev: 1_785_091_976.9 }],
-        })
-        .expect(201),
+      postBattle(app.handler, {
+        ...battleContext,
+        submissionId: "incremental-submission",
+        events: [battleEvent, battleEvent],
+      }),
+      postBattle(app.handler, {
+        ...battleContext,
+        submissionId: "compact-submission",
+        events: [{ ...battleEvent, ev: 1_785_091_976.9 }],
+      }),
     ]);
 
     expect(secondResponse.body).toEqual(firstResponse.body);
 
-    const battleResponse = await request(app.getHttpServer())
-      .get(`/battles/${firstResponse.body.battleId}`)
-      .set(authHeaders)
-      .expect(200);
+    const battleResponse = await getBattle(
+      app.handler,
+      `/battles/${firstResponse.body.battleId}`,
+    );
     const cashtelan = battleResponse.body.warriors.find(
       (warrior: { name: string }) => warrior.name === "cashtelan",
     );
@@ -465,24 +447,16 @@ describe("battle creation deduplication", () => {
     const testApplication = await createTestApplication();
     app = testApplication.app;
 
-    const compactResponse = await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "compact-duration-submission",
-        events: [battleEvent],
-      })
-      .expect(201);
-    const incrementalResponse = await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "incremental-duration-submission",
-        events: incrementalBattleEvents,
-      })
-      .expect(201);
+    const compactResponse = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "compact-duration-submission",
+      events: [battleEvent],
+    });
+    const incrementalResponse = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "incremental-duration-submission",
+      events: incrementalBattleEvents,
+    });
 
     expect(incrementalResponse.body).toEqual(compactResponse.body);
     expect(testApplication.database.storedBattles).toHaveLength(1);
@@ -510,7 +484,7 @@ describe("battle creation deduplication", () => {
       },
     });
     app = testApplication.app;
-    const battlesService = app.get(makeBattles);
+    const battlesService = app.battles;
     const firstCreation = battlesService.createBattle({
       data: {
         ...battleContext,
@@ -552,7 +526,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("waits for an in-flight creation to finish after losing the lock", async () => {
-    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
 
     let releaseTransaction!: () => void;
     const transactionGate = new Promise<void>((resolve) => {
@@ -572,7 +546,7 @@ describe("battle creation deduplication", () => {
       redis,
     });
     app = testApplication.app;
-    const battlesService = app.get(makeBattles);
+    const battlesService = app.battles;
     let creationSettled = false;
     const creationOutcome = battlesService
       .createBattle({
@@ -607,34 +581,30 @@ describe("battle creation deduplication", () => {
     const testApplication = await createTestApplication();
     app = testApplication.app;
 
-    const response = await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "events-without-ids",
-        events: [
-          {
-            f: {
-              init: "1",
-              m: moves.slice(0, 6),
-              w: warriors,
-            },
+    const response = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "events-without-ids",
+      events: [
+        {
+          f: {
+            init: "1",
+            m: moves.slice(0, 6),
+            w: warriors,
           },
-          {
-            f: {
-              endBattle: 1,
-              m: moves.slice(6),
-            },
+        },
+        {
+          f: {
+            endBattle: 1,
+            m: moves.slice(6),
           },
-        ],
-      })
-      .expect(201);
+        },
+      ],
+    });
 
-    const battleResponse = await request(app.getHttpServer())
-      .get(`/battles/${response.body.battleId}`)
-      .set(authHeaders)
-      .expect(200);
+    const battleResponse = await getBattle(
+      app.handler,
+      `/battles/${response.body.battleId}`,
+    );
     const cashtelan = battleResponse.body.warriors.find(
       (warrior: { name: string }) => warrior.name === "cashtelan",
     );
@@ -646,36 +616,32 @@ describe("battle creation deduplication", () => {
     const testApplication = await createTestApplication();
     app = testApplication.app;
 
-    const response = await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "events-with-repeated-id",
-        events: [
-          {
-            ev: 1_785_091_976.7,
-            f: {
-              init: "1",
-              m: moves.slice(0, 6),
-              w: warriors,
-            },
+    const response = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "events-with-repeated-id",
+      events: [
+        {
+          ev: 1_785_091_976.7,
+          f: {
+            init: "1",
+            m: moves.slice(0, 6),
+            w: warriors,
           },
-          {
-            ev: 1_785_091_976.7,
-            f: {
-              endBattle: 1,
-              m: moves.slice(6),
-            },
+        },
+        {
+          ev: 1_785_091_976.7,
+          f: {
+            endBattle: 1,
+            m: moves.slice(6),
           },
-        ],
-      })
-      .expect(201);
+        },
+      ],
+    });
 
-    const battleResponse = await request(app.getHttpServer())
-      .get(`/battles/${response.body.battleId}`)
-      .set(authHeaders)
-      .expect(200);
+    const battleResponse = await getBattle(
+      app.handler,
+      `/battles/${response.body.battleId}`,
+    );
     const cashtelan = battleResponse.body.warriors.find(
       (warrior: { name: string }) => warrior.name === "cashtelan",
     );
@@ -684,31 +650,23 @@ describe("battle creation deduplication", () => {
   });
 
   it("allows an identical battle after the deduplication window", async () => {
-    const dateNow = vi
-      .spyOn(Date, "now")
-      .mockReturnValue(Date.parse("2026-07-26T18:52:57.000Z"));
+    const dateNow = spyOn(Date, "now").mockReturnValue(
+      Date.parse("2026-07-26T18:52:57.000Z"),
+    );
     const testApplication = await createTestApplication();
     app = testApplication.app;
 
-    const firstResponse = await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "first-real-battle",
-        events: [battleEvent],
-      })
-      .expect(201);
+    const firstResponse = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "first-real-battle",
+      events: [battleEvent],
+    });
     dateNow.mockReturnValue(Date.parse("2026-07-26T18:53:07.001Z"));
-    const secondResponse = await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "second-real-battle",
-        events: [{ ...battleEvent, ev: 1_785_091_986.7 }],
-      })
-      .expect(201);
+    const secondResponse = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "second-real-battle",
+      events: [{ ...battleEvent, ev: 1_785_091_986.7 }],
+    });
 
     expect(secondResponse.body.battleId).not.toBe(firstResponse.body.battleId);
     expect(testApplication.database.storedBattles).toHaveLength(2);
@@ -716,42 +674,34 @@ describe("battle creation deduplication", () => {
   });
 
   it("returns 503 without storing a battle when Redis is unavailable", async () => {
-    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
     redis.getJson.mockRejectedValue(new Error("Redis unavailable"));
     const testApplication = await createTestApplication({ redis });
     app = testApplication.app;
 
-    await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "redis-failure",
-        events: [battleEvent],
-      })
-      .expect(503);
+    await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 503, {
+      ...battleContext,
+      submissionId: "redis-failure",
+      events: [battleEvent],
+    });
 
     expect(testApplication.database.storedBattles).toHaveLength(0);
   });
 
   it("returns 503 without storing a battle when the deduplication lock times out", async () => {
-    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
     redis.getJson.mockResolvedValue(null);
     redis.setNX.mockResolvedValue(false);
     const testApplication = await createTestApplication({ redis });
     app = testApplication.app;
 
-    await request(app.getHttpServer())
-      .post("/battles")
-      .set(authHeaders)
-      .send({
-        ...battleContext,
-        submissionId: "lock-timeout",
-        events: [battleEvent],
-      })
-      .expect(503);
+    await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 503, {
+      ...battleContext,
+      submissionId: "lock-timeout",
+      events: [battleEvent],
+    });
 
     expect(testApplication.database.storedBattles).toHaveLength(0);
   });

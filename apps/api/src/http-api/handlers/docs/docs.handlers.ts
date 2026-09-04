@@ -25,19 +25,16 @@ import type {
   roleTable,
 } from "#src/database/drizzle/schema";
 import {
-  DocsControllerCreateDocument201,
-  type DocsControllerCreateDocumentRequestJson,
-  DocsControllerDeleteDocument200,
-  DocsControllerGetDocument200,
-  DocsControllerGetDocuments200,
-  DocsControllerGetHistory200,
-  DocsControllerGetHistorySnapshot200,
-  DocsControllerGetTrash200,
-  DocsControllerPurgeDocument200,
-  DocsControllerRestoreDocument200,
-  DocsControllerUpdateDocument200,
-  type DocsControllerUpdateDocumentRequestJson,
-} from "../../contracts/docs/schemas.js";
+  DocumentResponse,
+  DocumentMutationResponse,
+  DocumentListResponse,
+  DocumentHistoryResponse,
+  DocumentHistorySnapshotResponse,
+  DocumentTrashResponse,
+  type CreateDocumentRequest,
+  type UpdateDocumentRequest,
+} from "#src/contracts/docs/schemas";
+
 import { LootlogApi } from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;
@@ -122,7 +119,7 @@ export class DocsData extends Context.Service<
     readonly list: (caller: AuthorizedDocsCaller) => DocsEffect<unknown>;
     readonly create: (
       caller: AuthorizedDocsCaller,
-      payload: DocsControllerCreateDocumentRequestJson,
+      payload: CreateDocumentRequest,
     ) => DocsEffect<unknown>;
     readonly trash: (caller: AuthorizedDocsCaller) => DocsEffect<unknown>;
     readonly history: (
@@ -141,7 +138,7 @@ export class DocsData extends Context.Service<
     readonly update: (
       caller: AuthorizedDocsCaller,
       documentId: string,
-      payload: DocsControllerUpdateDocumentRequestJson,
+      payload: UpdateDocumentRequest,
     ) => DocsEffect<unknown>;
     readonly moveToTrash: (
       caller: AuthorizedDocsCaller,
@@ -323,18 +320,18 @@ export const listDocuments = (guildId: string) =>
     "DocsControllerGetDocuments",
     guildId,
     (data, caller) => data.list(caller),
-    Schema.decodeUnknownSync(DocsControllerGetDocuments200),
+    Schema.decodeUnknownSync(DocumentListResponse),
   );
 
 export const createDocument = (
   guildId: string,
-  payload: DocsControllerCreateDocumentRequestJson,
+  payload: CreateDocumentRequest,
 ) =>
   execute(
     "DocsControllerCreateDocument",
     guildId,
     (data, caller) => data.create(caller, payload),
-    Schema.decodeUnknownSync(DocsControllerCreateDocument201),
+    Schema.decodeUnknownSync(DocumentResponse),
   );
 
 export const getTrash = (guildId: string) =>
@@ -342,7 +339,7 @@ export const getTrash = (guildId: string) =>
     "DocsControllerGetTrash",
     guildId,
     (data, caller) => data.trash(caller),
-    Schema.decodeUnknownSync(DocsControllerGetTrash200),
+    Schema.decodeUnknownSync(DocumentTrashResponse),
   );
 
 export const getHistory = (guildId: string, documentId: string) =>
@@ -350,7 +347,7 @@ export const getHistory = (guildId: string, documentId: string) =>
     "DocsControllerGetHistory",
     guildId,
     (data, caller) => data.history(caller, documentId),
-    Schema.decodeUnknownSync(DocsControllerGetHistory200),
+    Schema.decodeUnknownSync(DocumentHistoryResponse),
   );
 
 export const getHistorySnapshot = (
@@ -362,7 +359,7 @@ export const getHistorySnapshot = (
     "DocsControllerGetHistorySnapshot",
     guildId,
     (data, caller) => data.historySnapshot(caller, documentId, historyId),
-    Schema.decodeUnknownSync(DocsControllerGetHistorySnapshot200),
+    Schema.decodeUnknownSync(DocumentHistorySnapshotResponse),
   );
 
 export const getDocument = (guildId: string, documentId: string) =>
@@ -370,19 +367,19 @@ export const getDocument = (guildId: string, documentId: string) =>
     "DocsControllerGetDocument",
     guildId,
     (data, caller) => data.get(caller, documentId),
-    Schema.decodeUnknownSync(DocsControllerGetDocument200),
+    Schema.decodeUnknownSync(DocumentResponse),
   );
 
 export const updateDocument = (
   guildId: string,
   documentId: string,
-  payload: DocsControllerUpdateDocumentRequestJson,
+  payload: UpdateDocumentRequest,
 ) =>
   execute(
     "DocsControllerUpdateDocument",
     guildId,
     (data, caller) => data.update(caller, documentId, payload),
-    Schema.decodeUnknownSync(DocsControllerUpdateDocument200),
+    Schema.decodeUnknownSync(DocumentResponse),
   );
 
 export const deleteDocument = (guildId: string, documentId: string) =>
@@ -390,7 +387,7 @@ export const deleteDocument = (guildId: string, documentId: string) =>
     "DocsControllerDeleteDocument",
     guildId,
     (data, caller) => data.moveToTrash(caller, documentId),
-    Schema.decodeUnknownSync(DocsControllerDeleteDocument200),
+    Schema.decodeUnknownSync(DocumentMutationResponse),
   );
 
 export const restoreDocument = (guildId: string, documentId: string) =>
@@ -398,7 +395,7 @@ export const restoreDocument = (guildId: string, documentId: string) =>
     "DocsControllerRestoreDocument",
     guildId,
     (data, caller) => data.restore(caller, documentId),
-    Schema.decodeUnknownSync(DocsControllerRestoreDocument200),
+    Schema.decodeUnknownSync(DocumentMutationResponse),
   );
 
 export const purgeDocument = (guildId: string, documentId: string) =>
@@ -406,7 +403,7 @@ export const purgeDocument = (guildId: string, documentId: string) =>
     "DocsControllerPurgeDocument",
     guildId,
     (data, caller) => data.purge(caller, documentId),
-    Schema.decodeUnknownSync(DocsControllerPurgeDocument200),
+    Schema.decodeUnknownSync(DocumentMutationResponse),
   );
 
 const statusResponse = (error: { readonly status: number }) =>

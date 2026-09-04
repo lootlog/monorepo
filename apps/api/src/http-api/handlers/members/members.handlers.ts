@@ -10,18 +10,15 @@ import {
 } from "@lootlog/schema/permissions";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  MembersControllerDeactivateMember200,
-  MembersControllerGetGuildMemberReferences200,
-  MembersControllerGetGuildMembers200,
-  MembersControllerGetGuildMembersSummary200,
-  MembersControllerGetLatestRefreshJob200,
-  MembersControllerGetMe200,
-  MembersControllerGetMemberLootlogConfigSummary200,
-  MembersControllerGetRefreshJobStatus200,
-  MembersControllerRefreshAllMembers201,
-  MembersControllerRefreshMe200,
-  MembersControllerRefreshMember200,
-} from "../../contracts/members/schemas.js";
+  MemberResponse,
+  MemberReferencesResponse,
+  MembersResponse,
+  MemberSummariesResponse,
+  NullableMemberRefreshJobResponse,
+  NullableMemberResponse,
+  MemberLootlogConfigSummaryResponse,
+  MemberRefreshJobResponse,
+} from "#src/contracts/members/schemas";
 
 export type MembersIdentity = {
   readonly userId: string;
@@ -199,7 +196,7 @@ export const getCurrentMember = Effect.fn("getCurrentMember")(function* (
     service.getMe(current, guildId, refresh),
   );
   return yield* decode(
-    refresh ? MembersControllerRefreshMe200 : MembersControllerGetMe200,
+    refresh ? NullableMemberResponse : NullableMemberResponse,
     value,
   );
 });
@@ -215,7 +212,7 @@ export const refreshGuildMember = Effect.fn("refreshGuildMember")(function* (
   const value = yield* data((service) =>
     service.refreshMember(access.guildId, discordId),
   );
-  return yield* decode(MembersControllerRefreshMember200, value);
+  return yield* decode(NullableMemberResponse, value);
 });
 
 export const deactivateGuildMember = Effect.fn("deactivateGuildMember")(
@@ -227,7 +224,7 @@ export const deactivateGuildMember = Effect.fn("deactivateGuildMember")(
     const value = yield* data((service) =>
       service.deactivateMember(access.guildId, discordId),
     );
-    return yield* decode(MembersControllerDeactivateMember200, value);
+    return yield* decode(MemberResponse, value);
   },
 );
 
@@ -269,10 +266,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const value = yield* readData((service) =>
               service.getLootlogConfigSummary(access.guildId, params.discordId),
             );
-            return yield* decode(
-              MembersControllerGetMemberLootlogConfigSummary200,
-              value,
-            );
+            return yield* decode(MemberLootlogConfigSummaryResponse, value);
           }),
           [403, 404],
         ),
@@ -296,7 +290,7 @@ export const MembersHandlers = HttpApiBuilder.group(
                 query.includeInactive === true,
               ),
             );
-            return yield* decode(MembersControllerGetGuildMembers200, value);
+            return yield* decode(MembersResponse, value);
           }),
           [403],
         ),
@@ -316,10 +310,7 @@ export const MembersHandlers = HttpApiBuilder.group(
                   query.includeInactive === true,
                 ),
               );
-              return yield* decode(
-                MembersControllerGetGuildMemberReferences200,
-                value,
-              );
+              return yield* decode(MemberReferencesResponse, value);
             }),
             [403],
           ),
@@ -334,10 +325,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const value = yield* readData((service) =>
               service.getGuildMembersSummary(access.guildId),
             );
-            return yield* decode(
-              MembersControllerGetGuildMembersSummary200,
-              value,
-            );
+            return yield* decode(MemberSummariesResponse, value);
           }),
           [403],
         ),
@@ -353,7 +341,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const value = yield* data((service) =>
               service.refreshAllMembers(access.guildId, access.discordId),
             );
-            return yield* decode(MembersControllerRefreshAllMembers201, value);
+            return yield* decode(MemberRefreshJobResponse, value);
           }),
           [403],
         ),
@@ -369,10 +357,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const value = yield* refreshJobData((service) =>
               service.getLatestRefreshJob(access.guildId),
             );
-            return yield* decode(
-              MembersControllerGetLatestRefreshJob200,
-              value,
-            );
+            return yield* decode(NullableMemberRefreshJobResponse, value);
           }),
           [403, 404],
         ),
@@ -388,10 +373,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const value = yield* refreshJobData((service) =>
               service.getRefreshJobStatus(access.guildId, params.jobId),
             );
-            return yield* decode(
-              MembersControllerGetRefreshJobStatus200,
-              value,
-            );
+            return yield* decode(MemberRefreshJobResponse, value);
           }),
           [403, 404],
         ),

@@ -2,7 +2,7 @@
  * Marks the baseline migration as applied without executing the SQL.
  * Use this on databases that already have the tables (e.g. created by Prisma).
  *
- * Usage: npx tsx scripts/migrate-init.ts
+ * Usage: bun scripts/migrate-init.ts
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -56,10 +56,13 @@ async function main() {
       return;
     }
 
+    // Only the pre-rewrite history can be adopted; new migrations must execute.
     const subdirs = fs
       .readdirSync(migrationsFolder)
-      .filter((d) =>
-        fs.existsSync(path.join(migrationsFolder, d, "migration.sql")),
+      .filter(
+        (d) =>
+          d <= "20260726194145_plain_gorgon" &&
+          fs.existsSync(path.join(migrationsFolder, d, "migration.sql")),
       )
       .sort();
 

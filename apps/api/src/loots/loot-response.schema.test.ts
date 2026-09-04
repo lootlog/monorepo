@@ -1,4 +1,4 @@
-import { describe, expect, it } from "#test/bun-test";
+import { describe, expect, it } from "bun:test";
 import { Schema } from "effect";
 import { LootResponse } from "#src/loots/loot-response.schema";
 

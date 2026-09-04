@@ -12,7 +12,7 @@ import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import { EventWrappedApiResponseDto_Output } from "#src/http-api/contracts/events/schemas";
+import { EventWrappedResponse } from "#src/contracts/events/schemas";
 import { clipToWindowSeconds } from "#src/events/monitoring/tracking-window";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,
@@ -134,11 +134,7 @@ export const makeEventWrapped = (
     const load = getWrappedUncached(guild, eventId, permissions, roles);
     return Effect.gen(function* () {
       const cached = yield* Effect.tryPromise({
-        try: () =>
-          redis.getJson(
-            cacheKey,
-            makeJsonCodec(EventWrappedApiResponseDto_Output),
-          ),
+        try: () => redis.getJson(cacheKey, makeJsonCodec(EventWrappedResponse)),
         catch: (error) => error,
       }).pipe(
         Effect.catch((error) =>

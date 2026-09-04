@@ -7,22 +7,18 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  MessagingControllerSendNotification201,
-  MessagingControllerSendNotification429,
-  MessagingControllerSendNotificationRequestJson,
-  MessagingControllerVolunteerPathParams,
-  MessagingControllerVolunteerRequestJson,
-} from "./schemas.js";
+  SentNotificationResponse,
+  NotificationRateLimitResponse,
+  SendNotificationRequest,
+  NotificationPath,
+  VolunteerForPartyRequest,
+} from "#src/contracts/messaging/schemas";
 
 export class MessagingGroup extends HttpApiGroup.make("messaging").add(
   HttpApiEndpoint.post("MessagingControllerSendNotification", "/messaging", {
-    payload: MessagingControllerSendNotificationRequestJson,
-    success: MessagingControllerSendNotification201.pipe(
-      HttpApiSchema.status(201),
-    ),
-    error: MessagingControllerSendNotification429.pipe(
-      HttpApiSchema.status(429),
-    ),
+    payload: SendNotificationRequest,
+    success: SentNotificationResponse.pipe(HttpApiSchema.status(201)),
+    error: NotificationRateLimitResponse.pipe(HttpApiSchema.status(429)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MessagingController_sendNotification")
@@ -32,8 +28,8 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
     "MessagingControllerVolunteer",
     "/messaging/:notificationId/volunteer",
     {
-      params: MessagingControllerVolunteerPathParams,
-      payload: MessagingControllerVolunteerRequestJson,
+      params: NotificationPath,
+      payload: VolunteerForPartyRequest,
       success: HttpApiSchema.Empty(201),
     },
   )

@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import type { CreateKillDto } from "#src/http-api/contracts/kills/schemas";
+import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   KillCreationError,
   makeKillCreation,
@@ -14,7 +14,7 @@ const payload = {
   accountId: "account-1",
   characterId: "character-1",
   npc: { id: 123, name: "Mushita", lvl: 100, wt: 80 },
-} as CreateKillDto;
+} as CreateKillRequest;
 
 const logger = {
   error: () => undefined,

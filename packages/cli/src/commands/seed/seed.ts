@@ -1,4 +1,4 @@
-import { buildTimerKey } from "../../../../../apps/api/src/timers/timer-key.js";
+import { buildTimerKey } from "@lootlog/api/timers/timer-key";
 import {
   guildTable,
   itemSnapshotTable,
@@ -20,11 +20,11 @@ import {
   timerTable,
   userCharactersLootlogSettingsTable,
   userSettingsTable,
-} from "../../../../../apps/api/src/database/drizzle/schema.js";
+} from "@lootlog/api/database/schema";
 import {
   battles as battlesTable,
   battleWarriors as battleWarriorsTable,
-} from "../../../../../apps/battlelog/src/database/schema.js";
+} from "@lootlog/battlelog/database/schema";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";

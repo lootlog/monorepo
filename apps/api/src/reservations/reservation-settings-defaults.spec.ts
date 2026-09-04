@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "#test/bun-test";
+import { describe, expect, it } from "bun:test";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
 
 describe("Reservation settings defaults", () => {

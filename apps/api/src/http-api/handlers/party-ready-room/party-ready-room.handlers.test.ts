@@ -5,9 +5,9 @@ import {
   ResourceConflictError,
 } from "#src/shared/http/http-errors";
 import {
-  PartyReadyRoomClientUpdateDto_Output,
-  PartyReadyRoomProjectionDto_Output,
-} from "../../contracts/party-ready-room/schemas.js";
+  PartyReadyRoomUpdateResponse,
+  PartyReadyRoomResponse,
+} from "#src/contracts/party-ready-room/schemas";
 import {
   ReadyRoomAccessDenied,
   ReadyRoomAuthorization,
@@ -117,7 +117,7 @@ describe("Party Ready Room HttpApi handlers", () => {
       },
     ]);
     expect(response.expiresAt).toBe("2026-09-02T12:30:00.000Z");
-    expect(Schema.is(PartyReadyRoomProjectionDto_Output)(response)).toBe(true);
+    expect(Schema.is(PartyReadyRoomResponse)(response)).toBe(true);
   });
 
   it("fails closed before data access when identity authentication fails", async () => {
@@ -204,6 +204,6 @@ describe("Party Ready Room HttpApi handlers", () => {
 
     expect(error).toBe(forbidden);
     expect(removeCalled).toBe(false);
-    expect(Schema.is(PartyReadyRoomClientUpdateDto_Output)(update)).toBe(true);
+    expect(Schema.is(PartyReadyRoomUpdateResponse)(update)).toBe(true);
   });
 });

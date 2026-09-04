@@ -1,3 +1,4 @@
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
@@ -288,7 +289,8 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           if (
             document.title === options.title &&
-            JSON.stringify(document.content) === JSON.stringify(options.content)
+            stableJsonStringify(document.content) ===
+              stableJsonStringify(options.content)
           ) {
             return document;
           }

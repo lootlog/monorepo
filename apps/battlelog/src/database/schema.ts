@@ -1,3 +1,4 @@
+// Hand-maintained Battlelog database schema; Drizzle generates SQL migrations from it.
 import {
   boolean,
   doublePrecision,
@@ -80,6 +81,17 @@ export const battles = pgTable(
     index("battles_public_createdAt_idx").on(table.public, table.createdAt),
     index("battles_id_idx").on(table.id),
   ],
+);
+
+export const battleObjectDeletions = pgTable(
+  "battle_object_deletions",
+  {
+    battleId: text("battleId").primaryKey(),
+    userId: text("userId").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    retryAt: timestamp("retryAt").defaultNow().notNull(),
+  },
+  (table) => [index("battle_object_deletions_retryAt_idx").on(table.retryAt)],
 );
 
 export const userCharacters = pgTable(

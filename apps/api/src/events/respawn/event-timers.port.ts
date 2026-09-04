@@ -4,7 +4,7 @@ import { Clock, Effect, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
-import { mapTimerResponse } from "#src/http-api/handlers/timers/timer-response";
+import { mapTimerResponse } from "#src/timers/timer-projection";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";

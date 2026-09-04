@@ -20,7 +20,7 @@ import {
   TimersInvariantViolation,
   toTimersDataFailure,
 } from "./timer-errors.js";
-import { mapTimerResponse } from "./timer-response.js";
+import { mapTimerResponse } from "#src/timers/timer-projection";
 
 export interface RestoreTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;

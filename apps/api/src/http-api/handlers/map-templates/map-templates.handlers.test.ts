@@ -2,9 +2,10 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import {
-  MapTemplateResponseDto,
-  type CreateMapTemplateDto,
-} from "../../contracts/map-templates/schemas.js";
+  MapTemplateResponseSchema,
+  type CreateMapTemplate,
+} from "#src/map-templates/map-template.schema";
+
 import {
   createMapTemplate,
   MapTemplateNotFound,
@@ -14,7 +15,7 @@ import {
   updateMapTemplate,
 } from "./map-templates.handlers.js";
 
-const payload: CreateMapTemplateDto = {
+const payload: CreateMapTemplate = {
   name: "Heros route",
   maps: [{ id: 10, name: "Ithan" }],
 };
@@ -57,7 +58,7 @@ describe("Map Templates HttpApi handlers", () => {
     }> = [];
     const createCalls: Array<{
       guildId: string;
-      payload: CreateMapTemplateDto;
+      payload: CreateMapTemplate;
     }> = [];
     const layer = provideTestServices(
       makeAuthorization((options) => {
@@ -81,10 +82,10 @@ describe("Map Templates HttpApi handlers", () => {
     ]);
     expect(createCalls).toEqual([{ guildId: "guild-a", payload }]);
     expect(response).toEqual(storedTemplate);
-    expect(Schema.is(MapTemplateResponseDto)(response)).toBe(true);
+    expect(Schema.is(MapTemplateResponseSchema)(response)).toBe(true);
     expect(
       await Effect.runPromise(
-        Schema.encodeEffect(MapTemplateResponseDto)(response),
+        Schema.encodeEffect(MapTemplateResponseSchema)(response),
       ),
     ).toEqual({
       ...storedTemplate,

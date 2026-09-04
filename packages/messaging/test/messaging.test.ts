@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from "bun:test";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ConsumeMessage } from "amqplib";
-import { Effect } from "effect";
+import { Deferred, Effect, Fiber } from "effect";
 import {
   RabbitMessaging,
   type RabbitChannel,
@@ -111,6 +111,7 @@ describe("RabbitMessaging", () => {
     expect(publish).toHaveBeenCalledTimes(1);
     expect(publish.mock.calls[0]?.[0]).toBe("default");
     expect(publish.mock.calls[0]?.[1]).toBe("guilds.loots.create");
+    expect(publish.mock.calls[0]?.[3]).toMatchObject({ persistent: true });
   });
 
   test("acks a successful delivery", async () => {
@@ -264,7 +265,7 @@ describe("RabbitMessaging", () => {
   });
 
   test("interrupts in-flight deliveries when the consumer is cancelled", async () => {
-    const { channel, cancel, dispatch } = makeChannel();
+    const { channel, cancel, nack, dispatch } = makeChannel();
     let interrupted = false;
 
     await runWithChannel(
@@ -293,6 +294,7 @@ describe("RabbitMessaging", () => {
     );
 
     expect(cancel).toHaveBeenCalledWith("consumer-1");
+    expect(nack).toHaveBeenCalledWith(expect.anything(), false, true);
     expect(interrupted).toBe(true);
   });
 
@@ -333,4 +335,100 @@ describe("RabbitMessaging", () => {
     expect(result._tag).toBe("Failure");
     expect(interrupted).toBe(true);
   });
+});
+
+test("closing the consumer scope cancels the broker subscription exactly once", async () => {
+  const { channel, cancel } = makeChannel();
+  await runWithChannel(
+    channel,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      const consumer = yield* messaging.consume(
+        { queue: "test", failurePolicy: { strategy: "requeue" } },
+        () => Effect.void,
+      );
+      yield* consumer.cancel;
+    }),
+  );
+  expect(cancel).toHaveBeenCalledTimes(1);
+  cancel.mockClear();
+  await runWithChannel(
+    channel,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      yield* messaging.consume(
+        { queue: "test", failurePolicy: { strategy: "requeue" } },
+        () => Effect.void,
+      );
+    }),
+  );
+  expect(cancel).toHaveBeenCalledTimes(1);
+});
+
+test("a broker confirmation failure is not reported as published", async () => {
+  const { channel } = makeChannel();
+  const rejectingChannel = {
+    ...channel,
+    waitForConfirms: () => Promise.reject(new Error("broker rejected message")),
+  };
+  await expect(
+    runWithChannel(
+      rejectingChannel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.publish({
+          routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+          content: new Uint8Array(),
+        });
+      }),
+    ),
+  ).rejects.toMatchObject({ operation: "publish" });
+});
+
+test("interruption while the broker registers a consumer still cancels it", async () => {
+  const { channel, cancel } = makeChannel();
+  const started = Deferred.makeUnsafe<void>();
+  const registration = Promise.withResolvers<{ consumerTag: string }>();
+  const delayedChannel = {
+    ...channel,
+    consume: () => {
+      Deferred.doneUnsafe(started, Effect.void);
+      return registration.promise;
+    },
+  };
+  const fiber = Effect.runFork(
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      yield* messaging.consume(
+        { queue: "test", failurePolicy: { strategy: "requeue" } },
+        () => Effect.void,
+      );
+      yield* Effect.never;
+    }).pipe(
+      Effect.provide(RabbitMessaging.layerFromChannel(delayedChannel)),
+      Effect.scoped,
+    ),
+  );
+  await Effect.runPromise(Deferred.await(started));
+  const interruption = Effect.runFork(Fiber.interrupt(fiber));
+  registration.resolve({ consumerTag: "delayed" });
+  await Effect.runPromise(Fiber.join(interruption));
+  expect(cancel).toHaveBeenCalledWith("delayed");
+});
+
+test("scope closure retries a cancellation that previously failed", async () => {
+  const { channel, cancel } = makeChannel();
+  cancel.mockRejectedValueOnce(new Error("cancel failed"));
+  await runWithChannel(
+    channel,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      const consumer = yield* messaging.consume(
+        { queue: "test", failurePolicy: { strategy: "requeue" } },
+        () => Effect.void,
+      );
+      yield* consumer.cancel.pipe(Effect.ignore);
+    }),
+  );
+  expect(cancel).toHaveBeenCalledTimes(2);
 });

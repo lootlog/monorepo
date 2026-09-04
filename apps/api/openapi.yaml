@@ -5293,8 +5293,8 @@ paths:
                 - ELITE3
                 - HERO
                 - EVENT_HERO
-                - TITAN
                 - COLOSSUS
+                - TITAN
                 - NPC
           required: false
         - name: minLvl
@@ -5360,8 +5360,8 @@ paths:
                 - ELITE3
                 - HERO
                 - EVENT_HERO
-                - TITAN
                 - COLOSSUS
+                - TITAN
                 - NPC
           required: false
         - name: npcType
@@ -5375,8 +5375,8 @@ paths:
               - ELITE3
               - HERO
               - EVENT_HERO
-              - TITAN
               - COLOSSUS
+              - TITAN
               - NPC
           required: false
         - name: world
@@ -5433,8 +5433,8 @@ paths:
                 - ELITE3
                 - HERO
                 - EVENT_HERO
-                - TITAN
                 - COLOSSUS
+                - TITAN
                 - NPC
           required: false
         - name: world
@@ -5708,8 +5708,8 @@ paths:
                 - ELITE3
                 - HERO
                 - EVENT_HERO
-                - TITAN
                 - COLOSSUS
+                - TITAN
                 - NPC
           required: false
         - name: search
@@ -7882,8 +7882,8 @@ components:
                 - ELITE3
                 - HERO
                 - EVENT_HERO
-                - TITAN
                 - COLOSSUS
+                - TITAN
                 - NPC
             icon:
               nullable: true
@@ -8130,8 +8130,8 @@ components:
                 - ELITE3
                 - HERO
                 - EVENT_HERO
-                - TITAN
                 - COLOSSUS
+                - TITAN
                 - NPC
             icon:
               nullable: true
@@ -8375,8 +8375,8 @@ components:
             - ELITE3
             - HERO
             - EVENT_HERO
-            - TITAN
             - COLOSSUS
+            - TITAN
             - NPC
         prof:
           type: string
@@ -8764,8 +8764,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
       nullable: true
-    Suspend_:
-      $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
     TimerSettingsResponseDto:
       type: object
       properties:
@@ -9275,8 +9273,8 @@ components:
                   - ELITE3
                   - HERO
                   - EVENT_HERO
-                  - TITAN
                   - COLOSSUS
+                  - TITAN
                   - NPC
               margonemType:
                 nullable: true
@@ -9425,8 +9423,8 @@ components:
                   - ELITE3
                   - HERO
                   - EVENT_HERO
-                  - TITAN
                   - COLOSSUS
+                  - TITAN
                   - NPC
               lvl:
                 nullable: true
@@ -9726,8 +9724,8 @@ components:
                   - ELITE3
                   - HERO
                   - EVENT_HERO
-                  - TITAN
                   - COLOSSUS
+                  - TITAN
                   - NPC
               margonemType:
                 nullable: true
@@ -11365,8 +11363,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
       nullable: true
-    Suspend_1:
-      $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
     NotificationTargetResponseDto:
       type: object
       properties:
@@ -11646,8 +11642,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/GuildNotificationRulesResponseDto__schema0"
       nullable: true
-    Suspend_2:
-      $ref: "#/components/schemas/GuildNotificationRulesResponseDto__schema0"
     GuildNotificationRulesResponseDto:
       type: object
       properties:
@@ -11988,13 +11982,6 @@ components:
           nullable: true
           type: string
           maxLength: 4000
-        triggerType:
-          type: string
-          enum:
-            - TIMER_BEFORE_SPAWN
-            - NPC_SPAWNED
-            - WATCHED_ITEM_DROPPED
-            - SCHEDULED_MESSAGE
         world:
           type: string
           maxLength: 50
@@ -12063,6 +12050,15 @@ components:
         scheduleTimezone:
           type: string
           maxLength: 50
+        enabled:
+          type: boolean
+        triggerType:
+          type: string
+          enum:
+            - TIMER_BEFORE_SPAWN
+            - NPC_SPAWNED
+            - WATCHED_ITEM_DROPPED
+            - SCHEDULED_MESSAGE
         targetIds:
           type: array
           items:
@@ -12070,8 +12066,6 @@ components:
             minimum: -9007199254740991
             maximum: 9007199254740991
           maxItems: 3
-        enabled:
-          type: boolean
       required:
         - triggerType
         - targetIds
@@ -12088,8 +12082,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/NotificationRuleResponseDto__schema0"
       nullable: true
-    Suspend_3:
-      $ref: "#/components/schemas/NotificationRuleResponseDto__schema0"
     NotificationRuleResponseDto:
       type: object
       properties:
@@ -12359,13 +12351,6 @@ components:
           nullable: true
           type: string
           maxLength: 4000
-        triggerType:
-          type: string
-          enum:
-            - TIMER_BEFORE_SPAWN
-            - NPC_SPAWNED
-            - WATCHED_ITEM_DROPPED
-            - SCHEDULED_MESSAGE
         world:
           type: string
           maxLength: 50
@@ -12434,6 +12419,15 @@ components:
         scheduleTimezone:
           type: string
           maxLength: 50
+        enabled:
+          type: boolean
+        triggerType:
+          type: string
+          enum:
+            - TIMER_BEFORE_SPAWN
+            - NPC_SPAWNED
+            - WATCHED_ITEM_DROPPED
+            - SCHEDULED_MESSAGE
         targetIds:
           type: array
           items:
@@ -12441,8 +12435,6 @@ components:
             minimum: -9007199254740991
             maximum: 9007199254740991
           maxItems: 3
-        enabled:
-          type: boolean
       additionalProperties: false
     NotificationJobsResponseDto__schema0:
       anyOf:
@@ -12456,8 +12448,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
       nullable: true
-    Suspend_4:
-      $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
     NotificationJobsResponseDto:
       type: object
       properties:
@@ -13365,8 +13355,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto__schema0"
       nullable: true
-    Suspend_5:
-      $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto__schema0"
     NotificationTargetWithTestTriggerResponseDto:
       type: object
       properties:
@@ -13487,8 +13475,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/WatchedItemResponseDto__schema0"
       nullable: true
-    Suspend_6:
-      $ref: "#/components/schemas/WatchedItemResponseDto__schema0"
     WatchedItemResponseDto:
       type: object
       properties:
@@ -14682,8 +14668,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
       nullable: true
-    Suspend_7:
-      $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
     SoundSettingsResponseDto:
       type: object
       properties:
@@ -15297,8 +15281,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/EventMutationResponseDto__schema0"
       nullable: true
-    Suspend_8:
-      $ref: "#/components/schemas/EventMutationResponseDto__schema0"
     EventMutationResponseDto:
       type: object
       properties:
@@ -15460,8 +15442,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
       nullable: true
-    Suspend_9:
-      $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
     EventOverviewResponseDto:
       type: object
       properties:
@@ -16967,8 +16947,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
       nullable: true
-    Suspend_10:
-      $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
     EventKillHistoryResponseDto:
       type: object
       properties:
@@ -17140,8 +17118,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
       nullable: true
-    Suspend_11:
-      $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
     EventMemberKillHistoryResponseDto:
       type: object
       properties:
@@ -17333,8 +17309,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/KillDetailResponseDto__schema0"
       nullable: true
-    Suspend_12:
-      $ref: "#/components/schemas/KillDetailResponseDto__schema0"
     KillDetailResponseDto:
       type: object
       properties:
@@ -18055,13 +18029,13 @@ components:
         minSpawnTime:
           type: string
           format: date-time
-          minLength: 1
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          minLength: 1
         maxSpawnTime:
           type: string
           format: date-time
-          minLength: 1
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          minLength: 1
       required:
         - minSpawnTime
         - maxSpawnTime
@@ -18511,8 +18485,8 @@ components:
         - ELITE3
         - HERO
         - EVENT_HERO
-        - TITAN
         - COLOSSUS
+        - TITAN
         - NPC
     GuildTopNpcsResponseDto_Output:
       type: object
@@ -18894,8 +18868,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/GuildDocumentResponseDto__schema0"
       nullable: true
-    Suspend_13:
-      $ref: "#/components/schemas/GuildDocumentResponseDto__schema0"
     GuildDocumentResponseDto:
       type: object
       properties:
@@ -19114,8 +19086,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto__schema0"
       nullable: true
-    Suspend_14:
-      $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto__schema0"
     GuildDocumentHistorySnapshotResponseDto:
       type: object
       properties:
@@ -19179,8 +19149,6 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/UpdateGuildDocumentDto__schema0"
       nullable: true
-    Suspend_15:
-      $ref: "#/components/schemas/UpdateGuildDocumentDto__schema0"
     UpdateGuildDocumentDto:
       type: object
       properties:

@@ -95,14 +95,17 @@
     "client:check": "turbo run client:check --filter=@lootlog/client",
     "client:generate": "turbo run client:generate --filter=@lootlog/client",
     "db:activity:generate": "turbo run db:generate --filter=@lootlog/activity",
+    "db:activity:pull": "turbo run db:pull --filter=@lootlog/activity",
     "db:activity:migrate:dev": "turbo run db:migrate:dev --filter=@lootlog/activity",
     "db:activity:migrate:deploy": "turbo run db:migrate:deploy --filter=@lootlog/activity",
     "db:activity:studio": "turbo run db:studio --filter=@lootlog/activity",
     "db:api:generate": "turbo run db:generate --filter=@lootlog/api",
+    "db:api:pull": "turbo run db:pull --filter=@lootlog/api",
     "db:api:migrate:dev": "turbo run db:migrate:dev --filter=@lootlog/api --ui=tui",
     "db:api:migrate:deploy": "turbo run db:migrate:deploy --filter=@lootlog/api",
     "db:api:studio": "turbo run db:studio --filter=@lootlog/api",
     "db:auth:generate": "turbo run db:generate --filter=@lootlog/auth",
+    "db:auth:pull": "turbo run db:pull --filter=@lootlog/auth",
     "db:auth:migrate:plan": "turbo run auth:migrate:plan --filter=@lootlog/auth",
     "db:auth:migrate:apply": "turbo run auth:migrate:apply --filter=@lootlog/auth",
     "db:auth:migrate:dev": "turbo run db:migrate:dev --filter=@lootlog/auth",
@@ -110,9 +113,9 @@
     "db:auth:migrate:init": "turbo run db:migrate:init --filter=@lootlog/auth",
     "db:auth:studio": "turbo run db:studio --filter=@lootlog/auth",
     "db:battlelog:generate": "turbo run db:generate --filter=@lootlog/battlelog",
+    "db:battlelog:pull": "turbo run db:pull --filter=@lootlog/battlelog",
     "db:battlelog:migrate:deploy": "turbo run db:migrate:deploy --filter=@lootlog/battlelog",
     "db:battlelog:migrate:init": "turbo run db:migrate:init --filter=@lootlog/battlelog",
-    "db:battlelog:pull": "turbo run db:pull --filter=@lootlog/battlelog",
     "db:battlelog:push": "turbo run db:push --filter=@lootlog/battlelog",
     "db:battlelog:studio": "turbo run db:studio --filter=@lootlog/battlelog",
     "env:generate": "turbo run env:generate",
@@ -162,7 +165,8 @@
   },
   "packageManager": "bun@1.4.1",
   "patchedDependencies": {
-    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
+    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
+    "@effect/platform-bun@4.0.0-rc.112": "patches/@effect%2Fplatform-bun@4.0.0-rc.112.patch"
   },
   "trustedDependencies": [
     "@scarf/scarf",

@@ -5,7 +5,7 @@ import type {
   SettingsDocumentsFailure,
 } from "#src/settings-documents/settings-documents.service";
 import { Effect } from "effect";
-import type { UpdateSoundSettingsDto } from "#src/http-api/contracts/sound-settings/schemas";
+import type { UpdateSoundSettingsRequest } from "#src/contracts/sound-settings/schemas";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
@@ -22,7 +22,7 @@ export interface SoundSettings {
   readonly getSettings: (userId: string) => SoundEffect;
   readonly updateSettings: (
     userId: string,
-    dto: UpdateSoundSettingsDto,
+    dto: UpdateSoundSettingsRequest,
   ) => SoundEffect;
 }
 

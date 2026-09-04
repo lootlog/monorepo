@@ -7,41 +7,34 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  LootsControllerCountLootsByGuildId200,
-  LootsControllerCountLootsByGuildIdPathParams,
-  LootsControllerCountLootsByGuildIdQuery,
-  LootsControllerCreateComment201,
-  LootsControllerCreateCommentPathParams,
-  LootsControllerCreateCommentRequestJson,
-  LootsControllerCreateLoot201,
-  LootsControllerCreateLootRequestJson,
-  LootsControllerDeleteLootPathParams,
-  LootsControllerFetchLootById200,
-  LootsControllerFetchLootByIdPathParams,
-  LootsControllerFetchLootsByGuildId200,
-  LootsControllerFetchLootsByGuildIdPathParams,
-  LootsControllerFetchLootsByGuildIdQuery,
-  LootsControllerGetComments200,
-  LootsControllerGetCommentsPathParams,
-  LootsControllerGetLootStats200,
-  LootsControllerGetLootStatsPathParams,
-  LootsControllerGetLootStatsQuery,
-  LootsControllerResolveLootItemByHid200,
-  LootsControllerResolveLootItemByHidPathParams,
-  LootsControllerResolveLootItemByHidQuery,
-  LootsControllerUpdateLoot200,
-  LootsControllerUpdateLootPathParams,
-  LootsControllerUpdateLootRequestJson,
-} from "./schemas.js";
+  LootCountResponse,
+  LootOrganizationPath,
+  LootsQuery,
+  LootCommentResponse,
+  LootPath,
+  CreateLootCommentRequest,
+  CreateLootResponse,
+  CreateLootRequest,
+  LootDetailResponse,
+  LootListResponse,
+  LootCommentsResponse,
+  LootStatsResponse,
+  LootStatsQuery,
+  ResolvedLootItemResponse,
+  ResolveLootItemQuery,
+  LootShareResponse,
+  LootSharePath,
+  UpdateLootShareRequest,
+} from "#src/contracts/loots/schemas";
 
 export class LootsGroup extends HttpApiGroup.make("loots").add(
   HttpApiEndpoint.get(
     "LootsControllerFetchLootsByGuildId",
     "/guilds/:guildId/loots",
     {
-      params: LootsControllerFetchLootsByGuildIdPathParams,
-      query: LootsControllerFetchLootsByGuildIdQuery,
-      success: LootsControllerFetchLootsByGuildId200,
+      params: LootOrganizationPath,
+      query: LootsQuery,
+      success: LootListResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -56,9 +49,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerGetLootStats",
     "/guilds/:guildId/loots/stats",
     {
-      params: LootsControllerGetLootStatsPathParams,
-      query: LootsControllerGetLootStatsQuery,
-      success: LootsControllerGetLootStats200,
+      params: LootOrganizationPath,
+      query: LootStatsQuery,
+      success: LootStatsResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -73,9 +66,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerCountLootsByGuildId",
     "/guilds/:guildId/loots/count",
     {
-      params: LootsControllerCountLootsByGuildIdPathParams,
-      query: LootsControllerCountLootsByGuildIdQuery,
-      success: LootsControllerCountLootsByGuildId200,
+      params: LootOrganizationPath,
+      query: LootsQuery,
+      success: LootCountResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -90,9 +83,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerResolveLootItemByHid",
     "/guilds/:guildId/loots/items/resolve",
     {
-      params: LootsControllerResolveLootItemByHidPathParams,
-      query: LootsControllerResolveLootItemByHidQuery,
-      success: LootsControllerResolveLootItemByHid200,
+      params: LootOrganizationPath,
+      query: ResolveLootItemQuery,
+      success: ResolvedLootItemResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -107,8 +100,8 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerFetchLootById",
     "/guilds/:guildId/loots/:lootId",
     {
-      params: LootsControllerFetchLootByIdPathParams,
-      success: LootsControllerFetchLootById200,
+      params: LootPath,
+      success: LootDetailResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -120,7 +113,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerDeleteLoot",
     "/guilds/:guildId/loots/:lootId",
     {
-      params: LootsControllerDeleteLootPathParams,
+      params: LootPath,
       success: HttpApiSchema.Empty(200),
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
@@ -130,8 +123,8 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Archive loot")
     .annotate(OpenApi.Description, "Archive an Organization Loot record"),
   HttpApiEndpoint.post("LootsControllerCreateLoot", "/loots", {
-    payload: LootsControllerCreateLootRequestJson,
-    success: LootsControllerCreateLoot201.pipe(HttpApiSchema.status(201)),
+    payload: CreateLootRequest,
+    success: CreateLootResponse.pipe(HttpApiSchema.status(201)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_createLoot")
@@ -141,8 +134,8 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerGetComments",
     "/guilds/:guildId/loots/:lootId/comments",
     {
-      params: LootsControllerGetCommentsPathParams,
-      success: LootsControllerGetComments200,
+      params: LootPath,
+      success: LootCommentsResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -154,9 +147,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     "LootsControllerCreateComment",
     "/guilds/:guildId/loots/:lootId/comments",
     {
-      params: LootsControllerCreateCommentPathParams,
-      payload: LootsControllerCreateCommentRequestJson,
-      success: LootsControllerCreateComment201.pipe(HttpApiSchema.status(201)),
+      params: LootPath,
+      payload: CreateLootCommentRequest,
+      success: LootCommentResponse.pipe(HttpApiSchema.status(201)),
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -165,9 +158,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Create loot comment")
     .annotate(OpenApi.Description, "Add a comment to a loot"),
   HttpApiEndpoint.patch("LootsControllerUpdateLoot", "/loots/:id", {
-    params: LootsControllerUpdateLootPathParams,
-    payload: LootsControllerUpdateLootRequestJson,
-    success: LootsControllerUpdateLoot200,
+    params: LootSharePath,
+    payload: UpdateLootShareRequest,
+    success: LootShareResponse,
     error: HttpApiSchema.Empty(404),
   })
     .middleware(BearerSecurityMiddleware)

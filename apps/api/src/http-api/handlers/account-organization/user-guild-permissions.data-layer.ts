@@ -20,7 +20,7 @@ import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
 } from "./account-organization.operations.js";
-import { GuildsControllerGetUserGuildsWithPermissions200 } from "../../contracts/guilds/schemas.js";
+import { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
 const CACHE_TTL_SECONDS = 60;
 
@@ -46,7 +46,7 @@ export const makeUserGuildPermissions = (
     const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:guild-permissions`;
     const cached = yield* cache.getJson(
       cacheKey,
-      GuildsControllerGetUserGuildsWithPermissions200,
+      UserOrganizationPermissionsResponse,
     );
     if (cached !== null) return cached;
 

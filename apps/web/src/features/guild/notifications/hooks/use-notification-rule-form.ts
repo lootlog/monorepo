@@ -311,10 +311,11 @@ export const useNotificationRuleForm = () => {
     search: npcSearch,
     world: normalizedWorld,
   };
+  const hasNpcSearch = npcSearch.trim().length > 0;
   const searchedNpcQuery = useNpcsControllerGetNpcs(searchedNpcSearchParams, {
     query: {
       queryKey: getNpcsControllerGetNpcsQueryKey(searchedNpcSearchParams),
-      enabled: !isManualNpcEntry && npcSearch.trim().length > 0,
+      enabled: !isManualNpcEntry && hasNpcSearch,
     },
   });
 
@@ -322,6 +323,7 @@ export const useNotificationRuleForm = () => {
     [...(selectedNpcQuery.data ?? []), ...(searchedNpcQuery.data ?? [])],
     t,
   );
+  const activeNpcQuery = hasNpcSearch ? searchedNpcQuery : selectedNpcQuery;
   const targetOptions = mergedTargets.map((target) => ({
     value: String(target.id),
     label: getGuildNotificationTargetLabel(target),
@@ -494,6 +496,10 @@ export const useNotificationRuleForm = () => {
     npcSearch,
     setNpcSearch,
     npcOptions,
+    npcSearchError:
+      activeNpcQuery.isEnabled && activeNpcQuery.isError
+        ? t("common.searchUnavailable")
+        : undefined,
     searchedNpcQuery,
     targetOptions,
     worldOptions,

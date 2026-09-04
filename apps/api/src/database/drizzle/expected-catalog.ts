@@ -1,5 +1,5 @@
-// Generated from the immutable legacy Prisma schema and migration manifest.
-// Do not edit by hand.
+// Frozen legacy database catalog used only to verify baseline adoption.
+// Preserve its captured payload and fingerprints when the live schema evolves.
 import { gunzipSync } from "node:zlib";
 
 interface ExpectedApiCatalog {

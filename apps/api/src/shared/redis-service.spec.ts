@@ -1,10 +1,10 @@
-import { vi } from "#test/bun-test";
+import { describe, expect, it, vi } from "bun:test";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { Effect, Queue, Schema } from "effect";
 import { Redis } from "effect/unstable/persistence";
 
 type RedisCommandMock = ReturnType<
-  typeof vi.fn<(...args: unknown[]) => unknown>
+  typeof vi.fn<(...args: unknown[]) => Promise<unknown>>
 >;
 
 type RedisClientMock = {
@@ -42,7 +42,7 @@ const createRedisService = (client: RedisClientMock) => {
 };
 
 const redisCommandMock = (): RedisCommandMock =>
-  vi.fn<(...args: unknown[]) => unknown>();
+  vi.fn<(...args: unknown[]) => Promise<unknown>>();
 
 const createRedisClient = (): RedisClientMock => ({
   scan: redisCommandMock(),

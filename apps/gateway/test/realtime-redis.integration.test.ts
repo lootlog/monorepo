@@ -2,7 +2,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { Permission } from "@lootlog/schema/permissions";
-import { Fiber, ManagedRuntime } from "effect";
+import {
+  Effect,
+  Fiber,
+  ManagedRuntime,
+  Queue,
+  Redacted,
+  Schedule,
+} from "effect";
 import { Redis } from "effect/unstable/persistence";
 import {
   GenericContainer,
@@ -109,18 +116,136 @@ describe("realtime Dragonfly integration", () => {
     await dragonfly?.stop();
   });
 
+  test("closing a subscription scope releases Redis without a shutdown defect", async () => {
+    const channel = `shutdown:${crypto.randomUUID()}`;
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const redis = yield* Redis.Redis;
+        yield* Effect.scoped(
+          Effect.gen(function* () {
+            const messages = yield* redis.subscribe(channel);
+            yield* redis.send("PUBLISH", channel, "before shutdown");
+            expect(yield* Queue.take(messages)).toEqual({
+              channel,
+              message: "before shutdown",
+            });
+          }),
+        );
+        // Dragonfly observes socket closure asynchronously on another connection.
+        const subscriptions = yield* redis
+          .send<[string, number]>("PUBSUB", "NUMSUB", channel)
+          .pipe(
+            Effect.repeat({
+              until: ([, count]) => count === 0,
+              schedule: Schedule.spaced("10 millis"),
+            }),
+          );
+        expect(subscriptions).toEqual([channel, 0]);
+        expect(yield* redis.send("PING")).toBe("PONG");
+      }).pipe(
+        Effect.provide(
+          BunRedis.layer({
+            url: `redis://${dragonfly.getHost()}:${redisPort}`,
+          }),
+        ),
+        Effect.timeout("5 seconds"),
+      ),
+    );
+  });
+
+  test("SIGINT shuts down an active Redis subscription without logging a defect", async () => {
+    const url = `redis://${dragonfly.getHost()}:${redisPort}`;
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        "--eval",
+        `
+          import { BunRedis, BunRuntime } from "@effect/platform-bun";
+          import { Effect } from "effect";
+          import { Redis } from "effect/unstable/persistence";
+          BunRuntime.runMain(Effect.gen(function* () {
+            const redis = yield* Redis.Redis;
+            yield* redis.subscribe("shutdown:signal");
+            console.log("subscribed");
+            yield* Effect.never;
+          }).pipe(Effect.scoped, Effect.provide(BunRedis.layer({ url: ${JSON.stringify(url)} }))));
+        `,
+      ],
+      {
+        cwd: `${import.meta.dirname}/..`,
+        stdout: "pipe",
+        stderr: "pipe",
+        timeout: 5_000,
+        killSignal: "SIGKILL",
+      },
+    );
+    const reader = child.stdout.getReader();
+    const errors = new Response(child.stderr).text();
+    try {
+      const ready = await reader.read();
+      expect(new TextDecoder().decode(ready.value)).toContain("subscribed");
+      child.kill("SIGINT");
+      expect(await child.exited).toBe(130);
+      expect(await errors).toBe("");
+    } finally {
+      reader.releaseLock();
+      child.kill();
+      await child.exited;
+    }
+  }, 10_000);
+
+  test("unexpected subscriber disconnection still reaches the Redis error channel", async () => {
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const redis = yield* Redis.Redis;
+        const messages = yield* redis.subscribe("shutdown:disconnect");
+        const clients = yield* redis.send<string>("CLIENT", "LIST");
+        const subscriberAddress = clients
+          .split("\n")
+          .find((client) => /\bflags=P\b/.test(client))
+          ?.match(/\baddr=(\S+)/)?.[1];
+        if (!subscriberAddress)
+          throw new Error("Subscriber connection not found");
+        yield* redis.send("CLIENT", "KILL", subscriberAddress);
+        expect(yield* Effect.result(Queue.take(messages))).toMatchObject({
+          _tag: "Failure",
+          failure: { _tag: "RedisError" },
+        });
+      }).pipe(
+        Effect.scoped,
+        Effect.provide(
+          BunRedis.layer({
+            url: `redis://${dragonfly.getHost()}:${redisPort}`,
+          }),
+        ),
+        Effect.timeout("5 seconds"),
+      ),
+    );
+  });
+
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
     const configuration = {
+      environment: "test",
+      port: 0,
+      serviceName: "gateway",
+      serviceNamespace: "test",
+      apiUrl: "http://localhost",
+      authUrl: "http://localhost",
+      margonemSigningKeyUrl: "http://localhost/key",
+      rabbitmqUri: Redacted.make("unused"),
+      activityEventSignatureSecret: Redacted.make("test"),
+      websocketPath: "/ws",
+      allowedWebOrigins: new Set<string>(),
       redis: {
         host: dragonfly.getHost(),
         port: redisPort,
         username: "",
-        password: "",
+        password: Redacted.make(""),
         keyPrefix: "lootlog-realtime-integration:test",
       },
       maxBackpressureBytes: 1_048_576,
       maxBackpressureStrikes: 3,
-    } as GatewayConfiguration;
+    } satisfies GatewayConfiguration;
     const firstRuntime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
     );
@@ -129,11 +254,14 @@ describe("realtime Dragonfly integration", () => {
     );
     const firstRedis = await firstRuntime.runPromise(Redis.Redis);
     const secondRedis = await secondRuntime.runPromise(Redis.Redis);
-    const firstBackgroundFibers: Array<Fiber.RuntimeFiber<void, unknown>> = [];
-    const secondBackgroundFibers: Array<Fiber.RuntimeFiber<void, unknown>> = [];
+    const firstBackgroundFibers: Array<Fiber.Fiber<void, unknown>> = [];
+    const secondBackgroundFibers: Array<Fiber.Fiber<void, unknown>> = [];
     const firstStore = new RedisGatewayStore(
       firstRedis,
-      configuration.redis,
+      {
+        ...configuration.redis,
+        password: Redacted.value(configuration.redis.password),
+      },
       (effect) => firstRuntime.runPromise(effect),
       (_label, effect) => {
         firstBackgroundFibers.push(firstRuntime.runFork(effect));
@@ -141,7 +269,10 @@ describe("realtime Dragonfly integration", () => {
     );
     const secondStore = new RedisGatewayStore(
       secondRedis,
-      configuration.redis,
+      {
+        ...configuration.redis,
+        password: Redacted.value(configuration.redis.password),
+      },
       (effect) => secondRuntime.runPromise(effect),
       (_label, effect) => {
         secondBackgroundFibers.push(secondRuntime.runFork(effect));

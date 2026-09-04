@@ -4,12 +4,13 @@ import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
-  KillsControllerGetGuildKillStats200,
-  KillsControllerGetGuildTopKillersByType200,
-  KillsControllerGetGuildTopNpcs200,
-  KillsControllerGetNpcKillers200,
-  type KillsControllerGetGuildKillStatsQuery as GetGuildKillStatsDto,
-} from "#src/http-api/contracts/kills/schemas";
+  GuildKillStatsResponse,
+  GuildTopKillersByTypeResponse,
+  GuildTopNpcsResponse,
+  NpcKillersResponse,
+  type GuildKillStatsQuery as GetGuildKillStatsDto,
+} from "#src/contracts/kills/schemas";
+
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,
@@ -84,7 +85,7 @@ export const makeGuildKillQueries = (
           visibility: visibility.cacheScope,
         }),
         label: "guild kill stats",
-        schema: KillsControllerGetGuildKillStats200,
+        schema: GuildKillStatsResponse,
         load: Effect.gen(function* () {
           const [memberStats, guildSummary] = yield* Effect.all(
             [
@@ -197,7 +198,7 @@ export const makeGuildKillQueries = (
           world,
         }),
         label: "guild top npcs",
-        schema: KillsControllerGetGuildTopNpcs200,
+        schema: GuildTopNpcsResponse,
         load: persistence
           .findGuildSummaries(
             {
@@ -282,7 +283,7 @@ export const makeGuildKillQueries = (
           visibility: visibility.cacheScope,
         }),
         label: "guild top killers",
-        schema: KillsControllerGetGuildTopKillersByType200,
+        schema: GuildTopKillersByTypeResponse,
         load: persistence
           .findMemberStats(
             {
@@ -377,7 +378,7 @@ export const makeGuildKillQueries = (
           world,
         }),
         label: "npc killers",
-        schema: KillsControllerGetNpcKillers200,
+        schema: NpcKillersResponse,
         load: Effect.gen(function* () {
           const [stats, summaries] = yield* Effect.all(
             [

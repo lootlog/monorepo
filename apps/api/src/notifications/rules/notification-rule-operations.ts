@@ -16,9 +16,9 @@ import type {
   JsonValue,
 } from "#src/notifications/notification-database.types";
 import type {
-  CreateNotificationRuleDto,
-  UpdateNotificationRuleDto,
-} from "#src/http-api/contracts/notifications/schemas";
+  CreateNotificationRuleRequest,
+  UpdateNotificationRuleRequest,
+} from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
 import {
   NotificationJobKind,
@@ -398,7 +398,7 @@ export const makeNotificationRuleOperations = (
   const create = Effect.fn("notifications.rules.create")(function* (
     ownerType: NotificationOwnerTypeValue,
     ownerId: string,
-    data: CreateNotificationRuleDto,
+    data: CreateNotificationRuleRequest,
   ) {
     yield* ensureRuleLimit(ownerType, ownerId);
     const targetIds = yield* validateTargetIds(
@@ -438,7 +438,7 @@ export const makeNotificationRuleOperations = (
     ownerType: NotificationOwnerTypeValue,
     ownerId: string,
     ruleId: number,
-    data: UpdateNotificationRuleDto,
+    data: UpdateNotificationRuleRequest,
   ) {
     const existing = yield* findRule(ownerType, ownerId, ruleId);
     const targetIds = data.targetIds
@@ -585,7 +585,7 @@ export const makeNotificationRuleOperations = (
   });
 
   return {
-    createGuild: (guildId: string, data: CreateNotificationRuleDto) =>
+    createGuild: (guildId: string, data: CreateNotificationRuleRequest) =>
       dependencies
         .ensureGuildPermissions(guildId)
         .pipe(
@@ -593,7 +593,7 @@ export const makeNotificationRuleOperations = (
             create(NotificationOwnerType.GUILD, guildId, data),
           ),
         ),
-    createUser: (discordId: string, data: CreateNotificationRuleDto) =>
+    createUser: (discordId: string, data: CreateNotificationRuleRequest) =>
       create(NotificationOwnerType.USER, discordId, data),
     deleteGuild: (guildId: string, ruleId: number) =>
       remove(NotificationOwnerType.GUILD, guildId, ruleId),
@@ -613,7 +613,7 @@ export const makeNotificationRuleOperations = (
     updateGuild: (
       guildId: string,
       ruleId: number,
-      data: UpdateNotificationRuleDto,
+      data: UpdateNotificationRuleRequest,
     ) =>
       dependencies
         .ensureGuildPermissions(guildId)
@@ -625,7 +625,7 @@ export const makeNotificationRuleOperations = (
     updateUser: (
       discordId: string,
       ruleId: number,
-      data: UpdateNotificationRuleDto,
+      data: UpdateNotificationRuleRequest,
     ) => update(NotificationOwnerType.USER, discordId, ruleId, data),
   };
 };

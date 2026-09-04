@@ -22,10 +22,8 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
-import {
-  GuildsInternalControllerGetGuildByIdOrVanityUrl200,
-  GuildsInternalControllerGetUserPermissions200,
-} from "../../contracts/internal/schemas.js";
+import { OrganizationSummary } from "#src/contracts/shared";
+import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
 export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
@@ -128,7 +126,7 @@ export const makeInternalGuildsData = (
       const cacheKey = `user:${userId}:discord:${discordId}:guild-permissions`;
       const cached = yield* cache.getJson(
         cacheKey,
-        GuildsInternalControllerGetUserPermissions200,
+        InternalUserPermissionsResponse,
       );
       if (cached !== null) return cached;
 
@@ -308,7 +306,7 @@ export const getInternalUserPermissions = (discordId: string, userId: string) =>
     const data = yield* InternalGuildsData;
     return yield* Effect.flatMap(
       data.getUserPermissions(discordId, userId),
-      (value) => decode(GuildsInternalControllerGetUserPermissions200, value),
+      (value) => decode(InternalUserPermissionsResponse, value),
     );
   }).pipe(
     Effect.withSpan("GuildsInternalControllerGetUserPermissions", {
@@ -320,7 +318,7 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
   Effect.gen(function* () {
     const data = yield* InternalGuildsData;
     return yield* Effect.flatMap(data.getGuild(idOrVanityUrl), (value) =>
-      decode(GuildsInternalControllerGetGuildByIdOrVanityUrl200, value),
+      decode(OrganizationSummary, value),
     );
   }).pipe(
     Effect.withSpan("GuildsInternalControllerGetGuildByIdOrVanityUrl", {

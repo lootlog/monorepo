@@ -3,13 +3,12 @@ import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { Etag, HttpPlatform } from "effect/unstable/http";
 import { HttpApiTest } from "effect/unstable/httpapi";
-import {
-  BearerSecurityMiddleware,
-  GuildResponseDto_Output,
-} from "../../contracts/shared.js";
+import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { OrganizationSummary } from "#src/contracts/shared";
+import { UserPreferencesResponse } from "#src/contracts/users/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
-import { UserPreferencesResponseDto_Output } from "../../contracts/users/schemas.js";
-import { ForwardAuthIdentity } from "../../runtime/auth/forward-auth-identity.js";
+
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { GuildsHandlers } from "../guilds/guilds.handlers.js";
 import {
   GuildConfigurationData,
@@ -177,7 +176,7 @@ describe("Users and Guilds HttpApi handlers", () => {
 
     expect(userIds).toEqual([identity.userId]);
     expect(response).toEqual(userPreferences);
-    expect(Schema.is(UserPreferencesResponseDto_Output)(response)).toBe(true);
+    expect(Schema.is(UserPreferencesResponse)(response)).toBe(true);
   });
 
   it("fails closed on missing authentication before user data access", async () => {
@@ -242,7 +241,7 @@ describe("Users and Guilds HttpApi handlers", () => {
       },
     ]);
     expect(updateCalls).toEqual(["guild-a"]);
-    expect(Schema.is(GuildResponseDto_Output)(response)).toBe(true);
+    expect(Schema.is(OrganizationSummary)(response)).toBe(true);
   });
 
   it("fails closed on forbidden guild access before mutation", async () => {

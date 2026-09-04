@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { selectEventWrappedLeader } from "#src/events/wrapped/select-event-wrapped-leader";
 
 const candidate = (

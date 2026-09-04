@@ -5,7 +5,7 @@ import {
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
-import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
@@ -87,12 +87,7 @@ export class GatewayApplication extends Context.Service<
       yield* hub.start();
       const coverage = new CoveragePublisher(messaging);
       const presence = new PresenceStore(redis, hub, Date.now, coverage);
-      yield* presence
-        .sweepExpired()
-        .pipe(
-          Effect.repeat(Schedule.spaced(presence.sweepSchedule)),
-          Effect.forkScoped,
-        );
+      yield* presence.runExpirySweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
       const airTags = new AirTagService(redis, hub);

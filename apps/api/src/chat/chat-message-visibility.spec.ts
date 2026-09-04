@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";

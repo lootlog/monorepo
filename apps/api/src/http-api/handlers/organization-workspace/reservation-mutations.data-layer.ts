@@ -40,9 +40,9 @@ import {
   InvalidEntityError,
 } from "#src/shared/http/http-errors";
 import type {
-  CreateReservationDto,
-  UpdateReservationDto,
-} from "#src/http-api/contracts/reservations/schemas";
+  CreateReservationRequest,
+  UpdateReservationRequest,
+} from "#src/contracts/reservations/schemas";
 import {
   getDiscordAvatarUrl,
   presentReservation,
@@ -608,7 +608,7 @@ export const makeReservationMutationsDataLayer = (
       const create = (
         context: ReservationViewerContext,
         spotId: string,
-        data: CreateReservationDto,
+        data: CreateReservationRequest,
       ) =>
         Effect.gen(function* () {
           const [spot, guild, audienceGuildIds, member] = yield* Effect.all([
@@ -771,7 +771,7 @@ export const makeReservationMutationsDataLayer = (
         readonly userId: string;
         readonly discordId: string;
         readonly reservationId: number;
-        readonly data: UpdateReservationDto;
+        readonly data: UpdateReservationRequest;
       }) =>
         Effect.gen(function* () {
           const guildIds = yield* accessibleGuildIds(
@@ -915,7 +915,7 @@ export const makeReservationMutationsDataLayer = (
             create(
               context,
               spotId,
-              structuredClone(payload) as CreateReservationDto,
+              structuredClone(payload) as CreateReservationRequest,
             ),
           ),
         updateOwned: ({ userId, discordId }, reservationId, payload) =>
@@ -925,7 +925,7 @@ export const makeReservationMutationsDataLayer = (
               userId,
               discordId,
               reservationId,
-              data: structuredClone(payload) as UpdateReservationDto,
+              data: structuredClone(payload) as UpdateReservationRequest,
             }),
           ),
         deleteVisible: (context, reservationId) =>
