@@ -114,6 +114,19 @@ grep, find, or broad source reads when locating code or tracing behavior:
 
 <!-- CODEGRAPH_END -->
 
+## Vendored repositories
+
+When work depends on a library vendored under `repos/`, inspect that repository
+before using web search or guessing from documentation. Use its implementation,
+tests, and module structure as reference material.
+
+- Treat `repos/` as read-only unless the user explicitly asks to update a
+  vendored repository.
+- Keep application imports pointed at installed package dependencies; never
+  import or ship code from `repos/`.
+- Before writing Effect code, read `repos/effect/LLMS.md`, then inspect
+  `repos/effect/` for the relevant idiomatic patterns.
+
 ## How it works
 
 The main flow is:
@@ -140,10 +153,7 @@ The main code areas are:
 - `packages/` contains generated clients, browser-safe contracts and domain
   logic, protocols, UI, configuration, and tools. Defining a shared type does
   not make a package the owner of its data.
-- `repos/` contains vendored, read-only reference repositories. Prefer their
-  patterns over guesses, but never edit, import from, or ship code from them.
-  For Effect work, treat `repos/effect/` as the source of truth for idiomatic
-  APIs, tests, and module structure.
+- `repos/` contains vendored reference repositories for external dependencies.
 
 ## Domain language and boundaries
 
