@@ -228,23 +228,6 @@ const recordAdoption = async (client: SqlTransactionClient) => {
   );
 };
 
-const assertPresencePermissionBackfill = async (
-  client: SqlTransactionClient,
-) => {
-  const result = await client.query<{ count: string }>(`
-    /* api-adoption:presence-backfill */
-    SELECT COUNT(*)::text AS count
-    FROM "Role"
-    WHERE permissions @> ARRAY['LOOTLOG_ONLINE_PLAYERS_READ']::"Permission"[]
-      AND NOT permissions @> ARRAY['LOOTLOG_PRESENCE_LOCATION_READ']::"Permission"[]
-  `);
-  if (result.rows[0]?.count !== "0") {
-    throw new ApiDatabaseAdoptionError(
-      "API database presence permission backfill is incomplete; refusing Drizzle adoption.",
-    );
-  }
-};
-
 /**
  * Adopts a legacy API schema using one dedicated PostgreSQL client.
  *
@@ -303,7 +286,9 @@ export const adoptExistingApiDatabase = async (
       );
     }
 
-    await assertPresencePermissionBackfill(client);
+    await client.query(
+      `ALTER TYPE "Permission" ADD VALUE IF NOT EXISTS 'LOOTLOG_PRESENCE_LOCATION_READ'`,
+    );
     await recordAdoption(client);
     await client.query("COMMIT");
     return { status: "adopted", fingerprint: EXPECTED_API_CATALOG_SHA256 };
