@@ -1,4 +1,5 @@
 import { expect, it } from "bun:test";
+import { cpSync } from "node:fs";
 import { cp, mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -7,7 +8,7 @@ it("exports current source contracts without depending on compiled output", asyn
   const appDirectory = path.resolve(import.meta.dir, "../..");
   const fixture = await mkdtemp(path.join(tmpdir(), "api-openapi-source-"));
   try {
-    await cp(path.join(appDirectory, "src"), path.join(fixture, "src"), {
+    cpSync(path.join(appDirectory, "src"), path.join(fixture, "src"), {
       recursive: true,
     });
     await cp(
@@ -65,4 +66,5 @@ it("exports current source contracts without depending on compiled output", asyn
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
-}, 10_000);
+  // Two real CLI invocations share CI CPU with workspace builds and tests.
+}, 60_000);
