@@ -3,16 +3,6 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { Effect, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 
-export const REDIS_MODULE_OPTIONS = Symbol("REDIS_MODULE_OPTIONS");
-
-export interface RedisModuleOptions {
-  host: string;
-  port: number;
-  password?: string;
-  username?: string;
-  prefix?: string;
-}
-
 export interface JsonCodec<T> {
   stringify: (value: unknown) => string;
   parse: (text: string) => T;
@@ -78,16 +68,12 @@ export class RedisService {
 
   constructor(
     private readonly redis: Redis.Redis["Service"],
-    options: Pick<RedisModuleOptions, "prefix">,
-    private readonly runEffect: <A>(
+    options: { prefix?: string },
+    private readonly run: <A>(
       effect: Effect.Effect<A, Redis.RedisError>,
     ) => Promise<A>,
   ) {
     this.prefix = options.prefix ?? "";
-  }
-
-  private run<A>(effect: Effect.Effect<A, Redis.RedisError>): Promise<A> {
-    return this.runEffect(effect);
   }
 
   private prefixKey(key: string): string {

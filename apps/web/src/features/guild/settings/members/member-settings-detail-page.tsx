@@ -19,10 +19,7 @@ import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
-import {
-  isMemberOnlineInGame,
-  resolveMemberPresenceGuildId,
-} from "@/features/guild/settings/members/member-game-presence.utils";
+import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
 import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-web-presence.utils";
 import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
 import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
@@ -46,7 +43,7 @@ const MemberSettingsDetailPageContent = () => {
   );
   const { data: guild } = useGuildsControllerGetGuildById({ guildId });
   const { data: accessPolicy } = useGuildPermissions();
-  const resolvedGuildId = resolveMemberPresenceGuildId(guild);
+  const resolvedGuildId = guild?.id ?? undefined;
   const { data: memberActivityStats } = useQuery(
     memberActivityStatsQueryOptions(resolvedGuildId),
   );

@@ -9,6 +9,3 @@ export const formatTimeShort = (date: Date): string =>
 
 export const formatDateTime = (date: Date): string =>
   format(date, "d MMM, HH:mm", { locale: pl });
-
-export const formatDateTimeFull = (date: Date): string =>
-  format(date, "d MMM yyyy, HH:mm", { locale: pl });

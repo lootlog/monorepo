@@ -1,7 +1,6 @@
 import {
   getListReservationSpotsQueryKey,
   getListReservationSpotsQueryOptions,
-  getListSpotReservationsQueryOptions,
 } from "@lootlog/client/main";
 
 export const reservationSpotsQueryOptions = (guildId: string) =>
@@ -12,23 +11,6 @@ export const reservationSpotsQueryOptions = (guildId: string) =>
         enabled: Boolean(guildId),
         queryKey: getListReservationSpotsQueryKey({ guildId }),
         staleTime: 30_000,
-      },
-    },
-  );
-
-export const reservationWindowQueryOptions = (
-  guildId: string,
-  spotId: string,
-  from: Date,
-  to: Date,
-) =>
-  getListSpotReservationsQueryOptions(
-    { guildId, spotId },
-    { from: from.toISOString(), to: to.toISOString() },
-    {
-      query: {
-        enabled: Boolean(guildId && spotId),
-        staleTime: 15_000,
       },
     },
   );

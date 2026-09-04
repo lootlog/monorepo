@@ -18,19 +18,6 @@ export function isEventActiveAt(
   );
 }
 
-export function buildActiveEventWhere(referenceTime: Date) {
-  return {
-    AND: [
-      {
-        OR: [{ startsAt: null }, { startsAt: { lte: referenceTime } }],
-      },
-      {
-        OR: [{ endsAt: null }, { endsAt: { gt: referenceTime } }],
-      },
-    ],
-  };
-}
-
 export function attachComputedEventActive<T extends EventActivityWindow>(
   event: T,
   referenceTime: Date,

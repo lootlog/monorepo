@@ -181,6 +181,34 @@ const assertGeneratedRootValuesCanBeReused = (): void => {
 };
 
 describe("environment value generation", () => {
+  test("preserves configured values and only generates local credentials", () => {
+    const original = [
+      envVariable("PORT", "5432"),
+      envVariable("HOST", "localhost"),
+      envVariable("NODE_ENV", "local"),
+      envVariable("DATABASE_URL", "postgresql://user:pass@localhost/db"),
+      envVariable("DB_NAME", "lootlog"),
+      envVariable("CUSTOM_VALUE", "your_value"),
+      envVariable("DISCORD_CLIENT_SECRET", "external-secret"),
+      envVariable("R2_SECRET_ACCESS_KEY", "external-key"),
+      envVariable("REDIS_PASSWORD", "placeholder"),
+      envVariable("LOCAL_PASSWORD", "placeholder"),
+      envVariable("LOCAL_SECRET", "placeholder"),
+    ];
+    const generated = generateEnvValues(
+      original,
+      new Map([["REDIS_PASSWORD", ""]]),
+    );
+
+    assert.deepEqual(generated.slice(0, 8), original.slice(0, 8));
+    assert.equal(getValue(generated, "REDIS_PASSWORD"), "");
+    assert.match(getValue(generated, "LOCAL_PASSWORD"), /^[a-f0-9]{32}$/);
+    assert.equal(
+      Buffer.from(getValue(generated, "LOCAL_SECRET"), "base64").length,
+      64,
+    );
+  });
+
   test("derives application connection values", assertDerivedAppValues);
   test("derives Auth database values", assertAuthValues);
   test("derives Search integration values", assertSearchValues);

@@ -127,7 +127,3 @@ export const readEnvFile = (filePath: string): string => {
     throw new Error(`Failed to read file ${filePath}: ${error}`);
   }
 };
-
-export const envFileExists = (filePath: string): boolean => {
-  return existsSync(filePath);
-};

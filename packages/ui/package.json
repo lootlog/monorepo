@@ -34,7 +34,6 @@
     "lucide-react": "^1.35.0",
     "react-day-picker": "^10.0.1",
     "react-hook-form": "catalog:",
-    "react-medium-image-zoom": "^5.4.9",
     "recharts": "3.10.1",
     "sonner": "^2.0.8",
     "tailwindcss": "catalog:",
