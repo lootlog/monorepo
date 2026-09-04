@@ -3,7 +3,9 @@ import {
   GATEWAY_URL,
   GatewayEvent,
 } from "@/config/gateway";
+import { authControllerIssueRealtimeTicket } from "@lootlog/client/auth";
 import {
+  REALTIME_SUBPROTOCOL,
   RealtimeClient,
   type BasicPresence,
   type PresenceWithLocation,
@@ -74,6 +76,9 @@ export class GatewayClient {
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
+    protocols: [REALTIME_SUBPROTOCOL],
+    ticketProvider: async () =>
+      (await authControllerIssueRealtimeTicket()).ticket,
   });
   private readonly listeners = new Map<GatewayEvent, Set<Listener>>();
   private wasConnected = false;
