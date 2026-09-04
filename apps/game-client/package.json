@@ -31,8 +31,8 @@
     "@tanstack/react-query": "catalog:",
     "better-auth": "1.7.2",
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "cmdk": "1.1.1",
+    "cn": "catalog:",
     "i18next": "^26.4.0",
     "lexical": "catalog:",
     "lucide-react": "^1.35.0",
@@ -42,7 +42,6 @@
     "react-hook-form": "catalog:",
     "react-i18next": "^17.0.12",
     "sonner": "^2.0.8",
-    "tailwind-merge": "^3.6.0",
     "zod": "catalog:",
     "zustand": "^5.0.15"
   },
