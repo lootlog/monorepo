@@ -24,7 +24,6 @@ export const permissionEnum = pgEnum("Permission", [
   "LOOTLOG_ACCESS",
   "LOOTLOG_LOOTS_READ",
   "LOOTLOG_LOOTS_WRITE",
-  "LOOTLOG_LOOTS_ARCHIVE",
   "LOOTLOG_LOOTS_TITANS_READ",
   "LOOTLOG_LOOTS_HEROES_READ",
   "LOOTLOG_TIMERS_READ",
@@ -36,8 +35,6 @@ export const permissionEnum = pgEnum("Permission", [
   "LOOTLOG_RESERVATIONS_READ",
   "LOOTLOG_RESERVATIONS_WRITE",
   "LOOTLOG_MEMBERS_READ",
-  "LOOTLOG_ONLINE_PLAYERS_READ",
-  "LOOTLOG_PRESENCE_LOCATION_READ",
   "LOOTLOG_CHAT_READ",
   "LOOTLOG_CHAT_WRITE",
   "LOOTLOG_CHAT_TITANS_READ",
@@ -49,8 +46,11 @@ export const permissionEnum = pgEnum("Permission", [
   "LOOTLOG_EVENTS_MANAGE",
   "LOOTLOG_EVENTS_READ",
   "LOOTLOG_EVENTS_WRITE",
+  "LOOTLOG_ONLINE_PLAYERS_READ",
   "LOOTLOG_DOCS_READ",
   "LOOTLOG_DOCS_WRITE",
+  "LOOTLOG_LOOTS_ARCHIVE",
+  "LOOTLOG_PRESENCE_LOCATION_READ",
 ]);
 export const memberTypeEnum = pgEnum("MemberType", [
   "OWNER",
@@ -961,6 +961,10 @@ export const reservationShareTable = pgTable(
     })
       .onDelete("restrict")
       .onUpdate("cascade"),
+    check(
+      "ReservationShare_distinct_guilds_check",
+      sql`${table["firstGuildId"]} < ${table["secondGuildId"]}`,
+    ),
   ],
 );
 

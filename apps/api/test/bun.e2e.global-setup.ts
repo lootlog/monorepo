@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
@@ -8,6 +8,7 @@ import {
   type StartedTestContainer,
   Wait,
 } from "testcontainers";
+import { BASELINE_MIGRATION_NAME } from "../src/database/drizzle/expected-catalog.js";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const apiRoot = path.resolve(dirname, "..");
@@ -48,13 +49,8 @@ export default async function setup() {
   process.env.MAPS_API_URL = "http://maps.test";
 
   const migrationsRoot = path.join(apiRoot, "drizzle/migrations");
-  const baselineDirectories = await readdir(migrationsRoot);
-  const baselineDirectory = baselineDirectories.at(0);
-  if (baselineDirectory === undefined) {
-    throw new Error("API Drizzle baseline migration is missing");
-  }
   const migrationSql = await readFile(
-    path.join(migrationsRoot, baselineDirectory, "migration.sql"),
+    path.join(migrationsRoot, BASELINE_MIGRATION_NAME, "migration.sql"),
     "utf8",
   );
   const client = new Client({ connectionString: postgres.getConnectionUri() });
