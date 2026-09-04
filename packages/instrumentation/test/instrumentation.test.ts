@@ -37,9 +37,16 @@ describe("HTTP server metrics", () => {
     const boundary = HttpRouter.toWebHandler(
       HttpRouter.add(
         "GET",
-        "/*",
+        "/healthz",
         HttpServerResponse.empty({ status: 202 }),
       ).pipe(
+        Layer.merge(
+          HttpRouter.add(
+            "GET",
+            "/*",
+            HttpServerResponse.empty({ status: 204 }),
+          ),
+        ),
         Layer.provide(HttpServer.layerServices),
         Layer.merge(Logger.layer([logger])),
       ),
@@ -51,27 +58,35 @@ describe("HTTP server metrics", () => {
     });
     const before = await Effect.runPromise(Metric.value(counter));
     try {
+      const healthPaths = [
+        "/healthz",
+        "/healthz?probe=readiness",
+        "/healthz/",
+        "/HEALTHZ",
+        "//healthz",
+        "///HeAlThZ///?probe=readiness",
+      ];
       const healthResponses = await Promise.all(
-        ["/healthz", "/healthz?probe=readiness"].map((path) =>
+        healthPaths.map((path) =>
           boundary.handler(new Request(`http://localhost${path}`)),
         ),
       );
-      expect(healthResponses.map((response) => response.status)).toEqual([
-        202, 202,
-      ]);
+      expect(healthResponses.map((response) => response.status)).toEqual(
+        healthPaths.map(() => 202),
+      );
       expect(messages).toHaveLength(0);
       const after = await Effect.runPromise(Metric.value(counter));
-      expect(after.count - before.count).toBe(2);
+      expect(after.count - before.count).toBe(healthPaths.length);
 
       const otherResponses = await Promise.all(
-        ["/healthz-other", "/users"].map((path) =>
+        ["/healthz-other", "/healthz/other", "/users"].map((path) =>
           boundary.handler(new Request(`http://localhost${path}`)),
         ),
       );
       expect(otherResponses.map((response) => response.status)).toEqual([
-        202, 202,
+        204, 204, 204,
       ]);
-      expect(messages).toHaveLength(2);
+      expect(messages).toHaveLength(3);
     } finally {
       await boundary.dispose();
     }
