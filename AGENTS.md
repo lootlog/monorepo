@@ -1,171 +1,259 @@
-# AI agent instructions
+# Lootlog
 
-These instructions apply to every workspace unless a closer `AGENTS.md`
-overrides a rule for its subtree.
+Lootlog is an open-source Margonem companion that connects an in-game client,
+a shared web workspace, and Discord. It turns supported gameplay events into
+current, durable information for players and organized groups without requiring
+them to copy timers, loot records, or coordination state by hand.
 
-## Authority and required context
+The primary daily user is an active member of an organized Margonem group. A
+leader, deputy, or tactician usually makes the adoption decision, but every
+member must receive useful in-game feedback rather than acting only as a data
+source.
 
-Apply instructions in this order:
+## What Lootlog must protect
 
-1. the closest `AGENTS.md` to the file being changed;
-2. parent `AGENTS.md` files up to this root;
-3. canonical repository documents linked below;
-4. repository skills in `.agents/skills`;
-5. generic or external skills;
-6. lint, tests, and CI as mechanical enforcement.
+### 1. Trust the signal
 
-A local instruction may strengthen or replace a root rule only when it states
-the exception explicitly.
+Accepted durable records must not disappear silently, and retries must not
+create unintended duplicates. Show degraded or stale state instead of
+presenting it as current truth.
 
-Read the documents relevant to the change:
+### 2. Keep Margonem fast
 
-- [`PRODUCT.md`](PRODUCT.md) — target product, priorities, and non-goals.
-- [`CONTEXT.md`](CONTEXT.md) — canonical domain terms.
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — current system, target contracts, and known gaps.
-- [`SECURITY.md`](SECURITY.md) — mandatory for auth, authorization, API, gateway,
-  user content, data, public endpoints, and external integrations.
-- [`DESIGN.md`](DESIGN.md) — canonical visual system for public and product surfaces.
-- [`apps/web/design-guideline.md`](apps/web/design-guideline.md) — web app UI contract.
+Normal play must not feel slower with Lootlog enabled. Keep game-client work
+bounded; a client performance regression is a release blocker.
 
-`PRODUCT.md` and target sections in `ARCHITECTURE.md` are design constraints,
-not proof that a feature already exists. Do not describe target behavior as
-implemented until code and verification agree.
+### 3. Isolate Organizations
+
+The Organization is the top-level security boundary. Apply its access policy to
+base records, derived views, delivery paths, and metadata.
+
+### 4. Complete the connected workflow
+
+A change is incomplete when it works on one relevant surface but fails on
+another. Account for the Game client, Web app, Discord bot, public surfaces,
+installation methods, deployed contracts, and generated clients as applicable.
+
+Resolve architectural trade-offs in this order:
+
+1. Do not interfere with Margonem or lose accepted durable data.
+2. Preserve Game client performance.
+3. Preserve security and Organization isolation.
+4. Preserve real-time reliability.
+5. Control infrastructure cost.
+6. Preserve development speed and maintainability.
+7. Preserve abstract future flexibility.
+
+## Project principles
+
+Prefer ambitious outcomes and simple systems. Understand the real constraint,
+then implement the smallest complete model that makes correct behavior
+unsurprising. Remove accidental complexity instead of preserving it, and avoid
+machinery justified only by a possible future need.
+
+Measure before adding performance work. Fix a defect at the shared root cause
+after tracing every caller and affected boundary. Treat current code and
+verification as evidence; roadmap documents and target architecture are not
+proof that a feature already exists.
+
+## GPT-6 Astra operating defaults
+
+These defaults tune GPT-6 Astra and define the same work contract for other
+capable agents:
+
+- Infer the user's intent and authorized scope from their request and the prior
+  conversation. Treat requests such as “help me,” “can you,” and “I want to” as
+  instructions to do the work, not invitations to describe how it could be done.
+- Persist until the authorized outcome is complete. Do not stop at a plan,
+  partial fix, or capability statement when the requested work can be completed.
+- Inspect the repository before asking questions. Ask only when missing input
+  would materially change the result, new authority is required, or the next
+  action would be destructive or irreversible.
+- Complete reversible preparation before requesting approval for a consequential
+  final action. Present a concrete, reviewable result rather than a hypothetical
+  proposal.
+- Explicit user instructions override repository defaults and skill guidelines.
+  System and platform policy, authorization boundaries, and the user's ownership
+  of data remain controlling. If the user explicitly changes a product,
+  security, or compatibility contract, include its migration, documentation,
+  and verification consequences in the work.
+- Delegate independent, bounded work when parallel execution will materially
+  improve speed or quality. The primary agent owns integration, conflict
+  resolution, and final verification.
+- Lead with the outcome. Use plain, direct language and concise paragraphs. Use
+  lists only for parallel, sequential, or comparative information.
+- If a skill causes the work to pause, remain unfinished, or change direction,
+  name the exact `SKILL.md`, identify the controlling instruction, and explain
+  briefly how it applies.
+
+## Working in this repository
+
+This is the repository's only `AGENTS.md` and applies to every workspace. Apply
+repository material in this order after the operating defaults above:
+
+1. this file;
+2. repository skills in `.agents/skills`;
+3. generic or external skills;
+4. lint, tests, and CI as mechanical enforcement.
+
+Preserve unrelated user changes in the working tree. Assume the application is
+already running; do not start it. Keep temporary plans, research, and agent
+scratch files outside tracked repository paths.
 
 <!-- CODEGRAPH_START -->
 
-## CodeGraph
+### CodeGraph
 
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the
-repo root), use it before grep/find or reading source files when you need to
-understand or locate code:
+This repository is indexed by CodeGraph through `.codegraph/`. Use it before
+grep, find, or broad source reads when locating code or tracing behavior:
 
 - MCP: use `codegraph_explore` for symbols, source, and call paths, or
-  `codegraph_node` for one symbol or source file.
-- Shell: use `codegraph explore "<question>"` or `codegraph node <symbol-or-file>`.
+  `codegraph_node` for one symbol or file.
+- Shell: use `codegraph explore "<question>"` or
+  `codegraph node <symbol-or-file>`.
 
-If `.codegraph/` does not exist, skip CodeGraph. Indexing is the user's decision.
 <!-- CODEGRAPH_END -->
 
-## Code style
+## How it works
 
-- Use descriptive names and self-explanatory structure.
-- Use `===`, `??`, and optional chaining where their semantics fit.
-- Prefix intentionally unused variables with `_`.
-- Avoid chained ternaries; use branches or early returns.
-- Keep imports from one module in one statement and use inline `type` specifiers.
-- Use `import type` when a symbol exists only at type level.
-- Follow `.oxlintrc.md` and the effective Oxlint configuration.
+The main flow is:
 
-## React and frontend
+```text
+Margonem runtime
+  -> Game client observers and processors
+  -> HTTP APIs and the realtime v1 WebSocket gateway
+  -> PostgreSQL / TimescaleDB / R2
+  -> RabbitMQ domain and delivery events
+  -> gateway, activity, search, Discord, and Web consumers
+```
 
-- React Compiler handles memoization. Do not add `memo`, `useMemo`, or
-  `useCallback` unless a measured integration constraint requires an explicit
-  exception.
-- Keep one component per file.
-- Put all user-facing static text behind i18n. Polish is the only supported
-  product language, but hardcoded copy is still forbidden.
-- `apps/web` is client-rendered, not SSR.
-- Apply the Persuade, Operate, or Read mode from `DESIGN.md` instead of copying
-  landing-page composition across apps.
-- Meet WCAG 2.2 AA for web surfaces. Preserve keyboard use, visible focus,
-  reduced motion, semantic naming, and responsive core workflows.
+The main code areas are:
 
-## Domain and security
+- `apps/game-client` and `apps/web` provide the primary product surfaces.
+  `apps/landing`, `apps/docs`, and `apps/wiki` provide public surfaces;
+  `apps/developer` is not yet a supported product.
+- `apps/api`, `apps/auth`, `apps/gateway`, `apps/battlelog`, `apps/activity`,
+  `apps/search`, and `apps/discord-bot` own independently deployed backend
+  responsibilities.
+- `apps/traffic-splitter` owns shared edge routing for `dev.lootlog.pl` and
+  `lootlog.pl`.
+- `packages/` contains generated clients, browser-safe contracts and domain
+  logic, protocols, UI, configuration, and tools. Defining a shared type does
+  not make a package the owner of its data.
+- `repos/` contains vendored, read-only reference repositories. Prefer their
+  patterns over guesses, but never edit, import from, or ship code from them.
+  For Effect work, treat `repos/effect/` as the source of truth for idiomatic
+  APIs, tests, and module structure.
 
-- In code, `Guild` means the Discord guild that anchors one Lootlog
-  Organization. Do not use it for a Margonem clan.
-- Preserve the Organization boundary in queries, aggregates, cache keys, jobs,
-  events, socket rooms, search projections, comments, history, and notifications.
-- A mutation on an existing resource requires both resource visibility and the
-  action permission.
-- Derived views must not reveal metadata hidden by the source access policy.
-- Discord is the only supported sign-in provider. Domain data should reference
-  the internal user identifier rather than spreading `discordId` into new
-  contracts.
-- Never publish secrets, credentials, private reports, or private product
-  evidence.
+## Domain language and boundaries
 
-## Vendored Repositories
+Use these terms consistently:
 
-This project vendors external repositories under @repos/
+- **Organization** is the top-level Lootlog group, anchored to exactly one
+  Discord server and representing one player faction.
+- **Discord guild** is the Discord entity that anchors an Organization. In
+  code, `Guild` means this concept.
+- **Margonem clan** is an in-game clan. One Organization may include several
+  clans and players without a clan; never use `Guild` for a Margonem clan.
+- **User** is a person with a Lootlog account, **Member** is a User whose current
+  Discord membership places them in an Organization, and **Player** is a
+  Margonem character.
 
-- Use vendored repositories as read-only reference material when working with related libraries
-- Prefer examples and patterns from the vendored source code over generated guesses or web search results
-- Do not edit files under @repos/ unless explicitly asked
-- Do not import from @repos/ - application code should continue importing from normal package dependencies
+Preserve these boundaries:
 
-When writing Effect code, inspect @repos/effect/ for examples of idiomatic usage, tests, module structure, and API design. Treat it as the source of truth for Effect patterns.
+- Scope queries, aggregates, cache and idempotency keys, jobs, events, socket
+  rooms, search projections, comments, history, notifications, exports, and
+  telemetry to the Organization where applicable.
+- A mutation on an existing resource requires both source visibility and the
+  relevant Capability. Derived views must not reveal metadata hidden by the
+  source policy.
+- Each data domain has one writer. Exchange authenticated, versioned APIs or
+  facts between services instead of reading or mutating another service's
+  database.
+- Keep redelivered consumers idempotent. Treat caches and search indexes as
+  rebuildable projections.
+- Discord is the only supported sign-in provider. New domain contracts refer to
+  the internal User identifier instead of spreading `discordId`.
+- Keep secrets, credentials, private reports, and private product evidence out
+  of code, logs, events, commits, and public output.
 
-## Protected contracts
+Preserve these compatibility contracts unless the change includes an explicit
+migration or coordinated rollout:
 
-Do not assume backward compatibility for internal, unreleased code. Preserve
-these contracts unless the change includes an explicit migration or coordinated
-rollout:
-
-- Margonem runtime behavior and object/callback semantics;
-- deployed HTTP, RabbitMQ, and websocket contracts;
+- Margonem runtime behavior and object, callback, `this`, exception, return
+  value, and request-count semantics;
+- deployed HTTP, RabbitMQ, and WebSocket contracts;
 - persisted data and migrations;
 - userscript settings and stored preferences;
 - public battle links.
 
 Internal TypeScript interfaces, UI components, and explicitly experimental
-features do not receive compatibility by default.
+features do not receive backward compatibility by default.
 
-## Architecture
+## Check every affected boundary
 
-- Each data domain has one writer. Do not read or mutate another service's
-  database directly.
-- Exchange versioned APIs or facts between independently deployed services.
-- Keep consumers idempotent where delivery can repeat.
-- Treat caches and search indexes as rebuildable projections.
-- Do not add a deployable service without documenting its independent scaling,
-  failure, data, security, or release boundary.
-- Prefer bounded work in the game client. Performance regressions are release
-  blockers, not follow-up polish.
+Before calling a change complete, account for every applicable item:
+
+- **Entry points and surfaces:** Game client, Web app, responsive mobile Web,
+  Discord bot, public surfaces, and every affected Game client installation
+  method.
+- **Contracts:** HTTP schemas, RabbitMQ facts, WebSocket events, generated
+  clients, persistence, and rollout order.
+- **Access:** lists, details, aggregates, search, history, comments, socket
+  delivery, notifications, and metadata use the same source policy.
+- **Reverse states:** when a state can be entered, provide the applicable way to
+  inspect and leave it.
+- **Documentation:** update user guides when shipped behavior changes.
+
+## Implementation rules
+
+- React Compiler owns memoization. Add `memo`, `useMemo`, or `useCallback` only
+  for a measured integration constraint.
+- Keep one React component per file. Put all user-facing static text behind
+  i18n; Polish remains the only supported product language.
+- Treat `apps/web` as client-rendered and meet WCAG 2.2 AA, including keyboard
+  use, visible focus, reduced motion, semantic names, and responsive core
+  workflows.
+- Keep Margonem globals behind the approved bridge and adapters. Isolate
+  observers so one failure cannot affect the game or another observer.
+- Add a deployable service only when its scaling, failure, data, security, or
+  release boundary justifies independent deployment.
+- Import from the module that owns a symbol. Do not create source files that
+  only re-export symbols.
 
 ## Verification
 
-- Every workspace should declare `lint`, `typecheck`, and `test`, or document why
-  a gate does not apply.
-- Backend tests must protect externally observable behavior, business invariants,
-  real regressions, authorization boundaries, or meaningful integration contracts.
-  Every test needs a clear answer to: “What real regression would this catch?”
-- Do not test route, handler, service, schema, field, export, or module counts;
-  symbol existence; private wiring; Effect, Bun, TypeScript, or library mechanics;
-  or guarantees already enforced by the type system. Do not use broad snapshots
-  as a substitute for behavioral assertions.
-- Do not mock the unit under test or internal application layers in E2E tests.
-  Keep fakes at genuine external boundaries and verify resulting state, not only
-  status codes. Never add a test solely to increase coverage.
-- Run the narrowest relevant checks during development and all required
-  workspace checks before handoff.
-- Add contract or end-to-end coverage when a change crosses the game client,
-  HTTP API, queue, gateway, or generated client boundary.
-- Follow the closer game-client instructions for characterization tests and
-  replay benchmarks.
-- Do not update golden expectations merely to make a behavior change pass.
+- Start with the smallest proof that exercises the changed behavior. Run lint,
+  typecheck, and tests for every affected workspace; broaden or repeat checks
+  only when cross-workspace contracts, risk, failures, or unresolved concerns
+  justify it.
+- Tests must protect observable behavior, business invariants, real
+  regressions, authorization boundaries, or meaningful integration contracts.
+  Each test must answer: “What real regression would this catch?”
+- Skip tests that count symbols or modules, mirror private wiring, restate the
+  type system, verify framework mechanics, or exist only to increase coverage.
+  Broad snapshots are not a substitute for behavioral assertions.
+- Keep E2E fakes at genuine external boundaries. Verify resulting state, not
+  only status codes, and never mock the unit under test or internal application
+  layers.
+- Add contract or end-to-end coverage when a change crosses Game client, HTTP,
+  RabbitMQ, gateway, or generated-client boundaries. Game client runtime,
+  adapter, processor, projection, and domain-store changes require relevant
+  characterization tests.
+- Preserve golden expectations until an intended behavior change has been
+  established independently. Documentation-only changes do not require
+  application tests.
 
-Do not try to start the application; assume it is already running.
+## Delivery
 
-## Git, pull requests, and releases
-
-- Follow Conventional Commits and `commitlint.config.js`.
-- Write pull request titles, descriptions, and technical
-  documentation in English.
-- Never bypass hooks with `--no-verify`.
-- Pull requests do not carry release metadata. Production workflows select an
-  immutable commit from `main`.
-- Production promotions and rollbacks reuse immutable image references and
-  Cloudflare deployments. Never rebuild a revision during rollback.
-
-## Documentation
-
-- Update the canonical source first, then app-specific deltas and public guides.
-- Keep `CONTEXT.md` free of implementation detail.
-- Do not publish testimonials.
-- Do not create source files that only re-export symbols; update imports to the
-  real module.
-
-## Tests
-
-IMPORTANT: Tautological tests are considered harmful.
+- A completed change may include a local Conventional Commit. Push a branch or
+  open a pull request only when the user explicitly asks.
+- Follow `commitlint.config.js`, preserve hooks, and never use `--no-verify`.
+  Do not mention Codex in commits or add `[codex]` to a pull request title.
+- Write code, API contracts, architecture documents, ADRs, agent instructions,
+  pull request titles, and pull request descriptions in English. Write product
+  and user documentation in Polish.
+- Do not publish testimonials or unaudited product claims.
+- Pull requests carry no release metadata. Production promotions and rollbacks
+  reuse immutable image references and Cloudflare deployments; never rebuild a
+  revision during rollback.
