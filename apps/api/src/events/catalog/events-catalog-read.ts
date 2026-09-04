@@ -87,29 +87,12 @@ export const makeEventsCatalogRead = (
       stringify: (value) => superjson.stringify(value),
       parse: (text): unknown => superjson.parse(text),
     });
-    return Effect.gen(function* () {
-      const hit = yield* Effect.tryPromise({
-        try: () => redis.getJson(key, codec),
-        catch: (cause) => cause,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            logger.warn("Event read cache unavailable", error);
-            return null;
-          }),
-        ),
-      );
-      if (hit !== null) return hit;
-      const value = yield* load;
-      yield* Effect.tryPromise({
-        try: () => redis.setJson(key, value, CACHE_TTL_SECONDS, codec),
-        catch: (cause) => cause,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => logger.warn("Event read cache unavailable", error)),
-        ),
-      );
-      return value;
+    return redis.getOrSetJsonEffect({
+      key,
+      codec,
+      ttlSeconds: CACHE_TTL_SECONDS,
+      factory: load,
+      onError: (error) => logger.warn("Event read cache unavailable", error),
     });
   };
 
@@ -230,7 +213,7 @@ export const makeEventsCatalogRead = (
     );
 
   const filterEvent = <
-    T extends { heroNpcs: Array<{ npcLvl: number | null }> },
+    T extends { heroNpcs: ReadonlyArray<{ npcLvl: number | null }> },
   >(
     event: T,
     roles: Role[],
@@ -238,7 +221,7 @@ export const makeEventsCatalogRead = (
   ): T => ({
     ...event,
     heroNpcs: filterHeroesByLevel(
-      event.heroNpcs,
+      [...event.heroNpcs],
       roles,
       getEffectiveCapabilities(accessPolicy),
     ),

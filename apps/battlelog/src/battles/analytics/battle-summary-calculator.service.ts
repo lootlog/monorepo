@@ -1,8 +1,6 @@
 import type {
-  BattleAnalyticsSummary,
   BattleDurationStats,
   PhGrowthDataPoint,
-  ProfessionWinRate,
   RatingDeltaByOpponent,
   RatingGrowthDataPoint,
   BattleStreak,
@@ -12,98 +10,6 @@ import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-a
 
 export const battleSummaryCalculator = (() => {
   const summary = {
-    calculateBattleAnalytics(
-      battles: InflatedBattleWithWarriors[],
-      characterIds: Set<string>,
-    ): BattleAnalyticsSummary {
-      let wins = 0;
-      let losses = 0;
-      let totalPH = 0;
-
-      for (const battle of battles) {
-        const userWarrior = domain.findUserWarrior(battle, characterIds);
-
-        if (!userWarrior) {
-          continue;
-        }
-
-        totalPH += userWarrior.ph;
-
-        if (battle.hasFlee) {
-          continue;
-        }
-
-        if (userWarrior.team === battle.winningTeam) {
-          wins++;
-        } else if (userWarrior.team === battle.losingTeam) {
-          losses++;
-        }
-      }
-
-      const totalBattles = wins + losses;
-      const winRatio = totalBattles > 0 ? wins / totalBattles : 0;
-
-      return {
-        totalBattles,
-        wins,
-        losses,
-        winRatio: Math.round(winRatio * 10000) / 100,
-        totalPH,
-      };
-    },
-
-    calculateProfessionWinRate(
-      battles: InflatedBattleWithWarriors[],
-      characterIds: Set<string>,
-    ): ProfessionWinRate[] {
-      const professionStats = new Map<
-        string,
-        { wins: number; losses: number }
-      >();
-
-      for (const battle of battles) {
-        const userWarrior = domain.findUserWarrior(battle, characterIds);
-        const opponentWarrior = domain.findOpponentWarrior(
-          battle,
-          characterIds,
-        );
-
-        if (!userWarrior || !opponentWarrior) {
-          continue;
-        }
-
-        const stats = professionStats.get(opponentWarrior.prof) ?? {
-          wins: 0,
-          losses: 0,
-        };
-
-        if (userWarrior.team === battle.winningTeam) {
-          stats.wins++;
-        } else if (userWarrior.team === battle.losingTeam) {
-          stats.losses++;
-        }
-
-        professionStats.set(opponentWarrior.prof, stats);
-      }
-
-      return Array.from(professionStats.entries())
-        .map(([prof, stats]) => {
-          const totalBattles = stats.wins + stats.losses;
-
-          return {
-            prof,
-            wins: stats.wins,
-            losses: stats.losses,
-            totalBattles,
-            winRate:
-              totalBattles > 0
-                ? Math.round((stats.wins / totalBattles) * 10000) / 100
-                : 0,
-          };
-        })
-        .sort((left, right) => right.totalBattles - left.totalBattles);
-    },
-
     calculateCurrentStreak(
       battles: InflatedBattleWithWarriors[],
       characterIds: Set<string>,

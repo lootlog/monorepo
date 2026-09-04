@@ -2,6 +2,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeGuildKillQueries } from "#src/kills/guild-kill-queries";
 import { makeKillCreation } from "#src/kills/kill-creation";
+import type { KillQueryCache } from "#src/kills/kill-query-support";
 import { makeKillStatsPersistence } from "#src/kills/kill-stats-persistence";
 import { makeMemberKillQuery } from "#src/kills/member-kill-query";
 import { makeUserKillQueries } from "#src/kills/user-kill-queries";
@@ -104,16 +105,15 @@ export const recordsServicesLive = Layer.effect(
       logger: applicationLogger,
     });
     const killStatsPersistence = makeKillStatsPersistence(database);
-    const killQueryCache = {
-      get: (key, schema) =>
-        Effect.tryPromise({
-          try: () => redis.getJson(key, makeJsonCodec(schema)),
-          catch: (error) => error,
-        }),
-      set: <A>(key: string, value: A, ttlSeconds: number) =>
-        Effect.tryPromise({
-          try: () => redis.setJson(key, value, ttlSeconds),
-          catch: (error) => error,
+    const killQueryCache: KillQueryCache = {
+      getOrSet: (key, schema, factory, ttlSeconds) =>
+        redis.getOrSetJsonEffect({
+          key,
+          codec: makeJsonCodec(schema),
+          factory,
+          ttlSeconds,
+          onError: (error) =>
+            applicationLogger.warn("Kill statistics cache unavailable", error),
         }),
     };
     return {

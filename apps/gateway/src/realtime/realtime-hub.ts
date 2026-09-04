@@ -371,6 +371,8 @@ export class RealtimeHub {
     }
     if (!("type" in decoded.success)) return;
     const frame = decoded.success as Event;
+    let jsonFrame: string | undefined;
+    let binaryFrame: Uint8Array | undefined;
 
     for (const socket of this.sockets.values()) {
       if (!this.matchesRecipient(socket, message)) continue;
@@ -394,7 +396,11 @@ export class RealtimeHub {
       if (!(matchesUser || matchesDiscord || matchesScope || matchesAnyScope))
         continue;
       if (!this.matchesPresenceAudience(socket, message)) continue;
-      this.sendEvent(socket, frame);
+      const encoded =
+        socket.data.frameEncoding === "json"
+          ? (jsonFrame ??= JSON.stringify(frame))
+          : (binaryFrame ??= encodeRealtimeFrame(frame));
+      this.send(socket, encoded);
     }
   }
 

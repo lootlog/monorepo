@@ -16,6 +16,7 @@ import {
   type UserNpcKillsQuery as GetUserNpcKillsDto,
 } from "#src/contracts/kills/schemas";
 
+import type { KillQueryCache } from "./kill-query-support.js";
 import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
 const CACHE_TTL_SECONDS = 30;
@@ -25,18 +26,6 @@ export class UserKillQueriesError extends TaggedErrorClass<UserKillQueriesError>
   "UserKillQueriesError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-export interface UserKillQueriesCache {
-  readonly get: <S extends Schema.ConstraintDecoder<unknown>>(
-    key: string,
-    schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly set: <A>(
-    key: string,
-    value: A,
-    ttlSeconds: number,
-  ) => Effect.Effect<void, unknown>;
-}
 
 const cacheKey = (
   scope: string,
@@ -51,8 +40,8 @@ type UserStat =
 
 export const makeUserKillQueries = (
   database: typeof ApiDatabase.Service,
-  cache: UserKillQueriesCache,
-  logger: ApplicationLogger,
+  cache: KillQueryCache,
+  _logger: ApplicationLogger,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -132,26 +121,7 @@ export const makeUserKillQueries = (
   ) =>
     protect(
       `kills.cache.${label}`,
-      Effect.gen(function* () {
-        const existing = yield* cache.get(key, schema);
-        if (existing !== null) {
-          logger.log({
-            level: "debug",
-            message: `Cache hit for ${label}`,
-            cacheKey: key,
-          });
-          return existing;
-        }
-
-        logger.log({
-          level: "debug",
-          message: `Cache miss for ${label}`,
-          cacheKey: key,
-        });
-        const value = yield* load;
-        yield* cache.set(key, value, CACHE_TTL_SECONDS);
-        return value;
-      }),
+      cache.getOrSet(key, schema, load, CACHE_TTL_SECONDS),
     );
 
   const getUserKillStats = (userId: string, query: GetUserKillStatsDto) => {

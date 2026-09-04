@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-router";
 import { CookieConsent } from "@/src/components/cookie-consent";
 import { I18nProvider } from "@/src/components/i18n-provider";
-import { MotionProvider } from "@/src/components/motion-provider";
 import landingTranslations from "@/src/i18n/translations/landing.json";
 import uiCss from "@lootlog/ui/globals.css?url";
 import landingCss from "@/src/styles/landing.css?url";
@@ -67,10 +66,8 @@ function RootDocument() {
         style={{ fontFamily: "var(--font-geist-sans)" }}
       >
         <I18nProvider>
-          <MotionProvider>
-            <Outlet />
-            <CookieConsent />
-          </MotionProvider>
+          <Outlet />
+          <CookieConsent />
         </I18nProvider>
         <Scripts />
       </body>

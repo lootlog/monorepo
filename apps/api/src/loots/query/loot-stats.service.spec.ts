@@ -66,7 +66,7 @@ describe("LootStatsService access-scoped caching", () => {
     const service = new LootStatsService(
       (() => Effect.die("SQL must not run on a cache hit")) as never,
       {
-        getJson: async () => expected,
+        getOrSetJsonEffect: () => Effect.succeed(expected),
       } as never,
     );
 

@@ -121,7 +121,15 @@ const createServices = () =>
           waitTimeoutMs: 5_000,
         },
       );
-      return { battles, redis, redisApi, uploads };
+      return {
+        battles,
+        redis,
+        redisApi,
+        uploads,
+        cache,
+        analytics,
+        metadata: makeBattleMetadata(database, redis),
+      };
     }),
   );
 
@@ -244,3 +252,172 @@ it("does not renew or release another owner's real Redis lock after ownership ch
     await creation;
   }
 }, 10_000);
+
+it("invalidates only the user's cache generation and cannot restore a stale in-flight result", async () => {
+  const decode = (text: string) => Number(text);
+  const cached = (user: string, value: number) =>
+    services.cache.getOrSetJson(
+      user,
+      "summary",
+      () => Effect.succeed(value),
+      decode,
+    );
+  expect(await runtime.runPromise(cached("one", 1))).toBe(1);
+  expect(await runtime.runPromise(cached("two", 2))).toBe(2);
+  const { promise: started, resolve: begin } = Promise.withResolvers<void>();
+  const { promise: result, resolve: finish } = Promise.withResolvers<number>();
+  const oldRead = runtime.runPromise(
+    services.cache.getOrSetJson(
+      "one",
+      "slow",
+      () =>
+        Effect.tryPromise(async () => {
+          begin();
+          return await result;
+        }),
+      decode,
+    ),
+  );
+  await started;
+  const before = await runtime.runPromise(
+    services.redisApi.send<string>("INFO", "commandstats"),
+  );
+  await runtime.runPromise(services.cache.invalidateUserAnalytics("one"));
+  const after = await runtime.runPromise(
+    services.redisApi.send<string>("INFO", "commandstats"),
+  );
+  expect(after.match(/cmdstat_scan:[^\r\n]*/)?.[0]).toBe(
+    before.match(/cmdstat_scan:[^\r\n]*/)?.[0],
+  );
+  expect(await runtime.runPromise(cached("one", 3))).toBe(3);
+  expect(await runtime.runPromise(cached("two", 4))).toBe(2);
+  await services.redis.del("battle-cache-generation:two");
+  expect(await runtime.runPromise(cached("two", 6))).toBe(6);
+  expect(
+    await runtime.runPromise(
+      services.cache.getOrSetJson(
+        "one",
+        "slow",
+        () => Effect.succeed(5),
+        decode,
+      ),
+    ),
+  ).toBe(5);
+  finish(1);
+  expect(await oldRead).toBe(1);
+  expect(
+    await runtime.runPromise(
+      services.cache.getOrSetJson(
+        "one",
+        "slow",
+        () => Effect.succeed(9),
+        decode,
+      ),
+    ),
+  ).toBe(5);
+});
+
+it("aggregates battle summaries in SQL without losing flee PH, level filters or user isolation", async () => {
+  await pool.query(
+    `INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('uc', 'owner', 'hero', 'Hero', 'world')`,
+  );
+  const fixtures = [
+    { id: "win", winningTeam: 1, losingTeam: 2, ph: 50 },
+    { id: "loss", winningTeam: 2, losingTeam: 1, ph: 10 },
+    { id: "flee", winningTeam: 2, losingTeam: 1, ph: 5, hasFlee: true },
+    { id: "draw", winningTeam: 0, losingTeam: 0, ph: 20 },
+    { id: "low", winningTeam: 1, losingTeam: 2, ph: 99, lvl: 10 },
+    {
+      id: "other",
+      winningTeam: 1,
+      losingTeam: 2,
+      ph: 99,
+      owner: "someone-else",
+    },
+    { id: "team", winningTeam: 1, losingTeam: 2, ph: 99, type: "team" },
+  ];
+  for (const fixture of fixtures) {
+    await pool.query(
+      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", statistics)
+      VALUES ($1,$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6,'{}')`,
+      [
+        fixture.id,
+        fixture.owner ?? "owner",
+        fixture.type ?? "1v1",
+        fixture.winningTeam,
+        fixture.losingTeam,
+        fixture.hasFlee ?? false,
+      ],
+    );
+    await pool.query(
+      `INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,$2,'hero','Hero',100,'w','hero.gif',1,1,$3), ($4,$2,'enemy','Enemy',$5,'m','enemy.gif',2,1,0)`,
+      [
+        `${fixture.id}-hero`,
+        fixture.id,
+        fixture.ph,
+        `${fixture.id}-enemy`,
+        fixture.lvl ?? 100,
+      ],
+    );
+  }
+  const filters = { characterId: "hero", minLevel: 80, maxLevel: 120 };
+  expect(
+    await runtime.runPromise(
+      services.analytics.getBattleAnalytics(filters, "owner"),
+    ),
+  ).toEqual({
+    wins: 1,
+    losses: 1,
+    totalBattles: 2,
+    totalPH: 85,
+    winRatio: 50,
+  });
+  expect(
+    await runtime.runPromise(
+      services.analytics.calculateProfessionWinRate(
+        {
+          ...filters,
+          size: 20,
+          sortBy: "totalBattles",
+          sortOrder: "desc",
+          includeTotal: false,
+        },
+        "owner",
+      ),
+    ),
+  ).toEqual([{ prof: "m", wins: 1, losses: 1, totalBattles: 2, winRate: 50 }]);
+  expect(
+    await runtime.runPromise(
+      services.analytics.getBattleAnalytics(
+        { ...filters, matchmaking: true },
+        "owner",
+      ),
+    ),
+  ).toEqual({
+    wins: 0,
+    losses: 0,
+    totalBattles: 0,
+    totalPH: 0,
+    winRatio: 0,
+  });
+});
+
+it("reloads corrupted metadata cache and shares invalidation with analytics", async () => {
+  await services.redis.set("battle-cache-generation:owner", "test-generation");
+  const key =
+    "battle-cache:v2:owner:test-generation:battle-characters:list:owner";
+  await services.redis.set(key, "{broken-json", 300);
+  expect(
+    await runtime.runPromise(services.metadata.getUserCharacters("owner")),
+  ).toEqual({ characters: [] });
+  await pool.query(
+    `INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('new-uc','owner','hero','Hero','world')`,
+  );
+  await runtime.runPromise(services.cache.invalidateUserAnalytics("owner"));
+  expect(
+    await runtime.runPromise(services.metadata.getUserCharacters("owner")),
+  ).toEqual({
+    characters: [{ id: "hero", name: "Hero", world: "world", icon: "" }],
+  });
+});

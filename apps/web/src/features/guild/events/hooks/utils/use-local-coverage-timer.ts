@@ -1,3 +1,4 @@
+import { getClockSecond } from "@/hooks/utils/second-clock";
 import { useEffect, useRef, useState } from "react";
 import { formatDurationPadded } from "../../utils/format-duration";
 import type { CoverageGap } from "../queries/use-map-coverage-timer";
@@ -16,34 +17,6 @@ const getGapTypeFromStatus = (status: MapStatus): CoverageGapType | null => {
   if (status === "ASSIGNED_UNKNOWN") return null;
   if (status === "UNASSIGNED") return "UNASSIGNED";
   return "UNCOVERED";
-};
-
-const secondTickListeners = new Set<(currentSecond: number) => void>();
-let secondTickInterval: ReturnType<typeof setInterval> | null = null;
-
-export const getCoverageClockSecond = () => Math.floor(Date.now() / 1000);
-export const subscribeToCoverageClock = (
-  listener: (currentSecond: number) => void,
-) => {
-  secondTickListeners.add(listener);
-
-  if (secondTickInterval === null) {
-    secondTickInterval = setInterval(() => {
-      const currentSecond = getCoverageClockSecond();
-      [...secondTickListeners].forEach((currentListener) =>
-        currentListener(currentSecond),
-      );
-    }, 1000);
-  }
-
-  return () => {
-    secondTickListeners.delete(listener);
-
-    if (secondTickListeners.size === 0 && secondTickInterval !== null) {
-      clearInterval(secondTickInterval);
-      secondTickInterval = null;
-    }
-  };
 };
 
 export const useLocalCoverageTimer = (
@@ -97,7 +70,7 @@ export const useLocalCoverageTimer = (
   const elapsedSeconds =
     startTime === null
       ? 0
-      : Math.max(0, getCoverageClockSecond() - Math.floor(startTime / 1000));
+      : Math.max(0, getClockSecond() - Math.floor(startTime / 1000));
 
   return {
     gapType,

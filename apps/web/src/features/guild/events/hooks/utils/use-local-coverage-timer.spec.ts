@@ -1,3 +1,4 @@
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 // @vitest-environment happy-dom
 
 import { act, cleanup, renderHook } from "@testing-library/react";
@@ -5,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CoverageGap } from "../queries/use-map-coverage-timer";
 import {
   type MapStatus,
-  subscribeToCoverageClock,
   useLocalCoverageTimer,
 } from "./use-local-coverage-timer";
 
@@ -78,8 +78,8 @@ describe("useLocalCoverageTimer", () => {
   it("uses one clock interval for all active timer subscribers", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
 
-    const unsubscribeFirst = subscribeToCoverageClock(vi.fn());
-    const unsubscribeSecond = subscribeToCoverageClock(vi.fn());
+    const unsubscribeFirst = subscribeToSecondClock(vi.fn());
+    const unsubscribeSecond = subscribeToSecondClock(vi.fn());
 
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
 

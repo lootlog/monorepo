@@ -2,7 +2,7 @@ import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import { and, desc, eq, ilike } from "drizzle-orm";
 import { Effect, Schema } from "effect";
-import { makeJsonCodec } from "#src/infrastructure/redis-store";
+import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
 
@@ -23,13 +23,12 @@ const UserWorldsResponseSchema = Schema.Struct({
 });
 type UserWorldsResponse = typeof UserWorldsResponseSchema.Type;
 
-const USER_METADATA_CACHE_TTL_SECONDS = 5 * 60;
-
 export const makeBattleMetadata = (
   drizzle: DrizzleDatabase,
   redisService: RedisStore,
 ) => {
   const logger = new Logger("BattleMetadata");
+  const cache = makeBattleAnalyticsCache(redisService);
   const getUserCharactersCacheKey = (userId: string) =>
     `battle-characters:list:${userId}`;
   const getUserWorldsCacheKey = (userId: string) =>
@@ -91,38 +90,21 @@ export const makeBattleMetadata = (
       );
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
+    userId: string,
     key: string,
     load: Effect.Effect<S["Type"], unknown>,
     schema: S,
   ) =>
-    Effect.tryPromise({
-      try: () =>
-        Promise.resolve(redisService.getJson(key, makeJsonCodec(schema))),
-      catch: (cause) => cause,
-    }).pipe(
-      Effect.catch((error) => {
-        logger.warn("User metadata cache unavailable", error);
-        return Effect.succeed(null);
-      }),
-      Effect.flatMap((value) =>
-        value === null ? load : Effect.succeed(value),
-      ),
-      Effect.tap((value) =>
-        Effect.tryPromise({
-          try: () =>
-            Promise.resolve(
-              redisService.setJson(key, value, USER_METADATA_CACHE_TTL_SECONDS),
-            ),
-          catch: (cause) => cause,
-        }).pipe(Effect.catch(() => Effect.void)),
-      ),
-      Effect.withSpan("BattleMetadata_cached", {
-        attributes: { adapter: "redis", retryCount: 0 },
-      }),
+    cache.getOrSetJson(
+      userId,
+      key,
+      () => load,
+      Schema.decodeUnknownSync(Schema.fromJsonString(schema)),
     );
 
   const getUserCharacters = (userId: string) =>
     cached(
+      userId,
       getUserCharactersCacheKey(userId),
       getUserCharactersUncached(userId),
       UserCharactersResponseSchema,
@@ -130,6 +112,7 @@ export const makeBattleMetadata = (
 
   const getUserWorlds = (userId: string) =>
     cached(
+      userId,
       getUserWorldsCacheKey(userId),
       getUserWorldsUncached(userId),
       UserWorldsResponseSchema,

@@ -10,8 +10,6 @@ import professions from "./translations/professions.json";
 import battle from "./translations/battle.json";
 import battlePanel from "./translations/battle-panel.json";
 import battleUi from "./translations/battle-ui.json";
-import events from "./translations/events.json";
-import settings from "./translations/settings.json";
 import common from "./translations/common.json";
 import kills from "./translations/kills.json";
 import loots from "./translations/loots.json";
@@ -36,8 +34,6 @@ i18n.use(initReactI18next).init({
         battle,
         battlePanel,
         battleUi,
-        events,
-        settings,
         common,
         kills,
         loots,
@@ -64,3 +60,29 @@ i18n.use(initReactI18next).init({
 });
 
 export default i18n;
+
+let authenticatedTranslations: Promise<void> | undefined;
+
+export function loadAuthenticatedTranslations() {
+  authenticatedTranslations ??= Promise.all([
+    import("./translations/settings.json"),
+    import("./translations/events.json"),
+  ])
+    .then(([settings, events]) => {
+      i18n.addResourceBundle(
+        "pl",
+        "translation",
+        {
+          settings: settings.default,
+          events: events.default,
+        },
+        true,
+        true,
+      );
+    })
+    .catch((error: unknown) => {
+      authenticatedTranslations = undefined;
+      throw error;
+    });
+  return authenticatedTranslations;
+}
