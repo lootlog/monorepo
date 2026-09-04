@@ -60,7 +60,7 @@ export const recordHttpServerMetrics = (input: {
 export const httpServerMetrics = HttpMiddleware.make((httpApp) =>
   Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
-    if (/^\/healthz(?:[?#]|$)/.test(request.url)) {
+    if (/^\/+healthz\/*(?:[?#]|$)/i.test(request.url)) {
       yield* HttpMiddleware.withLoggerDisabled(Effect.void);
     }
     const startedAt = yield* Clock.currentTimeMillis;
