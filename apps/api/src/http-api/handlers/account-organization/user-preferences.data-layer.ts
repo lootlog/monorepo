@@ -289,10 +289,10 @@ const normalizeRoutingRules = (
         typeof rule.id === "string" && rule.id.length > 0
           ? rule.id
           : `rule-${index + 1}`,
-      name: name && name.length > 0 ? name : undefined,
+      ...(name ? { name } : {}),
       minLevel: Math.min(boundedMin, boundedMax),
       maxLevel: Math.max(boundedMin, boundedMax),
-      world: world && world.length > 0 ? world : undefined,
+      ...(world ? { world } : {}),
       guildIds: Array.isArray(rule.guildIds)
         ? rule.guildIds.filter(
             (guildId): guildId is string => typeof guildId === "string",

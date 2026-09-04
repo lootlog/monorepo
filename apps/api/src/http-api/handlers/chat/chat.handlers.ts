@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import { encodeDomainJson } from "../../domain-json.schema.js";
@@ -98,15 +99,20 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
 
 type ChatFailure = ChatAccessDenied | ChatNotFound | ChatOperationError;
 
-const declaredForbidden = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
+const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
   Effect.catchTags(effect, {
     ChatAccessDenied: (error) =>
-      error.status === 403 ? Effect.fail(undefined) : Effect.die(error),
-    ChatNotFound: Effect.die,
-    ChatOperationError: (error) =>
-      applicationErrorStatusOrUndefined(error.cause) === 403
-        ? Effect.fail(undefined)
-        : Effect.die(error.cause),
+      error.status === 403
+        ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
+        : Effect.die(error),
+    ChatNotFound: (error) =>
+      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    ChatOperationError: (error) => {
+      const status = applicationErrorStatusOrUndefined(error.cause);
+      return status === 403 || status === 404
+        ? Effect.succeed(HttpServerResponse.empty({ status }))
+        : Effect.die(error.cause);
+    },
   });
 
 const pathString = (value: unknown, name: string) =>
@@ -180,7 +186,7 @@ export const ChatHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("ChatControllerGetChatMessages", ({ params }) =>
-        declaredForbidden(
+        declaredHttpFailure(
           Effect.flatMap(
             pathString(params.guildId, "guildId"),
             getChatMessages,
@@ -188,14 +194,14 @@ export const ChatHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("ChatControllerSendChatMessage", ({ params, payload }) =>
-        declaredForbidden(
+        declaredHttpFailure(
           Effect.flatMap(pathString(params.guildId, "guildId"), (guildId) =>
             sendChatMessage(guildId, payload),
           ),
         ),
       )
       .handle("ChatControllerClearChatMessages", ({ params }) =>
-        declaredForbidden(
+        declaredHttpFailure(
           Effect.flatMap(
             pathString(params.guildId, "guildId"),
             clearChatMessages,
@@ -203,14 +209,14 @@ export const ChatHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("ChatControllerDeleteChatMessage", ({ params }) =>
-        declaredForbidden(
+        declaredHttpFailure(
           Effect.flatMap(pathString(params.guildId, "guildId"), (guildId) =>
             deleteChatMessage(guildId, params.messageId),
           ),
         ),
       )
       .handle("ChatControllerUpdateChatMessage", ({ params, payload }) =>
-        declaredForbidden(
+        declaredHttpFailure(
           Effect.flatMap(pathString(params.guildId, "guildId"), (guildId) =>
             updateChatMessage(guildId, params.messageId, payload.message),
           ),

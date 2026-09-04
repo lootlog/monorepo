@@ -20,6 +20,17 @@ const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}",
   "GET /guilds/{guildId}/permissions",
 ]);
+const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
+  "GET /guilds/{guildId}/members",
+  "GET /guilds/{guildId}/members/references",
+  "GET /guilds/{guildId}/members/summary",
+  "POST /guilds/{guildId}/members/refresh-all",
+  "GET /guilds/{guildId}/chat-messages",
+  "POST /guilds/{guildId}/chat-messages",
+  "DELETE /guilds/{guildId}/chat-messages",
+  "PATCH /guilds/{guildId}/chat-messages/{messageId}",
+  "DELETE /guilds/{guildId}/chat-messages/{messageId}",
+]);
 const TICKET_VERIFY_HEADERS = new Set([
   "x-lootlog-credential-purpose",
   "x-lootlog-websocket-origin",
@@ -182,7 +193,27 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
   );
 };
 
-const normalizeAllowedChanges = (
+const assertOrganizationNotFoundResponse = (
+  operation: JsonValue,
+  operationKey: string,
+): void => {
+  const responses =
+    operation !== null &&
+    typeof operation === "object" &&
+    !Array.isArray(operation)
+      ? operation["responses"]
+      : undefined;
+  if (
+    responses === null ||
+    typeof responses !== "object" ||
+    Array.isArray(responses) ||
+    responses["404"] === undefined
+  ) {
+    throw new Error(`${operationKey} must declare a 404 response`);
+  }
+};
+
+export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
   operation: JsonValue,
@@ -202,6 +233,14 @@ const normalizeAllowedChanges = (
   if (service === "api" && GUILD_METADATA_ERROR_OPERATIONS.has(operationKey)) {
     normalized = removeResponseStatus(normalized, "403");
     // Missing Organizations now return 404 instead of an internal server error.
+    normalized = removeResponseStatus(normalized, "404");
+  }
+  // Verified by the real authorization HTTP tests: missing Organizations return 404.
+  if (
+    service === "api" &&
+    ORGANIZATION_NOT_FOUND_OPERATIONS.has(operationKey)
+  ) {
+    assertOrganizationNotFoundResponse(normalized, operationKey);
     normalized = removeResponseStatus(normalized, "404");
   }
   if (service === "auth" && operationKey === "GET /auth/verify") {
