@@ -237,6 +237,12 @@ Before calling a change complete, account for every applicable item:
   typecheck, and tests for every affected workspace; broaden or repeat checks
   only when cross-workspace contracts, risk, failures, or unresolved concerns
   justify it.
+- After changing backend HTTP contracts (including response statuses), run
+  `bun run client:generate` from the repository root, review and commit all
+  affected OpenAPI specifications and generated clients, and update callers
+  and contract checks for the intended behavior. Run `bun run client:check`
+  before pushing; successful generation alone is not verification. Update
+  parity exceptions only for independently verified, intentional changes.
 - Tests must protect observable behavior, business invariants, real
   regressions, authorization boundaries, or meaningful integration contracts.
   Each test must answer: “What real regression would this catch?”
