@@ -1,21 +1,14 @@
 /** Shared input and output schemas for the guild-stats-card feature. */
 import * as Schema from "effect/Schema";
 
-export type RefreshStatsCardResponseDto_Output =
-  typeof RefreshStatsCardResponseDto_Output.Type;
+export type RefreshStatsCardResponse = typeof RefreshStatsCardResponse.Type;
 
-export const RefreshStatsCardResponseDto_Output = Schema.Struct({
+export const RefreshStatsCardResponse = Schema.Struct({
   nextRefreshAt: Schema.String,
 }).annotate({ identifier: "RefreshStatsCardResponseDto_Output" });
 
-export type AuthenticatedGuildStatsCardControllerRefreshStatsCardPathParams =
-  typeof AuthenticatedGuildStatsCardControllerRefreshStatsCardPathParams.Type;
+export type StatsCardOrganizationPath = typeof StatsCardOrganizationPath.Type;
 
-export const AuthenticatedGuildStatsCardControllerRefreshStatsCardPathParams =
-  Schema.Struct({ guildId: Schema.String });
-
-export type AuthenticatedGuildStatsCardControllerRefreshStatsCard200 =
-  typeof AuthenticatedGuildStatsCardControllerRefreshStatsCard200.Type;
-
-export const AuthenticatedGuildStatsCardControllerRefreshStatsCard200 =
-  RefreshStatsCardResponseDto_Output;
+export const StatsCardOrganizationPath = Schema.Struct({
+  guildId: Schema.String,
+});

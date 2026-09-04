@@ -1,3 +1,5 @@
+// Hand-maintained persistence contract, including Better Auth plugin fields.
+// Update this source and generate reviewed SQL migrations when auth storage changes.
 import {
   index,
   pgTable,

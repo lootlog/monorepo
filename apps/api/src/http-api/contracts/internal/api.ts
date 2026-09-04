@@ -4,11 +4,11 @@ import {
   HttpApiGroup,
   OpenApi,
 } from "effect/unstable/httpapi";
+import { OrganizationSummary } from "#src/contracts/shared";
 import {
-  GuildsInternalControllerGetGuildByIdOrVanityUrl200,
-  GuildsInternalControllerGetGuildByIdOrVanityUrlPathParams,
-  GuildsInternalControllerGetUserPermissions200,
-  GuildsInternalControllerGetUserPermissionsQuery,
+  OrganizationLookupPath,
+  InternalUserPermissionsResponse,
+  InternalUserPermissionsQuery,
 } from "#src/contracts/internal/schemas";
 
 export class InternalGroup extends HttpApiGroup.make("internal").add(
@@ -16,8 +16,8 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     "GuildsInternalControllerGetUserPermissions",
     "/internal/guilds/user-permissions",
     {
-      query: GuildsInternalControllerGetUserPermissionsQuery,
-      success: GuildsInternalControllerGetUserPermissions200,
+      query: InternalUserPermissionsQuery,
+      success: InternalUserPermissionsResponse,
     },
   )
     .annotate(OpenApi.Identifier, "GuildsInternalController_getUserPermissions")
@@ -30,8 +30,8 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     "GuildsInternalControllerGetGuildByIdOrVanityUrl",
     "/internal/guilds/:idOrVanityUrl",
     {
-      params: GuildsInternalControllerGetGuildByIdOrVanityUrlPathParams,
-      success: GuildsInternalControllerGetGuildByIdOrVanityUrl200,
+      params: OrganizationLookupPath,
+      success: OrganizationSummary,
     },
   )
     .annotate(

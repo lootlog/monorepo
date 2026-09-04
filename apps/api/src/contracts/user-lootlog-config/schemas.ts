@@ -1,47 +1,43 @@
 /** Shared input and output schemas for the user-lootlog-config feature. */
 import * as Schema from "effect/Schema";
+import { NonEmptyString } from "#src/contracts/scalars";
 
-export type UserLootlogConfigAccountResponseDto_Output =
-  typeof UserLootlogConfigAccountResponseDto_Output.Type;
+const characterLootlogConfigFields = {
+  userId: Schema.String,
+  accountId: Schema.String,
+  characterId: Schema.String,
+  catchingGuildIds: Schema.Array(Schema.String),
+};
 
-export const UserLootlogConfigAccountResponseDto_Output = Schema.Record(
+export type AccountLootlogConfigResponse =
+  typeof AccountLootlogConfigResponse.Type;
+
+export const AccountLootlogConfigResponse = Schema.Record(
   Schema.String,
-  Schema.Struct({
-    userId: Schema.String,
-    accountId: Schema.String,
-    characterId: Schema.String,
-    catchingGuildIds: Schema.Array(Schema.String),
-  }),
+  Schema.Struct(characterLootlogConfigFields),
 ).annotate({ identifier: "UserLootlogConfigAccountResponseDto_Output" });
 
-export type CreateOrUpdateLootlogCharacterConfigDto =
-  typeof CreateOrUpdateLootlogCharacterConfigDto.Type;
+export type UpdateCharacterLootlogConfigRequest =
+  typeof UpdateCharacterLootlogConfigRequest.Type;
 
-export const CreateOrUpdateLootlogCharacterConfigDto = Schema.Struct({
-  characterId: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
+export const UpdateCharacterLootlogConfigRequest = Schema.Struct({
+  characterId: NonEmptyString,
   catchingGuildIds: Schema.Array(Schema.String).annotate({
     description: "Guild IDs used for catching-related actions",
   }),
 }).annotate({ identifier: "CreateOrUpdateLootlogCharacterConfigDto" });
 
-export type UserLootlogConfigResponseDto_Output =
-  typeof UserLootlogConfigResponseDto_Output.Type;
+export type CharacterLootlogConfigResponse =
+  typeof CharacterLootlogConfigResponse.Type;
 
-export const UserLootlogConfigResponseDto_Output = Schema.Struct({
-  userId: Schema.String,
-  accountId: Schema.String,
-  characterId: Schema.String,
-  catchingGuildIds: Schema.Array(Schema.String),
-}).annotate({ identifier: "UserLootlogConfigResponseDto_Output" });
+export const CharacterLootlogConfigResponse = Schema.Struct(
+  characterLootlogConfigFields,
+).annotate({ identifier: "UserLootlogConfigResponseDto_Output" });
 
-export type UserLootlogPlayersCatchingGuildsRequestDto =
-  typeof UserLootlogPlayersCatchingGuildsRequestDto.Type;
+export type PlayersCatchingOrganizationsRequest =
+  typeof PlayersCatchingOrganizationsRequest.Type;
 
-export const UserLootlogPlayersCatchingGuildsRequestDto = Schema.Struct({
+export const PlayersCatchingOrganizationsRequest = Schema.Struct({
   players: Schema.Array(
     Schema.Struct({
       userId: Schema.String,
@@ -55,68 +51,26 @@ export const UserLootlogPlayersCatchingGuildsRequestDto = Schema.Struct({
   ),
 }).annotate({ identifier: "UserLootlogPlayersCatchingGuildsRequestDto" });
 
-export type UserLootlogPlayersCatchingGuildsResponseDto_Output =
-  typeof UserLootlogPlayersCatchingGuildsResponseDto_Output.Type;
+export type PlayersCatchingOrganizationsResponse =
+  typeof PlayersCatchingOrganizationsResponse.Type;
 
-export const UserLootlogPlayersCatchingGuildsResponseDto_Output = Schema.Struct(
-  {
-    players: Schema.Array(
-      Schema.Struct({
-        userId: Schema.String,
-        accountId: Schema.String,
-        characterId: Schema.String,
-        guilds: Schema.Array(
-          Schema.Struct({ id: Schema.String, name: Schema.String }),
-        ),
-      }),
-    ),
-  },
-).annotate({
+export const PlayersCatchingOrganizationsResponse = Schema.Struct({
+  players: Schema.Array(
+    Schema.Struct({
+      userId: Schema.String,
+      accountId: Schema.String,
+      characterId: Schema.String,
+      guilds: Schema.Array(
+        Schema.Struct({ id: Schema.String, name: Schema.String }),
+      ),
+    }),
+  ),
+}).annotate({
   identifier: "UserLootlogPlayersCatchingGuildsResponseDto_Output",
 });
 
-export type UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParams =
-  typeof UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParams.Type;
+export type LootlogAccountPath = typeof LootlogAccountPath.Type;
 
-export const UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParams =
-  Schema.Struct({
-    accountId: Schema.String.annotate({ examples: ["account_123"] }),
-  });
-
-export type UserLootlogConfigControllerGetUserLootlogConfigByAccountId200 =
-  typeof UserLootlogConfigControllerGetUserLootlogConfigByAccountId200.Type;
-
-export const UserLootlogConfigControllerGetUserLootlogConfigByAccountId200 =
-  UserLootlogConfigAccountResponseDto_Output;
-
-export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParams =
-  typeof UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParams.Type;
-
-export const UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParams =
-  Schema.Struct({
-    accountId: Schema.String.annotate({ examples: ["account_123"] }),
-  });
-
-export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigRequestJson =
-  typeof UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigRequestJson.Type;
-
-export const UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigRequestJson =
-  CreateOrUpdateLootlogCharacterConfigDto;
-
-export type UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200 =
-  typeof UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200.Type;
-
-export const UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200 =
-  UserLootlogConfigResponseDto_Output;
-
-export type UserLootlogConfigControllerGetPlayersCatchingGuildsRequestJson =
-  typeof UserLootlogConfigControllerGetPlayersCatchingGuildsRequestJson.Type;
-
-export const UserLootlogConfigControllerGetPlayersCatchingGuildsRequestJson =
-  UserLootlogPlayersCatchingGuildsRequestDto;
-
-export type UserLootlogConfigControllerGetPlayersCatchingGuilds200 =
-  typeof UserLootlogConfigControllerGetPlayersCatchingGuilds200.Type;
-
-export const UserLootlogConfigControllerGetPlayersCatchingGuilds200 =
-  UserLootlogPlayersCatchingGuildsResponseDto_Output;
+export const LootlogAccountPath = Schema.Struct({
+  accountId: Schema.String.annotate({ examples: ["account_123"] }),
+});

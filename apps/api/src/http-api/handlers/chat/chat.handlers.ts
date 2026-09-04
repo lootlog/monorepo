@@ -8,13 +8,12 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import {
-  ChatControllerClearChatMessages200,
-  ChatControllerDeleteChatMessage200,
-  ChatControllerGetChatMessages200,
-  ChatControllerSendChatMessage201,
-  ChatControllerUpdateChatMessage200,
-  type SendMessageDto,
+  ChatMessageActionResponse,
+  ChatMessagesResponse,
+  ChatMessageResponse,
+  type SendChatMessageRequest,
 } from "#src/contracts/chat/schemas";
+
 import { LootlogApi } from "../../lootlog-api.js";
 
 export type ChatIdentity = {
@@ -63,7 +62,7 @@ export class ChatData extends Context.Service<
     readonly sendMessage: (
       discordId: string,
       guildId: string,
-      payload: SendMessageDto,
+      payload: SendChatMessageRequest,
     ) => DataEffect;
     readonly clearMessages: (discordId: string, guildId: string) => DataEffect;
     readonly deleteMessage: (
@@ -128,18 +127,18 @@ export const getChatMessages = Effect.fn("getChatMessages")(function* (
   const value = yield* data((service) =>
     service.getMessages(access.discordId, access.guildId),
   );
-  return yield* decode(ChatControllerGetChatMessages200, value);
+  return yield* decode(ChatMessagesResponse, value);
 });
 
 export const sendChatMessage = Effect.fn("sendChatMessage")(function* (
   guildId: string,
-  payload: SendMessageDto,
+  payload: SendChatMessageRequest,
 ) {
   const access = yield* requireGuild(guildId, writeCapabilities);
   const value = yield* data((service) =>
     service.sendMessage(access.discordId, access.guildId, payload),
   );
-  return yield* decode(ChatControllerSendChatMessage201, value);
+  return yield* decode(ChatMessageResponse, value);
 });
 
 export const clearChatMessages = Effect.fn("clearChatMessages")(function* (
@@ -149,7 +148,7 @@ export const clearChatMessages = Effect.fn("clearChatMessages")(function* (
   const value = yield* data((service) =>
     service.clearMessages(access.discordId, access.guildId),
   );
-  return yield* decode(ChatControllerClearChatMessages200, value);
+  return yield* decode(ChatMessageActionResponse, value);
 });
 
 export const deleteChatMessage = Effect.fn("deleteChatMessage")(function* (
@@ -160,7 +159,7 @@ export const deleteChatMessage = Effect.fn("deleteChatMessage")(function* (
   const value = yield* data((service) =>
     service.deleteMessage(access.discordId, access.guildId, messageId),
   );
-  return yield* decode(ChatControllerDeleteChatMessage200, value);
+  return yield* decode(ChatMessageActionResponse, value);
 });
 
 export const updateChatMessage = Effect.fn("updateChatMessage")(function* (
@@ -172,7 +171,7 @@ export const updateChatMessage = Effect.fn("updateChatMessage")(function* (
   const value = yield* data((service) =>
     service.updateMessage(access.discordId, access.guildId, messageId, message),
   );
-  return yield* decode(ChatControllerUpdateChatMessage200, value);
+  return yield* decode(ChatMessageActionResponse, value);
 });
 
 export const ChatHandlers = HttpApiBuilder.group(

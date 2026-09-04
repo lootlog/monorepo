@@ -14,10 +14,11 @@ import {
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
-  type CreateCommentDto,
-  LootsControllerFetchLootsByGuildId200,
-  type LootsControllerFetchLootsByGuildIdQuery as FetchLootsParamsDto,
+  type CreateLootCommentRequest,
+  type LootsQuery as FetchLootsParamsDto,
+  LootListResponse,
 } from "#src/contracts/loots/schemas";
+
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { ErrorKey } from "#src/loots/error-key";
 import type {
@@ -82,7 +83,7 @@ export interface LootsOperations {
     readonly discordId: string;
     readonly guild: Guild;
     readonly lootId: number;
-    readonly body: CreateCommentDto;
+    readonly body: CreateLootCommentRequest;
     readonly accessPolicy: AccessPolicy;
     readonly roles: Role[];
   }) => LootsEffect<LootComment>;
@@ -303,10 +304,7 @@ export const makeLootsOperations = ({
       const key = cacheKey(guild, permissions, roles, params);
       return Effect.gen(function* () {
         const cached = yield* attempt("loots.query.listCacheRead", () =>
-          redis.getJson(
-            key,
-            makeJsonCodec(LootsControllerFetchLootsByGuildId200),
-          ),
+          redis.getJson(key, makeJsonCodec(LootListResponse)),
         ).pipe(
           Effect.catch((error) =>
             Effect.sync(() => {

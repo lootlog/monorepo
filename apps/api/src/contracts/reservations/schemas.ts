@@ -4,416 +4,108 @@ import {
   DateTimeWithOffsetString,
   DateTimeString,
   FiniteNumber,
+  SafeInteger,
+  JsonValue,
+  NonNegativeSafeInteger,
 } from "#src/contracts/scalars";
 
-export type ReservationSpotsResponseDto =
-  typeof ReservationSpotsResponseDto.Type;
+const ReservationAuthor = Schema.Struct({
+  displayName: Schema.String,
+  avatarUrl: Schema.Union([Schema.String, Schema.Null]),
+});
+const ReservationSourceOrganization = Schema.Struct({
+  name: Schema.String,
+  iconUrl: Schema.Union([Schema.String, Schema.Null]),
+  isCurrent: Schema.Boolean,
+  calendarPath: Schema.String.check(
+    Schema.isPattern(new RegExp("^\\/.*")).annotate({
+      expected: "a string matching the RegExp ^\\/.*",
+    }),
+  ),
+});
+const ReservationLimit = Schema.Number.check(
+  Schema.isInt().annotate({ expected: "an integer" }),
+)
+  .check(
+    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
+      expected: "a value less than or equal to 9007199254740991",
+    }),
+  )
+  .check(
+    Schema.isGreaterThan(0).annotate({
+      expected: "a value greater than 0",
+    }),
+  );
 
-export const ReservationSpotsResponseDto = Schema.Array(
+const ReservationEditingLimits = Schema.Struct({
+  reservationMaxDurationMinutes: ReservationLimit,
+  reservationMinDurationMinutes: ReservationLimit,
+  reservationTimeGranularityMinutes: ReservationLimit,
+  reservationMaxAdvanceDays: ReservationLimit,
+});
+const reservationFields = {
+  id: SafeInteger,
+  spotId: Schema.String,
+  spotName: Schema.String,
+  startsAt: DateTimeString,
+  endsAt: DateTimeString,
+  comment: Schema.Union([Schema.String, Schema.Null]),
+  createdAt: DateTimeString,
+  author: ReservationAuthor,
+  sourceOrganization: ReservationSourceOrganization,
+  isMine: Schema.Boolean,
+  canEdit: Schema.Boolean,
+  canCancel: Schema.Boolean,
+  editingConstraints: Schema.Union([
+    Schema.StructWithRest(ReservationEditingLimits, [
+      Schema.Record(Schema.String, JsonValue),
+    ]),
+    Schema.Null,
+  ]),
+  reminderMinutesBefore: Schema.Union([
+    Schema.Literals([0, 5, 15, 30]),
+    Schema.Null,
+  ]),
+};
+
+export const ReservationSpotsResponse = Schema.Array(
   Schema.Struct({
     id: Schema.String,
     name: Schema.String,
-    level: Schema.Number.check(
-      Schema.isInt().annotate({ expected: "an integer" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-          expected: "a value greater than or equal to -9007199254740991",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
+    level: SafeInteger,
     images: Schema.Array(Schema.String),
     maps: Schema.Array(Schema.String),
     isPinned: Schema.Boolean,
     isAvailableNow: Schema.Boolean,
     availableUntil: Schema.Union([DateTimeString, Schema.Null]),
-    activeReservationCount: Schema.Number.check(
-      Schema.isInt().annotate({ expected: "an integer" }),
-    )
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
+    activeReservationCount: NonNegativeSafeInteger,
     hasPartnerReservations: Schema.Boolean,
     currentReservation: Schema.Union([
-      Schema.StructWithRest(
-        Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isInt().annotate({ expected: "an integer" }),
-          )
-            .check(
-              Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-                expected: "a value greater than or equal to -9007199254740991",
-              }),
-            )
-            .check(
-              Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                expected: "a value less than or equal to 9007199254740991",
-              }),
-            ),
-          spotId: Schema.String,
-          spotName: Schema.String,
-          startsAt: DateTimeString,
-          endsAt: DateTimeString,
-          comment: Schema.Union([Schema.String, Schema.Null]),
-          createdAt: DateTimeString,
-          author: Schema.Struct({
-            displayName: Schema.String,
-            avatarUrl: Schema.Union([Schema.String, Schema.Null]),
-          }),
-          sourceOrganization: Schema.Struct({
-            name: Schema.String,
-            iconUrl: Schema.Union([Schema.String, Schema.Null]),
-            isCurrent: Schema.Boolean,
-            calendarPath: Schema.String.check(
-              Schema.isPattern(new RegExp("^\\/.*")).annotate({
-                expected: "a string matching the RegExp ^\\/.*",
-              }),
-            ),
-          }),
-          isMine: Schema.Boolean,
-          canEdit: Schema.Boolean,
-          canCancel: Schema.Boolean,
-          editingConstraints: Schema.Union([
-            Schema.StructWithRest(
-              Schema.Struct({
-                reservationMaxDurationMinutes: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-                reservationMinDurationMinutes: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-                reservationTimeGranularityMinutes: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-                reservationMaxAdvanceDays: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-              }),
-              [
-                Schema.Record(
-                  Schema.String,
-                  Schema.Json.annotate({ expected: "JSON value" }),
-                ),
-              ],
-            ),
-            Schema.Null,
-          ]),
-          reminderMinutesBefore: Schema.Union([
-            Schema.Literals([0, 5, 15, 30]),
-            Schema.Null,
-          ]),
-        }),
-        [
-          Schema.Record(
-            Schema.String,
-            Schema.Json.annotate({ expected: "JSON value" }),
-          ),
-        ],
-      ),
+      Schema.StructWithRest(Schema.Struct(reservationFields), [
+        Schema.Record(Schema.String, JsonValue),
+      ]),
       Schema.Null,
     ]),
     nextReservation: Schema.Union([
-      Schema.StructWithRest(
-        Schema.Struct({
-          id: Schema.Number.check(
-            Schema.isInt().annotate({ expected: "an integer" }),
-          )
-            .check(
-              Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-                expected: "a value greater than or equal to -9007199254740991",
-              }),
-            )
-            .check(
-              Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                expected: "a value less than or equal to 9007199254740991",
-              }),
-            ),
-          spotId: Schema.String,
-          spotName: Schema.String,
-          startsAt: DateTimeString,
-          endsAt: DateTimeString,
-          comment: Schema.Union([Schema.String, Schema.Null]),
-          createdAt: DateTimeString,
-          author: Schema.Struct({
-            displayName: Schema.String,
-            avatarUrl: Schema.Union([Schema.String, Schema.Null]),
-          }),
-          sourceOrganization: Schema.Struct({
-            name: Schema.String,
-            iconUrl: Schema.Union([Schema.String, Schema.Null]),
-            isCurrent: Schema.Boolean,
-            calendarPath: Schema.String.check(
-              Schema.isPattern(new RegExp("^\\/.*")).annotate({
-                expected: "a string matching the RegExp ^\\/.*",
-              }),
-            ),
-          }),
-          isMine: Schema.Boolean,
-          canEdit: Schema.Boolean,
-          canCancel: Schema.Boolean,
-          editingConstraints: Schema.Union([
-            Schema.StructWithRest(
-              Schema.Struct({
-                reservationMaxDurationMinutes: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-                reservationMinDurationMinutes: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-                reservationTimeGranularityMinutes: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-                reservationMaxAdvanceDays: Schema.Number.check(
-                  Schema.isInt().annotate({ expected: "an integer" }),
-                )
-                  .check(
-                    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                      expected:
-                        "a value less than or equal to 9007199254740991",
-                    }),
-                  )
-                  .check(
-                    Schema.isGreaterThan(0).annotate({
-                      expected: "a value greater than 0",
-                    }),
-                  ),
-              }),
-              [
-                Schema.Record(
-                  Schema.String,
-                  Schema.Json.annotate({ expected: "JSON value" }),
-                ),
-              ],
-            ),
-            Schema.Null,
-          ]),
-          reminderMinutesBefore: Schema.Union([
-            Schema.Literals([0, 5, 15, 30]),
-            Schema.Null,
-          ]),
-        }),
-        [
-          Schema.Record(
-            Schema.String,
-            Schema.Json.annotate({ expected: "JSON value" }),
-          ),
-        ],
-      ),
+      Schema.StructWithRest(Schema.Struct(reservationFields), [
+        Schema.Record(Schema.String, JsonValue),
+      ]),
       Schema.Null,
     ]),
   }),
 ).annotate({ identifier: "ReservationSpotsResponseDto" });
+export type ReservationSpotsResponse = typeof ReservationSpotsResponse.Type;
 
-export type ReservationWindowResponseDto =
-  typeof ReservationWindowResponseDto.Type;
-
-export const ReservationWindowResponseDto = Schema.Struct({
-  items: Schema.Array(
-    Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isInt().annotate({ expected: "an integer" }),
-      )
-        .check(
-          Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-            expected: "a value greater than or equal to -9007199254740991",
-          }),
-        )
-        .check(
-          Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-            expected: "a value less than or equal to 9007199254740991",
-          }),
-        ),
-      spotId: Schema.String,
-      spotName: Schema.String,
-      startsAt: DateTimeString,
-      endsAt: DateTimeString,
-      comment: Schema.Union([Schema.String, Schema.Null]),
-      createdAt: DateTimeString,
-      author: Schema.Struct({
-        displayName: Schema.String,
-        avatarUrl: Schema.Union([Schema.String, Schema.Null]),
-      }),
-      sourceOrganization: Schema.Struct({
-        name: Schema.String,
-        iconUrl: Schema.Union([Schema.String, Schema.Null]),
-        isCurrent: Schema.Boolean,
-        calendarPath: Schema.String.check(
-          Schema.isPattern(new RegExp("^\\/.*")).annotate({
-            expected: "a string matching the RegExp ^\\/.*",
-          }),
-        ),
-      }),
-      isMine: Schema.Boolean,
-      canEdit: Schema.Boolean,
-      canCancel: Schema.Boolean,
-      editingConstraints: Schema.Union([
-        Schema.StructWithRest(
-          Schema.Struct({
-            reservationMaxDurationMinutes: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-            reservationMinDurationMinutes: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-            reservationTimeGranularityMinutes: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-            reservationMaxAdvanceDays: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-          }),
-          [
-            Schema.Record(
-              Schema.String,
-              Schema.Json.annotate({ expected: "JSON value" }),
-            ),
-          ],
-        ),
-        Schema.Null,
-      ]),
-      reminderMinutesBefore: Schema.Union([
-        Schema.Literals([0, 5, 15, 30]),
-        Schema.Null,
-      ]),
-    }),
-  ),
+export const ReservationWindowResponse = Schema.Struct({
+  items: Schema.Array(Schema.Struct(reservationFields)),
   window: Schema.Struct({
     from: DateTimeString,
     to: DateTimeString,
   }),
 }).annotate({ identifier: "ReservationWindowResponseDto" });
+export type ReservationWindowResponse = typeof ReservationWindowResponse.Type;
 
-export type CreateReservationDto = typeof CreateReservationDto.Type;
-
-export const CreateReservationDto = Schema.Struct({
+export const CreateReservationRequest = Schema.Struct({
   startsAt: DateTimeWithOffsetString,
   endsAt: DateTimeWithOffsetString,
   comment: Schema.optionalKey(
@@ -427,232 +119,19 @@ export const CreateReservationDto = Schema.Struct({
     Schema.Union([Schema.Literals([0, 5, 15, 30]), Schema.Null]),
   ),
 }).annotate({ identifier: "CreateReservationDto" });
+export type CreateReservationRequest = typeof CreateReservationRequest.Type;
 
-export type ReservationResponseDto = typeof ReservationResponseDto.Type;
+export const ReservationResponse = Schema.Struct(reservationFields).annotate({
+  identifier: "ReservationResponseDto",
+});
+export type ReservationResponse = typeof ReservationResponse.Type;
 
-export const ReservationResponseDto = Schema.Struct({
-  id: Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-    .check(
-      Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-        expected: "a value greater than or equal to -9007199254740991",
-      }),
-    )
-    .check(
-      Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-        expected: "a value less than or equal to 9007199254740991",
-      }),
-    ),
-  spotId: Schema.String,
-  spotName: Schema.String,
-  startsAt: DateTimeString,
-  endsAt: DateTimeString,
-  comment: Schema.Union([Schema.String, Schema.Null]),
-  createdAt: DateTimeString,
-  author: Schema.Struct({
-    displayName: Schema.String,
-    avatarUrl: Schema.Union([Schema.String, Schema.Null]),
-  }),
-  sourceOrganization: Schema.Struct({
-    name: Schema.String,
-    iconUrl: Schema.Union([Schema.String, Schema.Null]),
-    isCurrent: Schema.Boolean,
-    calendarPath: Schema.String.check(
-      Schema.isPattern(new RegExp("^\\/.*")).annotate({
-        expected: "a string matching the RegExp ^\\/.*",
-      }),
-    ),
-  }),
-  isMine: Schema.Boolean,
-  canEdit: Schema.Boolean,
-  canCancel: Schema.Boolean,
-  editingConstraints: Schema.Union([
-    Schema.StructWithRest(
-      Schema.Struct({
-        reservationMaxDurationMinutes: Schema.Number.check(
-          Schema.isInt().annotate({ expected: "an integer" }),
-        )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          )
-          .check(
-            Schema.isGreaterThan(0).annotate({
-              expected: "a value greater than 0",
-            }),
-          ),
-        reservationMinDurationMinutes: Schema.Number.check(
-          Schema.isInt().annotate({ expected: "an integer" }),
-        )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          )
-          .check(
-            Schema.isGreaterThan(0).annotate({
-              expected: "a value greater than 0",
-            }),
-          ),
-        reservationTimeGranularityMinutes: Schema.Number.check(
-          Schema.isInt().annotate({ expected: "an integer" }),
-        )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          )
-          .check(
-            Schema.isGreaterThan(0).annotate({
-              expected: "a value greater than 0",
-            }),
-          ),
-        reservationMaxAdvanceDays: Schema.Number.check(
-          Schema.isInt().annotate({ expected: "an integer" }),
-        )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          )
-          .check(
-            Schema.isGreaterThan(0).annotate({
-              expected: "a value greater than 0",
-            }),
-          ),
-      }),
-      [
-        Schema.Record(
-          Schema.String,
-          Schema.Json.annotate({ expected: "JSON value" }),
-        ),
-      ],
-    ),
-    Schema.Null,
-  ]),
-  reminderMinutesBefore: Schema.Union([
-    Schema.Literals([0, 5, 15, 30]),
-    Schema.Null,
-  ]),
-}).annotate({ identifier: "ReservationResponseDto" });
-
-export type MyReservationsResponseDto = typeof MyReservationsResponseDto.Type;
-
-export const MyReservationsResponseDto = Schema.Struct({
-  items: Schema.Array(
-    Schema.Struct({
-      id: Schema.Number.check(
-        Schema.isInt().annotate({ expected: "an integer" }),
-      )
-        .check(
-          Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-            expected: "a value greater than or equal to -9007199254740991",
-          }),
-        )
-        .check(
-          Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-            expected: "a value less than or equal to 9007199254740991",
-          }),
-        ),
-      spotId: Schema.String,
-      spotName: Schema.String,
-      startsAt: DateTimeString,
-      endsAt: DateTimeString,
-      comment: Schema.Union([Schema.String, Schema.Null]),
-      createdAt: DateTimeString,
-      author: Schema.Struct({
-        displayName: Schema.String,
-        avatarUrl: Schema.Union([Schema.String, Schema.Null]),
-      }),
-      sourceOrganization: Schema.Struct({
-        name: Schema.String,
-        iconUrl: Schema.Union([Schema.String, Schema.Null]),
-        isCurrent: Schema.Boolean,
-        calendarPath: Schema.String.check(
-          Schema.isPattern(new RegExp("^\\/.*")).annotate({
-            expected: "a string matching the RegExp ^\\/.*",
-          }),
-        ),
-      }),
-      isMine: Schema.Boolean,
-      canEdit: Schema.Boolean,
-      canCancel: Schema.Boolean,
-      editingConstraints: Schema.Union([
-        Schema.StructWithRest(
-          Schema.Struct({
-            reservationMaxDurationMinutes: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-            reservationMinDurationMinutes: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-            reservationTimeGranularityMinutes: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-            reservationMaxAdvanceDays: Schema.Number.check(
-              Schema.isInt().annotate({ expected: "an integer" }),
-            )
-              .check(
-                Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-                  expected: "a value less than or equal to 9007199254740991",
-                }),
-              )
-              .check(
-                Schema.isGreaterThan(0).annotate({
-                  expected: "a value greater than 0",
-                }),
-              ),
-          }),
-          [
-            Schema.Record(
-              Schema.String,
-              Schema.Json.annotate({ expected: "JSON value" }),
-            ),
-          ],
-        ),
-        Schema.Null,
-      ]),
-      reminderMinutesBefore: Schema.Union([
-        Schema.Literals([0, 5, 15, 30]),
-        Schema.Null,
-      ]),
-    }),
-  ),
+export const MyReservationsResponse = Schema.Struct({
+  items: Schema.Array(Schema.Struct(reservationFields)),
 }).annotate({ identifier: "MyReservationsResponseDto" });
+export type MyReservationsResponse = typeof MyReservationsResponse.Type;
 
-export type UpdateReservationDto = typeof UpdateReservationDto.Type;
-
-export const UpdateReservationDto = Schema.Struct({
+export const UpdateReservationRequest = Schema.Struct({
   startsAt: Schema.optionalKey(DateTimeWithOffsetString),
   endsAt: Schema.optionalKey(DateTimeWithOffsetString),
   comment: Schema.optionalKey(
@@ -675,109 +154,41 @@ export const UpdateReservationDto = Schema.Struct({
     }),
   )
   .annotate({ identifier: "UpdateReservationDto" });
+export type UpdateReservationRequest = typeof UpdateReservationRequest.Type;
 
-export type ListReservationSpotsPathParams =
-  typeof ListReservationSpotsPathParams.Type;
-
-export const ListReservationSpotsPathParams = Schema.Struct({
+export const OrganizationReservationParams = Schema.Struct({
   guildId: Schema.String,
 });
+export type OrganizationReservationParams =
+  typeof OrganizationReservationParams.Type;
 
-export type ListReservationSpots200 = typeof ListReservationSpots200.Type;
-
-export const ListReservationSpots200 = ReservationSpotsResponseDto;
-
-export type ListSpotReservationsPathParams =
-  typeof ListSpotReservationsPathParams.Type;
-
-export const ListSpotReservationsPathParams = Schema.Struct({
+export const ReservationSpotParams = Schema.Struct({
   spotId: Schema.String,
   guildId: Schema.String,
 });
+export type ReservationSpotParams = typeof ReservationSpotParams.Type;
 
-export type ListSpotReservationsQuery = typeof ListSpotReservationsQuery.Type;
-
-export const ListSpotReservationsQuery = Schema.Struct({
+export const ReservationWindowQuery = Schema.Struct({
   from: DateTimeWithOffsetString,
   to: DateTimeWithOffsetString,
 });
+export type ReservationWindowQuery = typeof ReservationWindowQuery.Type;
 
-export type ListSpotReservations200 = typeof ListSpotReservations200.Type;
-
-export const ListSpotReservations200 = ReservationWindowResponseDto;
-
-export type CreateReservationPathParams =
-  typeof CreateReservationPathParams.Type;
-
-export const CreateReservationPathParams = Schema.Struct({
-  spotId: Schema.String,
-  guildId: Schema.String,
-});
-
-export type CreateReservationRequestJson =
-  typeof CreateReservationRequestJson.Type;
-
-export const CreateReservationRequestJson = CreateReservationDto;
-
-export type CreateReservation201 = typeof CreateReservation201.Type;
-
-export const CreateReservation201 = ReservationResponseDto;
-
-export type DeleteReservationPathParams =
-  typeof DeleteReservationPathParams.Type;
-
-export const DeleteReservationPathParams = Schema.Struct({
+export const OrganizationReservationParamsWithId = Schema.Struct({
   reservationId: FiniteNumber,
   guildId: Schema.String,
 });
+export type OrganizationReservationParamsWithId =
+  typeof OrganizationReservationParamsWithId.Type;
 
-export type PinReservationSpotPathParams =
-  typeof PinReservationSpotPathParams.Type;
-
-export const PinReservationSpotPathParams = Schema.Struct({
-  spotId: Schema.String,
-  guildId: Schema.String,
-});
-
-export type UnpinReservationSpotPathParams =
-  typeof UnpinReservationSpotPathParams.Type;
-
-export const UnpinReservationSpotPathParams = Schema.Struct({
-  spotId: Schema.String,
-  guildId: Schema.String,
-});
-
-export type ListMyReservationsQuery = typeof ListMyReservationsQuery.Type;
-
-export const ListMyReservationsQuery = Schema.Struct({
+export const MyReservationsQuery = Schema.Struct({
   status: Schema.optionalKey(
     Schema.Literals(["upcoming", "past"]).annotate({ default: "upcoming" }),
   ),
 });
+export type MyReservationsQuery = typeof MyReservationsQuery.Type;
 
-export type ListMyReservations200 = typeof ListMyReservations200.Type;
-
-export const ListMyReservations200 = MyReservationsResponseDto;
-
-export type DeleteMyReservationPathParams =
-  typeof DeleteMyReservationPathParams.Type;
-
-export const DeleteMyReservationPathParams = Schema.Struct({
+export const ReservationParams = Schema.Struct({
   reservationId: FiniteNumber,
 });
-
-export type UpdateMyReservationPathParams =
-  typeof UpdateMyReservationPathParams.Type;
-
-export const UpdateMyReservationPathParams = Schema.Struct({
-  reservationId: FiniteNumber,
-});
-
-export type UpdateMyReservationRequestJson =
-  typeof UpdateMyReservationRequestJson.Type;
-
-export const UpdateMyReservationRequestJson = UpdateReservationDto;
-
-export type UpdateMyReservation200 = typeof UpdateMyReservation200.Type;
-
-export const UpdateMyReservation200 = ReservationResponseDto;
+export type ReservationParams = typeof ReservationParams.Type;

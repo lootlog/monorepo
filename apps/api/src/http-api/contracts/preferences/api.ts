@@ -6,19 +6,18 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  SettingsDocumentsControllerGetPreferences200,
-  SettingsDocumentsControllerGetPreferencesQuery,
-  SettingsDocumentsControllerPatchPreferences200,
-  SettingsDocumentsControllerPatchPreferencesRequestJson,
-} from "#src/contracts/preferences/schemas";
+  SettingsDocumentsResponseSchema,
+  SettingsDocumentsQuerySchema,
+  PatchSettingsDocumentsSchema,
+} from "@lootlog/schema/settings-documents";
 
 export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
   HttpApiEndpoint.get(
     "SettingsDocumentsControllerGetPreferences",
     "/preferences",
     {
-      query: SettingsDocumentsControllerGetPreferencesQuery,
-      success: SettingsDocumentsControllerGetPreferences200,
+      query: SettingsDocumentsQuerySchema,
+      success: SettingsDocumentsResponseSchema,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -28,8 +27,8 @@ export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
     "SettingsDocumentsControllerPatchPreferences",
     "/preferences",
     {
-      payload: SettingsDocumentsControllerPatchPreferencesRequestJson,
-      success: SettingsDocumentsControllerPatchPreferences200,
+      payload: PatchSettingsDocumentsSchema,
+      success: SettingsDocumentsResponseSchema,
     },
   )
     .middleware(BearerSecurityMiddleware)

@@ -7,37 +7,28 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  TimersControllerCreateAutoTimer201,
-  TimersControllerCreateAutoTimerRequestJson,
-  TimersControllerCreateManualTimer201,
-  TimersControllerCreateManualTimerPathParams,
-  TimersControllerCreateManualTimerRequestJson,
-  TimersControllerDeleteTimerPathParams,
-  TimersControllerDeleteTimerQuery,
-  TimersControllerGetAllTimers200,
-  TimersControllerGetAllTimersQuery,
-  TimersControllerGetRecentTimerHistory200,
-  TimersControllerGetRecentTimerHistoryQuery,
-  TimersControllerGetTimerHistory200,
-  TimersControllerGetTimerHistoryPathParams,
-  TimersControllerGetTimerHistoryQuery,
-  TimersControllerGetTimers200,
-  TimersControllerGetTimersPathParams,
-  TimersControllerGetTimersQuery,
-  TimersControllerResetTimer200,
-  TimersControllerResetTimerPathParams,
-  TimersControllerResetTimerRequestJson,
-  TimersControllerRestoreTimerFromHistory201,
-  TimersControllerRestoreTimerFromHistoryPathParams,
-  TimersControllerSearchNpcsWithTimerData200,
-  TimersControllerSearchNpcsWithTimerDataPathParams,
-  TimersControllerSearchNpcsWithTimerDataQuery,
+  CreateAutoTimerResponse,
+  CreateAutoTimerRequest,
+  TimerResponse,
+  TimerOrganizationPath,
+  CreateManualTimerRequest,
+  TimerPath,
+  TimersQuery,
+  TimersResponse,
+  TimerHistoryListResponse,
+  RecentTimerHistoryQuery,
+  TimerHistoryQuery,
+  TimerListOrganizationPath,
+  ResetTimerRequest,
+  TimerHistoryEntryPath,
+  TimerNpcSearchResponse,
+  TimerNpcSearchQuery,
 } from "#src/contracts/timers/schemas";
 
 export class TimersGroup extends HttpApiGroup.make("timers").add(
   HttpApiEndpoint.get("TimersControllerGetAllTimers", "/timers", {
-    query: TimersControllerGetAllTimersQuery,
-    success: TimersControllerGetAllTimers200,
+    query: TimersQuery,
+    success: TimersResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_getAllTimers")
@@ -50,8 +41,8 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerGetRecentTimerHistory",
     "/timers/history",
     {
-      query: TimersControllerGetRecentTimerHistoryQuery,
-      success: TimersControllerGetRecentTimerHistory200,
+      query: RecentTimerHistoryQuery,
+      success: TimerHistoryListResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -62,9 +53,9 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       "Retrieve latest visible timer history entries for an authenticated user guild",
     ),
   HttpApiEndpoint.get("TimersControllerGetTimers", "/guilds/:guildId/timers", {
-    params: TimersControllerGetTimersPathParams,
-    query: TimersControllerGetTimersQuery,
-    success: TimersControllerGetTimers200,
+    params: TimerListOrganizationPath,
+    query: TimersQuery,
+    success: TimersResponse,
     error: HttpApiSchema.Empty(403),
   })
     .middleware(BearerSecurityMiddleware)
@@ -75,9 +66,9 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerSearchNpcsWithTimerData",
     "/guilds/:guildId/timers/npcs/search",
     {
-      params: TimersControllerSearchNpcsWithTimerDataPathParams,
-      query: TimersControllerSearchNpcsWithTimerDataQuery,
-      success: TimersControllerSearchNpcsWithTimerData200,
+      params: TimerOrganizationPath,
+      query: TimerNpcSearchQuery,
+      success: TimerNpcSearchResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -89,8 +80,8 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       "Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration",
     ),
   HttpApiEndpoint.post("TimersControllerCreateAutoTimer", "/timers/auto", {
-    payload: TimersControllerCreateAutoTimerRequestJson,
-    success: TimersControllerCreateAutoTimer201.pipe(HttpApiSchema.status(201)),
+    payload: CreateAutoTimerRequest,
+    success: CreateAutoTimerResponse.pipe(HttpApiSchema.status(201)),
     error: [HttpApiSchema.Empty(400), HttpApiSchema.Empty(403)],
   })
     .middleware(BearerSecurityMiddleware)
@@ -104,9 +95,9 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerResetTimer",
     "/guilds/:guildId/timers/:timerIdentifier/reset",
     {
-      params: TimersControllerResetTimerPathParams,
-      payload: TimersControllerResetTimerRequestJson,
-      success: TimersControllerResetTimer200,
+      params: TimerPath,
+      payload: ResetTimerRequest,
+      success: TimerResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -121,8 +112,8 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerDeleteTimer",
     "/guilds/:guildId/timers/:timerIdentifier",
     {
-      params: TimersControllerDeleteTimerPathParams,
-      query: TimersControllerDeleteTimerQuery,
+      params: TimerPath,
+      query: TimersQuery,
       success: HttpApiSchema.Empty(200),
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
@@ -138,9 +129,9 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerGetTimerHistory",
     "/guilds/:guildId/timers/:timerIdentifier/history",
     {
-      params: TimersControllerGetTimerHistoryPathParams,
-      query: TimersControllerGetTimerHistoryQuery,
-      success: TimersControllerGetTimerHistory200,
+      params: TimerPath,
+      query: TimerHistoryQuery,
+      success: TimerHistoryListResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -154,10 +145,8 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerRestoreTimerFromHistory",
     "/guilds/:guildId/timers/history/:historyEntryId/restore",
     {
-      params: TimersControllerRestoreTimerFromHistoryPathParams,
-      success: TimersControllerRestoreTimerFromHistory201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: TimerHistoryEntryPath,
+      success: TimerResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -171,11 +160,9 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     "TimersControllerCreateManualTimer",
     "/guilds/:guildId/timers/manual",
     {
-      params: TimersControllerCreateManualTimerPathParams,
-      payload: TimersControllerCreateManualTimerRequestJson,
-      success: TimersControllerCreateManualTimer201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: TimerOrganizationPath,
+      payload: CreateManualTimerRequest,
+      success: TimerResponse.pipe(HttpApiSchema.status(201)),
       error: HttpApiSchema.Empty(403),
     },
   )

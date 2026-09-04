@@ -13,7 +13,7 @@ import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { buildTimerKey } from "#src/timers/timer-key";
-import type { CreateManualTimerDto } from "#src/contracts/timers/schemas";
+import type { CreateManualTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
   TimersInvariantViolation,
@@ -32,7 +32,7 @@ export interface ManualTimerPorts {
   ) => Effect.Effect<unknown, unknown>;
 }
 
-const spawnWindow = (payload: CreateManualTimerDto, now: Date) => {
+const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
     const minSpawnTime = new Date(payload.customMinSpawnTime);
     const maxSpawnTime = new Date(payload.customMaxSpawnTime);
@@ -73,7 +73,7 @@ export const makeManualTimer = (
 ) => {
   const operation = Effect.fn("createManualTimerData")(function* (
     access: TimersGuildAccess,
-    payload: CreateManualTimerDto,
+    payload: CreateManualTimerRequest,
   ) {
     const now = new Date(yield* Clock.currentTimeMillis);
     const window = yield* Effect.try({
@@ -194,6 +194,6 @@ export const makeManualTimer = (
     );
     return response;
   });
-  return (access: TimersGuildAccess, payload: CreateManualTimerDto) =>
+  return (access: TimersGuildAccess, payload: CreateManualTimerRequest) =>
     operation(access, payload).pipe(Effect.mapError(toTimersDataFailure));
 };

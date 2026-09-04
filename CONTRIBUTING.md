@@ -82,6 +82,18 @@ required by the affected workspace before handoff.
 
 ## API architecture and checks
 
+Backend TypeScript schemas and types are maintained by hand in all seven services:
+API, Auth, Gateway, Battlelog, Activity, Search, and Discord bot. Effect schemas
+define HTTP validation; infer their TypeScript types from those schemas. Reuse
+schemas from their owning module instead of copying fields or adding endpoint
+aliases. Existing OpenAPI component identifiers remain stable for client compatibility.
+
+Backend generation is limited to SQL migrations and OpenAPI YAML. Drizzle migration
+snapshots and other migration metadata, immutable migration archives, and compiled
+`dist` output are retained. Edit Drizzle schemas manually before generating SQL;
+do not introspect databases or use auth tooling to overwrite TypeScript source.
+Client generation in `packages/client` consumes the exported OpenAPI documents.
+
 In `apps/api/src`, feature modules own business operations and persistence.
 `contracts/` contains shared input/output schemas used by those modules and HTTP
 adapters. `http-api/` owns route declarations, authentication middleware contracts,

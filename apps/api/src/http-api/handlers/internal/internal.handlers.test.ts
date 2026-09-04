@@ -1,10 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import {
-  GuildsInternalControllerGetGuildByIdOrVanityUrl200,
-  GuildsInternalControllerGetUserPermissions200,
-} from "#src/contracts/internal/schemas";
+import { OrganizationSummary } from "#src/contracts/shared";
+import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
 import {
   getInternalGuild,
   getInternalUserPermissions,
@@ -51,9 +49,7 @@ describe("internal guild HttpApi handlers", () => {
       ),
     );
     expect(calls).toEqual([["discord-a", "user-a"]]);
-    expect(
-      Schema.is(GuildsInternalControllerGetUserPermissions200)(response),
-    ).toBe(true);
+    expect(Schema.is(InternalUserPermissionsResponse)(response)).toBe(true);
   });
 
   it("keeps empty internal identities as an empty result without data access", async () => {
@@ -85,9 +81,7 @@ describe("internal guild HttpApi handlers", () => {
         Effect.provide(Layer.succeed(InternalGuildsData, data)),
       ),
     );
-    expect(
-      Schema.is(GuildsInternalControllerGetGuildByIdOrVanityUrl200)(response),
-    ).toBe(true);
+    expect(Schema.is(OrganizationSummary)(response)).toBe(true);
   });
 
   it("builds the established owner and member permission projection from repositories", async () => {
@@ -130,9 +124,7 @@ describe("internal guild HttpApi handlers", () => {
     const response = await Effect.runPromise(
       data.getUserPermissions("discord-a", "user-a"),
     );
-    expect(
-      Schema.is(GuildsInternalControllerGetUserPermissions200)(response),
-    ).toBe(true);
+    expect(Schema.is(InternalUserPermissionsResponse)(response)).toBe(true);
     expect(response).toHaveLength(2);
     expect(cached).toEqual([response]);
   });
@@ -166,9 +158,7 @@ describe("internal guild HttpApi handlers", () => {
     const data = makeInternalGuildsData(persistence, cache);
 
     const response = await Effect.runPromise(data.getGuild("guild-a"));
-    expect(
-      Schema.is(GuildsInternalControllerGetGuildByIdOrVanityUrl200)(response),
-    ).toBe(true);
+    expect(Schema.is(OrganizationSummary)(response)).toBe(true);
     expect(databaseRead).toBe(false);
   });
 });

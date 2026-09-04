@@ -141,10 +141,6 @@
     "auth:migrate:apply": {
       "cache": false
     },
-    "db:pull": {
-      "cache": false,
-      "interactive": true
-    },
     "db:push": {
       "cache": false,
       "interactive": true

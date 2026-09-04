@@ -5,9 +5,9 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
 import {
-  AcknowledgeExpiredParticipationConfirmationsDto,
-  UpdateKillPointDto,
-  UpdateRankingPointsDto,
+  AcknowledgeExpiredParticipationConfirmationsRequest,
+  UpdateKillPointRequest,
+  UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
 import type { EventKills } from "#src/events/kills/event-kill.service";
 import type { EventRankingRead } from "#src/events/ranking/event-ranking-read";
@@ -39,7 +39,7 @@ export const makeEventsRanking = (
     guildData: { id: string },
     eventId: string,
     member: { id: number },
-    data: AcknowledgeExpiredParticipationConfirmationsDto,
+    data: AcknowledgeExpiredParticipationConfirmationsRequest,
   ) {
     return participation.acknowledgeExpired(guildData, eventId, member, data);
   },
@@ -111,7 +111,7 @@ export const makeEventsRanking = (
     guildData: { id: string },
     eventId: string,
     rankingId: string,
-    data: UpdateRankingPointsDto,
+    data: UpdateRankingPointsRequest,
     userId: string,
   ) {
     return pointEdits.updateRanking(
@@ -309,7 +309,7 @@ export const makeEventsRanking = (
     eventId: string,
     killId: string,
     killPointId: string,
-    data: UpdateKillPointDto,
+    data: UpdateKillPointRequest,
     userId: string,
   ) {
     return pointEdits.updateKillPoint(

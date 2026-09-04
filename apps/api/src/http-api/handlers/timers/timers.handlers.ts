@@ -11,19 +11,16 @@ import {
 import type { Guild, Role } from "#src/timers/timers.types";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  TimersControllerCreateAutoTimer201,
-  type CreateManualTimerDto,
-  type CreateTimerFromGameClientDto,
-  TimersControllerCreateManualTimer201,
-  TimersControllerGetAllTimers200,
-  TimersControllerGetRecentTimerHistory200,
-  TimersControllerGetTimerHistory200,
-  TimersControllerGetTimers200,
-  TimersControllerResetTimer200,
-  TimersControllerRestoreTimerFromHistory201,
-  TimersControllerSearchNpcsWithTimerData200,
-  type ResetTimerDto,
+  CreateAutoTimerResponse,
+  TimerResponse,
+  TimersResponse,
+  TimerHistoryListResponse,
+  TimerNpcSearchResponse,
+  type CreateManualTimerRequest,
+  type CreateAutoTimerRequest,
+  type ResetTimerRequest,
 } from "#src/contracts/timers/schemas";
+
 import {
   type TimersDataFailure,
   TimersInfrastructureError,
@@ -93,12 +90,12 @@ export class TimersData extends Context.Service<
     ) => DataEffect;
     readonly createAuto: (
       identity: TimersIdentity,
-      payload: CreateTimerFromGameClientDto,
+      payload: CreateAutoTimerRequest,
     ) => DataEffect;
     readonly reset: (
       access: TimersGuildAccess,
       timerIdentifier: string,
-      payload: ResetTimerDto,
+      payload: ResetTimerRequest,
     ) => DataEffect;
     readonly delete: (
       access: TimersGuildAccess,
@@ -117,7 +114,7 @@ export class TimersData extends Context.Service<
     ) => DataEffect;
     readonly createManual: (
       access: TimersGuildAccess,
-      payload: CreateManualTimerDto,
+      payload: CreateManualTimerRequest,
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/timers/data") {
@@ -201,7 +198,7 @@ export const getAllTimers = Effect.fn("getAllTimers")(function* (
 ) {
   const current = yield* identity;
   const value = yield* data((service) => service.getAll(current, world));
-  return yield* decode(TimersControllerGetAllTimers200, value);
+  return yield* decode(TimersResponse, value);
 });
 
 export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
@@ -210,7 +207,7 @@ export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
     const value = yield* data((service) =>
       service.getRecentHistory(access, world, limit),
     );
-    return yield* decode(TimersControllerGetRecentTimerHistory200, value);
+    return yield* decode(TimerHistoryListResponse, value);
   },
 );
 
@@ -220,7 +217,7 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
   const value = yield* data((service) => service.getGuildTimers(access, world));
-  return yield* decode(TimersControllerGetTimers200, value);
+  return yield* decode(TimersResponse, value);
 });
 
 export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
@@ -233,27 +230,27 @@ export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
   const value = yield* data((service) =>
     service.searchNpcs(access.guild.id, world, search, limit),
   );
-  return yield* decode(TimersControllerSearchNpcsWithTimerData200, value);
+  return yield* decode(TimerNpcSearchResponse, value);
 });
 
 export const createAutoTimer = Effect.fn("createAutoTimer")(function* (
-  payload: CreateTimerFromGameClientDto,
+  payload: CreateAutoTimerRequest,
 ) {
   const current = yield* identity;
   const value = yield* data((service) => service.createAuto(current, payload));
-  return yield* decode(TimersControllerCreateAutoTimer201, value);
+  return yield* decode(CreateAutoTimerResponse, value);
 });
 
 export const resetGuildTimer = Effect.fn("resetGuildTimer")(function* (
   guildId: string,
   timerIdentifier: string,
-  payload: ResetTimerDto,
+  payload: ResetTimerRequest,
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_RESET);
   const value = yield* data((service) =>
     service.reset(access, timerIdentifier, payload),
   );
-  return yield* decode(TimersControllerResetTimer200, value);
+  return yield* decode(TimerResponse, value);
 });
 
 export const deleteGuildTimer = Effect.fn("deleteGuildTimer")(function* (
@@ -276,7 +273,7 @@ export const getGuildTimerHistory = Effect.fn("getGuildTimerHistory")(
     const value = yield* data((service) =>
       service.getHistory(access, world, timerIdentifier, limit),
     );
-    return yield* decode(TimersControllerGetTimerHistory200, value);
+    return yield* decode(TimerHistoryListResponse, value);
   },
 );
 
@@ -288,11 +285,11 @@ export const restoreGuildTimer = Effect.fn("restoreGuildTimer")(function* (
   const value = yield* data((service) =>
     service.restore(access, historyEntryId),
   );
-  return yield* decode(TimersControllerRestoreTimerFromHistory201, value);
+  return yield* decode(TimerResponse, value);
 });
 
 export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
-  function* (guildId: string, payload: CreateManualTimerDto) {
+  function* (guildId: string, payload: CreateManualTimerRequest) {
     const access = yield* requireGuild(
       guildId,
       Permission.LOOTLOG_TIMERS_WRITE,
@@ -300,7 +297,7 @@ export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
     const value = yield* data((service) =>
       service.createManual(access, payload),
     );
-    return yield* decode(TimersControllerCreateManualTimer201, value);
+    return yield* decode(TimerResponse, value);
   },
 );
 

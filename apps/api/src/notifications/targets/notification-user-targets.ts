@@ -28,8 +28,8 @@ import {
   USER_DM_TEST_RULE_NAME,
 } from "#src/notifications/targets/user-dm";
 import type {
-  CreateNotificationTargetDto,
-  UpdateNotificationTargetDto,
+  CreateNotificationTargetRequest,
+  UpdateNotificationTargetRequest,
 } from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
 import type {
@@ -188,7 +188,7 @@ export const makeNotificationUserTargets = (
 
   const create = Effect.fn("notifications.userTargets.create")(function* (
     discordId: string,
-    data: CreateNotificationTargetDto,
+    data: CreateNotificationTargetRequest,
   ) {
     if (data.targetType !== NotificationTargetType.DM) {
       return yield* Effect.fail(
@@ -275,7 +275,7 @@ export const makeNotificationUserTargets = (
   const update = Effect.fn("notifications.userTargets.update")(function* (
     discordId: string,
     targetId: number,
-    data: UpdateNotificationTargetDto,
+    data: UpdateNotificationTargetRequest,
   ) {
     yield* find(discordId, targetId);
     const displayName = Object.hasOwn(data, "displayName")

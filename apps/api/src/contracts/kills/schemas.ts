@@ -1,76 +1,84 @@
 /** Shared input and output schemas for the kills feature. */
 import * as Schema from "effect/Schema";
-import { FiniteNumber } from "#src/contracts/scalars";
+import {
+  LevelFilter,
+  PageSize,
+  NonEmptyString,
+  JsonValue,
+  PositiveSafeInteger,
+  NonNegativeSafeInteger,
+  FiniteNumber,
+} from "#src/contracts/scalars";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
-export type CreateKillDto = typeof CreateKillDto.Type;
+const KillCountsByNpcType = Schema.Struct({
+  COMMON: Schema.optionalKey(FiniteNumber),
+  ELITE: Schema.optionalKey(FiniteNumber),
+  ELITE2: Schema.optionalKey(FiniteNumber),
+  ELITE3: Schema.optionalKey(FiniteNumber),
+  HERO: Schema.optionalKey(FiniteNumber),
+  TITAN: Schema.optionalKey(FiniteNumber),
+  COLOSSUS: Schema.optionalKey(FiniteNumber),
+  NPC: Schema.optionalKey(FiniteNumber),
+  EVENT_HERO: Schema.optionalKey(FiniteNumber),
+});
 
-export const CreateKillDto = Schema.Struct({
-  world: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
+const KilledNpcSummary = Schema.Struct({
+  npcId: FiniteNumber,
+  npcName: Schema.String,
+  npcType: Schema.String,
+  npcLvl: FiniteNumber,
+  npcProf: Schema.Union([Schema.String, Schema.Null]),
+  npcIcon: Schema.Union([Schema.String, Schema.Null]),
+  totalKills: FiniteNumber,
+});
+
+const KillPagination = Schema.Struct({
+  total: FiniteNumber,
+  cursor: FiniteNumber,
+  limit: FiniteNumber,
+  hasNext: Schema.Boolean,
+});
+
+const RankedKiller = Schema.Struct({
+  memberId: FiniteNumber,
+  memberName: Schema.String,
+  memberAvatar: Schema.Union([Schema.String, Schema.Null]),
+  memberUserId: Schema.String,
+  totalParticipations: FiniteNumber,
+});
+
+export type CreateKillRequest = typeof CreateKillRequest.Type;
+
+export const CreateKillRequest = Schema.Struct({
+  world: NonEmptyString,
   npc: Schema.Struct({
     id: FiniteNumber,
-    name: Schema.String.check(
-      Schema.isMinLength(1).annotate({
-        expected: "a value with a length of at least 1",
-      }),
-    ),
+    name: NonEmptyString,
     lvl: FiniteNumber,
     prof: Schema.optionalKey(Schema.String),
     wt: FiniteNumber,
     icon: Schema.optionalKey(Schema.String),
   }),
-  characterId: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
-  accountId: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
+  characterId: NonEmptyString,
+  accountId: NonEmptyString,
 }).annotate({ identifier: "CreateKillDto" });
 
-export type CreateKillResponseDto_Output =
-  typeof CreateKillResponseDto_Output.Type;
+export type CreateKillResponse = typeof CreateKillResponse.Type;
 
-export const CreateKillResponseDto_Output = Schema.Struct({
+export const CreateKillResponse = Schema.Struct({
   updated: FiniteNumber,
   deduplicated: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "CreateKillResponseDto_Output" });
 
-export type GuildKillStatsResponseDto_Output =
-  typeof GuildKillStatsResponseDto_Output.Type;
+export type GuildKillStatsResponse = typeof GuildKillStatsResponse.Type;
 
-export const GuildKillStatsResponseDto_Output = Schema.Struct({
+export const GuildKillStatsResponse = Schema.Struct({
   overview: Schema.Struct({
     guildUniqueKills: FiniteNumber,
     totalMemberParticipations: FiniteNumber,
-    killsByType: Schema.Struct({
-      COMMON: Schema.optionalKey(FiniteNumber),
-      ELITE: Schema.optionalKey(FiniteNumber),
-      ELITE2: Schema.optionalKey(FiniteNumber),
-      ELITE3: Schema.optionalKey(FiniteNumber),
-      HERO: Schema.optionalKey(FiniteNumber),
-      TITAN: Schema.optionalKey(FiniteNumber),
-      COLOSSUS: Schema.optionalKey(FiniteNumber),
-      NPC: Schema.optionalKey(FiniteNumber),
-      EVENT_HERO: Schema.optionalKey(FiniteNumber),
-    }),
-    participationsByType: Schema.Struct({
-      COMMON: Schema.optionalKey(FiniteNumber),
-      ELITE: Schema.optionalKey(FiniteNumber),
-      ELITE2: Schema.optionalKey(FiniteNumber),
-      ELITE3: Schema.optionalKey(FiniteNumber),
-      HERO: Schema.optionalKey(FiniteNumber),
-      TITAN: Schema.optionalKey(FiniteNumber),
-      COLOSSUS: Schema.optionalKey(FiniteNumber),
-      NPC: Schema.optionalKey(FiniteNumber),
-      EVENT_HERO: Schema.optionalKey(FiniteNumber),
-    }),
+    killsByType: KillCountsByNpcType,
+    participationsByType: KillCountsByNpcType,
   }),
   memberRanking: Schema.Array(
     Schema.Struct({
@@ -79,38 +87,17 @@ export const GuildKillStatsResponseDto_Output = Schema.Struct({
       memberAvatar: Schema.Union([Schema.String, Schema.Null]),
       memberUserId: Schema.String,
       totalParticipations: FiniteNumber,
-      participationsByType: Schema.Struct({
-        COMMON: Schema.optionalKey(FiniteNumber),
-        ELITE: Schema.optionalKey(FiniteNumber),
-        ELITE2: Schema.optionalKey(FiniteNumber),
-        ELITE3: Schema.optionalKey(FiniteNumber),
-        HERO: Schema.optionalKey(FiniteNumber),
-        TITAN: Schema.optionalKey(FiniteNumber),
-        COLOSSUS: Schema.optionalKey(FiniteNumber),
-        NPC: Schema.optionalKey(FiniteNumber),
-        EVENT_HERO: Schema.optionalKey(FiniteNumber),
-      }),
+      participationsByType: KillCountsByNpcType,
     }),
   ),
 }).annotate({ identifier: "GuildKillStatsResponseDto_Output" });
 
-export type UserKillStatsResponseDto_Output =
-  typeof UserKillStatsResponseDto_Output.Type;
+export type UserKillStatsResponse = typeof UserKillStatsResponse.Type;
 
-export const UserKillStatsResponseDto_Output = Schema.Struct({
+export const UserKillStatsResponse = Schema.Struct({
   overview: Schema.Struct({
     totalKills: FiniteNumber,
-    killsByType: Schema.Struct({
-      COMMON: Schema.optionalKey(FiniteNumber),
-      ELITE: Schema.optionalKey(FiniteNumber),
-      ELITE2: Schema.optionalKey(FiniteNumber),
-      ELITE3: Schema.optionalKey(FiniteNumber),
-      HERO: Schema.optionalKey(FiniteNumber),
-      TITAN: Schema.optionalKey(FiniteNumber),
-      COLOSSUS: Schema.optionalKey(FiniteNumber),
-      NPC: Schema.optionalKey(FiniteNumber),
-      EVENT_HERO: Schema.optionalKey(FiniteNumber),
-    }),
+    killsByType: KillCountsByNpcType,
     killsByWorld: Schema.Record(Schema.String, FiniteNumber),
   }),
   topNpcs: Schema.Array(
@@ -126,47 +113,20 @@ export const UserKillStatsResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "UserKillStatsResponseDto_Output" });
 
-export type UserNpcKillsResponseDto_Output =
-  typeof UserNpcKillsResponseDto_Output.Type;
+export type UserNpcKillsResponse = typeof UserNpcKillsResponse.Type;
 
-export const UserNpcKillsResponseDto_Output = Schema.Struct({
-  npcs: Schema.Array(
-    Schema.Struct({
-      npcId: FiniteNumber,
-      npcName: Schema.String,
-      npcType: Schema.String,
-      npcLvl: FiniteNumber,
-      npcProf: Schema.Union([Schema.String, Schema.Null]),
-      npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      totalKills: FiniteNumber,
-    }),
-  ),
-  pagination: Schema.Struct({
-    total: FiniteNumber,
-    cursor: FiniteNumber,
-    limit: FiniteNumber,
-    hasNext: Schema.Boolean,
-  }),
+export const UserNpcKillsResponse = Schema.Struct({
+  npcs: Schema.Array(KilledNpcSummary),
+  pagination: KillPagination,
 }).annotate({ identifier: "UserNpcKillsResponseDto_Output" });
 
 export type NpcType = typeof NpcType.Type;
 
-export const NpcType = Schema.Literals([
-  "COMMON",
-  "ELITE",
-  "ELITE2",
-  "ELITE3",
-  "HERO",
-  "EVENT_HERO",
-  "TITAN",
-  "COLOSSUS",
-  "NPC",
-]).annotate({ identifier: "NpcType" });
+export const NpcType = NpcTypeSchema.annotate({ identifier: "NpcType" });
 
-export type KillsControllerGetGuildTopNpcsParams =
-  typeof KillsControllerGetGuildTopNpcsParams.Type;
+export type GuildTopNpcsQuery = typeof GuildTopNpcsQuery.Type;
 
-export const KillsControllerGetGuildTopNpcsParams = Schema.Struct({
+export const GuildTopNpcsQuery = Schema.Struct({
   limit: FiniteNumber,
   npcType: Schema.optionalKey(NpcType),
   world: Schema.String,
@@ -176,10 +136,9 @@ export const KillsControllerGetGuildTopNpcsParams = Schema.Struct({
   period: Schema.String,
 });
 
-export type GuildTopNpcsResponseDto_Output =
-  typeof GuildTopNpcsResponseDto_Output.Type;
+export type GuildTopNpcsResponse = typeof GuildTopNpcsResponse.Type;
 
-export const GuildTopNpcsResponseDto_Output = Schema.Struct({
+export const GuildTopNpcsResponse = Schema.Struct({
   topNpcs: Schema.Array(
     Schema.Struct({
       npcId: FiniteNumber,
@@ -192,49 +151,18 @@ export const GuildTopNpcsResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "GuildTopNpcsResponseDto_Output" });
 
-export type GuildTopKillersByTypeResponseDto_Output =
-  typeof GuildTopKillersByTypeResponseDto_Output.Type;
+export type GuildTopKillersByTypeResponse =
+  typeof GuildTopKillersByTypeResponse.Type;
 
-export const GuildTopKillersByTypeResponseDto_Output = Schema.Struct({
-  TITAN: Schema.optionalKey(
-    Schema.Array(
-      Schema.Struct({
-        memberId: FiniteNumber,
-        memberName: Schema.String,
-        memberAvatar: Schema.Union([Schema.String, Schema.Null]),
-        memberUserId: Schema.String,
-        totalParticipations: FiniteNumber,
-      }),
-    ),
-  ),
-  HERO: Schema.optionalKey(
-    Schema.Array(
-      Schema.Struct({
-        memberId: FiniteNumber,
-        memberName: Schema.String,
-        memberAvatar: Schema.Union([Schema.String, Schema.Null]),
-        memberUserId: Schema.String,
-        totalParticipations: FiniteNumber,
-      }),
-    ),
-  ),
-  EVENT_HERO: Schema.optionalKey(
-    Schema.Array(
-      Schema.Struct({
-        memberId: FiniteNumber,
-        memberName: Schema.String,
-        memberAvatar: Schema.Union([Schema.String, Schema.Null]),
-        memberUserId: Schema.String,
-        totalParticipations: FiniteNumber,
-      }),
-    ),
-  ),
+export const GuildTopKillersByTypeResponse = Schema.Struct({
+  TITAN: Schema.optionalKey(Schema.Array(RankedKiller)),
+  HERO: Schema.optionalKey(Schema.Array(RankedKiller)),
+  EVENT_HERO: Schema.optionalKey(Schema.Array(RankedKiller)),
 }).annotate({ identifier: "GuildTopKillersByTypeResponseDto_Output" });
 
-export type NpcKillersResponseDto_Output =
-  typeof NpcKillersResponseDto_Output.Type;
+export type NpcKillersResponse = typeof NpcKillersResponse.Type;
 
-export const NpcKillersResponseDto_Output = Schema.Struct({
+export const NpcKillersResponse = Schema.Struct({
   npc: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
@@ -247,12 +175,7 @@ export const NpcKillersResponseDto_Output = Schema.Struct({
         uniqueGuildKills: FiniteNumber,
         totalMemberParticipations: FiniteNumber,
       }),
-      [
-        Schema.Record(
-          Schema.String,
-          Schema.Json.annotate({ expected: "JSON value" }),
-        ),
-      ],
+      [Schema.Record(Schema.String, JsonValue)],
     ),
     Schema.Null,
   ]),
@@ -267,10 +190,9 @@ export const NpcKillersResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "NpcKillersResponseDto_Output" });
 
-export type MemberKillsResponseDto_Output =
-  typeof MemberKillsResponseDto_Output.Type;
+export type MemberKillsResponse = typeof MemberKillsResponse.Type;
 
-export const MemberKillsResponseDto_Output = Schema.Struct({
+export const MemberKillsResponse = Schema.Struct({
   member: Schema.Union([
     Schema.StructWithRest(
       Schema.Struct({
@@ -279,12 +201,7 @@ export const MemberKillsResponseDto_Output = Schema.Struct({
         memberAvatar: Schema.Union([Schema.String, Schema.Null]),
         memberUserId: Schema.String,
       }),
-      [
-        Schema.Record(
-          Schema.String,
-          Schema.Json.annotate({ expected: "JSON value" }),
-        ),
-      ],
+      [Schema.Record(Schema.String, JsonValue)],
     ),
     Schema.Null,
   ]),
@@ -294,107 +211,31 @@ export const MemberKillsResponseDto_Output = Schema.Struct({
         totalParticipations: FiniteNumber,
         participationsByType: Schema.Record(Schema.String, FiniteNumber),
       }),
-      [
-        Schema.Record(
-          Schema.String,
-          Schema.Json.annotate({ expected: "JSON value" }),
-        ),
-      ],
+      [Schema.Record(Schema.String, JsonValue)],
     ),
     Schema.Null,
   ]),
-  npcs: Schema.Array(
-    Schema.Struct({
-      npcId: FiniteNumber,
-      npcName: Schema.String,
-      npcType: Schema.String,
-      npcLvl: FiniteNumber,
-      npcProf: Schema.Union([Schema.String, Schema.Null]),
-      npcIcon: Schema.Union([Schema.String, Schema.Null]),
-      totalKills: FiniteNumber,
-    }),
-  ),
+  npcs: Schema.Array(KilledNpcSummary),
   pagination: Schema.Union([
-    Schema.StructWithRest(
-      Schema.Struct({
-        total: FiniteNumber,
-        cursor: FiniteNumber,
-        limit: FiniteNumber,
-        hasNext: Schema.Boolean,
-      }),
-      [
-        Schema.Record(
-          Schema.String,
-          Schema.Json.annotate({ expected: "JSON value" }),
-        ),
-      ],
-    ),
+    Schema.StructWithRest(KillPagination, [
+      Schema.Record(Schema.String, JsonValue),
+    ]),
     Schema.Null,
   ]),
 }).annotate({ identifier: "MemberKillsResponseDto_Output" });
 
-export type KillsControllerCreateKillRequestJson =
-  typeof KillsControllerCreateKillRequestJson.Type;
+export type KillOrganizationPath = typeof KillOrganizationPath.Type;
 
-export const KillsControllerCreateKillRequestJson = CreateKillDto;
-
-export type KillsControllerCreateKill201 =
-  typeof KillsControllerCreateKill201.Type;
-
-export const KillsControllerCreateKill201 = CreateKillResponseDto_Output;
-
-export type KillsControllerGetGuildKillStatsPathParams =
-  typeof KillsControllerGetGuildKillStatsPathParams.Type;
-
-export const KillsControllerGetGuildKillStatsPathParams = Schema.Struct({
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
+export const KillOrganizationPath = Schema.Struct({
+  guildId: JsonValue,
 });
 
-export type KillsControllerGetGuildKillStatsQuery =
-  typeof KillsControllerGetGuildKillStatsQuery.Type;
+export type GuildKillStatsQuery = typeof GuildKillStatsQuery.Type;
 
-export const KillsControllerGetGuildKillStatsQuery = Schema.Struct({
-  npcTypes: Schema.optionalKey(
-    Schema.Array(
-      Schema.Literals([
-        "COMMON",
-        "ELITE",
-        "ELITE2",
-        "ELITE3",
-        "HERO",
-        "EVENT_HERO",
-        "TITAN",
-        "COLOSSUS",
-        "NPC",
-      ]),
-    ),
-  ),
-  minLvl: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
-  ),
-  maxLvl: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
-  ),
+export const GuildKillStatsQuery = Schema.Struct({
+  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  minLvl: Schema.optionalKey(LevelFilter),
+  maxLvl: Schema.optionalKey(LevelFilter),
   world: Schema.optionalKey(Schema.String),
   period: Schema.optionalKey(
     Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
@@ -409,144 +250,30 @@ export const KillsControllerGetGuildKillStatsQuery = Schema.Struct({
   ),
 );
 
-export type KillsControllerGetGuildKillStats200 =
-  typeof KillsControllerGetGuildKillStats200.Type;
+export type UserKillStatsQuery = typeof UserKillStatsQuery.Type;
 
-export const KillsControllerGetGuildKillStats200 =
-  GuildKillStatsResponseDto_Output;
-
-export type KillsControllerGetUserKillStatsQuery =
-  typeof KillsControllerGetUserKillStatsQuery.Type;
-
-export const KillsControllerGetUserKillStatsQuery = Schema.Struct({
-  npcTypes: Schema.optionalKey(
-    Schema.Array(
-      Schema.Literals([
-        "COMMON",
-        "ELITE",
-        "ELITE2",
-        "ELITE3",
-        "HERO",
-        "EVENT_HERO",
-        "TITAN",
-        "COLOSSUS",
-        "NPC",
-      ]),
-    ),
-  ),
-  npcType: Schema.optionalKey(
-    Schema.Literals([
-      "COMMON",
-      "ELITE",
-      "ELITE2",
-      "ELITE3",
-      "HERO",
-      "EVENT_HERO",
-      "TITAN",
-      "COLOSSUS",
-      "NPC",
-    ]),
-  ),
+export const UserKillStatsQuery = Schema.Struct({
+  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  npcType: Schema.optionalKey(NpcTypeSchema),
   world: Schema.optionalKey(Schema.String),
-  topNpcsLimit: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
+  topNpcsLimit: Schema.optionalKey(PositiveSafeInteger),
   period: Schema.optionalKey(
     Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
   ),
 });
 
-export type KillsControllerGetUserKillStats200 =
-  typeof KillsControllerGetUserKillStats200.Type;
+export type UserNpcKillsQuery = typeof UserNpcKillsQuery.Type;
 
-export const KillsControllerGetUserKillStats200 =
-  UserKillStatsResponseDto_Output;
-
-export type KillsControllerGetUserNpcKillsQuery =
-  typeof KillsControllerGetUserNpcKillsQuery.Type;
-
-export const KillsControllerGetUserNpcKillsQuery = Schema.Struct({
-  npcTypes: Schema.optionalKey(
-    Schema.Array(
-      Schema.Literals([
-        "COMMON",
-        "ELITE",
-        "ELITE2",
-        "ELITE3",
-        "HERO",
-        "EVENT_HERO",
-        "TITAN",
-        "COLOSSUS",
-        "NPC",
-      ]),
-    ),
-  ),
+export const UserNpcKillsQuery = Schema.Struct({
+  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
   world: Schema.optionalKey(Schema.String),
   search: Schema.optionalKey(Schema.String),
-  cursor: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  limit: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(100).annotate({
-          expected: "a value less than or equal to 100",
-        }),
-      ),
-  ),
+  cursor: Schema.optionalKey(NonNegativeSafeInteger),
+  limit: Schema.optionalKey(PageSize),
   sortOrder: Schema.optionalKey(Schema.Literals(["asc", "desc"])),
   sortBy: Schema.optionalKey(Schema.Literals(["kills", "level"])),
-  minLvl: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
-  ),
-  maxLvl: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
-  ),
+  minLvl: Schema.optionalKey(LevelFilter),
+  maxLvl: Schema.optionalKey(LevelFilter),
   period: Schema.optionalKey(
     Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
   ),
@@ -560,180 +287,48 @@ export const KillsControllerGetUserNpcKillsQuery = Schema.Struct({
   ),
 );
 
-export type KillsControllerGetUserNpcKills200 =
-  typeof KillsControllerGetUserNpcKills200.Type;
+export type GuildTopKillersQuery = typeof GuildTopKillersQuery.Type;
 
-export const KillsControllerGetUserNpcKills200 = UserNpcKillsResponseDto_Output;
-
-export type KillsControllerGetGuildTopNpcsPathParams =
-  typeof KillsControllerGetGuildTopNpcsPathParams.Type;
-
-export const KillsControllerGetGuildTopNpcsPathParams = Schema.Struct({
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
-});
-
-export type KillsControllerGetGuildTopNpcsQuery =
-  typeof KillsControllerGetGuildTopNpcsQuery.Type;
-
-export const KillsControllerGetGuildTopNpcsQuery = Schema.Struct({
-  limit: FiniteNumber,
-  npcType: Schema.optionalKey(NpcType),
-  world: Schema.String,
-  search: Schema.String,
-  minLvl: Schema.String,
-  maxLvl: Schema.String,
-  period: Schema.String,
-});
-
-export type KillsControllerGetGuildTopNpcs200 =
-  typeof KillsControllerGetGuildTopNpcs200.Type;
-
-export const KillsControllerGetGuildTopNpcs200 = GuildTopNpcsResponseDto_Output;
-
-export type KillsControllerGetGuildTopKillersByTypePathParams =
-  typeof KillsControllerGetGuildTopKillersByTypePathParams.Type;
-
-export const KillsControllerGetGuildTopKillersByTypePathParams = Schema.Struct({
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
-});
-
-export type KillsControllerGetGuildTopKillersByTypeQuery =
-  typeof KillsControllerGetGuildTopKillersByTypeQuery.Type;
-
-export const KillsControllerGetGuildTopKillersByTypeQuery = Schema.Struct({
+export const GuildTopKillersQuery = Schema.Struct({
   limit: FiniteNumber,
   period: Schema.String,
 });
 
-export type KillsControllerGetGuildTopKillersByType200 =
-  typeof KillsControllerGetGuildTopKillersByType200.Type;
+export type NpcKillersPath = typeof NpcKillersPath.Type;
 
-export const KillsControllerGetGuildTopKillersByType200 =
-  GuildTopKillersByTypeResponseDto_Output;
-
-export type KillsControllerGetNpcKillersPathParams =
-  typeof KillsControllerGetNpcKillersPathParams.Type;
-
-export const KillsControllerGetNpcKillersPathParams = Schema.Struct({
+export const NpcKillersPath = Schema.Struct({
   npcId: Schema.String.annotate({ examples: ["999"] }),
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
+  guildId: JsonValue,
 });
 
-export type KillsControllerGetNpcKillersQuery =
-  typeof KillsControllerGetNpcKillersQuery.Type;
+export type NpcKillersQuery = typeof NpcKillersQuery.Type;
 
-export const KillsControllerGetNpcKillersQuery = Schema.Struct({
-  limit: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(100).annotate({
-          expected: "a value less than or equal to 100",
-        }),
-      ),
-  ),
+export const NpcKillersQuery = Schema.Struct({
+  limit: Schema.optionalKey(PageSize),
   world: Schema.optionalKey(Schema.String),
   period: Schema.optionalKey(
     Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
   ),
 });
 
-export type KillsControllerGetNpcKillers200 =
-  typeof KillsControllerGetNpcKillers200.Type;
+export type MemberKillsPath = typeof MemberKillsPath.Type;
 
-export const KillsControllerGetNpcKillers200 = NpcKillersResponseDto_Output;
-
-export type KillsControllerGetMemberKillsPathParams =
-  typeof KillsControllerGetMemberKillsPathParams.Type;
-
-export const KillsControllerGetMemberKillsPathParams = Schema.Struct({
+export const MemberKillsPath = Schema.Struct({
   memberId: Schema.String.annotate({ examples: ["123"] }),
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
+  guildId: JsonValue,
 });
 
-export type KillsControllerGetMemberKillsQuery =
-  typeof KillsControllerGetMemberKillsQuery.Type;
+export type MemberKillsQuery = typeof MemberKillsQuery.Type;
 
-export const KillsControllerGetMemberKillsQuery = Schema.Struct({
-  minLvl: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
-  ),
-  maxLvl: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(500).annotate({
-          expected: "a value less than or equal to 500",
-        }),
-      ),
-  ),
+export const MemberKillsQuery = Schema.Struct({
+  minLvl: Schema.optionalKey(LevelFilter),
+  maxLvl: Schema.optionalKey(LevelFilter),
   world: Schema.optionalKey(Schema.String),
-  npcTypes: Schema.optionalKey(
-    Schema.Array(
-      Schema.Literals([
-        "COMMON",
-        "ELITE",
-        "ELITE2",
-        "ELITE3",
-        "HERO",
-        "EVENT_HERO",
-        "TITAN",
-        "COLOSSUS",
-        "NPC",
-      ]),
-    ),
-  ),
+  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
   search: Schema.optionalKey(Schema.String),
-  limit: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(100).annotate({
-          expected: "a value less than or equal to 100",
-        }),
-      ),
-  ),
-  cursor: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(0).annotate({
-          expected: "a value greater than or equal to 0",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
+  limit: Schema.optionalKey(PageSize),
+  cursor: Schema.optionalKey(NonNegativeSafeInteger),
   period: Schema.optionalKey(
     Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
   ),
 });
-
-export type KillsControllerGetMemberKills200 =
-  typeof KillsControllerGetMemberKills200.Type;
-
-export const KillsControllerGetMemberKills200 = MemberKillsResponseDto_Output;

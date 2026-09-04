@@ -1,18 +1,19 @@
 /** Shared input and output schemas for the reservation-sharing feature. */
 import * as Schema from "effect/Schema";
-import { DateTimeString } from "#src/contracts/scalars";
+import { NonEmptyString, DateTimeString } from "#src/contracts/scalars";
 
-export type ReservationSharesResponseDto =
-  typeof ReservationSharesResponseDto.Type;
+const PartnerOrganization = Schema.Struct({
+  name: Schema.String,
+  iconUrl: Schema.Union([Schema.String, Schema.Null]),
+});
 
-export const ReservationSharesResponseDto = Schema.Struct({
+export type ReservationSharesResponse = typeof ReservationSharesResponse.Type;
+
+export const ReservationSharesResponse = Schema.Struct({
   shares: Schema.Array(
     Schema.Struct({
       id: Schema.String,
-      partner: Schema.Struct({
-        name: Schema.String,
-        iconUrl: Schema.Union([Schema.String, Schema.Null]),
-      }),
+      partner: PartnerOrganization,
       createdAt: DateTimeString,
     }),
   ),
@@ -25,10 +26,10 @@ export const ReservationSharesResponseDto = Schema.Struct({
   ),
 }).annotate({ identifier: "ReservationSharesResponseDto" });
 
-export type CreateReservationShareInvitationResponseDto =
-  typeof CreateReservationShareInvitationResponseDto.Type;
+export type CreatedReservationShareInvitationResponse =
+  typeof CreatedReservationShareInvitationResponse.Type;
 
-export const CreateReservationShareInvitationResponseDto = Schema.Struct({
+export const CreatedReservationShareInvitationResponse = Schema.Struct({
   id: Schema.String,
   expiresAt: DateTimeString,
   createdAt: DateTimeString,
@@ -42,14 +43,11 @@ export const CreateReservationShareInvitationResponseDto = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateReservationShareInvitationResponseDto" });
 
-export type ReservationShareInvitationPreviewResponseDto =
-  typeof ReservationShareInvitationPreviewResponseDto.Type;
+export type ReservationShareInvitationPreviewResponse =
+  typeof ReservationShareInvitationPreviewResponse.Type;
 
-export const ReservationShareInvitationPreviewResponseDto = Schema.Struct({
-  sourceOrganization: Schema.Struct({
-    name: Schema.String,
-    iconUrl: Schema.Union([Schema.String, Schema.Null]),
-  }),
+export const ReservationShareInvitationPreviewResponse = Schema.Struct({
+  sourceOrganization: PartnerOrganization,
   expiresAt: DateTimeString,
   eligibleTargetOrganizations: Schema.Array(
     Schema.Struct({
@@ -60,97 +58,46 @@ export const ReservationShareInvitationPreviewResponseDto = Schema.Struct({
   ),
 }).annotate({ identifier: "ReservationShareInvitationPreviewResponseDto" });
 
-export type AcceptReservationShareInvitationDto =
-  typeof AcceptReservationShareInvitationDto.Type;
+export type AcceptReservationShareInvitationRequest =
+  typeof AcceptReservationShareInvitationRequest.Type;
 
-export const AcceptReservationShareInvitationDto = Schema.Struct({
-  targetGuildId: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
+export const AcceptReservationShareInvitationRequest = Schema.Struct({
+  targetGuildId: NonEmptyString,
 }).annotate({ identifier: "AcceptReservationShareInvitationDto" });
 
-export type AcceptReservationShareInvitationResponseDto =
-  typeof AcceptReservationShareInvitationResponseDto.Type;
+export type AcceptedReservationShareResponse =
+  typeof AcceptedReservationShareResponse.Type;
 
-export const AcceptReservationShareInvitationResponseDto = Schema.Struct({
+export const AcceptedReservationShareResponse = Schema.Struct({
   id: Schema.String,
-  partner: Schema.Struct({
-    name: Schema.String,
-    iconUrl: Schema.Union([Schema.String, Schema.Null]),
-  }),
+  partner: PartnerOrganization,
   createdAt: DateTimeString,
 }).annotate({ identifier: "AcceptReservationShareInvitationResponseDto" });
 
-export type ListReservationSharesPathParams =
-  typeof ListReservationSharesPathParams.Type;
+export type ReservationSharingOrganizationPath =
+  typeof ReservationSharingOrganizationPath.Type;
 
-export const ListReservationSharesPathParams = Schema.Struct({
+export const ReservationSharingOrganizationPath = Schema.Struct({
   guildId: Schema.String,
 });
 
-export type ListReservationShares200 = typeof ListReservationShares200.Type;
+export type ReservationShareInvitationPath =
+  typeof ReservationShareInvitationPath.Type;
 
-export const ListReservationShares200 = ReservationSharesResponseDto;
-
-export type CreateReservationShareInvitationPathParams =
-  typeof CreateReservationShareInvitationPathParams.Type;
-
-export const CreateReservationShareInvitationPathParams = Schema.Struct({
-  guildId: Schema.String,
-});
-
-export type CreateReservationShareInvitation201 =
-  typeof CreateReservationShareInvitation201.Type;
-
-export const CreateReservationShareInvitation201 =
-  CreateReservationShareInvitationResponseDto;
-
-export type RevokeReservationShareInvitationPathParams =
-  typeof RevokeReservationShareInvitationPathParams.Type;
-
-export const RevokeReservationShareInvitationPathParams = Schema.Struct({
+export const ReservationShareInvitationPath = Schema.Struct({
   invitationId: Schema.String,
   guildId: Schema.String,
 });
 
-export type RevokeReservationSharePathParams =
-  typeof RevokeReservationSharePathParams.Type;
+export type ReservationSharePath = typeof ReservationSharePath.Type;
 
-export const RevokeReservationSharePathParams = Schema.Struct({
+export const ReservationSharePath = Schema.Struct({
   shareId: Schema.String,
   guildId: Schema.String,
 });
 
-export type PreviewReservationShareInvitationPathParams =
-  typeof PreviewReservationShareInvitationPathParams.Type;
+export type ReservationShareTokenPath = typeof ReservationShareTokenPath.Type;
 
-export const PreviewReservationShareInvitationPathParams = Schema.Struct({
+export const ReservationShareTokenPath = Schema.Struct({
   token: Schema.String,
 });
-
-export type PreviewReservationShareInvitation200 =
-  typeof PreviewReservationShareInvitation200.Type;
-
-export const PreviewReservationShareInvitation200 =
-  ReservationShareInvitationPreviewResponseDto;
-
-export type AcceptReservationShareInvitationPathParams =
-  typeof AcceptReservationShareInvitationPathParams.Type;
-
-export const AcceptReservationShareInvitationPathParams = Schema.Struct({
-  token: Schema.String,
-});
-
-export type AcceptReservationShareInvitationRequestJson =
-  typeof AcceptReservationShareInvitationRequestJson.Type;
-
-export const AcceptReservationShareInvitationRequestJson =
-  AcceptReservationShareInvitationDto;
-
-export type AcceptReservationShareInvitation201 =
-  typeof AcceptReservationShareInvitation201.Type;
-
-export const AcceptReservationShareInvitation201 =
-  AcceptReservationShareInvitationResponseDto;

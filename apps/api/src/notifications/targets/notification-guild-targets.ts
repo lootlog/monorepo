@@ -8,8 +8,8 @@ import {
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
 import type {
-  CreateNotificationTargetDto,
-  UpdateNotificationTargetDto,
+  CreateNotificationTargetRequest,
+  UpdateNotificationTargetRequest,
 } from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
 import {
@@ -133,7 +133,7 @@ export const makeNotificationGuildTargets = (
 
   const create = Effect.fn("notifications.guildTargets.create")(function* (
     guildId: string,
-    data: CreateNotificationTargetDto,
+    data: CreateNotificationTargetRequest,
   ) {
     if (data.targetType !== NotificationTargetType.CHANNEL) {
       return yield* Effect.fail(
@@ -212,7 +212,7 @@ export const makeNotificationGuildTargets = (
   const update = Effect.fn("notifications.guildTargets.update")(function* (
     guildId: string,
     targetId: number,
-    data: UpdateNotificationTargetDto,
+    data: UpdateNotificationTargetRequest,
   ) {
     yield* find(guildId, targetId);
     const displayName = Object.hasOwn(data, "displayName")

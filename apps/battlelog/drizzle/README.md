@@ -1,4 +1,11 @@
-# Battlelog object cleanup
+# Battlelog database migrations
+
+Maintain `src/database/schema.ts` directly. Run `bun run db:generate` to derive
+SQL migrations and Drizzle snapshots from it, review the artifacts, then apply
+them with `bun run db:migrate:deploy`. Keep historical SQL and snapshots;
+database introspection must not overwrite the source schema.
+
+## Object cleanup
 
 Apply `20260904192453_pending_object_deletions` before deploying the Battlelog
 cleanup worker. Removing a battle and recording its object deletion intent

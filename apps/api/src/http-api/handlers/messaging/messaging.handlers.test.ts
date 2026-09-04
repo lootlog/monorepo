@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { MessagingControllerSendNotification201 } from "#src/contracts/messaging/schemas";
+import { SentNotificationResponse } from "#src/contracts/messaging/schemas";
 import {
   MessagingAccessDenied,
   MessagingData,
@@ -66,9 +66,7 @@ describe("messaging HttpApi handlers", () => {
       sendNotification(notification).pipe(Effect.provide(layer)),
     );
     expect(callers).toEqual([{ userId: "user-a", discordId: "discord-a" }]);
-    expect(Schema.is(MessagingControllerSendNotification201)(response)).toBe(
-      true,
-    );
+    expect(Schema.is(SentNotificationResponse)(response)).toBe(true);
   });
 
   it("fails closed before rate limiting or delivery when auth is missing", async () => {

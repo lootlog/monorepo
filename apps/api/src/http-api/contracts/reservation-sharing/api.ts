@@ -7,17 +7,15 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  AcceptReservationShareInvitation201,
-  AcceptReservationShareInvitationPathParams,
-  AcceptReservationShareInvitationRequestJson,
-  CreateReservationShareInvitation201,
-  CreateReservationShareInvitationPathParams,
-  ListReservationShares200,
-  ListReservationSharesPathParams,
-  PreviewReservationShareInvitation200,
-  PreviewReservationShareInvitationPathParams,
-  RevokeReservationShareInvitationPathParams,
-  RevokeReservationSharePathParams,
+  AcceptedReservationShareResponse,
+  ReservationShareTokenPath,
+  AcceptReservationShareInvitationRequest,
+  CreatedReservationShareInvitationResponse,
+  ReservationSharingOrganizationPath,
+  ReservationSharesResponse,
+  ReservationShareInvitationPreviewResponse,
+  ReservationShareInvitationPath,
+  ReservationSharePath,
 } from "#src/contracts/reservation-sharing/schemas";
 
 export class ReservationSharingGroup extends HttpApiGroup.make(
@@ -27,8 +25,8 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "listReservationShares",
     "/guilds/:guildId/reservation-shares",
     {
-      params: ListReservationSharesPathParams,
-      success: ListReservationShares200,
+      params: ReservationSharingOrganizationPath,
+      success: ReservationSharesResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -41,8 +39,8 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "createReservationShareInvitation",
     "/guilds/:guildId/reservation-share-invitations",
     {
-      params: CreateReservationShareInvitationPathParams,
-      success: CreateReservationShareInvitation201.pipe(
+      params: ReservationSharingOrganizationPath,
+      success: CreatedReservationShareInvitationResponse.pipe(
         HttpApiSchema.status(201),
       ),
     },
@@ -57,7 +55,7 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "revokeReservationShareInvitation",
     "/guilds/:guildId/reservation-share-invitations/:invitationId",
     {
-      params: RevokeReservationShareInvitationPathParams,
+      params: ReservationShareInvitationPath,
       success: HttpApiSchema.Empty(204),
     },
   )
@@ -71,7 +69,7 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "revokeReservationShare",
     "/guilds/:guildId/reservation-shares/:shareId",
     {
-      params: RevokeReservationSharePathParams,
+      params: ReservationSharePath,
       success: HttpApiSchema.Empty(204),
     },
   )
@@ -82,8 +80,8 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "previewReservationShareInvitation",
     "/reservation-share-invitations/:token",
     {
-      params: PreviewReservationShareInvitationPathParams,
-      success: PreviewReservationShareInvitation200,
+      params: ReservationShareTokenPath,
+      success: ReservationShareInvitationPreviewResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -93,11 +91,9 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "acceptReservationShareInvitation",
     "/reservation-share-invitations/:token",
     {
-      params: AcceptReservationShareInvitationPathParams,
-      payload: AcceptReservationShareInvitationRequestJson,
-      success: AcceptReservationShareInvitation201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: ReservationShareTokenPath,
+      payload: AcceptReservationShareInvitationRequest,
+      success: AcceptedReservationShareResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)

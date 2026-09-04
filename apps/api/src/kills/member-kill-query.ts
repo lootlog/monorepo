@@ -3,9 +3,10 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
-  KillsControllerGetMemberKills200,
-  type KillsControllerGetMemberKillsQuery as GetMemberKillsDto,
+  MemberKillsResponse,
+  type MemberKillsQuery as GetMemberKillsDto,
 } from "#src/contracts/kills/schemas";
+
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,
@@ -67,7 +68,7 @@ export const makeMemberKillQuery =
         visibility: visibilityCacheScope(accessPolicy, visibleRoles),
       }),
       label: "member kills",
-      schema: KillsControllerGetMemberKills200,
+      schema: MemberKillsResponse,
       load: Effect.gen(function* () {
         const member = yield* persistence.findMember(guildId, memberId);
         if (!member) return null;

@@ -2,6 +2,8 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   SettingsDocumentsResponseSchema,
   type SettingsDocumentsResponse,
+  type PatchSettingsDocuments,
+  type SettingsDocumentsQuery,
 } from "@lootlog/schema/settings-documents";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
@@ -10,23 +12,17 @@ import { makeSettingsDocuments } from "#src/settings-documents/settings-document
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
-  SoundSettingsControllerGetSettings200,
-  SoundSettingsControllerUpdateSettings200,
-  type UpdateSoundSettingsDto,
+  SoundSettingsResponse,
+  type UpdateSoundSettingsRequest,
 } from "#src/contracts/sound-settings/schemas";
+
 import {
-  TimerSettingsControllerGetGlobalSettings200,
-  TimerSettingsControllerGetGuildSettings200,
-  TimerSettingsControllerUpdateGlobalSettings200,
-  TimerSettingsControllerUpdateGuildSettings200,
-  type MigrateTimerSettingsDto,
-  type UpdateGuildTimerSettingsDto,
-  type UpdateTimerSettingsDto,
+  TimerSettingsResponse,
+  OrganizationTimerSettingsResponse,
+  type MigrateTimerSettingsRequest,
+  type UpdateOrganizationTimerSettingsRequest,
+  type UpdateTimerSettingsRequest,
 } from "#src/contracts/timer-settings/schemas";
-import type {
-  PatchSettingsDocumentsDto,
-  SettingsDocumentsControllerGetPreferencesQuery,
-} from "#src/contracts/preferences/schemas";
 
 export class SettingsAccessDenied extends TaggedErrorClass<SettingsAccessDenied>()(
   "SettingsAccessDenied",
@@ -58,7 +54,7 @@ export class SettingsData extends Context.Service<
     readonly getGlobalTimerSettings: (userId: string) => Operation;
     readonly updateGlobalTimerSettings: (
       userId: string,
-      payload: UpdateTimerSettingsDto,
+      payload: UpdateTimerSettingsRequest,
     ) => Operation;
     readonly getGuildTimerSettings: (
       userId: string,
@@ -67,24 +63,24 @@ export class SettingsData extends Context.Service<
     readonly updateGuildTimerSettings: (
       userId: string,
       guildId: string,
-      payload: UpdateGuildTimerSettingsDto,
+      payload: UpdateOrganizationTimerSettingsRequest,
     ) => Operation;
     readonly migrateTimerSettings: (
       userId: string,
-      payload: MigrateTimerSettingsDto,
+      payload: MigrateTimerSettingsRequest,
     ) => Operation;
     readonly getPreferences: (
       userId: string,
-      query: SettingsDocumentsControllerGetPreferencesQuery,
+      query: SettingsDocumentsQuery,
     ) => SettingsDocumentsOperation;
     readonly patchPreferences: (
       userId: string,
-      payload: PatchSettingsDocumentsDto,
+      payload: PatchSettingsDocuments,
     ) => SettingsDocumentsOperation;
     readonly getSoundSettings: (userId: string) => Operation;
     readonly updateSoundSettings: (
       userId: string,
-      payload: UpdateSoundSettingsDto,
+      payload: UpdateSoundSettingsRequest,
     ) => Operation;
   }
 >()("@lootlog/api/http-api/settings/data") {
@@ -165,48 +161,48 @@ const withIdentity = <A>(
 export const getGlobalTimerSettings = () =>
   withIdentity("TimerSettingsControllerGetGlobalSettings", (userId, data) =>
     Effect.flatMap(data.getGlobalTimerSettings(userId), (value) =>
-      decode(TimerSettingsControllerGetGlobalSettings200, value),
+      decode(TimerSettingsResponse, value),
     ),
   );
 
-export const updateGlobalTimerSettings = (payload: UpdateTimerSettingsDto) =>
+export const updateGlobalTimerSettings = (
+  payload: UpdateTimerSettingsRequest,
+) =>
   withIdentity("TimerSettingsControllerUpdateGlobalSettings", (userId, data) =>
     Effect.flatMap(data.updateGlobalTimerSettings(userId, payload), (value) =>
-      decode(TimerSettingsControllerUpdateGlobalSettings200, value),
+      decode(TimerSettingsResponse, value),
     ),
   );
 
 export const getGuildTimerSettings = (guildId: string) =>
   withIdentity("TimerSettingsControllerGetGuildSettings", (userId, data) =>
     Effect.flatMap(data.getGuildTimerSettings(userId, guildId), (value) =>
-      decode(TimerSettingsControllerGetGuildSettings200, value),
+      decode(OrganizationTimerSettingsResponse, value),
     ),
   );
 
 export const updateGuildTimerSettings = (
   guildId: string,
-  payload: UpdateGuildTimerSettingsDto,
+  payload: UpdateOrganizationTimerSettingsRequest,
 ) =>
   withIdentity("TimerSettingsControllerUpdateGuildSettings", (userId, data) =>
     Effect.flatMap(
       data.updateGuildTimerSettings(userId, guildId, payload),
-      (value) => decode(TimerSettingsControllerUpdateGuildSettings200, value),
+      (value) => decode(OrganizationTimerSettingsResponse, value),
     ),
   );
 
-export const migrateTimerSettings = (payload: MigrateTimerSettingsDto) =>
+export const migrateTimerSettings = (payload: MigrateTimerSettingsRequest) =>
   withIdentity("TimerSettingsControllerMigrateSettings", (userId, data) =>
     data.migrateTimerSettings(userId, payload),
   );
 
-export const getPreferences = (
-  query: SettingsDocumentsControllerGetPreferencesQuery,
-) =>
+export const getPreferences = (query: SettingsDocumentsQuery) =>
   withIdentity("SettingsDocumentsControllerGetPreferences", (userId, data) =>
     data.getPreferences(userId, query),
   );
 
-export const patchPreferences = (payload: PatchSettingsDocumentsDto) =>
+export const patchPreferences = (payload: PatchSettingsDocuments) =>
   withIdentity("SettingsDocumentsControllerPatchPreferences", (userId, data) =>
     data.patchPreferences(userId, payload),
   );
@@ -214,14 +210,14 @@ export const patchPreferences = (payload: PatchSettingsDocumentsDto) =>
 export const getSoundSettings = () =>
   withIdentity("SoundSettingsControllerGetSettings", (userId, data) =>
     Effect.flatMap(data.getSoundSettings(userId), (value) =>
-      decode(SoundSettingsControllerGetSettings200, value),
+      decode(SoundSettingsResponse, value),
     ),
   );
 
-export const updateSoundSettings = (payload: UpdateSoundSettingsDto) =>
+export const updateSoundSettings = (payload: UpdateSoundSettingsRequest) =>
   withIdentity("SoundSettingsControllerUpdateSettings", (userId, data) =>
     Effect.flatMap(data.updateSoundSettings(userId, payload), (value) =>
-      decode(SoundSettingsControllerUpdateSettings200, value),
+      decode(SoundSettingsResponse, value),
     ),
   );
 

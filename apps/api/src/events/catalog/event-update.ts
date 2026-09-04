@@ -22,7 +22,7 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import type { UpdateEventDto } from "#src/contracts/events/schemas";
+import type { UpdateEventRequest } from "#src/contracts/events/schemas";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import {
   attachComputedEventActive,
@@ -41,7 +41,7 @@ const updatedScoring = (
   currentRules: (typeof eventTable.$inferSelect)["scoringRules"],
   currentMode: unknown,
   requestedMode: EventScoringMode | undefined,
-  requestedRules: UpdateEventDto["scoringRules"],
+  requestedRules: UpdateEventRequest["scoringRules"],
 ) => {
   const mode = normalizeEventScoringMode(
     requestedMode ?? normalizeEventScoringMode(currentMode),
@@ -66,7 +66,7 @@ export const makeEventUpdate =
     catalogRead: EventsCatalogRead,
     logger: Logger,
   ) =>
-  (guild: { id: string }, eventId: string, data: UpdateEventDto) =>
+  (guild: { id: string }, eventId: string, data: UpdateEventRequest) =>
     Effect.gen(function* () {
       const rows = yield* database
         .select()

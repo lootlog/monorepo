@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { LootlogConfigControllerUpdateNpc200 } from "#src/contracts/lootlog-config/schemas";
+import { NpcLootlogConfigResponse } from "#src/contracts/lootlog-config/schemas";
 import {
   getLootlogConfig,
   LootlogConfigAccessDenied,
@@ -59,7 +59,7 @@ describe("lootlog config HttpApi handlers", () => {
       { guildId: "guild-alias", capability: Permission.ADMIN },
     ]);
     expect(dataCalls).toEqual([["guild-a", "1"]]);
-    expect(Schema.is(LootlogConfigControllerUpdateNpc200)(response)).toBe(true);
+    expect(Schema.is(NpcLootlogConfigResponse)(response)).toBe(true);
   });
 
   it("fails closed before config reads for a hidden Organization", async () => {

@@ -6,23 +6,19 @@ import {
   OpenApi,
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
+import { StatusOk } from "#src/contracts/shared";
 import {
-  UsersControllerDeleteAccount200,
-  UsersControllerGetCurrentUserAccessibleGuilds200,
-  UsersControllerGetCurrentUserGuilds200,
-  UsersControllerGetUserGameAccountPreferences200,
-  UsersControllerGetUserGameAccountPreferencesPathParams,
-  UsersControllerGetUserPreferences200,
-  UsersControllerUpdateUserGameAccountPreferences200,
-  UsersControllerUpdateUserGameAccountPreferencesPathParams,
-  UsersControllerUpdateUserGameAccountPreferencesRequestJson,
-  UsersControllerUpdateUserPreferences200,
-  UsersControllerUpdateUserPreferencesRequestJson,
+  CurrentOrganizationsResponse,
+  UserGameAccountPreferencesResponse,
+  GameAccountPreferencesPath,
+  UserPreferencesResponse,
+  UpdateUserGameAccountPreferencesRequest,
+  UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 
 export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.delete("UsersControllerDeleteAccount", "/users/@me", {
-    success: UsersControllerDeleteAccount200,
+    success: StatusOk,
     error: HttpApiSchema.Empty(503),
   })
     .middleware(BearerSecurityMiddleware)
@@ -35,7 +31,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.get(
     "UsersControllerGetUserPreferences",
     "/users/@me/preferences",
-    { success: UsersControllerGetUserPreferences200 },
+    { success: UserPreferencesResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UsersController_getUserPreferences")
@@ -45,8 +41,8 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     "UsersControllerUpdateUserPreferences",
     "/users/@me/preferences",
     {
-      payload: UsersControllerUpdateUserPreferencesRequestJson,
-      success: UsersControllerUpdateUserPreferences200,
+      payload: UpdateUserPreferencesRequest,
+      success: UserPreferencesResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -56,7 +52,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.get(
     "UsersControllerGetCurrentUserGuilds",
     "/users/@me/guilds",
-    { success: UsersControllerGetCurrentUserGuilds200 },
+    { success: CurrentOrganizationsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UsersController_getCurrentUserGuilds")
@@ -68,7 +64,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.get(
     "UsersControllerGetCurrentUserAccessibleGuilds",
     "/users/@me/guilds/accessible",
-    { success: UsersControllerGetCurrentUserAccessibleGuilds200 },
+    { success: CurrentOrganizationsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(
@@ -84,8 +80,8 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     "UsersControllerGetUserGameAccountPreferences",
     "/users/@me/game-preferences/accounts/:accountId",
     {
-      params: UsersControllerGetUserGameAccountPreferencesPathParams,
-      success: UsersControllerGetUserGameAccountPreferences200,
+      params: GameAccountPreferencesPath,
+      success: UserGameAccountPreferencesResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -102,9 +98,9 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     "UsersControllerUpdateUserGameAccountPreferences",
     "/users/@me/game-preferences/accounts/:accountId",
     {
-      params: UsersControllerUpdateUserGameAccountPreferencesPathParams,
-      payload: UsersControllerUpdateUserGameAccountPreferencesRequestJson,
-      success: UsersControllerUpdateUserGameAccountPreferences200,
+      params: GameAccountPreferencesPath,
+      payload: UpdateUserGameAccountPreferencesRequest,
+      success: UserGameAccountPreferencesResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)

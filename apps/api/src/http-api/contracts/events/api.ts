@@ -7,122 +7,78 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  AcknowledgeExpiredParticipationConfirmations201,
-  AcknowledgeExpiredParticipationConfirmationsPathParams,
-  AcknowledgeExpiredParticipationConfirmationsRequestJson,
-  ConfirmParticipationForKill200,
-  ConfirmParticipationForKillPathParams,
-  CreateEvent201,
-  CreateEventPathParams,
-  CreateEventRequestJson,
-  DeleteEvent200,
-  DeleteEventPathParams,
-  EventsAssignmentControllerAddHeroPathParams,
-  EventsAssignmentControllerAddHeroRequestJson,
-  EventsAssignmentControllerAddMap201,
-  EventsAssignmentControllerAddMapPathParams,
-  EventsAssignmentControllerAddMapRequestJson,
-  EventsAssignmentControllerAssignMapToLocationPathParams,
-  EventsAssignmentControllerAssignMapToLocationRequestJson,
-  EventsAssignmentControllerAssignMemberPathParams,
-  EventsAssignmentControllerAssignMemberRequestJson,
-  EventsAssignmentControllerCreateLocationPathParams,
-  EventsAssignmentControllerCreateLocationRequestJson,
-  EventsAssignmentControllerDeleteHeroPathParams,
-  EventsAssignmentControllerDeleteLocationPathParams,
-  EventsAssignmentControllerDeleteMapPathParams,
-  EventsAssignmentControllerGetLocationsPathParams,
-  EventsAssignmentControllerReorderLocationsPathParams,
-  EventsAssignmentControllerReorderLocationsRequestJson,
-  EventsAssignmentControllerSelfAssignMemberPathParams,
-  EventsAssignmentControllerSelfUnassignMemberPathParams,
-  EventsAssignmentControllerUnassignMemberPathParams,
-  EventsAssignmentControllerUnassignMemberQuery,
-  EventsAssignmentControllerUpdateHeroPathParams,
-  EventsAssignmentControllerUpdateHeroRequestJson,
-  EventsAssignmentControllerUpdateLocationPathParams,
-  EventsAssignmentControllerUpdateLocationRequestJson,
-  EventsMonitoringControllerCloseRespawnWindowPathParams,
-  EventsMonitoringControllerCloseRespawnWindowRequestJson,
-  EventsMonitoringControllerGetActiveGapForMap200,
-  EventsMonitoringControllerGetActiveGapForMapPathParams,
-  EventsMonitoringControllerGetActiveGapsForHero200,
-  EventsMonitoringControllerGetActiveGapsForHeroPathParams,
-  EventsMonitoringControllerGetCoordination200,
-  EventsMonitoringControllerGetCoordinationPathParams,
-  EventsMonitoringControllerGetHeroCoverageGaps200,
-  EventsMonitoringControllerGetHeroCoverageGapsPathParams,
-  EventsMonitoringControllerGetHeroPresenceStats200,
-  EventsMonitoringControllerGetHeroPresenceStatsPathParams,
-  EventsMonitoringControllerGetHeroRespawnConfig200,
-  EventsMonitoringControllerGetHeroRespawnConfigPathParams,
-  EventsMonitoringControllerGetKillTimelineData200,
-  EventsMonitoringControllerGetKillTimelineDataPathParams,
-  EventsMonitoringControllerGetMapCoverageGaps200,
-  EventsMonitoringControllerGetMapCoverageGapsPathParams,
-  EventsMonitoringControllerOpenRespawnWindowPathParams,
-  EventsMonitoringControllerOpenRespawnWindowRequestJson,
-  EventsRankingControllerGetEventHeroStats200,
-  EventsRankingControllerGetEventHeroStatsPathParams,
-  EventsRankingControllerGetEventKillHistory200,
-  EventsRankingControllerGetEventKillHistoryPathParams,
-  EventsRankingControllerGetEventKillHistoryQuery,
-  EventsRankingControllerGetHeroKillHistory200,
-  EventsRankingControllerGetHeroKillHistoryPathParams,
-  EventsRankingControllerGetHeroKillHistoryQuery,
-  EventsRankingControllerGetKillDetail200,
-  EventsRankingControllerGetKillDetailPathParams,
-  EventsRankingControllerGetMemberKillHistory200,
-  EventsRankingControllerGetMemberKillHistoryPathParams,
-  EventsRankingControllerGetMemberKillHistoryQuery,
-  EventsRankingControllerUpdateKillPointPathParams,
-  EventsRankingControllerUpdateKillPointRequestJson,
-  ListEventHeroTimers200,
-  ListEventHeroTimersPathParams,
-  ListEventHeroTimersQuery,
-  ListEventMaps200,
-  ListEventMapsPathParams,
-  ListEventRanking200,
-  ListEventRankingPathParams,
-  ListEvents200,
-  ListEventsPathParams,
-  ListEventsQuery,
-  ListPendingParticipationConfirmations200,
-  ListPendingParticipationConfirmationsPathParams,
-  ListPinnedEvents200,
-  ListPinnedEventsPathParams,
-  PinEvent200,
-  PinEventPathParams,
-  RecalculateEventPoints200,
-  RecalculateEventPointsPathParams,
-  ShowEvent200,
-  ShowEventOverview200,
-  ShowEventOverviewPathParams,
-  ShowEventPathParams,
-  ShowEventWrapped200,
-  ShowEventWrappedPathParams,
-  UnpinEventPathParams,
-  UpdateEvent200,
-  UpdateEventPathParams,
-  UpdateEventRequestJson,
-  UpdateRankingPointsPathParams,
-  UpdateRankingPointsRequestJson,
+  AcknowledgeExpiredParticipationConfirmationsResponse,
+  EventPath,
+  AcknowledgeExpiredParticipationConfirmationsRequest,
+  ConfirmParticipationForKillResponse,
+  EventKillPath,
+  EventMutationResponse,
+  EventOrganizationPath,
+  CreateEventRequest,
+  CreateEventHeroRequest,
+  EventMapResponse,
+  EventHeroPath,
+  CreateEventMapRequest,
+  EventHeroMapPath,
+  AssignEventMapLocationRequest,
+  EventMapPath,
+  AssignEventMemberRequest,
+  CreateEventLocationRequest,
+  EventLocationPath,
+  ReorderEventLocationsRequest,
+  UnassignEventMemberQuery,
+  UpdateEventHeroRequest,
+  UpdateEventLocationRequest,
+  CloseRespawnWindowRequest,
+  ActiveCoverageGapResponse,
+  CoverageGapsResponse,
+  EventCoordinationResponse,
+  HeroCoverageGapsResponse,
+  HeroPresenceStatsResponse,
+  HeroRespawnConfigResponse,
+  EventKillTimelineResponse,
+  EventHeroKillPath,
+  OpenRespawnWindowRequest,
+  EventHeroStatsListResponse,
+  EventKillHistoryResponse,
+  EventKillHistoryQuery,
+  HeroKillHistoryQuery,
+  EventKillDetailResponse,
+  EventMemberKillHistoryResponse,
+  EventMemberPath,
+  EventKillPointPath,
+  UpdateKillPointRequest,
+  EventTimersResponse,
+  EventTimersQuery,
+  EventMapsResponse,
+  EventRankingResponse,
+  EventListResponse,
+  EventListQuery,
+  PendingParticipationConfirmationsResponse,
+  PinnedEventsResponse,
+  PinnedEventResponse,
+  EventOverviewResponse,
+  EventWrappedResponse,
+  UpdateEventRequest,
+  EventRankingPath,
+  UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
+import { SuccessResponse } from "#src/contracts/shared";
 
 export class EventsGroup extends HttpApiGroup.make("events").add(
   HttpApiEndpoint.get("listEvents", "/guilds/:guildId/events", {
-    params: ListEventsPathParams,
-    query: ListEventsQuery,
-    success: ListEvents200,
+    params: EventOrganizationPath,
+    query: EventListQuery,
+    success: EventListResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listEvents")
     .annotate(OpenApi.Summary, "List guild events")
     .annotate(OpenApi.Description, "Get all events for a guild"),
   HttpApiEndpoint.post("createEvent", "/guilds/:guildId/events", {
-    params: CreateEventPathParams,
-    payload: CreateEventRequestJson,
-    success: CreateEvent201.pipe(HttpApiSchema.status(201)),
+    params: EventOrganizationPath,
+    payload: CreateEventRequest,
+    success: EventMutationResponse.pipe(HttpApiSchema.status(201)),
     error: HttpApiSchema.Empty(403),
   })
     .middleware(BearerSecurityMiddleware)
@@ -133,8 +89,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       "Create a new guild event with maps and hero NPCs",
     ),
   HttpApiEndpoint.get("showEvent", "/guilds/:guildId/events/:eventId", {
-    params: ShowEventPathParams,
-    success: ShowEvent200,
+    params: EventPath,
+    success: EventOverviewResponse,
     error: HttpApiSchema.Empty(404),
   })
     .middleware(BearerSecurityMiddleware)
@@ -145,8 +101,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       "Get detailed information about a specific event",
     ),
   HttpApiEndpoint.delete("deleteEvent", "/guilds/:guildId/events/:eventId", {
-    params: DeleteEventPathParams,
-    success: DeleteEvent200,
+    params: EventPath,
+    success: SuccessResponse,
     error: HttpApiSchema.Empty(404),
   })
     .middleware(BearerSecurityMiddleware)
@@ -154,9 +110,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Delete event")
     .annotate(OpenApi.Description, "Delete an event"),
   HttpApiEndpoint.patch("updateEvent", "/guilds/:guildId/events/:eventId", {
-    params: UpdateEventPathParams,
-    payload: UpdateEventRequestJson,
-    success: UpdateEvent200,
+    params: EventPath,
+    payload: UpdateEventRequest,
+    success: EventMutationResponse,
     error: HttpApiSchema.Empty(404),
   })
     .middleware(BearerSecurityMiddleware)
@@ -167,8 +123,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "showEventOverview",
     "/guilds/:guildId/events/:eventId/overview",
     {
-      params: ShowEventOverviewPathParams,
-      success: ShowEventOverview200,
+      params: EventPath,
+      success: EventOverviewResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -183,8 +139,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "showEventWrapped",
     "/guilds/:guildId/events/:eventId/wrapped",
     {
-      params: ShowEventWrappedPathParams,
-      success: ShowEventWrapped200,
+      params: EventPath,
+      success: EventWrappedResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -199,8 +155,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "listEventMaps",
     "/guilds/:guildId/events/:eventId/maps",
     {
-      params: ListEventMapsPathParams,
-      success: ListEventMaps200,
+      params: EventPath,
+      success: EventMapsResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -215,8 +171,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "recalculateEventPoints",
     "/guilds/:guildId/events/:eventId/recalculate-points",
     {
-      params: RecalculateEventPointsPathParams,
-      success: RecalculateEventPoints200,
+      params: EventPath,
+      success: SuccessResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -231,8 +187,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerAssignMember",
     "/guilds/:guildId/events/:eventId/maps/:mapId/assign",
     {
-      params: EventsAssignmentControllerAssignMemberPathParams,
-      payload: EventsAssignmentControllerAssignMemberRequestJson,
+      params: EventMapPath,
+      payload: AssignEventMemberRequest,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -248,8 +204,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerUnassignMember",
     "/guilds/:guildId/events/:eventId/maps/:mapId/assign",
     {
-      params: EventsAssignmentControllerUnassignMemberPathParams,
-      query: EventsAssignmentControllerUnassignMemberQuery,
+      params: EventMapPath,
+      query: UnassignEventMemberQuery,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -265,7 +221,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerSelfAssignMember",
     "/guilds/:guildId/events/:eventId/maps/:mapId/self-assign",
     {
-      params: EventsAssignmentControllerSelfAssignMemberPathParams,
+      params: EventMapPath,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -278,7 +234,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerSelfUnassignMember",
     "/guilds/:guildId/events/:eventId/maps/:mapId/self-assign",
     {
-      params: EventsAssignmentControllerSelfUnassignMemberPathParams,
+      params: EventMapPath,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -294,8 +250,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerAddHero",
     "/guilds/:guildId/events/:eventId/heroes",
     {
-      params: EventsAssignmentControllerAddHeroPathParams,
-      payload: EventsAssignmentControllerAddHeroRequestJson,
+      params: EventPath,
+      payload: CreateEventHeroRequest,
       success: HttpApiSchema.Empty(201),
     },
   )
@@ -307,7 +263,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerDeleteHero",
     "/guilds/:guildId/events/:eventId/heroes/:heroId",
     {
-      params: EventsAssignmentControllerDeleteHeroPathParams,
+      params: EventHeroPath,
       success: HttpApiSchema.Empty(200),
     },
   )
@@ -319,8 +275,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerUpdateHero",
     "/guilds/:guildId/events/:eventId/heroes/:heroId",
     {
-      params: EventsAssignmentControllerUpdateHeroPathParams,
-      payload: EventsAssignmentControllerUpdateHeroRequestJson,
+      params: EventHeroPath,
+      payload: UpdateEventHeroRequest,
       success: HttpApiSchema.Empty(200),
     },
   )
@@ -332,11 +288,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerAddMap",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/maps",
     {
-      params: EventsAssignmentControllerAddMapPathParams,
-      payload: EventsAssignmentControllerAddMapRequestJson,
-      success: EventsAssignmentControllerAddMap201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: EventHeroPath,
+      payload: CreateEventMapRequest,
+      success: EventMapResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -347,7 +301,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerDeleteMap",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId",
     {
-      params: EventsAssignmentControllerDeleteMapPathParams,
+      params: EventHeroMapPath,
       success: HttpApiSchema.Empty(200),
     },
   )
@@ -359,7 +313,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerGetLocations",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations",
     {
-      params: EventsAssignmentControllerGetLocationsPathParams,
+      params: EventHeroPath,
       success: HttpApiSchema.Empty(200),
     },
   )
@@ -374,8 +328,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerCreateLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations",
     {
-      params: EventsAssignmentControllerCreateLocationPathParams,
-      payload: EventsAssignmentControllerCreateLocationRequestJson,
+      params: EventHeroPath,
+      payload: CreateEventLocationRequest,
       success: HttpApiSchema.Empty(201),
       error: HttpApiSchema.Empty(400),
     },
@@ -388,7 +342,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerDeleteLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId",
     {
-      params: EventsAssignmentControllerDeleteLocationPathParams,
+      params: EventLocationPath,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -404,8 +358,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerUpdateLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId",
     {
-      params: EventsAssignmentControllerUpdateLocationPathParams,
-      payload: EventsAssignmentControllerUpdateLocationRequestJson,
+      params: EventLocationPath,
+      payload: UpdateEventLocationRequest,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -418,8 +372,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerReorderLocations",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/reorder",
     {
-      params: EventsAssignmentControllerReorderLocationsPathParams,
-      payload: EventsAssignmentControllerReorderLocationsRequestJson,
+      params: EventHeroPath,
+      payload: ReorderEventLocationsRequest,
       success: HttpApiSchema.Empty(200),
     },
   )
@@ -431,8 +385,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsAssignmentControllerAssignMapToLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId/location",
     {
-      params: EventsAssignmentControllerAssignMapToLocationPathParams,
-      payload: EventsAssignmentControllerAssignMapToLocationRequestJson,
+      params: EventHeroMapPath,
+      payload: AssignEventMapLocationRequest,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -451,8 +405,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "listPendingParticipationConfirmations",
     "/guilds/:guildId/events/:eventId/participation-confirmations/pending",
     {
-      params: ListPendingParticipationConfirmationsPathParams,
-      success: ListPendingParticipationConfirmations200,
+      params: EventPath,
+      success: PendingParticipationConfirmationsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -466,9 +420,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "acknowledgeExpiredParticipationConfirmations",
     "/guilds/:guildId/events/:eventId/participation-confirmations/expired/acknowledge",
     {
-      params: AcknowledgeExpiredParticipationConfirmationsPathParams,
-      payload: AcknowledgeExpiredParticipationConfirmationsRequestJson,
-      success: AcknowledgeExpiredParticipationConfirmations201.pipe(
+      params: EventPath,
+      payload: AcknowledgeExpiredParticipationConfirmationsRequest,
+      success: AcknowledgeExpiredParticipationConfirmationsResponse.pipe(
         HttpApiSchema.status(201),
       ),
     },
@@ -486,8 +440,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "confirmParticipationForKill",
     "/guilds/:guildId/events/:eventId/kills/:killId/confirm-participation",
     {
-      params: ConfirmParticipationForKillPathParams,
-      success: ConfirmParticipationForKill200,
+      params: EventKillPath,
+      success: ConfirmParticipationForKillResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -501,8 +455,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "listEventRanking",
     "/guilds/:guildId/events/:eventId/ranking",
     {
-      params: ListEventRankingPathParams,
-      success: ListEventRanking200,
+      params: EventPath,
+      success: EventRankingResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -514,8 +468,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "updateRankingPoints",
     "/guilds/:guildId/events/:eventId/ranking/:rankingId",
     {
-      params: UpdateRankingPointsPathParams,
-      payload: UpdateRankingPointsRequestJson,
+      params: EventRankingPath,
+      payload: UpdateRankingPointsRequest,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -531,9 +485,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "listEventHeroTimers",
     "/guilds/:guildId/events/:eventId/timers",
     {
-      params: ListEventHeroTimersPathParams,
-      query: ListEventHeroTimersQuery,
-      success: ListEventHeroTimers200,
+      params: EventPath,
+      query: EventTimersQuery,
+      success: EventTimersResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -548,8 +502,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsRankingControllerGetEventHeroStats",
     "/guilds/:guildId/events/:eventId/hero-stats",
     {
-      params: EventsRankingControllerGetEventHeroStatsPathParams,
-      success: EventsRankingControllerGetEventHeroStats200,
+      params: EventPath,
+      success: EventHeroStatsListResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -564,9 +518,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsRankingControllerGetEventKillHistory",
     "/guilds/:guildId/events/:eventId/kills",
     {
-      params: EventsRankingControllerGetEventKillHistoryPathParams,
-      query: EventsRankingControllerGetEventKillHistoryQuery,
-      success: EventsRankingControllerGetEventKillHistory200,
+      params: EventPath,
+      query: EventKillHistoryQuery,
+      success: EventKillHistoryResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -581,9 +535,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsRankingControllerGetMemberKillHistory",
     "/guilds/:guildId/events/:eventId/members/:memberId/kills",
     {
-      params: EventsRankingControllerGetMemberKillHistoryPathParams,
-      query: EventsRankingControllerGetMemberKillHistoryQuery,
-      success: EventsRankingControllerGetMemberKillHistory200,
+      params: EventMemberPath,
+      query: EventKillHistoryQuery,
+      success: EventMemberKillHistoryResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -601,9 +555,9 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsRankingControllerGetHeroKillHistory",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/kills",
     {
-      params: EventsRankingControllerGetHeroKillHistoryPathParams,
-      query: EventsRankingControllerGetHeroKillHistoryQuery,
-      success: EventsRankingControllerGetHeroKillHistory200,
+      params: EventHeroPath,
+      query: HeroKillHistoryQuery,
+      success: EventKillHistoryResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -618,8 +572,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsRankingControllerGetKillDetail",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId",
     {
-      params: EventsRankingControllerGetKillDetailPathParams,
-      success: EventsRankingControllerGetKillDetail200,
+      params: EventHeroKillPath,
+      success: EventKillDetailResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -634,8 +588,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsRankingControllerUpdateKillPoint",
     "/guilds/:guildId/events/:eventId/kills/:killId/points/:killPointId",
     {
-      params: EventsRankingControllerUpdateKillPointPathParams,
-      payload: EventsRankingControllerUpdateKillPointRequestJson,
+      params: EventKillPointPath,
+      payload: UpdateKillPointRequest,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },
@@ -651,8 +605,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetCoordination",
     "/guilds/:guildId/events/:eventId/coordination",
     {
-      params: EventsMonitoringControllerGetCoordinationPathParams,
-      success: EventsMonitoringControllerGetCoordination200,
+      params: EventPath,
+      success: EventCoordinationResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -666,8 +620,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetKillTimelineData",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId/timeline",
     {
-      params: EventsMonitoringControllerGetKillTimelineDataPathParams,
-      success: EventsMonitoringControllerGetKillTimelineData200,
+      params: EventHeroKillPath,
+      success: EventKillTimelineResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -685,8 +639,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetHeroCoverageGaps",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/coverage-gaps",
     {
-      params: EventsMonitoringControllerGetHeroCoverageGapsPathParams,
-      success: EventsMonitoringControllerGetHeroCoverageGaps200,
+      params: EventHeroPath,
+      success: HeroCoverageGapsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -703,8 +657,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetMapCoverageGaps",
     "/guilds/:guildId/events/:eventId/maps/:mapId/coverage-gaps",
     {
-      params: EventsMonitoringControllerGetMapCoverageGapsPathParams,
-      success: EventsMonitoringControllerGetMapCoverageGaps200,
+      params: EventMapPath,
+      success: CoverageGapsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -721,8 +675,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetActiveGapForMap",
     "/guilds/:guildId/events/:eventId/maps/:mapId/active-gap",
     {
-      params: EventsMonitoringControllerGetActiveGapForMapPathParams,
-      success: EventsMonitoringControllerGetActiveGapForMap200,
+      params: EventMapPath,
+      success: ActiveCoverageGapResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -739,8 +693,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetActiveGapsForHero",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/active-gaps",
     {
-      params: EventsMonitoringControllerGetActiveGapsForHeroPathParams,
-      success: EventsMonitoringControllerGetActiveGapsForHero200,
+      params: EventHeroPath,
+      success: CoverageGapsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -757,8 +711,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetHeroPresenceStats",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/presence-stats",
     {
-      params: EventsMonitoringControllerGetHeroPresenceStatsPathParams,
-      success: EventsMonitoringControllerGetHeroPresenceStats200,
+      params: EventHeroPath,
+      success: HeroPresenceStatsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -775,8 +729,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerGetHeroRespawnConfig",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/respawn-config",
     {
-      params: EventsMonitoringControllerGetHeroRespawnConfigPathParams,
-      success: EventsMonitoringControllerGetHeroRespawnConfig200,
+      params: EventHeroPath,
+      success: HeroRespawnConfigResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -793,8 +747,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerCloseRespawnWindow",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/close-respawn-window",
     {
-      params: EventsMonitoringControllerCloseRespawnWindowPathParams,
-      payload: EventsMonitoringControllerCloseRespawnWindowRequestJson,
+      params: EventHeroPath,
+      payload: CloseRespawnWindowRequest,
       success: HttpApiSchema.Empty(200),
       error: [HttpApiSchema.Empty(400), HttpApiSchema.Empty(404)],
     },
@@ -813,8 +767,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     "EventsMonitoringControllerOpenRespawnWindow",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/open-respawn-window",
     {
-      params: EventsMonitoringControllerOpenRespawnWindowPathParams,
-      payload: EventsMonitoringControllerOpenRespawnWindowRequestJson,
+      params: EventHeroPath,
+      payload: OpenRespawnWindowRequest,
       success: HttpApiSchema.Empty(200),
       error: [HttpApiSchema.Empty(400), HttpApiSchema.Empty(404)],
     },
@@ -830,22 +784,22 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       "Manually open a new respawn window for a hero with specified or default times.",
     ),
   HttpApiEndpoint.get("listPinnedEvents", "/guilds/:guildId/pinned-events", {
-    params: ListPinnedEventsPathParams,
-    success: ListPinnedEvents200,
+    params: EventOrganizationPath,
+    success: PinnedEventsResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listPinnedEvents")
     .annotate(OpenApi.Summary, "List active pinned events"),
   HttpApiEndpoint.put("pinEvent", "/guilds/:guildId/events/:eventId/pin", {
-    params: PinEventPathParams,
-    success: PinEvent200,
+    params: EventPath,
+    success: PinnedEventResponse,
     error: [HttpApiSchema.Empty(404), HttpApiSchema.Empty(409)],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "pinEvent")
     .annotate(OpenApi.Summary, "Pin an active event"),
   HttpApiEndpoint.delete("unpinEvent", "/guilds/:guildId/events/:eventId/pin", {
-    params: UnpinEventPathParams,
+    params: EventPath,
     success: HttpApiSchema.Empty(204),
   })
     .middleware(BearerSecurityMiddleware)

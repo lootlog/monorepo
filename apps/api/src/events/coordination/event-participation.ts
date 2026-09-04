@@ -17,7 +17,7 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import type { AcknowledgeExpiredParticipationConfirmationsDto } from "#src/contracts/events/schemas";
+import type { AcknowledgeExpiredParticipationConfirmationsRequest } from "#src/contracts/events/schemas";
 import type { EventRankingPublisher } from "#src/events/kills/event-point-edits";
 
 export class EventParticipationError extends TaggedErrorClass<EventParticipationError>()(
@@ -188,7 +188,7 @@ export const makeEventParticipation = (
       guild: { id: string },
       eventId: string,
       member: { id: number },
-      data: AcknowledgeExpiredParticipationConfirmationsDto,
+      data: AcknowledgeExpiredParticipationConfirmationsRequest,
     ) =>
       query(
         "events.participation.acknowledgeExpired",

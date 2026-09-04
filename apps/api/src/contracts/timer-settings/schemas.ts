@@ -1,109 +1,23 @@
 /** Shared input and output schemas for the timer-settings feature. */
 import * as Schema from "effect/Schema";
-import { DateTimeString, FiniteNumber } from "#src/contracts/scalars";
+import {
+  DateTimeString,
+  FiniteNumber,
+  JsonValue,
+} from "#src/contracts/scalars";
+const TimerConfiguration = JsonValue.annotate({
+  identifier: "TimerSettingsResponseDto__schema0",
+});
 
-export type TimerSettingsResponseDto__schema0 =
-  | string
-  | number
-  | boolean
-  | ReadonlyArray<
-      | string
-      | number
-      | boolean
-      | ReadonlyArray<TimerSettingsResponseDto__schema0>
-      | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-      | null
-    >
-  | {
-      readonly [x: string]:
-        | string
-        | number
-        | boolean
-        | ReadonlyArray<TimerSettingsResponseDto__schema0>
-        | { readonly [x: string]: TimerSettingsResponseDto__schema0 }
-        | null;
-    }
-  | null;
-
-export const TimerSettingsResponseDto__schema0 = Schema.suspend(
-  (): Schema.Codec<TimerSettingsResponseDto__schema0> =>
-    __recursive_TimerSettingsResponseDto__schema0,
-);
-
-export type TimerSettingsResponseDto = typeof TimerSettingsResponseDto.Type;
-
-export const TimerSettingsResponseDto = Schema.Struct({
+export const TimerSettingsResponse = Schema.Struct({
   userId: Schema.String,
-  generalConfig: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
-  displayConfig: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
-  customColors: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
-  timersColors: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
-  alwaysVisibleExpiredTimers: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
-  defaultColorNames: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
-  overriddenDefaultColors: Schema.Union([
-    Schema.Union([
-      Schema.String,
-      FiniteNumber,
-      Schema.Boolean,
-      Schema.Array(TimerSettingsResponseDto__schema0),
-      Schema.Record(Schema.String, TimerSettingsResponseDto__schema0),
-    ]),
-    Schema.Null,
-  ]),
+  generalConfig: TimerConfiguration,
+  displayConfig: TimerConfiguration,
+  customColors: TimerConfiguration,
+  timersColors: TimerConfiguration,
+  alwaysVisibleExpiredTimers: TimerConfiguration,
+  defaultColorNames: TimerConfiguration,
+  overriddenDefaultColors: TimerConfiguration,
   hiddenDefaultColors: Schema.Array(Schema.String),
   timerFiltersEnabled: Schema.Boolean,
   colorFiltersEnabled: Schema.Boolean,
@@ -112,10 +26,9 @@ export const TimerSettingsResponseDto = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 }).annotate({ identifier: "TimerSettingsResponseDto" });
+export type TimerSettingsResponse = typeof TimerSettingsResponse.Type;
 
-export type UpdateTimerSettingsDto = typeof UpdateTimerSettingsDto.Type;
-
-export const UpdateTimerSettingsDto = Schema.Struct({
+export const UpdateTimerSettingsRequest = Schema.Struct({
   generalConfig: Schema.optionalKey(
     Schema.Struct({
       removeTimerAfterMs: Schema.optionalKey(
@@ -195,11 +108,9 @@ export const UpdateTimerSettingsDto = Schema.Struct({
   timersSortOrder: Schema.optionalKey(Schema.Literals(["asc", "desc"])),
   syncEnabled: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "UpdateTimerSettingsDto" });
+export type UpdateTimerSettingsRequest = typeof UpdateTimerSettingsRequest.Type;
 
-export type GuildTimerSettingsResponseDto =
-  typeof GuildTimerSettingsResponseDto.Type;
-
-export const GuildTimerSettingsResponseDto = Schema.Struct({
+export const OrganizationTimerSettingsResponse = Schema.Struct({
   userId: Schema.String,
   guildId: Schema.String,
   hiddenTimers: Schema.Array(Schema.String),
@@ -207,137 +118,27 @@ export const GuildTimerSettingsResponseDto = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 }).annotate({ identifier: "GuildTimerSettingsResponseDto" });
+export type OrganizationTimerSettingsResponse =
+  typeof OrganizationTimerSettingsResponse.Type;
 
-export type UpdateGuildTimerSettingsDto =
-  typeof UpdateGuildTimerSettingsDto.Type;
-
-export const UpdateGuildTimerSettingsDto = Schema.Struct({
+export const UpdateOrganizationTimerSettingsRequest = Schema.Struct({
   hiddenTimers: Schema.optionalKey(Schema.Array(Schema.String)),
   pinnedTimers: Schema.optionalKey(Schema.Array(Schema.String)),
 }).annotate({ identifier: "UpdateGuildTimerSettingsDto" });
+export type UpdateOrganizationTimerSettingsRequest =
+  typeof UpdateOrganizationTimerSettingsRequest.Type;
 
-export type MigrateTimerSettingsDto = typeof MigrateTimerSettingsDto.Type;
-
-export const MigrateTimerSettingsDto = Schema.Struct({
-  localData: Schema.Record(
-    Schema.String,
-    Schema.Json.annotate({ expected: "JSON value" }),
-  ),
+export const MigrateTimerSettingsRequest = Schema.Struct({
+  localData: Schema.Record(Schema.String, JsonValue),
   conflictResolution: Schema.optionalKey(
     Schema.Literals(["local", "remote", "merge"]),
   ),
 }).annotate({ identifier: "MigrateTimerSettingsDto" });
+export type MigrateTimerSettingsRequest =
+  typeof MigrateTimerSettingsRequest.Type;
 
-// recursive definitions
-const __recursive_TimerSettingsResponseDto__schema0 = Schema.Union([
-  Schema.Union([
-    Schema.String,
-    FiniteNumber,
-    Schema.Boolean,
-    Schema.Array(
-      Schema.Union([
-        Schema.Union([
-          Schema.String,
-          FiniteNumber,
-          Schema.Boolean,
-          Schema.Array(
-            Schema.suspend(
-              (): Schema.Codec<TimerSettingsResponseDto__schema0> =>
-                TimerSettingsResponseDto__schema0,
-            ),
-          ),
-          Schema.Record(
-            Schema.String,
-            Schema.suspend(
-              (): Schema.Codec<TimerSettingsResponseDto__schema0> =>
-                TimerSettingsResponseDto__schema0,
-            ),
-          ),
-        ]),
-        Schema.Null,
-      ]),
-    ),
-    Schema.Record(
-      Schema.String,
-      Schema.Union([
-        Schema.Union([
-          Schema.String,
-          FiniteNumber,
-          Schema.Boolean,
-          Schema.Array(
-            Schema.suspend(
-              (): Schema.Codec<TimerSettingsResponseDto__schema0> =>
-                TimerSettingsResponseDto__schema0,
-            ),
-          ),
-          Schema.Record(
-            Schema.String,
-            Schema.suspend(
-              (): Schema.Codec<TimerSettingsResponseDto__schema0> =>
-                TimerSettingsResponseDto__schema0,
-            ),
-          ),
-        ]),
-        Schema.Null,
-      ]),
-    ),
-  ]),
-  Schema.Null,
-]).annotate({ identifier: "TimerSettingsResponseDto__schema0" });
-
-export type TimerSettingsControllerGetGlobalSettings200 =
-  typeof TimerSettingsControllerGetGlobalSettings200.Type;
-
-export const TimerSettingsControllerGetGlobalSettings200 =
-  TimerSettingsResponseDto;
-
-export type TimerSettingsControllerUpdateGlobalSettingsRequestJson =
-  typeof TimerSettingsControllerUpdateGlobalSettingsRequestJson.Type;
-
-export const TimerSettingsControllerUpdateGlobalSettingsRequestJson =
-  UpdateTimerSettingsDto;
-
-export type TimerSettingsControllerUpdateGlobalSettings200 =
-  typeof TimerSettingsControllerUpdateGlobalSettings200.Type;
-
-export const TimerSettingsControllerUpdateGlobalSettings200 =
-  TimerSettingsResponseDto;
-
-export type TimerSettingsControllerGetGuildSettingsPathParams =
-  typeof TimerSettingsControllerGetGuildSettingsPathParams.Type;
-
-export const TimerSettingsControllerGetGuildSettingsPathParams = Schema.Struct({
+export const OrganizationTimerSettingsParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
-
-export type TimerSettingsControllerGetGuildSettings200 =
-  typeof TimerSettingsControllerGetGuildSettings200.Type;
-
-export const TimerSettingsControllerGetGuildSettings200 =
-  GuildTimerSettingsResponseDto;
-
-export type TimerSettingsControllerUpdateGuildSettingsPathParams =
-  typeof TimerSettingsControllerUpdateGuildSettingsPathParams.Type;
-
-export const TimerSettingsControllerUpdateGuildSettingsPathParams =
-  Schema.Struct({
-    guildId: Schema.String.annotate({ examples: ["guild_123"] }),
-  });
-
-export type TimerSettingsControllerUpdateGuildSettingsRequestJson =
-  typeof TimerSettingsControllerUpdateGuildSettingsRequestJson.Type;
-
-export const TimerSettingsControllerUpdateGuildSettingsRequestJson =
-  UpdateGuildTimerSettingsDto;
-
-export type TimerSettingsControllerUpdateGuildSettings200 =
-  typeof TimerSettingsControllerUpdateGuildSettings200.Type;
-
-export const TimerSettingsControllerUpdateGuildSettings200 =
-  GuildTimerSettingsResponseDto;
-
-export type TimerSettingsControllerMigrateSettingsRequestJson =
-  typeof TimerSettingsControllerMigrateSettingsRequestJson.Type;
-
-export const TimerSettingsControllerMigrateSettingsRequestJson =
-  MigrateTimerSettingsDto;
+export type OrganizationTimerSettingsParams =
+  typeof OrganizationTimerSettingsParams.Type;

@@ -26,9 +26,9 @@ import {
   MembersOperationError,
 } from "./members.handlers.js";
 import {
-  MembersControllerGetGuildMemberReferences200,
-  MembersControllerGetGuildMembersSummary200,
-  MembersControllerGetMemberLootlogConfigSummary200,
+  MemberReferencesResponse,
+  MemberSummariesResponse,
+  MemberLootlogConfigSummaryResponse,
 } from "#src/contracts/members/schemas";
 
 export interface MemberReadCache {
@@ -129,7 +129,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getGuildMemberReferencesCacheKey(guildId, includeInactive),
               30,
-              MembersControllerGetGuildMemberReferences200,
+              MemberReferencesResponse,
               membersWithRoles(guildId, includeInactive).pipe(
                 Effect.map((members) =>
                   members.map(
@@ -151,7 +151,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getGuildMembersSummaryCacheKey(guildId),
               30,
-              MembersControllerGetGuildMembersSummary200,
+              MemberSummariesResponse,
               Effect.gen(function* () {
                 const owners = yield* database
                   .select({ ownerId: guildTable.ownerId })
@@ -197,7 +197,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getMemberLootlogConfigSummaryCacheKey(guildId, discordId),
               60,
-              MembersControllerGetMemberLootlogConfigSummary200,
+              MemberLootlogConfigSummaryResponse,
               Effect.gen(function* () {
                 const members = yield* database
                   .select()

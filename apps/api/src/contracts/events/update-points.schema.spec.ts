@@ -1,21 +1,23 @@
 import { describe, expect, it } from "bun:test";
 import {
-  UpdateKillPointDto,
-  UpdateRankingPointsDto,
+  UpdateKillPointRequest,
+  UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
 import { Schema } from "effect";
 
-describe("Update points DTO validation", () => {
-  describe("UpdateRankingPointsDto", () => {
+describe("Point adjustment validation", () => {
+  describe("UpdateRankingPointsRequest", () => {
     it("accepts decimal delta values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsDto)({ pointsDelta: 1.75 }),
+        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
+          pointsDelta: 1.75,
+        }),
       ).not.toThrow();
     });
 
     it("accepts decimal values with more than two decimal places", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsDto)({
+        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
           pointsDelta: 1.234,
         }),
       ).not.toThrow();
@@ -23,7 +25,7 @@ describe("Update points DTO validation", () => {
 
     it("accepts negative delta values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsDto)({
+        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
           pointsDelta: -0.25,
         }),
       ).not.toThrow();
@@ -31,29 +33,33 @@ describe("Update points DTO validation", () => {
 
     it("rejects infinity values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateRankingPointsDto)({
+        Schema.decodeUnknownSync(UpdateRankingPointsRequest)({
           pointsDelta: Number.POSITIVE_INFINITY,
         }),
       ).toThrow();
     });
   });
 
-  describe("UpdateKillPointDto", () => {
+  describe("UpdateKillPointRequest", () => {
     it("accepts decimal values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateKillPointDto)({ pointsDelta: 0.25 }),
+        Schema.decodeUnknownSync(UpdateKillPointRequest)({ pointsDelta: 0.25 }),
       ).not.toThrow();
     });
 
     it("accepts decimal values with more than two decimal places", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateKillPointDto)({ pointsDelta: 0.125 }),
+        Schema.decodeUnknownSync(UpdateKillPointRequest)({
+          pointsDelta: 0.125,
+        }),
       ).not.toThrow();
     });
 
     it("accepts negative delta values", () => {
       expect(() =>
-        Schema.decodeUnknownSync(UpdateKillPointDto)({ pointsDelta: -0.25 }),
+        Schema.decodeUnknownSync(UpdateKillPointRequest)({
+          pointsDelta: -0.25,
+        }),
       ).not.toThrow();
     });
   });

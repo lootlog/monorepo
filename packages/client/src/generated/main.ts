@@ -1186,8 +1186,8 @@ export const TimerResponseDtoNpcType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -1365,8 +1365,8 @@ export const TimerHistoryResponseDtoNpcType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -1558,8 +1558,8 @@ export const SearchTimersNpcResponseDtoOutputType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -1779,8 +1779,6 @@ export interface UserLootlogPlayersCatchingGuildsResponseDtoOutput {
 }
 
 export type TimerSettingsResponseDtoSchema0 = string | number | boolean | (TimerSettingsResponseDtoSchema0 | null)[] | {[key: string]: TimerSettingsResponseDtoSchema0 | null} | null;
-
-export type Suspend = TimerSettingsResponseDtoSchema0 | null;
 
 export type TimerSettingsResponseDtoTimersSortOrder = typeof TimerSettingsResponseDtoTimersSortOrder[keyof typeof TimerSettingsResponseDtoTimersSortOrder];
 
@@ -2131,8 +2129,8 @@ export const LootResponseDtoNpcsItemType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -2221,8 +2219,8 @@ export const LootStatsResponseDtoOutputTopNpcsItemType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -2433,8 +2431,8 @@ export const NullableLootResponseDtoNpcsItemType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -3503,10 +3501,6 @@ export interface AcceptReservationShareInvitationResponseDto {
   createdAt: string;
 }
 
-export type JsonValue = string | number | boolean | (JsonValue | null)[] | {[key: string]: JsonValue | null} | null;
-
-export type Suspend1 = JsonValue | null;
-
 export type NotificationTargetResponseDtoOwnerType = typeof NotificationTargetResponseDtoOwnerType[keyof typeof NotificationTargetResponseDtoOwnerType];
 
 
@@ -3529,6 +3523,8 @@ export const NotificationTargetResponseDtoTargetType = {
   CHANNEL: 'CHANNEL',
   DM: 'DM',
 } as const;
+
+export type JsonValue = string | number | boolean | (JsonValue | null)[] | {[key: string]: JsonValue | null} | null;
 
 export interface NotificationTargetResponseDto {
   /**
@@ -3683,8 +3679,6 @@ export interface UpdateNotificationTargetDto {
 }
 
 export type GuildNotificationRulesResponseDtoSchema0 = string | number | boolean | (GuildNotificationRulesResponseDtoSchema0 | null)[] | {[key: string]: GuildNotificationRulesResponseDtoSchema0 | null} | null;
-
-export type Suspend2 = GuildNotificationRulesResponseDtoSchema0 | null;
 
 export type GuildNotificationRulesResponseDtoItemsItemOwnerType = typeof GuildNotificationRulesResponseDtoItemsItemOwnerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemOwnerType];
 
@@ -3976,16 +3970,6 @@ export interface GuildNotificationRulesResponseDto {
   limits: GuildNotificationRulesResponseDtoLimits;
 }
 
-export type CreateNotificationRuleDtoTriggerType = typeof CreateNotificationRuleDtoTriggerType[keyof typeof CreateNotificationRuleDtoTriggerType];
-
-
-export const CreateNotificationRuleDtoTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
 export type CreateNotificationRuleDtoScheduleStrategy = typeof CreateNotificationRuleDtoScheduleStrategy[keyof typeof CreateNotificationRuleDtoScheduleStrategy];
 
 
@@ -4012,6 +3996,16 @@ export const CreateNotificationRuleDtoScheduleIntervalType = {
   WEEKLY: 'WEEKLY',
 } as const;
 
+export type CreateNotificationRuleDtoTriggerType = typeof CreateNotificationRuleDtoTriggerType[keyof typeof CreateNotificationRuleDtoTriggerType];
+
+
+export const CreateNotificationRuleDtoTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
 export interface CreateNotificationRuleDto {
   /**
      * @maxLength 255
@@ -4023,7 +4017,6 @@ export interface CreateNotificationRuleDto {
      * @nullable
      */
   contentTemplate?: string | null;
-  triggerType: CreateNotificationRuleDtoTriggerType;
   /** @maxLength 50 */
   world?: string;
   /**
@@ -4074,18 +4067,17 @@ export interface CreateNotificationRuleDto {
   scheduledUntil?: string;
   /** @maxLength 50 */
   scheduleTimezone?: string;
+  enabled?: boolean;
+  triggerType: CreateNotificationRuleDtoTriggerType;
   /**
      * @maxItems 3
      * @items.minimum -9007199254740991
      * @items.maximum 9007199254740991
      */
   targetIds: number[];
-  enabled?: boolean;
 }
 
 export type NotificationRuleResponseDtoSchema0 = string | number | boolean | (NotificationRuleResponseDtoSchema0 | null)[] | {[key: string]: NotificationRuleResponseDtoSchema0 | null} | null;
-
-export type Suspend3 = NotificationRuleResponseDtoSchema0 | null;
 
 export type NotificationRuleResponseDtoOwnerType = typeof NotificationRuleResponseDtoOwnerType[keyof typeof NotificationRuleResponseDtoOwnerType];
 
@@ -4315,16 +4307,6 @@ export interface NotificationRuleResponseDto {
   targets: NotificationRuleResponseDtoTargetsItem[];
 }
 
-export type UpdateNotificationRuleDtoTriggerType = typeof UpdateNotificationRuleDtoTriggerType[keyof typeof UpdateNotificationRuleDtoTriggerType];
-
-
-export const UpdateNotificationRuleDtoTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
 export type UpdateNotificationRuleDtoScheduleStrategy = typeof UpdateNotificationRuleDtoScheduleStrategy[keyof typeof UpdateNotificationRuleDtoScheduleStrategy];
 
 
@@ -4351,6 +4333,16 @@ export const UpdateNotificationRuleDtoScheduleIntervalType = {
   WEEKLY: 'WEEKLY',
 } as const;
 
+export type UpdateNotificationRuleDtoTriggerType = typeof UpdateNotificationRuleDtoTriggerType[keyof typeof UpdateNotificationRuleDtoTriggerType];
+
+
+export const UpdateNotificationRuleDtoTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
 export interface UpdateNotificationRuleDto {
   /**
      * @maxLength 255
@@ -4362,7 +4354,6 @@ export interface UpdateNotificationRuleDto {
      * @nullable
      */
   contentTemplate?: string | null;
-  triggerType?: UpdateNotificationRuleDtoTriggerType;
   /** @maxLength 50 */
   world?: string;
   /**
@@ -4413,18 +4404,17 @@ export interface UpdateNotificationRuleDto {
   scheduledUntil?: string;
   /** @maxLength 50 */
   scheduleTimezone?: string;
+  enabled?: boolean;
+  triggerType?: UpdateNotificationRuleDtoTriggerType;
   /**
      * @maxItems 3
      * @items.minimum -9007199254740991
      * @items.maximum 9007199254740991
      */
   targetIds?: number[];
-  enabled?: boolean;
 }
 
 export type NotificationJobsResponseDtoSchema0 = string | number | boolean | (NotificationJobsResponseDtoSchema0 | null)[] | {[key: string]: NotificationJobsResponseDtoSchema0 | null} | null;
-
-export type Suspend4 = NotificationJobsResponseDtoSchema0 | null;
 
 export type NotificationJobsResponseDtoPendingItemOwnerType = typeof NotificationJobsResponseDtoPendingItemOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemOwnerType];
 
@@ -5251,8 +5241,6 @@ export interface NotificationJobsResponseDto {
 
 export type NotificationTargetWithTestTriggerResponseDtoSchema0 = string | number | boolean | (NotificationTargetWithTestTriggerResponseDtoSchema0 | null)[] | {[key: string]: NotificationTargetWithTestTriggerResponseDtoSchema0 | null} | null;
 
-export type Suspend5 = NotificationTargetWithTestTriggerResponseDtoSchema0 | null;
-
 export type NotificationTargetWithTestTriggerResponseDtoOwnerType = typeof NotificationTargetWithTestTriggerResponseDtoOwnerType[keyof typeof NotificationTargetWithTestTriggerResponseDtoOwnerType];
 
 
@@ -5342,8 +5330,6 @@ export interface NotificationTargetWithTestTriggerResponseDto {
 }
 
 export type WatchedItemResponseDtoSchema0 = string | number | boolean | (WatchedItemResponseDtoSchema0 | null)[] | {[key: string]: WatchedItemResponseDtoSchema0 | null} | null;
-
-export type Suspend6 = WatchedItemResponseDtoSchema0 | null;
 
 /**
  * @nullable
@@ -6302,8 +6288,6 @@ export interface PartyReadyRoomExpectedRevisionDto {
 
 export type SoundSettingsResponseDtoSchema0 = string | number | boolean | (SoundSettingsResponseDtoSchema0 | null)[] | {[key: string]: SoundSettingsResponseDtoSchema0 | null} | null;
 
-export type Suspend7 = SoundSettingsResponseDtoSchema0 | null;
-
 export interface SoundSettingsResponseDto {
   userId: string;
   masterVolume: number;
@@ -6672,8 +6656,6 @@ export interface CreateEventDto {
 
 export type EventMutationResponseDtoSchema0 = string | number | boolean | (EventMutationResponseDtoSchema0 | null)[] | {[key: string]: EventMutationResponseDtoSchema0 | null} | null;
 
-export type Suspend8 = EventMutationResponseDtoSchema0 | null;
-
 export type EventMutationResponseDtoScoringMode = typeof EventMutationResponseDtoScoringMode[keyof typeof EventMutationResponseDtoScoringMode];
 
 
@@ -6754,8 +6736,6 @@ export interface EventMutationResponseDto {
 }
 
 export type EventOverviewResponseDtoSchema0 = string | number | boolean | (EventOverviewResponseDtoSchema0 | null)[] | {[key: string]: EventOverviewResponseDtoSchema0 | null} | null;
-
-export type Suspend9 = EventOverviewResponseDtoSchema0 | null;
 
 export type EventOverviewResponseDtoScoringMode = typeof EventOverviewResponseDtoScoringMode[keyof typeof EventOverviewResponseDtoScoringMode];
 
@@ -7538,8 +7518,6 @@ export interface EventHeroStatsResponseDto {
 
 export type EventKillHistoryResponseDtoSchema0 = string | number | boolean | (EventKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventKillHistoryResponseDtoSchema0 | null} | null;
 
-export type Suspend10 = EventKillHistoryResponseDtoSchema0 | null;
-
 export type EventKillHistoryResponseDtoDataItemHeroNpc = {
   id: string;
   /** @nullable */
@@ -7614,8 +7592,6 @@ export interface EventKillHistoryResponseDto {
 }
 
 export type EventMemberKillHistoryResponseDtoSchema0 = string | number | boolean | (EventMemberKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventMemberKillHistoryResponseDtoSchema0 | null} | null;
-
-export type Suspend11 = EventMemberKillHistoryResponseDtoSchema0 | null;
 
 export type EventMemberKillHistoryResponseDtoMember = {
   id: number;
@@ -7704,8 +7680,6 @@ export interface EventMemberKillHistoryResponseDto {
 }
 
 export type KillDetailResponseDtoSchema0 = string | number | boolean | (KillDetailResponseDtoSchema0 | null)[] | {[key: string]: KillDetailResponseDtoSchema0 | null} | null;
-
-export type Suspend12 = KillDetailResponseDtoSchema0 | null;
 
 export type KillDetailResponseDtoKillHeroNpcEvent = {
   id: string;
@@ -8370,8 +8344,8 @@ export const NpcType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -8559,8 +8533,6 @@ export interface CreateGuildDocumentDto {
 
 export type GuildDocumentResponseDtoSchema0 = string | number | boolean | (GuildDocumentResponseDtoSchema0 | null)[] | {[key: string]: GuildDocumentResponseDtoSchema0 | null} | null;
 
-export type Suspend13 = GuildDocumentResponseDtoSchema0 | null;
-
 export type GuildDocumentResponseDtoCreatedBy = {
   memberId: string;
   /** @nullable */
@@ -8664,8 +8636,6 @@ export interface GuildDocumentHistoryResponseDto {
 
 export type GuildDocumentHistorySnapshotResponseDtoSchema0 = string | number | boolean | (GuildDocumentHistorySnapshotResponseDtoSchema0 | null)[] | {[key: string]: GuildDocumentHistorySnapshotResponseDtoSchema0 | null} | null;
 
-export type Suspend14 = GuildDocumentHistorySnapshotResponseDtoSchema0 | null;
-
 export type GuildDocumentHistorySnapshotResponseDtoAction = typeof GuildDocumentHistorySnapshotResponseDtoAction[keyof typeof GuildDocumentHistorySnapshotResponseDtoAction];
 
 
@@ -8697,8 +8667,6 @@ export interface GuildDocumentHistorySnapshotResponseDto {
 
 export type UpdateGuildDocumentDtoSchema0 = string | number | boolean | (UpdateGuildDocumentDtoSchema0 | null)[] | {[key: string]: UpdateGuildDocumentDtoSchema0 | null} | null;
 
-export type Suspend15 = UpdateGuildDocumentDtoSchema0 | null;
-
 export interface UpdateGuildDocumentDto {
   content: UpdateGuildDocumentDtoSchema0 | null;
   /**
@@ -8722,8 +8690,8 @@ export const TimerNpcResponseDtoType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -8893,8 +8861,8 @@ export const LootNpcResponseDtoType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -9962,8 +9930,8 @@ export const KillsControllerGetGuildKillStatsNpcTypesItem = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -10001,8 +9969,8 @@ export const KillsControllerGetUserKillStatsNpcTypesItem = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -10016,8 +9984,8 @@ export const KillsControllerGetUserKillStatsNpcType = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -10072,8 +10040,8 @@ export const KillsControllerGetUserNpcKillsNpcTypesItem = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
@@ -10193,8 +10161,8 @@ export const KillsControllerGetMemberKillsNpcTypesItem = {
   ELITE3: 'ELITE3',
   HERO: 'HERO',
   EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
   COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
   NPC: 'NPC',
 } as const;
 
