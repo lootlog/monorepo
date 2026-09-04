@@ -16,6 +16,7 @@ const makeSession = (permissions: Permission[]): SessionData => ({
     },
   ],
   subscriptions: new Map(),
+  airTagScopes: [],
   confidence: "reported",
   backpressureStrikes: 0,
 });

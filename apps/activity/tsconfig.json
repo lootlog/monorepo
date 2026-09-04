@@ -8,5 +8,5 @@
     "types": ["bun", "node"]
   },
   "include": ["src", "test", "drizzle.config.ts"],
-  "exclude": ["dist", "node_modules", "src/generated", "prisma"]
+  "exclude": ["dist", "node_modules", "prisma"]
 }

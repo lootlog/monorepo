@@ -7,32 +7,27 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  CreateReservation201,
-  CreateReservationPathParams,
-  CreateReservationRequestJson,
-  DeleteMyReservationPathParams,
-  DeleteReservationPathParams,
-  ListMyReservations200,
-  ListMyReservationsQuery,
-  ListReservationSpots200,
-  ListReservationSpotsPathParams,
-  ListSpotReservations200,
-  ListSpotReservationsPathParams,
-  ListSpotReservationsQuery,
-  PinReservationSpotPathParams,
-  UnpinReservationSpotPathParams,
-  UpdateMyReservation200,
-  UpdateMyReservationPathParams,
-  UpdateMyReservationRequestJson,
-} from "./schemas.js";
+  ReservationResponse,
+  ReservationSpotParams,
+  CreateReservationRequest,
+  ReservationParams,
+  OrganizationReservationParamsWithId,
+  MyReservationsResponse,
+  MyReservationsQuery,
+  ReservationSpotsResponse,
+  OrganizationReservationParams,
+  ReservationWindowResponse,
+  ReservationWindowQuery,
+  UpdateReservationRequest,
+} from "#src/contracts/reservations/schemas";
 
 export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
   HttpApiEndpoint.get(
     "listReservationSpots",
     "/guilds/:guildId/reservation-spots",
     {
-      params: ListReservationSpotsPathParams,
-      success: ListReservationSpots200,
+      params: OrganizationReservationParams,
+      success: ReservationSpotsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -45,9 +40,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     "listSpotReservations",
     "/guilds/:guildId/reservation-spots/:spotId/reservations",
     {
-      params: ListSpotReservationsPathParams,
-      query: ListSpotReservationsQuery,
-      success: ListSpotReservations200,
+      params: ReservationSpotParams,
+      query: ReservationWindowQuery,
+      success: ReservationWindowResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -60,9 +55,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     "createReservation",
     "/guilds/:guildId/reservation-spots/:spotId/reservations",
     {
-      params: CreateReservationPathParams,
-      payload: CreateReservationRequestJson,
-      success: CreateReservation201.pipe(HttpApiSchema.status(201)),
+      params: ReservationSpotParams,
+      payload: CreateReservationRequest,
+      success: ReservationResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -74,7 +69,10 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
   HttpApiEndpoint.delete(
     "deleteReservation",
     "/guilds/:guildId/reservations/:reservationId",
-    { params: DeleteReservationPathParams, success: HttpApiSchema.Empty(204) },
+    {
+      params: OrganizationReservationParamsWithId,
+      success: HttpApiSchema.Empty(204),
+    },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "deleteReservation")
@@ -85,7 +83,7 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
   HttpApiEndpoint.put(
     "pinReservationSpot",
     "/guilds/:guildId/reservation-spot-pins/:spotId",
-    { params: PinReservationSpotPathParams, success: HttpApiSchema.Empty(204) },
+    { params: ReservationSpotParams, success: HttpApiSchema.Empty(204) },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "pinReservationSpot")
@@ -94,7 +92,7 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     "unpinReservationSpot",
     "/guilds/:guildId/reservation-spot-pins/:spotId",
     {
-      params: UnpinReservationSpotPathParams,
+      params: ReservationSpotParams,
       success: HttpApiSchema.Empty(204),
     },
   )
@@ -102,8 +100,8 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     .annotate(OpenApi.Identifier, "unpinReservationSpot")
     .annotate(OpenApi.Summary, "Unpin a reservation spot for the current user"),
   HttpApiEndpoint.get("listMyReservations", "/users/@me/reservations", {
-    query: ListMyReservationsQuery,
-    success: ListMyReservations200,
+    query: MyReservationsQuery,
+    success: MyReservationsResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listMyReservations")
@@ -112,7 +110,7 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     "deleteMyReservation",
     "/users/@me/reservations/:reservationId",
     {
-      params: DeleteMyReservationPathParams,
+      params: ReservationParams,
       success: HttpApiSchema.Empty(204),
     },
   )
@@ -123,9 +121,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     "updateMyReservation",
     "/users/@me/reservations/:reservationId",
     {
-      params: UpdateMyReservationPathParams,
-      payload: UpdateMyReservationRequestJson,
-      success: UpdateMyReservation200,
+      params: ReservationParams,
+      payload: UpdateReservationRequest,
+      success: ReservationResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)

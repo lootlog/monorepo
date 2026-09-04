@@ -282,9 +282,9 @@ export class RabbitBridge {
   constructor(
     private readonly messaging: RabbitMessagingService,
     private readonly hub: RealtimeHub,
-    private readonly commands: CommandHandler,
-    private readonly presence: PresenceStore,
-    private readonly coverage: CoveragePublisher,
+    private readonly commands: Pick<CommandHandler, "rebalanceAcrossInstances">,
+    private readonly presence: Pick<PresenceStore, "coverageForMap">,
+    private readonly coverage: Pick<CoveragePublisher, "publish">,
   ) {}
 
   start(): Effect.Effect<void, MessagingError, Scope.Scope> {
@@ -307,7 +307,11 @@ export class RabbitBridge {
                 : { strategy: "nack" },
           },
           (delivery: RabbitDelivery) =>
-            handle(spec.routingKey, decodeDelivery(spec.routingKey, delivery)),
+            handle(
+              spec.routingKey,
+              decodeDelivery(spec.routingKey, delivery),
+              delivery.properties.messageId,
+            ),
         );
         consumers.push(consumer);
       }
@@ -343,6 +347,7 @@ export class RabbitBridge {
   private handle(
     routingKey: CanonicalRabbitEventRoutingKey,
     payload: unknown,
+    messageId?: string,
   ): Effect.Effect<void, unknown> {
     const fromPromise = <A>(evaluate: () => Promise<A>) =>
       Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
@@ -385,6 +390,7 @@ export class RabbitBridge {
         this.hub.publishToScope(
           { topic: "organization.loots", organizationId: data.guildId },
           { v: 1, type: "loot.created", data },
+          messageId,
         ),
       );
     }

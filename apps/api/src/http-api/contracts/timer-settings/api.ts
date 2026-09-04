@@ -7,22 +7,19 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  TimerSettingsControllerGetGlobalSettings200,
-  TimerSettingsControllerGetGuildSettings200,
-  TimerSettingsControllerGetGuildSettingsPathParams,
-  TimerSettingsControllerMigrateSettingsRequestJson,
-  TimerSettingsControllerUpdateGlobalSettings200,
-  TimerSettingsControllerUpdateGlobalSettingsRequestJson,
-  TimerSettingsControllerUpdateGuildSettings200,
-  TimerSettingsControllerUpdateGuildSettingsPathParams,
-  TimerSettingsControllerUpdateGuildSettingsRequestJson,
-} from "./schemas.js";
+  TimerSettingsResponse,
+  OrganizationTimerSettingsResponse,
+  OrganizationTimerSettingsParams,
+  MigrateTimerSettingsRequest,
+  UpdateTimerSettingsRequest,
+  UpdateOrganizationTimerSettingsRequest,
+} from "#src/contracts/timer-settings/schemas";
 
 export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
   HttpApiEndpoint.get(
     "TimerSettingsControllerGetGlobalSettings",
     "/timer-settings",
-    { success: TimerSettingsControllerGetGlobalSettings200 },
+    { success: TimerSettingsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimerSettingsController_getGlobalSettings")
@@ -32,8 +29,8 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     "TimerSettingsControllerUpdateGlobalSettings",
     "/timer-settings",
     {
-      payload: TimerSettingsControllerUpdateGlobalSettingsRequestJson,
-      success: TimerSettingsControllerUpdateGlobalSettings200,
+      payload: UpdateTimerSettingsRequest,
+      success: TimerSettingsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -47,8 +44,8 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     "TimerSettingsControllerGetGuildSettings",
     "/timer-settings/guilds/:guildId",
     {
-      params: TimerSettingsControllerGetGuildSettingsPathParams,
-      success: TimerSettingsControllerGetGuildSettings200,
+      params: OrganizationTimerSettingsParams,
+      success: OrganizationTimerSettingsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -62,9 +59,9 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     "TimerSettingsControllerUpdateGuildSettings",
     "/timer-settings/guilds/:guildId",
     {
-      params: TimerSettingsControllerUpdateGuildSettingsPathParams,
-      payload: TimerSettingsControllerUpdateGuildSettingsRequestJson,
-      success: TimerSettingsControllerUpdateGuildSettings200,
+      params: OrganizationTimerSettingsParams,
+      payload: UpdateOrganizationTimerSettingsRequest,
+      success: OrganizationTimerSettingsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -78,7 +75,7 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     "TimerSettingsControllerMigrateSettings",
     "/timer-settings/migrate",
     {
-      payload: TimerSettingsControllerMigrateSettingsRequestJson,
+      payload: MigrateTimerSettingsRequest,
       success: HttpApiSchema.Empty(200),
     },
   )

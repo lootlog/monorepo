@@ -8,19 +8,6 @@
     "types": ["bun"],
     "rootDir": "."
   },
-  "include": [
-    "src/main.ts",
-    "src/app.ts",
-    "src/auth/**/*.ts",
-    "src/config/gateway-config.ts",
-    "src/platform/**/*.ts",
-    "src/rabbit/**/*.ts",
-    "src/realtime/**/*.ts",
-    "src/guilds/guild-store.ts",
-    "src/guilds/types/guild.types.ts",
-    "src/guilds/utils/cache-keys.util.ts",
-    "src/gateway/constants/game-url-regex.constant.ts",
-    "src/**/*.test.ts",
-    "test/**/*.ts"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

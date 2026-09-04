@@ -7,27 +7,22 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  ChatControllerClearChatMessages200,
-  ChatControllerClearChatMessagesPathParams,
-  ChatControllerDeleteChatMessage200,
-  ChatControllerDeleteChatMessagePathParams,
-  ChatControllerGetChatMessages200,
-  ChatControllerGetChatMessagesPathParams,
-  ChatControllerSendChatMessage201,
-  ChatControllerSendChatMessagePathParams,
-  ChatControllerSendChatMessageRequestJson,
-  ChatControllerUpdateChatMessage200,
-  ChatControllerUpdateChatMessagePathParams,
-  ChatControllerUpdateChatMessageRequestJson,
-} from "./schemas.js";
+  ChatMessageActionResponse,
+  ChatOrganizationPath,
+  ChatMessagePath,
+  ChatMessagesResponse,
+  ChatMessageResponse,
+  SendChatMessageRequest,
+  UpdateChatMessageRequest,
+} from "#src/contracts/chat/schemas";
 
 export class ChatGroup extends HttpApiGroup.make("chat").add(
   HttpApiEndpoint.get(
     "ChatControllerGetChatMessages",
     "/guilds/:guildId/chat-messages",
     {
-      params: ChatControllerGetChatMessagesPathParams,
-      success: ChatControllerGetChatMessages200,
+      params: ChatOrganizationPath,
+      success: ChatMessagesResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -39,9 +34,9 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     "ChatControllerSendChatMessage",
     "/guilds/:guildId/chat-messages",
     {
-      params: ChatControllerSendChatMessagePathParams,
-      payload: ChatControllerSendChatMessageRequestJson,
-      success: ChatControllerSendChatMessage201.pipe(HttpApiSchema.status(201)),
+      params: ChatOrganizationPath,
+      payload: SendChatMessageRequest,
+      success: ChatMessageResponse.pipe(HttpApiSchema.status(201)),
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -53,8 +48,8 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     "ChatControllerClearChatMessages",
     "/guilds/:guildId/chat-messages",
     {
-      params: ChatControllerClearChatMessagesPathParams,
-      success: ChatControllerClearChatMessages200,
+      params: ChatOrganizationPath,
+      success: ChatMessageActionResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -66,8 +61,8 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     "ChatControllerDeleteChatMessage",
     "/guilds/:guildId/chat-messages/:messageId",
     {
-      params: ChatControllerDeleteChatMessagePathParams,
-      success: ChatControllerDeleteChatMessage200,
+      params: ChatMessagePath,
+      success: ChatMessageActionResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -79,9 +74,9 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     "ChatControllerUpdateChatMessage",
     "/guilds/:guildId/chat-messages/:messageId",
     {
-      params: ChatControllerUpdateChatMessagePathParams,
-      payload: ChatControllerUpdateChatMessageRequestJson,
-      success: ChatControllerUpdateChatMessage200,
+      params: ChatMessagePath,
+      payload: UpdateChatMessageRequest,
+      success: ChatMessageActionResponse,
       error: HttpApiSchema.Empty(403),
     },
   )

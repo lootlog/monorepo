@@ -3,6 +3,7 @@ import type { Meilisearch, SearchParams } from "meilisearch";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
+  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -42,13 +43,6 @@ const buildItemWorldFilter = (world: string) => {
 
   return `(worlds = ${formattedWorld} OR world = ${formattedWorld})`;
 };
-
-const emptySearchResponse = (): SearchItemsResponse => ({
-  hits: [],
-  estimatedTotalHits: 0,
-  facetDistribution: {},
-  facetStats: {},
-});
 
 const mapSearchResponse = (data: {
   estimatedTotalHits?: number;
@@ -149,12 +143,12 @@ export const makeItemsModule = (
             Effect.map(mapSearchResponse),
             Effect.catch((fallbackError) => {
               logger.error("Items search error", { error: fallbackError });
-              return Effect.succeed(emptySearchResponse());
+              return Effect.fail(fallbackError);
             }),
           );
         }
         logger.error("Items search error", { error });
-        return Effect.succeed(emptySearchResponse());
+        return Effect.fail(error);
       }),
     );
   });
@@ -182,6 +176,7 @@ export const makeItemsModule = (
       Effect.catch((error) => {
         if (getMeilisearchErrorCode(error.cause) !== "document_not_found") {
           logger.warn("Could not read existing item worlds", { error, uid });
+          return Effect.fail(error);
         }
         return Effect.succeed([] as string[]);
       }),
@@ -228,7 +223,7 @@ export const makeItemsModule = (
       }),
     );
 
-    yield* attemptMeilisearch("search.items.index", () =>
+    yield* completeMeilisearchTask("search.items.index", () =>
       index.addDocuments(itemsWithSearchFields, {
         primaryKey: "uid",
       }),
@@ -238,12 +233,12 @@ export const makeItemsModule = (
   return { getItems, indexItems, searchItems } satisfies {
     readonly getItems: (
       input: Pick<ItemSearchQuery, "limit" | "search" | "world">,
-    ) => Effect.Effect<ReadonlyArray<ItemHit>>;
+    ) => Effect.Effect<ReadonlyArray<ItemHit>, SearchOperationFailure>;
     readonly indexItems: (
       data: IndexItemsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
     readonly searchItems: (
       input: ItemSearchQuery,
-    ) => Effect.Effect<SearchItemsResponse>;
+    ) => Effect.Effect<SearchItemsResponse, SearchOperationFailure>;
   };
 };

@@ -51,6 +51,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PlayerHitDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchUnavailableEncoded"
       summary: Search players by name
   /npcs:
     get:
@@ -96,6 +102,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/NpcHitDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchUnavailableEncoded"
       summary: Search NPCs by name
   /items:
     get:
@@ -161,6 +173,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SearchItemsResponseDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchUnavailableEncoded"
       summary: Search items with filters, sorting, and facets
   /all:
     get:
@@ -191,6 +209,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SearchAllResponseDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchUnavailableEncoded"
       summary: Search across all categories
 components:
   schemas:
@@ -223,6 +247,18 @@ components:
         - accountId
         - world
       description: Player search hit
+    SearchUnavailableEncoded:
+      type: object
+      properties:
+        _tag:
+          type: string
+          enum:
+            - SearchUnavailable
+        message:
+          type: string
+      required:
+        - _tag
+        - message
     NpcHitDto_Output:
       type: object
       properties:

@@ -19,14 +19,14 @@
     "start": "bun dist/src/main.js",
     "start:debug": "bun --conditions=development --env-file=.env --inspect --watch src/main.ts",
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "oxfmt src test",
-    "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' src/auth src/realtime src/rabbit test",
+    "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' ./src ./test",
     "test:integration": "bun --conditions=development test test/realtime-redis.integration.test.ts",
     "test:debug": "bun --conditions=development test --inspect-brk --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
-    "test:e2e": "bun --conditions=development test --path-ignore-patterns=dist test",
+    "test:e2e": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' ./test",
     "test:watch": "bun --conditions=development test --watch --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
-    "openapi:generate": "bun src/openapi/generate-openapi.ts"
+    "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",

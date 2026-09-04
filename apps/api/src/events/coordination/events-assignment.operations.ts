@@ -2,15 +2,15 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
 import {
-  AssignMapLocationDto,
-  AssignMemberDto,
-  CreateHeroDto,
-  CreateLocationDto,
-  CreateMapDto,
-  ReorderLocationsDto,
-  UpdateHeroDto,
-  UpdateLocationDto,
-} from "#src/http-api/contracts/events/schemas";
+  AssignEventMapLocationRequest,
+  AssignEventMemberRequest,
+  CreateEventHeroRequest,
+  CreateEventLocationRequest,
+  CreateEventMapRequest,
+  ReorderEventLocationsRequest,
+  UpdateEventHeroRequest,
+  UpdateEventLocationRequest,
+} from "#src/contracts/events/schemas";
 import { Effect } from "effect";
 import type { EventAccess } from "#src/events/event-access";
 import type { EventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";
@@ -25,7 +25,7 @@ export const makeEventsAssignment = (
     guildData: { id: string },
     eventId: string,
     mapId: string,
-    data: AssignMemberDto,
+    data: AssignEventMemberRequest,
   ) {
     return mapAssignments.assignMember(
       guildData,
@@ -85,7 +85,11 @@ export const makeEventsAssignment = (
     }).pipe(Effect.withSpan("EventsAssignment.selfUnassignMember"));
   },
 
-  addHero(guildData: { id: string }, eventId: string, data: CreateHeroDto) {
+  addHero(
+    guildData: { id: string },
+    eventId: string,
+    data: CreateEventHeroRequest,
+  ) {
     return catalogMutations.addHero(guildData, eventId, data);
   },
 
@@ -93,7 +97,7 @@ export const makeEventsAssignment = (
     guildData: { id: string },
     eventId: string,
     heroId: string,
-    data: UpdateHeroDto,
+    data: UpdateEventHeroRequest,
   ) {
     return catalogMutations.updateHero(guildData, eventId, heroId, data);
   },
@@ -106,7 +110,7 @@ export const makeEventsAssignment = (
     guildData: { id: string },
     eventId: string,
     heroId: string,
-    data: CreateMapDto,
+    data: CreateEventMapRequest,
   ) {
     return catalogMutations.addMap(guildData, eventId, heroId, data);
   },
@@ -143,7 +147,7 @@ export const makeEventsAssignment = (
     guildData: { id: string },
     eventId: string,
     heroId: string,
-    data: CreateLocationDto,
+    data: CreateEventLocationRequest,
   ) {
     return catalogMutations.createLocation(guildData, eventId, heroId, data);
   },
@@ -153,7 +157,7 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     locationId: string,
-    data: UpdateLocationDto,
+    data: UpdateEventLocationRequest,
   ) {
     return catalogMutations.updateLocation(
       guildData,
@@ -182,7 +186,7 @@ export const makeEventsAssignment = (
     guildData: { id: string },
     eventId: string,
     heroId: string,
-    data: ReorderLocationsDto,
+    data: ReorderEventLocationsRequest,
   ) {
     return catalogMutations.reorderLocations(guildData, eventId, heroId, data);
   },
@@ -192,7 +196,7 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     mapId: string,
-    data: AssignMapLocationDto,
+    data: AssignEventMapLocationRequest,
   ) {
     return catalogMutations.assignMapToLocation(
       guildData,

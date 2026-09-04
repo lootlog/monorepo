@@ -3,14 +3,15 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import type {
-  KillsControllerCreateKill201,
-  KillsControllerCreateKillRequestJson,
-} from "../../contracts/kills/schemas.js";
+  CreateKillResponse,
+  CreateKillRequest,
+} from "#src/contracts/kills/schemas";
 import type {
-  LootsControllerCreateComment201,
-  LootsControllerCreateCommentRequestJson,
-  LootsControllerFetchLootById200,
-} from "../../contracts/loots/schemas.js";
+  LootCommentResponse,
+  CreateLootCommentRequest,
+  LootDetailResponse,
+} from "#src/contracts/loots/schemas";
+
 import {
   createComment,
   createKill,
@@ -93,13 +94,13 @@ describe("Kills and Loots HttpApi handlers", () => {
     const payload = {
       npc: { id: 123, name: "Mushita", lvl: 100, type: "HERO" },
       world: "tempest",
-    } as unknown as KillsControllerCreateKillRequestJson;
+    } as unknown as CreateKillRequest;
     const created = {
       id: "kill-1",
-    } as unknown as KillsControllerCreateKill201;
+    } as unknown as CreateKillResponse;
     const calls: Array<{
       receivedCaller: AuthenticatedCaller;
-      receivedPayload: KillsControllerCreateKillRequestJson;
+      receivedPayload: CreateKillRequest;
     }> = [];
 
     const result = await Effect.runPromise(
@@ -238,8 +239,7 @@ describe("Kills and Loots HttpApi handlers", () => {
             services(
               makeAuthorization(),
               makeData({
-                fetchLoot: () =>
-                  Effect.succeed(null as LootsControllerFetchLootById200),
+                fetchLoot: () => Effect.succeed(null as LootDetailResponse),
               }),
             ),
           ),
@@ -254,10 +254,10 @@ describe("Kills and Loots HttpApi handlers", () => {
   it("checks write permission before creating a comment", async () => {
     const payload = {
       content: "gg",
-    } as unknown as LootsControllerCreateCommentRequestJson;
+    } as unknown as CreateLootCommentRequest;
     const created = {
       id: "comment-1",
-    } as unknown as LootsControllerCreateComment201;
+    } as unknown as LootCommentResponse;
     const authorizationCalls: string[] = [];
 
     const result = await Effect.runPromise(

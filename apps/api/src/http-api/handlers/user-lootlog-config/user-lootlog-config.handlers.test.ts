@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { UserLootlogConfigControllerGetPlayersCatchingGuilds200 } from "../../contracts/user-lootlog-config/schemas.js";
+import { PlayersCatchingOrganizationsResponse } from "#src/contracts/user-lootlog-config/schemas";
 import {
   getPlayersCatchingGuilds,
   getUserLootlogAccountConfig,
@@ -101,8 +101,6 @@ describe("user lootlog config HttpApi handlers", () => {
       getPlayersCatchingGuilds({ players: [] }).pipe(Effect.provide(layer)),
     );
     expect(result).toEqual(response);
-    expect(
-      Schema.is(UserLootlogConfigControllerGetPlayersCatchingGuilds200)(result),
-    ).toBe(true);
+    expect(Schema.is(PlayersCatchingOrganizationsResponse)(result)).toBe(true);
   });
 });

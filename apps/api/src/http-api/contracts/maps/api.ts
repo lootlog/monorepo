@@ -4,11 +4,11 @@ import {
   HttpApiGroup,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { MapsControllerGetMaps200 } from "./schemas.js";
+import { GameMapsResponse } from "#src/contracts/maps/schemas";
 
 export class MapsGroup extends HttpApiGroup.make("maps").add(
   HttpApiEndpoint.get("MapsControllerGetMaps", "/maps", {
-    success: MapsControllerGetMaps200,
+    success: GameMapsResponse,
   })
     .annotate(OpenApi.Identifier, "MapsController_getMaps")
     .annotate(OpenApi.Summary, "Get all game maps")

@@ -1,9 +1,17 @@
-import { vi } from "#test/bun-test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  setSystemTime,
+  vi,
+} from "bun:test";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Effect } from "effect";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { buildTimerKey } from "#src/timers/timer-key";
-import { mockFn } from "#test/mock-fn";
 import {
   makeEventCoordination,
   type EventCoordination,
@@ -20,49 +28,45 @@ describe("EventCoordination", () => {
   const guildId = "guild-1";
   const eventId = "event-1";
 
-  const findEvent = mockFn();
-  const findActiveGaps = mockFn();
-  const repository = {
-    findEvent: (...arguments_: unknown[]) =>
-      Effect.promise(() => findEvent(...arguments_)),
-    findActiveGaps: (...arguments_: unknown[]) =>
-      Effect.promise(() => findActiveGaps(...arguments_)),
-  };
-
-  const getTimersForEventHeroFilters = mockFn();
-  const mockTimersService = {
-    getTimersForEventHeroFilters: (...arguments_: unknown[]) =>
-      Effect.promise(() => getTimersForEventHeroFilters(...arguments_)),
+  const findEvent = mock<EventCoordinationStore["findEvent"]>();
+  const findActiveGaps = mock<EventCoordinationStore["findActiveGaps"]>();
+  const repository = { findEvent, findActiveGaps };
+  const getTimersForEventHeroFilters =
+    mock<EventTimersPort["getTimersForEventHeroFilters"]>();
+  const mockTimersService: EventTimersPort = {
+    getTimersForEventHeroFilters,
+    getEventRespawnTimer: () => Effect.die("Unexpected timer lookup"),
+    openEventRespawnTimer: () => Effect.die("Unexpected timer mutation"),
+    closeEventRespawnTimer: () => Effect.die("Unexpected timer mutation"),
+    getActiveTimerKeys: () => Effect.die("Unexpected timer lookup"),
   };
 
   let service: EventCoordination;
 
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(now);
+    setSystemTime(now);
     vi.clearAllMocks();
 
-    service = makeEventCoordination(
-      repository as unknown as EventCoordinationStore,
-      mockTimersService as unknown as EventTimersPort,
-    );
+    service = makeEventCoordination(repository, mockTimersService);
 
-    findEvent.mockResolvedValue({
-      assignmentTimeoutMinutes: 7,
-      id: eventId,
-      world: "tempest",
-      heroNpcs: [createHero()],
-    });
-    findActiveGaps.mockResolvedValue([]);
-    getTimersForEventHeroFilters.mockResolvedValue([]);
+    findEvent.mockReturnValue(
+      Effect.succeed({
+        assignmentTimeoutMinutes: 7,
+        id: eventId,
+        world: "tempest",
+        heroNpcs: [createHero()],
+      }),
+    );
+    findActiveGaps.mockReturnValue(Effect.succeed([]));
+    getTimersForEventHeroFilters.mockReturnValue(Effect.succeed([]));
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    setSystemTime();
   });
 
   it("throws when event does not exist", async () => {
-    findEvent.mockResolvedValue(null);
+    findEvent.mockReturnValue(Effect.succeed(null));
 
     await expect(
       Effect.runPromise(service.getCoordination(guildId, eventId)),
@@ -99,26 +103,32 @@ describe("EventCoordination", () => {
   });
 
   it("marks open windows with active gaps as critical and recommends map action", async () => {
-    getTimersForEventHeroFilters.mockResolvedValue([
-      createTimer({
-        minSpawnTime: "2026-06-19T11:30:00.000Z",
-        maxSpawnTime: "2026-06-19T12:30:00.000Z",
-      }),
-    ]);
-    findActiveGaps.mockResolvedValue([
-      {
-        id: "gap-1",
-        mapId: "map-2",
-        heroNpcId: "hero-1",
-        gapType: CoverageGapType.UNASSIGNED,
-        startedAt: new Date("2026-06-19T11:45:00.000Z"),
-        durationSeconds: null,
-        map: {
-          mapId: 102,
-          mapName: "Map 2",
+    getTimersForEventHeroFilters.mockReturnValue(
+      Effect.succeed([
+        createTimer({
+          minSpawnTime: "2026-06-19T11:30:00.000Z",
+          maxSpawnTime: "2026-06-19T12:30:00.000Z",
+        }),
+      ]),
+    );
+    findActiveGaps.mockReturnValue(
+      Effect.succeed([
+        {
+          id: "gap-1",
+          mapId: "map-2",
+          heroNpcId: "hero-1",
+          gapType: CoverageGapType.UNASSIGNED,
+          startedAt: new Date("2026-06-19T11:45:00.000Z"),
+          durationSeconds: null,
+          endedAt: null,
+          hadAssignedMembers: null,
+          map: {
+            mapId: 102,
+            mapName: "Map 2",
+          },
         },
-      },
-    ]);
+      ]),
+    );
 
     const result = await Effect.runPromise(
       service.getCoordination(guildId, eventId),
@@ -153,12 +163,14 @@ describe("EventCoordination", () => {
   });
 
   it("marks overdue windows as critical and recommends closing the window", async () => {
-    getTimersForEventHeroFilters.mockResolvedValue([
-      createTimer({
-        minSpawnTime: "2026-06-19T10:00:00.000Z",
-        maxSpawnTime: "2026-06-19T11:55:00.000Z",
-      }),
-    ]);
+    getTimersForEventHeroFilters.mockReturnValue(
+      Effect.succeed([
+        createTimer({
+          minSpawnTime: "2026-06-19T10:00:00.000Z",
+          maxSpawnTime: "2026-06-19T11:55:00.000Z",
+        }),
+      ]),
+    );
 
     const result = await Effect.runPromise(
       service.getCoordination(guildId, eventId),
@@ -175,12 +187,14 @@ describe("EventCoordination", () => {
   });
 
   it("marks waiting windows with missing assignments as warnings", async () => {
-    getTimersForEventHeroFilters.mockResolvedValue([
-      createTimer({
-        minSpawnTime: "2026-06-19T12:30:00.000Z",
-        maxSpawnTime: "2026-06-19T13:30:00.000Z",
-      }),
-    ]);
+    getTimersForEventHeroFilters.mockReturnValue(
+      Effect.succeed([
+        createTimer({
+          minSpawnTime: "2026-06-19T12:30:00.000Z",
+          maxSpawnTime: "2026-06-19T13:30:00.000Z",
+        }),
+      ]),
+    );
 
     const result = await Effect.runPromise(
       service.getCoordination(guildId, eventId),
@@ -197,12 +211,14 @@ describe("EventCoordination", () => {
   });
 
   it("does not count unassigned maps as covered during an active window without gap records", async () => {
-    getTimersForEventHeroFilters.mockResolvedValue([
-      createTimer({
-        minSpawnTime: "2026-06-19T11:30:00.000Z",
-        maxSpawnTime: "2026-06-19T12:30:00.000Z",
-      }),
-    ]);
+    getTimersForEventHeroFilters.mockReturnValue(
+      Effect.succeed([
+        createTimer({
+          minSpawnTime: "2026-06-19T11:30:00.000Z",
+          maxSpawnTime: "2026-06-19T12:30:00.000Z",
+        }),
+      ]),
+    );
 
     const result = await Effect.runPromise(
       service.getCoordination(guildId, eventId),
@@ -222,38 +238,47 @@ describe("EventCoordination", () => {
   });
 
   it("recommends joining a map for uncovered active gaps", async () => {
-    findEvent.mockResolvedValue({
-      id: eventId,
-      world: "tempest",
-      heroNpcs: [
-        createHero({
-          maps: [
-            createMap({ id: "map-1", assigned: true }),
-            createMap({ id: "map-2", assigned: true }),
-          ],
-        }),
-      ],
-    });
-    getTimersForEventHeroFilters.mockResolvedValue([
-      createTimer({
-        minSpawnTime: "2026-06-19T11:30:00.000Z",
-        maxSpawnTime: "2026-06-19T12:30:00.000Z",
+    findEvent.mockReturnValue(
+      Effect.succeed({
+        assignmentTimeoutMinutes: 7,
+        id: eventId,
+        world: "tempest",
+        heroNpcs: [
+          createHero({
+            maps: [
+              createMap({ id: "map-1", assigned: true }),
+              createMap({ id: "map-2", assigned: true }),
+            ],
+          }),
+        ],
       }),
-    ]);
-    findActiveGaps.mockResolvedValue([
-      {
-        id: "gap-1",
-        mapId: "map-2",
-        heroNpcId: "hero-1",
-        gapType: CoverageGapType.UNCOVERED,
-        startedAt: new Date("2026-06-19T11:45:00.000Z"),
-        durationSeconds: null,
-        map: {
-          mapId: 102,
-          mapName: "Map 2",
+    );
+    getTimersForEventHeroFilters.mockReturnValue(
+      Effect.succeed([
+        createTimer({
+          minSpawnTime: "2026-06-19T11:30:00.000Z",
+          maxSpawnTime: "2026-06-19T12:30:00.000Z",
+        }),
+      ]),
+    );
+    findActiveGaps.mockReturnValue(
+      Effect.succeed([
+        {
+          id: "gap-1",
+          mapId: "map-2",
+          heroNpcId: "hero-1",
+          gapType: CoverageGapType.UNCOVERED,
+          startedAt: new Date("2026-06-19T11:45:00.000Z"),
+          durationSeconds: null,
+          endedAt: null,
+          hadAssignedMembers: null,
+          map: {
+            mapId: 102,
+            mapName: "Map 2",
+          },
         },
-      },
-    ]);
+      ]),
+    );
 
     const result = await Effect.runPromise(
       service.getCoordination(guildId, eventId),
@@ -272,41 +297,46 @@ describe("EventCoordination", () => {
   });
 
   it("sorts critical, active, waiting, then idle heroes", async () => {
-    findEvent.mockResolvedValue({
-      id: eventId,
-      world: "tempest",
-      heroNpcs: [
-        createHero({ id: "idle", npcId: 1, npcName: "Idle" }),
-        createHero({ id: "waiting", npcId: 2, npcName: "Waiting" }),
-        createHero({
-          id: "active-clean",
+    findEvent.mockReturnValue(
+      Effect.succeed({
+        assignmentTimeoutMinutes: 7,
+        id: eventId,
+        world: "tempest",
+        heroNpcs: [
+          createHero({ id: "idle", npcId: 1, npcName: "Idle" }),
+          createHero({ id: "waiting", npcId: 2, npcName: "Waiting" }),
+          createHero({
+            id: "active-clean",
+            npcId: 3,
+            npcName: "Active Clean",
+            maps: [createMap({ id: "map-active", assigned: true })],
+          }),
+          createHero({ id: "overdue", npcId: 4, npcName: "Overdue" }),
+        ],
+      }),
+    );
+    getTimersForEventHeroFilters.mockReturnValue(
+      Effect.succeed([
+        createTimer({
+          npcId: 2,
+          npcName: "Waiting",
+          minSpawnTime: "2026-06-19T12:20:00.000Z",
+          maxSpawnTime: "2026-06-19T13:00:00.000Z",
+        }),
+        createTimer({
           npcId: 3,
           npcName: "Active Clean",
-          maps: [createMap({ id: "map-active", assigned: true })],
+          minSpawnTime: "2026-06-19T11:30:00.000Z",
+          maxSpawnTime: "2026-06-19T12:30:00.000Z",
         }),
-        createHero({ id: "overdue", npcId: 4, npcName: "Overdue" }),
-      ],
-    });
-    getTimersForEventHeroFilters.mockResolvedValue([
-      createTimer({
-        npcId: 2,
-        npcName: "Waiting",
-        minSpawnTime: "2026-06-19T12:20:00.000Z",
-        maxSpawnTime: "2026-06-19T13:00:00.000Z",
-      }),
-      createTimer({
-        npcId: 3,
-        npcName: "Active Clean",
-        minSpawnTime: "2026-06-19T11:30:00.000Z",
-        maxSpawnTime: "2026-06-19T12:30:00.000Z",
-      }),
-      createTimer({
-        npcId: 4,
-        npcName: "Overdue",
-        minSpawnTime: "2026-06-19T10:30:00.000Z",
-        maxSpawnTime: "2026-06-19T11:30:00.000Z",
-      }),
-    ]);
+        createTimer({
+          npcId: 4,
+          npcName: "Overdue",
+          minSpawnTime: "2026-06-19T10:30:00.000Z",
+          maxSpawnTime: "2026-06-19T11:30:00.000Z",
+        }),
+      ]),
+    );
 
     const result = await Effect.runPromise(
       service.getCoordination(guildId, eventId),
@@ -365,6 +395,18 @@ function createTimer({
   maxSpawnTime: string;
 }) {
   return {
+    createdById: 1,
+    guildId: "guild-1",
+    latestRespBaseSeconds: 0,
+    latestRespawnRandomness: 0,
+    tempId: null,
+    wasReset: false,
+    windowOpenedAt: null,
+    actorCharacterSnapshotId: null,
+    actorCharacterLvl: null,
+    deletedAt: null,
+    createdAt: new Date(minSpawnTime),
+    updatedAt: new Date(minSpawnTime),
     npcId,
     timerKey: buildTimerKey(npcId, npcName),
     world: "tempest",

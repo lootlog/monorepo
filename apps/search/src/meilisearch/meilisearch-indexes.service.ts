@@ -5,7 +5,10 @@ import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import type { AppLogger } from "#src/shared/logger";
 import { getMeilisearchErrorCode } from "./query-builder.js";
-import { attemptMeilisearch } from "./search-operation-failure.js";
+import {
+  attemptMeilisearch,
+  completeMeilisearchTask,
+} from "./search-operation-failure.js";
 
 const itemFilterableAttributes = [
   "world",
@@ -37,8 +40,8 @@ const ensureIndex = (
       if (getMeilisearchErrorCode(error.cause) !== "index_not_found") {
         return Effect.fail(error);
       }
-      return attemptMeilisearch("meilisearch.index.create", () =>
-        meilisearch.createIndex(indexName, { primaryKey }).waitTask(),
+      return completeMeilisearchTask("meilisearch.index.create", () =>
+        meilisearch.createIndex(indexName, { primaryKey }),
       );
     }),
     Effect.asVoid,
@@ -60,34 +63,28 @@ export const configureMeilisearchIndexes = (
       () =>
         meilisearch
           .index(NPCS_INDEX)
-          .updateFilterableAttributes(["name", "type", "world"])
-          .waitTask(),
+          .updateFilterableAttributes(["name", "type", "world"]),
       () =>
         meilisearch
           .index(PLAYERS_INDEX)
-          .updateFilterableAttributes(["name", "world"])
-          .waitTask(),
+          .updateFilterableAttributes(["name", "world"]),
       () =>
         meilisearch
           .index(ITEMS_INDEX)
-          .updateFilterableAttributes(itemFilterableAttributes)
-          .waitTask(),
+          .updateFilterableAttributes(itemFilterableAttributes),
       () =>
         meilisearch
           .index(ITEMS_INDEX)
-          .updateSearchableAttributes(["name", "stat"])
-          .waitTask(),
+          .updateSearchableAttributes(["name", "stat"]),
       () =>
         meilisearch
           .index(ITEMS_INDEX)
-          .updateSortableAttributes(["name", "lvl", "rarity", "type"])
-          .waitTask(),
-      () =>
-        meilisearch.index(ITEMS_INDEX).updateDistinctAttribute("id").waitTask(),
+          .updateSortableAttributes(["name", "lvl", "rarity", "type"]),
+      () => meilisearch.index(ITEMS_INDEX).updateDistinctAttribute("id"),
     ];
     yield* Effect.all(
       configure.map((configureIndex, index) =>
-        attemptMeilisearch(`meilisearch.index.configure.${index}`, () =>
+        completeMeilisearchTask(`meilisearch.index.configure.${index}`, () =>
           configureIndex(),
         ),
       ),

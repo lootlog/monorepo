@@ -6,32 +6,23 @@ import {
   OpenApi,
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
+import { OrganizationSummary } from "#src/contracts/shared";
 import {
-  GuildsControllerGetGuildById200,
-  GuildsControllerGetGuildByIdPathParams,
-  GuildsControllerGetGuildConfig200,
-  GuildsControllerGetGuildConfigPathParams,
-  GuildsControllerGetGuildDiscordSyncStatus200,
-  GuildsControllerGetGuildDiscordSyncStatusPathParams,
-  GuildsControllerGetGuildPermissions200,
-  GuildsControllerGetGuildPermissionsPathParams,
-  GuildsControllerGetManageableUserGuilds200,
-  GuildsControllerGetUserGuilds200,
-  GuildsControllerGetUserGuildsQuery,
-  GuildsControllerGetUserGuildsWithPermissions200,
-  GuildsControllerGetWorldsByGuildId200,
-  GuildsControllerGetWorldsByGuildIdPathParams,
-  GuildsControllerRefreshGuildDiscordSync201,
-  GuildsControllerRefreshGuildDiscordSyncPathParams,
-  GuildsControllerUpdateGuildConfig200,
-  GuildsControllerUpdateGuildConfigPathParams,
-  GuildsControllerUpdateGuildConfigRequestJson,
-} from "./schemas.js";
+  OrganizationPath,
+  DiscordGuildSyncStateResponse,
+  OrganizationCapabilitiesResponse,
+  ManageableOrganizationsResponse,
+  UserOrganizationsResponse,
+  UserOrganizationsQuery,
+  UserOrganizationPermissionsResponse,
+  OrganizationWorldsResponse,
+  UpdateOrganizationConfigRequest,
+} from "#src/contracts/guilds/schemas";
 
 export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get("GuildsControllerGetUserGuilds", "/guilds/@me", {
-    query: GuildsControllerGetUserGuildsQuery,
-    success: GuildsControllerGetUserGuilds200,
+    query: UserOrganizationsQuery,
+    success: UserOrganizationsResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getUserGuilds")
@@ -44,7 +35,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get(
     "GuildsControllerGetUserGuildsWithPermissions",
     "/guilds/@me/permissions",
-    { success: GuildsControllerGetUserGuildsWithPermissions200 },
+    { success: UserOrganizationPermissionsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(
@@ -60,7 +51,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get(
     "GuildsControllerGetManageableUserGuilds",
     "/guilds/@me/manageable",
-    { success: GuildsControllerGetManageableUserGuilds200 },
+    { success: ManageableOrganizationsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getManageableUserGuilds")
@@ -70,8 +61,8 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
       "Retrieve guilds where the authenticated user has Discord administrator permissions",
     ),
   HttpApiEndpoint.get("GuildsControllerGetGuildById", "/guilds/:guildId", {
-    params: GuildsControllerGetGuildByIdPathParams,
-    success: GuildsControllerGetGuildById200,
+    params: OrganizationPath,
+    success: OrganizationSummary,
     error: HttpApiSchema.Empty(403),
   })
     .middleware(BearerSecurityMiddleware)
@@ -82,8 +73,8 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     "GuildsControllerGetGuildConfig",
     "/guilds/:guildId/config",
     {
-      params: GuildsControllerGetGuildConfigPathParams,
-      success: GuildsControllerGetGuildConfig200,
+      params: OrganizationPath,
+      success: OrganizationSummary,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -92,9 +83,9 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     "GuildsControllerUpdateGuildConfig",
     "/guilds/:guildId/config",
     {
-      params: GuildsControllerUpdateGuildConfigPathParams,
-      payload: GuildsControllerUpdateGuildConfigRequestJson,
-      success: GuildsControllerUpdateGuildConfig200,
+      params: OrganizationPath,
+      payload: UpdateOrganizationConfigRequest,
+      success: OrganizationSummary,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -103,8 +94,8 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     "GuildsControllerGetWorldsByGuildId",
     "/guilds/:guildId/worlds",
     {
-      params: GuildsControllerGetWorldsByGuildIdPathParams,
-      success: GuildsControllerGetWorldsByGuildId200,
+      params: OrganizationPath,
+      success: OrganizationWorldsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -118,8 +109,8 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     "GuildsControllerGetGuildPermissions",
     "/guilds/:guildId/permissions",
     {
-      params: GuildsControllerGetGuildPermissionsPathParams,
-      success: GuildsControllerGetGuildPermissions200,
+      params: OrganizationPath,
+      success: OrganizationCapabilitiesResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -134,8 +125,8 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     "GuildsControllerGetGuildDiscordSyncStatus",
     "/guilds/:guildId/discord-sync",
     {
-      params: GuildsControllerGetGuildDiscordSyncStatusPathParams,
-      success: GuildsControllerGetGuildDiscordSyncStatus200,
+      params: OrganizationPath,
+      success: DiscordGuildSyncStateResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -149,10 +140,8 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     "GuildsControllerRefreshGuildDiscordSync",
     "/guilds/:guildId/discord-sync/refresh",
     {
-      params: GuildsControllerRefreshGuildDiscordSyncPathParams,
-      success: GuildsControllerRefreshGuildDiscordSync201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: OrganizationPath,
+      success: DiscordGuildSyncStateResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)

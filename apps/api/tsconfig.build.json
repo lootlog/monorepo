@@ -8,6 +8,7 @@
     "test",
     "dist",
     "**/*spec.ts",
+    "**/*.test.ts",
     "scripts",
     "generated",
     "src/database/drizzle/adoption.ts",

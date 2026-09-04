@@ -39,7 +39,7 @@ apps/
 ├── discord-bot/         Discord integration
 ├── docs/                User documentation
 ├── game-client/         In-game React client and Margonem runtime bridge
-├── gateway/             Socket.IO presence and real-time fan-out
+├── gateway/             Bun WebSocket presence and real-time fan-out
 ├── landing/             Public product site and legal pages
 ├── search/              Meilisearch-backed public search API
 ├── traffic-splitter/    Shared edge router for dev.lootlog.pl and lootlog.pl
@@ -138,6 +138,33 @@ inputs and deployment steps.
 
 Docker Compose is limited to local infrastructure. Self-hosting is
 community-supported until the project ships a tested distribution.
+
+### Backend artifacts and recovery
+
+Backend images contain the pruned workspace source, production dependencies,
+and build output. `dist/` alone is not a deployable artifact: Activity, Search,
+and Discord bundles retain `#src` imports that Bun resolves to source TypeScript,
+and shared packages export source. Keep these files together as specified in
+`docker/backend.Dockerfile`.
+
+RabbitMQ connection, channel, or broker subscription loss fails the supervised
+API, Gateway, Activity, Search, or Discord process and closes its Effect scopes.
+The deployment supervisor must restart failed processes; the adapter does not
+silently reconnect a partially initialized application. Consumer scopes cancel
+subscriptions and requeue interrupted deliveries.
+
+Dead-letter queues retain exhausted messages. Their depth is exposed as the
+Effect gauge `rabbitmq.dead_letter.messages`, with the `queue` attribute; the
+application does not consume or log their bodies. After fixing the cause, use
+an operator-controlled replay: preserve the message ID and payload, publish to
+the original destination with publisher confirmation, then acknowledge the
+dead letter. Reset the retry-count header for a fresh retry budget. An
+interrupted replay can duplicate delivery, so consumers must remain idempotent.
+
+Apply the new API and Battlelog database migrations before deploying their
+workers. See [loot publication recovery](apps/api/drizzle/README.md) and
+[battle object cleanup](apps/battlelog/drizzle/README.md) for pending-work
+inspection and rollback constraints.
 
 ## Testing
 

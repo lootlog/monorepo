@@ -464,7 +464,7 @@ function ItemsRoute() {
               <Badge variant="secondary">
                 {t("search.limitBadge", { count: SEARCH_LIMIT })}
               </Badge>
-              {data ? (
+              {status === "ready" && data ? (
                 <Badge variant="outline">
                   {t("search.results", { count: data.estimatedTotalHits })}
                 </Badge>

@@ -7,20 +7,20 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  RolesControllerGetGuildRoles200,
-  RolesControllerGetGuildRolesPathParams,
-  RolesControllerUpdateGuildRole200,
-  RolesControllerUpdateGuildRolePathParams,
-  RolesControllerUpdateGuildRoleRequestJson,
-} from "./schemas.js";
+  RolesResponse,
+  RoleOrganizationPath,
+  RoleResponse,
+  RolePath,
+  UpdateRolePermissionsRequest,
+} from "#src/contracts/roles/schemas";
 
 export class RolesGroup extends HttpApiGroup.make("roles").add(
   HttpApiEndpoint.get(
     "RolesControllerGetGuildRoles",
     "/guilds/:guildId/roles",
     {
-      params: RolesControllerGetGuildRolesPathParams,
-      success: RolesControllerGetGuildRoles200,
+      params: RoleOrganizationPath,
+      success: RolesResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -32,9 +32,9 @@ export class RolesGroup extends HttpApiGroup.make("roles").add(
     "RolesControllerUpdateGuildRole",
     "/guilds/:guildId/roles/:roleId/permissions",
     {
-      params: RolesControllerUpdateGuildRolePathParams,
-      payload: RolesControllerUpdateGuildRoleRequestJson,
-      success: RolesControllerUpdateGuildRole200,
+      params: RolePath,
+      payload: UpdateRolePermissionsRequest,
+      success: RoleResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )

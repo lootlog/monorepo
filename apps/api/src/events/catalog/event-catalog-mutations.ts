@@ -35,14 +35,14 @@ import {
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import type {
-  AssignMapLocationDto,
-  CreateHeroDto,
-  CreateLocationDto,
-  CreateMapDto,
-  ReorderLocationsDto,
-  UpdateHeroDto,
-  UpdateLocationDto,
-} from "#src/http-api/contracts/events/schemas";
+  AssignEventMapLocationRequest,
+  CreateEventHeroRequest,
+  CreateEventLocationRequest,
+  CreateEventMapRequest,
+  ReorderEventLocationsRequest,
+  UpdateEventHeroRequest,
+  UpdateEventLocationRequest,
+} from "#src/contracts/events/schemas";
 
 export class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",
@@ -226,7 +226,11 @@ export const makeEventCatalogMutations = (
     ).pipe(Effect.flatMap(hydrateMaps));
 
   return {
-    addHero: (guild: { id: string }, eventId: string, data: CreateHeroDto) =>
+    addHero: (
+      guild: { id: string },
+      eventId: string,
+      data: CreateEventHeroRequest,
+    ) =>
       Effect.gen(function* () {
         const now = new Date(yield* Clock.currentTimeMillis);
         const eventRows = yield* query(
@@ -317,7 +321,7 @@ export const makeEventCatalogMutations = (
       guild: { id: string },
       eventId: string,
       heroId: string,
-      data: UpdateHeroDto,
+      data: UpdateEventHeroRequest,
     ) =>
       Effect.gen(function* () {
         if (!(yield* findHero(guild.id, eventId, heroId))) {
@@ -360,7 +364,7 @@ export const makeEventCatalogMutations = (
       guild: { id: string },
       eventId: string,
       heroId: string,
-      data: CreateMapDto,
+      data: CreateEventMapRequest,
     ) =>
       Effect.gen(function* () {
         if (!(yield* findHero(guild.id, eventId, heroId)))
@@ -456,7 +460,7 @@ export const makeEventCatalogMutations = (
       guild: { id: string },
       eventId: string,
       heroId: string,
-      data: CreateLocationDto,
+      data: CreateEventLocationRequest,
     ) =>
       Effect.gen(function* () {
         if (!(yield* findHero(guild.id, eventId, heroId)))
@@ -511,7 +515,7 @@ export const makeEventCatalogMutations = (
       eventId: string,
       heroId: string,
       locationId: string,
-      data: UpdateLocationDto,
+      data: UpdateEventLocationRequest,
     ) =>
       Effect.gen(function* () {
         const location = yield* findLocation(
@@ -586,7 +590,7 @@ export const makeEventCatalogMutations = (
       guild: { id: string },
       eventId: string,
       heroId: string,
-      data: ReorderLocationsDto,
+      data: ReorderEventLocationsRequest,
     ) =>
       Effect.gen(function* () {
         if (!(yield* findHero(guild.id, eventId, heroId)))
@@ -637,7 +641,7 @@ export const makeEventCatalogMutations = (
       eventId: string,
       heroId: string,
       mapId: string,
-      data: AssignMapLocationDto,
+      data: AssignEventMapLocationRequest,
     ) =>
       Effect.gen(function* () {
         if (!(yield* findMap(guild.id, eventId, heroId, mapId)))

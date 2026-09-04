@@ -6,14 +6,13 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  SoundSettingsControllerGetSettings200,
-  SoundSettingsControllerUpdateSettings200,
-  SoundSettingsControllerUpdateSettingsRequestJson,
-} from "./schemas.js";
+  SoundSettingsResponse,
+  UpdateSoundSettingsRequest,
+} from "#src/contracts/sound-settings/schemas";
 
 export class SoundSettingsGroup extends HttpApiGroup.make("sound-settings").add(
   HttpApiEndpoint.get("SoundSettingsControllerGetSettings", "/sound-settings", {
-    success: SoundSettingsControllerGetSettings200,
+    success: SoundSettingsResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "SoundSettingsController_getSettings")
@@ -23,8 +22,8 @@ export class SoundSettingsGroup extends HttpApiGroup.make("sound-settings").add(
     "SoundSettingsControllerUpdateSettings",
     "/sound-settings",
     {
-      payload: SoundSettingsControllerUpdateSettingsRequestJson,
-      success: SoundSettingsControllerUpdateSettings200,
+      payload: UpdateSoundSettingsRequest,
+      success: SoundSettingsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)

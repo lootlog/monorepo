@@ -166,7 +166,7 @@ describe("CommandHandler session lifecycle", () => {
   test("keeps game sessions available when Margonem proof is unavailable", async () => {
     const { handler, hub } = setup();
     const { socket } = makeSocket();
-    socket.data.platform = "game";
+    socket.data = { ...socket.data, platform: "game" };
     const command = encode({
       v: 1,
       type: "session.join",

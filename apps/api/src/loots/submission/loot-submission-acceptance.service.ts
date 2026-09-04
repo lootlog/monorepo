@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
   GuildLootCreatedEventV2,
@@ -10,7 +10,6 @@ import {
   PermissionDeniedError,
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import {
@@ -24,13 +23,16 @@ import type {
   lootlogConfigNpcTable,
 } from "#src/database/drizzle/schema";
 import type {
-  CreateLootDto,
-  LootsControllerCreateLoot201 as CreateLootResponse,
-} from "#src/http-api/contracts/loots/schemas";
+  CreateLootRequest,
+  CreateLootResponse,
+} from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "#src/shared/margonem/item-type";
 import { getProfByShortname } from "#src/shared/margonem/profession";
-import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import {
+  LootPublicationPayload,
+  type LootPublication,
+} from "./loot-publication-outbox.js";
 import type { LootShare } from "#src/loots/loot-response.schema";
 import type { LootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 
@@ -67,24 +69,6 @@ type ProcessedNpc = {
 
 type LootEventNpc = GuildLootEventNpc & { type: NpcType };
 
-interface LootStatsInvalidator {
-  readonly invalidateCache: (
-    guildIds: string[],
-  ) => Effect.Effect<void, unknown>;
-}
-
-interface LootSubmissionPublisher {
-  readonly publish: (
-    exchange: string,
-    routingKey: string,
-    message: unknown,
-  ) => Effect.Effect<void, unknown>;
-}
-
-interface LootSubmissionCache {
-  readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
-}
-
 interface LootSubmissionLock {
   readonly withLock: <A, E>(
     resource: string,
@@ -110,23 +94,19 @@ const LOOT_LOCK_RETRY_OPTIONS = {
 export interface LootSubmissionAcceptance {
   readonly accept: (options: {
     discordId: string;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
   }) => Effect.Effect<CreateLootResponse, unknown>;
 }
 
 class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance {
   constructor(
     private readonly repository: LootSubmissionAcceptancePersistence,
-    private readonly publisher: LootSubmissionPublisher,
-    private readonly lootStatsService: LootStatsInvalidator,
-    private readonly cache: LootSubmissionCache,
-    private readonly logger: Logger,
     private readonly lock: LootSubmissionLock,
   ) {}
 
   accept(options: {
     discordId: string;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
   }): Effect.Effect<CreateLootResponse, unknown> {
     const uniqueId = this.createUniqueLootId(
       options.submission.loots,
@@ -148,7 +128,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   private acceptWithLock(options: {
     discordId: string;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
     uniqueId: string;
   }): Effect.Effect<CreateLootResponse, unknown> {
     const self = this;
@@ -259,14 +239,16 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         primaryNpcType,
         submission: options.submission,
         uniqueId: options.uniqueId,
+        publications: (lootId) =>
+          self.newLootPublications({
+            lootId,
+            npcs: npcData.mapped,
+            outcome,
+            socketNpcs,
+            submission: options.submission,
+          }),
       });
-      yield* self.publishNewLootEffects({
-        lootId,
-        npcs: npcData.mapped,
-        outcome,
-        socketNpcs,
-        submission: options.submission,
-      });
+
       return self.createResponse(lootId, outcome);
     });
   }
@@ -276,7 +258,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     lootlogConfigs: Array<{ id: string; npcs: LootlogConfigNpc[] }>;
     members: Array<{ id: number; guildId: string }>;
     primaryNpcType: NpcType;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
     whitelistedGuildIds: Set<string>;
   }): AcceptanceOutcome {
     const lootlogConfigByGuildId = new Map(
@@ -362,33 +344,22 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return;
       }
 
-      const organizationRecords = yield* self.repository.appendSubmissions(
+      yield* self.repository.appendSubmissions(
         lootId,
         newSubmissions,
+        (organizationIds) =>
+          self.createdPublications(lootId, organizationIds, socketNpcs),
       );
-
-      const archivedOrganizationIds = new Set(
-        organizationRecords
-          .filter((record) => (record.archivedAt ?? null) !== null)
-          .map((record) => record.guildId),
-      );
-      const activeSubmissions = newSubmissions.filter(
-        (submission) => !archivedOrganizationIds.has(submission.guildId),
-      );
-      const activeOrganizationIds = activeSubmissions.map(
-        ({ guildId }) => guildId,
-      );
-      yield* self.invalidateCaches(activeOrganizationIds);
-      yield* self.publishCreatedFacts(lootId, activeSubmissions, socketNpcs);
     });
   }
 
   private createNewLoot(options: {
-    npcData: { primary: CreateLootDto["npcs"][number] };
+    npcData: { primary: CreateLootRequest["npcs"][number] };
     outcome: AcceptanceOutcome;
     primaryNpcType: NpcType;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
     uniqueId: string;
+    publications: (lootId: number) => LootPublication[];
   }): Effect.Effect<number, unknown> {
     const self = this;
     return Effect.gen(function* () {
@@ -397,99 +368,101 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         options.npcData.primary,
         options.primaryNpcType,
       );
-      return yield* self.repository.createNewLoot({
-        uniqueId: options.uniqueId,
-        world: options.submission.world,
-        source: options.submission.source,
-        location: options.submission.location,
-        lootShare: initialAllocation.share,
-        lootShareSource: initialAllocation.source,
-        items: self.mapLootItemsToPersistence(options.submission.loots),
-        players: self.mapLootPlayersToPersistence(
-          options.submission.players,
-          options.submission.world,
-        ),
-        npcs: self.mapLootNpcsToPersistence(options.submission.npcs),
-        submissions: options.outcome.submissionData,
-      });
+      return yield* self.repository.createNewLoot(
+        {
+          uniqueId: options.uniqueId,
+          world: options.submission.world,
+          source: options.submission.source,
+          location: options.submission.location,
+          lootShare: initialAllocation.share,
+          lootShareSource: initialAllocation.source,
+          items: self.mapLootItemsToPersistence(options.submission.loots),
+          players: self.mapLootPlayersToPersistence(
+            options.submission.players,
+            options.submission.world,
+          ),
+          npcs: self.mapLootNpcsToPersistence(options.submission.npcs),
+          submissions: options.outcome.submissionData,
+        },
+        options.publications,
+      );
     });
   }
 
-  private publishNewLootEffects(options: {
+  private newLootPublications(options: {
     lootId: number;
     npcs: ProcessedNpc[];
     outcome: AcceptanceOutcome;
     socketNpcs: LootEventNpc[];
-    submission: CreateLootDto;
-  }): Effect.Effect<void, unknown> {
-    const self = this;
-    return Effect.gen(function* () {
-      const organizationIds = options.outcome.submissionData.map(
-        ({ guildId }) => guildId,
-      );
-      yield* self.invalidateCaches(organizationIds);
-      yield* self.publishCreatedFacts(
-        options.lootId,
-        options.outcome.submissionData,
-        options.socketNpcs,
-      );
-
-      const players = self.mapPlayers(options.submission.players);
-      yield* self.publisher.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.SEARCH_PLAYERS_INDEX,
-        players.map((player) => ({
-          ...player,
+    submission: CreateLootRequest;
+  }): LootPublication[] {
+    const organizationIds = this.getUniqueOrganizationIds(
+      options.outcome.submissionData,
+    );
+    const intents = this.createdPublications(
+      options.lootId,
+      organizationIds,
+      options.socketNpcs,
+    );
+    const rabbit = (
+      routingKey: Extract<
+        LootPublication["payload"],
+        { kind: "rabbit" }
+      >["routingKey"],
+      data: unknown,
+    ) => {
+      intents.push({
+        organizationIds,
+        payload: Schema.decodeUnknownSync(LootPublicationPayload)({
+          kind: "rabbit",
+          routingKey,
+          data,
+        }),
+      });
+    };
+    rabbit(
+      RoutingKey.SEARCH_PLAYERS_INDEX,
+      this.mapPlayers(options.submission.players).map((player) => ({
+        ...player,
+        world: options.submission.world,
+      })),
+    );
+    rabbit(
+      RoutingKey.SEARCH_NPCS_INDEX,
+      options.npcs.map((npc) => ({ ...npc, world: options.submission.world })),
+    );
+    const items = this.mapItems(options.submission.loots);
+    if (items.length > 0)
+      rabbit(
+        RoutingKey.SEARCH_ITEMS_INDEX,
+        items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          icon: item.icon,
+          stat: item.stat,
+          lvl: item.lvl,
+          rarity: item.rarity,
+          type: item.type,
           world: options.submission.world,
         })),
       );
-      yield* self.publisher.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.SEARCH_NPCS_INDEX,
-        options.npcs.map((npc) => ({
-          ...npc,
-          world: options.submission.world,
-        })),
-      );
-
-      const items = self.mapItems(options.submission.loots);
-      if (items.length > 0)
-        yield* self.publisher.publish(
-          DEFAULT_EXCHANGE_NAME,
-          RoutingKey.SEARCH_ITEMS_INDEX,
-          items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            icon: item.icon,
-            stat: item.stat,
-            lvl: item.lvl,
-            rarity: item.rarity,
-            type: item.type,
-            world: options.submission.world,
-          })),
-        );
-
-      yield* self.publisher.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.NOTIFICATIONS_LOOT_CREATED,
-        {
-          version: 2,
-          lootId: options.lootId,
-          world: options.submission.world,
-          guildIds: organizationIds,
-          itemIds: items.map((item) => item.id),
-          itemNames: items.map((item) => item.name),
-          npcs: options.socketNpcs.map((npc) => ({
-            type: npc.type ?? null,
-            lvl: npc.lvl ?? null,
-          })),
-        } satisfies LootCreatedNotificationEventV2,
-      );
-    });
+    rabbit(RoutingKey.NOTIFICATIONS_LOOT_CREATED, {
+      version: 2,
+      lootId: options.lootId,
+      world: options.submission.world,
+      guildIds: organizationIds,
+      itemIds: items.map((item) => item.id),
+      itemNames: items.map((item) => item.name),
+      npcs: options.socketNpcs.map((npc) => ({
+        type: npc.type ?? null,
+        lvl: npc.lvl ?? null,
+      })),
+    } satisfies LootCreatedNotificationEventV2);
+    return intents;
   }
 
   private createUniqueLootId(
-    loots: CreateLootDto["loots"],
+    loots: CreateLootRequest["loots"],
     world: string,
   ): string {
     const source =
@@ -501,8 +474,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private inferInitialAllocation(
-    submission: CreateLootDto,
-    primaryNpc: CreateLootDto["npcs"][number],
+    submission: CreateLootRequest,
+    primaryNpc: CreateLootRequest["npcs"][number],
     primaryNpcType: NpcType,
   ) {
     if (primaryNpcType !== NpcType.COLOSSUS) {
@@ -534,8 +507,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private mapItemOwnerAllocation(
-    loots: CreateLootDto["loots"],
-    players: CreateLootDto["players"],
+    loots: CreateLootRequest["loots"],
+    players: CreateLootRequest["players"],
   ): LootShare | null {
     if (loots.length === 0 || loots.length !== players.length) return null;
     const shareByCharacter = new Map<number, string>();
@@ -562,8 +535,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return assigned.size === players.length ? share : null;
   }
 
-  private processNpcs(npcs: CreateLootDto["npcs"]): {
-    primary: CreateLootDto["npcs"][number];
+  private processNpcs(npcs: CreateLootRequest["npcs"]): {
+    primary: CreateLootRequest["npcs"][number];
     mapped: ProcessedNpc[];
   } {
     const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
@@ -588,7 +561,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private isAcceptedByConfig(
-    loots: CreateLootDto["loots"],
+    loots: CreateLootRequest["loots"],
     npcs: LootlogConfigNpc[],
     primaryNpcType: NpcType,
   ): boolean {
@@ -601,7 +574,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     );
   }
 
-  private getItemStats(item: CreateLootDto["loots"][number]) {
+  private getItemStats(item: CreateLootRequest["loots"][number]) {
     const parsedStats = this.parseItemStats(item.stat);
     const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
     const rarity = parsedStats["rarity"]?.toUpperCase() as ItemRarity;
@@ -625,11 +598,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     }, {});
   }
 
-  private mapItems(items: CreateLootDto["loots"]) {
+  private mapItems(items: CreateLootRequest["loots"]) {
     return items.map((item) => ({ ...item, ...this.getItemStats(item) }));
   }
 
-  private mapPlayers(players: CreateLootDto["players"]) {
+  private mapPlayers(players: CreateLootRequest["players"]) {
     return players.map((player) => {
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
         player.id,
@@ -647,7 +620,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     });
   }
 
-  private mapLootItemsToPersistence(items: CreateLootDto["loots"]) {
+  private mapLootItemsToPersistence(items: CreateLootRequest["loots"]) {
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);
       const statsHash = this.generateStatsHash(item.stat);
@@ -667,7 +640,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private mapLootPlayersToPersistence(
-    players: CreateLootDto["players"],
+    players: CreateLootRequest["players"],
     world: string,
   ) {
     return players.map((player) => {
@@ -711,7 +684,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return { characterId: Number(character), accountId: Number(account) };
   }
 
-  private mapLootNpcsToPersistence(npcs: CreateLootDto["npcs"]) {
+  private mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {
     return npcs.map((npc) => ({
       npcId: npc.id,
       name: npc.name,
@@ -774,69 +747,32 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return [...new Set(submissions.map(({ guildId }) => guildId))];
   }
 
-  private invalidateCaches(
-    organizationIds: string[],
-  ): Effect.Effect<void, unknown> {
-    return Effect.all(
-      [
-        ...this.getUniqueOrganizationIds(
-          organizationIds.map((guildId) => ({ guildId })),
-        ).map((guildId) =>
-          this.cache.deleteByPattern(`loots:list:${guildId}:*`).pipe(
-            Effect.catch((error) =>
-              Effect.sync(() =>
-                this.logger.warn("Failed to invalidate loots list cache", {
-                  error,
-                  guildId,
-                }),
-              ),
-            ),
-          ),
-        ),
-        organizationIds.length > 0
-          ? this.lootStatsService.invalidateCache(organizationIds)
-          : Effect.void,
-      ],
-      { concurrency: "unbounded" },
-    ).pipe(Effect.asVoid);
-  }
-
-  private publishCreatedFacts(
+  private createdPublications(
     lootId: number,
-    submissions: LootSubmissionData[],
+    organizationIds: string[],
     npcs: LootEventNpc[],
-  ): Effect.Effect<void, unknown> {
-    return Effect.all(
-      submissions.map((submission) =>
-        this.publisher.publish(
-          DEFAULT_EXCHANGE_NAME,
-          RoutingKey.GUILDS_LOOTS_CREATE,
-          {
+  ): LootPublication[] {
+    return organizationIds.flatMap((guildId): LootPublication[] => [
+      { organizationIds: [guildId], payload: { kind: "cache" } },
+      {
+        organizationIds: [guildId],
+        payload: {
+          kind: "rabbit",
+          routingKey: RoutingKey.GUILDS_LOOTS_CREATE,
+          data: {
             version: 2,
-            guildId: submission.guildId,
+            guildId,
             lootId,
             npcs,
           } satisfies GuildLootCreatedEventV2,
-        ),
-      ),
-      { concurrency: "unbounded" },
-    ).pipe(Effect.asVoid);
+        },
+      },
+    ]);
   }
 }
 
 export const makeLootSubmissionAcceptance = (
   repository: LootSubmissionAcceptancePersistence,
-  publisher: LootSubmissionPublisher,
-  lootStatsService: LootStatsInvalidator,
-  cache: LootSubmissionCache,
-  logger: Logger,
   lock: LootSubmissionLock,
 ): LootSubmissionAcceptance =>
-  new LootSubmissionAcceptanceImplementation(
-    repository,
-    publisher,
-    lootStatsService,
-    cache,
-    logger,
-    lock,
-  );
+  new LootSubmissionAcceptanceImplementation(repository, lock);

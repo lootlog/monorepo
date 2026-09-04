@@ -4,6 +4,7 @@ import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
+  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -84,10 +85,9 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
         const hits = response.hits.map(normalizeNpcHit);
         return ids && ids.length > 0 ? hits : uniqueNpcsByNameAndType(hits);
       }),
-      Effect.catch((error) => {
-        logger.error("NPC search error", { error });
-        return Effect.succeed([] as NpcHit[]);
-      }),
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("NPC search error", { error })),
+      ),
     );
   });
 
@@ -128,7 +128,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       };
     });
 
-    yield* attemptMeilisearch("search.npcs.index", () =>
+    yield* completeMeilisearchTask("search.npcs.index", () =>
       index.addDocuments(npcsWithUid, { primaryKey: "uid" }),
     );
   });
@@ -136,7 +136,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   return { getNpcs, indexNpcs } satisfies {
     readonly getNpcs: (
       input: NpcSearchQuery,
-    ) => Effect.Effect<ReadonlyArray<NpcHit>>;
+    ) => Effect.Effect<ReadonlyArray<NpcHit>, SearchOperationFailure>;
     readonly indexNpcs: (
       data: IndexNpcsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;

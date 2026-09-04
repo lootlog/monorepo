@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { PublicGuildStatsCardControllerGetStatsCardPathParams } from "./schemas.js";
+import { PublicStatsCardOrganizationPath } from "#src/contracts/public-guild-stats-card/schemas";
 
 export class PublicGuildStatsCardGroup extends HttpApiGroup.make(
   "public-guild-stats-card",
@@ -14,7 +14,7 @@ export class PublicGuildStatsCardGroup extends HttpApiGroup.make(
     "PublicGuildStatsCardControllerGetStatsCard",
     "/public/guilds/:guildId/stats-card.png",
     {
-      params: PublicGuildStatsCardControllerGetStatsCardPathParams,
+      params: PublicStatsCardOrganizationPath,
       success: HttpApiSchema.Empty(200),
       error: HttpApiSchema.Empty(404),
     },

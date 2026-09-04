@@ -139,7 +139,7 @@ const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
   return operation;
 };
 
-const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
+export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
   if (Array.isArray(value)) {
     const normalized = value.map(normalizeOpenApiRepresentation);
     if (
@@ -169,7 +169,16 @@ const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
           key !== "description" && key !== "example" && key !== "examples",
       )
       .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, item]) => [key, normalizeOpenApiRepresentation(item)]),
+      .map(([key, item]) => [
+        key,
+        key === "enum" && Array.isArray(item)
+          ? item
+              .map(normalizeOpenApiRepresentation)
+              .sort((left, right) =>
+                JSON.stringify(left).localeCompare(JSON.stringify(right)),
+              )
+          : normalizeOpenApiRepresentation(item),
+      ]),
   );
 };
 
@@ -180,6 +189,16 @@ const normalizeAllowedChanges = (
 ): JsonValue => {
   let normalized = operation;
   if (service === "api") normalized = removePresencePermission(normalized);
+  // Search outages now return an explicit 503 instead of a successful empty result.
+  if (
+    service === "search" &&
+    new Set(["GET /players", "GET /npcs", "GET /items", "GET /all"]).has(
+      operationKey,
+    )
+  ) {
+    normalized = removeResponseStatus(normalized, "503");
+  }
+
   if (
     service === "api" &&
     GUILD_METADATA_FORBIDDEN_OPERATIONS.has(operationKey)
@@ -273,57 +292,62 @@ const assertTicketOperation = (operation: JsonValue | undefined): void => {
   }
 };
 
-const changedOperations: string[] = [];
-for (const service of services) {
-  const baseline = operations(readBaseline(service.baseline));
-  const current = operations(readCurrent(service.current));
+if (import.meta.main) {
+  const changedOperations: string[] = [];
+  for (const service of services) {
+    const baseline = operations(readBaseline(service.baseline));
+    const current = operations(readCurrent(service.current));
 
-  const additions = [...current.keys()].filter((key) => !baseline.has(key));
-  const removals = [...baseline.keys()].filter((key) => !current.has(key));
-  const expectedAdditions = service.current === "auth" ? 1 : 0;
-  if (
-    additions.length !== expectedAdditions ||
-    (expectedAdditions === 1 && additions[0] !== REALTIME_TICKET_OPERATION)
-  ) {
-    throw new Error(
-      `${service.current} has unexpected OpenAPI additions: ${additions.join(", ") || "none"}`,
-    );
-  }
-  if (removals.length > 0) {
-    throw new Error(
-      `${service.current} removed OpenAPI operations: ${removals.join(", ")}`,
-    );
-  }
-
-  for (const [key, baselineOperation] of baseline) {
-    const currentOperation = current.get(key);
-    if (currentOperation === undefined) continue;
-    const normalized = normalizeAllowedChanges(
-      service.current,
-      key,
-      currentOperation,
-    );
-    const normalizedBaseline =
-      normalizeOpenApiRepresentation(baselineOperation);
-    if (JSON.stringify(normalized) !== JSON.stringify(normalizedBaseline)) {
-      const paths = differencePaths(normalizedBaseline, normalized).slice(0, 4);
-      changedOperations.push(
-        `${service.current}: ${key} (${paths.join(", ")})`,
+    const additions = [...current.keys()].filter((key) => !baseline.has(key));
+    const removals = [...baseline.keys()].filter((key) => !current.has(key));
+    const expectedAdditions = service.current === "auth" ? 1 : 0;
+    if (
+      additions.length !== expectedAdditions ||
+      (expectedAdditions === 1 && additions[0] !== REALTIME_TICKET_OPERATION)
+    ) {
+      throw new Error(
+        `${service.current} has unexpected OpenAPI additions: ${additions.join(", ") || "none"}`,
       );
+    }
+    if (removals.length > 0) {
+      throw new Error(
+        `${service.current} removed OpenAPI operations: ${removals.join(", ")}`,
+      );
+    }
+
+    for (const [key, baselineOperation] of baseline) {
+      const currentOperation = current.get(key);
+      if (currentOperation === undefined) continue;
+      const normalized = normalizeAllowedChanges(
+        service.current,
+        key,
+        currentOperation,
+      );
+      const normalizedBaseline =
+        normalizeOpenApiRepresentation(baselineOperation);
+      if (JSON.stringify(normalized) !== JSON.stringify(normalizedBaseline)) {
+        const paths = differencePaths(normalizedBaseline, normalized).slice(
+          0,
+          4,
+        );
+        changedOperations.push(
+          `${service.current}: ${key} (${paths.join(", ")})`,
+        );
+      }
+    }
+
+    if (service.current === "auth") {
+      assertTicketOperation(current.get(REALTIME_TICKET_OPERATION));
     }
   }
 
-  if (service.current === "auth") {
-    assertTicketOperation(current.get(REALTIME_TICKET_OPERATION));
+  if (changedOperations.length > 0) {
+    throw new Error(
+      `OpenAPI operations changed:\n${changedOperations.join("\n")}`,
+    );
   }
-}
 
-if (changedOperations.length > 0) {
-  throw new Error(
-    `OpenAPI operations changed:\n${changedOperations.join("\n")}`,
+  process.stdout.write(
+    "OpenAPI parity passed: 243 baseline operations plus the allowlisted realtime ticket endpoint\n",
   );
 }
-
-process.stdout.write(
-  "OpenAPI parity passed: 243 baseline operations plus the allowlisted realtime ticket endpoint\n",
-);

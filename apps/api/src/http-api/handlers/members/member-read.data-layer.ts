@@ -11,7 +11,7 @@ import {
   roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
+import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { getAdminBulkRefreshRateLimit } from "#src/members/member-cache";
 import { ErrorKey } from "#src/members/error-key";
 import {
@@ -26,10 +26,10 @@ import {
   MembersOperationError,
 } from "./members.handlers.js";
 import {
-  MembersControllerGetGuildMemberReferences200,
-  MembersControllerGetGuildMembersSummary200,
-  MembersControllerGetMemberLootlogConfigSummary200,
-} from "../../contracts/members/schemas.js";
+  MemberReferencesResponse,
+  MemberSummariesResponse,
+  MemberLootlogConfigSummaryResponse,
+} from "#src/contracts/members/schemas";
 
 export interface MemberReadCache {
   readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
@@ -129,7 +129,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getGuildMemberReferencesCacheKey(guildId, includeInactive),
               30,
-              MembersControllerGetGuildMemberReferences200,
+              MemberReferencesResponse,
               membersWithRoles(guildId, includeInactive).pipe(
                 Effect.map((members) =>
                   members.map(
@@ -151,7 +151,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getGuildMembersSummaryCacheKey(guildId),
               30,
-              MembersControllerGetGuildMembersSummary200,
+              MemberSummariesResponse,
               Effect.gen(function* () {
                 const owners = yield* database
                   .select({ ownerId: guildTable.ownerId })
@@ -197,7 +197,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
             cached(
               getMemberLootlogConfigSummaryCacheKey(guildId, discordId),
               60,
-              MembersControllerGetMemberLootlogConfigSummary200,
+              MemberLootlogConfigSummaryResponse,
               Effect.gen(function* () {
                 const members = yield* database
                   .select()

@@ -33,7 +33,7 @@ import {
   type CachedTimerProjection,
   mapTimerResponse,
   parseTimerNpc,
-} from "./timer-response.js";
+} from "#src/timers/timer-projection";
 
 export interface TimerListCache {
   readonly get: (

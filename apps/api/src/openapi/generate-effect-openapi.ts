@@ -160,85 +160,10 @@ const normalizeNullableSchemas = (value: unknown): void => {
   for (const item of Object.values(value)) normalizeNullableSchemas(item);
 };
 
-const restoreRecursiveJsonReferences = (document: {
+const normalizeJsonComponents = (document: {
   components: { schemas: Record<string, JsonObject> };
   paths: Record<string, unknown>;
 }): void => {
-  const nullableSchemaNames = new Set<string>(NULLABLE_JSON_SCHEMA_NAMES);
-  const suspendedReferences = new Map<string, string>();
-
-  for (const [name, schema] of Object.entries(document.components.schemas)) {
-    const reference = schema["$ref"];
-    if (
-      name.startsWith("Suspend_") &&
-      typeof reference === "string" &&
-      nullableSchemaNames.has(reference.split("/").at(-1) ?? "")
-    ) {
-      suspendedReferences.set(`#/components/schemas/${name}`, reference);
-    }
-  }
-
-  const resolveReference = (value: unknown): string | undefined => {
-    if (!isJsonObject(value) || typeof value["$ref"] !== "string") {
-      return undefined;
-    }
-    const reference = value["$ref"];
-    const resolved = suspendedReferences.get(reference) ?? reference;
-    return nullableSchemaNames.has(resolved.split("/").at(-1) ?? "")
-      ? resolved
-      : undefined;
-  };
-
-  const restoreValue = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      for (const item of value) restoreValue(item);
-      return;
-    }
-    if (!isJsonObject(value)) return;
-
-    const variants = value["anyOf"];
-    if (Array.isArray(variants) && variants.length === 5) {
-      const primitiveTypes = new Set(
-        variants.flatMap((variant) =>
-          isJsonObject(variant) && typeof variant["type"] === "string"
-            ? [variant["type"]]
-            : [],
-        ),
-      );
-      const arrayVariant = variants.find(
-        (variant) => isJsonObject(variant) && variant["type"] === "array",
-      );
-      const objectVariant = variants.find(
-        (variant) => isJsonObject(variant) && variant["type"] === "object",
-      );
-      const arrayReference = isJsonObject(arrayVariant)
-        ? resolveReference(arrayVariant["items"])
-        : undefined;
-      const objectReference = isJsonObject(objectVariant)
-        ? resolveReference(objectVariant["additionalProperties"])
-        : undefined;
-
-      if (
-        primitiveTypes.has("string") &&
-        primitiveTypes.has("number") &&
-        primitiveTypes.has("boolean") &&
-        arrayReference !== undefined &&
-        arrayReference === objectReference
-      ) {
-        for (const key of Object.keys(value)) delete value[key];
-        value["$ref"] = arrayReference;
-        return;
-      }
-    }
-
-    for (const item of Object.values(value)) restoreValue(item);
-  };
-
-  restoreValue(document.paths);
-  for (const [name, schema] of Object.entries(document.components.schemas)) {
-    if (!nullableSchemaNames.has(name)) restoreValue(schema);
-  }
-
   for (const name of NULLABLE_JSON_SCHEMA_NAMES) {
     const reference = `#/components/schemas/${name}`;
     document.components.schemas[name] = {
@@ -354,7 +279,7 @@ const compatibilitySchemas = {
 
 normalizeNullableSchemas(document);
 (document as { openapi: string }).openapi = "3.0.0";
-restoreRecursiveJsonReferences(document);
+normalizeJsonComponents(document);
 Object.assign(document.components.schemas, compatibilitySchemas);
 
 const yaml = stringify(document, {

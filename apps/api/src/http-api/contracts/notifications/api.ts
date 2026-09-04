@@ -6,72 +6,40 @@ import {
   OpenApi,
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
+import { SuccessResponse } from "#src/contracts/shared";
 import {
-  NotificationsGuildControllerCancelGuildJob200,
-  NotificationsGuildControllerCancelGuildJobPathParams,
-  NotificationsGuildControllerCreateGuildRule201,
-  NotificationsGuildControllerCreateGuildRulePathParams,
-  NotificationsGuildControllerCreateGuildRuleRequestJson,
-  NotificationsGuildControllerCreateGuildTarget201,
-  NotificationsGuildControllerCreateGuildTargetPathParams,
-  NotificationsGuildControllerCreateGuildTargetRequestJson,
-  NotificationsGuildControllerDeleteGuildRule200,
-  NotificationsGuildControllerDeleteGuildRulePathParams,
-  NotificationsGuildControllerDeleteGuildTarget200,
-  NotificationsGuildControllerDeleteGuildTargetPathParams,
-  NotificationsGuildControllerGetAvailableGuildTargets200,
-  NotificationsGuildControllerGetAvailableGuildTargetsPathParams,
-  NotificationsGuildControllerGetGuildJobs200,
-  NotificationsGuildControllerGetGuildJobsPathParams,
-  NotificationsGuildControllerGetGuildRules200,
-  NotificationsGuildControllerGetGuildRulesPathParams,
-  NotificationsGuildControllerGetGuildTargets200,
-  NotificationsGuildControllerGetGuildTargetsPathParams,
-  NotificationsGuildControllerRebuildGuildRuleJobs201,
-  NotificationsGuildControllerRebuildGuildRuleJobsPathParams,
-  NotificationsGuildControllerTriggerGuildRuleTest201,
-  NotificationsGuildControllerTriggerGuildRuleTestPathParams,
-  NotificationsGuildControllerUpdateGuildRule200,
-  NotificationsGuildControllerUpdateGuildRulePathParams,
-  NotificationsGuildControllerUpdateGuildRuleRequestJson,
-  NotificationsGuildControllerUpdateGuildTarget200,
-  NotificationsGuildControllerUpdateGuildTargetPathParams,
-  NotificationsGuildControllerUpdateGuildTargetRequestJson,
-  NotificationsUserControllerCreateUserRule201,
-  NotificationsUserControllerCreateUserRuleRequestJson,
-  NotificationsUserControllerCreateUserTarget201,
-  NotificationsUserControllerCreateUserTargetRequestJson,
-  NotificationsUserControllerCreateWatchedItem201,
-  NotificationsUserControllerCreateWatchedItemRequestJson,
-  NotificationsUserControllerDeleteUserRule200,
-  NotificationsUserControllerDeleteUserRulePathParams,
-  NotificationsUserControllerDeleteUserTarget200,
-  NotificationsUserControllerDeleteUserTargetPathParams,
-  NotificationsUserControllerDeleteWatchedItem200,
-  NotificationsUserControllerDeleteWatchedItemPathParams,
-  NotificationsUserControllerGetUserJobs200,
-  NotificationsUserControllerGetUserRules200,
-  NotificationsUserControllerGetUserTargets200,
-  NotificationsUserControllerGetWatchedItems200,
-  NotificationsUserControllerQuickAddWatchedItem201,
-  NotificationsUserControllerQuickAddWatchedItemRequestJson,
-  NotificationsUserControllerTriggerUserTargetTest201,
-  NotificationsUserControllerTriggerUserTargetTestPathParams,
-  NotificationsUserControllerUpdateUserRule200,
-  NotificationsUserControllerUpdateUserRulePathParams,
-  NotificationsUserControllerUpdateUserRuleRequestJson,
-  NotificationsUserControllerUpdateUserTarget200,
-  NotificationsUserControllerUpdateUserTargetPathParams,
-  NotificationsUserControllerUpdateUserTargetRequestJson,
-} from "./schemas.js";
+  OrganizationNotificationJobParams,
+  NotificationRuleResponse,
+  OrganizationNotificationParams,
+  CreateNotificationRuleRequest,
+  NotificationTargetResponse,
+  CreateNotificationTargetRequest,
+  OrganizationNotificationRuleParams,
+  OrganizationNotificationTargetParams,
+  AvailableOrganizationNotificationTargetsResponse,
+  NotificationJobsResponse,
+  OrganizationNotificationRulesResponse,
+  OrganizationNotificationTargetsResponse,
+  UpdateNotificationRuleRequest,
+  UpdateNotificationTargetRequest,
+  WatchedItemResponse,
+  CreateWatchedItemRequest,
+  NotificationRuleParams,
+  NotificationTargetParams,
+  WatchedItemParams,
+  NotificationRulesResponse,
+  UserNotificationTargetsResponse,
+  WatchedItemsResponse,
+  QuickAddWatchedItemRequest,
+} from "#src/contracts/notifications/schemas";
 
 export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   HttpApiEndpoint.get(
     "NotificationsGuildControllerGetGuildTargets",
     "/guilds/:guildId/notifications/targets",
     {
-      params: NotificationsGuildControllerGetGuildTargetsPathParams,
-      success: NotificationsGuildControllerGetGuildTargets200,
+      params: OrganizationNotificationParams,
+      success: OrganizationNotificationTargetsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -88,11 +56,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerCreateGuildTarget",
     "/guilds/:guildId/notifications/targets",
     {
-      params: NotificationsGuildControllerCreateGuildTargetPathParams,
-      payload: NotificationsGuildControllerCreateGuildTargetRequestJson,
-      success: NotificationsGuildControllerCreateGuildTarget201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: OrganizationNotificationParams,
+      payload: CreateNotificationTargetRequest,
+      success: NotificationTargetResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -109,8 +75,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerGetAvailableGuildTargets",
     "/guilds/:guildId/notifications/targets/available",
     {
-      params: NotificationsGuildControllerGetAvailableGuildTargetsPathParams,
-      success: NotificationsGuildControllerGetAvailableGuildTargets200,
+      params: OrganizationNotificationParams,
+      success: AvailableOrganizationNotificationTargetsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -127,8 +93,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerDeleteGuildTarget",
     "/guilds/:guildId/notifications/targets/:targetId",
     {
-      params: NotificationsGuildControllerDeleteGuildTargetPathParams,
-      success: NotificationsGuildControllerDeleteGuildTarget200,
+      params: OrganizationNotificationTargetParams,
+      success: SuccessResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -142,9 +108,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerUpdateGuildTarget",
     "/guilds/:guildId/notifications/targets/:targetId",
     {
-      params: NotificationsGuildControllerUpdateGuildTargetPathParams,
-      payload: NotificationsGuildControllerUpdateGuildTargetRequestJson,
-      success: NotificationsGuildControllerUpdateGuildTarget200,
+      params: OrganizationNotificationTargetParams,
+      payload: UpdateNotificationTargetRequest,
+      success: NotificationTargetResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -158,8 +124,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerGetGuildRules",
     "/guilds/:guildId/notifications/rules",
     {
-      params: NotificationsGuildControllerGetGuildRulesPathParams,
-      success: NotificationsGuildControllerGetGuildRules200,
+      params: OrganizationNotificationParams,
+      success: OrganizationNotificationRulesResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -173,11 +139,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerCreateGuildRule",
     "/guilds/:guildId/notifications/rules",
     {
-      params: NotificationsGuildControllerCreateGuildRulePathParams,
-      payload: NotificationsGuildControllerCreateGuildRuleRequestJson,
-      success: NotificationsGuildControllerCreateGuildRule201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: OrganizationNotificationParams,
+      payload: CreateNotificationRuleRequest,
+      success: NotificationRuleResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -191,8 +155,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerDeleteGuildRule",
     "/guilds/:guildId/notifications/rules/:ruleId",
     {
-      params: NotificationsGuildControllerDeleteGuildRulePathParams,
-      success: NotificationsGuildControllerDeleteGuildRule200,
+      params: OrganizationNotificationRuleParams,
+      success: SuccessResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -206,9 +170,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerUpdateGuildRule",
     "/guilds/:guildId/notifications/rules/:ruleId",
     {
-      params: NotificationsGuildControllerUpdateGuildRulePathParams,
-      payload: NotificationsGuildControllerUpdateGuildRuleRequestJson,
-      success: NotificationsGuildControllerUpdateGuildRule200,
+      params: OrganizationNotificationRuleParams,
+      payload: UpdateNotificationRuleRequest,
+      success: NotificationRuleResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -222,10 +186,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerRebuildGuildRuleJobs",
     "/guilds/:guildId/notifications/rules/:ruleId/rebuild-jobs",
     {
-      params: NotificationsGuildControllerRebuildGuildRuleJobsPathParams,
-      success: NotificationsGuildControllerRebuildGuildRuleJobs201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: OrganizationNotificationRuleParams,
+      success: SuccessResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -242,10 +204,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerTriggerGuildRuleTest",
     "/guilds/:guildId/notifications/rules/:ruleId/test",
     {
-      params: NotificationsGuildControllerTriggerGuildRuleTestPathParams,
-      success: NotificationsGuildControllerTriggerGuildRuleTest201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: OrganizationNotificationRuleParams,
+      success: SuccessResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -262,8 +222,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerGetGuildJobs",
     "/guilds/:guildId/notifications/jobs",
     {
-      params: NotificationsGuildControllerGetGuildJobsPathParams,
-      success: NotificationsGuildControllerGetGuildJobs200,
+      params: OrganizationNotificationParams,
+      success: NotificationJobsResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -277,8 +237,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsGuildControllerCancelGuildJob",
     "/guilds/:guildId/notifications/jobs/:jobId",
     {
-      params: NotificationsGuildControllerCancelGuildJobPathParams,
-      success: NotificationsGuildControllerCancelGuildJob200,
+      params: OrganizationNotificationJobParams,
+      success: SuccessResponse,
       error: HttpApiSchema.Empty(400),
     },
   )
@@ -292,7 +252,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetUserTargets",
     "/users/@me/notifications/targets",
-    { success: NotificationsUserControllerGetUserTargets200 },
+    { success: UserNotificationTargetsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getUserTargets")
@@ -305,10 +265,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerCreateUserTarget",
     "/users/@me/notifications/targets",
     {
-      payload: NotificationsUserControllerCreateUserTargetRequestJson,
-      success: NotificationsUserControllerCreateUserTarget201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      payload: CreateNotificationTargetRequest,
+      success: NotificationTargetResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -325,8 +283,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerDeleteUserTarget",
     "/users/@me/notifications/targets/:targetId",
     {
-      params: NotificationsUserControllerDeleteUserTargetPathParams,
-      success: NotificationsUserControllerDeleteUserTarget200,
+      params: NotificationTargetParams,
+      success: SuccessResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -340,9 +298,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerUpdateUserTarget",
     "/users/@me/notifications/targets/:targetId",
     {
-      params: NotificationsUserControllerUpdateUserTargetPathParams,
-      payload: NotificationsUserControllerUpdateUserTargetRequestJson,
-      success: NotificationsUserControllerUpdateUserTarget200,
+      params: NotificationTargetParams,
+      payload: UpdateNotificationTargetRequest,
+      success: NotificationTargetResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -356,10 +314,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerTriggerUserTargetTest",
     "/users/@me/notifications/targets/:targetId/test",
     {
-      params: NotificationsUserControllerTriggerUserTargetTestPathParams,
-      success: NotificationsUserControllerTriggerUserTargetTest201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: NotificationTargetParams,
+      success: SuccessResponse.pipe(HttpApiSchema.status(201)),
       error: HttpApiSchema.Empty(409),
     },
   )
@@ -376,7 +332,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetUserRules",
     "/users/@me/notifications/rules",
-    { success: NotificationsUserControllerGetUserRules200 },
+    { success: NotificationRulesResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getUserRules")
@@ -389,10 +345,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerCreateUserRule",
     "/users/@me/notifications/rules",
     {
-      payload: NotificationsUserControllerCreateUserRuleRequestJson,
-      success: NotificationsUserControllerCreateUserRule201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      payload: CreateNotificationRuleRequest,
+      success: NotificationRuleResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -403,8 +357,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerDeleteUserRule",
     "/users/@me/notifications/rules/:ruleId",
     {
-      params: NotificationsUserControllerDeleteUserRulePathParams,
-      success: NotificationsUserControllerDeleteUserRule200,
+      params: NotificationRuleParams,
+      success: SuccessResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -415,9 +369,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerUpdateUserRule",
     "/users/@me/notifications/rules/:ruleId",
     {
-      params: NotificationsUserControllerUpdateUserRulePathParams,
-      payload: NotificationsUserControllerUpdateUserRuleRequestJson,
-      success: NotificationsUserControllerUpdateUserRule200,
+      params: NotificationRuleParams,
+      payload: UpdateNotificationRuleRequest,
+      success: NotificationRuleResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -427,7 +381,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetUserJobs",
     "/users/@me/notifications/jobs",
-    { success: NotificationsUserControllerGetUserJobs200 },
+    { success: NotificationJobsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getUserJobs")
@@ -439,7 +393,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetWatchedItems",
     "/users/@me/notifications/watched-items",
-    { success: NotificationsUserControllerGetWatchedItems200 },
+    { success: WatchedItemsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getWatchedItems")
@@ -452,10 +406,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerCreateWatchedItem",
     "/users/@me/notifications/watched-items",
     {
-      payload: NotificationsUserControllerCreateWatchedItemRequestJson,
-      success: NotificationsUserControllerCreateWatchedItem201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      payload: CreateWatchedItemRequest,
+      success: WatchedItemResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -472,10 +424,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerQuickAddWatchedItem",
     "/users/@me/notifications/watched-items/quick-add",
     {
-      payload: NotificationsUserControllerQuickAddWatchedItemRequestJson,
-      success: NotificationsUserControllerQuickAddWatchedItem201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      payload: QuickAddWatchedItemRequest,
+      success: WatchedItemResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -492,8 +442,8 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     "NotificationsUserControllerDeleteWatchedItem",
     "/users/@me/notifications/watched-items/:watchedItemId",
     {
-      params: NotificationsUserControllerDeleteWatchedItemPathParams,
-      success: NotificationsUserControllerDeleteWatchedItem200,
+      params: WatchedItemParams,
+      success: SuccessResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)

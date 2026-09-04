@@ -14,20 +14,21 @@ import {
 import { LootCommentResponse } from "#src/shared/schema/loot-comment";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { normalizeKillStatsPeriod } from "#src/kills/kill-stats-period";
-import type { KillsControllerCreateKill201 } from "../../contracts/kills/schemas.js";
+import type { CreateKillResponse } from "#src/contracts/kills/schemas";
 import {
-  LootsControllerCreateComment201,
-  LootsControllerFetchLootById200,
-  LootsControllerFetchLootsByGuildId200,
-  LootsControllerGetComments200,
-} from "../../contracts/loots/schemas.js";
+  LootCommentResponse as LootCommentResponseSchema,
+  LootDetailResponse,
+  LootListResponse,
+  LootCommentsResponse,
+} from "#src/contracts/loots/schemas";
+
 import { RecordsData, RecordsDataError } from "./records.operations.js";
 
 export interface RecordsServices {
   readonly createKill: (
     discordId: string,
     payload: Parameters<RecordsData["Service"]["createKill"]>[1],
-  ) => Effect.Effect<KillsControllerCreateKill201, unknown>;
+  ) => Effect.Effect<CreateKillResponse, unknown>;
   readonly userKillQueries: UserKillQueries;
   readonly memberKillQuery: MemberKillQuery;
   readonly guildKillQueries: GuildKillQueries;
@@ -188,10 +189,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           result.map((loot) => encodeUnknownResponse(LootResponse, loot)),
         ),
         Effect.flatMap((result) =>
-          decode(
-            Schema.decodeUnknownSync(LootsControllerFetchLootsByGuildId200),
-            result,
-          ),
+          decode(Schema.decodeUnknownSync(LootListResponse), result),
         ),
       ),
     getLootStats: (caller, query) =>
@@ -241,10 +239,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           encodeUnknownResponse(NullableLootResponse, result),
         ),
         Effect.flatMap((result) =>
-          decode(
-            Schema.decodeUnknownSync(LootsControllerFetchLootById200),
-            result,
-          ),
+          decode(Schema.decodeUnknownSync(LootDetailResponse), result),
         ),
       ),
     archiveLoot: (caller, lootId) =>
@@ -289,10 +284,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           ),
         ),
         Effect.flatMap((result) =>
-          decode(
-            Schema.decodeUnknownSync(LootsControllerGetComments200),
-            result,
-          ),
+          decode(Schema.decodeUnknownSync(LootCommentsResponse), result),
         ),
       ),
     createComment: (caller, lootId, payload) =>
@@ -311,10 +303,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           encodeUnknownResponse(LootCommentResponse, result),
         ),
         Effect.flatMap((result) =>
-          decode(
-            Schema.decodeUnknownSync(LootsControllerCreateComment201),
-            result,
-          ),
+          decode(Schema.decodeUnknownSync(LootCommentResponseSchema), result),
         ),
       ),
     updateLoot: (caller, lootId, payload) =>

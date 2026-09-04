@@ -16,7 +16,17 @@ const MAX_CACHE_SIZE = 1000;
 const CACHE_TTL = 24 * 60 * 60;
 
 export const makeBattleObjectStorage = (
-  redisStore: RedisStore,
+  redisStore: Pick<
+    RedisStore,
+    | "get"
+    | "set"
+    | "del"
+    | "zadd"
+    | "zcard"
+    | "zrange"
+    | "zrem"
+    | "zremrangebyrank"
+  >,
   config: R2Config,
 ) => {
   const logger = new Logger("BattleObjectStorage");
@@ -139,39 +149,6 @@ export const makeBattleObjectStorage = (
       }
     },
 
-    async deleteBattleDataBatch(battleIds: string[]): Promise<void> {
-      if (battleIds.length === 0) return;
-
-      const results = await Promise.allSettled(
-        battleIds.map(async (battleId) => {
-          const key = `battles/${battleId}.json`;
-          const command = new DeleteObjectCommand({
-            Bucket: config.bucketName,
-            Key: key,
-          });
-          await client.send(command);
-        }),
-      );
-
-      const failed = results.filter((r) => r.status === "rejected");
-      if (failed.length > 0) {
-        logger.warn(
-          `Failed to delete ${failed.length}/${battleIds.length} R2 objects`,
-        );
-      }
-
-      await Promise.all(
-        battleIds.flatMap((battleId) => [
-          redisStore.del(`${CACHE_PREFIX}:${battleId}`),
-          redisStore.zrem(LRU_KEY, battleId),
-        ]),
-      );
-
-      logger.log(
-        `Batch deleted ${battleIds.length - failed.length}/${battleIds.length} battle files from R2`,
-      );
-    },
-
     async cacheData(battleId: string, data: string): Promise<void> {
       try {
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
@@ -240,6 +217,7 @@ export const makeBattleObjectStorage = (
           `Failed to delete cached data for battle ${battleId}:`,
           error,
         );
+        throw error;
       }
     },
   };
@@ -251,8 +229,5 @@ type BattleObjectStorageModule = ReturnType<typeof makeBattleObjectStorage>;
 
 export type BattleObjectStorage = Pick<
   BattleObjectStorageModule,
-  | "deleteBattleData"
-  | "deleteBattleDataBatch"
-  | "getBattleData"
-  | "uploadBattleData"
+  "deleteBattleData" | "getBattleData" | "uploadBattleData"
 >;

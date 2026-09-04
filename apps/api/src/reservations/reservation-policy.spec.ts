@@ -1,4 +1,4 @@
-import { describe, expect, it } from "#test/bun-test";
+import { describe, expect, it } from "bun:test";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import {
   parseReservationWindow,

@@ -1,4 +1,5 @@
 import { desc, sql } from "drizzle-orm";
+// Hand-maintained Activity database schema; Drizzle generates SQL migrations from it.
 import {
   index,
   integer,

@@ -5,10 +5,10 @@ import type {
 } from "#src/settings-documents/settings-documents.service";
 import { Effect } from "effect";
 import type {
-  MigrateTimerSettingsDto,
-  UpdateGuildTimerSettingsDto,
-  UpdateTimerSettingsDto,
-} from "#src/http-api/contracts/timer-settings/schemas";
+  MigrateTimerSettingsRequest,
+  UpdateOrganizationTimerSettingsRequest,
+  UpdateTimerSettingsRequest,
+} from "#src/contracts/timer-settings/schemas";
 
 const APPEARANCE_FIELDS = [
   "displayConfig",
@@ -30,17 +30,17 @@ export interface TimerSettings {
   readonly getGlobalSettings: (userId: string) => TimerEffect;
   readonly updateGlobalSettings: (
     userId: string,
-    dto: UpdateTimerSettingsDto,
+    dto: UpdateTimerSettingsRequest,
   ) => TimerEffect;
   readonly getGuildSettings: (userId: string, guildId: string) => TimerEffect;
   readonly updateGuildSettings: (
     userId: string,
     guildId: string,
-    dto: UpdateGuildTimerSettingsDto,
+    dto: UpdateOrganizationTimerSettingsRequest,
   ) => TimerEffect;
   readonly migrateSettings: (
     userId: string,
-    dto: MigrateTimerSettingsDto,
+    dto: MigrateTimerSettingsRequest,
   ) => TimerEffect;
 }
 
@@ -176,7 +176,7 @@ export const makeTimerSettings = (
 
   const updateGlobalSettings = (
     userId: string,
-    dto: UpdateTimerSettingsDto,
+    dto: UpdateTimerSettingsRequest,
   ) => {
     const appearanceSet: Record<string, unknown> = {};
     const timersSet: Record<string, unknown> = {};
@@ -234,7 +234,7 @@ export const makeTimerSettings = (
   const updateGuildSettings = (
     userId: string,
     guildId: string,
-    dto: UpdateGuildTimerSettingsDto,
+    dto: UpdateOrganizationTimerSettingsRequest,
   ) =>
     settingsDocuments
       .patchPreferences(userId, {
@@ -255,7 +255,7 @@ export const makeTimerSettings = (
 
   const migrateSettings = (
     userId: string,
-    dto: MigrateTimerSettingsDto,
+    dto: MigrateTimerSettingsRequest,
   ): TimerEffect =>
     Effect.gen(function* () {
       const { localData, conflictResolution = "local" } = dto;
@@ -278,7 +278,7 @@ export const makeTimerSettings = (
         userId,
         extractGlobalSettingsFromLocal(
           localData,
-        ) as unknown as UpdateTimerSettingsDto,
+        ) as unknown as UpdateTimerSettingsRequest,
       );
       const guilds = yield* Effect.forEach(
         Object.entries(extractGuildSettingsFromLocal(localData)),

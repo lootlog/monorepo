@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { Schema } from "effect";
 import { EventKillHistoryResponse } from "#src/events/kills/event-kill-response.schema";
 

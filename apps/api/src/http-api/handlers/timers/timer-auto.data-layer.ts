@@ -44,7 +44,7 @@ import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { buildTimerKey } from "#src/timers/timer-key";
-import type { CreateTimerFromGameClientDto } from "../../contracts/timers/schemas.js";
+import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {
   TimersInfrastructureError,
@@ -55,7 +55,7 @@ import {
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
-} from "./timer-response.js";
+} from "#src/timers/timer-projection";
 
 const DEDUP_TTL_SECONDS = 30;
 const RELEASE_DEDUP_LOCK_SCRIPT = `
@@ -117,10 +117,7 @@ export interface AutoTimerPorts {
   ) => Effect.Effect<A, E | unknown>;
 }
 
-const calculateSpawnWindow = (
-  payload: CreateTimerFromGameClientDto,
-  now: Date,
-) => {
+const calculateSpawnWindow = (payload: CreateAutoTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
     const minSpawnTime = new Date(payload.customMinSpawnTime);
     const maxSpawnTime = new Date(payload.customMaxSpawnTime);
@@ -156,7 +153,7 @@ const calculateSpawnWindow = (
   };
 };
 
-const makeNpc = (payload: CreateTimerFromGameClientDto) => ({
+const makeNpc = (payload: CreateAutoTimerRequest) => ({
   id: payload.npc.id,
   name: payload.npc.name,
   prof: getProfByShortname(payload.npc.prof ?? ""),
@@ -175,7 +172,7 @@ const makeNpc = (payload: CreateTimerFromGameClientDto) => ({
 
 const upsertActor = (
   database: Pick<typeof ApiDatabase.Service, "insert" | "select">,
-  payload: CreateTimerFromGameClientDto,
+  payload: CreateAutoTimerRequest,
 ) =>
   Effect.gen(function* () {
     const actor = payload.actorCharacter;
@@ -296,7 +293,7 @@ export const makeAutoTimer = (
   const writeGuildTimer = (
     identity: TimersIdentity,
     guildId: string,
-    payload: CreateTimerFromGameClientDto,
+    payload: CreateAutoTimerRequest,
   ) => {
     const timerKey = buildTimerKey(payload.npc.id, payload.npc.name);
     const dedupKey = `timer:dedup:${guildId}:${payload.world}:${timerKey}`;
@@ -575,7 +572,7 @@ export const makeAutoTimer = (
 
   const operation = Effect.fn("createAutoTimerData")(function* (
     identity: TimersIdentity,
-    payload: CreateTimerFromGameClientDto,
+    payload: CreateAutoTimerRequest,
   ) {
     if (payload.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS) {
       return yield* Effect.fail(
@@ -681,6 +678,6 @@ export const makeAutoTimer = (
     }
     return { submittedGuilds, rejectedGuilds };
   });
-  return (identity: TimersIdentity, payload: CreateTimerFromGameClientDto) =>
+  return (identity: TimersIdentity, payload: CreateAutoTimerRequest) =>
     operation(identity, payload).pipe(Effect.mapError(toTimersDataFailure));
 };

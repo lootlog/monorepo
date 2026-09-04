@@ -3,6 +3,7 @@ import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
+  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -44,10 +45,9 @@ export const makePlayersModule = (
       index.search(searchTerm, query),
     ).pipe(
       Effect.map((response) => response.hits),
-      Effect.catch((error) => {
-        logger.error("Players search error", { error });
-        return Effect.succeed([] as PlayerHit[]);
-      }),
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("Players search error", { error })),
+      ),
     );
   });
 
@@ -82,7 +82,7 @@ export const makePlayersModule = (
       uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
-    yield* attemptMeilisearch("search.players.index", () =>
+    yield* completeMeilisearchTask("search.players.index", () =>
       index.addDocuments(playersWithUid, { primaryKey: "uid" }),
     );
   });
@@ -90,7 +90,7 @@ export const makePlayersModule = (
   return { getPlayers, indexPlayers } satisfies {
     readonly getPlayers: (
       input: PlayerSearchQuery,
-    ) => Effect.Effect<ReadonlyArray<PlayerHit>>;
+    ) => Effect.Effect<ReadonlyArray<PlayerHit>, SearchOperationFailure>;
     readonly indexPlayers: (
       data: IndexPlayersCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;

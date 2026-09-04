@@ -36,28 +36,29 @@ import {
 } from "#src/shared/http/http-errors";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import {
-  AcceptReservationShareInvitation201,
-  CreateReservationShareInvitation201,
-  ListReservationShares200,
-  PreviewReservationShareInvitation200,
-  type AcceptReservationShareInvitationDto,
-} from "../../contracts/reservation-sharing/schemas.js";
+  AcceptedReservationShareResponse,
+  CreatedReservationShareInvitationResponse,
+  ReservationSharesResponse,
+  ReservationShareInvitationPreviewResponse,
+  type AcceptReservationShareInvitationRequest,
+} from "#src/contracts/reservation-sharing/schemas";
+
 import {
-  CreateReservation201,
-  ListMyReservations200,
-  ListReservationSpots200,
-  ListSpotReservations200,
-  UpdateMyReservation200,
-  type CreateReservationDto,
-  type ListMyReservationsQuery,
-  type ListSpotReservationsQuery,
-  type UpdateReservationDto,
-} from "../../contracts/reservations/schemas.js";
+  ReservationResponse,
+  MyReservationsResponse,
+  ReservationSpotsResponse,
+  ReservationWindowResponse,
+  type CreateReservationRequest,
+  type MyReservationsQuery,
+  type ReservationWindowQuery,
+  type UpdateReservationRequest,
+} from "#src/contracts/reservations/schemas";
+
 import {
-  RolesControllerGetGuildRoles200,
-  RolesControllerUpdateGuildRole200,
-  type UpdateRolePermissionsDto,
-} from "../../contracts/roles/schemas.js";
+  RolesResponse,
+  RoleResponse,
+  type UpdateRolePermissionsRequest,
+} from "#src/contracts/roles/schemas";
 
 export type OrganizationWorkspaceIdentity = {
   readonly userId: string;
@@ -112,7 +113,7 @@ export class OrganizationWorkspaceData extends Context.Service<
     readonly create: (
       context: ReservationViewerContext,
       spotId: string,
-      payload: CreateReservationDto,
+      payload: CreateReservationRequest,
     ) => DataEffect;
     readonly deleteVisible: (
       context: ReservationViewerContext,
@@ -125,7 +126,7 @@ export class OrganizationWorkspaceData extends Context.Service<
     readonly updateOwned: (
       identity: OrganizationWorkspaceIdentity,
       reservationId: number,
-      payload: UpdateReservationDto,
+      payload: UpdateReservationRequest,
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/organization-workspace/data") {}
@@ -135,7 +136,7 @@ export class MyReservationsData extends Context.Service<
   {
     readonly listMine: (
       identity: OrganizationWorkspaceIdentity,
-      query: ListMyReservationsQuery,
+      query: MyReservationsQuery,
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/my-reservations/data") {
@@ -296,7 +297,7 @@ export class ReservationSharingData extends Context.Service<
     ) => DataEffect;
     readonly acceptInvitation: (
       token: string,
-      payload: AcceptReservationShareInvitationDto,
+      payload: AcceptReservationShareInvitationRequest,
       identity: OrganizationWorkspaceIdentity,
     ) => DataEffect;
   }
@@ -310,7 +311,7 @@ export class RolesData extends Context.Service<
       discordId: string,
       guildId: string,
       roleId: string,
-      payload: UpdateRolePermissionsDto,
+      payload: UpdateRolePermissionsRequest,
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/roles/data") {
@@ -519,30 +520,26 @@ export const listReservationSpots = Effect.fn("listReservationSpots")(
     const value = yield* readData((service) =>
       service.listSpots(toViewer(access)),
     );
-    return yield* decode(ListReservationSpots200, value);
+    return yield* decode(ReservationSpotsResponse, value);
   },
 );
 
 export const listSpotReservations = Effect.fn("listSpotReservations")(
-  function* (
-    guildId: string,
-    spotId: string,
-    query: ListSpotReservationsQuery,
-  ) {
+  function* (guildId: string, spotId: string, query: ReservationWindowQuery) {
     const access = yield* requireGuild(guildId, [
       Permission.LOOTLOG_RESERVATIONS_READ,
     ]);
     const value = yield* readData((service) =>
       service.listWindow(toViewer(access), spotId, query.from, query.to),
     );
-    return yield* decode(ListSpotReservations200, value);
+    return yield* decode(ReservationWindowResponse, value);
   },
 );
 
 export const createReservation = Effect.fn("createReservation")(function* (
   guildId: string,
   spotId: string,
-  payload: CreateReservationDto,
+  payload: CreateReservationRequest,
 ) {
   const access = yield* requireGuild(guildId, [
     Permission.LOOTLOG_RESERVATIONS_READ,
@@ -551,7 +548,7 @@ export const createReservation = Effect.fn("createReservation")(function* (
   const value = yield* data((service) =>
     service.create(toViewer(access), spotId, payload),
   );
-  return yield* decode(CreateReservation201, value);
+  return yield* decode(ReservationResponse, value);
 });
 
 export const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
@@ -588,13 +585,13 @@ export const unpinReservationSpot = (guildId: string, spotId: string) =>
   setReservationSpotPin(guildId, spotId, false);
 
 export const listMyReservations = Effect.fn("listMyReservations")(function* (
-  query: ListMyReservationsQuery,
+  query: MyReservationsQuery,
 ) {
   const current = yield* identity;
   const value = yield* myReservationsData((service) =>
     service.listMine(current, query),
   );
-  return yield* decode(ListMyReservations200, value);
+  return yield* decode(MyReservationsResponse, value);
 });
 
 export const deleteMyReservation = Effect.fn("deleteMyReservation")(function* (
@@ -606,20 +603,20 @@ export const deleteMyReservation = Effect.fn("deleteMyReservation")(function* (
 
 export const updateMyReservation = Effect.fn("updateMyReservation")(function* (
   reservationId: number,
-  payload: UpdateReservationDto,
+  payload: UpdateReservationRequest,
 ) {
   const current = yield* identity;
   const value = yield* data((service) =>
     service.updateOwned(current, reservationId, payload),
   );
-  return yield* decode(UpdateMyReservation200, value);
+  return yield* decode(ReservationResponse, value);
 });
 
 export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
   function* (
     guildId: string,
     roleId: string,
-    payload: UpdateRolePermissionsDto,
+    payload: UpdateRolePermissionsRequest,
   ) {
     const access = yield* requireGuild(guildId, [
       Permission.LOOTLOG_ACCESS,
@@ -628,7 +625,7 @@ export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
     const value = yield* rolesData((service) =>
       service.updateRole(access.discordId, access.guildId, roleId, payload),
     );
-    return yield* decode(RolesControllerUpdateGuildRole200, value);
+    return yield* decode(RoleResponse, value);
   },
 );
 
@@ -638,7 +635,7 @@ export const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(
     const value = yield* rolesData((service) =>
       service.getRoles(access.guildId),
     );
-    return yield* decode(RolesControllerGetGuildRoles200, value);
+    return yield* decode(RolesResponse, value);
   },
 );
 
@@ -653,7 +650,7 @@ export const listReservationShares = Effect.fn("listReservationShares")(
     const value = yield* sharingData((service) =>
       service.listShares(access.guildId),
     );
-    return yield* decode(ListReservationShares200, value);
+    return yield* decode(ReservationSharesResponse, value);
   },
 );
 
@@ -664,17 +661,17 @@ export const previewReservationShareInvitation = Effect.fn(
   const value = yield* sharingData((service) =>
     service.previewInvitation(token, current.discordId),
   );
-  return yield* decode(PreviewReservationShareInvitation200, value);
+  return yield* decode(ReservationShareInvitationPreviewResponse, value);
 });
 
 export const acceptReservationShareInvitation = Effect.fn(
   "acceptReservationShareInvitation",
-)(function* (token: string, payload: AcceptReservationShareInvitationDto) {
+)(function* (token: string, payload: AcceptReservationShareInvitationRequest) {
   const current = yield* identity;
   const value = yield* sharingData((service) =>
     service.acceptInvitation(token, payload, current),
   );
-  return yield* decode(AcceptReservationShareInvitation201, value);
+  return yield* decode(AcceptedReservationShareResponse, value);
 });
 
 export const createReservationShareInvitation = Effect.fn(
@@ -684,7 +681,7 @@ export const createReservationShareInvitation = Effect.fn(
   const value = yield* sharingData((service) =>
     service.createInvitation(access.guildId, access.userId),
   );
-  return yield* decode(CreateReservationShareInvitation201, value);
+  return yield* decode(CreatedReservationShareInvitationResponse, value);
 });
 
 export const revokeReservationShareInvitation = Effect.fn(
@@ -714,7 +711,7 @@ export const getGuildRolesFromPath = (guildId: unknown) =>
 export const updateGuildRoleFromPath = (
   guildId: unknown,
   roleId: string,
-  payload: UpdateRolePermissionsDto,
+  payload: UpdateRolePermissionsRequest,
 ) =>
   toDeclaredOrganizationWorkspaceError(
     Effect.flatMap(pathString(guildId, "guildId"), (decodedGuildId) =>

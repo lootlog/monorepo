@@ -412,6 +412,11 @@ export const WatchFormDialog = ({
                           <WatchedItemSelector
                             disabled={!selectedWorld}
                             loading={isItemsLoading}
+                            errorMessage={
+                              itemSearchQuery.isError
+                                ? t("common.searchUnavailable")
+                                : undefined
+                            }
                             items={itemSearchResults}
                             searchValue={itemSearchValue}
                             selectedItem={field.value as GameItem | null}
