@@ -1,6 +1,6 @@
-import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 // @vitest-environment happy-dom
 
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CoverageGap } from "../queries/use-map-coverage-timer";

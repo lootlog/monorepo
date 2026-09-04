@@ -492,23 +492,11 @@ export const makeBattles = (
       );
     },
 
-    getUserCharacters(userId: string): Effect.Effect<
-      {
-        characters: Array<{
-          id: string;
-          name: string;
-          world: string;
-          icon: string;
-        }>;
-      },
-      unknown
-    > {
+    getUserCharacters(userId: string) {
       return battleMetadataService.getUserCharacters(userId);
     },
 
-    getUserWorlds(
-      userId: string,
-    ): Effect.Effect<{ worlds: string[] }, unknown> {
+    getUserWorlds(userId: string) {
       return battleMetadataService.getUserWorlds(userId);
     },
 
