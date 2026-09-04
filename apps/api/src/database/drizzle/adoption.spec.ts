@@ -23,49 +23,6 @@ const expectedEnumRows = EXPECTED_API_CATALOG.enums.flatMap(
   ({ name, values }) => values.map((value) => ({ name, value })),
 );
 
-const legacyNullableColumns = new Set([
-  "DiscordGuildChannelSnapshot.grantedPermissions",
-  "DiscordGuildChannelSnapshot.missingPermissions",
-  "DiscordGuildChannelSnapshot.requiredPermissions",
-  "DiscordGuildSyncState.grantedPermissions",
-  "DiscordGuildSyncState.missingPermissions",
-  "DiscordGuildSyncState.requiredPermissions",
-  "LootlogConfigNpc.allowedRarities",
-  "Role.permissions",
-  "UserGuildTimerSettings.hiddenTimers",
-  "UserGuildTimerSettings.pinnedTimers",
-  "UserSettings.guildsOrder",
-]);
-
-const deployedLegacyCatalog = {
-  ...EXPECTED_API_CATALOG,
-  columns: EXPECTED_API_CATALOG.columns.map((column) =>
-    legacyNullableColumns.has(`${column.tableName}.${column.columnName}`)
-      ? { ...column, isNullable: true }
-      : column,
-  ),
-  enums: EXPECTED_API_CATALOG.enums.map((enumDefinition) =>
-    enumDefinition.name === "Permission"
-      ? {
-          ...enumDefinition,
-          values: enumDefinition.values
-            .filter(
-              (value) =>
-                value !== "LOOTLOG_LOOTS_ARCHIVE" &&
-                value !== "LOOTLOG_PRESENCE_LOCATION_READ",
-            )
-            .concat("LOOTLOG_LOOTS_ARCHIVE"),
-        }
-      : enumDefinition,
-  ),
-  constraints: [
-    ...new Set([
-      ...EXPECTED_API_CATALOG.constraints,
-      "ReservationShare_distinct_guilds_check",
-    ]),
-  ].sort(),
-};
-
 const makeClient = ({
   marker,
   journal = [],
@@ -133,17 +90,12 @@ const hasBaselineInsert = (queries: ReadonlyArray<Query>) =>
   queries.some(({ statement }) =>
     statement.includes("INSERT INTO drizzle.__drizzle_migrations"),
   );
+const hasAdoptionMarkerInsert = (queries: ReadonlyArray<Query>) =>
+  queries.some(({ statement }) =>
+    statement.includes("INSERT INTO drizzle.__lootlog_adoption"),
+  );
 
 describe("adoptExistingApiDatabase", () => {
-  it("accepts the physical schema deployed before Drizzle adoption", async () => {
-    const { client } = makeClient({ catalog: deployedLegacyCatalog });
-
-    await expect(adoptExistingApiDatabase(client)).resolves.toEqual({
-      status: "adopted",
-      fingerprint: EXPECTED_API_CATALOG_SHA256,
-    });
-  });
-
   it("commits the permission enum transition with the Drizzle baseline", async () => {
     const { client, queries } = makeClient();
 
@@ -247,7 +199,7 @@ describe("adoptExistingApiDatabase", () => {
     });
   });
 
-  it("does not adopt an empty database", async () => {
+  it("marks an empty database before Drizzle initializes it", async () => {
     const { client, queries } = makeClient({
       catalog: { ...EXPECTED_API_CATALOG, tables: [] },
     });
@@ -256,6 +208,7 @@ describe("adoptExistingApiDatabase", () => {
       status: "empty",
     });
     expect(hasBaselineInsert(queries)).toBe(false);
+    expect(hasAdoptionMarkerInsert(queries)).toBe(true);
     expect(queries.at(-1)?.statement).toBe("COMMIT");
   });
 
@@ -281,6 +234,71 @@ describe("adoptExistingApiDatabase", () => {
 });
 
 describe("generated API database evidence", () => {
+  it("matches the captured deployed legacy catalog differences", () => {
+    const nullableColumns = [
+      "DiscordGuildChannelSnapshot.grantedPermissions",
+      "DiscordGuildChannelSnapshot.missingPermissions",
+      "DiscordGuildChannelSnapshot.requiredPermissions",
+      "DiscordGuildSyncState.grantedPermissions",
+      "DiscordGuildSyncState.missingPermissions",
+      "DiscordGuildSyncState.requiredPermissions",
+      "LootlogConfigNpc.allowedRarities",
+      "Role.permissions",
+      "UserGuildTimerSettings.hiddenTimers",
+      "UserGuildTimerSettings.pinnedTimers",
+      "UserSettings.guildsOrder",
+    ];
+    expect(
+      nullableColumns.map((name) => {
+        const column = EXPECTED_API_CATALOG.columns.find(
+          ({ tableName, columnName }) => `${tableName}.${columnName}` === name,
+        );
+        return [name, column?.isNullable];
+      }),
+    ).toEqual(nullableColumns.map((name) => [name, true]));
+
+    expect(
+      EXPECTED_API_CATALOG.enums.find(({ name }) => name === "Permission")
+        ?.values,
+    ).toEqual([
+      "OWNER",
+      "ADMIN",
+      "LOOTLOG_MANAGE",
+      "LOOTLOG_ACCESS",
+      "LOOTLOG_LOOTS_READ",
+      "LOOTLOG_LOOTS_WRITE",
+      "LOOTLOG_LOOTS_TITANS_READ",
+      "LOOTLOG_LOOTS_HEROES_READ",
+      "LOOTLOG_TIMERS_READ",
+      "LOOTLOG_TIMERS_WRITE",
+      "LOOTLOG_TIMERS_RESET",
+      "LOOTLOG_TIMERS_DELETE",
+      "LOOTLOG_TIMERS_TITANS_READ",
+      "LOOTLOG_TIMERS_HEROES_READ",
+      "LOOTLOG_RESERVATIONS_READ",
+      "LOOTLOG_RESERVATIONS_WRITE",
+      "LOOTLOG_MEMBERS_READ",
+      "LOOTLOG_CHAT_READ",
+      "LOOTLOG_CHAT_WRITE",
+      "LOOTLOG_CHAT_TITANS_READ",
+      "LOOTLOG_CHAT_HEROES_READ",
+      "LOOTLOG_NOTIFICATIONS_READ",
+      "LOOTLOG_NOTIFICATIONS_SEND",
+      "LOOTLOG_NOTIFICATIONS_TITANS_READ",
+      "LOOTLOG_NOTIFICATIONS_HEROES_READ",
+      "LOOTLOG_EVENTS_MANAGE",
+      "LOOTLOG_EVENTS_READ",
+      "LOOTLOG_EVENTS_WRITE",
+      "LOOTLOG_ONLINE_PLAYERS_READ",
+      "LOOTLOG_DOCS_READ",
+      "LOOTLOG_DOCS_WRITE",
+      "LOOTLOG_LOOTS_ARCHIVE",
+    ]);
+    expect(EXPECTED_API_CATALOG.constraints).toContain(
+      "ReservationShare_distinct_guilds_check",
+    );
+  });
+
   it("keeps the expected catalog hash deterministic", () => {
     const hash = createHash("sha256")
       .update(JSON.stringify(EXPECTED_API_CATALOG))
