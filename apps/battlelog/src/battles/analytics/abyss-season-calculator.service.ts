@@ -1,10 +1,10 @@
 import type { AbyssSeason } from "#src/battles/analytics/battle-statistics-response";
-import type { BattleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
+import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
 import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-analytics.types";
 
 const ABYSS_SEASON_GAP_MS = 14 * 24 * 60 * 60 * 1000;
 
-export const makeAbyssSeasonCalculator = (domain: BattleAnalyticsDomain) => ({
+export const abyssSeasonCalculator = {
   calculateSeasons(
     sortedBattles: InflatedBattleWithWarriors[],
     characterIds: Set<string>,
@@ -20,7 +20,7 @@ export const makeAbyssSeasonCalculator = (domain: BattleAnalyticsDomain) => ({
           ABYSS_SEASON_GAP_MS;
 
       if (startsNewSeason) {
-        seasons.push(buildSeasonSummary(domain, seasonBattles, characterIds));
+        seasons.push(buildSeasonSummary(seasonBattles, characterIds));
         seasonBattles = [];
       }
 
@@ -28,15 +28,14 @@ export const makeAbyssSeasonCalculator = (domain: BattleAnalyticsDomain) => ({
     }
 
     if (seasonBattles.length > 0) {
-      seasons.push(buildSeasonSummary(domain, seasonBattles, characterIds));
+      seasons.push(buildSeasonSummary(seasonBattles, characterIds));
     }
 
     return seasons.reverse();
   },
-});
+};
 
 const buildSeasonSummary = (
-  domain: BattleAnalyticsDomain,
   seasonBattles: InflatedBattleWithWarriors[],
   characterIds: Set<string>,
 ): AbyssSeason => {
@@ -93,7 +92,3 @@ const buildSeasonSummary = (
     totalPointsGained: hasPoints ? totalPointsGained : null,
   };
 };
-
-export type AbyssSeasonCalculator = ReturnType<
-  typeof makeAbyssSeasonCalculator
->;

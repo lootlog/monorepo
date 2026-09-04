@@ -26,6 +26,7 @@
     "./runtime-environment": "./src/runtime-environment.ts",
     "./settings-documents": "./src/settings-documents.ts",
     "./sound-settings": "./src/sound-settings.ts",
+    "./stable-json": "./src/stable-json.ts",
     "./timer-settings": "./src/timer-settings.ts",
     "./user-preferences": "./src/user-preferences.ts"
   },

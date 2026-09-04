@@ -1,11 +1,9 @@
 import type { PlayerVsPlayerBattle } from "#src/battles/analytics/battle-statistics-response";
 import type { PlayerVsPlayerQuery } from "#src/battles/analytics/query-battle-statistics";
-import type { BattleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
+import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
 import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-analytics.types";
 
-export const makePlayerVsPlayerCalculator = (
-  domain: BattleAnalyticsDomain,
-) => ({
+export const playerVsPlayerCalculator = {
   calculateBattles(
     battles: InflatedBattleWithWarriors[],
     characterIds: Set<string>,
@@ -41,7 +39,7 @@ export const makePlayerVsPlayerCalculator = (
         };
       });
   },
-});
+};
 
 const shouldIncludeBattle = (
   battle: InflatedBattleWithWarriors,
@@ -54,7 +52,3 @@ const shouldIncludeBattle = (
     (warrior) => warrior.originalId === query.opponentId,
   );
 };
-
-export type PlayerVsPlayerCalculator = ReturnType<
-  typeof makePlayerVsPlayerCalculator
->;

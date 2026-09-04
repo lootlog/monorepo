@@ -34,11 +34,6 @@ describe("apiRuntimeConfiguration", () => {
       enabled: "true",
       retentionDays: 30,
     });
-    expect(config.performanceDiagnostics).toEqual({
-      enabled: false,
-      thresholdMilliseconds: 50,
-      sampleRate: 1,
-    });
     expect(config.nodeWarningDiagnosticsEnabled).toBe(false);
     expect(config.postgresqlConnectionUri).toBeUndefined();
   });
@@ -65,27 +60,17 @@ describe("apiRuntimeConfiguration", () => {
     const config = await Effect.runPromise(
       loadWith({
         ...requiredEnvironment,
-        PERF_DIAGNOSTICS_ENABLED: "YES",
         NODE_WARNING_DIAGNOSTICS_ENABLED: "unexpected-value",
       }),
     );
 
-    expect(config.performanceDiagnostics.enabled).toBe(true);
     expect(config.nodeWarningDiagnosticsEnabled).toBe(false);
   });
 
-  it("fails closed for missing required input and invalid bounded numbers", () => {
+  it("fails closed for missing required input", () => {
     const missingRabbit = Effect.runSyncExit(
       loadWith({ ...requiredEnvironment, RABBITMQ_URI: undefined }),
     );
-    const invalidSampleRate = Effect.runSyncExit(
-      loadWith({
-        ...requiredEnvironment,
-        PERF_DIAGNOSTICS_SAMPLE_RATE: "1.1",
-      }),
-    );
-
     expect(Exit.isFailure(missingRabbit)).toBe(true);
-    expect(Exit.isFailure(invalidSampleRate)).toBe(true);
   });
 });

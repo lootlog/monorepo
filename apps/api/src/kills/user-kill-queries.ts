@@ -2,6 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userKillStatsBucketTable,
@@ -36,30 +37,12 @@ export interface UserKillQueriesCache {
   ) => Effect.Effect<void, unknown>;
 }
 
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) {
-    return `[${value.map(stableSerialize).join(",")}]`;
-  }
-
-  if (value && typeof value === "object") {
-    const entries = Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-
-    return `{${entries
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`)
-      .join(",")}}`;
-  }
-
-  return JSON.stringify(value);
-};
-
 const cacheKey = (
   scope: string,
   userId: string,
   params: Record<string, unknown>,
 ) =>
-  `${CACHE_PREFIX}:${scope}:${userId}:${Buffer.from(stableSerialize(params)).toString("base64url")}`;
+  `${CACHE_PREFIX}:${scope}:${userId}:${Buffer.from(stableJsonStringify(params)).toString("base64url")}`;
 
 type UserStat =
   | typeof userKillStatsTable.$inferSelect

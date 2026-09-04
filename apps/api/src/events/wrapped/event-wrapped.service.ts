@@ -2,6 +2,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Logger } from "#src/shared/application-logger";
 import type { Permission } from "@lootlog/schema/permissions";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import type {
   guildTable,
   itemSnapshotTable,
@@ -403,27 +404,9 @@ export const makeEventWrapped = (
         .sort((leftRole, rightRole) => leftRole.id.localeCompare(rightRole.id)),
     };
 
-    return Buffer.from(stableSerialize(visibilityScope)).toString("base64url");
-  }
-
-  function stableSerialize(value: unknown): string {
-    if (Array.isArray(value)) {
-      return `[${value.map((entry) => stableSerialize(entry)).join(",")}]`;
-    }
-
-    if (value && typeof value === "object") {
-      const entries = Object.entries(value)
-        .filter(([, entry]) => entry !== undefined)
-        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-
-      return `{${entries
-        .map(
-          ([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`,
-        )
-        .join(",")}}`;
-    }
-
-    return JSON.stringify(value);
+    return Buffer.from(stableJsonStringify(visibilityScope)).toString(
+      "base64url",
+    );
   }
 
   function getEventLoots(params: {

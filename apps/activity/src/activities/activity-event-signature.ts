@@ -1,15 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-const stableStringify = (value: unknown): string =>
-  JSON.stringify(value, (_key, entry) =>
-    entry && typeof entry === "object" && !Array.isArray(entry)
-      ? Object.keys(entry)
-          .sort()
-          .reduce<Record<string, unknown>>((result, key) => {
-            result[key] = entry[key];
-            return result;
-          }, {})
-      : entry,
-  );
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 export const ACTIVITY_EVENT_SIGNATURE_HEADER = "x-lootlog-activity-signature";
 
@@ -27,7 +17,7 @@ export function verifyActivityEventSignature({
   }
 
   const expectedSignature = createHmac("sha256", secret)
-    .update(stableStringify(payload))
+    .update(stableJsonStringify(payload))
     .digest("hex");
 
   const expectedBuffer = Buffer.from(expectedSignature, "hex");
@@ -42,6 +32,6 @@ export function verifyActivityEventSignature({
 
 export function signActivityEvent(payload: unknown, secret: string): string {
   return createHmac("sha256", secret)
-    .update(stableStringify(payload))
+    .update(stableJsonStringify(payload))
     .digest("hex");
 }

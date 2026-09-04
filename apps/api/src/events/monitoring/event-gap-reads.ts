@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -22,19 +23,6 @@ export class EventGapReadError extends TaggedErrorClass<EventGapReadError>()(
   "EventGapReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(",")}]`;
-  if (value instanceof Date) return JSON.stringify(value.toISOString());
-  if (value && typeof value === "object") {
-    return `{${Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-};
 
 export const makeEventGapReads = (
   database: typeof ApiDatabase.Service,
@@ -61,7 +49,7 @@ export const makeEventGapReads = (
       guildId,
       eventId,
       scope,
-      Buffer.from(stableSerialize(params)).toString("base64url"),
+      Buffer.from(stableJsonStringify(params)).toString("base64url"),
     ].join(":");
     const codec = makeJsonCodec(Schema.toType(schema), {
       stringify: (value: unknown) => superjson.stringify(value),

@@ -31,7 +31,6 @@ vi.mock("#src/config/env", () => ({
     TIMER_RETENTION_DAYS: 7,
     RESERVATIONS_CLEANUP_ENABLED: "true",
     RESERVATIONS_RETENTION_DAYS: 30,
-    PERF_DIAGNOSTICS_ENABLED: false,
   },
 }));
 

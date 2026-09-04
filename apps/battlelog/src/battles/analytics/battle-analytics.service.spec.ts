@@ -5,17 +5,10 @@ import {
   type BattleAnalytics,
 } from "./battle-analytics.service.js";
 import { makeBattleAnalyticsCache } from "./battle-analytics-cache.service.js";
-import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
-import { battleAnalyticsPaging } from "./battle-analytics-paging.service.js";
 import {
   makeBattleAnalyticsQuery,
   type BattleAnalyticsQuery,
 } from "./battle-analytics-query.service.js";
-import { makeAbyssSeasonCalculator } from "./abyss-season-calculator.service.js";
-import { makeBattleSummaryCalculator } from "./battle-summary-calculator.service.js";
-import { makeCombatProfileCalculator } from "./combat-profile-calculator.service.js";
-import { makeHeadToHeadCalculator } from "./head-to-head-calculator.service.js";
-import { makePlayerVsPlayerCalculator } from "./player-vs-player-calculator.service.js";
 import type { DrizzleDatabase } from "#src/database/database";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import type {
@@ -156,21 +149,9 @@ describe("battle analytics", () => {
     ) as unknown as DrizzleDatabase;
     const redis = mockRedisService as unknown as RedisStore;
     const cacheService = makeBattleAnalyticsCache(redis);
-    const domain = battleAnalyticsDomain;
     queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
     service = runEffectService(
-      makeBattleAnalytics(
-        drizzle,
-        cacheService,
-        queryService,
-        domain,
-        battleAnalyticsPaging,
-        makeBattleSummaryCalculator(domain),
-        makeCombatProfileCalculator(domain),
-        makeHeadToHeadCalculator(domain),
-        makePlayerVsPlayerCalculator(domain),
-        makeAbyssSeasonCalculator(domain),
-      ),
+      makeBattleAnalytics(drizzle, cacheService, queryService),
     );
     drizzleService = mockDrizzleService;
     redisService = mockRedisService;

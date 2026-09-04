@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
-import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
-import { makeCombatProfileCalculator } from "./combat-profile-calculator.service.js";
+import { combatProfileCalculator } from "./combat-profile-calculator.service.js";
 
 type TestBattleInput = {
   id: string;
@@ -73,7 +72,7 @@ function createBattle({
 }
 
 describe("combat-profile calculator", () => {
-  const service = makeCombatProfileCalculator(battleAnalyticsDomain);
+  const service = combatProfileCalculator;
   const characterIds = new Set(["character-1"]);
 
   it("keeps strongest combat highlights and ignores flee battles", () => {
