@@ -25,6 +25,7 @@ type Scope = typeof SubscriptionScope.Type;
 type Event = typeof ServerEvent.Type;
 type Response = typeof RealtimeResponse.Type;
 
+// ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const ConnectionRegistration = Schema.Struct({
   connectionId: Schema.String,
@@ -187,13 +188,21 @@ export class RealtimeHub {
     return this.sendFrame(socket, event);
   }
 
-  async publishToScope(scope: Scope, event: Event): Promise<void> {
+  async publishToScope(
+    scope: Scope,
+    event: Event,
+    publicationId?: string,
+  ): Promise<void> {
     const message = this.createFederatedMessage({
+      id: publicationId
+        ? JSON.stringify([getScopeKey(scope), event.type, publicationId])
+        : undefined,
       scopeKey: getScopeKey(scope),
       scope,
       frame: event,
     });
     this.deliver(message);
+    // Retry federation even when this instance already delivered the publication.
     await this.redis.publish(message);
   }
 
@@ -302,6 +311,7 @@ export class RealtimeHub {
   }
 
   private createFederatedMessage(options: {
+    readonly id?: string;
     readonly scopeKey?: string;
     readonly scope?: Scope;
     readonly scopes?: ReadonlyArray<Scope>;
@@ -316,7 +326,7 @@ export class RealtimeHub {
     readonly frame: Event;
   }): FederatedRealtimeMessage {
     return {
-      id: crypto.randomUUID(),
+      id: options.id ?? crypto.randomUUID(),
       sourceInstanceId: this.instanceId,
       scopeKey: options.scopeKey,
       scope: options.scope,

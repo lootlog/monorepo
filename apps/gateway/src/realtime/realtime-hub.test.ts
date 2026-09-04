@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import type {
+  RabbitDelivery,
+  RabbitMessagingService,
+} from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type {
@@ -7,6 +12,7 @@ import type {
   RedisGatewayStore,
 } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
+import { RabbitBridge } from "#src/rabbit/rabbit-bridge";
 import type { GatewaySocket, SessionData } from "./session.js";
 
 class FederationBus {
@@ -83,6 +89,145 @@ const makeSocket = (
 };
 
 describe("RealtimeHub federation", () => {
+  test("deduplicates outbox replays across gateways without losing a failed federation publish", async () => {
+    const bus = new FederationBus();
+    const firstStore = new FakeRedisStore(bus);
+    const first = new RealtimeHub(
+      config,
+      firstStore as unknown as RedisGatewayStore,
+    );
+    const second = new RealtimeHub(
+      config,
+      new FakeRedisStore(bus) as unknown as RedisGatewayStore,
+    );
+    const targets = [first, second].map((hub, index) => {
+      const target = makeSocket(makeSession(`loot-${index}`));
+      for (const organizationId of ["organization-1", "organization-2"]) {
+        const scope = { topic: "organization.loots", organizationId } as const;
+        target.socket.data.subscriptions.set(getScopeKey(scope), scope);
+      }
+      hub.register(target.socket);
+      return target;
+    });
+    const handlers = [first, second].map(
+      () =>
+        new Map<
+          string,
+          (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+        >(),
+    );
+    const bridges = [first, second].map((hub, index) => {
+      const messaging: RabbitMessagingService = {
+        publish: () => Effect.void,
+        ack: () => Effect.void,
+        nack: () => Effect.void,
+        consume: (options, handler) =>
+          Effect.sync(() => {
+            handlers[index]?.set(options.queue, handler);
+            return { consumerTag: options.queue, cancel: Effect.void };
+          }),
+      };
+      const unexpected = () => {
+        throw new Error("Unexpected non-loot handler");
+      };
+      return new RabbitBridge(
+        messaging,
+        hub,
+        { rebalanceAcrossInstances: unexpected },
+        { coverageForMap: unexpected },
+        { publish: unexpected },
+      );
+    });
+    const deliver = (
+      instance: number,
+      messageId?: string,
+      guildId = "organization-1",
+    ) => {
+      const handler = handlers[instance]?.get("gateway-guilds-loots-create");
+      if (!handler) throw new Error("Loot consumer not started");
+      const content = Buffer.from(
+        JSON.stringify({ version: 2, guildId, lootId: 42, npcs: [] }),
+      );
+      const properties: RabbitDelivery["properties"] = {
+        messageId,
+        contentType: "application/json",
+        contentEncoding: undefined,
+        headers: {},
+        deliveryMode: 2,
+        priority: undefined,
+        correlationId: undefined,
+        replyTo: undefined,
+        expiration: undefined,
+        timestamp: undefined,
+        type: undefined,
+        userId: undefined,
+        appId: undefined,
+        clusterId: undefined,
+      };
+      const fields = {
+        consumerTag: "gateway-guilds-loots-create",
+        deliveryTag: 1,
+        exchange: "default",
+        routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+        redelivered: false,
+      };
+      return handler({
+        content,
+        properties,
+        ...fields,
+        raw: { content, properties, fields },
+      });
+    };
+    const frames = () =>
+      targets.map((target) =>
+        target.sent.map((bytes) => decodeRealtimeFrame(bytes)),
+      );
+    const event = (guildId = "organization-1") =>
+      ({
+        v: 1,
+        type: "loot.created",
+        data: { version: 2, guildId, lootId: 42, npcs: [] },
+      }) as const;
+
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* first.start();
+          yield* second.start();
+          for (const bridge of bridges) yield* bridge.start();
+          const publish = firstStore.publish.bind(firstStore);
+          firstStore.publish = async () => {
+            throw new Error("Redis unavailable");
+          };
+          const failed = yield* deliver(0, "loot-publication:1").pipe(
+            Effect.result,
+          );
+          expect(failed._tag).toBe("Failure");
+          expect(frames()).toEqual([[event()], []]);
+
+          firstStore.publish = publish;
+          yield* deliver(0, "loot-publication:1");
+          yield* deliver(1, "loot-publication:1");
+          expect(frames()).toEqual([[event()], [event()]]);
+
+          yield* deliver(0, "loot-publication:2");
+          yield* deliver(1, "loot-publication:1", "organization-2");
+          yield* deliver(0);
+          yield* deliver(1);
+          const expected = [
+            event(),
+            event(),
+            event("organization-2"),
+            event(),
+            event(),
+          ];
+          expect(frames()).toEqual([expected, expected]);
+          for (const bridge of bridges) yield* bridge.stop();
+        }),
+      ),
+    );
+  });
+
   test("sends readable JSON to local diagnostic sockets", () => {
     const hub = new RealtimeHub(
       config,
