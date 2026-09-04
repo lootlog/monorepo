@@ -16,7 +16,7 @@ const HTTP_METHODS = new Set([
   "trace",
 ]);
 const REALTIME_TICKET_OPERATION = "POST /auth/realtime-ticket";
-const GUILD_METADATA_FORBIDDEN_OPERATIONS = new Set([
+const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}",
   "GET /guilds/{guildId}/permissions",
 ]);
@@ -199,11 +199,10 @@ const normalizeAllowedChanges = (
     normalized = removeResponseStatus(normalized, "503");
   }
 
-  if (
-    service === "api" &&
-    GUILD_METADATA_FORBIDDEN_OPERATIONS.has(operationKey)
-  ) {
+  if (service === "api" && GUILD_METADATA_ERROR_OPERATIONS.has(operationKey)) {
     normalized = removeResponseStatus(normalized, "403");
+    // Missing Organizations now return 404 instead of an internal server error.
+    normalized = removeResponseStatus(normalized, "404");
   }
   if (service === "auth" && operationKey === "GET /auth/verify") {
     normalized = removeTicketVerifyHeaders(normalized);

@@ -541,6 +541,8 @@ paths:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
         "403":
           description: <No Content>
+        "404":
+          description: <No Content>
       description: Retrieve guild information by guild ID
       summary: Get guild by ID
   /guilds/{guildId}/config:
@@ -669,6 +671,8 @@ paths:
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
         "403":
+          description: <No Content>
+        "404":
           description: <No Content>
       description: Retrieve resolved permissions for the current member in a guild
       summary: Get guild permissions

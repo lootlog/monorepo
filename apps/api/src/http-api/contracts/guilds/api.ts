@@ -63,7 +63,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get("GuildsControllerGetGuildById", "/guilds/:guildId", {
     params: OrganizationPath,
     success: OrganizationSummary,
-    error: HttpApiSchema.Empty(403),
+    error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getGuildById")
@@ -111,7 +111,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: OrganizationPath,
       success: OrganizationCapabilitiesResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
