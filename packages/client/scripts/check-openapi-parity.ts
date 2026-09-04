@@ -193,7 +193,27 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
   );
 };
 
-const normalizeAllowedChanges = (
+const assertOrganizationNotFoundResponse = (
+  operation: JsonValue,
+  operationKey: string,
+): void => {
+  const responses =
+    operation !== null &&
+    typeof operation === "object" &&
+    !Array.isArray(operation)
+      ? operation["responses"]
+      : undefined;
+  if (
+    responses === null ||
+    typeof responses !== "object" ||
+    Array.isArray(responses) ||
+    responses["404"] === undefined
+  ) {
+    throw new Error(`${operationKey} must declare a 404 response`);
+  }
+};
+
+export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
   operation: JsonValue,
@@ -220,6 +240,7 @@ const normalizeAllowedChanges = (
     service === "api" &&
     ORGANIZATION_NOT_FOUND_OPERATIONS.has(operationKey)
   ) {
+    assertOrganizationNotFoundResponse(normalized, operationKey);
     normalized = removeResponseStatus(normalized, "404");
   }
   if (service === "auth" && operationKey === "GET /auth/verify") {
