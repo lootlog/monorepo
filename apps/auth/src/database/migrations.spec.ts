@@ -200,7 +200,7 @@ describe("initializeAuthMigrations", () => {
     const migrationInserts = queries.filter(({ sql }) =>
       sql.includes("INSERT INTO drizzle.__drizzle_migrations"),
     );
-    expect(migrationInserts).toHaveLength(2);
+    expect(migrationInserts).toHaveLength(3);
     expect(migrationInserts[0]?.values).toHaveLength(2);
   });
 
