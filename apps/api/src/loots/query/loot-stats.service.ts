@@ -4,7 +4,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { Logger } from "#src/shared/application-logger";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import { LootStatsResponseDto_Output } from "#src/http-api/contracts/loots/schemas";
+import { LootStatsResponseDto_Output } from "#src/contracts/loots/schemas";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";

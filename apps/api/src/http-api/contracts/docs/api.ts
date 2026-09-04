@@ -29,7 +29,7 @@ import {
   DocsControllerUpdateDocument200,
   DocsControllerUpdateDocumentPathParams,
   DocsControllerUpdateDocumentRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/docs/schemas";
 
 export class DocsGroup extends HttpApiGroup.make("docs").add(
   HttpApiEndpoint.get("DocsControllerGetDocuments", "/guilds/:guildId/docs", {

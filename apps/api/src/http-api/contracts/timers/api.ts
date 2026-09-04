@@ -32,7 +32,7 @@ import {
   TimersControllerSearchNpcsWithTimerData200,
   TimersControllerSearchNpcsWithTimerDataPathParams,
   TimersControllerSearchNpcsWithTimerDataQuery,
-} from "./schemas.js";
+} from "#src/contracts/timers/schemas";
 
 export class TimersGroup extends HttpApiGroup.make("timers").add(
   HttpApiEndpoint.get("TimersControllerGetAllTimers", "/timers", {

@@ -1,4 +1,4 @@
-import { vi } from "#test/bun-test";
+import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { Effect, Schema } from "effect";
 import type { JsonCodec, RedisService } from "#src/redis/redis.service";
 import { EventKillHistoryResponse } from "#src/events/kills/event-kill-response.schema";

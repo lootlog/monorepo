@@ -19,7 +19,7 @@ import {
   LootlogConfigControllerGetLootlogConfig200,
   LootlogConfigControllerUpdateNpc200,
   type UpdateLootlogConfigNpcDto,
-} from "../../contracts/lootlog-config/schemas.js";
+} from "#src/contracts/lootlog-config/schemas";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",

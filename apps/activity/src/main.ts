@@ -1,3 +1,4 @@
+import { RabbitMessaging } from "@lootlog/messaging";
 import { BunRuntime } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
@@ -29,5 +30,5 @@ BunRuntime.runMain(
       Layer.provide(FetchHttpClient.layer),
       Layer.provide(ObservabilityLive),
     ),
-  ),
+  ).pipe(RabbitMessaging.supervised),
 );

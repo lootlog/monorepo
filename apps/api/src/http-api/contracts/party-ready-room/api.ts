@@ -30,7 +30,7 @@ import {
   PartyReadyRoomControllerWithdraw200,
   PartyReadyRoomControllerWithdrawPathParams,
   PartyReadyRoomControllerWithdrawRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/party-ready-room/schemas";
 
 export class PartyReadyRoomGroup extends HttpApiGroup.make(
   "party-ready-room",

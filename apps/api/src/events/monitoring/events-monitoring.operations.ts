@@ -5,7 +5,7 @@ type Role = typeof roleTable.$inferSelect;
 import {
   CloseRespawnWindowDto,
   OpenRespawnWindowDto,
-} from "#src/http-api/contracts/events/schemas";
+} from "#src/contracts/events/schemas";
 import type { EventCoordination } from "#src/events/coordination/event-coordination.service";
 import type { EventKills } from "#src/events/kills/event-kill.service";
 import type { EventRespawn } from "#src/events/respawn/event-respawn.service";

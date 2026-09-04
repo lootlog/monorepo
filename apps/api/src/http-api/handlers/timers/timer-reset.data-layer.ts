@@ -20,10 +20,10 @@ import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
-import type { ResetTimerDto } from "../../contracts/timers/schemas.js";
+import type { ResetTimerDto } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
-import { mapTimerResponse } from "./timer-response.js";
+import { mapTimerResponse } from "#src/timers/timer-projection";
 
 export interface ResetTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;

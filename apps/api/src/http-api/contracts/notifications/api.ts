@@ -63,7 +63,7 @@ import {
   NotificationsUserControllerUpdateUserTarget200,
   NotificationsUserControllerUpdateUserTargetPathParams,
   NotificationsUserControllerUpdateUserTargetRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/notifications/schemas";
 
 export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   HttpApiEndpoint.get(

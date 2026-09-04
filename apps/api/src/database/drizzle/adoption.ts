@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import { createHash } from "node:crypto";
 import {
   BASELINE_MIGRATION_CREATED_AT,
@@ -9,10 +10,10 @@ import {
 } from "./expected-catalog.js";
 
 export interface SqlTransactionClient {
-  query<Row extends Record<string, unknown> = Record<string, unknown>>(
+  query(
     statement: string,
     values?: ReadonlyArray<unknown>,
-  ): Promise<{ readonly rows: ReadonlyArray<Row> }>;
+  ): Promise<{ readonly rows: ReadonlyArray<Record<string, unknown>> }>;
 }
 
 export type AdoptionResult =
@@ -20,20 +21,35 @@ export type AdoptionResult =
   | { readonly status: "adopted"; readonly fingerprint: string }
   | { readonly status: "already-adopted"; readonly fingerprint: string };
 
-type ActualColumn = {
-  readonly tableName: string;
-  readonly columnName: string;
-  readonly formattedType: string;
-  readonly isNullable: boolean;
-  readonly hasDefault: boolean;
-};
+const ActualColumn = Schema.Struct({
+  tableName: Schema.String,
+  columnName: Schema.String,
+  formattedType: Schema.String,
+  isNullable: Schema.Boolean,
+  hasDefault: Schema.Boolean,
+});
+const EnumRow = Schema.Struct({ name: Schema.String, value: Schema.String });
+const NameRow = Schema.Struct({ name: Schema.String });
+const AdoptionMarker = Schema.Struct({
+  fingerprint: Schema.String,
+  migrationEvidenceHash: Schema.String,
+});
+const MigrationJournalRow = Schema.Struct({
+  hash: Schema.String,
+  createdAt: Schema.String,
+  name: Schema.NullOr(Schema.String),
+});
 
-type EnumRow = {
-  readonly name: string;
-  readonly value: string;
-};
-
-type NameRow = { readonly name: string };
+const queryRows = async <A>(
+  client: SqlTransactionClient,
+  row: Schema.Codec<A>,
+  statement: string,
+  values?: ReadonlyArray<unknown>,
+) => ({
+  rows: Schema.decodeUnknownSync(Schema.Array(row))(
+    (await client.query(statement, values)).rows,
+  ),
+});
 
 export class ApiDatabaseAdoptionError extends Error {
   readonly expectedFingerprint = EXPECTED_API_CATALOG_SHA256;
@@ -51,7 +67,10 @@ const hashCatalog = (catalog: unknown) =>
   createHash("sha256").update(JSON.stringify(catalog)).digest("hex");
 
 const loadActualCatalog = async (client: SqlTransactionClient) => {
-  const tables = await client.query<NameRow>(`
+  const tables = await queryRows(
+    client,
+    NameRow,
+    `
     /* api-adoption:tables */
     SELECT table_name AS name
     FROM information_schema.tables
@@ -59,10 +78,13 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
       AND table_type = 'BASE TABLE'
       AND table_name <> '_prisma_migrations'
     ORDER BY table_name
-  `);
+  `,
+  );
 
   const tableNames = tables.rows.map(({ name }) => name).sort();
-  const columns = await client.query<ActualColumn>(
+  const columns = await queryRows(
+    client,
+    ActualColumn,
     `
     /* api-adoption:columns */
     SELECT
@@ -86,7 +108,10 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
     [EXPECTED_API_CATALOG.tables],
   );
 
-  const enumRows = await client.query<EnumRow>(`
+  const enumRows = await queryRows(
+    client,
+    EnumRow,
+    `
     /* api-adoption:enums */
     SELECT enum_type.typname AS name, enum_value.enumlabel AS value
     FROM pg_catalog.pg_type enum_type
@@ -94,7 +119,8 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
     JOIN pg_catalog.pg_enum enum_value ON enum_value.enumtypid = enum_type.oid
     WHERE namespace.nspname = 'public'
     ORDER BY enum_type.typname, enum_value.enumsortorder
-  `);
+  `,
+  );
   const enumValues = new Map<string, string[]>();
   for (const row of enumRows.rows) {
     const values = enumValues.get(row.name) ?? [];
@@ -102,7 +128,9 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
     enumValues.set(row.name, values);
   }
 
-  const indexes = await client.query<NameRow>(
+  const indexes = await queryRows(
+    client,
+    NameRow,
     `
     /* api-adoption:indexes */
     SELECT index_class.relname AS name
@@ -120,7 +148,9 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
     [EXPECTED_API_CATALOG.tables],
   );
 
-  const constraints = await client.query<NameRow>(
+  const constraints = await queryRows(
+    client,
+    NameRow,
     `
     /* api-adoption:constraints */
     SELECT constraint_definition.conname AS name
@@ -151,17 +181,18 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
 };
 
 const assertKnownMarker = async (client: SqlTransactionClient) => {
-  const marker = await client.query<{
-    fingerprint: string;
-    migrationEvidenceHash: string;
-  }>(`
+  const marker = await queryRows(
+    client,
+    AdoptionMarker,
+    `
     /* api-adoption:marker */
     SELECT
       fingerprint,
       migration_evidence_hash AS "migrationEvidenceHash"
     FROM drizzle.__lootlog_adoption
     WHERE component = 'api'
-  `);
+  `,
+  );
   const existing = marker.rows[0];
   if (!existing) return false;
   if (
@@ -177,16 +208,16 @@ const assertKnownMarker = async (client: SqlTransactionClient) => {
 };
 
 const assertKnownMigrationJournal = async (client: SqlTransactionClient) => {
-  const journal = await client.query<{
-    hash: string;
-    createdAt: string;
-    name: string | null;
-  }>(`
+  const journal = await queryRows(
+    client,
+    MigrationJournalRow,
+    `
     /* api-adoption:migration-journal */
     SELECT hash, created_at::text AS "createdAt", name
     FROM drizzle.__drizzle_migrations
     ORDER BY id
-  `);
+  `,
+  );
   if (journal.rows.length === 0) return;
   const baseline = journal.rows[0];
   if (

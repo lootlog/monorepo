@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
 import { filterHeroesByLevel } from "./event-hero-visibility.js";
 

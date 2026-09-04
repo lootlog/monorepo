@@ -1,4 +1,4 @@
-import type { SendMessageDto } from "#src/http-api/contracts/chat/schemas";
+import type { SendMessageDto } from "#src/contracts/chat/schemas";
 
 export type ChatStoredMessage = SendMessageDto & {
   id: string;

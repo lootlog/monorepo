@@ -20,14 +20,11 @@ const adoptDatabase = Effect.gen(function* () {
   const sql = yield* PgClient.PgClient;
   const connection = yield* sql.reserve;
   const client: SqlTransactionClient = {
-    query: async <Row extends Record<string, unknown>>(
-      statement: string,
-      values: ReadonlyArray<unknown> = [],
-    ) => {
+    query: async (statement: string, values: ReadonlyArray<unknown> = []) => {
       const rows = await Effect.runPromise(
         connection.execute(statement, values, undefined),
       );
-      return { rows: rows as ReadonlyArray<Row> };
+      return { rows };
     },
   };
 
@@ -46,6 +43,8 @@ export const migrateApiDatabase = Effect.gen(function* () {
   });
 });
 
-BunRuntime.runMain(
-  migrateApiDatabase.pipe(Effect.scoped, Effect.provide(ApiDatabaseLive)),
-);
+if (import.meta.main) {
+  BunRuntime.runMain(
+    migrateApiDatabase.pipe(Effect.scoped, Effect.provide(ApiDatabaseLive)),
+  );
+}

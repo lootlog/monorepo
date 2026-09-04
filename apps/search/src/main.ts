@@ -1,3 +1,4 @@
+import { RabbitMessaging } from "@lootlog/messaging";
 import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
@@ -29,5 +30,9 @@ BunRuntime.runMain(
   Effect.gen(function* () {
     yield* installScopedLogRunner;
     yield* Layer.launch(SearchApplication);
-  }).pipe(Effect.scoped, Effect.provide(ObservabilityLive)),
+  }).pipe(
+    Effect.scoped,
+    Effect.provide(ObservabilityLive),
+    RabbitMessaging.supervised,
+  ),
 );

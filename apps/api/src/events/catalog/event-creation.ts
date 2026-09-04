@@ -15,7 +15,7 @@ import {
 import type { RedisService } from "#src/redis/redis.service";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import type { CreateEventDto } from "#src/http-api/contracts/events/schemas";
+import type { CreateEventDto } from "#src/contracts/events/schemas";
 import { attachComputedEventActive } from "#src/events/monitoring/event-activity";
 
 export class EventCreationError extends TaggedErrorClass<EventCreationError>()(

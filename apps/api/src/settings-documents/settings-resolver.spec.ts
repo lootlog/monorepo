@@ -8,7 +8,7 @@ import {
   SETTINGS_CATALOG,
 } from "@lootlog/domain/settings-documents";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
-import { describe, expect, it } from "#test/bun-test";
+import { describe, expect, it } from "bun:test";
 
 describe("settings resolver", () => {
   it("has valid defaults and exactly one inheritance path for every field", () => {

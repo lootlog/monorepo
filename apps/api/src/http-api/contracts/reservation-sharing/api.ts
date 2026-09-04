@@ -18,7 +18,7 @@ import {
   PreviewReservationShareInvitationPathParams,
   RevokeReservationShareInvitationPathParams,
   RevokeReservationSharePathParams,
-} from "./schemas.js";
+} from "#src/contracts/reservation-sharing/schemas";
 
 export class ReservationSharingGroup extends HttpApiGroup.make(
   "reservation-sharing",

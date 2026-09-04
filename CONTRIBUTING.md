@@ -80,6 +80,39 @@ bun run format:check
 Use the narrowest relevant workspace checks while developing. Run every gate
 required by the affected workspace before handoff.
 
+## API architecture and checks
+
+In `apps/api/src`, feature modules own business operations and persistence.
+`contracts/` contains shared input/output schemas used by those modules and HTTP
+adapters. `http-api/` owns route declarations, authentication middleware contracts,
+and handlers. Domain code must not import HTTP handlers or runtime composition.
+
+`runtime/features/` assembles each feature's live dependencies;
+`runtime/api-data-layers.ts` joins those layers for requests and background work.
+`runtime/application/` owns application lifetime, `runtime/background/` owns workers
+and consumers, and `runtime/infrastructure/` owns external clients. Shared timer
+projections live with their feature in `timers/timer-projection.ts`.
+Member refresh job processors live in `members/`; timer and reservation retention
+operations live in `timers/` and `reservations/`. Background runtime code only wires
+these operations to scoped workers, consumers, and schedules.
+
+Run API checks from `apps/api`:
+
+```bash
+bun run typecheck
+bun run test
+bun run test:integration
+bun run test:e2e
+bun run lint
+bun run build
+```
+
+Typecheck includes source and tests. Unit tests run from `src`, including runtime
+and contract tests. Integration and HTTP E2E tests start isolated PostgreSQL and
+Dragonfly containers and apply the complete migration chain; Docker must be
+available. Repository integration tests exercise real database operations, while
+service tests replace dependencies at their public interfaces.
+
 ## Releases
 
 Pull requests do not carry release metadata. Production releases select an

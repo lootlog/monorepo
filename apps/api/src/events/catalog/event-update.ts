@@ -22,7 +22,7 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import type { UpdateEventDto } from "#src/http-api/contracts/events/schemas";
+import type { UpdateEventDto } from "#src/contracts/events/schemas";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import {
   attachComputedEventActive,

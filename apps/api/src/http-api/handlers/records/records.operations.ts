@@ -24,7 +24,7 @@ import type {
   KillsControllerGetUserKillStatsQuery,
   KillsControllerGetUserNpcKills200,
   KillsControllerGetUserNpcKillsQuery,
-} from "../../contracts/kills/schemas.js";
+} from "#src/contracts/kills/schemas";
 import type {
   LootsControllerCountLootsByGuildId200,
   LootsControllerCountLootsByGuildIdQuery,
@@ -42,7 +42,7 @@ import type {
   LootsControllerResolveLootItemByHidQuery,
   LootsControllerUpdateLoot200,
   LootsControllerUpdateLootRequestJson,
-} from "../../contracts/loots/schemas.js";
+} from "#src/contracts/loots/schemas";
 
 type Guild = typeof guildTable.$inferSelect;
 type Role = typeof roleTable.$inferSelect;

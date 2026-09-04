@@ -28,7 +28,7 @@ import {
   KillsControllerGetUserKillStatsQuery,
   KillsControllerGetUserNpcKills200,
   KillsControllerGetUserNpcKillsQuery,
-} from "./schemas.js";
+} from "#src/contracts/kills/schemas";
 
 export class KillsGroup extends HttpApiGroup.make("kills").add(
   HttpApiEndpoint.post("KillsControllerCreateKill", "/kills", {

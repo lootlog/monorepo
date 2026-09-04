@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit",
     "format": "oxfmt src test",
     "test": "bun test",
-    "test:e2e": "bun test test",
+    "test:e2e": "bun test ./test",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun src/openapi/generate-openapi.ts"
   },

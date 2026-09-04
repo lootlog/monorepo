@@ -1,3 +1,4 @@
+import type { EnqueuedTaskPromise } from "meilisearch";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 
@@ -21,3 +22,17 @@ export const attemptMeilisearch = <A>(
       attributes: { adapter: "meilisearch", retryCount: 0 },
     }),
   );
+
+export const completeMeilisearchTask = (
+  operation: string,
+  run: () => EnqueuedTaskPromise,
+) =>
+  attemptMeilisearch(operation, async () => {
+    const task = await run().waitTask();
+    if (task.status !== "succeeded") {
+      throw (
+        task.error ?? new Error(`Meilisearch task ${task.uid} ${task.status}`)
+      );
+    }
+    return task;
+  });

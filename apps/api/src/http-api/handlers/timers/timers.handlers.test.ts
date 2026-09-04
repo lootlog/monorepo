@@ -8,7 +8,7 @@ import {
   TimersControllerResetTimer200,
   type CreateManualTimerDto,
   type ResetTimerDto,
-} from "../../contracts/timers/schemas.js";
+} from "#src/contracts/timers/schemas";
 import {
   createManualGuildTimer,
   deleteGuildTimer,

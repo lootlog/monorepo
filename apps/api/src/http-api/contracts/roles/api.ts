@@ -12,7 +12,7 @@ import {
   RolesControllerUpdateGuildRole200,
   RolesControllerUpdateGuildRolePathParams,
   RolesControllerUpdateGuildRoleRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/roles/schemas";
 
 export class RolesGroup extends HttpApiGroup.make("roles").add(
   HttpApiEndpoint.get(

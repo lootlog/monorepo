@@ -66,7 +66,9 @@ describe("Search Effect modules", () => {
     const client = makeClient(() => ({
       addDocuments: (documents: unknown) => {
         indexed.push(documents);
-        return Promise.resolve({ taskUid: 1 });
+        return {
+          waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
+        };
       },
     }));
 
@@ -112,21 +114,28 @@ describe("Search Effect modules", () => {
     ]);
   });
 
-  test("keeps failed public searches fail-soft", async () => {
+  test("propagates failed public searches", async () => {
     const client = makeClient(() => ({
       search: () => Promise.reject(new Error("search unavailable")),
     }));
 
     const players = makePlayersModule(client, silentLogger);
 
-    expect(await Effect.runPromise(players.getPlayers({ limit: 10 }))).toEqual(
-      [],
-    );
+    expect(
+      await Effect.runPromise(
+        players.getPlayers({ limit: 10 }).pipe(Effect.flip),
+      ),
+    ).toMatchObject({
+      _tag: "SearchOperationFailure",
+      operation: "search.players",
+    });
   });
 
   test("returns a typed failure so Rabbit can requeue failed indexing", async () => {
     const client = makeClient(() => ({
-      addDocuments: () => Promise.reject(new Error("index unavailable")),
+      addDocuments: () => ({
+        waitTask: () => Promise.reject(new Error("index unavailable")),
+      }),
     }));
     const players = makePlayersModule(client, silentLogger);
 
@@ -187,7 +196,9 @@ describe("Search Effect modules", () => {
       getDocument: () => Promise.resolve({ worlds: ["jaruna"] }),
       addDocuments: (documents: unknown) => {
         indexedDocuments = documents;
-        return Promise.resolve({ taskUid: 1 });
+        return {
+          waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
+        };
       },
     }));
     const items = makeItemsModule(client, silentLogger);
@@ -231,7 +242,7 @@ describe("Search Effect modules", () => {
   test("creates missing indexes and applies their searchable fields", async () => {
     const created: string[] = [];
     const searchable: unknown[] = [];
-    const task = { waitTask: () => Promise.resolve() };
+    const task = { waitTask: () => Promise.resolve({ status: "succeeded" }) };
     const client = new Meilisearch({ host: "http://search.invalid" });
     Object.defineProperties(client, {
       getIndex: {

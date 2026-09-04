@@ -9,7 +9,7 @@ import {
   SoundSettingsControllerGetSettings200,
   SoundSettingsControllerUpdateSettings200,
   SoundSettingsControllerUpdateSettingsRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/sound-settings/schemas";
 
 export class SoundSettingsGroup extends HttpApiGroup.make("sound-settings").add(
   HttpApiEndpoint.get("SoundSettingsControllerGetSettings", "/sound-settings", {

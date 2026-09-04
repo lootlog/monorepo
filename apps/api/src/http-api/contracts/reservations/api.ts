@@ -24,7 +24,7 @@ import {
   UpdateMyReservation200,
   UpdateMyReservationPathParams,
   UpdateMyReservationRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/reservations/schemas";
 
 export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
   HttpApiEndpoint.get(

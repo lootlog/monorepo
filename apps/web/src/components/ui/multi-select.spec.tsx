@@ -19,6 +19,32 @@ afterEach(() => {
 });
 
 describe("MultiSelect", () => {
+  it("shows search failure instead of empty or stale results while preserving selected values", () => {
+    render(
+      <MultiSelect
+        controlledSearch
+        errorMessage="Wyszukiwarka niedostępna"
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[
+          { value: "selected", label: "Wybrany" },
+          { value: "stale", label: "Nieaktualny wynik" },
+        ]}
+        searchValue="potwór"
+        value={["selected"]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Wyszukiwarka niedostępna",
+    );
+    expect(screen.queryByText("common.noResults")).toBeNull();
+    expect(
+      screen.queryByRole("option", { name: "Nieaktualny wynik" }),
+    ).toBeNull();
+    expect(screen.getByText("Wybrany")).toBeTruthy();
+  });
+
   it("renders its custom popover trigger without native button warnings", () => {
     const consoleError = vi
       .spyOn(console, "error")

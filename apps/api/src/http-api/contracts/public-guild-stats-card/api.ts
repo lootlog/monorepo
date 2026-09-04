@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { PublicGuildStatsCardControllerGetStatsCardPathParams } from "./schemas.js";
+import { PublicGuildStatsCardControllerGetStatsCardPathParams } from "#src/contracts/public-guild-stats-card/schemas";
 
 export class PublicGuildStatsCardGroup extends HttpApiGroup.make(
   "public-guild-stats-card",

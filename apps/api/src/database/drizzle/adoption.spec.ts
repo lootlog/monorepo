@@ -130,6 +130,28 @@ describe("adoptExistingApiDatabase", () => {
     expect(queries.at(-1)?.statement).toBe("ROLLBACK");
   });
 
+  it("rejects malformed catalog rows before adopting the database", async () => {
+    const { client, queries } = makeClient({
+      catalog: {
+        ...EXPECTED_API_CATALOG,
+        columns: [
+          {
+            tableName: "Guild",
+            columnName: "id",
+            formattedType: "text",
+            isNullable: "false",
+            hasDefault: false,
+          },
+        ],
+      },
+    });
+    await expect(adoptExistingApiDatabase(client)).rejects.toThrow(
+      "Expected boolean",
+    );
+    expect(hasBaselineInsert(queries)).toBe(false);
+    expect(queries.at(-1)?.statement).toBe("ROLLBACK");
+  });
+
   it("fails closed for a partial legacy schema", async () => {
     const { client, queries } = makeClient({
       catalog: {

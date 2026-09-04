@@ -22,7 +22,7 @@ import {
 } from "#src/chat/chat-message-permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
-import { SendMessageDto } from "#src/http-api/contracts/chat/schemas";
+import { SendMessageDto } from "#src/contracts/chat/schemas";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 import { canViewChatMessage } from "#src/chat/chat-message-visibility";
 import {

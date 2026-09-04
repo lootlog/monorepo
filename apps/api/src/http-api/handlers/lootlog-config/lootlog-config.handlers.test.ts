@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { LootlogConfigControllerUpdateNpc200 } from "../../contracts/lootlog-config/schemas.js";
+import { LootlogConfigControllerUpdateNpc200 } from "#src/contracts/lootlog-config/schemas";
 import {
   getLootlogConfig,
   LootlogConfigAccessDenied,

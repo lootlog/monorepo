@@ -1,3 +1,4 @@
+import { RabbitMessaging } from "@lootlog/messaging";
 import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
@@ -5,7 +6,7 @@ import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp, OtlpSerialization } from "effect/unstable/observability";
 import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
 import { apiConfiguration } from "#src/config/api.config";
-import { ApiApplicationLive } from "./http-api/runtime/application/api-application.js";
+import { ApiApplicationLive } from "./runtime/application/api-application.js";
 
 const ObservabilityLive = Layer.unwrap(
   Effect.map(apiConfiguration, (config) =>
@@ -33,5 +34,9 @@ BunRuntime.runMain(
     yield* Layer.launch(
       ApiApplicationLive.pipe(Layer.provide(FetchHttpClient.layer)),
     );
-  }).pipe(Effect.scoped, Effect.provide(ObservabilityLive)),
+  }).pipe(
+    Effect.scoped,
+    Effect.provide(ObservabilityLive),
+    RabbitMessaging.supervised,
+  ),
 );

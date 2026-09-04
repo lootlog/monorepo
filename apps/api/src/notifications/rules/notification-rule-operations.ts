@@ -18,7 +18,7 @@ import type {
 import type {
   CreateNotificationRuleDto,
   UpdateNotificationRuleDto,
-} from "#src/http-api/contracts/notifications/schemas";
+} from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
 import {
   NotificationJobKind,

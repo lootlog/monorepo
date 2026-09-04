@@ -9,7 +9,7 @@ import {
   KillsControllerGetGuildTopNpcs200,
   KillsControllerGetNpcKillers200,
   type KillsControllerGetGuildKillStatsQuery as GetGuildKillStatsDto,
-} from "#src/http-api/contracts/kills/schemas";
+} from "#src/contracts/kills/schemas";
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
   buildKillQueryCacheKey,

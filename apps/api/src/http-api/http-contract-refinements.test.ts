@@ -4,16 +4,16 @@ import {
   CloseRespawnWindowDto,
   CreateEventDto,
   OpenRespawnWindowDto,
-} from "./contracts/events/schemas.js";
+} from "#src/contracts/events/schemas";
 import {
   CreateNotificationRuleDto,
   UpdateNotificationRuleDto,
-} from "./contracts/notifications/schemas.js";
+} from "#src/contracts/notifications/schemas";
 import {
   KillsControllerGetGuildKillStatsQuery,
   KillsControllerGetUserNpcKillsQuery,
-} from "./contracts/kills/schemas.js";
-import { UpdateReservationDto } from "./contracts/reservations/schemas.js";
+} from "#src/contracts/kills/schemas";
+import { UpdateReservationDto } from "#src/contracts/reservations/schemas";
 
 const rejects = (schema: Schema.ConstraintDecoder<unknown>, value: unknown) =>
   Result.isFailure(Schema.decodeUnknownResult(schema)(value));

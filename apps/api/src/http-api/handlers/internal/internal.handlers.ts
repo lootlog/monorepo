@@ -25,7 +25,7 @@ import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
 import {
   GuildsInternalControllerGetGuildByIdOrVanityUrl200,
   GuildsInternalControllerGetUserPermissions200,
-} from "../../contracts/internal/schemas.js";
+} from "#src/contracts/internal/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
 export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(

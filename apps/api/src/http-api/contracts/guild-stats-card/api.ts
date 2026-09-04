@@ -9,7 +9,7 @@ import { BearerSecurityMiddleware } from "../shared.js";
 import {
   AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
   AuthenticatedGuildStatsCardControllerRefreshStatsCardPathParams,
-} from "./schemas.js";
+} from "#src/contracts/guild-stats-card/schemas";
 
 export class GuildStatsCardGroup extends HttpApiGroup.make(
   "guild-stats-card",

@@ -44,7 +44,7 @@ import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { buildTimerKey } from "#src/timers/timer-key";
-import type { CreateTimerFromGameClientDto } from "../../contracts/timers/schemas.js";
+import type { CreateTimerFromGameClientDto } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {
   TimersInfrastructureError,
@@ -55,7 +55,7 @@ import {
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
-} from "./timer-response.js";
+} from "#src/timers/timer-projection";
 
 const DEDUP_TTL_SECONDS = 30;
 const RELEASE_DEDUP_LOCK_SCRIPT = `

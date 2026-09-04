@@ -299,3 +299,14 @@ describe("deployment targets", () => {
     ).rejects.toThrow("Previous production state does not contain target: api");
   });
 });
+
+test("all HTTP contract producers trigger generated-client verification", async () => {
+  for (const producer of ["@lootlog/gateway", "@lootlog/discord-bot"]) {
+    const plan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: [producer],
+      changedFiles: [],
+    });
+    expect(plan.runClientCheck).toBe(true);
+  }
+});

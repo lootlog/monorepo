@@ -223,6 +223,7 @@ export const LootSearchCommand = ({
     trimmedSearch.length >= 2,
     Boolean(debouncedSearch),
     !showSearchLoading,
+    !searchResultsQuery.isError,
     Boolean(hasSearchResults),
   );
   const showNoResults = allTrue(
@@ -230,7 +231,14 @@ export const LootSearchCommand = ({
     trimmedSearch.length >= 2,
     Boolean(debouncedSearch),
     !showSearchLoading,
+    !searchResultsQuery.isError,
     !hasSearchResults,
+  );
+  const showSearchError = allTrue(
+    !isHidInput,
+    trimmedSearch.length >= 2,
+    !showSearchLoading,
+    searchResultsQuery.isError,
   );
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -434,6 +442,22 @@ export const LootSearchCommand = ({
               <span className="text-sm">
                 {t("loots.searchCommand.loading")}
               </span>
+            </motion.div>,
+          )}
+
+          {renderIf(
+            showSearchError,
+            <motion.div
+              key="search-error"
+              role="alert"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center gap-3 px-6 py-8 text-center text-sm text-destructive"
+            >
+              <CircleAlert className="size-5" />
+              {t("common.searchUnavailable")}
             </motion.div>,
           )}
 

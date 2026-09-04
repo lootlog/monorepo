@@ -37,7 +37,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "effect": "4.0.0-rc.112"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

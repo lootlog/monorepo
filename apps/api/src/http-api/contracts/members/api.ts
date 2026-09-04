@@ -31,7 +31,7 @@ import {
   MembersControllerRefreshMePathParams,
   MembersControllerRefreshMember200,
   MembersControllerRefreshMemberPathParams,
-} from "./schemas.js";
+} from "#src/contracts/members/schemas";
 
 export class MembersGroup extends HttpApiGroup.make("members").add(
   HttpApiEndpoint.get(

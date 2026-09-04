@@ -11,7 +11,7 @@ import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
-import { Effect, Schema } from "effect";
+import { Effect, Schedule, Schema } from "effect";
 import {
   PresenceNotPublished,
   PresenceSessionMismatch,
@@ -65,8 +65,16 @@ const withoutLocation = (presence: Basic | Precise): Basic => {
 
 export class PresenceStore {
   constructor(
-    private readonly redis: RedisGatewayStore,
-    private readonly hub: RealtimeHub,
+    private readonly redis: {
+      readonly command: Pick<
+        RedisGatewayStore["command"],
+        "get" | "set" | "del" | "sadd" | "srem" | "smembers" | "mget" | "incr"
+      >;
+    },
+    private readonly hub: Pick<
+      RealtimeHub,
+      "instanceId" | "publishPresence" | "publishToScope" | "refreshRegistry"
+    >,
     private readonly now: () => number = Date.now,
     private readonly coverage?: CoveragePublisher,
   ) {}
@@ -228,6 +236,15 @@ export class PresenceStore {
       };
     }).pipe(
       Effect.mapError((cause) => asPresenceFailure("presence.snapshot", cause)),
+    );
+  }
+
+  runExpirySweep() {
+    return this.sweepExpired().pipe(
+      Effect.catch((cause) =>
+        Effect.logError("Presence expiry sweep failed; retrying", cause),
+      ),
+      Effect.repeat(Schedule.spaced(this.sweepSchedule)),
     );
   }
 

@@ -1,5 +1,5 @@
 import type { SettingsDocumentsResponse } from "#src/settings-documents/settings-documents.service";
-import { describe, expect, it, vi } from "#test/bun-test";
+import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
 import { makeTimerSettings } from "./timer-settings.service.js";
 

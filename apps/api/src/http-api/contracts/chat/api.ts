@@ -19,7 +19,7 @@ import {
   ChatControllerUpdateChatMessage200,
   ChatControllerUpdateChatMessagePathParams,
   ChatControllerUpdateChatMessageRequestJson,
-} from "./schemas.js";
+} from "#src/contracts/chat/schemas";
 
 export class ChatGroup extends HttpApiGroup.make("chat").add(
   HttpApiEndpoint.get(

@@ -32,6 +32,7 @@ type WatchedItemSelectorProps = {
   placeholder: string;
   searchPlaceholder: string;
   emptyMessage: string;
+  errorMessage?: string;
   loadingMessage: string;
   disabledMessage: string;
   onSearchChange: (value: string) => void;
@@ -47,6 +48,7 @@ export const WatchedItemSelector = ({
   placeholder,
   searchPlaceholder,
   emptyMessage,
+  errorMessage,
   loadingMessage,
   disabledMessage,
   onSearchChange,
@@ -149,15 +151,22 @@ export const WatchedItemSelector = ({
             className="h-9"
           />
           <CommandList id={resultsListId}>
-            {loading ? (
+            {errorMessage ? (
+              <div role="alert" className="px-3 py-3 text-sm text-destructive">
+                {errorMessage}
+              </div>
+            ) : null}
+            {loading && !errorMessage ? (
               <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
                 <Spinner className="h-4 w-4" />
                 {loadingMessage}
               </div>
             ) : null}
-            {!loading ? <CommandEmpty>{emptyMessage}</CommandEmpty> : null}
+            {!loading && !errorMessage ? (
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+            ) : null}
             <CommandGroup>
-              {items.map((item) => (
+              {(errorMessage ? [] : items).map((item) => (
                 <CommandItem
                   key={item.id}
                   value={`${item.id}`}

@@ -180,6 +180,16 @@ const normalizeAllowedChanges = (
 ): JsonValue => {
   let normalized = operation;
   if (service === "api") normalized = removePresencePermission(normalized);
+  // Search outages now return an explicit 503 instead of a successful empty result.
+  if (
+    service === "search" &&
+    new Set(["GET /players", "GET /npcs", "GET /items", "GET /all"]).has(
+      operationKey,
+    )
+  ) {
+    normalized = removeResponseStatus(normalized, "503");
+  }
+
   if (
     service === "api" &&
     GUILD_METADATA_FORBIDDEN_OPERATIONS.has(operationKey)

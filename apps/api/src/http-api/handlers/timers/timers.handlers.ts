@@ -23,7 +23,7 @@ import {
   TimersControllerRestoreTimerFromHistory201,
   TimersControllerSearchNpcsWithTimerData200,
   type ResetTimerDto,
-} from "../../contracts/timers/schemas.js";
+} from "#src/contracts/timers/schemas";
 import {
   type TimersDataFailure,
   TimersInfrastructureError,

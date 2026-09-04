@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { SettingsDocumentsControllerGetPreferences200 } from "../../contracts/preferences/schemas.js";
-import { SoundSettingsControllerGetSettings200 } from "../../contracts/sound-settings/schemas.js";
-import { TimerSettingsControllerGetGlobalSettings200 } from "../../contracts/timer-settings/schemas.js";
+import { SettingsDocumentsControllerGetPreferences200 } from "#src/contracts/preferences/schemas";
+import { SoundSettingsControllerGetSettings200 } from "#src/contracts/sound-settings/schemas";
+import { TimerSettingsControllerGetGlobalSettings200 } from "#src/contracts/timer-settings/schemas";
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {

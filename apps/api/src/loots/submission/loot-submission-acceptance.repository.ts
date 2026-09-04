@@ -11,6 +11,8 @@ import {
   or,
 } from "drizzle-orm";
 import { Clock, Effect } from "effect";
+import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
+import type { LootPublication } from "./loot-publication-outbox.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   itemSnapshotTable,
@@ -134,12 +136,14 @@ export interface LootSubmissionAcceptancePersistence {
   readonly appendSubmissions: (
     lootId: number,
     submissions: PersistedLootSubmission[],
+    publications: (organizationIds: string[]) => LootPublication[],
   ) => Effect.Effect<
     Array<{ id: number; guildId: string; archivedAt: Date | null }>,
     unknown
   >;
   readonly createNewLoot: (
     data: NewLootPersistence,
+    publications: (lootId: number) => LootPublication[],
   ) => Effect.Effect<number, unknown>;
 }
 
@@ -315,7 +319,7 @@ export const makeLootSubmissionAcceptancePersistence = (
     );
   },
 
-  appendSubmissions: (lootId, submissions) => {
+  appendSubmissions: (lootId, submissions, publications) => {
     const guildIds = [...new Set(submissions.map(({ guildId }) => guildId))];
     return database.transaction((transaction) =>
       Effect.gen(function* () {
@@ -382,12 +386,22 @@ export const makeLootSubmissionAcceptancePersistence = (
               ],
             });
         }
+        const intents = publications(
+          records
+            .filter((record) => record.archivedAt === null)
+            .map((record) => record.guildId),
+        );
+        if (intents.length > 0) {
+          yield* transaction
+            .insert(lootPublicationOutboxTable)
+            .values(intents.map((intent) => ({ ...intent, lootId })));
+        }
         return records;
       }),
     );
   },
 
-  createNewLoot: (data) =>
+  createNewLoot: (data, publications) =>
     database.transaction((transaction) =>
       Effect.gen(function* () {
         const now = new Date(yield* Clock.currentTimeMillis);
@@ -568,6 +582,12 @@ export const makeLootSubmissionAcceptancePersistence = (
             };
           }),
         );
+        const intents = publications(loot.id);
+        if (intents.length > 0) {
+          yield* transaction
+            .insert(lootPublicationOutboxTable)
+            .values(intents.map((intent) => ({ ...intent, lootId: loot.id })));
+        }
         return loot.id;
       }),
     ),

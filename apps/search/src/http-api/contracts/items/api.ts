@@ -1,7 +1,9 @@
+import { SearchUnavailable } from "../search-unavailable.js";
 /** Endpoints owned by the items HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
 import {
@@ -11,6 +13,7 @@ import {
 
 export class ItemsGroup extends HttpApiGroup.make("Items").add(
   HttpApiEndpoint.get("ItemsControllerGetItems", "/items", {
+    error: SearchUnavailable.pipe(HttpApiSchema.status(503)),
     query: ItemsControllerGetItemsQuery,
     success: ItemsControllerGetItems200,
   })

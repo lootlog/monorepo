@@ -56,6 +56,7 @@ export const NotificationRuleFormPage = () => {
     npcSearch,
     setNpcSearch,
     npcOptions,
+    npcSearchError,
     searchedNpcQuery,
     targetOptions,
     worldOptions,
@@ -431,6 +432,7 @@ export const NotificationRuleFormPage = () => {
                                       searchValue={npcSearch}
                                       onSearchChange={setNpcSearch}
                                       loading={searchedNpcQuery.isFetching}
+                                      errorMessage={npcSearchError}
                                       searchPlaceholder={t(
                                         "settings.notifications.placeholders.searchNpcs",
                                       )}

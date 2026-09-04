@@ -14,7 +14,7 @@ import {
   type KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto,
   KillsControllerGetUserNpcKills200,
   type KillsControllerGetUserNpcKillsQuery as GetUserNpcKillsDto,
-} from "#src/http-api/contracts/kills/schemas";
+} from "#src/contracts/kills/schemas";
 import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
 const CACHE_TTL_SECONDS = 30;

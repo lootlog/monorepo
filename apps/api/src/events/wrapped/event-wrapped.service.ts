@@ -12,7 +12,7 @@ import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import { EventWrappedApiResponseDto_Output } from "#src/http-api/contracts/events/schemas";
+import { EventWrappedApiResponseDto_Output } from "#src/contracts/events/schemas";
 import { clipToWindowSeconds } from "#src/events/monitoring/tracking-window";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,

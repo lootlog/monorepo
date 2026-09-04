@@ -59,6 +59,7 @@ interface MultiSelectProps
   onSearchChange?: (value: string) => void;
   searchValue?: string;
   loading?: boolean;
+  errorMessage?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
   minimumSearchLength?: number;
@@ -208,6 +209,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       onSearchChange,
       searchValue,
       loading = false,
+      errorMessage,
       searchPlaceholder,
       emptyMessage,
       minimumSearchLength = 1,
@@ -245,7 +247,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const hasSearch = commandSearch || controlledSearch;
     const shouldPromptForSearch =
       controlledSearch && inputValue.length < minimumSearchLength;
-    const visibleOptions = shouldPromptForSearch ? [] : options;
+    const visibleOptions = shouldPromptForSearch || errorMessage ? [] : options;
     const selectedOptions = selectedValues.map(
       (selectedValue) =>
         optionCacheRef.current.get(selectedValue) ?? {
@@ -347,12 +349,18 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
           className="min-w-64 max-w-[min(24rem,calc(100vw-2rem))] rounded-xl border-border"
           onWheel={(event) => event.stopPropagation()}
         >
-          <MultiSelectResults
-            options={visibleOptions}
-            loading={loading}
-            loadingLabel={t("common.loading")}
-            emptyLabel={resultsEmptyLabel}
-          />
+          {errorMessage ? (
+            <div role="alert" className="px-3 py-3 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          ) : (
+            <MultiSelectResults
+              options={visibleOptions}
+              loading={loading}
+              loadingLabel={t("common.loading")}
+              emptyLabel={resultsEmptyLabel}
+            />
+          )}
         </ComboboxContent>
       </Combobox>
     );

@@ -11,7 +11,7 @@ import {
   roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
+import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { getAdminBulkRefreshRateLimit } from "#src/members/member-cache";
 import { ErrorKey } from "#src/members/error-key";
 import {
@@ -29,7 +29,7 @@ import {
   MembersControllerGetGuildMemberReferences200,
   MembersControllerGetGuildMembersSummary200,
   MembersControllerGetMemberLootlogConfigSummary200,
-} from "../../contracts/members/schemas.js";
+} from "#src/contracts/members/schemas";
 
 export interface MemberReadCache {
   readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(

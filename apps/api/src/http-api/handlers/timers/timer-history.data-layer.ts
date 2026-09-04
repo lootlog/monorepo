@@ -21,7 +21,7 @@ import {
   mapTimerMember,
   mapTimerNpc,
   parseTimerNpc,
-} from "./timer-response.js";
+} from "#src/timers/timer-projection";
 
 export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
   const read = (

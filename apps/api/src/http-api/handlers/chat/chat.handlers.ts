@@ -14,7 +14,7 @@ import {
   ChatControllerSendChatMessage201,
   ChatControllerUpdateChatMessage200,
   type SendMessageDto,
-} from "../../contracts/chat/schemas.js";
+} from "#src/contracts/chat/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
 export type ChatIdentity = {

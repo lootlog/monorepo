@@ -18,7 +18,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import type {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
-} from "#src/http-api/contracts/events/schemas";
+} from "#src/contracts/events/schemas";
 
 export class EventPointEditError extends TaggedErrorClass<EventPointEditError>()(
   "EventPointEditError",

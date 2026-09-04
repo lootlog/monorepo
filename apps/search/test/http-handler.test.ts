@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { SearchOperationFailure } from "../src/meilisearch/search-operation-failure.js";
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import {
@@ -7,7 +8,7 @@ import {
 } from "../src/http-api/search-operations.js";
 import { SearchRoutes } from "../src/http-api/search-http.js";
 
-const makeBoundary = () => {
+const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
   let itemQuery: unknown;
   const operations: SearchOperationsValue = {
     searchItems: (query) => {
@@ -25,6 +26,7 @@ const makeBoundary = () => {
     indexItems: () => Effect.void,
     indexNpcs: () => Effect.void,
     indexPlayers: () => Effect.void,
+    ...overrides,
   };
   const boundary = HttpRouter.toWebHandler(
     SearchRoutes.pipe(
@@ -72,4 +74,25 @@ describe("Search HttpApi contract", () => {
     expect(response.status).toBe(404);
     await dispose();
   });
+});
+
+test("a search outage is an explicit unavailable response, not an empty success", async () => {
+  const boundary = makeBoundary({
+    searchPlayers: () =>
+      Effect.fail(
+        new SearchOperationFailure({
+          operation: "search.players",
+          cause: new Error("upstream unavailable"),
+        }),
+      ),
+  });
+  try {
+    const response = await boundary.handler(
+      new Request("http://localhost/players?limit=10"),
+    );
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ _tag: "SearchUnavailable" });
+  } finally {
+    await boundary.dispose();
+  }
 });

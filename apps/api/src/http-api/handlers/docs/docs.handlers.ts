@@ -37,7 +37,7 @@ import {
   DocsControllerRestoreDocument200,
   DocsControllerUpdateDocument200,
   type DocsControllerUpdateDocumentRequestJson,
-} from "../../contracts/docs/schemas.js";
+} from "#src/contracts/docs/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;

@@ -4,7 +4,7 @@ import {
   HttpApiGroup,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { MapsControllerGetMaps200 } from "./schemas.js";
+import { MapsControllerGetMaps200 } from "#src/contracts/maps/schemas";
 
 export class MapsGroup extends HttpApiGroup.make("maps").add(
   HttpApiEndpoint.get("MapsControllerGetMaps", "/maps", {
