@@ -9,6 +9,7 @@ import type { AuthDatabaseConnection } from "./drizzle.js";
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
 const authTableNames = ["user", "session", "account", "verification", "jwks"];
+const preJwksMetadataMigrationCount = 2;
 const migrationsFolder = fileURLToPath(
   new URL("../../drizzle", import.meta.url),
 );
@@ -68,6 +69,7 @@ export type AuthMigrationPlan = {
     | "fresh"
     | "better-auth-1.6"
     | "better-auth-1.6-imported"
+    | "better-auth-1.7-pre-jwks-metadata"
     | "better-auth-1.7"
     | "unknown";
   readonly pendingMigrations: number;
@@ -189,11 +191,22 @@ export const AUTH_SCHEMA_FINGERPRINT_IMPORTED_V1_6: ReadonlyArray<SchemaColumn> 
     };
   });
 
-export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> =
+export const AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA: ReadonlyArray<SchemaColumn> =
   AUTH_SCHEMA_FINGERPRINT_V1_6.flatMap((schemaColumn) =>
     schemaColumn.tableName === "account" &&
     schemaColumn.columnName === "password"
       ? [column("account", "issuer", "text", "NO"), schemaColumn]
+      : [schemaColumn],
+  );
+
+export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> =
+  AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA.flatMap((schemaColumn) =>
+    schemaColumn.tableName === "jwks" && schemaColumn.columnName === "createdAt"
+      ? [
+          column("jwks", "alg", "text", "YES"),
+          schemaColumn,
+          column("jwks", "crv", "text", "YES"),
+        ]
       : [schemaColumn],
   );
 
@@ -415,6 +428,15 @@ function hasCompatibleMigrationTracking(
     return (
       trackedHashes.length === 1 &&
       trackedHashes[0] === localMigrations[0]?.hash
+    );
+  }
+
+  if (source === "better-auth-1.7-pre-jwks-metadata") {
+    return matchesSchemaPart(
+      trackedHashes,
+      localMigrations
+        .slice(0, preJwksMetadataMigrationCount)
+        .map(({ hash }) => hash),
     );
   }
 
@@ -766,6 +788,14 @@ export async function planAuthMigration(
     expectedIndexes = AUTH_SCHEMA_INDEXES_IMPORTED_V1_6;
   } else if (
     matchesSchemaVariant(schema, {
+      columns: AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA,
+      indexes: AUTH_SCHEMA_INDEXES,
+    })
+  ) {
+    source = "better-auth-1.7-pre-jwks-metadata";
+    expectedIndexes = AUTH_SCHEMA_INDEXES;
+  } else if (
+    matchesSchemaVariant(schema, {
       columns: AUTH_SCHEMA_FINGERPRINT,
       indexes: AUTH_SCHEMA_INDEXES,
     })
@@ -788,7 +818,9 @@ export async function planAuthMigration(
     };
   }
 
-  const hasIssuer = source === "better-auth-1.7";
+  const hasIssuer =
+    source === "better-auth-1.7" ||
+    source === "better-auth-1.7-pre-jwks-metadata";
   const [userCount, accountCount, sessionCount, dataViolations] =
     await Promise.all([
       readCount(pool, `SELECT COUNT(*)::text AS count FROM "user"`),
@@ -818,7 +850,15 @@ export async function planAuthMigration(
     status: getPlanStatus(source, integrityViolations),
     source,
     pendingMigrations:
-      source === "better-auth-1.7" ? 0 : Math.max(localMigrationCount - 1, 0),
+      source === "better-auth-1.7"
+        ? 0
+        : Math.max(
+            localMigrationCount -
+              (source === "better-auth-1.7-pre-jwks-metadata"
+                ? preJwksMetadataMigrationCount
+                : 1),
+            0,
+          ),
     userCount,
     accountCount,
     sessionCount,
@@ -894,6 +934,14 @@ export async function initializeAuthMigrations(
       throw new Error("Missing Better Auth 1.6 baseline migration.");
     }
     await markMigrationsAsApplied(pool, [baselineMigration]);
+    return;
+  }
+
+  if (plan.source === "better-auth-1.7-pre-jwks-metadata") {
+    await markMigrationsAsApplied(
+      pool,
+      localMigrations.slice(0, preJwksMetadataMigrationCount),
+    );
     return;
   }
 
