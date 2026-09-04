@@ -177,6 +177,7 @@ function Sidebar({
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
+          keepMounted
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
@@ -192,7 +193,9 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <React.Activity mode={openMobile ? "visible" : "hidden"}>
+            <div className="flex h-full w-full flex-col">{children}</div>
+          </React.Activity>
         </SheetContent>
       </Sheet>
     );
