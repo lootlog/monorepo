@@ -29,6 +29,53 @@ const enumBlocks = block("enum");
 const modelBlocks = block("model");
 const enumNames = new Set(enumBlocks.map(({ name }) => name));
 const modelNames = new Set(modelBlocks.map(({ name }) => name));
+const legacyNullableColumns = new Set([
+  "DiscordGuildChannelSnapshot.grantedPermissions",
+  "DiscordGuildChannelSnapshot.missingPermissions",
+  "DiscordGuildChannelSnapshot.requiredPermissions",
+  "DiscordGuildSyncState.grantedPermissions",
+  "DiscordGuildSyncState.missingPermissions",
+  "DiscordGuildSyncState.requiredPermissions",
+  "LootlogConfigNpc.allowedRarities",
+  "Role.permissions",
+  "UserGuildTimerSettings.hiddenTimers",
+  "UserGuildTimerSettings.pinnedTimers",
+  "UserSettings.guildsOrder",
+]);
+const parseEnumValues = (body) =>
+  body
+    .split("\n")
+    .map(
+      (line) =>
+        line
+          .replace(/\/\/.*$/, "")
+          .trim()
+          .split(/\s+/)[0],
+    )
+    .filter((line) => /^[A-Z][A-Z0-9_]*$/.test(line));
+const deployedPermissionValues = parseEnumValues(
+  enumBlocks.find(({ name }) => name === "Permission").body,
+)
+  .filter(
+    (value) =>
+      value !== "LOOTLOG_LOOTS_ARCHIVE" &&
+      value !== "LOOTLOG_PRESENCE_LOCATION_READ" &&
+      value !== "LOOTLOG_ONLINE_PLAYERS_READ" &&
+      value !== "LOOTLOG_DOCS_READ" &&
+      value !== "LOOTLOG_DOCS_WRITE",
+  )
+  .concat(
+    "LOOTLOG_ONLINE_PLAYERS_READ",
+    "LOOTLOG_DOCS_READ",
+    "LOOTLOG_DOCS_WRITE",
+    "LOOTLOG_LOOTS_ARCHIVE",
+  );
+const enumValues = ({ name, body }, includePresenceLocation) =>
+  name === "Permission"
+    ? deployedPermissionValues.concat(
+        includePresenceLocation ? "LOOTLOG_PRESENCE_LOCATION_READ" : [],
+      )
+    : parseEnumValues(body);
 const lowerFirst = (value) => value[0].toLowerCase() + value.slice(1);
 const tableSymbol = (modelName) => `${lowerFirst(modelName)}Table`;
 const quote = JSON.stringify;
@@ -196,7 +243,9 @@ const catalog = {
         tableName: model.tableName,
         columnName: field.columnName,
         formattedType: formatType(field),
-        isNullable: field.optional,
+        isNullable:
+          field.optional ||
+          legacyNullableColumns.has(`${model.tableName}.${field.columnName}`),
         hasDefault: hasDatabaseDefault(field),
       })),
     )
@@ -236,18 +285,9 @@ const catalog = {
       ),
     ),
   enums: enumBlocks
-    .map(({ name, body }) => ({
-      name,
-      values: body
-        .split("\n")
-        .map(
-          (line) =>
-            line
-              .replace(/\/\/.*$/, "")
-              .trim()
-              .split(/\s+/)[0],
-        )
-        .filter((line) => /^[A-Z][A-Z0-9_]*$/.test(line)),
+    .map((definition) => ({
+      name: definition.name,
+      values: enumValues(definition, false),
     }))
     .sort((left, right) => left.name.localeCompare(right.name)),
   indexes: [],
@@ -307,6 +347,7 @@ catalog.constraints.push(
   "_EventMapToMember_B_fkey",
   "Reservation_valid_time_range_check",
   "Reservation_reminder_minutes_check",
+  "ReservationShare_distinct_guilds_check",
 );
 catalog.indexes.sort();
 catalog.constraints.sort();
@@ -320,17 +361,9 @@ output.push(
 );
 output.push("");
 
-for (const { name, body } of enumBlocks) {
-  const values = body
-    .split("\n")
-    .map(
-      (line) =>
-        line
-          .replace(/\/\/.*$/, "")
-          .trim()
-          .split(/\s+/)[0],
-    )
-    .filter((line) => /^[A-Z][A-Z0-9_]*$/.test(line));
+for (const definition of enumBlocks) {
+  const { name } = definition;
+  const values = enumValues(definition, true);
   output.push(
     `export const ${lowerFirst(name)}Enum = pgEnum(${quote(name)}, ${JSON.stringify(values)});`,
   );
@@ -428,6 +461,11 @@ for (const model of models) {
     );
     extras.push(
       'check("Reservation_reminder_minutes_check", sql`${table["reminderMinutesBefore"]} IS NULL OR ${table["reminderMinutesBefore"]} IN (0, 5, 15, 30)`)',
+    );
+  }
+  if (model.tableName === "ReservationShare") {
+    extras.push(
+      'check("ReservationShare_distinct_guilds_check", sql`${table["firstGuildId"]} < ${table["secondGuildId"]}`)',
     );
   }
   if (model.tableName === "Timer") {

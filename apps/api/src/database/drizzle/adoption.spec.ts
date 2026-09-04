@@ -23,10 +23,52 @@ const expectedEnumRows = EXPECTED_API_CATALOG.enums.flatMap(
   ({ name, values }) => values.map((value) => ({ name, value })),
 );
 
+const legacyNullableColumns = new Set([
+  "DiscordGuildChannelSnapshot.grantedPermissions",
+  "DiscordGuildChannelSnapshot.missingPermissions",
+  "DiscordGuildChannelSnapshot.requiredPermissions",
+  "DiscordGuildSyncState.grantedPermissions",
+  "DiscordGuildSyncState.missingPermissions",
+  "DiscordGuildSyncState.requiredPermissions",
+  "LootlogConfigNpc.allowedRarities",
+  "Role.permissions",
+  "UserGuildTimerSettings.hiddenTimers",
+  "UserGuildTimerSettings.pinnedTimers",
+  "UserSettings.guildsOrder",
+]);
+
+const deployedLegacyCatalog = {
+  ...EXPECTED_API_CATALOG,
+  columns: EXPECTED_API_CATALOG.columns.map((column) =>
+    legacyNullableColumns.has(`${column.tableName}.${column.columnName}`)
+      ? { ...column, isNullable: true }
+      : column,
+  ),
+  enums: EXPECTED_API_CATALOG.enums.map((enumDefinition) =>
+    enumDefinition.name === "Permission"
+      ? {
+          ...enumDefinition,
+          values: enumDefinition.values
+            .filter(
+              (value) =>
+                value !== "LOOTLOG_LOOTS_ARCHIVE" &&
+                value !== "LOOTLOG_PRESENCE_LOCATION_READ",
+            )
+            .concat("LOOTLOG_LOOTS_ARCHIVE"),
+        }
+      : enumDefinition,
+  ),
+  constraints: [
+    ...new Set([
+      ...EXPECTED_API_CATALOG.constraints,
+      "ReservationShare_distinct_guilds_check",
+    ]),
+  ].sort(),
+};
+
 const makeClient = ({
   marker,
   journal = [],
-  presenceBackfillViolations = "0",
   catalog = EXPECTED_API_CATALOG,
 }: {
   readonly marker?: {
@@ -38,7 +80,6 @@ const makeClient = ({
     readonly createdAt: string;
     readonly name: string | null;
   }>;
-  readonly presenceBackfillViolations?: string;
   readonly catalog?: {
     readonly tables: ReadonlyArray<string>;
     readonly columns: ReadonlyArray<Record<string, unknown>>;
@@ -82,9 +123,6 @@ const makeClient = ({
       if (statement.includes("api-adoption:constraints")) {
         return { rows: catalog.constraints.map((name) => ({ name })) };
       }
-      if (statement.includes("api-adoption:presence-backfill")) {
-        return { rows: [{ count: presenceBackfillViolations }] };
-      }
       return { rows: [] };
     },
   };
@@ -97,13 +135,30 @@ const hasBaselineInsert = (queries: ReadonlyArray<Query>) =>
   );
 
 describe("adoptExistingApiDatabase", () => {
-  it("records the Drizzle baseline only after the complete catalog matches", async () => {
+  it("accepts the physical schema deployed before Drizzle adoption", async () => {
+    const { client } = makeClient({ catalog: deployedLegacyCatalog });
+
+    await expect(adoptExistingApiDatabase(client)).resolves.toEqual({
+      status: "adopted",
+      fingerprint: EXPECTED_API_CATALOG_SHA256,
+    });
+  });
+
+  it("commits the permission enum transition with the Drizzle baseline", async () => {
     const { client, queries } = makeClient();
 
     await expect(adoptExistingApiDatabase(client)).resolves.toEqual({
       status: "adopted",
       fingerprint: EXPECTED_API_CATALOG_SHA256,
     });
+    const enumTransitionIndex = queries.findIndex(({ statement }) =>
+      statement.includes('ALTER TYPE "Permission" ADD VALUE'),
+    );
+    const baselineInsertIndex = queries.findIndex(({ statement }) =>
+      statement.includes("INSERT INTO drizzle.__drizzle_migrations"),
+    );
+    expect(enumTransitionIndex).toBeGreaterThan(-1);
+    expect(baselineInsertIndex).toBeGreaterThan(enumTransitionIndex);
     expect(hasBaselineInsert(queries)).toBe(true);
     expect(queries.at(-1)?.statement).toBe("COMMIT");
   });
@@ -133,18 +188,6 @@ describe("adoptExistingApiDatabase", () => {
 
     await expect(adoptExistingApiDatabase(client)).rejects.toThrow(
       "does not match the accepted legacy schema",
-    );
-    expect(hasBaselineInsert(queries)).toBe(false);
-    expect(queries.at(-1)?.statement).toBe("ROLLBACK");
-  });
-
-  it("fails closed when the presence permission backfill is incomplete", async () => {
-    const { client, queries } = makeClient({
-      presenceBackfillViolations: "1",
-    });
-
-    await expect(adoptExistingApiDatabase(client)).rejects.toThrow(
-      "presence permission backfill is incomplete",
     );
     expect(hasBaselineInsert(queries)).toBe(false);
     expect(queries.at(-1)?.statement).toBe("ROLLBACK");
