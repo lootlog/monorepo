@@ -1,14 +1,8 @@
 # Contributing to Lootlog
 
 Lootlog accepts bug fixes, documentation improvements, performance work, and
-features that fit the product direction. Read these documents before proposing a
-large change:
-
-- [`PRODUCT.md`](PRODUCT.md)
-- [`CONTEXT.md`](CONTEXT.md)
-- [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- [`SECURITY.md`](SECURITY.md)
-- the closest `AGENTS.md` to the code you will change
+features that fit the product direction. Read [`AGENTS.md`](AGENTS.md) before
+proposing a large change.
 
 The [Code of Conduct](CODE_OF_CONDUCT.md) applies to every project space.
 
@@ -23,8 +17,9 @@ Search existing issues before opening a new one. A useful bug report includes:
 - browser, installation method, Margonem interface, and OS when relevant;
 - screenshots or recordings that do not expose private Organization data.
 
-Report vulnerabilities privately through the process in
-[`SECURITY.md`](SECURITY.md). Do not open a public security issue.
+Report vulnerabilities privately through
+[GitHub Security Advisories](https://github.com/lootlog/monorepo/security/advisories/new).
+Do not open a public security issue.
 
 ## Propose changes
 
@@ -66,10 +61,9 @@ not start another copy unless asked.
 
 ## Make a change
 
-- Follow the closest `AGENTS.md` and effective Oxlint configuration.
+- Follow the root `AGENTS.md` and effective Oxlint configuration.
 - Use Oxfmt rather than hand-formatting generated style changes.
 - Add or update tests for behavior changes.
-- Update the canonical document before copying facts into a public guide.
 - Preserve protected contracts or include an explicit migration.
 - Do not bypass hooks with `--no-verify`.
 
