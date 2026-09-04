@@ -13,9 +13,11 @@ import {
   lte,
   gte,
   ne,
+  or,
   sql as drizzleSql,
 } from "drizzle-orm";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { ActivityDatabase } from "#src/database/database";
 import {
@@ -77,6 +79,28 @@ const mapDetails = (details: unknown): Record<string, unknown> | undefined =>
   details !== null && typeof details === "object" && !Array.isArray(details)
     ? (details as Record<string, unknown>)
     : undefined;
+const encodeCursor = (activity: {
+  readonly createdAt: Date;
+  readonly id: string;
+}) =>
+  Buffer.from(
+    JSON.stringify([activity.createdAt.toISOString(), activity.id]),
+  ).toString("base64url");
+const decodeCursor = (cursor: string) => {
+  const value: unknown = JSON.parse(
+    Buffer.from(cursor, "base64url").toString("utf8"),
+  );
+  if (
+    !Array.isArray(value) ||
+    value.length !== 2 ||
+    typeof value[0] !== "string" ||
+    typeof value[1] !== "string" ||
+    !Number.isFinite(Date.parse(value[0]))
+  ) {
+    throw new Error("Invalid activity cursor");
+  }
+  return { createdAt: new Date(value[0]), id: value[1] };
+};
 export class ActivityRepository extends Context.Service<
   ActivityRepository,
   ActivityRepositoryValue
@@ -325,6 +349,7 @@ export class ActivityRepository extends Context.Service<
       const findMany = Effect.fn("ActivityRepository.findMany")(function* (
         query: QueryActivities,
       ) {
+        const cursor = query.cursor ? decodeCursor(query.cursor) : undefined;
         const conditions = [
           query.userId ? eq(activities.userId, query.userId) : undefined,
           query.guildId ? eq(activities.guildId, query.guildId) : undefined,
@@ -339,7 +364,15 @@ export class ActivityRepository extends Context.Service<
           query.endDate
             ? lte(activities.createdAt, new Date(query.endDate))
             : undefined,
-          query.cursor ? lt(activities.id, query.cursor) : undefined,
+          cursor
+            ? or(
+                lt(activities.createdAt, cursor.createdAt),
+                and(
+                  eq(activities.createdAt, cursor.createdAt),
+                  lt(activities.id, cursor.id),
+                ),
+              )
+            : undefined,
           query.playerName
             ? ilike(activityActorSnapshots.name, `%${query.playerName}%`)
             : undefined,
@@ -358,18 +391,20 @@ export class ActivityRepository extends Context.Service<
             eq(activities.actorSnapshotId, activityActorSnapshots.id),
           )
           .where(and(...conditions))
-          .orderBy(desc(activities.createdAt))
+          .orderBy(desc(activities.createdAt), desc(activities.id))
           .limit(query.limit + 1);
         const rows = yield* statement;
         const hasMore = rows.length > query.limit;
         const page = hasMore ? rows.slice(0, query.limit) : rows;
+        const lastActivity = page.at(-1)?.activity;
         return {
           data: page.map(({ activity, actorSnapshot }) => ({
             ...activity,
             details: mapDetails(activity.details),
             actorSnapshot: actorSnapshot ?? undefined,
           })),
-          nextCursor: hasMore ? page.at(-1)?.activity.id : undefined,
+          nextCursor:
+            hasMore && lastActivity ? encodeCursor(lastActivity) : undefined,
           hasMore,
         };
       });
