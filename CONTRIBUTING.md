@@ -88,10 +88,20 @@ define HTTP validation; infer their TypeScript types from those schemas. Reuse
 schemas from their owning module instead of copying fields or adding endpoint
 aliases. Existing OpenAPI component identifiers remain stable for client compatibility.
 
-Backend generation is limited to SQL migrations and OpenAPI YAML. Drizzle migration
+Routine backend generation is limited to SQL migrations and OpenAPI YAML. Drizzle migration
 snapshots and other migration metadata, immutable migration archives, and compiled
 `dist` output are retained. Edit Drizzle schemas manually before generating SQL;
-do not introspect databases or use auth tooling to overwrite TypeScript source.
+do not use auth tooling to overwrite TypeScript source.
+
+Manual database introspection is also available for API, Auth, Activity, and
+Battlelog. Run `bun run db:pull` within the service or `bun run db:api:pull`,
+`bun run db:auth:pull`, `bun run db:activity:pull`, or
+`bun run db:battlelog:pull` from the repository root. Each command uses the
+service's Drizzle configuration and writes introspection artifacts to its configured
+`out` directory. PostgreSQL environment overrides are forwarded through Turbo,
+so a database copy can be inspected independently of local defaults. Review the
+resulting files before using them; introspection does not validate or apply
+migrations, and the handwritten source schemas remain authoritative.
 Client generation in `packages/client` consumes the exported OpenAPI documents.
 
 In `apps/api/src`, feature modules own business operations and persistence.
