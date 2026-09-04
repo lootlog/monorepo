@@ -9,7 +9,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   getDocsControllerGetHistoryQueryKey,
   getDocsControllerGetHistorySnapshotQueryKey,

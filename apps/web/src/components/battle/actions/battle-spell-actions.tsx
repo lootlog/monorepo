@@ -2,7 +2,7 @@ import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
 } from "@/lib/api/battlelog-types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";

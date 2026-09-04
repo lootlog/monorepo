@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { cn } from "../lib/utils.js";
+import { cn } from "cn";
 
 export interface EmergencyExitIconProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string;

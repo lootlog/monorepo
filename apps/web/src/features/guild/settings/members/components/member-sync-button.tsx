@@ -18,7 +18,7 @@ import {
   useMembersControllerRefreshMember,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 export type MemberSyncButtonProps = {
   member: GuildMember;

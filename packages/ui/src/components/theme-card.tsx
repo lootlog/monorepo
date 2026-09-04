@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Check, Eye } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 export interface ThemeCardProps {
   name: string;

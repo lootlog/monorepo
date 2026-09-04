@@ -1,6 +1,6 @@
 import type { ReactNode, WheelEvent } from "react";
 import { TabsList } from "@lootlog/ui/components/tabs";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface EventScrollableTabsListProps {
   children: ReactNode;

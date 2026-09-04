@@ -2,7 +2,7 @@
 
 import type * as React from "react";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (

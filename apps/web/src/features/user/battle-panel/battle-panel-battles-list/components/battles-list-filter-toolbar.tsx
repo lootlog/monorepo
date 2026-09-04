@@ -21,7 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   Award,
   Check,

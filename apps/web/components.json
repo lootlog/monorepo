@@ -15,7 +15,7 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@lootlog/ui/lib/utils",
+    "utils": "cn",
     "ui": "@lootlog/ui/components"
   }
 }

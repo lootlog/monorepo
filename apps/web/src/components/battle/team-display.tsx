@@ -1,4 +1,4 @@
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 import { PlayerTile } from "./player-tile";
 import {

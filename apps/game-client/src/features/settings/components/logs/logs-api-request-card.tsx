@@ -4,7 +4,7 @@ import {
   getStatusLabel,
   stringifyLogValue,
 } from "@/features/settings/components/logs/logs.helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { LoggedApiRequest } from "@/store/logs.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

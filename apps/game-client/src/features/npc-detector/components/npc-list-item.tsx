@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
   DetectorNpcType,

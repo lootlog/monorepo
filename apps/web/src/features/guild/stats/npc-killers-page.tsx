@@ -24,7 +24,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   getKillsControllerGetNpcKillersQueryKey,
   useKillsControllerGetNpcKillers,

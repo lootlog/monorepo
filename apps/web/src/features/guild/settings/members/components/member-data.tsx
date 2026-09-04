@@ -3,7 +3,7 @@ import type { MemberActivityStats } from "@/features/guild/settings/members/memb
 import type { ReactNode } from "react";
 import { Permission } from "@lootlog/schema/permissions";
 import { useTranslation } from "react-i18next";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";

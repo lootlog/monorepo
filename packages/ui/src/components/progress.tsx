@@ -3,7 +3,7 @@
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 const progressIndicatorVariants = cva("h-full transition-all", {
   variants: {

@@ -18,7 +18,7 @@ import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   Avatar,

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Permission } from "@lootlog/schema/permissions";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { EventMap, EventMapLocation } from "../../types/api";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
 import {

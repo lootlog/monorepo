@@ -9,7 +9,7 @@ import {
 } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { HOURS, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import {
   getDaySwipeDirection,

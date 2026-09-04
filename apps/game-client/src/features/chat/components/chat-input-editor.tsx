@@ -14,7 +14,7 @@ import {
   setChatInputEditorValue,
 } from "@/features/chat/chat-input-editor.helpers";
 import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import {
   forwardRef,
   useImperativeHandle,

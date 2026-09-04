@@ -47,8 +47,8 @@ const vendorChunkGroups = {
   ],
   "vendor-style": [
     "/node_modules/class-variance-authority/",
+    "/node_modules/cn/",
     "/node_modules/clsx/",
-    "/node_modules/tailwind-merge/",
     "/node_modules/tw-animate-css/",
   ],
   "vendor-lottie": ["/node_modules/lottie-react/", "/node_modules/lottie-web/"],

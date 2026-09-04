@@ -1,6 +1,6 @@
 import { ContextMenu as BaseContextMenu } from "@base-ui/react/context-menu";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
 const ContextMenu = BaseContextMenu.Root;

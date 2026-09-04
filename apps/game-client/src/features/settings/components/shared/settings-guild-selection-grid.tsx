@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";

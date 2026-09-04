@@ -21,7 +21,7 @@ import type {
   BattleStatCategoryDefinition,
   StatsCustomizationConfig,
 } from "@/types/stats-customization.types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   Tooltip,
   TooltipContent,

@@ -25,7 +25,7 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { PlayerTile } from "@/components/battle";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";

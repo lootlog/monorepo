@@ -33,7 +33,7 @@ import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useKillsControllerGetMemberKills } from "@lootlog/client/main";
 import type { NpcType } from "@lootlog/client/main";
 import type { MemberKillsResponseDtoOutput } from "@lootlog/client/main";

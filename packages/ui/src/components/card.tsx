@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
 import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
 import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";

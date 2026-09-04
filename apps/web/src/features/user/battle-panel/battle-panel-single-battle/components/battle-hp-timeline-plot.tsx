@@ -30,7 +30,7 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {

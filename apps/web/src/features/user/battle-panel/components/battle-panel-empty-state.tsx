@@ -6,7 +6,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { LucideIcon } from "lucide-react";
 
 type BattlePanelEmptyStateProps = {

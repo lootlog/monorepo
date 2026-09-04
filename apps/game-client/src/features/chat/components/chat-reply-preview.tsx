@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getChatReplySnippet } from "@/features/chat/chat-reply.helpers";
 import type { ChatReplyDraft } from "@/store/chat.store";
 import { X } from "lucide-react";

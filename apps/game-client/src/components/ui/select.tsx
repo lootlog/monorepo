@@ -1,7 +1,7 @@
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
 const SelectValue = BaseSelect.Value;

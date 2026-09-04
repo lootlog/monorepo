@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ChevronDown, GripVertical, Trash2, Info } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import { ScoringRuleSummary } from "./scoring-rule-summary";
 import { ScoringConditionsEditor } from "./scoring-conditions-editor";

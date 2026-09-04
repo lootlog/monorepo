@@ -1,6 +1,6 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { MenuItem } from "./types";

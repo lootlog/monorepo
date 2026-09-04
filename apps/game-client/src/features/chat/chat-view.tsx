@@ -9,7 +9,7 @@ import { ChatWindowActions } from "@/features/chat/components/chat-window-action
 import { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";

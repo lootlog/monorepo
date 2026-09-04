@@ -19,7 +19,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/search";
 import { ItemRarity } from "@/lib/loots/loot-types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type GameItem = SearchItemsResponseDtoOutputHitsItem;
 

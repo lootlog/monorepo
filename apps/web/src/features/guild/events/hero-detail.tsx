@@ -42,7 +42,7 @@ import { HeroDetailResponsiveLayout } from "./components/heroes/hero-detail-resp
 import { MemberBadge } from "./components/shared/member-badge";
 import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";

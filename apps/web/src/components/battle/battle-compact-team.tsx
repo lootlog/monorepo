@@ -5,7 +5,7 @@ import {
 } from "@/components/battle/utils/battle-color-palette";
 import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Sword } from "lucide-react";
 import type { FC } from "react";
 

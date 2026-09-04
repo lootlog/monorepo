@@ -15,7 +15,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { TRANSFORMERS } from "@lexical/markdown";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { GuildDocEditorEditablePlugin } from "./guild-doc-editor-editable-plugin";
 import { GuildDocCodeHighlightPlugin } from "./guild-doc-code-highlight-plugin";
 import {

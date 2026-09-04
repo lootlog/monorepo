@@ -4,7 +4,7 @@ import {
   getBattleDamageTags,
 } from "@/features/user/battle-panel/components/battle-damage-tags";
 import type { BattleWarrior } from "@/lib/api/battlelog-types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   stopBattleTableAction,
   stopBattleTableKeyboardAction,

@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import { forwardRef, type ReactNode } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   InputGroup,
   InputGroupAddon,
