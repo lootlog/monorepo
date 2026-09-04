@@ -1,6 +1,7 @@
 import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
-import { Queue, Worker } from "bullmq";
+import { RedisClient } from "bun";
+import { createBunRedisClient, Queue, RedisConnection, Worker } from "bullmq";
 import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import {
@@ -23,6 +24,13 @@ import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
 import { makeDrizzleDatabase } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
+
+RedisConnection.clientFactory = (options) => {
+  if (!options.url) {
+    throw new Error("BullMQ requires a Redis URL");
+  }
+  return createBunRedisClient(new RedisClient(options.url));
+};
 
 export interface BattlelogApplicationService {
   readonly port: number;
