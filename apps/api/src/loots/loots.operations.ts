@@ -33,13 +33,6 @@ import type { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 type Guild = typeof guildTable.$inferSelect;
 type Role = typeof roleTable.$inferSelect;
-type CachedLootQueryResult = Omit<
-  LootQueryResult,
-  "createdAt" | "updatedAt"
-> & {
-  readonly createdAt: Date | string;
-  readonly updatedAt: Date | string;
-};
 type LootCount = Effect.Success<
   ReturnType<LootQueryOperations["countLootsByGuildId"]>
 >;
@@ -154,18 +147,31 @@ const cacheKey = (
 };
 
 const normalizeCachedLoots = (
-  loots: CachedLootQueryResult[],
+  loots: typeof LootListResponse.Type,
 ): LootQueryResult[] =>
   loots.map((loot) => ({
     ...loot,
-    createdAt:
-      loot.createdAt instanceof Date
-        ? loot.createdAt
-        : new Date(loot.createdAt),
-    updatedAt:
-      loot.updatedAt instanceof Date
-        ? loot.updatedAt
-        : new Date(loot.updatedAt),
+    createdAt: new Date(loot.createdAt),
+    updatedAt: new Date(loot.updatedAt),
+    items: loot.items.map((item) => ({ ...item, prof: [...item.prof] })),
+    players: loot.players.map((player) => ({
+      ...player,
+      id: String(player.id),
+    })),
+    npcs: [...loot.npcs],
+    lootShare: Object.fromEntries(
+      Object.entries(loot.lootShare).map(([key, players]) => [
+        key,
+        [...players],
+      ]),
+    ),
+    submissions: (loot.submissions ?? []).map((submission) => ({
+      ...submission,
+      member: {
+        ...submission.member,
+        avatar: submission.member.avatar ?? null,
+      },
+    })),
   }));
 
 export const makeLootsOperations = ({
@@ -302,34 +308,17 @@ export const makeLootsOperations = ({
         return query.fetchLootsByGuildId(guild, permissions, roles, params);
       }
       const key = cacheKey(guild, permissions, roles, params);
-      return Effect.gen(function* () {
-        const cached = yield* attempt("loots.query.listCacheRead", () =>
-          redis.getJson(key, makeJsonCodec(LootListResponse)),
-        ).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() => {
-              logger.warn("Loots list cache unavailable", { error });
-              return null;
-            }),
-          ),
-        );
-        if (cached !== null) return normalizeCachedLoots(cached);
-        const result = yield* query.fetchLootsByGuildId(
-          guild,
-          permissions,
-          roles,
-          params,
-        );
-        yield* attempt("loots.query.listCacheWrite", () =>
-          redis.setJson(key, result, CACHE_TTL_SECONDS),
-        ).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.warn("Loots list cache unavailable", { error }),
-            ),
-          ),
-        );
-        return result;
+      const wireCodec = makeJsonCodec(LootListResponse);
+      return redis.getOrSetJsonEffect({
+        key,
+        codec: {
+          stringify: wireCodec.stringify,
+          parse: (text) => normalizeCachedLoots(wireCodec.parse(text)),
+        },
+        ttlSeconds: CACHE_TTL_SECONDS,
+        factory: query.fetchLootsByGuildId(guild, permissions, roles, params),
+        onError: (error) =>
+          logger.warn("Loots list cache unavailable", { error }),
       });
     },
 

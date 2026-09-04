@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { TestClock } from "effect/testing";
@@ -132,6 +132,52 @@ const secondGuild = (permissions: Permission[]) => ({
 });
 
 describe("PresenceStore", () => {
+  test("batches map metadata while ignoring missing, malformed and other-map sessions", async () => {
+    const redis = new MemoryRedis();
+    const store = new PresenceStore(
+      { command: redis } as unknown as RedisGatewayStore,
+      new RecordingHub() as unknown as RealtimeHub,
+      () => 10_000,
+    );
+    for (let index = 0; index < 5; index++) {
+      const data = {
+        ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+        connectionId: `session-${index}`,
+        discordId: `discord-${index}`,
+      };
+      await Effect.runPromise(
+        store.publish(socket(data), {
+          organizationIds: ["organization-1"],
+          isAfk: index === 1,
+          location: {
+            mapId: index === 4 ? 2 : 1,
+            map: index === 4 ? "Other" : "Target",
+            x: 1,
+            y: 1,
+          },
+        }),
+      );
+    }
+    redis.values.delete("presence:metadata:organization-1:session-2");
+    redis.values.set("presence:metadata:organization-1:session-3", "invalid");
+    const get = spyOn(redis, "get");
+    const mget = spyOn(redis, "mget");
+    expect(
+      await Effect.runPromise(store.coverageForMap("organization-1", "Target")),
+    ).toEqual([
+      { discordId: "discord-0", isAfk: false },
+      { discordId: "discord-1", isAfk: true },
+    ]);
+    expect(get).not.toHaveBeenCalled();
+    expect(mget).toHaveBeenCalledTimes(2);
+    expect(mget.mock.calls[1]?.[0]).toHaveLength(4);
+    mget.mockClear();
+    expect(
+      await Effect.runPromise(store.coverageForMap("organization-1", "Empty")),
+    ).toEqual([]);
+    expect(mget).toHaveBeenCalledTimes(1);
+  });
+
   test("uses server lastSeen and separates basic from precise location", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();

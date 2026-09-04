@@ -101,42 +101,37 @@ export const makeBattleAnalytics = (
   queryModule: BattleAnalyticsQuery,
 ) => {
   const getBattleAnalytics = (query: BattleAnalyticsCriteria, userId: string) =>
-    Effect.gen(function* () {
-      const cacheKey = cache.buildAnalyticsCacheKey(userId, query);
-      const cachedResult = yield* cache.getJson(
-        cacheKey,
-        analyticsDecoders.analytics,
-      );
-      if (cachedResult) return cachedResult;
+    cache.getOrSetJson(
+      userId,
+      cache.buildAnalyticsCacheKey(userId, query),
+      () =>
+        Effect.gen(function* () {
+          const characterIds = yield* queryModule.getCharacterIds(
+            userId,
+            query,
+          );
+          if (characterIds.length === 0) {
+            return {
+              totalBattles: 0,
+              wins: 0,
+              losses: 0,
+              winRatio: 0,
+              totalPH: 0,
+            };
+          }
 
-      const characterIds = yield* queryModule.getCharacterIds(userId, query);
-      if (characterIds.length === 0) {
-        return {
-          totalBattles: 0,
-          wins: 0,
-          losses: 0,
-          winRatio: 0,
-          totalPH: 0,
-        };
-      }
-
-      const characterIdSet = domain.toCharacterIdSet(characterIds);
-      const filteredBattles = yield* getFilteredAnalyticsBattles({
-        userId,
-        query,
-        characterIds,
-        characterIdSet,
-      });
-      const result = summaryCalculator.calculateBattleAnalytics(
-        filteredBattles,
-        characterIdSet,
-      );
-      yield* cache.setJson(cacheKey, result);
-      return result;
-    });
+          return yield* queryModule.getBattleSummary(
+            userId,
+            query,
+            characterIds,
+          );
+        }),
+      analyticsDecoders.analytics,
+    );
 
   const getAbyssSeasons = (query: AbyssSeasonsQuery, userId: string) =>
     cache.getOrSetJson(
+      userId,
       cache.buildQueryCacheKey("statistics", "abyss-seasons:v1", userId, query),
       () => getAbyssSeasonsUncached(query, userId),
       analyticsDecoders.abyssSeasons,
@@ -147,6 +142,7 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("profession-win-rate", userId, query),
       analyticsDecoders.professionWinRate,
       () =>
@@ -156,22 +152,17 @@ export const makeBattleAnalytics = (
             return [];
           }
 
-          const filteredBattles = yield* getFilteredAnalyticsBattles({
+          return yield* queryModule.getProfessionWinRate(
             userId,
             query,
-            ...characterContext,
-            hasFlee: false,
-          });
-
-          return summaryCalculator.calculateProfessionWinRate(
-            filteredBattles,
-            characterContext.characterIdSet,
+            characterContext.characterIds,
           );
         }),
     );
 
   const getCombatProfile = (query: BattleStatisticsQuery, userId: string) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("combat-profile", userId, query),
       analyticsDecoders.combatProfile,
       () =>
@@ -199,6 +190,7 @@ export const makeBattleAnalytics = (
 
   const getHeadToHead = (query: BattleStatisticsQuery, userId: string) =>
     cache.getOrSetJson(
+      userId,
       cache.buildQueryCacheKey("statistics", "head-to-head:v2", userId, query),
       () => getHeadToHeadUncached(query, userId),
       analyticsDecoders.headToHead,
@@ -206,6 +198,7 @@ export const makeBattleAnalytics = (
 
   const getCurrentStreak = (query: BattleStatisticsQuery, userId: string) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("streak", userId, query),
       analyticsDecoders.streak,
       () =>
@@ -235,6 +228,7 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("duration", userId, query),
       analyticsDecoders.duration,
       () =>
@@ -264,6 +258,7 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("ph-growth", userId, query),
       analyticsDecoders.phGrowth,
       () =>
@@ -296,6 +291,7 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("rating-growth", userId, query, {
         includeBattleFilters: false,
       }),
@@ -330,6 +326,7 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     getCachedStatisticsResult(
+      userId,
       cache.buildStatisticsCacheKey("rating-delta-by-opponent", userId, query, {
         includeBattleFilters: false,
       }),
@@ -365,6 +362,7 @@ export const makeBattleAnalytics = (
     userId: string,
   ) =>
     cache.getOrSetJson(
+      userId,
       cache.buildQueryCacheKey(
         "statistics",
         "player-vs-player:v2",
@@ -392,6 +390,7 @@ export const makeBattleAnalytics = (
               ),
             ),
         },
+        columns: { statistics: false },
         with: { warriors: true },
         orderBy: { createdAt: "asc" },
       });
@@ -487,20 +486,11 @@ export const makeBattleAnalytics = (
     });
 
   const getCachedStatisticsResult = <T>(
+    userId: string,
     cacheKey: string,
     decodeJsonValue: (value: string) => T,
     factory: () => Effect.Effect<T, unknown>,
-  ) =>
-    Effect.gen(function* () {
-      const cachedResult = yield* cache.getJson(cacheKey, decodeJsonValue);
-      if (cachedResult) {
-        return cachedResult;
-      }
-
-      const result = yield* factory();
-      yield* cache.setJson(cacheKey, result);
-      return result;
-    });
+  ) => cache.getOrSetJson(userId, cacheKey, factory, decodeJsonValue);
 
   const getCharacterContext = (
     userId: string,
@@ -551,6 +541,7 @@ export const makeBattleAnalytics = (
                   ratingNotNull: options.ratingNotNull,
                 }),
         },
+        columns: { statistics: false },
         with: { warriors: true },
         ...(options.orderBy ? { orderBy: options.orderBy } : {}),
       });

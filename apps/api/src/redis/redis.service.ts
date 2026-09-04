@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import { Effect, Schema } from "effect";
+import { type Cause, Effect, Exit, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 
 export interface JsonCodec<T> {
@@ -60,6 +60,49 @@ if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
 end
 return 0
+`;
+
+// Only ephemeral read caches participate. Wrapped and authorization caches retain
+// their existing key and invalidation contracts.
+const readCacheScopes = (key: string): string[] => {
+  const match = /^(timer:list|loots:list|loot-stats):([^:]+):/.exec(key);
+  if (match) return [`${match[1]}:${match[2]}`];
+  const kills =
+    /^kill-stats:(user-[^:]+|guild-[^:]+|member-kills):([^:]+):/.exec(key);
+  if (kills)
+    return [
+      `kill-stats:${kills[1]?.startsWith("user-") ? "user" : "guild"}:${kills[2]}`,
+    ];
+  const event = /^event-read:v2:([^:]+):([^:]+):/.exec(key);
+  return event
+    ? [`event-read:v2:${event[1]}`, `event-read:v2:${event[1]}:${event[2]}`]
+    : [];
+};
+
+const readCacheScopePattern = (pattern: string): string | undefined => {
+  const kills = /^kill-stats:(user-\*|guild-\*|member-kills):([^:*]+):\*$/.exec(
+    pattern,
+  );
+  if (kills)
+    return `kill-stats:${kills[1] === "user-*" ? "user" : "guild"}:${kills[2]}`;
+  return /^(?:(?:timer:list|loots:list|loot-stats):[^:*]+|event-read:v2:[^:*]+(?::[^:*]+)?):\*$/.test(
+    pattern,
+  )
+    ? pattern.slice(0, -2)
+    : undefined;
+};
+
+const READ_CACHE_GENERATIONS_SCRIPT = `
+local versions = {}
+for i, key in ipairs(KEYS) do
+  local version = redis.call("GET", key)
+  if not version then
+    version = ARGV[i]
+    redis.call("SET", key, version)
+  end
+  versions[i] = version
+end
+return versions
 `;
 
 export class RedisService {
@@ -136,6 +179,16 @@ export class RedisService {
     waitIntervalMs = DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS,
     codec,
   }: RedisGetOrSetJsonOptions<T>): Promise<T> {
+    const scopes = readCacheScopes(key);
+    if (scopes.length > 0) {
+      const generations = await this.eval<string[]>(
+        READ_CACHE_GENERATIONS_SCRIPT,
+        scopes.map((scope) => `cache-generation:v1:${scope}`),
+        scopes.map(() => randomUUID()),
+      );
+      // Capture before loading: an invalidated in-flight fill stays unreachable.
+      key = `read-cache:v1:${generations.join(":")}:${key}`;
+    }
     const cached = await this.getJson<T>(key, codec);
 
     if (cached !== null) {
@@ -218,6 +271,43 @@ export class RedisService {
     }
   }
 
+  getOrSetJsonEffect<T, E>(
+    options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
+      factory: Effect.Effect<T, E>;
+    },
+  ): Effect.Effect<T, E> {
+    return Effect.gen(
+      function* (this: RedisService) {
+        const context = yield* Effect.context();
+        let failure: Cause.Cause<E> | undefined;
+        return yield* Effect.tryPromise({
+          try: (signal) =>
+            this.getOrSetJsonBestEffort({
+              ...options,
+              factory: async () => {
+                const exit = await Effect.runPromiseExitWith(context)(
+                  options.factory,
+                  { signal },
+                );
+                if (Exit.isFailure(exit)) {
+                  failure = exit.cause;
+                  throw exit.cause;
+                }
+                return exit.value;
+              },
+            }),
+          catch: (error) => error,
+        }).pipe(
+          Effect.catch((error) =>
+            failure === undefined
+              ? Effect.die(error)
+              : Effect.failCause(failure),
+          ),
+        );
+      }.bind(this),
+    );
+  }
+
   private async waitForJsonCache<T>(
     key: string,
     waitTimeoutMs: number,
@@ -258,6 +348,12 @@ export class RedisService {
     pattern: string,
     batchSize = DEFAULT_DELETE_BATCH_SIZE,
   ): Promise<number> {
+    const scope = readCacheScopePattern(pattern);
+    if (scope !== undefined) {
+      await this.set(`cache-generation:v1:${scope}`, randomUUID());
+      // Entries expire by TTL; no keys are physically deleted on this path.
+      return 0;
+    }
     const prefixedPattern = this.prefixKey(pattern);
     let cursor = "0";
     let deletedCount = 0;

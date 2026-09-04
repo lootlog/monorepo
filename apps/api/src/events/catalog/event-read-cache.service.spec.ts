@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { Effect, Schema } from "effect";
-import type { JsonCodec, RedisService } from "#src/redis/redis.service";
+import type {
+  RedisGetOrSetJsonBestEffortOptions,
+  RedisService,
+} from "#src/redis/redis.service";
 import { EventKillHistoryResponse } from "#src/events/kills/event-kill-response.schema";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
 
@@ -13,19 +16,23 @@ describe("EventReadCache", () => {
   });
   let stored: string | null = null;
   const redis = {
-    getJson: vi.fn(async (_key: string, codec: JsonCodec<unknown>) =>
-      stored === null ? null : codec.parse(stored),
-    ),
-    setJson: vi.fn(
-      async (
-        _key: string,
-        value: unknown,
-        _ttl: number,
-        codec: JsonCodec<unknown>,
-      ) => {
-        stored = codec.stringify(value);
+    getOrSetJsonEffect<T, E>(
+      options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
+        factory: Effect.Effect<T, E>;
       },
-    ),
+    ) {
+      return Effect.suspend(() =>
+        stored !== null
+          ? Effect.succeed(options.codec.parse(stored))
+          : options.factory.pipe(
+              Effect.tap((value) =>
+                Effect.sync(() => {
+                  stored = options.codec.stringify(value);
+                }),
+              ),
+            ),
+      );
+    },
     deleteByPattern: vi.fn<(...args: unknown[]) => Promise<number>>(),
   };
 

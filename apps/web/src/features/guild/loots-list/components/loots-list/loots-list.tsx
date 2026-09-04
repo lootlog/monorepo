@@ -1,3 +1,7 @@
+import {
+  patchActiveLootLists,
+  LOOTS_QUERY_GC_TIME_MS,
+} from "./loot-list-cache";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-item-skeleton";
@@ -233,15 +237,16 @@ const lootMatchesParams = (
   return true;
 };
 
-const getLootQueryParamsFromKey = (
-  queryKey: QueryKey,
-): LootsControllerFetchLootsByGuildIdParams | null => {
+const lootMatchesQueryKey = (loot: Loot, queryKey: QueryKey): boolean => {
   const params = queryKey[1];
   if (!params || typeof params !== "object" || Array.isArray(params)) {
-    return null;
+    return false;
   }
 
-  return params as LootsControllerFetchLootsByGuildIdParams;
+  return lootMatchesParams(
+    loot,
+    params as LootsControllerFetchLootsByGuildIdParams,
+  );
 };
 
 const upsertLootIntoInfiniteData = (
@@ -376,6 +381,7 @@ export const LootsList: FC = () => {
     initialPageParam: 0,
     enabled: !!guildId && !!world,
     staleTime: LOOTS_QUERY_STALE_TIME_MS,
+    gcTime: LOOTS_QUERY_GC_TIME_MS,
   });
   const handleLootCreate = useEffectEvent(
     async (payload: GuildLootCreatedEventV2) => {
@@ -397,38 +403,28 @@ export const LootsList: FC = () => {
         return;
       }
 
-      const queryEntries = queryClient.getQueriesData<LootsInfiniteData>({
-        queryKey: [`/guilds/${guildId}/loots`],
-        exact: false,
-      });
-
       let patchedAnyQuery = false;
       let insertedNewLoot = false;
-      for (const [queryKey] of queryEntries) {
-        const queryParams = getLootQueryParamsFromKey(queryKey);
-        if (!queryParams || !lootMatchesParams(loot, queryParams)) {
-          continue;
+      patchActiveLootLists(queryClient, guildId, (old, queryKey) => {
+        if (!old?.pages || !lootMatchesQueryKey(loot, queryKey)) {
+          return old;
         }
 
-        queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) => {
-          if (!old?.pages) {
-            return old;
-          }
+        patchedAnyQuery = true;
+        if (!hasLootInInfiniteData(old, loot.id)) {
+          insertedNewLoot = true;
+        }
+        return upsertLootIntoInfiniteData(old, loot);
+      });
 
-          patchedAnyQuery = true;
-          if (!hasLootInInfiniteData(old, loot.id)) {
-            insertedNewLoot = true;
-          }
-
-          return upsertLootIntoInfiniteData(old, loot);
-        });
-      }
-
-      queryClient.setQueryData(
-        getLootsControllerFetchLootByIdQueryKey({
-          guildId,
-          lootId: loot.id,
-        }),
+      queryClient.setQueriesData(
+        {
+          queryKey: getLootsControllerFetchLootByIdQueryKey({
+            guildId,
+            lootId: loot.id,
+          }),
+          exact: true,
+        },
         loot,
       );
 
@@ -466,25 +462,17 @@ export const LootsList: FC = () => {
         return;
       }
 
-      const queryEntries = queryClient.getQueriesData<LootsInfiniteData>({
-        queryKey: [`/guilds/${guildId}/loots`],
-        exact: false,
-      });
-
       let patchedAnyListQuery = false;
-      for (const [queryKey] of queryEntries) {
-        queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) => {
-          if (hasLootInInfiniteData(old, payload.lootId)) {
-            patchedAnyListQuery = true;
-          }
-
-          return updateLootShareInInfiniteData(
-            old,
-            payload.lootId,
-            payload.lootShare,
-          );
-        });
-      }
+      patchActiveLootLists(queryClient, guildId, (old) => {
+        if (hasLootInInfiniteData(old, payload.lootId)) {
+          patchedAnyListQuery = true;
+        }
+        return updateLootShareInInfiniteData(
+          old,
+          payload.lootId,
+          payload.lootShare,
+        );
+      });
 
       let patchedDetailQuery = false;
       queryClient.setQueryData<Loot | null>(

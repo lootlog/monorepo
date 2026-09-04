@@ -63,26 +63,12 @@ export const makeEventReadCache = (redis: RedisService) => {
         Schema.toType(schema),
         superJsonSerialization,
       );
-      return Effect.gen(function* () {
-        const cached = yield* Effect.tryPromise(() =>
-          redis.getJson(key, codec),
-        ).pipe(
-          Effect.catch((error) => {
-            logger.warn("Event read cache unavailable", error);
-            return Effect.succeed(null);
-          }),
-        );
-        if (cached !== null) return cached;
-        const value = yield* factory();
-        yield* Effect.tryPromise(() =>
-          redis.setJson(key, value, EVENT_READ_CACHE_TTL_SECONDS, codec),
-        ).pipe(
-          Effect.catch((error) => {
-            logger.warn("Event read cache unavailable", error);
-            return Effect.void;
-          }),
-        );
-        return value;
+      return redis.getOrSetJsonEffect({
+        key,
+        codec,
+        ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
+        factory: Effect.suspend(factory),
+        onError: (error) => logger.warn("Event read cache unavailable", error),
       });
     },
 

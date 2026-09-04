@@ -27,8 +27,8 @@ describe("event catalog read Effect module", () => {
       active: true,
       heroNpcs: [],
     };
-    const getJson = mock(() => Promise.resolve(cachedEvent));
-    const redis = { getJson } as unknown as RedisService;
+    const getOrSetJsonEffect = mock(() => Effect.succeed(cachedEvent));
+    const redis = { getOrSetJsonEffect } as unknown as RedisService;
     const database = new Proxy(
       {},
       {
@@ -50,6 +50,6 @@ describe("event catalog read Effect module", () => {
     );
 
     expect(result).toEqual(cachedEvent);
-    expect(getJson).toHaveBeenCalledTimes(1);
+    expect(getOrSetJsonEffect).toHaveBeenCalledTimes(1);
   });
 });

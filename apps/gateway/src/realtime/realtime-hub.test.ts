@@ -228,6 +228,54 @@ describe("RealtimeHub federation", () => {
     );
   });
 
+  test("shares encoded broadcasts while retaining recipient filtering and backpressure", async () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()) as unknown as RedisGatewayStore,
+    );
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+    const targets = [
+      makeSocket(makeSession("first")),
+      makeSocket(makeSession("second")),
+      makeSocket(makeSession("slow"), 2_048),
+      makeSocket(makeSession("other")),
+    ];
+    for (const [index, target] of targets.entries()) {
+      if (index < 3)
+        target.socket.data.subscriptions.set(getScopeKey(scope), scope);
+      hub.register(target.socket);
+    }
+    const jsonFrames: string[] = [];
+    const jsonSocket = {
+      data: { ...makeSession("json-broadcast"), frameEncoding: "json" },
+      getBufferedAmount: () => 0,
+      send: (frame: string) => {
+        jsonFrames.push(frame);
+        return frame.length;
+      },
+    } as unknown as GatewaySocket;
+    jsonSocket.data.subscriptions.set(getScopeKey(scope), scope);
+    hub.register(jsonSocket);
+    const event = {
+      v: 1,
+      type: "chat.created",
+      data: { organizationId: "organization-1", payload: { id: "message-1" } },
+    } as const;
+    await hub.publishToScope(scope, event);
+    expect(jsonFrames).toEqual([JSON.stringify(event)]);
+    expect(targets[0]?.sent).toHaveLength(1);
+    expect(targets[0]?.sent[0]).toBe(targets[1]?.sent[0]);
+    expect(
+      decodeRealtimeFrame(targets[0]?.sent[0] ?? new Uint8Array()),
+    ).toEqual(event);
+    expect(targets[2]?.sent).toEqual([]);
+    expect(targets[2]?.socket.data.backpressureStrikes).toBe(1);
+    expect(targets[3]?.sent).toEqual([]);
+  });
+
   test("sends readable JSON to local diagnostic sockets", () => {
     const hub = new RealtimeHub(
       config,
