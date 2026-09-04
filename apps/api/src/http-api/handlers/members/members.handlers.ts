@@ -170,16 +170,18 @@ const declaredEmptyError = <A, R>(
   Effect.catchTags(effect, {
     MembersAccessDenied: (error) =>
       statuses.includes(error.status)
-        ? Effect.fail(undefined)
+        ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
         : Effect.die(error),
     MembersNotFound: (error) =>
       statuses.includes(error.status)
-        ? Effect.fail(undefined)
+        ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
         : Effect.die(error),
-    MembersOperationError: (error) =>
-      statuses.includes(applicationErrorStatusOrUndefined(error.cause) ?? 0)
-        ? Effect.fail(undefined)
-        : Effect.die(error.cause),
+    MembersOperationError: (error) => {
+      const status = applicationErrorStatusOrUndefined(error.cause);
+      return status !== undefined && statuses.includes(status)
+        ? Effect.succeed(HttpServerResponse.empty({ status }))
+        : Effect.die(error.cause);
+    },
   });
 
 const pathString = (value: unknown, name: string) =>
@@ -292,7 +294,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             );
             return yield* decode(MembersResponse, value);
           }),
-          [403],
+          [403, 404],
         ),
       )
       .handle(
@@ -312,7 +314,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               );
               return yield* decode(MemberReferencesResponse, value);
             }),
-            [403],
+            [403, 404],
           ),
       )
       .handle("MembersControllerGetGuildMembersSummary", ({ params }) =>
@@ -327,7 +329,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             );
             return yield* decode(MemberSummariesResponse, value);
           }),
-          [403],
+          [403, 404],
         ),
       )
       .handle("MembersControllerRefreshAllMembers", ({ params }) =>
@@ -343,7 +345,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             );
             return yield* decode(MemberRefreshJobResponse, value);
           }),
-          [403],
+          [403, 404],
         ),
       )
       .handle("MembersControllerGetLatestRefreshJob", ({ params }) =>

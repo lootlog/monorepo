@@ -109,7 +109,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
       params: MemberOrganizationPath,
       query: MembersQuery,
       success: MembersResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -123,7 +123,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
       params: MemberOrganizationPath,
       query: MembersQuery,
       success: MemberReferencesResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -139,7 +139,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     {
       params: MemberOrganizationPath,
       success: MemberSummariesResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -155,7 +155,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     {
       params: MemberOrganizationPath,
       success: MemberRefreshJobResponse.pipe(HttpApiSchema.status(201)),
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
