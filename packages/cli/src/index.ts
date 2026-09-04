@@ -36,9 +36,6 @@ ${chalk.bold("Examples:")}
 ${chalk.bold("Global Options:")}
   -h, --help                     Show this help message
   -v, --version                  Show CLI version
-
-${chalk.bold("Documentation:")}
-  For more information, see packages/cli/README.md
   `);
 };
 

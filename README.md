@@ -8,13 +8,8 @@ coordination.
 Lootlog is open source under MIT. It is an unofficial community project and
 does not automate character movement, combat, or player decisions.
 
-## Product and engineering context
+## Project links
 
-- [Product direction](PRODUCT.md)
-- [Domain language](CONTEXT.md)
-- [Architecture](ARCHITECTURE.md)
-- [Security policy](SECURITY.md)
-- [Design system](DESIGN.md)
 - [Contributor guide](CONTRIBUTING.md)
 - [User documentation](https://docs.lootlog.pl)
 
@@ -66,9 +61,6 @@ packages/
 └── ui/                  Shared UI components and styles
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership, data flow, service
-boundaries, deployment, and known gaps.
-
 ## Technology
 
 - Bun workspaces and Turborepo
@@ -116,8 +108,8 @@ bun run format
 bun run format:check
 ```
 
-Additional workspace-specific commands live in the relevant app or package
-README when one exists.
+Additional workspace-specific commands are declared in each workspace's
+`package.json`.
 
 ## Releases and production
 
@@ -149,11 +141,10 @@ community-supported until the project ships a tested distribution.
 
 ## Contributing and security
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and the applicable `AGENTS.md` before
-changing code. Report vulnerabilities privately through
-[GitHub Security Advisories](https://github.com/lootlog/monorepo/security/advisories/new)
-or use the fallback contact in [SECURITY.md](SECURITY.md). Do not open public
-issues for suspected vulnerabilities.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) before changing
+code. Report vulnerabilities privately through
+[GitHub Security Advisories](https://github.com/lootlog/monorepo/security/advisories/new).
+Do not open public issues for suspected vulnerabilities.
 
 General issues belong in the
 [Lootlog monorepo issue tracker](https://github.com/lootlog/monorepo/issues).
