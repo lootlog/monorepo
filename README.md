@@ -13,7 +13,6 @@ does not automate character movement, combat, or player decisions.
 - [Product direction](PRODUCT.md)
 - [Domain language](CONTEXT.md)
 - [Architecture](ARCHITECTURE.md)
-- [Architecture decisions](docs/adr/README.md)
 - [Security policy](SECURITY.md)
 - [Design system](DESIGN.md)
 - [Contributor guide](CONTRIBUTING.md)
@@ -40,7 +39,7 @@ apps/
 ├── activity/            Activity and audit service
 ├── api/                 Organization, loot, timer, chat, and coordination API
 ├── auth/                Discord authentication and session service
-├── battlelog-service/   Battle ingestion, storage, and statistics
+├── battlelog/           Battle ingestion, storage, and statistics
 ├── developer/           Future developer portal
 ├── discord-bot/         Discord integration
 ├── docs/                User documentation
@@ -53,16 +52,16 @@ apps/
 └── wiki/                Public Margonem knowledge app
 
 packages/
-├── api-client/          OpenAPI-generated clients and transport
-├── api-helpers/         Shared authentication and permission helpers
 ├── battle-processor/    Battle normalization and processing
 ├── cli/                 Environment and maintenance commands
+├── client/              Generated HTTP clients and realtime client
 ├── datetime/            Shared date and time utilities
+├── domain/              Browser-safe domain logic
 ├── instrumentation/     Observability setup
 ├── margonem/            Margonem domain types and helpers
-├── scoring/             Event and ranking scoring
-├── socket-parser/       Shared socket parsing
-├── types/               Shared contracts
+├── messaging/           RabbitMQ transport
+├── protocol/            Realtime and RabbitMQ wire contracts
+├── schema/              Shared schemas and browser-safe types
 ├── typescript-config/   Shared TypeScript configuration
 └── ui/                  Shared UI components and styles
 ```
@@ -74,7 +73,7 @@ boundaries, deployment, and known gaps.
 
 - Bun workspaces and Turborepo
 - TypeScript, React 19, Vite, TanStack Start, and TanStack Router/Query
-- Effect HttpApi, Better Auth, and native Bun HTTP/WebSocket servers
+- Effect 4 HttpApi, Better Auth, and native Bun HTTP/WebSocket servers
 - PostgreSQL, TimescaleDB, Drizzle, and R2
 - RabbitMQ, Redis, native WebSockets, and Meilisearch
 - Oxlint, Oxfmt, Vitest, and GitHub Actions
@@ -117,7 +116,8 @@ bun run format
 bun run format:check
 ```
 
-Workspace-specific commands are documented in each app or package README.
+Additional workspace-specific commands live in the relevant app or package
+README when one exists.
 
 ## Releases and production
 
@@ -139,8 +139,10 @@ infrastructure repository records image references and Cloudflare deployment
 IDs. The Roll back production workflow restores its previous revision without
 rebuilding code.
 
-See [CI and deployment](docs/ci-cd.md) for workflow inputs, required environment
-configuration, rollback, and the post-merge GitHub settings change.
+See the [development deployment](.github/workflows/dev-deploy.yml),
+[production release](.github/workflows/release.yml), and
+[production rollback](.github/workflows/rollback.yml) workflows for the current
+inputs and deployment steps.
 
 Docker Compose is limited to local infrastructure. Self-hosting is
 community-supported until the project ships a tested distribution.
