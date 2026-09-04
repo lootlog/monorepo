@@ -320,6 +320,8 @@ paths:
                   $ref: "#/components/schemas/MemberResponseDto"
         "403":
           description: <No Content>
+        "404":
+          description: <No Content>
       description: Retrieve all members for a guild
       summary: Get guild members
   /guilds/{guildId}/members/references:
@@ -350,6 +352,8 @@ paths:
                   $ref: "#/components/schemas/MemberReferenceResponseDto_Output"
         "403":
           description: <No Content>
+        "404":
+          description: <No Content>
       description: Retrieve limited member reference data for guild-scoped historical views
       summary: Get guild member references
   /guilds/{guildId}/members/summary:
@@ -375,6 +379,8 @@ paths:
                   $ref: "#/components/schemas/MemberSummaryResponseDto_Output"
         "403":
           description: <No Content>
+        "404":
+          description: <No Content>
       description: Retrieve lightweight active member data for game-client member lookups
       summary: Get guild members summary
   /guilds/{guildId}/members/refresh-all:
@@ -397,6 +403,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/MemberRefreshJobResponseDto"
         "403":
+          description: <No Content>
+        "404":
           description: <No Content>
       description: Create a job to refresh all guild members (admin only)
       summary: Refresh all members
@@ -2071,6 +2079,8 @@ paths:
                   $ref: "#/components/schemas/ChatMessageResponseDto_Output"
         "403":
           description: <No Content>
+        "404":
+          description: <No Content>
       description: Retrieve chat messages for a guild
       summary: Get chat messages
     post:
@@ -2092,6 +2102,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChatMessageResponseDto_Output"
         "403":
+          description: <No Content>
+        "404":
           description: <No Content>
       description: Send a new chat message to a guild
       summary: Send chat message
@@ -2120,6 +2132,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
         "403":
+          description: <No Content>
+        "404":
           description: <No Content>
       description: Clear all chat messages from a guild
       summary: Clear chat messages
@@ -2150,6 +2164,8 @@ paths:
                 $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
         "403":
           description: <No Content>
+        "404":
+          description: <No Content>
       description: Delete a chat message from a guild
       summary: Delete chat message
     patch:
@@ -2177,6 +2193,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
         "403":
+          description: <No Content>
+        "404":
           description: <No Content>
       description: Update the content of a chat message
       summary: Update chat message

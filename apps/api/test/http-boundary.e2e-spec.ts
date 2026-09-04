@@ -35,6 +35,7 @@ import {
   memberToRoleTable,
   roleTable,
   timerTable,
+  userGameAccountSettingsTable,
 } from "../src/database/drizzle/schema.js";
 
 const caller = {
@@ -182,6 +183,65 @@ describe("API HTTP boundary", () => {
     await redisRuntime.dispose();
     await databaseRuntime.dispose();
     await boundary.dispose();
+  });
+
+  it.each([
+    {},
+    { name: "", world: "   " },
+    { name: "  Heroes  " },
+    { world: "  Aldous  " },
+  ])("round-trips detector rules with optional labels %j", async (labels) => {
+    const path = "/users/@me/game-preferences/accounts/routing-test";
+    const rule = {
+      id: "rule-1",
+      minLevel: 0,
+      maxLevel: 500,
+      guildIds: [authorizedGuildId],
+      ...labels,
+    };
+    const expectedRule = {
+      id: rule.id,
+      minLevel: 0,
+      maxLevel: 500,
+      guildIds: [authorizedGuildId],
+      ...(labels.name?.trim() ? { name: labels.name.trim() } : {}),
+      ...(labels.world?.trim() ? { world: labels.world.trim() } : {}),
+    };
+    const updated = await request(path, {
+      method: "PATCH",
+      body: JSON.stringify({ detector: { routingRules: [rule] } }),
+    });
+    expect(updated.status).toBe(200);
+    expect(await updated.json()).toMatchObject({
+      detector: { routingRules: [expectedRule] },
+      hasStoredDetector: true,
+    });
+    const fetched = await request(path);
+    expect(fetched.status).toBe(200);
+    expect(await fetched.json()).toMatchObject({
+      detector: { routingRules: [expectedRule] },
+    });
+  });
+
+  it("reads existing unnamed detector rules", async () => {
+    const accountId = "stored-routing-test";
+    const rule = { id: "existing", minLevel: 10, maxLevel: 100, guildIds: [] };
+    await databaseRuntime.runPromise(
+      database.insert(userGameAccountSettingsTable).values({
+        userId: caller.userId,
+        accountId,
+        settings: { detector: { routingRules: [rule] } },
+        updatedAt: new Date(),
+      }),
+    );
+    const fetched = await request(
+      `/users/@me/game-preferences/accounts/${accountId}`,
+    );
+    expect(fetched.status).toBe(200);
+    expect(await fetched.json()).toMatchObject({
+      detector: { routingRules: [rule] },
+      hasStoredDetector: true,
+    });
   });
 
   it.each(["", "/permissions"])(
@@ -378,4 +438,60 @@ describe("API HTTP boundary", () => {
     expect(missingTemplate.status).toBe(404);
     expect(forbiddenHistory.status).toBe(403);
   });
+  it.each([
+    { suffix: "/members", method: "GET" },
+    { suffix: "/members/references", method: "GET" },
+    { suffix: "/members/summary", method: "GET" },
+    { suffix: "/members/refresh-all", method: "POST" },
+    { suffix: "/members/member-a/refresh", method: "POST" },
+    { suffix: "/members/member-a/deactivate", method: "PATCH" },
+    { suffix: "/members/member-a/lootlog-config-summary", method: "GET" },
+    { suffix: "/members/refresh-jobs/latest", method: "GET" },
+    { suffix: "/members/refresh-jobs/1", method: "GET" },
+    { suffix: "/chat-messages", method: "GET" },
+    { suffix: "/chat-messages", method: "DELETE" },
+    { suffix: "/chat-messages/message-a", method: "DELETE" },
+    {
+      suffix: "/chat-messages/message-a",
+      method: "PATCH",
+      payload: { message: "Updated" },
+    },
+    {
+      suffix: "/chat-messages",
+      method: "POST",
+      payload: {
+        message: "Hello",
+        type: "NORMAL",
+        characterData: {
+          nick: "Hero",
+          id: 1,
+          acc: 2,
+          lvl: 300,
+          prof: "w",
+          icon: "hero.gif",
+        },
+      },
+    },
+  ])(
+    "preserves Organization authorization status for $method $suffix",
+    async ({ suffix, method, payload }) => {
+      const init = {
+        method,
+        body: payload ? JSON.stringify(payload) : undefined,
+      };
+      const missing = await request(
+        `/guilds/missing-organization${suffix}`,
+        init,
+      );
+      const forbidden = await request(
+        `/guilds/${forbiddenGuildId}${suffix}`,
+        init,
+      );
+
+      expect(missing.status).toBe(404);
+      expect(await missing.text()).toBe("");
+      expect(forbidden.status).toBe(403);
+      expect(await forbidden.text()).toBe("");
+    },
+  );
 });

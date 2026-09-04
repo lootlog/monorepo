@@ -23,7 +23,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     {
       params: ChatOrganizationPath,
       success: ChatMessagesResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -37,7 +37,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
       params: ChatOrganizationPath,
       payload: SendChatMessageRequest,
       success: ChatMessageResponse.pipe(HttpApiSchema.status(201)),
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -50,7 +50,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     {
       params: ChatOrganizationPath,
       success: ChatMessageActionResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -63,7 +63,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     {
       params: ChatMessagePath,
       success: ChatMessageActionResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -77,7 +77,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
       params: ChatMessagePath,
       payload: UpdateChatMessageRequest,
       success: ChatMessageActionResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
     .middleware(BearerSecurityMiddleware)
