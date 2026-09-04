@@ -263,7 +263,10 @@ const EventParticipationConfirmationDialogContent = ({
                                 </p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Clock className="size-3" />
-                                  {t("events.confirmation.deadline", "Do")}:{" "}
+                                  {t(
+                                    "events.confirmation.deadline",
+                                    "Do",
+                                  )}:{" "}
                                   {formatDateTime(deadline)} ({remaining})
                                 </p>
                               </div>

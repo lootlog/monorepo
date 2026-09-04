@@ -34,7 +34,7 @@ import { Table } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useState, type KeyboardEvent } from "react";
@@ -42,6 +42,7 @@ import { useTranslation } from "react-i18next";
 import type { PlayerVsPlayerPaginatedResponseDtoOutput } from "@lootlog/client/battlelog";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 const getPlayerVsPlayerRequestIds = (
   currentCharacterId: string | undefined,
@@ -229,10 +230,10 @@ export function PlayerVsPlayerFullPage() {
     );
   const myCharacter = data?.battles[0]?.userWarrior;
 
-  const table = useReactTable({
+  const table = useTable({
+    features: coreTableFeatures,
     data: battles,
     columns: playerVsPlayerColumns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   const filterState = {

@@ -13,8 +13,12 @@ import {
 import { cn } from "cn";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
-export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
+export const playerVsPlayerColumns: ColumnDef<
+  typeof coreTableFeatures,
+  PlayerVsPlayerBattle
+>[] = [
   {
     id: "result",
     header: () => (

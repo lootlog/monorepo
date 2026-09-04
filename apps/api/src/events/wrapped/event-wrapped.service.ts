@@ -372,17 +372,15 @@ export const makeEventWrapped = (
           totalLoots,
           rarityTotals: totalRarityTotals,
           heroBreakdown: event.heroNpcs
-            .map(
-              (hero): EventWrappedLootHeroDto => ({
-                heroNpcId: hero.id,
-                npcName: hero.npcName,
-                npcIcon: hero.npcIcon,
-                totalLoots: heroLoots.get(hero.id)?.totalLoots ?? 0,
-                rarityTotals:
-                  heroLoots.get(hero.id)?.rarityTotals ??
-                  createEmptyRarityTotals(),
-              }),
-            )
+            .map((hero): EventWrappedLootHeroDto => ({
+              heroNpcId: hero.id,
+              npcName: hero.npcName,
+              npcIcon: hero.npcIcon,
+              totalLoots: heroLoots.get(hero.id)?.totalLoots ?? 0,
+              rarityTotals:
+                heroLoots.get(hero.id)?.rarityTotals ??
+                createEmptyRarityTotals(),
+            }))
             .sort((left, right) => right.totalLoots - left.totalLoots),
         },
       };

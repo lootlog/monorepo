@@ -4,6 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ExpandableDataTable } from "./expandable-data-table";
+import { sortedTableFeatures } from "@/lib/tanstack-table-features";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -18,7 +19,7 @@ afterEach(cleanup);
 describe("ExpandableDataTable", () => {
   it("uses the shared expanded-detail table state for animated rows", () => {
     type TestRow = { id: string };
-    const columns: ColumnDef<TestRow>[] = [
+    const columns: ColumnDef<typeof sortedTableFeatures, TestRow>[] = [
       {
         accessorKey: "id",
         header: "ID",

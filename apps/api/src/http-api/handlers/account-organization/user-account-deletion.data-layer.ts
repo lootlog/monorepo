@@ -126,13 +126,11 @@ const deletePersistedAccount = (
           );
       }
 
-      return members.map(
-        (member): RemovedMember => ({
-          discordId: member.userId,
-          guildId: member.guildId,
-          globalUserId: member.globalUserId,
-        }),
-      );
+      return members.map((member): RemovedMember => ({
+        discordId: member.userId,
+        guildId: member.guildId,
+        globalUserId: member.globalUserId,
+      }));
     }),
   );
 

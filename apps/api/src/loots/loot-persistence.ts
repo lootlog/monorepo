@@ -45,11 +45,10 @@ type Database = typeof ApiDatabase.Service;
 export const makeLootPersistence = (database: Database): LootPersistence => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
-      Effect.mapError(
-        (cause): PersistenceFailure =>
-          cause instanceof PermissionDeniedError
-            ? cause
-            : new LootPersistenceError({ operation, cause }),
+      Effect.mapError((cause): PersistenceFailure =>
+        cause instanceof PermissionDeniedError
+          ? cause
+          : new LootPersistenceError({ operation, cause }),
       ),
       Effect.withSpan(operation, {
         attributes: { adapter: "loots.drizzle", retryCount: 0 },

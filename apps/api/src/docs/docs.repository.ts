@@ -104,11 +104,10 @@ export class DocsRepository extends Context.Service<
 function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
   const protect = <A, E>(effect: Effect.Effect<A, E>) =>
     effect.pipe(
-      Effect.mapError(
-        (error): DocsRepositoryFailure =>
-          error instanceof ApplicationError
-            ? error
-            : new DocsPersistenceError({ cause: error }),
+      Effect.mapError((error): DocsRepositoryFailure =>
+        error instanceof ApplicationError
+          ? error
+          : new DocsPersistenceError({ cause: error }),
       ),
     );
 

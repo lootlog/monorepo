@@ -8,12 +8,11 @@ import {
 } from "@lootlog/ui/components/table";
 import {
   flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
   type ColumnDef,
   type Row,
+  type RowData,
   type SortingState,
+  useTable,
 } from "@tanstack/react-table";
 import { cn } from "cn";
 import { Fragment, type ReactNode, useState } from "react";
@@ -27,6 +26,7 @@ import { WarriorDetailsBreakdown } from "./warrior-details-breakdown";
 import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
+import { sortedTableFeatures } from "@/lib/tanstack-table-features";
 
 type ExpandedRowType =
   | "damage"
@@ -36,10 +36,10 @@ type ExpandedRowType =
   | "details"
   | "damageDealt";
 
-interface ExpandableDataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface ExpandableDataTableProps<TData extends RowData> {
+  columns: ColumnDef<typeof sortedTableFeatures, TData>[];
   data: TData[];
-  getRowClassName?: (row: Row<TData>) => string;
+  getRowClassName?: (row: Row<typeof sortedTableFeatures, TData>) => string;
   forceHorizontalScroll?: boolean;
   expandedRows: Map<string, ExpandedRowType>;
 }
@@ -76,21 +76,20 @@ const renderExpandedContent = (
   }
 };
 
-export function ExpandableDataTable<TData, TValue>({
+export function ExpandableDataTable<TData extends RowData>({
   columns,
   data,
   getRowClassName,
   forceHorizontalScroll = false,
   expandedRows,
-}: ExpandableDataTableProps<TData, TValue>) {
+}: ExpandableDataTableProps<TData>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: sortedTableFeatures,
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
     state: {
       sorting,
@@ -154,7 +153,6 @@ export function ExpandableDataTable<TData, TValue>({
                         "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
                         getRowClassName ? getRowClassName(row) : undefined,
                       )}
-                      data-state={row.getIsSelected() && "selected"}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>

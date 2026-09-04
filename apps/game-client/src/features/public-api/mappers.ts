@@ -117,14 +117,12 @@ export const mapGuilds = (
   data: Array<Guild | GuildResponseDtoOutput> | undefined,
 ): PublicGuild[] | undefined => {
   if (!data) return undefined;
-  return data.map(
-    (g): PublicGuild => ({
-      id: g.id,
-      name: g.name,
-      icon: g.icon ?? null,
-      vanityUrl: g.vanityUrl ?? undefined,
-    }),
-  );
+  return data.map((g): PublicGuild => ({
+    id: g.id,
+    name: g.name,
+    icon: g.icon ?? null,
+    vanityUrl: g.vanityUrl ?? undefined,
+  }));
 };
 
 export const mapTimers = (
