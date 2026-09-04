@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import { AlertCircle, Skull } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -15,6 +15,7 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { createEventKillsTableColumns } from "./event-kills-table-columns";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type EventKillsTableBaseProps = {
   eventId: string;
@@ -90,10 +91,10 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     isPreview,
     t,
   });
-  const table = useReactTable({
+  const table = useTable({
+    features: coreTableFeatures,
     columns,
     data: kills,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   useEffect(() => {

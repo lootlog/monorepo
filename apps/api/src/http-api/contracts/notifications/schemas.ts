@@ -130,7 +130,9 @@ export type NotificationTargetWithTestTriggerResponseDto__schema0 =
       | boolean
       | ReadonlyArray<NotificationTargetWithTestTriggerResponseDto__schema0>
       | {
-          readonly [x: string]: NotificationTargetWithTestTriggerResponseDto__schema0;
+          readonly [
+            x: string
+          ]: NotificationTargetWithTestTriggerResponseDto__schema0;
         }
       | null
     >
@@ -141,7 +143,9 @@ export type NotificationTargetWithTestTriggerResponseDto__schema0 =
         | boolean
         | ReadonlyArray<NotificationTargetWithTestTriggerResponseDto__schema0>
         | {
-            readonly [x: string]: NotificationTargetWithTestTriggerResponseDto__schema0;
+            readonly [
+              x: string
+            ]: NotificationTargetWithTestTriggerResponseDto__schema0;
           }
         | null;
     }

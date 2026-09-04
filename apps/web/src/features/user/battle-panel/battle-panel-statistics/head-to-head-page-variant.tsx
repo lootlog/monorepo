@@ -35,10 +35,9 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  getCoreRowModel,
   type ColumnDef,
   type SortingState,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import { AlertCircle, SearchX, Swords } from "lucide-react";
 import { useQueryStates } from "nuqs";
@@ -46,9 +45,10 @@ import { useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { HeadToHeadFilterToolbar } from "./components/head-to-head-filter-toolbar";
 import { HeadToHeadFiltersPanel } from "./components/head-to-head-filters-panel";
+import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
 type HeadToHeadPageVariantProps = {
-  columns: ColumnDef<HeadToHeadRecord>[];
+  columns: ColumnDef<typeof sortingTableFeatures, HeadToHeadRecord>[];
   emptyDescriptionKey: string;
   emptyTitleKey: string;
   matchmaking: boolean;
@@ -287,7 +287,8 @@ export function HeadToHeadPageVariant({
     });
   };
 
-  const table = useReactTable({
+  const table = useTable({
+    features: sortingTableFeatures,
     data: data?.records ?? [],
     columns,
     state: {
@@ -305,7 +306,6 @@ export function HeadToHeadPageVariant({
         sortOrder: nextSort?.desc ? "desc" : "asc",
       });
     },
-    getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
   });
 
