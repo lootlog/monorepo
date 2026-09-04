@@ -19,6 +19,12 @@ const baselinePath = fileURLToPath(
     import.meta.url,
   ),
 );
+const betterAuth17Path = fileURLToPath(
+  new URL(
+    "../../drizzle/20260902062446_aberrant_martin_li/migration.sql",
+    import.meta.url,
+  ),
+);
 
 describe("Better Auth 1.7 PostgreSQL migration", () => {
   let postgres: StartedPostgreSqlContainer;
@@ -49,6 +55,46 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       await runAuthMigrations(connection);
       await runAuthMigrations(connection);
       await assertAuthSchemaFingerprint(connection.pool);
+      expect(await planAuthMigration(connection.pool)).toMatchObject({
+        status: "up-to-date",
+        source: "better-auth-1.7",
+        pendingMigrations: 0,
+      });
+    } finally {
+      await connection.pool.end();
+    }
+  });
+
+  it("adds the Better Auth 1.7 JWKS metadata columns to an existing schema", async () => {
+    const databaseUri = await createDatabase(postgres, "auth_v17_jwks");
+    const connection = makeConnection(databaseUri);
+    try {
+      await installCanonicalLegacySchema(connection.pool);
+      await connection.pool.query(await fs.readFile(betterAuth17Path, "utf8"));
+
+      expect(await planAuthMigration(connection.pool)).toMatchObject({
+        status: "ready",
+        source: "better-auth-1.7-pre-jwks-metadata",
+        pendingMigrations: 1,
+      });
+
+      await runAuthMigrations(connection);
+
+      expect(
+        await connection.pool.query(`
+          SELECT column_name AS "columnName", is_nullable AS "isNullable"
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'jwks'
+            AND column_name IN ('alg', 'crv')
+          ORDER BY column_name
+        `),
+      ).toMatchObject({
+        rows: [
+          { columnName: "alg", isNullable: "YES" },
+          { columnName: "crv", isNullable: "YES" },
+        ],
+      });
       expect(await planAuthMigration(connection.pool)).toMatchObject({
         status: "up-to-date",
         source: "better-auth-1.7",
