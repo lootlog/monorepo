@@ -2,7 +2,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Fiber, ManagedRuntime, Queue, Redacted } from "effect";
+import {
+  Effect,
+  Fiber,
+  ManagedRuntime,
+  Queue,
+  Redacted,
+  Schedule,
+} from "effect";
 import { Redis } from "effect/unstable/persistence";
 import {
   GenericContainer,
@@ -124,10 +131,16 @@ describe("realtime Dragonfly integration", () => {
             });
           }),
         );
-        expect(yield* redis.send("PUBSUB", "NUMSUB", channel)).toEqual([
-          channel,
-          0,
-        ]);
+        // Dragonfly observes socket closure asynchronously on another connection.
+        const subscriptions = yield* redis
+          .send<[string, number]>("PUBSUB", "NUMSUB", channel)
+          .pipe(
+            Effect.repeat({
+              until: ([, count]) => count === 0,
+              schedule: Schedule.spaced("10 millis"),
+            }),
+          );
+        expect(subscriptions).toEqual([channel, 0]);
         expect(yield* redis.send("PING")).toBe("PONG");
       }).pipe(
         Effect.provide(
