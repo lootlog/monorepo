@@ -11,7 +11,7 @@ import {
   type StartedTestContainer,
   Wait,
 } from "testcontainers";
-import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
+import { Effect, Exit, Layer, ManagedRuntime, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { readdir } from "node:fs/promises";
 import pg from "pg";
@@ -420,4 +420,88 @@ it("reloads corrupted metadata cache and shares invalidation with analytics", as
   ).toEqual({
     characters: [{ id: "hero", name: "Hero", world: "world", icon: "" }],
   });
+});
+
+it("coalesces concurrent analytics fills and retries factory failures without caching them", async () => {
+  let calls = 0;
+  const cache = services.cache;
+  const read = () =>
+    cache.getOrSetJson(
+      "burst",
+      "summary",
+      () =>
+        Effect.gen(function* () {
+          calls++;
+          yield* Effect.sleep("80 millis");
+          return 42;
+        }),
+      Number,
+    );
+  const results = await Promise.all(
+    Array.from({ length: 8 }, () => runtime.runPromise(read())),
+  );
+  expect(results).toEqual(Array(8).fill(42));
+  expect(calls).toBe(1);
+  const failure = { reason: "database failed" };
+  let failures = 0;
+  expect(
+    await runtime.runPromise(
+      cache
+        .getOrSetJson(
+          "burst",
+          "failure",
+          () =>
+            Effect.suspend(() => {
+              failures++;
+              return Effect.fail(failure);
+            }),
+          Number,
+        )
+        .pipe(Effect.flip),
+    ),
+  ).toBe(failure);
+  expect(failures).toBe(1);
+  expect(
+    await runtime.runPromise(
+      cache.getOrSetJson("burst", "failure", () => Effect.succeed(7), Number),
+    ),
+  ).toBe(7);
+});
+
+it("interrupts a coalesced analytics factory and permits a subsequent fill", async () => {
+  const controller = new AbortController();
+  const { promise: started, resolve: begin } = Promise.withResolvers<void>();
+  const { promise: canceled, resolve: cancel } = Promise.withResolvers<void>();
+  const reading = Effect.runPromiseExit(
+    services.cache.getOrSetJson(
+      "abort",
+      "summary",
+      () =>
+        Effect.sync(begin).pipe(
+          Effect.andThen(Effect.never),
+          Effect.onInterrupt(() => Effect.sync(cancel)),
+        ),
+      Number,
+    ),
+    { signal: controller.signal },
+  );
+  await started;
+  controller.abort();
+  expect(Exit.hasInterrupts(await reading)).toBe(true);
+  await canceled;
+  const generation = await services.redis.get("battle-cache-generation:abort");
+  const key = `battle-cache:v2:abort:${generation}:summary`;
+  expect(await services.redis.get(key)).toBeNull();
+  expect(
+    await runtime.runPromise(
+      services.cache.getOrSetJson(
+        "abort",
+        "summary",
+        () => Effect.succeed(9),
+        Number,
+      ),
+    ),
+  ).toBe(9);
+  expect(await services.redis.get(`${key}:single-flight`)).toBeNull();
+  expect(await services.redis.get(key)).toBe("9");
 });

@@ -3,7 +3,7 @@ import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
 import type { BattleStatisticsQuery } from "#src/battles/analytics/query-battle-statistics";
-import { Effect } from "effect";
+import { type Cause, Effect, Exit } from "effect";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 const ANALYTICS_CACHE_PREFIX = "analytics";
@@ -42,41 +42,6 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     return enabled ? enabledSegment : `not-${enabledSegment}`;
   };
 
-  const getJson = <T>(cacheKey: string, decodeJson: (value: string) => T) =>
-    Effect.tryPromise({
-      try: () => Promise.resolve(redisService.get(cacheKey)),
-      catch: (cause) => cause,
-    }).pipe(
-      Effect.flatMap((cachedResult) =>
-        cachedResult
-          ? Effect.try({
-              try: () => decodeJson(cachedResult),
-              catch: (cause) => cause,
-            })
-          : Effect.succeed(null),
-      ),
-      Effect.withSpan("BattleAnalyticsCache_getJson", {
-        attributes: { adapter: "redis", retryCount: 0 },
-      }),
-    );
-
-  const setJson = <T>(cacheKey: string, result: T) =>
-    Effect.tryPromise({
-      try: () =>
-        Promise.resolve(
-          redisService.set(
-            cacheKey,
-            JSON.stringify(result),
-            ANALYTICS_CACHE_TTL_SECONDS,
-          ),
-        ),
-      catch: (cause) => cause,
-    }).pipe(
-      Effect.withSpan("BattleAnalyticsCache_setJson", {
-        attributes: { adapter: "redis", retryCount: 0 },
-      }),
-    );
-
   const getOrSetJson = <T>(
     userId: string,
     cacheKey: string,
@@ -100,21 +65,34 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       );
       if (generation === undefined) return yield* factory();
       const versionedKey = `battle-cache:v2:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
-      const cached = yield* getJson(versionedKey, decodeJson).pipe(
-        Effect.catch((error) => {
-          logger.warn("Battle analytics cache unavailable", error);
-          return Effect.succeed(null);
-        }),
+      const context = yield* Effect.context();
+      let failure: Cause.Cause<unknown> | undefined;
+      return yield* Effect.tryPromise({
+        try: (signal) =>
+          redisService.getOrSetJsonBestEffort<T>({
+            key: versionedKey,
+            ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
+            codec: { stringify: JSON.stringify, parse: decodeJson },
+            factory: async () => {
+              const exit = await Effect.runPromiseExitWith(context)(
+                Effect.suspend(factory),
+                { signal },
+              );
+              if (Exit.isFailure(exit)) {
+                failure = exit.cause;
+                throw exit.cause;
+              }
+              return exit.value;
+            },
+            onError: (error) =>
+              logger.warn("Battle analytics cache unavailable", error),
+          }),
+        catch: (error) => error,
+      }).pipe(
+        Effect.catch((error) =>
+          failure === undefined ? Effect.die(error) : Effect.failCause(failure),
+        ),
       );
-      if (cached !== null) return cached;
-      const result = yield* factory();
-      yield* setJson(versionedKey, result).pipe(
-        Effect.catch((error) => {
-          logger.warn("Battle analytics cache unavailable", error);
-          return Effect.void;
-        }),
-      );
-      return result;
     });
 
   const invalidateUserAnalytics = (userId: string) =>

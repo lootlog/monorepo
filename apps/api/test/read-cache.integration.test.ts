@@ -212,6 +212,14 @@ describe("Read cache Dragonfly integration", () => {
           const hit = yield* request();
           expect(hit[0]?.createdAt).toBeInstanceOf(Date);
           expect(hit[0]?.updatedAt).toBeInstanceOf(Date);
+          expect(
+            yield* Effect.promise(() => cache.scan(`loots:list:${guild.id}:*`)),
+          ).toEqual([]);
+          expect(
+            yield* Effect.promise(() =>
+              cache.scan(`read-cache:v1:*:loots:list:${guild.id}:*`),
+            ),
+          ).toHaveLength(1);
           yield* operations.archiveLoot({
             guild,
             accessPolicy: policy,
@@ -320,6 +328,11 @@ describe("Read cache Dragonfly integration", () => {
       Effect.runPromise(service.getLootStatsEffect(organization, policy, []));
     const responses = await Promise.all(Array.from({ length: 8 }, request));
     expect(queries).toBe(6);
+    expect(await cache.scan(`loot-stats:${organization}:*`)).toEqual([]);
+    const firstGenerationKeys = await cache.scan(
+      `read-cache:v1:*:loot-stats:${organization}:*`,
+    );
+    expect(firstGenerationKeys).toHaveLength(1);
     expect(
       responses.every(
         (response) => JSON.stringify(response) === JSON.stringify(responses[0]),
@@ -328,5 +341,12 @@ describe("Read cache Dragonfly integration", () => {
     await cache.deleteByPattern(`loot-stats:${organization}:*`);
     await request();
     expect(queries).toBe(12);
+    const nextGenerationKeys = await cache.scan(
+      `read-cache:v1:*:loot-stats:${organization}:*`,
+    );
+    expect(nextGenerationKeys).toHaveLength(2);
+    expect(nextGenerationKeys).toEqual(
+      expect.arrayContaining(firstGenerationKeys),
+    );
   });
 });

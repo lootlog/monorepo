@@ -141,7 +141,21 @@ describe("battle analytics", () => {
       getClient: mock(),
       deleteByPattern: mock(),
       getOrSetJsonBestEffort: mock(
-        ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+        async ({
+          key,
+          factory,
+          codec,
+        }: {
+          key: string;
+          factory: () => Promise<unknown>;
+          codec: { parse: (text: string) => unknown };
+        }): Promise<unknown> => {
+          const cached = await mockRedisService.get(key);
+          if (cached !== null) return codec.parse(cached);
+          const result = await factory();
+          await mockRedisService.set(key, JSON.stringify(result), 300);
+          return result;
+        },
       ),
     };
 
