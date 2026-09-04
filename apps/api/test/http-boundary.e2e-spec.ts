@@ -15,6 +15,7 @@ import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
+import { getFreshCompleteUserGuildsHandoffKey } from "#src/discord/discord-cache.util";
 import { RedisService } from "#src/redis/redis.service";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
@@ -27,6 +28,9 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildTable,
+  itemSnapshotTable,
+  notificationTargetTable,
+  watchedItemTable,
   memberTable,
   memberToRoleTable,
   roleTable,
@@ -178,6 +182,91 @@ describe("API HTTP boundary", () => {
     await redisRuntime.dispose();
     await databaseRuntime.dispose();
     await boundary.dispose();
+  });
+
+  it.each(["", "/permissions"])(
+    "returns 404 for missing Organization metadata %s",
+    async (suffix) => {
+      const response = await request(`/guilds/missing-organization${suffix}`);
+      expect(response.status).toBe(404);
+    },
+  );
+
+  it("returns watched item snapshots after create, quick-add and retry", async () => {
+    await redis.set(
+      getFreshCompleteUserGuildsHandoffKey(caller),
+      JSON.stringify({
+        guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
+        fresh: true,
+        complete: true,
+      }),
+      60,
+    );
+    const itemId = 990001;
+    await databaseRuntime.runPromise(
+      Effect.gen(function* () {
+        yield* database.insert(notificationTargetTable).values({
+          ownerType: "USER",
+          ownerId: caller.discordId,
+          provider: "DISCORD",
+          targetType: "DM",
+          externalId: "watched-item-test-dm",
+          updatedAt: new Date(),
+        });
+        yield* database.insert(itemSnapshotTable).values({
+          itemId,
+          statsHash: "watched-item-test",
+          name: "Watched item",
+          icon: "item.png",
+          statRaw: "lvl=80",
+          statsSnapshot: {},
+        });
+      }),
+    );
+    for (const [path, scope, expectedSnapshot] of [
+      ["/quick-add", { guildId: authorizedGuildId }, null],
+      [
+        "",
+        { guildIds: [authorizedGuildId] },
+        { name: "Watched item", icon: "item.png" },
+      ],
+      [
+        "/quick-add",
+        { guildId: authorizedGuildId },
+        { name: "Watched item", icon: "item.png" },
+      ],
+    ] as const) {
+      // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
+      const response = await request(
+        `/users/@me/notifications/watched-items${path}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            itemId,
+            itemName:
+              expectedSnapshot === null ? "No snapshot" : "Watched item",
+            world,
+            ...scope,
+          }),
+        },
+      );
+      expect(response.status).toBe(201);
+      // eslint-disable-next-line no-await-in-loop -- Validate each response before retrying the mutation.
+      expect(await response.json()).toMatchObject({
+        itemId,
+        itemSnapshot: expectedSnapshot,
+      });
+    }
+    expect(
+      await databaseRuntime.runPromise(
+        database.select({ value: count() }).from(watchedItemTable),
+      ),
+    ).toEqual([{ value: 1 }]);
+    const listed = await request("/users/@me/notifications/watched-items");
+    expect(listed.status).toBe(200);
+    expect(await listed.json()).toMatchObject([
+      { itemId, itemSnapshot: { name: "Watched item" } },
+    ]);
   });
 
   it("creates, reads and deletes a timer through the real router and database", async () => {

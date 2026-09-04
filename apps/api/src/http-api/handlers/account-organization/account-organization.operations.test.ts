@@ -114,11 +114,10 @@ const provideServices = (
   );
 
 describe("Users and Guilds HttpApi handlers", () => {
-  it("returns forbidden for Organization metadata without access", async () => {
-    const denied = new AccountOrganizationAccessDenied({
-      status: 403,
-      code: "FORBIDDEN",
-    });
+  it.each([
+    new AccountOrganizationAccessDenied({ status: 403, code: "FORBIDDEN" }),
+    new AccountOrganizationNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
+  ])("preserves Organization access status", async (denied) => {
     const services = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
       makeData(),
@@ -155,7 +154,10 @@ describe("Users and Guilds HttpApi handlers", () => {
     >;
     const responses = await Effect.runPromise(runnableResponsesEffect);
 
-    expect(responses.map(({ status }) => status)).toEqual([403, 403]);
+    expect(responses.map(({ status }) => status)).toEqual([
+      denied.status,
+      denied.status,
+    ]);
   });
 
   it("returns current user preferences through the generated response schema", async () => {

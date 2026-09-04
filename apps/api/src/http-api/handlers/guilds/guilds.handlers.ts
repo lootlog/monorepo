@@ -10,7 +10,6 @@ import {
   legacyCurrentGuildList,
   manageableCurrentGuildList,
   toAccountOrganizationHttpResponse,
-  toDeclaredAccountOrganizationError,
   updateGuildConfiguration,
 } from "../account-organization/account-organization.operations.js";
 
@@ -29,13 +28,12 @@ export const GuildsHandlers = HttpApiBuilder.group(
         toAccountOrganizationHttpResponse(manageableCurrentGuildList()),
       )
       .handle("GuildsControllerGetGuildById", ({ params }) =>
-        toDeclaredAccountOrganizationError(
+        toAccountOrganizationHttpResponse(
           guildRead(params.guildId).pipe(
             Effect.withSpan("GuildsControllerGetGuildById", {
               attributes: { operationId: "GuildsControllerGetGuildById" },
             }),
           ),
-          [403],
         ),
       )
       .handle("GuildsControllerGetGuildConfig", ({ params }) =>
@@ -56,10 +54,7 @@ export const GuildsHandlers = HttpApiBuilder.group(
         toAccountOrganizationHttpResponse(guildWorlds(params.guildId)),
       )
       .handle("GuildsControllerGetGuildPermissions", ({ params }) =>
-        toDeclaredAccountOrganizationError(
-          guildPermissions(params.guildId),
-          [403],
-        ),
+        toAccountOrganizationHttpResponse(guildPermissions(params.guildId)),
       )
       .handle("GuildsControllerGetGuildDiscordSyncStatus", ({ params }) =>
         toAccountOrganizationHttpResponse(
