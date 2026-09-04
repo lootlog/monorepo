@@ -7,12 +7,8 @@ const DEFAULT_POSTGRESQL_HOST = "localhost";
 const DEFAULT_RABBITMQ_HOST = "localhost";
 const DEFAULT_RABBITMQ_PORT = "5672";
 
-const generateRandomString = (length: number): string => {
-  return randomBytes(length).toString("hex").slice(0, length);
-};
-
 const generatePassword = (): string => {
-  return generateRandomString(PASSWORD_LENGTH);
+  return randomBytes(PASSWORD_LENGTH).toString("hex").slice(0, PASSWORD_LENGTH);
 };
 
 const generateSecretKey = (): string => {
@@ -105,10 +101,6 @@ const EXTERNAL_VALUE_KEYS = [
 
 const EXTERNAL_VALUE_KEY_SET = new Set<string>(EXTERNAL_VALUE_KEYS);
 
-const shouldGenerateValue = (key: string): boolean => {
-  return !EXTERNAL_VALUE_KEY_SET.has(key);
-};
-
 const includesAny = (value: string, fragments: string[]): boolean => {
   return fragments.some((fragment) => value.includes(fragment));
 };
@@ -125,10 +117,6 @@ const shouldGenerateSecret = (lowerKey: string): boolean => {
   return !includesAny(lowerKey, ["discord", "r2"]);
 };
 
-const isUnconfiguredPlaceholder = (value: string): boolean => {
-  return ["xxx", "your_"].includes(value) || value.startsWith("your_");
-};
-
 const generateSmartDefault = (
   key: string,
   originalValue: string,
@@ -141,7 +129,7 @@ const generateSmartDefault = (
     return sharedValue;
   }
 
-  if (!shouldGenerateValue(key)) {
+  if (EXTERNAL_VALUE_KEY_SET.has(key)) {
     return originalValue;
   }
 
@@ -151,33 +139,6 @@ const generateSmartDefault = (
 
   if (shouldGenerateSecret(lowerKey)) {
     return generateSecretKey();
-  }
-
-  if (lowerKey.includes("port")) {
-    const portMatch = originalValue.match(/^\d+$/);
-    if (portMatch) {
-      return originalValue;
-    }
-  }
-
-  if (lowerKey.includes("host") && originalValue === "localhost") {
-    return "localhost";
-  }
-
-  if (includesAny(lowerKey, ["url", "uri"])) {
-    return originalValue;
-  }
-
-  if (lowerKey.includes("env") && originalValue === "local") {
-    return "local";
-  }
-
-  if (includesAny(lowerKey, ["db_name", "database", "db_user"])) {
-    return originalValue;
-  }
-
-  if (isUnconfiguredPlaceholder(originalValue)) {
-    return originalValue;
   }
 
   return originalValue;
@@ -238,14 +199,6 @@ const buildPostgreSQLUri = (
   return `postgresql://${user}:${password}@${host}:${port}/${database}`;
 };
 
-const getSharedValue = (
-  sharedValues: Map<string, string>,
-  key: string,
-  fallback: string,
-): string => {
-  return sharedValues.get(key) ?? fallback;
-};
-
 const getDatabaseName = (
   envFileName: string | undefined,
   originalValue: string,
@@ -285,13 +238,9 @@ const getDatabaseCredentials = (
   const database = LOCAL_DATABASES[databaseName];
 
   return {
-    user: getSharedValue(sharedValues, database.userKey, "user"),
-    password: getSharedValue(sharedValues, database.passwordKey, "password"),
-    database: getSharedValue(
-      sharedValues,
-      database.nameKey,
-      database.fallbackName,
-    ),
+    user: sharedValues.get(database.userKey) ?? "user",
+    password: sharedValues.get(database.passwordKey) ?? "password",
+    database: sharedValues.get(database.nameKey) ?? database.fallbackName,
     port: database.port,
   };
 };
@@ -333,11 +282,7 @@ export const enhanceVariablesWithDerivedValues = (
     if (variable.key === "MEILISEARCH_API_KEY") {
       return {
         ...variable,
-        value: getSharedValue(
-          sharedValues,
-          "MEILISEARCH_MASTER_KEY",
-          variable.value,
-        ),
+        value: sharedValues.get("MEILISEARCH_MASTER_KEY") ?? variable.value,
       };
     }
 

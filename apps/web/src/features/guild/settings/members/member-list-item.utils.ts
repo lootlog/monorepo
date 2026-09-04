@@ -1,5 +1,4 @@
 import { cn } from "cn";
-import { Permission } from "@lootlog/schema/permissions";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 
@@ -125,9 +124,6 @@ export const memberMatchesStatusFilter = ({
 
   return isMemberProblematic(member);
 };
-
-export const memberHasAdminPermission = (member: GuildMember) =>
-  member.roles.some((role) => role.permissions.includes(Permission.ADMIN));
 
 export const compareMemberListSortValues = (
   first: MemberListSortValue,

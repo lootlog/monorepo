@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { question, chalk } from "zx";
 import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
@@ -8,7 +9,6 @@ import {
   buildEnvContent,
   writeEnvFile,
   readEnvFile,
-  envFileExists,
 } from "../../utils/file-utils.js";
 import {
   generateEnvValues,
@@ -51,7 +51,7 @@ const processEnvFile = async (
   options: CliOptions,
   processOptions: ProcessEnvFileOptions = {},
 ): Promise<ProcessEnvFileResult> => {
-  const exists = envFileExists(envFile.path);
+  const exists = existsSync(envFile.path);
 
   if (exists && options.skipExisting) {
     console.log(chalk.yellow(`⏭️  Skipping ${envFile.name} (already exists)`));
@@ -243,12 +243,7 @@ ${chalk.bold("Note:")}
 
 // Only run main when this file is executed directly, not when imported
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const main = async (): Promise<void> => {
-    const args = process.argv.slice(2);
-    await generate(args);
-  };
-
-  main().catch((error) => {
+  generate(process.argv.slice(2)).catch((error) => {
     console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
     process.exit(1);
   });
