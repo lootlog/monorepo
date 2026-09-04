@@ -1,11 +1,20 @@
 import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
+import { RedisClient } from "bun";
+import { createBunRedisClient, RedisConnection } from "bullmq";
 import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp, OtlpSerialization } from "effect/unstable/observability";
 import { registerNodeWarningDiagnostics } from "#src/shared/diagnostics/node-warning-diagnostics";
 import { apiConfiguration } from "#src/config/api.config";
 import { ApiApplicationLive } from "./http-api/runtime/application/api-application.js";
+
+RedisConnection.clientFactory = (options) => {
+  if (!options.url) {
+    throw new Error("BullMQ requires a Redis URL");
+  }
+  return createBunRedisClient(new RedisClient(options.url));
+};
 
 const ObservabilityLive = Layer.unwrap(
   Effect.map(apiConfiguration, (config) =>

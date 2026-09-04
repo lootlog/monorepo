@@ -1,4 +1,4 @@
-import { Clock, Effect, FiberSet, Layer, Redacted, Schema } from "effect";
+import { Clock, Effect, FiberSet, Layer, Schema } from "effect";
 import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import {
   RabbitMessaging,
@@ -49,7 +49,10 @@ import { makeNotificationDispatchProcessor } from "#src/notifications/delivery/n
 import { makeNotificationsEvents } from "#src/notifications/delivery/notifications-events.handler";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { applicationLogger } from "#src/shared/application-logger";
-import { ApiRedis } from "#src/http-api/runtime/infrastructure/api-redis";
+import {
+  ApiRedis,
+  redisUrl,
+} from "#src/http-api/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
 import { forkCronTask } from "#src/http-api/runtime/background/cron";
 import {
@@ -590,14 +593,7 @@ export const BullWorkers = Layer.effectDiscard(
       { dispatch },
       applicationLogger,
     );
-    const connection = {
-      host: config.redis.host,
-      port: config.redis.port,
-      username: config.redis.username,
-      password: Redacted.value(config.redis.password),
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-    };
+    const connection = { url: redisUrl(config.redis) };
     yield* Effect.acquireRelease(
       Effect.sync(() => {
         const workers = [

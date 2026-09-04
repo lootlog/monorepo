@@ -30,7 +30,9 @@ export class ApiRedis extends Context.Service<ApiRedis, RedisService>()(
   );
 }
 
-const redisUrl = (redis: ApiRuntimeConfig["Service"]["redis"]): string => {
+export const redisUrl = (
+  redis: ApiRuntimeConfig["Service"]["redis"],
+): string => {
   const username = encodeURIComponent(redis.username);
   const password = encodeURIComponent(Redacted.value(redis.password));
   return `redis://${username}:${password}@${redis.host}:${redis.port}`;

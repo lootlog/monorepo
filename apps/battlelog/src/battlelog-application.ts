@@ -24,11 +24,6 @@ import { makeDrizzleDatabase } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 
-const redisConnectionOptions = (config: BattlelogConfiguration) => ({
-  ...config.redis,
-  password: Redacted.value(config.redis.password),
-});
-
 export interface BattlelogApplicationService {
   readonly port: number;
   readonly operations: BattlelogOperations;
@@ -122,7 +117,7 @@ const acquireDeleteQueue = (config: BattlelogConfiguration) =>
     Effect.sync(
       () =>
         new Queue<DeleteUserBattlesJobData>(DELETE_USER_BATTLES_QUEUE, {
-          connection: redisConnectionOptions(config),
+          connection: { url: redisUrl(config) },
           prefix: "{bull}",
         }),
     ),
@@ -141,7 +136,7 @@ const acquireDeleteWorker = (
         return new Worker<DeleteUserBattlesJobData>(
           DELETE_USER_BATTLES_QUEUE,
           (job) => runWorker(processor.process(job)),
-          { connection: redisConnectionOptions(config), prefix: "{bull}" },
+          { connection: { url: redisUrl(config) }, prefix: "{bull}" },
         );
       }),
       (worker) => Effect.tryPromise(() => worker.close()),
