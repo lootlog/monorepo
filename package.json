@@ -153,14 +153,14 @@
   "devEngines": {
     "packageManager": {
       "name": "bun",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "onFail": "ignore"
     }
   },
   "engines": {
-    "bun": "1.4.0"
+    "bun": "1.4.1"
   },
-  "packageManager": "bun@1.4.0",
+  "packageManager": "bun@1.4.1",
   "patchedDependencies": {
     "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
   },
