@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import { verifyAndAdoptDatabase } from "./adoption.js";
 import { PgClientLive } from "./database.js";
 
-const program = Effect.gen(function* () {
+export const migrateActivityDatabase = Effect.gen(function* () {
   const sql = yield* PgClient.PgClient;
   const table = yield* sql.unsafe<{ exists: boolean }>(
     `SELECT to_regclass('"Activity"') IS NOT NULL AS exists`,
@@ -26,4 +26,8 @@ const program = Effect.gen(function* () {
   yield* verifyAndAdoptDatabase();
 });
 
-BunRuntime.runMain(program.pipe(Effect.provide(PgClientLive)));
+if (import.meta.main) {
+  BunRuntime.runMain(
+    migrateActivityDatabase.pipe(Effect.provide(PgClientLive)),
+  );
+}

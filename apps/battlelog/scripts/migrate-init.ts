@@ -1,97 +1,60 @@
 /**
- * Marks the baseline migration as applied without executing the SQL.
- * Use this on databases that already have the tables (e.g. created by Prisma).
+ * Marks the pre-rewrite migration history as applied without executing its SQL.
+ * Use only on databases that already have those tables (e.g. created by Prisma).
  *
  * Usage: bun scripts/migrate-init.ts
  */
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import { Config, Effect, Redacted } from "effect";
-import pg from "pg";
+import { BunRuntime } from "@effect/platform-bun";
+import { PgClient } from "@effect/sql-pg";
+import { readMigrationFiles } from "drizzle-orm/migrator";
+import { Effect } from "effect";
+import { fileURLToPath } from "node:url";
+import { PgClientLive } from "../src/database/database.js";
 
-const databaseUrl = Redacted.value(
-  await Effect.runPromise(Config.redacted("POSTGRESQL_CONNECTION_URI")),
-);
-
-const migrationsFolder = path.resolve(import.meta.dirname, "../drizzle");
-const migrationsSchema = "drizzle";
-const migrationsTable = "__drizzle_migrations";
-
-function formatToMillis(dateStr: string): number {
-  const year = parseInt(dateStr.slice(0, 4));
-  const month = parseInt(dateStr.slice(4, 6)) - 1;
-  const day = parseInt(dateStr.slice(6, 8));
-  const hours = parseInt(dateStr.slice(8, 10));
-  const minutes = parseInt(dateStr.slice(10, 12));
-  const seconds = parseInt(dateStr.slice(12, 14));
-  return new Date(year, month, day, hours, minutes, seconds).getTime();
-}
-
-async function main() {
-  const pool = new pg.Pool({ connectionString: databaseUrl });
-
-  try {
-    await pool.query(`CREATE SCHEMA IF NOT EXISTS ${migrationsSchema}`);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS ${migrationsSchema}.${migrationsTable} (
-        id SERIAL PRIMARY KEY,
-        hash text NOT NULL,
-        created_at bigint,
-        name text,
-        applied_at timestamp with time zone DEFAULT now()
-      )
-    `);
-
-    const existing = await pool.query(
-      `SELECT id, hash, name FROM ${migrationsSchema}.${migrationsTable}`,
-    );
-
-    if (existing.rows.length > 0) {
-      console.log("Migrations already tracked in database:");
-      for (const row of existing.rows) {
-        console.log(`  - ${row.name} (${row.hash.slice(0, 8)}...)`);
+export const adoptBattlelogDatabase = Effect.gen(function* () {
+  const sql = yield* PgClient.PgClient;
+  yield* sql.withTransaction(
+    Effect.gen(function* () {
+      yield* sql.unsafe("CREATE SCHEMA IF NOT EXISTS drizzle");
+      yield* sql.unsafe(`
+        CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
+          id SERIAL PRIMARY KEY,
+          hash text NOT NULL,
+          created_at bigint,
+          name text,
+          applied_at timestamp with time zone DEFAULT now()
+        )
+      `);
+      const existing = yield* sql.unsafe(
+        "SELECT id FROM drizzle.__drizzle_migrations",
+      );
+      if (existing.length > 0) {
+        yield* Effect.logInfo("Migrations already tracked; nothing to adopt");
+        return;
       }
-      console.log("\nNothing to do.");
-      return;
-    }
 
-    // Only the pre-rewrite history can be adopted; new migrations must execute.
-    const subdirs = fs
-      .readdirSync(migrationsFolder)
-      .filter(
-        (d) =>
-          d <= "20260726194145_plain_gorgon" &&
-          fs.existsSync(path.join(migrationsFolder, d, "migration.sql")),
-      )
-      .sort();
-
-    for (const subdir of subdirs) {
-      const sqlContent = fs.readFileSync(
-        path.join(migrationsFolder, subdir, "migration.sql"),
-        "utf-8",
+      const migrations = yield* Effect.try(() =>
+        readMigrationFiles({
+          migrationsFolder: fileURLToPath(
+            new URL("../drizzle", import.meta.url),
+          ),
+        }),
       );
-      const hash = crypto.createHash("sha256").update(sqlContent).digest("hex");
-      const dateStr = subdir.slice(0, 14);
-      const millis = formatToMillis(dateStr);
-
-      await pool.query(
-        `INSERT INTO ${migrationsSchema}.${migrationsTable} (hash, created_at, name) VALUES ($1, $2, $3)`,
-        [hash, millis, subdir],
-      );
-
-      console.log(`Marked as applied: ${subdir}`);
-    }
-
-    console.log(
-      "\nDone. Future 'drizzle-kit migrate' will skip these migrations.",
-    );
-  } finally {
-    await pool.end();
-  }
-}
-
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
+      // Only the pre-rewrite history can be adopted; new migrations must execute.
+      for (const migration of migrations) {
+        if (migration.name > "20260726194145_plain_gorgon") continue;
+        yield* sql.unsafe(
+          "INSERT INTO drizzle.__drizzle_migrations (hash, created_at, name) VALUES ($1, $2, $3)",
+          [migration.hash, migration.folderMillis, migration.name],
+        );
+        yield* Effect.logInfo("Marked migration as applied", {
+          migration: migration.name,
+        });
+      }
+    }),
+  );
 });
+
+if (import.meta.main) {
+  BunRuntime.runMain(adoptBattlelogDatabase.pipe(Effect.provide(PgClientLive)));
+}

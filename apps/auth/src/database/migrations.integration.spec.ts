@@ -5,7 +5,10 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { PgClient } from "@effect/sql-pg";
+import { makePostgresLayer, PostgresPool } from "@lootlog/database";
+import { AuthDatabase } from "./drizzle.js";
+import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import pg from "pg";
 import {
   assertAuthSchemaFingerprint,
@@ -43,42 +46,54 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
   });
 
   it("creates a fresh 1.7 schema and can run again", async () => {
-    const connection = makeConnection(postgres.getConnectionUri());
+    const connection = await makeConnection(postgres.getConnectionUri());
     try {
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "ready",
         source: "fresh",
         accountCount: 0,
         issuerBackfillCount: 0,
       });
 
-      await runAuthMigrations(connection);
-      await runAuthMigrations(connection);
-      await assertAuthSchemaFingerprint(connection.pool);
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      await Effect.runPromise(assertAuthSchemaFingerprint(connection.client));
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "up-to-date",
         source: "better-auth-1.7",
         pendingMigrations: 0,
       });
     } finally {
-      await connection.pool.end();
+      await connection.close();
     }
   });
 
   it("adds the Better Auth 1.7 JWKS metadata columns to an existing schema", async () => {
     const databaseUri = await createDatabase(postgres, "auth_v17_jwks");
-    const connection = makeConnection(databaseUri);
+    const connection = await makeConnection(databaseUri);
     try {
       await installCanonicalLegacySchema(connection.pool);
       await connection.pool.query(await fs.readFile(betterAuth17Path, "utf8"));
 
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "ready",
         source: "better-auth-1.7-pre-jwks-metadata",
         pendingMigrations: 1,
       });
 
-      await runAuthMigrations(connection);
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
 
       expect(
         await connection.pool.query(`
@@ -95,46 +110,52 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
           { columnName: "crv", isNullable: "YES" },
         ],
       });
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "up-to-date",
         source: "better-auth-1.7",
         pendingMigrations: 0,
       });
     } finally {
-      await connection.pool.end();
+      await connection.close();
     }
   });
 
   it("backfills a populated canonical 1.6 schema", async () => {
     const databaseUri = await createDatabase(postgres, "auth_v16");
-    const connection = makeConnection(databaseUri);
+    const connection = await makeConnection(databaseUri);
     try {
       await installCanonicalLegacySchema(connection.pool);
       await insertUser(connection.pool, "user-1", "discord-1");
       await insertAccount(connection.pool, "account-1", "user-1", "discord-1");
 
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "ready",
         source: "better-auth-1.6",
         accountCount: 1,
         issuerBackfillCount: 1,
       });
 
-      await runAuthMigrations(connection);
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
       expect(
         await connection.pool.query(
           `SELECT "issuer" FROM "account" WHERE "id" = 'account-1'`,
         ),
       ).toMatchObject({ rows: [{ issuer: "local:oauth:discord" }] });
-      await assertAuthSchemaFingerprint(connection.pool);
+      await Effect.runPromise(assertAuthSchemaFingerprint(connection.client));
     } finally {
-      await connection.pool.end();
+      await connection.close();
     }
   });
 
   it("upgrades the imported production shape without changing identities or UTC instants", async () => {
     const databaseUri = await createDatabase(postgres, "auth_imported_v16");
-    const connection = makeConnection(databaseUri);
+    const connection = await makeConnection(databaseUri);
     try {
       await installImportedLegacySchema(connection.pool);
       await insertUser(connection.pool, "user-1", "discord-a", {
@@ -153,7 +174,9 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       `);
 
       const identitiesBefore = await readStableIdentities(connection.pool);
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "ready",
         source: "better-auth-1.6-imported",
         userCount: 1,
@@ -162,7 +185,9 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
         timestampNormalizationColumns: 14,
       });
 
-      await runAuthMigrations(connection);
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
 
       expect(await readStableIdentities(connection.pool)).toEqual(
         identitiesBefore,
@@ -184,13 +209,15 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
           WHERE "createdAt" IS NULL OR "updatedAt" IS NULL
         `),
       ).toMatchObject({ rows: [{ count: "0" }] });
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "up-to-date",
         source: "better-auth-1.7",
         missingIndexes: [],
       });
     } finally {
-      await connection.pool.end();
+      await connection.close();
     }
   });
 
@@ -241,7 +268,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
     await Promise.all(
       cases.map(async ({ database, code, corrupt }) => {
         const databaseUri = await createDatabase(postgres, database);
-        const connection = makeConnection(databaseUri);
+        const connection = await makeConnection(databaseUri);
         try {
           await installCanonicalLegacySchema(connection.pool);
           await insertUser(connection.pool, "user-1", "discord-1");
@@ -253,15 +280,19 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
           );
           await corrupt(connection.pool);
 
-          const plan = await planAuthMigration(connection.pool);
+          const plan = await Effect.runPromise(
+            planAuthMigration(connection.client),
+          );
           expect(plan.status).toBe("blocked");
           expect(plan.integrityViolations).toContainEqual({ code, count: 1 });
-          await expect(runAuthMigrations(connection)).rejects.toThrow(
-            "No database changes were applied",
-          );
+          await expect(
+            Effect.runPromise(
+              runAuthMigrations(connection.db, connection.client),
+            ),
+          ).rejects.toThrow("No database changes were applied");
           await expectIssuerAndTrackingToBeAbsent(connection.pool);
         } finally {
-          await connection.pool.end();
+          await connection.close();
         }
       }),
     );
@@ -269,29 +300,43 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
 
   it("blocks an unknown schema before the first write", async () => {
     const databaseUri = await createDatabase(postgres, "auth_unknown");
-    const connection = makeConnection(databaseUri);
+    const connection = await makeConnection(databaseUri);
     try {
       await installCanonicalLegacySchema(connection.pool);
       await connection.pool.query(`DROP INDEX "account_userId_idx"`);
 
-      expect(await planAuthMigration(connection.pool)).toMatchObject({
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({
         status: "blocked",
         source: "unknown",
         integrityViolations: [{ code: "UNKNOWN_SCHEMA", count: 1 }],
       });
-      await expect(runAuthMigrations(connection)).rejects.toThrow(
-        "No database changes were applied",
-      );
+      await expect(
+        Effect.runPromise(runAuthMigrations(connection.db, connection.client)),
+      ).rejects.toThrow("No database changes were applied");
       await expectIssuerAndTrackingToBeAbsent(connection.pool);
     } finally {
-      await connection.pool.end();
+      await connection.close();
     }
   });
 });
 
-function makeConnection(connectionString: string) {
-  const pool = new pg.Pool({ connectionString });
-  return { pool, db: drizzle({ client: pool }) };
+async function makeConnection(connectionString: string) {
+  const runtime = ManagedRuntime.make(
+    AuthDatabase.layer.pipe(
+      Layer.provideMerge(
+        makePostgresLayer({
+          url: Redacted.make(connectionString),
+          applicationName: "auth-migrations-test",
+        }),
+      ),
+    ),
+  );
+  const pool = await runtime.runPromise(PostgresPool);
+  const client = await runtime.runPromise(PgClient.PgClient);
+  const db = await runtime.runPromise(AuthDatabase);
+  return { pool, client, db, close: () => runtime.dispose() };
 }
 
 async function createDatabase(

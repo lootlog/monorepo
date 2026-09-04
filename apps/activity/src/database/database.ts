@@ -1,4 +1,4 @@
-import { PgClient } from "@effect/sql-pg";
+import { makePostgresLayer } from "@lootlog/database";
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
 import { Context, Effect, Layer } from "effect";
 import { ActivityConfig } from "#src/config/activity-config";
@@ -16,7 +16,7 @@ export class ActivityDatabase extends Context.Service<
 export const PgClientLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ActivityConfig;
-    return PgClient.layer({
+    return makePostgresLayer({
       url: config.databaseUrl,
       applicationName: config.serviceName,
     });
