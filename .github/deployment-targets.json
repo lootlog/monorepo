@@ -128,7 +128,7 @@
     "directory": "apps/game-client",
     "kind": "pages",
     "artifactPath": "apps/game-client/dist/@lootlog",
-    "development": false,
+    "development": { "project": "lootlog-game-client-monorepo" },
     "production": {
       "project": "lootlog-game-client-monorepo",
       "requiredEnvironmentVariables": [
