@@ -26,7 +26,6 @@ const expectedEnumRows = EXPECTED_API_CATALOG.enums.flatMap(
 const makeClient = ({
   marker,
   journal = [],
-  presenceBackfillViolations = "0",
   catalog = EXPECTED_API_CATALOG,
 }: {
   readonly marker?: {
@@ -38,7 +37,6 @@ const makeClient = ({
     readonly createdAt: string;
     readonly name: string | null;
   }>;
-  readonly presenceBackfillViolations?: string;
   readonly catalog?: {
     readonly tables: ReadonlyArray<string>;
     readonly columns: ReadonlyArray<Record<string, unknown>>;
@@ -82,9 +80,6 @@ const makeClient = ({
       if (statement.includes("api-adoption:constraints")) {
         return { rows: catalog.constraints.map((name) => ({ name })) };
       }
-      if (statement.includes("api-adoption:presence-backfill")) {
-        return { rows: [{ count: presenceBackfillViolations }] };
-      }
       return { rows: [] };
     },
   };
@@ -95,15 +90,27 @@ const hasBaselineInsert = (queries: ReadonlyArray<Query>) =>
   queries.some(({ statement }) =>
     statement.includes("INSERT INTO drizzle.__drizzle_migrations"),
   );
+const hasAdoptionMarkerInsert = (queries: ReadonlyArray<Query>) =>
+  queries.some(({ statement }) =>
+    statement.includes("INSERT INTO drizzle.__lootlog_adoption"),
+  );
 
 describe("adoptExistingApiDatabase", () => {
-  it("records the Drizzle baseline only after the complete catalog matches", async () => {
+  it("commits the permission enum transition with the Drizzle baseline", async () => {
     const { client, queries } = makeClient();
 
     await expect(adoptExistingApiDatabase(client)).resolves.toEqual({
       status: "adopted",
       fingerprint: EXPECTED_API_CATALOG_SHA256,
     });
+    const enumTransitionIndex = queries.findIndex(({ statement }) =>
+      statement.includes('ALTER TYPE "Permission" ADD VALUE'),
+    );
+    const baselineInsertIndex = queries.findIndex(({ statement }) =>
+      statement.includes("INSERT INTO drizzle.__drizzle_migrations"),
+    );
+    expect(enumTransitionIndex).toBeGreaterThan(-1);
+    expect(baselineInsertIndex).toBeGreaterThan(enumTransitionIndex);
     expect(hasBaselineInsert(queries)).toBe(true);
     expect(queries.at(-1)?.statement).toBe("COMMIT");
   });
@@ -133,18 +140,6 @@ describe("adoptExistingApiDatabase", () => {
 
     await expect(adoptExistingApiDatabase(client)).rejects.toThrow(
       "does not match the accepted legacy schema",
-    );
-    expect(hasBaselineInsert(queries)).toBe(false);
-    expect(queries.at(-1)?.statement).toBe("ROLLBACK");
-  });
-
-  it("fails closed when the presence permission backfill is incomplete", async () => {
-    const { client, queries } = makeClient({
-      presenceBackfillViolations: "1",
-    });
-
-    await expect(adoptExistingApiDatabase(client)).rejects.toThrow(
-      "presence permission backfill is incomplete",
     );
     expect(hasBaselineInsert(queries)).toBe(false);
     expect(queries.at(-1)?.statement).toBe("ROLLBACK");
@@ -204,7 +199,7 @@ describe("adoptExistingApiDatabase", () => {
     });
   });
 
-  it("does not adopt an empty database", async () => {
+  it("marks an empty database before Drizzle initializes it", async () => {
     const { client, queries } = makeClient({
       catalog: { ...EXPECTED_API_CATALOG, tables: [] },
     });
@@ -213,6 +208,7 @@ describe("adoptExistingApiDatabase", () => {
       status: "empty",
     });
     expect(hasBaselineInsert(queries)).toBe(false);
+    expect(hasAdoptionMarkerInsert(queries)).toBe(true);
     expect(queries.at(-1)?.statement).toBe("COMMIT");
   });
 
@@ -238,6 +234,71 @@ describe("adoptExistingApiDatabase", () => {
 });
 
 describe("generated API database evidence", () => {
+  it("matches the captured deployed legacy catalog differences", () => {
+    const nullableColumns = [
+      "DiscordGuildChannelSnapshot.grantedPermissions",
+      "DiscordGuildChannelSnapshot.missingPermissions",
+      "DiscordGuildChannelSnapshot.requiredPermissions",
+      "DiscordGuildSyncState.grantedPermissions",
+      "DiscordGuildSyncState.missingPermissions",
+      "DiscordGuildSyncState.requiredPermissions",
+      "LootlogConfigNpc.allowedRarities",
+      "Role.permissions",
+      "UserGuildTimerSettings.hiddenTimers",
+      "UserGuildTimerSettings.pinnedTimers",
+      "UserSettings.guildsOrder",
+    ];
+    expect(
+      nullableColumns.map((name) => {
+        const column = EXPECTED_API_CATALOG.columns.find(
+          ({ tableName, columnName }) => `${tableName}.${columnName}` === name,
+        );
+        return [name, column?.isNullable];
+      }),
+    ).toEqual(nullableColumns.map((name) => [name, true]));
+
+    expect(
+      EXPECTED_API_CATALOG.enums.find(({ name }) => name === "Permission")
+        ?.values,
+    ).toEqual([
+      "OWNER",
+      "ADMIN",
+      "LOOTLOG_MANAGE",
+      "LOOTLOG_ACCESS",
+      "LOOTLOG_LOOTS_READ",
+      "LOOTLOG_LOOTS_WRITE",
+      "LOOTLOG_LOOTS_TITANS_READ",
+      "LOOTLOG_LOOTS_HEROES_READ",
+      "LOOTLOG_TIMERS_READ",
+      "LOOTLOG_TIMERS_WRITE",
+      "LOOTLOG_TIMERS_RESET",
+      "LOOTLOG_TIMERS_DELETE",
+      "LOOTLOG_TIMERS_TITANS_READ",
+      "LOOTLOG_TIMERS_HEROES_READ",
+      "LOOTLOG_RESERVATIONS_READ",
+      "LOOTLOG_RESERVATIONS_WRITE",
+      "LOOTLOG_MEMBERS_READ",
+      "LOOTLOG_CHAT_READ",
+      "LOOTLOG_CHAT_WRITE",
+      "LOOTLOG_CHAT_TITANS_READ",
+      "LOOTLOG_CHAT_HEROES_READ",
+      "LOOTLOG_NOTIFICATIONS_READ",
+      "LOOTLOG_NOTIFICATIONS_SEND",
+      "LOOTLOG_NOTIFICATIONS_TITANS_READ",
+      "LOOTLOG_NOTIFICATIONS_HEROES_READ",
+      "LOOTLOG_EVENTS_MANAGE",
+      "LOOTLOG_EVENTS_READ",
+      "LOOTLOG_EVENTS_WRITE",
+      "LOOTLOG_ONLINE_PLAYERS_READ",
+      "LOOTLOG_DOCS_READ",
+      "LOOTLOG_DOCS_WRITE",
+      "LOOTLOG_LOOTS_ARCHIVE",
+    ]);
+    expect(EXPECTED_API_CATALOG.constraints).toContain(
+      "ReservationShare_distinct_guilds_check",
+    );
+  });
+
   it("keeps the expected catalog hash deterministic", () => {
     const hash = createHash("sha256")
       .update(JSON.stringify(EXPECTED_API_CATALOG))

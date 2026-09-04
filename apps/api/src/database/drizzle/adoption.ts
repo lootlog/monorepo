@@ -201,6 +201,19 @@ const assertKnownMigrationJournal = async (client: SqlTransactionClient) => {
   }
 };
 
+const recordAdoptionMarker = async (client: SqlTransactionClient) => {
+  await client.query(
+    `
+    INSERT INTO drizzle.__lootlog_adoption (
+      component,
+      fingerprint,
+      migration_evidence_hash
+    ) VALUES ('api', $1, $2)
+  `,
+    [EXPECTED_API_CATALOG_SHA256, LEGACY_MIGRATION_EVIDENCE_SHA256],
+  );
+};
+
 const recordAdoption = async (client: SqlTransactionClient) => {
   await client.query(
     `
@@ -216,33 +229,7 @@ const recordAdoption = async (client: SqlTransactionClient) => {
       BASELINE_MIGRATION_NAME,
     ],
   );
-  await client.query(
-    `
-    INSERT INTO drizzle.__lootlog_adoption (
-      component,
-      fingerprint,
-      migration_evidence_hash
-    ) VALUES ('api', $1, $2)
-  `,
-    [EXPECTED_API_CATALOG_SHA256, LEGACY_MIGRATION_EVIDENCE_SHA256],
-  );
-};
-
-const assertPresencePermissionBackfill = async (
-  client: SqlTransactionClient,
-) => {
-  const result = await client.query<{ count: string }>(`
-    /* api-adoption:presence-backfill */
-    SELECT COUNT(*)::text AS count
-    FROM "Role"
-    WHERE permissions @> ARRAY['LOOTLOG_ONLINE_PLAYERS_READ']::"Permission"[]
-      AND NOT permissions @> ARRAY['LOOTLOG_PRESENCE_LOCATION_READ']::"Permission"[]
-  `);
-  if (result.rows[0]?.count !== "0") {
-    throw new ApiDatabaseAdoptionError(
-      "API database presence permission backfill is incomplete; refusing Drizzle adoption.",
-    );
-  }
+  await recordAdoptionMarker(client);
 };
 
 /**
@@ -291,6 +278,7 @@ export const adoptExistingApiDatabase = async (
 
     const actualCatalog = await loadActualCatalog(client);
     if (actualCatalog.tables.length === 0) {
+      await recordAdoptionMarker(client);
       await client.query("COMMIT");
       return { status: "empty" };
     }
@@ -303,7 +291,9 @@ export const adoptExistingApiDatabase = async (
       );
     }
 
-    await assertPresencePermissionBackfill(client);
+    await client.query(
+      `ALTER TYPE "Permission" ADD VALUE IF NOT EXISTS 'LOOTLOG_PRESENCE_LOCATION_READ'`,
+    );
     await recordAdoption(client);
     await client.query("COMMIT");
     return { status: "adopted", fingerprint: EXPECTED_API_CATALOG_SHA256 };
