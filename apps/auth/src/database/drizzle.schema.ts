@@ -155,6 +155,8 @@ export const authJwks = pgTable("jwks", {
     mode: "date",
     withTimezone: true,
   }),
+  alg: text("alg"),
+  crv: text("crv"),
 });
 
 export const betterAuthSchema = {
