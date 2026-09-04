@@ -1,3 +1,4 @@
+import { useTimerClock } from "./use-timer-clock";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
@@ -86,6 +87,7 @@ export const Timers = () => {
       },
     },
   );
+  const now = useTimerClock(timers, guildId, world);
   const [search, setSearch] = useState("");
   const isMobile = useIsMobile();
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
@@ -252,6 +254,7 @@ export const Timers = () => {
                               <SingleTimer
                                 key={timer.npc?.id ?? timer.timerKey}
                                 timer={timer}
+                                now={now}
                               />
                             );
                           })}

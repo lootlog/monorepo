@@ -157,15 +157,13 @@ export const timersData = Layer.unwrap(
       }),
       getAll: makeAllTimerList(database),
       getGuildTimers: makeGuildTimerList(database, {
-        get: (key) =>
-          attempt(() =>
-            redis.getJson(
-              key,
-              makeJsonCodec(Schema.Array(CachedTimerProjectionSchema)),
-            ),
-          ),
-        set: (key, value, ttlSeconds) =>
-          attempt(() => redis.setJson(key, value, ttlSeconds)),
+        getOrSet: (key, factory) =>
+          redis.getOrSetJsonEffect({
+            key,
+            factory,
+            ttlSeconds: 2,
+            codec: makeJsonCodec(Schema.Array(CachedTimerProjectionSchema)),
+          }),
       }),
       searchNpcs: makeTimerSearch(database),
     });

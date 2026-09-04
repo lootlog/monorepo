@@ -1,3 +1,4 @@
+import type { KillQueryCache } from "./kill-query-support.js";
 import { Effect, Schema } from "effect";
 import { describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -5,7 +6,6 @@ import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { UserKillStatsQuery as GetUserKillStatsDto } from "#src/contracts/kills/schemas";
 import {
   makeUserKillQueries,
-  type UserKillQueriesCache,
   UserKillQueriesError,
 } from "./user-kill-queries.js";
 
@@ -34,12 +34,11 @@ describe("user kill queries Effect module", () => {
       }>,
     };
     let observedKey = "";
-    const cache: UserKillQueriesCache = {
-      get: (key, schema) => {
+    const cache: KillQueryCache = {
+      getOrSet: (key, schema) => {
         observedKey = key;
         return Effect.sync(() => Schema.decodeUnknownSync(schema)(expected));
       },
-      set: () => Effect.die("cache set must not run on a hit"),
     };
     const queries = makeUserKillQueries(
       {} as typeof ApiDatabase.Service,
@@ -56,9 +55,8 @@ describe("user kill queries Effect module", () => {
   });
 
   it("maps a cache failure to the typed module error", async () => {
-    const cache: UserKillQueriesCache = {
-      get: () => Effect.fail(new Error("redis unavailable")),
-      set: () => Effect.void,
+    const cache: KillQueryCache = {
+      getOrSet: () => Effect.fail(new Error("redis unavailable")),
     };
     const queries = makeUserKillQueries(
       {} as typeof ApiDatabase.Service,

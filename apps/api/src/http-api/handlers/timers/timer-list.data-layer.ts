@@ -36,14 +36,10 @@ import {
 } from "#src/timers/timer-projection";
 
 export interface TimerListCache {
-  readonly get: (
+  readonly getOrSet: (
     key: string,
-  ) => Effect.Effect<ReadonlyArray<CachedTimerProjection> | null, unknown>;
-  readonly set: (
-    key: string,
-    value: ReadonlyArray<CachedTimerProjection>,
-    ttlSeconds: number,
-  ) => Effect.Effect<unknown, unknown>;
+    load: Effect.Effect<ReadonlyArray<CachedTimerProjection>, unknown>,
+  ) => Effect.Effect<ReadonlyArray<CachedTimerProjection>, unknown>;
 }
 
 const visibleExpiredKeys = (
@@ -154,24 +150,22 @@ export const makeGuildTimerList = (
     world?: string,
   ) {
     const cacheKey = `timer:list:${access.guild.id}:${access.userId}:${world || "all"}`;
-    const cached = yield* cache.get(cacheKey);
-    let timers: ReadonlyArray<CachedTimerProjection>;
-    if (cached !== null) {
-      timers = cached;
-    } else {
-      const selectedKeys = yield* readSelectedTimerKeys(
-        database,
-        access.userId,
-        world,
-      );
-      timers = yield* readVisibleTimers(
-        database,
-        [access.guild.id],
-        world,
-        selectedKeys,
-      );
-      yield* cache.set(cacheKey, timers, 2);
-    }
+    const timers = yield* cache.getOrSet(
+      cacheKey,
+      Effect.gen(function* () {
+        const selectedKeys = yield* readSelectedTimerKeys(
+          database,
+          access.userId,
+          world,
+        );
+        return yield* readVisibleTimers(
+          database,
+          [access.guild.id],
+          world,
+          selectedKeys,
+        );
+      }),
+    );
     const administrative = access.accessPolicy.allows(Capability.ADMIN);
     return timers
       .filter(

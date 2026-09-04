@@ -10,15 +10,12 @@ import type { KillStatsFilter } from "./kill-stats-persistence.js";
 export type KillQueryRole = typeof roleTable.$inferSelect;
 
 export interface KillQueryCache {
-  readonly get: <S extends Schema.ConstraintDecoder<unknown>>(
+  readonly getOrSet: <S extends Schema.ConstraintDecoder<unknown>>(
     key: string,
     schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly set: <A>(
-    key: string,
-    value: A,
+    load: Effect.Effect<S["Type"], unknown>,
     ttlSeconds: number,
-  ) => Effect.Effect<void, unknown>;
+  ) => Effect.Effect<S["Type"], unknown>;
 }
 
 export const buildKillQueryCacheKey = (
@@ -99,23 +96,4 @@ export const cachedKillQuery = <
   readonly label: string;
   readonly schema: S;
   readonly load: Effect.Effect<S["Type"], unknown>;
-}) =>
-  Effect.gen(function* () {
-    const existing = yield* options.cache.get(options.key, options.schema);
-    if (existing !== null) {
-      options.logger.log({
-        level: "debug",
-        message: `Cache hit for ${options.label}`,
-        cacheKey: options.key,
-      });
-      return existing;
-    }
-    options.logger.log({
-      level: "debug",
-      message: `Cache miss for ${options.label}`,
-      cacheKey: options.key,
-    });
-    const value = yield* options.load;
-    yield* options.cache.set(options.key, value, 30);
-    return value;
-  });
+}) => options.cache.getOrSet(options.key, options.schema, options.load, 30);

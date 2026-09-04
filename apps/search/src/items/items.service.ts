@@ -167,22 +167,6 @@ export const makeItemsModule = (
     return response.hits;
   });
 
-  const existingWorlds = (uid: string) => {
-    const index = meilisearch.index<IndexedItem>(ITEMS_INDEX);
-    return attemptMeilisearch("search.items.existing-worlds", () =>
-      index.getDocument(uid),
-    ).pipe(
-      Effect.map((document) => document.worlds ?? []),
-      Effect.catch((error) => {
-        if (getMeilisearchErrorCode(error.cause) !== "document_not_found") {
-          logger.warn("Could not read existing item worlds", { error, uid });
-          return Effect.fail(error);
-        }
-        return Effect.succeed([] as string[]);
-      }),
-    );
-  };
-
   const indexItems = Effect.fn("SearchItems.index")(function* (
     data: IndexItemsCommand,
   ) {
@@ -205,20 +189,29 @@ export const makeItemsModule = (
     }
 
     const itemsById = mergeItemsById(validItems);
-    const itemsWithExistingWorlds = yield* Effect.all(
-      itemsById.map((item) =>
-        Effect.map(existingWorlds(item.uid), (storedWorlds) => {
-          return {
-            ...item,
-            worlds: uniqueWorlds([...item.worlds, ...storedWorlds]),
-          };
-        }),
-      ),
-      { concurrency: "unbounded" },
-    );
-    const itemsWithSearchFields = itemsWithExistingWorlds.map(
+    const worldsById = new Map<string, string[]>();
+    for (let offset = 0; offset < itemsById.length; offset += 100) {
+      const batch = itemsById.slice(offset, offset + 100);
+      const stored = yield* attemptMeilisearch(
+        "search.items.existing-worlds",
+        () =>
+          index.getDocuments<Pick<IndexedItem, "uid" | "worlds">>({
+            ids: batch.map((item) => item.uid),
+            fields: ["uid", "worlds"],
+            limit: batch.length,
+          }),
+      );
+      for (const item of stored.results) {
+        worldsById.set(item.uid, item.worlds ?? []);
+      }
+    }
+    const itemsWithSearchFields = itemsById.map(
       ({ world: _world, ...item }) => ({
         ...item,
+        worlds: uniqueWorlds([
+          ...item.worlds,
+          ...(worldsById.get(item.uid) ?? []),
+        ]),
         ...createItemSearchFields(item.stat),
       }),
     );

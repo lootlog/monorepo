@@ -1,9 +1,11 @@
 import type { InflatedBattleWarrior } from "#src/battles/statistics/battle-warrior-stats";
 import type { Battle, BattleWarrior } from "#src/database/schema";
 
-export type StoredBattleWithWarriors = Battle & { warriors: BattleWarrior[] };
+export type StoredBattleWithWarriors = Omit<Battle, "statistics"> & {
+  warriors: BattleWarrior[];
+};
 
-export type InflatedBattleWithWarriors = Battle & {
+export type InflatedBattleWithWarriors = Omit<Battle, "statistics"> & {
   warriors: InflatedBattleWarrior[];
 };
 

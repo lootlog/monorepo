@@ -10,6 +10,7 @@ import {
 } from "@lootlog/client/main";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
+import { loadAuthenticatedTranslations } from "@/i18n/config";
 
 function AuthenticatedLayout() {
   return (
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/_authenticated")({
         ),
       ]).catch(() => undefined);
 
+      await loadAuthenticatedTranslations();
       return null;
     }),
   component: AuthenticatedLayout,

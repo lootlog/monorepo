@@ -55,34 +55,19 @@ export const makeEventGapReads = (
       stringify: (value: unknown) => superjson.stringify(value),
       parse: (text): unknown => superjson.parse(text),
     });
-    return Effect.gen(function* () {
-      const hit = yield* Effect.tryPromise({
-        try: () => redis.getJson(key, codec),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            logger.warn("Event gap cache unavailable", error);
-            return null;
-          }),
-        ),
+    return redis
+      .getOrSetJsonEffect({
+        key,
+        codec,
+        ttlSeconds: 10,
+        factory: load,
+        onError: (error) => logger.warn("Event gap cache unavailable", error),
+      })
+      .pipe(
+        Effect.withSpan("events.gaps.cache", {
+          attributes: { adapter: "events.redis", retryCount: 0 },
+        }),
       );
-      if (hit !== null) return hit;
-      const value = yield* load;
-      yield* Effect.tryPromise({
-        try: () => redis.setJson(key, value, 10, codec),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => logger.warn("Event gap cache unavailable", error)),
-        ),
-      );
-      return value;
-    }).pipe(
-      Effect.withSpan("events.gaps.cache", {
-        attributes: { adapter: "events.redis", retryCount: 0 },
-      }),
-    );
   };
   const requireMap = (guildId: string, eventId: string, mapId: string) =>
     query(

@@ -70,36 +70,20 @@ export const makeEventHeroSummary = (
       stringify: (value: unknown) => superjson.stringify(value),
       parse: (text): unknown => superjson.parse(text),
     });
-    return Effect.gen(function* () {
-      const hit = yield* Effect.tryPromise({
-        try: () => redis.getJson(key, codec),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            logger.warn("Event hero stats cache unavailable", error);
-            return null;
-          }),
-        ),
+    return redis
+      .getOrSetJsonEffect({
+        key,
+        codec,
+        ttlSeconds: 10,
+        factory: load,
+        onError: (error) =>
+          logger.warn("Event hero stats cache unavailable", error),
+      })
+      .pipe(
+        Effect.withSpan("events.heroSummary.cache", {
+          attributes: { adapter: "events.redis", retryCount: 0 },
+        }),
       );
-      if (hit !== null) return hit;
-      const value = yield* load;
-      yield* Effect.tryPromise({
-        try: () => redis.setJson(key, value, 10, codec),
-        catch: (error) => error,
-      }).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() =>
-            logger.warn("Event hero stats cache unavailable", error),
-          ),
-        ),
-      );
-      return value;
-    }).pipe(
-      Effect.withSpan("events.heroSummary.cache", {
-        attributes: { adapter: "events.redis", retryCount: 0 },
-      }),
-    );
   };
   return {
     getTimers: (guild: { id: string }, eventId: string, world: string) =>

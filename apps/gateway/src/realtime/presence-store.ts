@@ -308,20 +308,31 @@ export class PresenceStore {
   > {
     const self = this;
     return Effect.gen(function* () {
-      const presences = yield* self.readOrganization(organizationId);
+      const presences = (yield* self.readOrganization(organizationId)).filter(
+        (presence) =>
+          "location" in presence && presence.location?.map === mapName,
+      );
+      if (presences.length === 0) return [];
+      const values = yield* fromPromise("presence.read-metadata", () =>
+        self.redis.command.mget(
+          presences.map((presence) =>
+            self.metadataKey(organizationId, presence.sessionId),
+          ),
+        ),
+      );
       const result: Array<{
         readonly discordId: string;
         readonly isAfk: boolean;
       }> = [];
-      for (const presence of presences) {
-        if (!("location" in presence) || presence.location?.map !== mapName)
-          continue;
-        const metadata = yield* self.readMetadata(
-          organizationId,
-          presence.sessionId,
-        );
-        if (metadata)
+      for (const [index, presence] of presences.entries()) {
+        const value = values[index];
+        if (!value) continue;
+        try {
+          const metadata = decodePresenceMetadata(value);
           result.push({ discordId: metadata.discordId, isAfk: presence.isAfk });
+        } catch {
+          continue;
+        }
       }
       return result;
     });
