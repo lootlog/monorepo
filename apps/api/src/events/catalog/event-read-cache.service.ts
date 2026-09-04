@@ -2,6 +2,7 @@ import { Logger } from "#src/shared/application-logger";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import superjson from "superjson";
 import { Effect, Schema } from "effect";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 const EVENT_READ_CACHE_PREFIX = "event-read:v2";
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
@@ -13,30 +14,6 @@ const superJsonSerialization = {
 
 export const makeEventReadCache = (redis: RedisService) => {
   const logger = new Logger("EventReadCache");
-  const stableSerialize = (value: unknown): string => {
-    if (Array.isArray(value)) {
-      return `[${value.map((entry) => stableSerialize(entry)).join(",")}]`;
-    }
-
-    if (value instanceof Date) {
-      return JSON.stringify(value.toISOString());
-    }
-
-    if (value && typeof value === "object") {
-      const entries = Object.entries(value)
-        .filter(([, entry]) => entry !== undefined)
-        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-
-      return `{${entries
-        .map(
-          ([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`,
-        )
-        .join(",")}}`;
-    }
-
-    return JSON.stringify(value);
-  };
-
   const buildKey = (
     guildId: string,
     eventSegment: string,
@@ -48,7 +25,7 @@ export const makeEventReadCache = (redis: RedisService) => {
       guildId,
       eventSegment,
       scope,
-      Buffer.from(stableSerialize(params)).toString("base64url"),
+      Buffer.from(stableJsonStringify(params)).toString("base64url"),
     ].join(":");
 
   const deleteByPattern = async (pattern: string) => {

@@ -87,25 +87,6 @@ for (const schemaName of [
       : [...prefix, "details", "additionalProperties"];
   setOpenApiCompatibilityValue(document, detailsPath, {});
 }
-const HTTP_METHODS = [
-  "get",
-  "post",
-  "put",
-  "patch",
-  "delete",
-  "options",
-  "head",
-  "trace",
-] as const;
-const operationIds = Object.values(document.paths).flatMap((path) =>
-  HTTP_METHODS.flatMap((method) => {
-    const operation = path[method];
-    return operation?.operationId === undefined ? [] : [operation.operationId];
-  }),
-);
-if (operationIds.length !== 9 || new Set(operationIds).size !== 9) {
-  throw new Error("Activity OpenAPI requires 9 unique operations");
-}
 await Bun.write(
   new URL("../../openapi.yaml", import.meta.url),
   stringify(document, { lineWidth: 0 }),

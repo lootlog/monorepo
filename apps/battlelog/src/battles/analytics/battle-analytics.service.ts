@@ -12,18 +12,18 @@ import {
   type PlayerVsPlayerPaginatedResponse,
 } from "#src/battles/analytics/battle-statistics-response";
 import type { BattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
-import type { BattleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
-import type { BattleAnalyticsPaging } from "#src/battles/analytics/battle-analytics-paging.service";
+import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
+import { battleAnalyticsPaging as paging } from "#src/battles/analytics/battle-analytics-paging.service";
 import type { BattleAnalyticsQuery } from "#src/battles/analytics/battle-analytics-query.service";
 import type {
   AnalyticsBattleOrderBy,
   DateRangeQuery,
 } from "#src/battles/analytics/battle-analytics.types";
-import type { BattleSummaryCalculator } from "#src/battles/analytics/battle-summary-calculator.service";
-import type { CombatProfileCalculator } from "#src/battles/analytics/combat-profile-calculator.service";
-import type { HeadToHeadCalculator } from "#src/battles/analytics/head-to-head-calculator.service";
-import type { PlayerVsPlayerCalculator } from "#src/battles/analytics/player-vs-player-calculator.service";
-import type { AbyssSeasonCalculator } from "#src/battles/analytics/abyss-season-calculator.service";
+import { battleSummaryCalculator as summaryCalculator } from "#src/battles/analytics/battle-summary-calculator.service";
+import { combatProfileCalculator } from "#src/battles/analytics/combat-profile-calculator.service";
+import { headToHeadCalculator } from "#src/battles/analytics/head-to-head-calculator.service";
+import { playerVsPlayerCalculator } from "#src/battles/analytics/player-vs-player-calculator.service";
+import { abyssSeasonCalculator } from "#src/battles/analytics/abyss-season-calculator.service";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battleWarriors, battles } from "#src/database/schema";
 
@@ -99,13 +99,6 @@ export const makeBattleAnalytics = (
   drizzle: DrizzleDatabase,
   cache: BattleAnalyticsCache,
   queryModule: BattleAnalyticsQuery,
-  domain: BattleAnalyticsDomain,
-  paging: BattleAnalyticsPaging,
-  summaryCalculator: BattleSummaryCalculator,
-  combatProfileCalculator: CombatProfileCalculator,
-  headToHeadCalculator: HeadToHeadCalculator,
-  playerVsPlayerCalculator: PlayerVsPlayerCalculator,
-  abyssSeasonCalculator: AbyssSeasonCalculator,
 ) => {
   const getBattleAnalytics = (query: BattleAnalyticsCriteria, userId: string) =>
     Effect.gen(function* () {

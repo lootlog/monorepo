@@ -8,6 +8,7 @@ import type {
 } from "@lootlog/schema/loot-events";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
 import {
@@ -44,19 +45,6 @@ export class LootAllocationOperationError extends TaggedErrorClass<LootAllocatio
   "LootAllocationOperationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(",")}]`;
-  if (value && typeof value === "object") {
-    const entries = Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right));
-    return `{${entries
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value) ?? "undefined";
-};
 
 const parseChatAllocation = (message: string): Record<string, string[]> => {
   const allocation: Record<string, string[]> = {};
@@ -135,8 +123,8 @@ export const makeLootAllocationOperations = (options: {
     persisted: unknown,
     submitted: LootShare,
   ) => {
-    const persistedValue = stableSerialize(persisted);
-    const submittedValue = stableSerialize(submitted);
+    const persistedValue = stableJsonStringify(persisted);
+    const submittedValue = stableJsonStringify(submitted);
     if (persistedValue === submittedValue) return Effect.void;
     return Effect.sync(() =>
       options.logger.warn("Conflicting chat loot share rejected", {

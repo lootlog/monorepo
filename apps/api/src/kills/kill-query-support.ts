@@ -1,6 +1,7 @@
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
@@ -20,27 +21,12 @@ export interface KillQueryCache {
   ) => Effect.Effect<void, unknown>;
 }
 
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) {
-    return `[${value.map(stableSerialize).join(",")}]`;
-  }
-  if (value && typeof value === "object") {
-    const entries = Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-    return `{${entries
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-};
-
 export const buildKillQueryCacheKey = (
   scope: string,
   ownerId: string,
   params: Record<string, unknown>,
 ) =>
-  `kill-stats:${scope}:${ownerId}:${Buffer.from(stableSerialize(params)).toString("base64url")}`;
+  `kill-stats:${scope}:${ownerId}:${Buffer.from(stableJsonStringify(params)).toString("base64url")}`;
 
 export const buildNpcLevelFilter = (minLvl?: number, maxLvl?: number) => {
   const normalizedMin = minLvl && minLvl > 0 ? minLvl : undefined;

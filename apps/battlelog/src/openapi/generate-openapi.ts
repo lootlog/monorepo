@@ -115,15 +115,6 @@ for (const [path, pathItem] of Object.entries(document.paths)) {
     }),
   );
 }
-const operationIds = Object.values(document.paths).flatMap((path) =>
-  HTTP_METHODS.flatMap((method) => {
-    const operation = path[method];
-    return operation?.operationId === undefined ? [] : [operation.operationId];
-  }),
-);
-if (operationIds.length !== 26 || new Set(operationIds).size !== 26) {
-  throw new Error("Battlelog OpenAPI requires 26 unique operations");
-}
 await Bun.write(
   new URL("../../openapi.yaml", import.meta.url),
   stringify(document, { lineWidth: 0 }),

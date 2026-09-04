@@ -4,6 +4,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
@@ -121,21 +122,6 @@ interface LootsDependencies {
 
 const CACHE_TTL_SECONDS = 10;
 
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) {
-    return `[${value.map(stableSerialize).join(",")}]`;
-  }
-  if (value && typeof value === "object") {
-    const entries = Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-    return `{${entries
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value) ?? "undefined";
-};
-
 const cacheKey = (
   guild: Guild,
   permissions: Permission[],
@@ -158,7 +144,10 @@ const cacheKey = (
     "list",
     guild.id,
     Buffer.from(
-      stableSerialize({ params: { ...params, cursor: 0 }, visibilityScope }),
+      stableJsonStringify({
+        params: { ...params, cursor: 0 },
+        visibilityScope,
+      }),
     ).toString("base64url"),
   ].join(":");
 };

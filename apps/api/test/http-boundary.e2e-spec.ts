@@ -111,6 +111,8 @@ describe("API HTTP boundary", () => {
         guildId: authorizedGuildId,
         name: "Timer maintainer",
         permissions: [
+          Permission.ADMIN,
+          Permission.LOOTLOG_EVENTS_READ,
           Permission.LOOTLOG_TIMERS_READ,
           Permission.LOOTLOG_TIMERS_WRITE,
           Permission.LOOTLOG_MANAGE,
@@ -217,6 +219,25 @@ describe("API HTTP boundary", () => {
 
     expect(response.status).toBe(403);
     expect(await database.timer.count()).toBe(0);
+  });
+
+  it("enforces Organization access for events and notifications", async () => {
+    const responses = await Promise.all([
+      request(`/guilds/${authorizedGuildId}/events`),
+      request(`/guilds/${forbiddenGuildId}/events`),
+      request(`/guilds/${authorizedGuildId}/notifications/targets`),
+      request(`/guilds/${forbiddenGuildId}/notifications/targets`),
+      request("/users/@me/notifications/targets"),
+      boundary.handler(
+        new Request("http://api.test/users/@me/notifications/targets", {
+          headers: { authorization: headers.authorization },
+        }),
+      ),
+    ]);
+
+    expect(responses.map(({ status }) => status)).toEqual([
+      200, 403, 200, 403, 200, 401,
+    ]);
   });
 
   it("preserves expected 4xx statuses at the HTTP boundary", async () => {
