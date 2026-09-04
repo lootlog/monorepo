@@ -308,19 +308,20 @@ export const updateNotificationRuleValues = (
     data.npcIds !== undefined ||
     data.itemId !== undefined ||
     data.itemIds !== undefined;
+  let world = existing.world;
+  let filters = existing.filters as JsonValue | null;
+  if (scheduled) {
+    world = null;
+    filters = null;
+  } else {
+    if (Object.hasOwn(data, "world")) world = data.world ?? null;
+    if (hasFilterUpdate) filters = buildFilters(data);
+  }
   return {
     triggerType,
-    world: scheduled
-      ? null
-      : Object.hasOwn(data, "world")
-        ? (data.world ?? null)
-        : existing.world,
+    world,
     name: Object.hasOwn(data, "name") ? (data.name ?? null) : existing.name,
-    filters: scheduled
-      ? null
-      : hasFilterUpdate
-        ? buildFilters(data)
-        : (existing.filters as JsonValue | null),
+    filters,
     contentTemplate: Object.hasOwn(data, "contentTemplate")
       ? normalizeContentTemplate(data.contentTemplate)
       : existing.contentTemplate,

@@ -7,3 +7,9 @@ test("serializes nested objects with stable key order", () => {
   );
   expect(stableJsonStringify(undefined)).toBe("undefined");
 });
+
+test("preserves own __proto__ properties", () => {
+  expect(
+    stableJsonStringify(JSON.parse('{"__proto__":{"admin":true},"x":1}')),
+  ).toBe('{"__proto__":{"admin":true},"x":1}');
+});

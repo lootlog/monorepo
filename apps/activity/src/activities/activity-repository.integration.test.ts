@@ -78,4 +78,50 @@ describe("ActivityRepository", () => {
       ),
     ).toMatchObject({ rows: [{ count: 1 }] });
   });
+
+  it("paginates by creation time across mixed identifier formats", async () => {
+    await pool.query(
+      `INSERT INTO "Activity" ("id", "userId", "guildId", "discordId", "type", "createdAt", "source", "idempotencyKey") VALUES
+        ('zzzzzzzzzzzzzzzzzzzzzzzzz', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:03:00Z', 'WEB_APP', 'pagination-newest'),
+        ('yyyyyyyyyyyyyyyyyyyyyyyyy', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:02:00Z', 'WEB_APP', 'pagination-same-time'),
+        ('10000000-0000-4000-8000-000000000000', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:02:00Z', 'WEB_APP', 'pagination-middle'),
+        ('xxxxxxxxxxxxxxxxxxxxxxxxx', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:01:00Z', 'WEB_APP', 'pagination-oldest')`,
+    );
+    const repositoryLayer = ActivityRepository.layer.pipe(
+      Layer.provide(
+        ActivityDatabase.layer.pipe(
+          Layer.provide(
+            PgClient.layer({
+              url: Redacted.make(postgres.getConnectionUri()),
+            }),
+          ),
+        ),
+      ),
+    );
+
+    const [firstPage, secondPage] = await Effect.runPromise(
+      Effect.gen(function* () {
+        const repository = yield* ActivityRepository;
+        const first = yield* repository.findMany({
+          guildId: "guild-pagination",
+          limit: 2,
+        });
+        const second = yield* repository.findMany({
+          guildId: "guild-pagination",
+          cursor: first.nextCursor,
+          limit: 2,
+        });
+        return [first, second] as const;
+      }).pipe(Effect.provide(repositoryLayer)),
+    );
+
+    expect(firstPage.data).toEqual([
+      expect.objectContaining({ id: "zzzzzzzzzzzzzzzzzzzzzzzzz" }),
+      expect.objectContaining({ id: "yyyyyyyyyyyyyyyyyyyyyyyyy" }),
+    ]);
+    expect(secondPage.data).toEqual([
+      expect.objectContaining({ id: "10000000-0000-4000-8000-000000000000" }),
+      expect.objectContaining({ id: "xxxxxxxxxxxxxxxxxxxxxxxxx" }),
+    ]);
+  });
 });
