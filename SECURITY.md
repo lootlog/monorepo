@@ -151,7 +151,6 @@ metrics labels.
 
 ## Dependencies and verification
 
-- Review dependency security alerts and Dependabot updates.
 - Use Oxlint, Oxfmt, TypeScript, Vitest, contract tests, and relevant end-to-end
   tests.
 - Run characterization tests and replay benchmarks for game-runtime changes.
