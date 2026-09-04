@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { format } from "@/utils/local-date";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,

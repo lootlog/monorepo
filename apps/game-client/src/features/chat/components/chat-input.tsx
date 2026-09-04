@@ -55,7 +55,7 @@ import {
 
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useChatStore } from "@/store/chat.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";

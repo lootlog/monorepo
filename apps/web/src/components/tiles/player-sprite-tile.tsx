@@ -1,5 +1,5 @@
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type PlayerSpriteTileProps = {
   icon?: string | null;

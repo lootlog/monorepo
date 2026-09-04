@@ -1,4 +1,4 @@
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   Tooltip,
   TooltipContent,

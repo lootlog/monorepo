@@ -12,7 +12,7 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@lootlog/ui/components",
-    "utils": "@lootlog/ui/lib/utils",
+    "utils": "cn",
     "hooks": "@lootlog/ui/hooks",
     "lib": "@lootlog/ui/lib",
     "ui": "@lootlog/ui/components"

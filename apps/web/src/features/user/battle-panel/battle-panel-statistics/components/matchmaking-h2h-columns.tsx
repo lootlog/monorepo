@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import i18n from "@/i18n/config";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";

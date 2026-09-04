@@ -1,4 +1,4 @@
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Permission } from "@lootlog/schema/permissions";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";

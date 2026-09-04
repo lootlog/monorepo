@@ -11,7 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 

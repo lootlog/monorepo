@@ -3,7 +3,7 @@ import {
   BattleDamageTags,
   type BattleDamageTagWarrior,
 } from "@/features/user/battle-panel/components/battle-damage-tags";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type BattlePanelPvpWarriorSummaryData = BattleDamageTagWarrior & {
   icon: string;

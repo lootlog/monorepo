@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 type SpinnerProps = {
   className?: string;

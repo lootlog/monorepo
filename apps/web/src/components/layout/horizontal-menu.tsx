@@ -6,7 +6,7 @@ import {
   NavigationMenuList,
 } from "@lootlog/ui/components/navigation-menu";
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { ThemeInteractiveFrame, useThemeMeta } from "@/themes";
 
 interface NavElement {

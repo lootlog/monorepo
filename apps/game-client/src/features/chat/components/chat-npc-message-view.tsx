@@ -1,5 +1,5 @@
 import { NpcTile } from "@/components/npc-tile";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { format } from "@/utils/local-date";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import type { GameNpc } from "@lootlog/margonem/npcs";

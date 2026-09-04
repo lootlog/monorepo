@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@lootlog/ui/components/card";
 import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Inbox } from "lucide-react";
 import type { KeyboardEventHandler, ReactNode } from "react";
 import { useTranslation } from "react-i18next";

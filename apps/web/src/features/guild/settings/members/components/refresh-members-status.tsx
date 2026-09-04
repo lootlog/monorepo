@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Progress } from "@lootlog/ui/components/progress";
 import { Clock, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type RefreshDisplayJob = {
   status: string;

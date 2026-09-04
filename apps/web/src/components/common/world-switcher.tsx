@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { GuildContext } from "@/contexts/guild.context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {

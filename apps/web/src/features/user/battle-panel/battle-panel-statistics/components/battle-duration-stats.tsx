@@ -7,7 +7,7 @@ import { intervalToDuration } from "date-fns";
 import { Clock, Zap, Hourglass } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StatCard } from "./stat-card";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface BattleDurationStatsCardProps {
   data: BattleDurationStats;

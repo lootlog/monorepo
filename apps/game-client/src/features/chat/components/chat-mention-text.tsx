@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { ChatMentionSegment } from "@/features/chat/chat-mentions.helpers";
 import { Fragment, type FC } from "react";
 

@@ -13,7 +13,7 @@ import {
   getStatusLabel,
   stringifyLogValue,
 } from "@/features/settings/components/logs/logs.helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { ChevronDown, Copy } from "lucide-react";
 import type { LoggedAction, LoggedApiRequest } from "@/store/logs.store";
 import { useState, type FC, type KeyboardEvent } from "react";

@@ -14,7 +14,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { CheckCircle2, XCircle, Trophy, Minus } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import {
   evaluateEventScoring,

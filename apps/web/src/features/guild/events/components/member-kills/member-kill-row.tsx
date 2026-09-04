@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { NpcTile } from "@/components/tiles";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
 import { formatDateTime } from "../../utils/format-date";

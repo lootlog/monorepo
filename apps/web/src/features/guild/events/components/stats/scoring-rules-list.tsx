@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import type { EventScoringRule } from "@lootlog/domain/scoring";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   getScoringRuleAction,
   getScoringRuleCondition,

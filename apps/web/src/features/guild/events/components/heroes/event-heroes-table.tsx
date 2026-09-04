@@ -4,7 +4,7 @@ import { Plus, Swords } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Table } from "@lootlog/ui/components/table";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { EventHeroNpc } from "../../types/api";

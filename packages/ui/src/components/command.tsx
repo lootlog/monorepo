@@ -4,7 +4,7 @@ import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search, SearchIcon } from "lucide-react";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   Dialog,
   DialogContent,

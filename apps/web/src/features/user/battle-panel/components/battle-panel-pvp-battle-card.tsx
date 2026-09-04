@@ -1,7 +1,7 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { getPlayerVsPlayerBattleResult } from "./battle-panel-battle-presentation";

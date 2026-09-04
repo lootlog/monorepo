@@ -24,7 +24,7 @@ import type {
 } from "@/types/stats-customization.types";
 import { CategoryItem } from "./category-item";
 import { AddCategoryForm } from "./add-category-form";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface StatsCustomizationModalProps {
   config: StatsCustomizationConfig;

@@ -6,7 +6,7 @@ import {
   getChatMentionSegments,
   type ChatMentionContext,
 } from "@/features/chat/chat-mentions.helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { Loader2 } from "lucide-react";
 import type { ChangeEventHandler, FC, FormEventHandler } from "react";

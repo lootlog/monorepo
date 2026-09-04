@@ -1,6 +1,6 @@
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { ReactNode } from "react";
 import {
   BattlePanelFilterChipList,

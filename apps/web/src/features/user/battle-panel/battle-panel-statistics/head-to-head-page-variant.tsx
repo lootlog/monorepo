@@ -32,7 +32,7 @@ import type {
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useNavigate } from "@tanstack/react-router";
 import {
   getCoreRowModel,

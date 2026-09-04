@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/api/npcs.api";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";

@@ -1,6 +1,6 @@
 import { ChartArea } from "lucide-react";
 import type { ReactNode } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type BattleStatsTableHeaderProps = {
   title?: string;

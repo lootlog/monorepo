@@ -19,7 +19,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { ReservationSegment } from "./types";
 
 type ReservationBlockProps = {

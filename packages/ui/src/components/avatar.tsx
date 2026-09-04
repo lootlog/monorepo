@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarPrimitive.Root.Props>(
   ({ className, ...props }, ref) => (

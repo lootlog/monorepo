@@ -4,7 +4,7 @@ import type {
 } from "@/lib/api/battlelog-types";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { BattleLogList } from "./battle-log-list";
 import { BattleLogSearchToolbar } from "./battle-log-search-toolbar";
 import { Sword } from "lucide-react";

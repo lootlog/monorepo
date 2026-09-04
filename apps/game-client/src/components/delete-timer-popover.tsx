@@ -16,7 +16,7 @@ import {
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
 

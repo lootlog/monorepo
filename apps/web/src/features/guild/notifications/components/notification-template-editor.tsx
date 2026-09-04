@@ -45,7 +45,7 @@ import {
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   $createNotificationTemplateRoleNode,
   NotificationTemplateRoleNode,

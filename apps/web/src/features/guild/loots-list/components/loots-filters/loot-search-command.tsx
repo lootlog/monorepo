@@ -25,7 +25,7 @@ import { ItemRarity } from "@/lib/loots/loot-types";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Spinner } from "@lootlog/ui/components/spinner";

@@ -4,7 +4,7 @@ import type {
 } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   BATTLE_SURFACE_COLORS,
   BATTLE_TEXT_COLORS,
