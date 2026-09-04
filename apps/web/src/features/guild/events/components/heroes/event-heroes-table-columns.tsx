@@ -21,6 +21,7 @@ import { cn } from "cn";
 import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type EventHeroStats = {
   npcId: number | null;
@@ -58,8 +59,11 @@ export const createEventHeroesTableColumns = ({
   onEditHero,
   onManageMaps,
   t,
-}: CreateEventHeroesTableColumnsOptions): ColumnDef<EventHeroTableRow>[] => {
-  const columns: ColumnDef<EventHeroTableRow>[] = [
+}: CreateEventHeroesTableColumnsOptions): ColumnDef<
+  typeof coreTableFeatures,
+  EventHeroTableRow
+>[] => {
+  const columns: ColumnDef<typeof coreTableFeatures, EventHeroTableRow>[] = [
     {
       id: "hero",
       header: t("events.heroes.columns.hero"),

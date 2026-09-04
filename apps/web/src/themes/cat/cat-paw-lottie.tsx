@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useLottie } from "lottie-react";
+import { Lottie } from "lottie-react";
 import { cn } from "cn";
 
 interface CatPawLottieProps {
@@ -11,11 +11,9 @@ export const CatPawLottie: FC<CatPawLottieProps> = ({
   animationData,
   className,
 }) => {
-  const { View } = useLottie({
-    animationData,
-    loop: true,
-    autoplay: true,
-  });
-
-  return <div className={cn("cat-paw-spinner size-14", className)}>{View}</div>;
+  return (
+    <div className={cn("cat-paw-spinner size-14", className)}>
+      <Lottie src={animationData} loop autoplay />
+    </div>
+  );
 };

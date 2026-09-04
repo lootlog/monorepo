@@ -2,26 +2,32 @@ import {
   flexRender,
   type Cell,
   type Row,
+  type RowData,
   type Table as TanStackTable,
 } from "@tanstack/react-table";
 import type { ComponentProps, ReactNode } from "react";
 import { TableBody, TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "cn";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type TableRowProps = ComponentProps<typeof TableRow>;
 
-type TanStackTableBodyProps<TData> = {
-  table: TanStackTable<TData>;
-  rowClassName?: string | ((row: Row<TData>) => string);
-  cellClassName?: string | ((cell: Cell<TData, unknown>) => string);
-  getRowProps?: (row: Row<TData>) => TableRowProps;
+type TanStackTableBodyProps<TData extends RowData> = {
+  table: TanStackTable<typeof coreTableFeatures, TData>;
+  rowClassName?:
+    | string
+    | ((row: Row<typeof coreTableFeatures, TData>) => string);
+  cellClassName?:
+    | string
+    | ((cell: Cell<typeof coreTableFeatures, TData, unknown>) => string);
+  getRowProps?: (row: Row<typeof coreTableFeatures, TData>) => TableRowProps;
   renderCellContent?: (
-    cell: Cell<TData, unknown>,
+    cell: Cell<typeof coreTableFeatures, TData, unknown>,
     content: ReactNode,
   ) => ReactNode;
 };
 
-export const TanStackTableBody = <TData,>({
+export const TanStackTableBody = <TData extends RowData>({
   table,
   rowClassName,
   cellClassName,

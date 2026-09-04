@@ -2,12 +2,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  getCoreRowModel,
-  useReactTable,
-  type Cell,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { type Cell, type ColumnDef, useTable } from "@tanstack/react-table";
 import { Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateRankingPoints } from "@lootlog/client/main";
@@ -22,6 +17,7 @@ import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranki
 import { formatDurationHuman } from "../../utils/format-duration";
 import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type EventRankingTableProps = {
   rankings: EventRanking[];
@@ -136,7 +132,7 @@ export const EventRankingTable = ({
       rightRanking.totalPoints - leftRanking.totalPoints,
   );
 
-  const allColumns: ColumnDef<EventRanking>[] = [
+  const allColumns: ColumnDef<typeof coreTableFeatures, EventRanking>[] = [
     {
       id: "position",
       header: () => (
@@ -261,15 +257,14 @@ export const EventRankingTable = ({
         )
       : allColumns;
 
-  const table = useReactTable({
-    autoResetPageIndex: false,
+  const table = useTable({
+    features: coreTableFeatures,
     data: sortedRankings,
     columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   const renderRankingLinkCell = (
-    cell: Cell<EventRanking, unknown>,
+    cell: Cell<typeof coreTableFeatures, EventRanking, unknown>,
     content: ReactNode,
   ) => {
     if (!LINK_COLUMN_IDS.has(cell.column.id) || !guildId || !eventId) {

@@ -40,7 +40,9 @@ export type GuildDocumentHistorySnapshotResponseDto__schema0 =
       | boolean
       | ReadonlyArray<GuildDocumentHistorySnapshotResponseDto__schema0>
       | {
-          readonly [x: string]: GuildDocumentHistorySnapshotResponseDto__schema0;
+          readonly [
+            x: string
+          ]: GuildDocumentHistorySnapshotResponseDto__schema0;
         }
       | null
     >
@@ -51,7 +53,9 @@ export type GuildDocumentHistorySnapshotResponseDto__schema0 =
         | boolean
         | ReadonlyArray<GuildDocumentHistorySnapshotResponseDto__schema0>
         | {
-            readonly [x: string]: GuildDocumentHistorySnapshotResponseDto__schema0;
+            readonly [
+              x: string
+            ]: GuildDocumentHistorySnapshotResponseDto__schema0;
           }
         | null;
     }

@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, useNavigate } from "@tanstack/react-router";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  type SortingState,
-} from "@tanstack/react-table";
+import { type SortingState, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -30,6 +25,7 @@ import {
 } from "@lootlog/client/main";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
 type KillsSearchParams = {
   world?: string;
@@ -232,15 +228,14 @@ export const KillsPage: React.FC = () => {
 
   const columns = createKillsColumns(cursor);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: sortingTableFeatures,
     data: data?.npcs || [],
     columns,
     state: {
       sorting,
     },
     onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     manualSorting: true,
   });
 

@@ -2,11 +2,9 @@ import { useState } from "react";
 import type { TFunction } from "i18next";
 import {
   flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  useReactTable,
   type ColumnDef,
   type ExpandedState,
+  useTable,
 } from "@tanstack/react-table";
 import { Users } from "lucide-react";
 import {
@@ -26,6 +24,7 @@ import {
   getKillMapTimelineColumnClassName,
   getKillMapTimelineColumnWidthClassName,
 } from "./kill-map-timeline-table-utils";
+import { expandingTableFeatures } from "@/lib/tanstack-table-features";
 
 interface KillMapsTimelineTableProps {
   maps: MapTimelineData[];
@@ -47,7 +46,7 @@ export const KillMapsTimelineTable = ({
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const isNarrow = useMaxWidth(TABLE_BREAKPOINT);
 
-  const columns: ColumnDef<MapTimelineData>[] = [
+  const columns: ColumnDef<typeof expandingTableFeatures, MapTimelineData>[] = [
     {
       id: "id",
       header: t("events.killDetail.mapCoverage.columns.id"),
@@ -157,7 +156,8 @@ export const KillMapsTimelineTable = ({
     },
   ];
 
-  const table = useReactTable({
+  const table = useTable({
+    features: expandingTableFeatures,
     data: maps,
     columns,
     state: {
@@ -170,8 +170,6 @@ export const KillMapsTimelineTable = ({
     onExpandedChange: setExpanded,
     getRowId: (map) => map.mapId,
     getRowCanExpand: () => true,
-    getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
   });
 
   return (

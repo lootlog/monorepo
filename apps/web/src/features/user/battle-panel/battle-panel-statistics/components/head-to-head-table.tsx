@@ -1,8 +1,4 @@
-import {
-  useReactTable,
-  getCoreRowModel,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
@@ -21,6 +17,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { KeyboardEvent } from "react";
 import { cn } from "cn";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type HeadToHeadTableSearch = {
   characterId?: string;
@@ -77,7 +74,7 @@ export function HeadToHeadTable({
     handleNavigateToHeadToHead();
   };
 
-  const columns: ColumnDef<HeadToHeadRecord>[] = [
+  const columns: ColumnDef<typeof coreTableFeatures, HeadToHeadRecord>[] = [
     {
       id: "avatar",
       header: "",
@@ -183,10 +180,10 @@ export function HeadToHeadTable({
     },
   ];
 
-  const table = useReactTable({
+  const table = useTable({
+    features: coreTableFeatures,
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (

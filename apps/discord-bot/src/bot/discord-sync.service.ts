@@ -298,25 +298,23 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const guildChannelsPayload = (guild: Guild) =>
     createSyncContext(guild).pipe(
-      Effect.map(
-        (context): DiscordGuildChannelsSyncedEvent => ({
-          guildId: guild.id,
-          channels: context.channels
-            .map((channel) =>
-              channelSnapshot(
-                channel,
-                context.botMember.user.id,
-                context.syncedAt,
-              ),
-            )
-            .sort(
-              (first, second) =>
-                first.position - second.position ||
-                first.name.localeCompare(second.name),
+      Effect.map((context): DiscordGuildChannelsSyncedEvent => ({
+        guildId: guild.id,
+        channels: context.channels
+          .map((channel) =>
+            channelSnapshot(
+              channel,
+              context.botMember.user.id,
+              context.syncedAt,
             ),
-          syncState: syncStateFromContext(guild.id, context),
-        }),
-      ),
+          )
+          .sort(
+            (first, second) =>
+              first.position - second.position ||
+              first.name.localeCompare(second.name),
+          ),
+        syncState: syncStateFromContext(guild.id, context),
+      })),
     );
 
   const loadGuildChannelsPayload = (guildId: string) =>

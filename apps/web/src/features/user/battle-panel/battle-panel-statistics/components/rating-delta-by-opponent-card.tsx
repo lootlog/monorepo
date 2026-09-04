@@ -1,8 +1,4 @@
-import {
-  useReactTable,
-  getCoreRowModel,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
@@ -21,6 +17,7 @@ import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { KeyboardEvent } from "react";
 import { cn } from "cn";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
@@ -84,7 +81,10 @@ export function RatingDeltaByOpponentCard({
     handleRowClick(opponentId);
   };
 
-  const columns: ColumnDef<RatingDeltaByOpponentRecord>[] = [
+  const columns: ColumnDef<
+    typeof coreTableFeatures,
+    RatingDeltaByOpponentRecord
+  >[] = [
     {
       id: "avatar",
       header: "",
@@ -188,10 +188,10 @@ export function RatingDeltaByOpponentCard({
     },
   ];
 
-  const table = useReactTable({
+  const table = useTable({
+    features: coreTableFeatures,
     data: topData,
     columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (
