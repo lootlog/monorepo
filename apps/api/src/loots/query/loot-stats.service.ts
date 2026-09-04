@@ -89,21 +89,8 @@ export class LootStatsService {
         )
       : undefined;
 
-    return Effect.gen(
+    const load = Effect.gen(
       function* (this: LootStatsService) {
-        const cached = yield* Effect.tryPromise({
-          try: () =>
-            this.redis.getJson(
-              cacheKey,
-              makeJsonCodec(LootStatsResponseSchema),
-            ),
-          catch: (cause) => cause,
-        });
-        if (cached !== null) {
-          this.logger.debug(`Cache hit for ${cacheKey}`);
-          return cached;
-        }
-        this.logger.debug(`Cache miss for ${cacheKey}`);
         const [
           overview,
           byRarity,
@@ -165,7 +152,7 @@ export class LootStatsService {
           ] as const,
           { concurrency: "unbounded" },
         );
-        const response = {
+        return {
           overview,
           byRarity,
           timeline,
@@ -173,17 +160,22 @@ export class LootStatsService {
           topContributors,
           topItems,
         } satisfies LootStatsResponse;
-        yield* Effect.tryPromise({
-          try: () => this.redis.setJson(cacheKey, response, CACHE_TTL_SECONDS),
-          catch: (cause) => cause,
-        });
-        return response;
       }.bind(this),
-    ).pipe(
-      Effect.withSpan("LootsController_getLootStats", {
-        attributes: { adapter: "loot-stats", retryCount: 0 },
-      }),
     );
+    return this.redis
+      .getOrSetJsonEffect({
+        key: cacheKey,
+        ttlSeconds: CACHE_TTL_SECONDS,
+        codec: makeJsonCodec(LootStatsResponseSchema),
+        factory: load,
+        onError: (error) =>
+          this.logger.warn("Loot statistics cache unavailable", error),
+      })
+      .pipe(
+        Effect.withSpan("LootsController_getLootStats", {
+          attributes: { adapter: "loot-stats", retryCount: 0 },
+        }),
+      );
   }
 
   private buildCacheKey(

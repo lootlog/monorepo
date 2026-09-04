@@ -200,7 +200,7 @@ export const makeGuildKillQueries = (
         label: "guild top npcs",
         schema: GuildTopNpcsResponse,
         load: persistence
-          .findGuildSummaries(
+          .topGuildNpcs(
             {
               guildId,
               ...(npcType && { npcType }),
@@ -213,50 +213,9 @@ export const makeGuildKillQueries = (
               ...(periodStart && { periodStart: { gte: periodStart } }),
             },
             periodStart !== undefined,
+            limit,
           )
-          .pipe(
-            Effect.map((summaries) => {
-              const npcs = new Map<
-                number,
-                {
-                  npcId: number;
-                  npcName: string;
-                  npcType: string;
-                  npcLvl: number;
-                  npcProf: string | null;
-                  npcIcon: string | null;
-                  uniqueKills: number;
-                }
-              >();
-              for (const summary of summaries) {
-                const existing = npcs.get(summary.npcId);
-                if (existing) {
-                  existing.uniqueKills += summary.uniqueKills;
-                  if (summary.npcLvl > existing.npcLvl) {
-                    existing.npcLvl = summary.npcLvl;
-                    existing.npcName = summary.npcName;
-                    existing.npcProf = summary.npcProf;
-                    existing.npcIcon = summary.npcIcon;
-                  }
-                } else {
-                  npcs.set(summary.npcId, {
-                    npcId: summary.npcId,
-                    npcName: summary.npcName,
-                    npcType: summary.npcType,
-                    npcLvl: summary.npcLvl,
-                    npcProf: summary.npcProf,
-                    npcIcon: summary.npcIcon,
-                    uniqueKills: summary.uniqueKills,
-                  });
-                }
-              }
-              return {
-                topNpcs: Array.from(npcs.values())
-                  .sort((left, right) => right.uniqueKills - left.uniqueKills)
-                  .slice(0, limit),
-              };
-            }),
-          ),
+          .pipe(Effect.map((topNpcs) => ({ topNpcs }))),
       }),
     );
   };
@@ -285,7 +244,7 @@ export const makeGuildKillQueries = (
         label: "guild top killers",
         schema: GuildTopKillersByTypeResponse,
         load: persistence
-          .findMemberStats(
+          .topMembersByType(
             {
               guildId,
               npcType: { in: npcTypes },
@@ -293,55 +252,21 @@ export const makeGuildKillQueries = (
               ...(periodStart && { periodStart: { gte: periodStart } }),
             },
             periodStart !== undefined,
-            true,
+            limit,
           )
           .pipe(
-            Effect.map((stats) => {
-              const result: Record<
-                string,
-                Array<{
-                  memberId: number;
-                  memberName: string;
-                  memberAvatar: string | null;
-                  memberUserId: string;
-                  totalParticipations: number;
-                }>
-              > = {};
-              for (const npcType of npcTypes) {
-                const members = new Map<
-                  number,
-                  {
-                    memberId: number;
-                    memberName: string;
-                    memberAvatar: string | null;
-                    memberUserId: string;
-                    totalParticipations: number;
-                  }
-                >();
-                for (const stat of stats) {
-                  if (stat.npcType !== npcType) continue;
-                  const existing = members.get(stat.memberId);
-                  if (existing) {
-                    existing.totalParticipations += stat.memberKills;
-                  } else {
-                    members.set(stat.memberId, {
-                      memberId: stat.memberId,
-                      memberName: stat.member.name,
-                      memberAvatar: stat.member.avatar,
-                      memberUserId: stat.member.userId,
-                      totalParticipations: stat.memberKills,
-                    });
-                  }
-                }
-                result[npcType] = Array.from(members.values())
-                  .sort(
-                    (left, right) =>
-                      right.totalParticipations - left.totalParticipations,
-                  )
-                  .slice(0, limit);
-              }
-              return result;
-            }),
+            Effect.map((stats) =>
+              Object.fromEntries(
+                npcTypes.map((npcType) => [
+                  npcType,
+                  stats
+                    .filter((stat) => stat.npcType === npcType)
+                    .map(
+                      ({ npcType: _type, rank: _rank, ...member }) => member,
+                    ),
+                ]),
+              ),
+            ),
           ),
       }),
     );
@@ -380,106 +305,53 @@ export const makeGuildKillQueries = (
         label: "npc killers",
         schema: NpcKillersResponse,
         load: Effect.gen(function* () {
-          const [stats, summaries] = yield* Effect.all(
+          const [killers, summaries, memberNpc] = yield* Effect.all(
             [
-              persistence.findMemberStats(
+              persistence.topNpcKillers(
                 filter,
                 periodStart !== undefined,
-                true,
+                limit,
               ),
-              persistence.findGuildSummaries(filter, periodStart !== undefined),
+              persistence.topGuildNpcs(filter, periodStart !== undefined, 1),
+              persistence.findMemberNpcMetadata(
+                filter,
+                periodStart !== undefined,
+              ),
             ],
             { concurrency: "unbounded" },
           );
-          const metadata =
-            stats.length === 0 && summaries.length === 0
-              ? yield* persistence.findGuildSummaries(
+          const fallback =
+            !memberNpc && summaries.length === 0
+              ? yield* persistence.topGuildNpcs(
                   { guildId, npcId, ...visibility.filter },
                   false,
+                  1,
                 )
               : [];
-          if (
-            stats.length === 0 &&
-            summaries.length === 0 &&
-            metadata.length === 0
-          ) {
-            return null;
-          }
-
-          const members = new Map<
-            number,
-            {
-              memberId: number;
-              memberName: string;
-              memberAvatar: string | null;
-              memberUserId: string;
-              participationCount: number;
-            }
-          >();
-          let totalMemberParticipations = 0;
-          let npcInfo: {
-            npcId: number;
-            npcName: string;
-            npcType: string;
-            npcLvl: number;
-            npcProf: string | null;
-            npcIcon: string | null;
-          } | null = null;
-          for (const stat of stats) {
-            totalMemberParticipations += stat.memberKills;
-            if (!npcInfo || stat.npcLvl > npcInfo.npcLvl) {
-              npcInfo = {
-                npcId: stat.npcId,
-                npcName: stat.npcName,
-                npcType: stat.npcType,
-                npcLvl: stat.npcLvl,
-                npcProf: stat.npcProf,
-                npcIcon: stat.npcIcon,
-              };
-            }
-            const existing = members.get(stat.memberId);
-            if (existing) {
-              existing.participationCount += stat.memberKills;
-            } else {
-              members.set(stat.memberId, {
-                memberId: stat.memberId,
-                memberName: stat.member.name,
-                memberAvatar: stat.member.avatar,
-                memberUserId: stat.member.userId,
-                participationCount: stat.memberKills,
-              });
-            }
-          }
-          const metadataSource = summaries.length > 0 ? summaries : metadata;
-          if (!npcInfo && metadataSource.length > 0) {
-            const summary = metadataSource.reduce((highest, current) =>
-              current.npcLvl > highest.npcLvl ? current : highest,
-            );
-            npcInfo = {
-              npcId: summary.npcId,
-              npcName: summary.npcName,
-              npcType: summary.npcType,
-              npcLvl: summary.npcLvl,
-              npcProf: summary.npcProf,
-              npcIcon: summary.npcIcon,
-            };
-          }
-          if (!npcInfo) return null;
+          const summary = summaries[0] ?? fallback[0];
+          const npc =
+            memberNpc ??
+            (summary
+              ? {
+                  npcId: summary.npcId,
+                  npcName: summary.npcName,
+                  npcType: summary.npcType,
+                  npcLvl: summary.npcLvl,
+                  npcProf: summary.npcProf,
+                  npcIcon: summary.npcIcon,
+                }
+              : null);
+          if (!npc) return null;
           return {
             npc: {
-              ...npcInfo,
-              uniqueGuildKills: summaries.reduce(
-                (total, summary) => total + summary.uniqueKills,
-                0,
-              ),
-              totalMemberParticipations,
+              ...npc,
+              uniqueGuildKills: summaries[0]?.uniqueKills ?? 0,
+              totalMemberParticipations:
+                killers[0]?.totalMemberParticipations ?? 0,
             },
-            killers: Array.from(members.values())
-              .sort(
-                (left, right) =>
-                  right.participationCount - left.participationCount,
-              )
-              .slice(0, limit),
+            killers: killers.map(
+              ({ totalMemberParticipations: _total, ...member }) => member,
+            ),
           };
         }),
       }),

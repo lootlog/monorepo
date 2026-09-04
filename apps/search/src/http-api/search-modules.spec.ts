@@ -193,7 +193,8 @@ describe("Search Effect modules", () => {
   test("merges item worlds before indexing", async () => {
     let indexedDocuments: unknown;
     const client = makeClient(() => ({
-      getDocument: () => Promise.resolve({ worlds: ["jaruna"] }),
+      getDocuments: () =>
+        Promise.resolve({ results: [{ uid: "42", worlds: ["jaruna"] }] }),
       addDocuments: (documents: unknown) => {
         indexedDocuments = documents;
         return {

@@ -1,3 +1,7 @@
+import {
+  getClockSecond,
+  subscribeToSecondClock,
+} from "@/hooks/utils/second-clock";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Clock } from "lucide-react";
@@ -7,11 +11,7 @@ import {
   isWindowActive,
   type WindowStatus,
 } from "../../hooks/use-window-status";
-import {
-  getCoverageClockSecond,
-  subscribeToCoverageClock,
-  useLocalCoverageTimer,
-} from "../../hooks/utils/use-local-coverage-timer";
+import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
 import { formatDurationPadded } from "../../utils/format-duration";
 import type { MapStatus } from "./map-card";
 
@@ -64,8 +64,8 @@ export const MapCoverageTimer = ({
       );
     };
 
-    updateTimerValue(getCoverageClockSecond());
-    return subscribeToCoverageClock(updateTimerValue);
+    updateTimerValue(getClockSecond());
+    return subscribeToSecondClock(updateTimerValue);
   }, [isTimerVisible, startTime, tooltipContent]);
 
   if (!isTimerVisible) {

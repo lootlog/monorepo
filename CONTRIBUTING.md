@@ -150,3 +150,42 @@ generated changelogs as part of a pull request.
 - Describe data, security, performance, rollout, and rollback risks.
 - Include screenshots or recordings for visible UI changes.
 - Confirm that you can submit the contribution under the MIT License.
+
+## Read-cache namespace rollout
+
+API read caches for timer lists, event reads, loot lists, loot statistics, and
+kill statistics use `read-cache:v1` keys. Reads capture random generations for
+their Organization (and event for event reads), or their User for personal kill
+statistics, before loading data. Invalidation replaces only
+the corresponding generation. Previous results expire under their existing TTL;
+a load that finishes after invalidation cannot repopulate the current generation.
+Generation keys are retained so expiry cannot make an older generation current.
+Wrapped retains its existing cache behavior.
+
+Battlelog uses `battle-cache:v2` result keys and a random generation per User.
+Analytics, character lists, and world lists share that generation. Results expire
+after five minutes; generation keys remain. A missing generation is initialized
+atomically with a new random value, including after Redis eviction.
+
+For each affected service, deploy or roll back in this order:
+
+1. Drain the running replicas before admitting traffic to the target revision.
+   Old and new revisions cannot invalidate each other's cache entries.
+2. Clear only the target revision's read-result keys, or wait for their TTLs to
+   expire after the last replica using that namespace stops. Repeat this step
+   when returning to a previously used revision: its cached results may predate
+   writes accepted by the other revision.
+3. Admit traffic to the target revision. Reuse its immutable service image;
+   do not rebuild during rollback.
+
+The new result prefixes are `read-cache:v1:` for API and `battle-cache:v2:` for
+Battlelog. Legacy API result prefixes are `timer:list:`, `loots:list:`,
+`loot-stats:`, `kill-stats:`, and `event-read:v2:`. Legacy Battlelog result prefixes are
+`analytics:`, `statistics:`, `battle-characters:`, and `battle-worlds:`. Include
+the configured Redis service prefix when selecting keys. Keep generation keys,
+locks, and unrelated state; never flush the shared Redis database.
+
+No HTTP schema, generated-client, or database migration is needed. Before
+deployment, run `apps/api/test/read-cache.integration.test.ts` and Battlelog's
+`bun run test:integration` to verify scope isolation, concurrent cache misses,
+and invalidation during a pending database read.

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
@@ -7,6 +8,14 @@ import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 const ANALYTICS_CACHE_PREFIX = "analytics";
 const ANALYTICS_CACHE_TTL_SECONDS = 5 * 60;
+const CACHE_GENERATION_SCRIPT = `
+local generation = redis.call("GET", KEYS[1])
+if not generation then
+  generation = ARGV[1]
+  redis.call("SET", KEYS[1], generation)
+end
+return generation
+`;
 
 export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
   const logger = new Logger("BattleAnalyticsCache");
@@ -38,8 +47,13 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       try: () => Promise.resolve(redisService.get(cacheKey)),
       catch: (cause) => cause,
     }).pipe(
-      Effect.map((cachedResult) =>
-        cachedResult ? decodeJson(cachedResult) : null,
+      Effect.flatMap((cachedResult) =>
+        cachedResult
+          ? Effect.try({
+              try: () => decodeJson(cachedResult),
+              catch: (cause) => cause,
+            })
+          : Effect.succeed(null),
       ),
       Effect.withSpan("BattleAnalyticsCache_getJson", {
         attributes: { adapter: "redis", retryCount: 0 },
@@ -64,12 +78,29 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     );
 
   const getOrSetJson = <T>(
+    userId: string,
     cacheKey: string,
     factory: () => Effect.Effect<T, unknown>,
     decodeJson: (value: string) => T,
   ) =>
     Effect.gen(function* () {
-      const cached = yield* getJson(cacheKey, decodeJson).pipe(
+      const generation = yield* Effect.tryPromise({
+        try: () =>
+          redisService.eval<string>(
+            CACHE_GENERATION_SCRIPT,
+            [`battle-cache-generation:${userId}`],
+            [randomUUID()],
+          ),
+        catch: (cause) => cause,
+      }).pipe(
+        Effect.catch((error) => {
+          logger.warn("Battle analytics cache unavailable", error);
+          return Effect.succeed(undefined);
+        }),
+      );
+      if (generation === undefined) return yield* factory();
+      const versionedKey = `battle-cache:v2:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
+      const cached = yield* getJson(versionedKey, decodeJson).pipe(
         Effect.catch((error) => {
           logger.warn("Battle analytics cache unavailable", error);
           return Effect.succeed(null);
@@ -77,7 +108,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       );
       if (cached !== null) return cached;
       const result = yield* factory();
-      yield* setJson(cacheKey, result).pipe(
+      yield* setJson(versionedKey, result).pipe(
         Effect.catch((error) => {
           logger.warn("Battle analytics cache unavailable", error);
           return Effect.void;
@@ -87,20 +118,10 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     });
 
   const invalidateUserAnalytics = (userId: string) =>
-    Effect.gen(function* () {
-      const patterns = [
-        `${ANALYTICS_CACHE_PREFIX}:${userId}:*`,
-        `statistics:*:${userId}:*`,
-        `battle-characters:*:${userId}*`,
-        `battle-worlds:${userId}:*`,
-      ];
-
-      for (const pattern of patterns) {
-        yield* Effect.tryPromise({
-          try: () => Promise.resolve(redisService.deleteByPattern(pattern)),
-          catch: (cause) => cause,
-        });
-      }
+    Effect.tryPromise({
+      try: () =>
+        redisService.set(`battle-cache-generation:${userId}`, randomUUID()),
+      catch: (cause) => cause,
     }).pipe(
       Effect.catch((error) => {
         logger.warn(
@@ -176,10 +197,8 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     buildAnalyticsCacheKey,
     buildQueryCacheKey,
     buildStatisticsCacheKey,
-    getJson,
     getOrSetJson,
     invalidateUserAnalytics,
-    setJson,
     ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
   };
 };

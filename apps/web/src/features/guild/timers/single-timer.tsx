@@ -6,59 +6,25 @@ import {
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { TimerResponseDto } from "@lootlog/client/main";
-import { invalidateTimersControllerGetTimers } from "@lootlog/client/main";
-import { useQueryClient } from "@tanstack/react-query";
 
 type SingleTimerProps = {
   timer: TimerResponseDto;
+  now: number;
 };
 
 const THRESHOLD = 30000;
 
-export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
+export const SingleTimer: FC<SingleTimerProps> = ({ timer, now }) => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
-  const { world } = useGuildContext();
-  const queryClient = useQueryClient();
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-  const [timeLeft, setTimeLeft] = useState(() => maxSpawnTime - Date.now());
-  const [minTimeLeft, setMinTimeLeft] = useState(
-    () => minSpawnTime - Date.now(),
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const time = maxSpawnTime - Date.now();
-      const minTime = minSpawnTime - Date.now();
-
-      if (time <= 0) {
-        clearInterval(interval);
-        setTimeLeft(0);
-        if (guildId) {
-          void invalidateTimersControllerGetTimers(
-            queryClient,
-            { guildId },
-            { world },
-          );
-        }
-
-        return;
-      }
-
-      setTimeLeft(time);
-      setMinTimeLeft(minTime);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [maxSpawnTime, minSpawnTime, queryClient, guildId, world]);
+  const timeLeft = Math.max(0, maxSpawnTime - now);
+  const minTimeLeft = minSpawnTime - now;
 
   const isMinSpawnTime = minSpawnTime < maxSpawnTime && minTimeLeft <= 0;
   const hasPassedRedThreshold = timeLeft < THRESHOLD;
