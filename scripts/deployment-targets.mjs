@@ -31,6 +31,11 @@ const globalDockerInputs = new Set([
   "turbo.json",
 ]);
 
+const developmentPipelineInputs = new Set([
+  ".github/workflows/dev-deploy.yml",
+  "scripts/deployment-targets.mjs",
+]);
+
 const isWorkspaceManifest = (file) =>
   /^(?:apps|packages)\/[^/]+\/package\.json$/u.test(file);
 
@@ -214,11 +219,15 @@ export async function createDeploymentPlan(input) {
   const affectedPackages = new Set(input.affectedPackages ?? []);
   if (input.mode === "dev") {
     const changedFiles = input.changedFiles ?? [];
+    const pipelineChanged = changedFiles.some((file) =>
+      developmentPipelineInputs.has(file),
+    );
     return {
       targets: targets.filter(
         (target) =>
           target.development !== false &&
-          (affectedPackages.has(target.package) ||
+          (pipelineChanged ||
+            affectedPackages.has(target.package) ||
             (target.kind === "docker" &&
               isDockerPackagingChange(target, changedFiles, affectedPackages))),
       ),

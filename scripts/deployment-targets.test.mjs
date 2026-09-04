@@ -54,6 +54,24 @@ describe("deployment targets", () => {
     expect(plan.targets.map(({ id }) => id)).toEqual(["api"]);
   });
 
+  test("development redeploys enabled targets after pipeline changes", async () => {
+    const expectedTargetIds = (await loadDeploymentTargets())
+      .filter(({ development }) => development !== false)
+      .map(({ id }) => id);
+
+    for (const changedFile of [
+      ".github/workflows/dev-deploy.yml",
+      "scripts/deployment-targets.mjs",
+    ]) {
+      const plan = await createDeploymentPlan({
+        mode: "dev",
+        affectedPackages: [],
+        changedFiles: [changedFile],
+      });
+      expect(plan.targets.map(({ id }) => id)).toEqual(expectedTargetIds);
+    }
+  });
+
   test("CI rebuilds images only when packaging inputs change", async () => {
     const sourcePlan = await createDeploymentPlan({
       mode: "ci",
