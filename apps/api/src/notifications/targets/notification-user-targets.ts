@@ -23,7 +23,6 @@ import {
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { hasOwnField } from "#src/shared/has-own-field";
 import {
   USER_DM_TEST_MESSAGE,
   USER_DM_TEST_RULE_NAME,
@@ -279,7 +278,7 @@ export const makeNotificationUserTargets = (
     data: UpdateNotificationTargetDto,
   ) {
     yield* find(discordId, targetId);
-    const displayName = hasOwnField(data, "displayName")
+    const displayName = Object.hasOwn(data, "displayName")
       ? { displayName: data.displayName ?? null }
       : {};
     const rows = yield* database

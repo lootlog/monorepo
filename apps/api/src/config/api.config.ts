@@ -13,15 +13,6 @@ const compatibilityBoolean = (name: string) =>
     Config.map(enabledValue),
   );
 
-const positiveFinite = (name: string) =>
-  Config.schema(Schema.Finite.check(Schema.isGreaterThan(0)), name);
-
-const probability = (name: string) =>
-  Config.schema(
-    Schema.Finite.check(Schema.isBetween({ minimum: 0, maximum: 1 })),
-    name,
-  );
-
 export interface ApiConfiguration {
   readonly environment: RuntimeEnvironment;
   readonly port: number;
@@ -53,11 +44,6 @@ export interface ApiConfiguration {
   readonly reservationsCleanup: {
     readonly enabled: string;
     readonly retentionDays: number;
-  };
-  readonly performanceDiagnostics: {
-    readonly enabled: boolean;
-    readonly thresholdMilliseconds: number;
-    readonly sampleRate: number;
   };
   readonly nodeWarningDiagnosticsEnabled: boolean;
   readonly hostName: string | undefined;
@@ -125,15 +111,6 @@ export const apiConfiguration = Config.all({
     ),
     retentionDays: Config.finite("RESERVATIONS_RETENTION_DAYS").pipe(
       Config.withDefault(30),
-    ),
-  }),
-  performanceDiagnostics: Config.all({
-    enabled: compatibilityBoolean("PERF_DIAGNOSTICS_ENABLED"),
-    thresholdMilliseconds: positiveFinite("PERF_DIAGNOSTICS_THRESHOLD_MS").pipe(
-      Config.withDefault(50),
-    ),
-    sampleRate: probability("PERF_DIAGNOSTICS_SAMPLE_RATE").pipe(
-      Config.withDefault(1),
     ),
   }),
   nodeWarningDiagnosticsEnabled: compatibilityBoolean(

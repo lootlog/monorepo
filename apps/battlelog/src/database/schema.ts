@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
   doublePrecision,
@@ -17,7 +16,7 @@ export const battles = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => createId()),
+      .$defaultFn(() => crypto.randomUUID()),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt")
       .defaultNow()
@@ -88,7 +87,7 @@ export const userCharacters = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => createId()),
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text("userId").notNull(),
     characterId: text("characterId").notNull(),
     name: text("name").notNull(),
@@ -116,7 +115,7 @@ export const battleWarriors = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => createId()),
+      .$defaultFn(() => crypto.randomUUID()),
     battleId: text("battleId")
       .notNull()
       .references(() => battles.id, { onDelete: "cascade" }),

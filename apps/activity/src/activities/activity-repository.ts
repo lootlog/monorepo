@@ -1,5 +1,4 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { createId } from "@paralleldrive/cuid2";
 import {
   and,
   asc,
@@ -117,7 +116,7 @@ export class ActivityRepository extends Context.Service<
             }),
           )
           .digest("hex");
-        const id = createId();
+        const id = crypto.randomUUID();
         const rows = yield* db
           .insert(activityActorSnapshots)
           .values({
@@ -176,7 +175,7 @@ export class ActivityRepository extends Context.Service<
             const createdRows = yield* tx
               .insert(activities)
               .values({
-                id: createId(),
+                id: crypto.randomUUID(),
                 userId: dto.userId,
                 guildId: dto.guildId,
                 discordId: dto.discordId,

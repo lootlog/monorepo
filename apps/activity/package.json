@@ -34,10 +34,8 @@
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "@paralleldrive/cuid2": "^3.3.0",
     "drizzle-orm": "catalog:",
-    "effect": "catalog:",
-    "yaml": "catalog:"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
@@ -47,6 +45,7 @@
     "@types/pg": "^8.23.1",
     "drizzle-kit": "catalog:",
     "pg": "^8.23.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "yaml": "catalog:"
   }
 }

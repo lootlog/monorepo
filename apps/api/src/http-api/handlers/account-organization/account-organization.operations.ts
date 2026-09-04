@@ -19,7 +19,6 @@ import {
 } from "#src/shared/http/http-errors";
 import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
 import { generateSlug } from "#src/shared/generate-slug";
-import { hasOwnField } from "#src/shared/has-own-field";
 import { RESTRICTED_VANITY_URLS } from "#src/guilds/restricted-vanity-urls";
 import { ErrorKey } from "#src/guilds/error-key";
 import {
@@ -175,7 +174,7 @@ const validateGuildConfigurationAgainstStored = (
 };
 
 const buildGuildConfigurationUpdate = (payload: UpdateGuildConfigDto) => ({
-  ...(hasOwnField(payload, "vanityUrl")
+  ...(Object.hasOwn(payload, "vanityUrl")
     ? { vanityUrl: generateSlug(payload.vanityUrl ?? undefined) }
     : {}),
   ...(payload.publicStatsCardEnabled === undefined

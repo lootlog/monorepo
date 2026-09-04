@@ -41,12 +41,10 @@
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "@paralleldrive/cuid2": "^3.3.0",
     "bullmq": "^5.81.4",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
-    "pg": "^8.23.0",
-    "yaml": "catalog:"
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
@@ -54,6 +52,7 @@
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "yaml": "catalog:"
   }
 }

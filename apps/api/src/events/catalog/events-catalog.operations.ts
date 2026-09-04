@@ -25,18 +25,7 @@ export const makeEventsCatalog = (wrapped: EventWrapped) => ({
   },
 });
 
-type LegacyEventsCatalog = ReturnType<typeof makeEventsCatalog>;
-export type EventsCatalog = Omit<
-  LegacyEventsCatalog,
-  | "createEvent"
-  | "deleteEvent"
-  | "getEvent"
-  | "getEventMaps"
-  | "getEventOverview"
-  | "getEvents"
-  | "recalculatePoints"
-  | "updateEvent"
-> &
+export type EventsCatalog = ReturnType<typeof makeEventsCatalog> &
   EventsCatalogRead & {
     readonly createEvent: EventCreation;
     readonly deleteEvent: EventDeletion;

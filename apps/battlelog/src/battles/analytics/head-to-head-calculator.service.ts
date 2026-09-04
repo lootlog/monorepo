@@ -1,6 +1,6 @@
 import type { BattleStatisticsQuery } from "#src/battles/analytics/query-battle-statistics";
 import type { HeadToHeadRecord } from "#src/battles/analytics/battle-statistics-response";
-import type { BattleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
+import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
 import type {
   BattleResult,
   InflatedBattleWithWarriors,
@@ -98,7 +98,7 @@ const sortRecords = (
   return records;
 };
 
-export const makeHeadToHeadCalculator = (domain: BattleAnalyticsDomain) => ({
+export const headToHeadCalculator = {
   calculateRecords(
     battles: InflatedBattleWithWarriors[],
     characterIds: Set<string>,
@@ -188,6 +188,4 @@ export const makeHeadToHeadCalculator = (domain: BattleAnalyticsDomain) => ({
       query.sortOrder ?? "desc",
     );
   },
-});
-
-export type HeadToHeadCalculator = ReturnType<typeof makeHeadToHeadCalculator>;
+};

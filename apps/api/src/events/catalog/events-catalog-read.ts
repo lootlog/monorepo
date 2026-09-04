@@ -5,6 +5,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -48,22 +49,6 @@ export class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadErro
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) {
-    return `[${value.map(stableSerialize).join(",")}]`;
-  }
-  if (value instanceof Date) return JSON.stringify(value.toISOString());
-  if (value && typeof value === "object") {
-    const entries = Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right));
-    return `{${entries
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-};
-
 const cacheKey = (
   guildId: string,
   eventSegment: string,
@@ -75,7 +60,7 @@ const cacheKey = (
     guildId,
     eventSegment,
     scope,
-    Buffer.from(stableSerialize(params)).toString("base64url"),
+    Buffer.from(stableJsonStringify(params)).toString("base64url"),
   ].join(":");
 
 export const makeEventsCatalogRead = (

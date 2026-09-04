@@ -26,7 +26,6 @@ import {
   isValidTimeZone,
 } from "#src/notifications/rules/notification-schedule-time";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
-import { hasOwnField } from "#src/shared/has-own-field";
 
 const MAX_NPCS_PER_RULE = 5;
 
@@ -165,7 +164,7 @@ const scheduleTimezone = (
 };
 
 const scheduledUntil = (data: RuleInput, existing?: ExistingRule) => {
-  if (!hasOwnField(data, "scheduledUntil")) {
+  if (!Object.hasOwn(data, "scheduledUntil")) {
     return existing?.scheduledUntil ?? null;
   }
   return data.scheduledUntil ? new Date(data.scheduledUntil) : null;
@@ -313,16 +312,16 @@ export const updateNotificationRuleValues = (
     triggerType,
     world: scheduled
       ? null
-      : hasOwnField(data, "world")
+      : Object.hasOwn(data, "world")
         ? (data.world ?? null)
         : existing.world,
-    name: hasOwnField(data, "name") ? (data.name ?? null) : existing.name,
+    name: Object.hasOwn(data, "name") ? (data.name ?? null) : existing.name,
     filters: scheduled
       ? null
       : hasFilterUpdate
         ? buildFilters(data)
         : (existing.filters as JsonValue | null),
-    contentTemplate: hasOwnField(data, "contentTemplate")
+    contentTemplate: Object.hasOwn(data, "contentTemplate")
       ? normalizeContentTemplate(data.contentTemplate)
       : existing.contentTemplate,
     ...scheduleConfig(triggerType, data, existing),

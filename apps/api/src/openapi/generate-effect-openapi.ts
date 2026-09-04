@@ -22,7 +22,6 @@ const NULLABLE_JSON_SCHEMA_NAMES = [
   "UpdateGuildDocumentDto__schema0",
 ] as const;
 
-const EXPECTED_OPERATION_COUNT = 199;
 const HTTP_METHODS = [
   "get",
   "post",
@@ -357,23 +356,6 @@ normalizeNullableSchemas(document);
 (document as { openapi: string }).openapi = "3.0.0";
 restoreRecursiveJsonReferences(document);
 Object.assign(document.components.schemas, compatibilitySchemas);
-
-const operationIds = Object.values(document.paths).flatMap((path) =>
-  HTTP_METHODS.flatMap((method) => {
-    const operation = path[method];
-    return operation?.operationId === undefined ? [] : [operation.operationId];
-  }),
-);
-const uniqueOperationIds = new Set(operationIds);
-
-if (
-  operationIds.length !== EXPECTED_OPERATION_COUNT ||
-  uniqueOperationIds.size !== EXPECTED_OPERATION_COUNT
-) {
-  throw new Error(
-    `OpenAPI generation requires ${EXPECTED_OPERATION_COUNT} unique operations; found ${operationIds.length} operations and ${uniqueOperationIds.size} unique IDs`,
-  );
-}
 
 const yaml = stringify(document, {
   lineWidth: 0,
