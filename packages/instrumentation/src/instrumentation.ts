@@ -60,6 +60,9 @@ export const recordHttpServerMetrics = (input: {
 export const httpServerMetrics = HttpMiddleware.make((httpApp) =>
   Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
+    if (/^\/healthz(?:[?#]|$)/.test(request.url)) {
+      yield* HttpMiddleware.withLoggerDisabled(Effect.void);
+    }
     const startedAt = yield* Clock.currentTimeMillis;
     const response = yield* httpApp;
     const completedAt = yield* Clock.currentTimeMillis;
