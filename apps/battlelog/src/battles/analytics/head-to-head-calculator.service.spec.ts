@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
-import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
-import { makeHeadToHeadCalculator } from "./head-to-head-calculator.service.js";
+import { headToHeadCalculator } from "./head-to-head-calculator.service.js";
 
 type TestBattleInput = {
   id: string;
@@ -68,7 +67,7 @@ function createBattle({
 }
 
 describe("head-to-head calculator", () => {
-  const service = makeHeadToHeadCalculator(battleAnalyticsDomain);
+  const service = headToHeadCalculator;
   const characterIds = new Set(["character-1"]);
 
   it("aggregates matchmaking rating deltas after search and min battle filters", () => {

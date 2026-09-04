@@ -28,13 +28,13 @@
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "discord.js": "^14.27.0",
-    "effect": "catalog:",
-    "yaml": "catalog:"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "yaml": "catalog:"
   }
 }

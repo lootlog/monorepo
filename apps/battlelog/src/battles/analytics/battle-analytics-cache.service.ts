@@ -3,32 +3,13 @@ import type { RedisStore } from "#src/infrastructure/redis-store";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
 import type { BattleStatisticsQuery } from "#src/battles/analytics/query-battle-statistics";
 import { Effect } from "effect";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 const ANALYTICS_CACHE_PREFIX = "analytics";
 const ANALYTICS_CACHE_TTL_SECONDS = 5 * 60;
 
 export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
   const logger = new Logger("BattleAnalyticsCache");
-
-  const stableSerialize = (value: unknown): string => {
-    if (Array.isArray(value)) {
-      return `[${value.map(stableSerialize).join(",")}]`;
-    }
-
-    if (value && typeof value === "object") {
-      const entries = Object.entries(value)
-        .filter(([, entry]) => entry !== undefined)
-        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-
-      return `{${entries
-        .map(
-          ([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`,
-        )
-        .join(",")}}`;
-    }
-
-    return JSON.stringify(value);
-  };
 
   const formatCacheSegment = (
     value: string | number | undefined,
@@ -188,7 +169,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       prefix,
       metric,
       userId,
-      Buffer.from(stableSerialize(query)).toString("base64url"),
+      Buffer.from(stableJsonStringify(query)).toString("base64url"),
     ].join(":");
 
   return {

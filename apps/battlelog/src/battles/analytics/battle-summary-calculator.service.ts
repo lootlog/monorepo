@@ -7,10 +7,10 @@ import type {
   RatingGrowthDataPoint,
   BattleStreak,
 } from "#src/battles/analytics/battle-statistics-response";
-import type { BattleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
+import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
 import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-analytics.types";
 
-export const makeBattleSummaryCalculator = (domain: BattleAnalyticsDomain) => {
+export const battleSummaryCalculator = (() => {
   const summary = {
     calculateBattleAnalytics(
       battles: InflatedBattleWithWarriors[],
@@ -338,8 +338,4 @@ export const makeBattleSummaryCalculator = (domain: BattleAnalyticsDomain) => {
     },
   };
   return summary;
-};
-
-export type BattleSummaryCalculator = ReturnType<
-  typeof makeBattleSummaryCalculator
->;
+})();

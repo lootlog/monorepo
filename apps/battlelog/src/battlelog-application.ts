@@ -13,19 +13,12 @@ import {
   makeDeleteUserBattlesProcessor,
   type DeleteUserBattlesJobData,
 } from "#src/battles/deletion/delete-user-battles.processor";
-import { makeAbyssSeasonCalculator } from "#src/battles/analytics/abyss-season-calculator.service";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
-import { battleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
-import { battleAnalyticsPaging } from "#src/battles/analytics/battle-analytics-paging.service";
 import { makeBattleAnalyticsQuery } from "#src/battles/analytics/battle-analytics-query.service";
 import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
-import { makeBattleSummaryCalculator } from "#src/battles/analytics/battle-summary-calculator.service";
-import { makeCombatProfileCalculator } from "#src/battles/analytics/combat-profile-calculator.service";
-import { makeHeadToHeadCalculator } from "#src/battles/analytics/head-to-head-calculator.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
-import { makePlayerVsPlayerCalculator } from "#src/battles/analytics/player-vs-player-calculator.service";
 import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
 import { makeDrizzleDatabase } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
@@ -63,25 +56,11 @@ export class BattlelogApplication extends Context.Service<
       const redis = makeRedisStore(redisClient, runRedis);
 
       const cacheService = makeBattleAnalyticsCache(redis);
-      const domain = battleAnalyticsDomain;
-      const paging = battleAnalyticsPaging;
       const queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
-      const summaryCalculator = makeBattleSummaryCalculator(domain);
-      const combatProfileCalculator = makeCombatProfileCalculator(domain);
-      const headToHeadCalculator = makeHeadToHeadCalculator(domain);
-      const playerVsPlayerCalculator = makePlayerVsPlayerCalculator(domain);
-      const abyssSeasonCalculator = makeAbyssSeasonCalculator(domain);
       const analyticsService = makeBattleAnalytics(
         drizzle,
         cacheService,
         queryService,
-        domain,
-        paging,
-        summaryCalculator,
-        combatProfileCalculator,
-        headToHeadCalculator,
-        playerVsPlayerCalculator,
-        abyssSeasonCalculator,
       );
       const metadataService = makeBattleMetadata(drizzle, redis);
       const battlesService = makeBattles(

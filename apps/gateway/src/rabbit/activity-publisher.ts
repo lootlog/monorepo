@@ -1,22 +1,12 @@
 import { createHmac } from "node:crypto";
 import type { RabbitMessagingService } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Clock, Effect, Redacted } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { SessionData } from "#src/realtime/session";
 
 const SIGNATURE_HEADER = "x-lootlog-activity-signature";
-
-const stable = (value: unknown): string => {
-  if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
-  const object = value as Record<string, unknown>;
-  return `{${Object.keys(object)
-    .sort()
-    .filter((key) => object[key] !== undefined)
-    .map((key) => `${JSON.stringify(key)}:${stable(object[key])}`)
-    .join(",")}}`;
-};
 
 export class ActivityPublisher {
   constructor(
@@ -67,7 +57,7 @@ export class ActivityPublisher {
             "sha256",
             Redacted.value(config.activityEventSignatureSecret),
           )
-            .update(stable(payload))
+            .update(stableJsonStringify(payload))
             .digest("hex");
           return messaging
             .publish({

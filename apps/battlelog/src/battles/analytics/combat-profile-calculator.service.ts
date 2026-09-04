@@ -1,10 +1,10 @@
 import type { CombatProfile } from "#src/battles/analytics/battle-statistics-response";
-import type { BattleAnalyticsDomain } from "#src/battles/analytics/battle-analytics-domain.service";
+import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
 import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-analytics.types";
 
 type CombatProfileHighlight = CombatProfile["highlights"][number];
 
-export const makeCombatProfileCalculator = (domain: BattleAnalyticsDomain) => {
+export const combatProfileCalculator = (() => {
   function calculate(
     battles: InflatedBattleWithWarriors[],
     characterIds: Set<string>,
@@ -322,8 +322,4 @@ export const makeCombatProfileCalculator = (domain: BattleAnalyticsDomain) => {
   }
 
   return { calculate, getEmptyProfile };
-};
-
-export type CombatProfileCalculator = ReturnType<
-  typeof makeCombatProfileCalculator
->;
+})();

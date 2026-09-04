@@ -22,7 +22,6 @@ import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { hasOwnField } from "#src/shared/has-own-field";
 
 export interface NotificationGuildChannels {
   readonly selectable: (guildId: string) => Effect.Effect<
@@ -216,7 +215,7 @@ export const makeNotificationGuildTargets = (
     data: UpdateNotificationTargetDto,
   ) {
     yield* find(guildId, targetId);
-    const displayName = hasOwnField(data, "displayName")
+    const displayName = Object.hasOwn(data, "displayName")
       ? { displayName: data.displayName ?? null }
       : {};
     const rows = yield* database
