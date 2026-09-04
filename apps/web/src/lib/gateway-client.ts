@@ -49,7 +49,7 @@ const groupPresence = (
         ? toLegacyPlayer(presence)
         : { sessionId: presence.sessionId };
     if (!value) continue;
-    (grouped[presence.userId] ??= []).push(value);
+    (grouped[presence.discordId ?? presence.userId] ??= []).push(value);
   }
   return grouped;
 };
@@ -219,7 +219,7 @@ export class GatewayClient {
         } else {
           this.dispatchPresenceRemoval(
             event.data.organizationId,
-            change.userId,
+            change.discordId ?? change.userId,
             change.sessionId,
           );
         }
@@ -237,7 +237,7 @@ export class GatewayClient {
   ): void {
     const base = {
       guildId,
-      discordId: presence.userId,
+      discordId: presence.discordId ?? presence.userId,
       sessionId: presence.sessionId,
       status: disconnected ? "offline" : presence.status,
       disconnected,
@@ -254,12 +254,12 @@ export class GatewayClient {
 
   private dispatchPresenceRemoval(
     guildId: string,
-    userId: string,
+    discordId: string,
     sessionId: string,
   ): void {
     const payload = {
       guildId,
-      discordId: userId,
+      discordId,
       sessionId,
       status: "offline",
       disconnected: true,

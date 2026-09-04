@@ -24,35 +24,45 @@ describe("realtime MessagePack codec", () => {
     expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   });
 
-  test("round-trips a presence delta without exposing a location", () => {
-    const frame = {
-      v: 1,
-      type: "presence.delta",
-      sequence: 9,
-      data: {
-        organizationId: "organization-1",
-        revision: 9,
-        changes: [
-          {
-            action: "upsert",
-            presence: {
+  test.each([undefined, "discord-1"])(
+    "round-trips presence deltas with optional Discord identity %s",
+    (discordId) => {
+      const frame = {
+        v: 1,
+        type: "presence.delta",
+        sequence: 9,
+        data: {
+          organizationId: "organization-1",
+          revision: 9,
+          changes: [
+            {
+              action: "remove",
               userId: "user-1",
-              sessionId: "session-1",
-              organizationIds: ["organization-1"],
-              platform: "web-app",
-              status: "online",
-              confidence: "verified",
-              isAfk: false,
-              lastSeen: 1_000,
-              character: undefined,
+              sessionId: "session-0",
+              ...(discordId ? { discordId } : {}),
             },
-          },
-        ],
-      },
-    } satisfies RealtimeFrame;
+            {
+              action: "upsert",
+              presence: {
+                userId: "user-1",
+                ...(discordId ? { discordId } : {}),
+                sessionId: "session-1",
+                organizationIds: ["organization-1"],
+                platform: "web-app",
+                status: "online",
+                confidence: "verified",
+                isAfk: false,
+                lastSeen: 1_000,
+                character: undefined,
+              },
+            },
+          ],
+        },
+      } satisfies RealtimeFrame;
 
-    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
-  });
+      expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
+    },
+  );
 
   test("round-trips the exact legacy map ping event shape", () => {
     const frame = {

@@ -176,19 +176,13 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                         ),
                       ),
                   )
-                  .flatMap(({ id, globalUserId, name, avatar, roles }) =>
-                    globalUserId
-                      ? [
-                          {
-                            id,
-                            userId: globalUserId,
-                            name,
-                            avatar,
-                            color: roles[0]?.color ?? null,
-                          },
-                        ]
-                      : [],
-                  );
+                  .map(({ id, userId, name, avatar, roles }) => ({
+                    id,
+                    userId,
+                    name,
+                    avatar,
+                    color: roles[0]?.color ?? null,
+                  }));
               }),
             ),
           ),

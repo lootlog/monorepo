@@ -110,6 +110,7 @@ export class PresenceStore {
 
       const presence: Basic | Precise = {
         userId: socket.data.userId,
+        discordId: socket.data.discordId,
         sessionId: socket.data.connectionId,
         organizationIds: selectedOrganizationIds,
         platform: socket.data.platform,
@@ -183,7 +184,12 @@ export class PresenceStore {
               isAfk: presence.isAfk,
             });
         }
-        yield* self.remove(organizationId, presence.userId, presence.sessionId);
+        yield* self.remove(
+          organizationId,
+          presence.userId,
+          presence.sessionId,
+          session.discordId,
+        );
       }
     });
   }
@@ -289,7 +295,13 @@ export class PresenceStore {
           const sessionId = key.slice(key.lastIndexOf(":") + 1);
           const metadata = yield* self.readMetadata(organizationId, sessionId);
           const userId = metadata?.userId;
-          if (userId) yield* self.remove(organizationId, userId, sessionId);
+          if (userId)
+            yield* self.remove(
+              organizationId,
+              userId,
+              sessionId,
+              metadata.discordId,
+            );
           else
             yield* fromPromise("presence.remove-stale-index", () =>
               self.redis.command.srem(self.indexKey(organizationId), key),
@@ -354,6 +366,7 @@ export class PresenceStore {
               organizationId,
               socket.data.userId,
               socket.data.connectionId,
+              socket.data.discordId,
             ),
           ];
           if (
@@ -423,6 +436,7 @@ export class PresenceStore {
     organizationId: string,
     userId: string,
     sessionId: string,
+    discordId: string,
   ): Effect.Effect<void, unknown> {
     const self = this;
     return Effect.gen(function* () {
@@ -447,7 +461,7 @@ export class PresenceStore {
         data: {
           organizationId,
           revision,
-          changes: [{ action: "remove", userId, sessionId }],
+          changes: [{ action: "remove", userId, discordId, sessionId }],
         },
       } satisfies Event;
       yield* fromPromise("presence.publish-remove", () =>
@@ -509,7 +523,11 @@ export class PresenceStore {
           if (self.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS) {
             continue;
           } else {
-            presences.push(presence);
+            const discordId =
+              presence.discordId ??
+              (yield* self.readMetadata(organizationId, presence.sessionId))
+                ?.discordId;
+            presences.push(discordId ? { ...presence, discordId } : presence);
           }
         } catch {
           continue;
