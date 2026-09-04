@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { resolveGatewaySocketPath } from "./gateway";
 
 describe("resolveGatewaySocketPath", () => {
-  it("uses the reverse-proxy websocket route by default", () => {
-    expect(resolveGatewaySocketPath({})).toBe("/gateway/ws");
+  it("uses the public gateway websocket route by default", () => {
+    expect(resolveGatewaySocketPath({})).toBe("/ws");
   });
 
   it("preserves an explicit deployment route", () => {
