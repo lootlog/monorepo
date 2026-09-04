@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, expect, it } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
+import { makePostgresLayer } from "@lootlog/database";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
@@ -138,7 +139,7 @@ beforeAll(async () => {
   }
   runtime = ManagedRuntime.make(
     Layer.merge(
-      PgClient.layer({ url: Redacted.make(postgres.getConnectionUri()) }),
+      makePostgresLayer({ url: Redacted.make(postgres.getConnectionUri()) }),
       BunRedis.layer({
         url: `redis://${redisContainer.getHost()}:${redisContainer.getMappedPort(6379)}`,
       }),

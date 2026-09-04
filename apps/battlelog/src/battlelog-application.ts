@@ -1,5 +1,4 @@
 import { BunRedis } from "@effect/platform-bun";
-import { PgClient } from "@effect/sql-pg";
 import { RedisClient } from "bun";
 import { createBunRedisClient, Queue, RedisConnection, Worker } from "bullmq";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
@@ -21,7 +20,7 @@ import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.se
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
-import { makeDrizzleDatabase } from "#src/database/database";
+import { makeDrizzleDatabase, PgClientLive } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 
@@ -103,16 +102,7 @@ export class BattlelogApplication extends Context.Service<
   );
 
   static readonly layer = this.layerWithoutConfig.pipe(
-    Layer.provide(
-      Layer.unwrap(
-        Effect.map(BattlelogConfig, (config) =>
-          PgClient.layer({
-            url: config.postgresqlConnectionUri,
-            applicationName: config.serviceName,
-          }),
-        ),
-      ),
-    ),
+    Layer.provide(PgClientLive),
     Layer.provide(BattlelogConfig.layer),
     Layer.provide(
       Layer.unwrap(

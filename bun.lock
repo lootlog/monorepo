@@ -23,6 +23,7 @@
       "dependencies": {
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
+        "@lootlog/database": "workspace:*",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -50,6 +51,7 @@
         "@discordjs/rest": "^2.6.3",
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
+        "@lootlog/database": "workspace:*",
         "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
@@ -81,6 +83,8 @@
       "version": "1.0.11",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@effect/sql-pg": "catalog:",
+        "@lootlog/database": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "better-auth": "1.7.2",
@@ -109,6 +113,7 @@
         "@effect/platform-bun": "catalog:",
         "@effect/sql-pg": "catalog:",
         "@lootlog/battle-processor": "workspace:*",
+        "@lootlog/database": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "bullmq": "^6.3.4",
@@ -485,6 +490,24 @@
         "@tanstack/react-query",
         "react",
       ],
+    },
+    "packages/database": {
+      "name": "@lootlog/database",
+      "version": "0.0.0",
+      "dependencies": {
+        "@effect/sql-pg": "catalog:",
+        "effect": "catalog:",
+        "pg": "^8.23.0",
+      },
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@testcontainers/postgresql": "^12.1.0",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "@types/pg": "^8.23.1",
+        "drizzle-orm": "catalog:",
+        "typescript": "catalog:",
+      },
     },
     "packages/datetime": {
       "name": "@lootlog/datetime",
@@ -1095,6 +1118,8 @@
     "@lootlog/cli": ["@lootlog/cli@workspace:packages/cli"],
 
     "@lootlog/client": ["@lootlog/client@workspace:packages/client"],
+
+    "@lootlog/database": ["@lootlog/database@workspace:packages/database"],
 
     "@lootlog/datetime": ["@lootlog/datetime@workspace:packages/datetime"],
 

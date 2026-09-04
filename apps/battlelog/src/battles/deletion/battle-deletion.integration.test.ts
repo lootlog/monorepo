@@ -4,6 +4,7 @@ import {
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
 import { PgClient } from "@effect/sql-pg";
+import { makePostgresLayer } from "@lootlog/database";
 import { Effect, Redacted } from "effect";
 import pg from "pg";
 import { readdir } from "node:fs/promises";
@@ -24,7 +25,8 @@ beforeAll(async () => {
   }
   for (const command of [
     ["bun", "scripts/migrate-init.ts"],
-    ["bunx", "drizzle-kit", "migrate"],
+    ["bun", "src/database/migrate.ts"],
+    ["bun", "src/database/migrate.ts"],
   ]) {
     const child = Bun.spawn(command, {
       cwd: new URL("../../../", import.meta.url).pathname,
@@ -42,6 +44,13 @@ beforeAll(async () => {
     ]);
     if (exit !== 0) throw new Error(`Migration failed: ${stdout}\n${stderr}`);
   }
+  const tracked = await pool.query(
+    "SELECT name FROM drizzle.__drizzle_migrations ORDER BY name",
+  );
+  expect(tracked.rows).toHaveLength(8);
+  expect(tracked.rows.at(-1)?.name).toBe(
+    "20260904192453_pending_object_deletions",
+  );
   // The adoption command must not mark new migrations as applied without SQL.
   expect(
     (await pool.query(`SELECT to_regclass('battle_object_deletions') AS table`))
@@ -70,7 +79,7 @@ const run = <A, E>(effect: Effect.Effect<A, E, PgClient.PgClient>) =>
   Effect.runPromise(
     effect.pipe(
       Effect.provide(
-        PgClient.layer({ url: Redacted.make(postgres.getConnectionUri()) }),
+        makePostgresLayer({ url: Redacted.make(postgres.getConnectionUri()) }),
       ),
     ),
   );
