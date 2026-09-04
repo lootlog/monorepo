@@ -1,8 +1,17 @@
 import { BunRedis } from "@effect/platform-bun";
+import { RedisClient } from "bun";
+import { createBunRedisClient, RedisConnection } from "bullmq";
 import { RedisService } from "#src/redis/redis.service";
 import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { ApiRuntimeConfig } from "#src/http-api/runtime/infrastructure/api-runtime-config";
+
+RedisConnection.clientFactory = (options) => {
+  if (!options.url) {
+    throw new Error("BullMQ requires a Redis URL");
+  }
+  return createBunRedisClient(new RedisClient(options.url));
+};
 
 export class ApiRedis extends Context.Service<ApiRedis, RedisService>()(
   "@lootlog/api/http-api/ApiRedis",
