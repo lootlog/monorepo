@@ -7,7 +7,7 @@ import { TimersGrid } from "./timers-grid";
 import { TimersEmptyState } from "./timers-empty-state";
 import { TimersFooter } from "./timers-footer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { AsyncContent } from "@/components/async-content";
 import { useTranslation } from "react-i18next";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";

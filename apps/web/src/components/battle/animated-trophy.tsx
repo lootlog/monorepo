@@ -1,4 +1,4 @@
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import type { FC } from "react";

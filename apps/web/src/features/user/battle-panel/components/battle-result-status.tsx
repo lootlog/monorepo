@@ -7,7 +7,7 @@ import {
   BATTLE_BADGE_COLORS,
   BATTLE_SURFACE_COLORS,
 } from "@/components/battle/utils/battle-color-palette";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Flag, Trophy, XCircle, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

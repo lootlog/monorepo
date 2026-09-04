@@ -16,7 +16,7 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 export interface FilterPopoverOption<T = string> {
   value: T;

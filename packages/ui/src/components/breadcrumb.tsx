@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 
 type BreadcrumbProps = Omit<ComponentProps<"nav">, "aria-label"> & {

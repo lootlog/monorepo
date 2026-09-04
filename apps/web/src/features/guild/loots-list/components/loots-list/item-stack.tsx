@@ -2,7 +2,7 @@ import { WatchableItemTile } from "@/components/tiles";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { ItemRarity, type Item } from "@/lib/loots/loot-types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState, type FC } from "react";
 import { ItemStackBadge } from "@/features/guild/loots-list/components/loots-list/item-stack-badge";

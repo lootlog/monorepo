@@ -1,5 +1,5 @@
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 
 export type BattleHeaderProps = {

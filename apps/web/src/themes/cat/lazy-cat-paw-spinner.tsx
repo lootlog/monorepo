@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 const CatPawSpinner = lazy(() =>
   import("./cat-paw-spinner").then((module) => ({

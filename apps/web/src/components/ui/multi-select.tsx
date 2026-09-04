@@ -13,7 +13,7 @@ import {
   ComboboxValue,
 } from "@lootlog/ui/components/combobox";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 
 const multiSelectVariants = cva(

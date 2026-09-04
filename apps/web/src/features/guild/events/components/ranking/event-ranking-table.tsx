@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useUpdateRankingPoints } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Table } from "@lootlog/ui/components/table";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";

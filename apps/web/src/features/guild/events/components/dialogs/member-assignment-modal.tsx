@@ -12,7 +12,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";

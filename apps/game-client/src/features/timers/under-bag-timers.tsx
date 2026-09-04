@@ -1,5 +1,5 @@
 import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { FC, PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
 

@@ -1,6 +1,6 @@
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight, Flag, Skull } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";

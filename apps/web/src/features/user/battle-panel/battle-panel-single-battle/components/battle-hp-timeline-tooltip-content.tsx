@@ -4,7 +4,7 @@ import {
   type CSSProperties,
   type RefObject,
 } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {

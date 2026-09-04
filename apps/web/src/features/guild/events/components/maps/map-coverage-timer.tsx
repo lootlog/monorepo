@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Clock } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import {
   isWindowActive,

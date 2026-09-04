@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Crown, Medal, Trophy } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type PodiumRankIconProps = {
   rank: number;

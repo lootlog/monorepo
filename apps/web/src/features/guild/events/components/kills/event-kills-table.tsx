@@ -10,7 +10,7 @@ import {
   TableCell,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";

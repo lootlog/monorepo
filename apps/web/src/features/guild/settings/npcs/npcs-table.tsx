@@ -1,6 +1,6 @@
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
 import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/client/main";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DropdownMenu,

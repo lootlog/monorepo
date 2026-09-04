@@ -13,7 +13,7 @@ import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
 
 export type LootFiltersHeaderProps = {

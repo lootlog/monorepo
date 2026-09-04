@@ -1,6 +1,6 @@
 import { AlertCircle, Loader2, RotateCcw, WifiOff } from "lucide-react";
 import type { FC } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { Button } from "@/components/ui/button";
 

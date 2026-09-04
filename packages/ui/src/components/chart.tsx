@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 const RESPONSIVE_CONTAINER_INITIAL_DIMENSION = { width: 1, height: 1 };
 

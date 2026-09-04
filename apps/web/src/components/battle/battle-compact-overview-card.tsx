@@ -1,5 +1,5 @@
 import { Card } from "@lootlog/ui/components/card";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Flag, Trophy, type LucideIcon } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

@@ -1,6 +1,6 @@
 import { Popover as BasePopover } from "@base-ui/react/popover";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
 function Popover(props: BasePopover.Root.Props) {

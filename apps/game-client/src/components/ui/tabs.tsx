@@ -1,5 +1,5 @@
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 function Tabs({ className, ...props }: BaseTabs.Root.Props) {
   return (

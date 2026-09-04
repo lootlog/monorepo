@@ -1,7 +1,7 @@
 import { battleHpTimelineEventIconByKey } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-icons";
 import type { BattleHpTimelineEventLegendItem } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legend-items";
 import { Badge } from "@lootlog/ui/components/badge";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type BattleHpTimelineLegendEventRowProps = {
   item: BattleHpTimelineEventLegendItem;

@@ -9,7 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@lootlog/ui/components/breadcrumb";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 

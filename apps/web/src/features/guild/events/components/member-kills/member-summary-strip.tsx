@@ -4,7 +4,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { formatDurationHuman } from "../../utils/format-duration";
 import {

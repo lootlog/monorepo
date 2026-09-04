@@ -32,7 +32,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   getCoreRowModel,
   useReactTable,

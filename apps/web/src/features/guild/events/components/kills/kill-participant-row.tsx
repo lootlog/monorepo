@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ChevronDown, Info, MapPin, Pencil } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";

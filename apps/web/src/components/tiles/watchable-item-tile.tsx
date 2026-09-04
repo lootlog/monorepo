@@ -31,7 +31,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type WatchableItemTileProps = ItemTileProps & {
   watchContext: WatchedItemScope;

@@ -40,6 +40,7 @@
     "@tanstack/react-virtual": "^3.14.10",
     "better-auth": "1.7.2",
     "class-variance-authority": "^0.7.1",
+    "cn": "catalog:",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.43.0",
     "i18next": "^26.4.0",

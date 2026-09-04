@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-table";
 import type { ComponentProps, ReactNode } from "react";
 import { TableBody, TableCell, TableRow } from "@lootlog/ui/components/table";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type TableRowProps = ComponentProps<typeof TableRow>;
 

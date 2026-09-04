@@ -30,7 +30,7 @@ import type {
   GuildMember,
   MembersStats,
 } from "@/features/guild/settings/members/members.types";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

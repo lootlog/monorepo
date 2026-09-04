@@ -4,7 +4,7 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Badge } from "@lootlog/ui/components/badge";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type ReservationOrganizationBadgeProps = {
   name: string;

@@ -4,7 +4,7 @@ import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
 import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
 import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";

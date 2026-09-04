@@ -8,7 +8,7 @@ import {
 } from "@lootlog/ui/components/field";
 import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
 import { Zap, Settings } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { EventScoringMode } from "@lootlog/domain/scoring";
 
 interface ScoringModeSelectorProps {

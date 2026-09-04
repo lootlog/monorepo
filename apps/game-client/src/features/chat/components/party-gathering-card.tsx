@@ -9,7 +9,7 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useGameStore } from "@/store/game.store";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { format } from "@/utils/local-date";

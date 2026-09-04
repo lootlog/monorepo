@@ -4,7 +4,7 @@ import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import type { ReactNode } from "react";

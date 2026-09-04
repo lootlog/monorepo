@@ -3,7 +3,7 @@ import { Tile } from "@/components/ui/tile";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";

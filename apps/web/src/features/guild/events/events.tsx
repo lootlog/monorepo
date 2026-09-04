@@ -37,7 +37,7 @@ import {
 } from "@lootlog/client/main";
 import type { EventListItemResponseDto } from "@lootlog/client/main";
 import type { Event } from "./types/api";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   Empty,
   EmptyContent,

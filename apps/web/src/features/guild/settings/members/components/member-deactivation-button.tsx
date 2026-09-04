@@ -21,7 +21,7 @@ import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserX } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 export type MemberDeactivationButtonProps = {
   member: GuildMember;

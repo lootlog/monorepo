@@ -1,5 +1,5 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useState, type FC } from "react";
 import { MessageType } from "@/api/chat.api";
 import {

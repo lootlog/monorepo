@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
 import { NpcTile } from "@/components/tiles";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";

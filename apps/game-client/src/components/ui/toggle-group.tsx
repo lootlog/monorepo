@@ -2,7 +2,7 @@ import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { Toggle, toggleVariants } from "@/components/ui/toggle";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 type ToggleGroupContextValue = VariantProps<typeof toggleVariants> & {
   type: "multiple" | "single";

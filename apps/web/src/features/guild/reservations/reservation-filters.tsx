@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { ButtonGroup } from "@lootlog/ui/components/button-group";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 export type ReservationFilter = "all" | "available" | "pinned" | "partners";
 

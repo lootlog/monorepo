@@ -9,7 +9,7 @@ import {
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { useGameStore } from "@/store/game.store";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type {
   MentionNotification,
   NotificationAutoHideState,
