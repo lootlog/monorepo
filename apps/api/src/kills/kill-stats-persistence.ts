@@ -328,13 +328,16 @@ export const makeKillStatsPersistence = (
       .where(condition(guildColumns(bucket), filter))
       .orderBy(table.npcId, desc(table.npcLvl), table.id)
       .as("ranked");
+    const query = database
+      .select()
+      .from(ranked)
+      .orderBy(desc(ranked.uniqueKills), ranked.npcId);
+    const sqlLimit = Math.trunc(limit);
     return protect(
       "kills.stats.top-npcs",
-      database
-        .select()
-        .from(ranked)
-        .orderBy(desc(ranked.uniqueKills), ranked.npcId)
-        .limit(limit),
+      Number.isSafeInteger(sqlLimit) && sqlLimit >= 0
+        ? query.limit(sqlLimit)
+        : query.pipe(Effect.map((rows) => rows.slice(0, limit))),
     );
   };
 
@@ -363,12 +366,17 @@ export const makeKillStatsPersistence = (
       .where(condition(memberColumns(bucket), filter))
       .groupBy(table.npcType, table.memberId, memberTable.id)
       .as("ranked");
+    const sqlLimit = Math.trunc(limit);
     return protect(
       "kills.stats.top-members",
       database
         .select()
         .from(grouped)
-        .where(lte(grouped.rank, limit))
+        .where(
+          Number.isSafeInteger(sqlLimit) && sqlLimit >= 0
+            ? lte(grouped.rank, sqlLimit)
+            : undefined,
+        )
         .orderBy(grouped.npcType, grouped.rank),
     );
   };
