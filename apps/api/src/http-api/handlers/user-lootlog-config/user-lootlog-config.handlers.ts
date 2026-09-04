@@ -16,11 +16,11 @@ import {
 import { getUserLootlogConfigCachePattern } from "#src/shared/cache";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
-  UserLootlogConfigControllerGetPlayersCatchingGuilds200,
-  UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
-  type CreateOrUpdateLootlogCharacterConfigDto,
-  type UserLootlogPlayersCatchingGuildsRequestDto,
+  CharacterLootlogConfigResponse,
+  PlayersCatchingOrganizationsResponse,
+  AccountLootlogConfigResponse,
+  type UpdateCharacterLootlogConfigRequest,
+  type PlayersCatchingOrganizationsRequest,
 } from "#src/contracts/user-lootlog-config/schemas";
 
 export class UserLootlogConfigAccessDenied extends TaggedErrorClass<UserLootlogConfigAccessDenied>()(
@@ -62,11 +62,11 @@ export class UserLootlogConfigData extends Context.Service<
     readonly upsertCharacter: (
       discordId: string,
       accountId: string,
-      payload: CreateOrUpdateLootlogCharacterConfigDto,
+      payload: UpdateCharacterLootlogConfigRequest,
     ) => Operation;
     readonly getPlayersCatchingGuilds: (
       discordId: string,
-      payload: UserLootlogPlayersCatchingGuildsRequestDto,
+      payload: PlayersCatchingOrganizationsRequest,
     ) => Operation;
   }
 >()("@lootlog/api/http-api/user-lootlog-config/data") {
@@ -124,7 +124,7 @@ export class UserLootlogConfigData extends Context.Service<
                 const cacheKey = `user-lootlog-config:${discordId}:account:${accountId}`;
                 const cached = yield* cacheRead(
                   cacheKey,
-                  UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
+                  AccountLootlogConfigResponse,
                 );
                 if (cached !== null) return cached;
 
@@ -324,10 +324,7 @@ const withIdentity = <A>(
 export const getUserLootlogAccountConfig = (accountId: string) =>
   withIdentity((discordId, data) =>
     Effect.flatMap(data.getAccount(discordId, accountId), (value) =>
-      decode(
-        UserLootlogConfigControllerGetUserLootlogConfigByAccountId200,
-        value,
-      ),
+      decode(AccountLootlogConfigResponse, value),
     ),
   ).pipe(
     Effect.withSpan(
@@ -343,16 +340,12 @@ export const getUserLootlogAccountConfig = (accountId: string) =>
 
 export const upsertUserLootlogCharacterConfig = (
   accountId: string,
-  payload: CreateOrUpdateLootlogCharacterConfigDto,
+  payload: UpdateCharacterLootlogConfigRequest,
 ) =>
   withIdentity((discordId, data) =>
     Effect.flatMap(
       data.upsertCharacter(discordId, accountId, payload),
-      (value) =>
-        decode(
-          UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig200,
-          value,
-        ),
+      (value) => decode(CharacterLootlogConfigResponse, value),
     ),
   ).pipe(
     Effect.withSpan(
@@ -367,11 +360,11 @@ export const upsertUserLootlogCharacterConfig = (
   );
 
 export const getPlayersCatchingGuilds = (
-  payload: UserLootlogPlayersCatchingGuildsRequestDto,
+  payload: PlayersCatchingOrganizationsRequest,
 ) =>
   withIdentity((discordId, data) =>
     Effect.flatMap(data.getPlayersCatchingGuilds(discordId, payload), (value) =>
-      decode(UserLootlogConfigControllerGetPlayersCatchingGuilds200, value),
+      decode(PlayersCatchingOrganizationsResponse, value),
     ),
   ).pipe(
     Effect.withSpan("UserLootlogConfigControllerGetPlayersCatchingGuilds", {

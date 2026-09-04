@@ -27,7 +27,7 @@ import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import { makeLootPublicationDispatcher } from "#src/loots/submission/loot-publication-outbox";
-import type { CreateLootDto } from "#src/contracts/loots/schemas";
+import type { CreateLootRequest } from "#src/contracts/loots/schemas";
 
 describe("durable loot publications", () => {
   let runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -68,7 +68,7 @@ describe("durable loot publications", () => {
         });
       }),
     );
-    const submission: CreateLootDto = {
+    const submission: CreateLootRequest = {
       loots: [
         {
           hid: id,

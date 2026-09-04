@@ -1,8 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { SettingsDocumentsControllerGetPreferences200 } from "#src/contracts/preferences/schemas";
-import { SoundSettingsControllerGetSettings200 } from "#src/contracts/sound-settings/schemas";
-import { TimerSettingsControllerGetGlobalSettings200 } from "#src/contracts/timer-settings/schemas";
+import { SettingsDocumentsResponseSchema } from "@lootlog/schema/settings-documents";
+import { SoundSettingsResponse } from "#src/contracts/sound-settings/schemas";
+import { TimerSettingsResponse } from "#src/contracts/timer-settings/schemas";
+
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
@@ -96,10 +97,8 @@ describe("settings HttpApi handlers", () => {
       ),
     );
 
-    expect(Schema.is(TimerSettingsControllerGetGlobalSettings200)(timers)).toBe(
-      true,
-    );
-    expect(Schema.is(SoundSettingsControllerGetSettings200)(sounds)).toBe(true);
+    expect(Schema.is(TimerSettingsResponse)(timers)).toBe(true);
+    expect(Schema.is(SoundSettingsResponse)(sounds)).toBe(true);
   });
 
   it("fails closed before reading settings without an authenticated user", async () => {
@@ -209,9 +208,7 @@ describe("settings HttpApi handlers", () => {
       getPreferences({ domains: "appearance" }).pipe(Effect.provide(layer)),
     );
     const encoded = await Effect.runPromise(
-      Schema.encodeEffect(SettingsDocumentsControllerGetPreferences200)(
-        response,
-      ),
+      Schema.encodeEffect(SettingsDocumentsResponseSchema)(response),
     );
 
     expect(response.domains.appearance?.updatedAt).toBe(updatedAt);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type {
-  CreateNotificationRuleDto,
-  UpdateNotificationRuleDto,
+  CreateNotificationRuleRequest,
+  UpdateNotificationRuleRequest,
 } from "#src/contracts/notifications/schemas";
 import {
   NotificationOwnerType,
@@ -22,7 +22,7 @@ describe("notification rule policy", () => {
         triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
         scheduledAt: "2026-09-02T12:00:00.000Z",
         targetIds: [1],
-      } as CreateNotificationRuleDto,
+      } as CreateNotificationRuleRequest,
     );
 
     expect(values.guildId).toBe("guild-1");
@@ -37,7 +37,7 @@ describe("notification rule policy", () => {
         scheduleIntervalType: NotificationScheduleIntervalType.DAILY,
         scheduleTimeOfDay: "12:00",
         targetIds: [1],
-      } as CreateNotificationRuleDto),
+      } as CreateNotificationRuleRequest),
     ).toThrow();
   });
 
@@ -63,7 +63,7 @@ describe("notification rule policy", () => {
         enabled: true,
         dedupeWindowSeconds: 0,
       },
-      { enabled: false } as UpdateNotificationRuleDto,
+      { enabled: false } as UpdateNotificationRuleRequest,
     );
 
     expect(values).toMatchObject({

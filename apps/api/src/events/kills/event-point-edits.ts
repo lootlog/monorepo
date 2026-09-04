@@ -16,8 +16,8 @@ import type { RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type {
-  UpdateKillPointDto,
-  UpdateRankingPointsDto,
+  UpdateKillPointRequest,
+  UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
 
 export class EventPointEditError extends TaggedErrorClass<EventPointEditError>()(
@@ -105,7 +105,7 @@ export const makeEventPointEdits = (
       guild: { id: string },
       eventId: string,
       rankingId: string,
-      data: UpdateRankingPointsDto,
+      data: UpdateRankingPointsRequest,
       userId: string,
     ) =>
       Effect.gen(function* () {
@@ -199,7 +199,7 @@ export const makeEventPointEdits = (
       eventId: string,
       killId: string,
       killPointId: string,
-      data: UpdateKillPointDto,
+      data: UpdateKillPointRequest,
       userId: string,
     ) =>
       Effect.gen(function* () {

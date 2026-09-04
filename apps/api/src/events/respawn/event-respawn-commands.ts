@@ -19,8 +19,8 @@ import {
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type {
-  CloseRespawnWindowDto,
-  OpenRespawnWindowDto,
+  CloseRespawnWindowRequest,
+  OpenRespawnWindowRequest,
 } from "#src/contracts/events/schemas";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
@@ -133,7 +133,7 @@ export const makeEventRespawnCommands = (
       guild: { id: string },
       eventId: string,
       heroId: string,
-      data: OpenRespawnWindowDto,
+      data: OpenRespawnWindowRequest,
     ) =>
       Effect.gen(function* () {
         const heroRows = yield* query(
@@ -273,7 +273,7 @@ export const makeEventRespawnCommands = (
       guild: { id: string },
       eventId: string,
       heroId: string,
-      data: CloseRespawnWindowDto,
+      data: CloseRespawnWindowRequest,
     ) =>
       Effect.gen(function* () {
         const heroRows = yield* query(
@@ -344,7 +344,7 @@ export const makeEventRespawnCommands = (
           ).open(guild, eventId, heroId, {
             minSpawnTime: data.newMinSpawnTime,
             maxSpawnTime: data.newMaxSpawnTime,
-          } as OpenRespawnWindowDto);
+          } as OpenRespawnWindowRequest);
         }
         return { success: true };
       }).pipe(Effect.withSpan("EventsMonitoringController_closeRespawnWindow")),

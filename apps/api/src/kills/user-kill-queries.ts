@@ -10,11 +10,12 @@ import {
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
-  KillsControllerGetUserKillStats200,
-  type KillsControllerGetUserKillStatsQuery as GetUserKillStatsDto,
-  KillsControllerGetUserNpcKills200,
-  type KillsControllerGetUserNpcKillsQuery as GetUserNpcKillsDto,
+  UserKillStatsResponse,
+  UserNpcKillsResponse,
+  type UserKillStatsQuery as GetUserKillStatsDto,
+  type UserNpcKillsQuery as GetUserNpcKillsDto,
 } from "#src/contracts/kills/schemas";
+
 import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
 const CACHE_TTL_SECONDS = 30;
@@ -162,7 +163,7 @@ export const makeUserKillQueries = (
     return cached(
       cacheKey("user-overview", userId, { query: { ...query, npcTypes } }),
       "user kill stats",
-      KillsControllerGetUserKillStats200,
+      UserKillStatsResponse,
       protect(
         "kills.user-overview.query",
         Effect.suspend(() =>
@@ -229,7 +230,7 @@ export const makeUserKillQueries = (
     return cached(
       cacheKey("user-npcs", userId, { query }),
       "user npc kills",
-      KillsControllerGetUserNpcKills200,
+      UserNpcKillsResponse,
       protect(
         "kills.user-npcs.query",
         Effect.suspend(() =>

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { CreateNotificationDto } from "#src/contracts/messaging/schemas";
+import { SendNotificationRequest } from "#src/contracts/messaging/schemas";
 import { Result, Schema } from "effect";
 
-describe("CreateNotificationDto", () => {
+describe("SendNotificationRequest", () => {
   it("keeps npc coordinates when present", () => {
-    const result = Schema.decodeUnknownSync(CreateNotificationDto)({
+    const result = Schema.decodeUnknownSync(SendNotificationRequest)({
       npc: {
         id: 911169,
         hpp: 0,
@@ -27,7 +27,7 @@ describe("CreateNotificationDto", () => {
   });
 
   it("requires the organizer character for party gathering notifications", () => {
-    const result = Schema.decodeUnknownResult(CreateNotificationDto)({
+    const result = Schema.decodeUnknownResult(SendNotificationRequest)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",
@@ -46,7 +46,7 @@ describe("CreateNotificationDto", () => {
   });
 
   it("accepts a party gathering notification with an organizer character", () => {
-    const result = Schema.decodeUnknownResult(CreateNotificationDto)({
+    const result = Schema.decodeUnknownResult(SendNotificationRequest)({
       npc: {
         id: 911169,
         location: "Glusza Swistu",

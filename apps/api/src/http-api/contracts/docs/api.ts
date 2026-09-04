@@ -7,34 +7,23 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  DocsControllerCreateDocument201,
-  DocsControllerCreateDocumentPathParams,
-  DocsControllerCreateDocumentRequestJson,
-  DocsControllerDeleteDocument200,
-  DocsControllerDeleteDocumentPathParams,
-  DocsControllerGetDocument200,
-  DocsControllerGetDocumentPathParams,
-  DocsControllerGetDocuments200,
-  DocsControllerGetDocumentsPathParams,
-  DocsControllerGetHistory200,
-  DocsControllerGetHistoryPathParams,
-  DocsControllerGetHistorySnapshot200,
-  DocsControllerGetHistorySnapshotPathParams,
-  DocsControllerGetTrash200,
-  DocsControllerGetTrashPathParams,
-  DocsControllerPurgeDocument200,
-  DocsControllerPurgeDocumentPathParams,
-  DocsControllerRestoreDocument200,
-  DocsControllerRestoreDocumentPathParams,
-  DocsControllerUpdateDocument200,
-  DocsControllerUpdateDocumentPathParams,
-  DocsControllerUpdateDocumentRequestJson,
+  DocumentResponse,
+  DocumentOrganizationPath,
+  CreateDocumentRequest,
+  DocumentMutationResponse,
+  DocumentPath,
+  DocumentListResponse,
+  DocumentHistoryResponse,
+  DocumentHistorySnapshotResponse,
+  DocumentHistoryPath,
+  DocumentTrashResponse,
+  UpdateDocumentRequest,
 } from "#src/contracts/docs/schemas";
 
 export class DocsGroup extends HttpApiGroup.make("docs").add(
   HttpApiEndpoint.get("DocsControllerGetDocuments", "/guilds/:guildId/docs", {
-    params: DocsControllerGetDocumentsPathParams,
-    success: DocsControllerGetDocuments200,
+    params: DocumentOrganizationPath,
+    success: DocumentListResponse,
     error: HttpApiSchema.Empty(403),
   })
     .middleware(BearerSecurityMiddleware)
@@ -45,9 +34,9 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerCreateDocument",
     "/guilds/:guildId/docs",
     {
-      params: DocsControllerCreateDocumentPathParams,
-      payload: DocsControllerCreateDocumentRequestJson,
-      success: DocsControllerCreateDocument201.pipe(HttpApiSchema.status(201)),
+      params: DocumentOrganizationPath,
+      payload: CreateDocumentRequest,
+      success: DocumentResponse.pipe(HttpApiSchema.status(201)),
       error: HttpApiSchema.Empty(409),
     },
   )
@@ -56,8 +45,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .annotate(OpenApi.Summary, "Create guild document")
     .annotate(OpenApi.Description, "Create a new empty guild document"),
   HttpApiEndpoint.get("DocsControllerGetTrash", "/guilds/:guildId/docs/trash", {
-    params: DocsControllerGetTrashPathParams,
-    success: DocsControllerGetTrash200,
+    params: DocumentOrganizationPath,
+    success: DocumentTrashResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_getTrash")
@@ -70,8 +59,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerGetHistory",
     "/guilds/:guildId/docs/:docId/history",
     {
-      params: DocsControllerGetHistoryPathParams,
-      success: DocsControllerGetHistory200,
+      params: DocumentPath,
+      success: DocumentHistoryResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -85,8 +74,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerGetHistorySnapshot",
     "/guilds/:guildId/docs/:docId/history/:historyId",
     {
-      params: DocsControllerGetHistorySnapshotPathParams,
-      success: DocsControllerGetHistorySnapshot200,
+      params: DocumentHistoryPath,
+      success: DocumentHistorySnapshotResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -100,8 +89,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerGetDocument",
     "/guilds/:guildId/docs/:docId",
     {
-      params: DocsControllerGetDocumentPathParams,
-      success: DocsControllerGetDocument200,
+      params: DocumentPath,
+      success: DocumentResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -115,9 +104,9 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerUpdateDocument",
     "/guilds/:guildId/docs/:docId",
     {
-      params: DocsControllerUpdateDocumentPathParams,
-      payload: DocsControllerUpdateDocumentRequestJson,
-      success: DocsControllerUpdateDocument200,
+      params: DocumentPath,
+      payload: UpdateDocumentRequest,
+      success: DocumentResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -128,8 +117,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerDeleteDocument",
     "/guilds/:guildId/docs/:docId",
     {
-      params: DocsControllerDeleteDocumentPathParams,
-      success: DocsControllerDeleteDocument200,
+      params: DocumentPath,
+      success: DocumentMutationResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -140,8 +129,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerRestoreDocument",
     "/guilds/:guildId/docs/:docId/restore",
     {
-      params: DocsControllerRestoreDocumentPathParams,
-      success: DocsControllerRestoreDocument200,
+      params: DocumentPath,
+      success: DocumentMutationResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -152,8 +141,8 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     "DocsControllerPurgeDocument",
     "/guilds/:guildId/docs/:docId/purge",
     {
-      params: DocsControllerPurgeDocumentPathParams,
-      success: DocsControllerPurgeDocument200,
+      params: DocumentPath,
+      success: DocumentMutationResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)

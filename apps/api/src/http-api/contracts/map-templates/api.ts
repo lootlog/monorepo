@@ -7,25 +7,23 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  MapTemplatesControllerCreateTemplate201,
-  MapTemplatesControllerCreateTemplatePathParams,
-  MapTemplatesControllerCreateTemplateRequestJson,
-  MapTemplatesControllerDeleteTemplate200,
-  MapTemplatesControllerDeleteTemplatePathParams,
-  MapTemplatesControllerGetTemplates200,
-  MapTemplatesControllerGetTemplatesPathParams,
-  MapTemplatesControllerUpdateTemplate200,
-  MapTemplatesControllerUpdateTemplatePathParams,
-  MapTemplatesControllerUpdateTemplateRequestJson,
+  MapTemplateResponseSchema,
+  CreateMapTemplateSchema,
+} from "#src/map-templates/map-template.schema";
+import {
+  MapTemplateOrganizationPath,
+  MapTemplatePath,
+  MapTemplatesResponse,
 } from "#src/contracts/map-templates/schemas";
+import { StatusOk } from "#src/contracts/shared";
 
 export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
   HttpApiEndpoint.get(
     "MapTemplatesControllerGetTemplates",
     "/guilds/:guildId/map-templates",
     {
-      params: MapTemplatesControllerGetTemplatesPathParams,
-      success: MapTemplatesControllerGetTemplates200,
+      params: MapTemplateOrganizationPath,
+      success: MapTemplatesResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -36,11 +34,9 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
     "MapTemplatesControllerCreateTemplate",
     "/guilds/:guildId/map-templates",
     {
-      params: MapTemplatesControllerCreateTemplatePathParams,
-      payload: MapTemplatesControllerCreateTemplateRequestJson,
-      success: MapTemplatesControllerCreateTemplate201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: MapTemplateOrganizationPath,
+      payload: CreateMapTemplateSchema,
+      success: MapTemplateResponseSchema.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -51,9 +47,9 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
     "MapTemplatesControllerUpdateTemplate",
     "/guilds/:guildId/map-templates/:templateId",
     {
-      params: MapTemplatesControllerUpdateTemplatePathParams,
-      payload: MapTemplatesControllerUpdateTemplateRequestJson,
-      success: MapTemplatesControllerUpdateTemplate200,
+      params: MapTemplatePath,
+      payload: CreateMapTemplateSchema,
+      success: MapTemplateResponseSchema,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -64,8 +60,8 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
     "MapTemplatesControllerDeleteTemplate",
     "/guilds/:guildId/map-templates/:templateId",
     {
-      params: MapTemplatesControllerDeleteTemplatePathParams,
-      success: MapTemplatesControllerDeleteTemplate200,
+      params: MapTemplatePath,
+      success: StatusOk,
     },
   )
     .middleware(BearerSecurityMiddleware)

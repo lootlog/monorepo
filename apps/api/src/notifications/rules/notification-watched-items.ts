@@ -15,8 +15,8 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type {
-  CreateWatchedItemDto,
-  CreateWatchedItemQuickAddDto,
+  CreateWatchedItemRequest,
+  QuickAddWatchedItemRequest,
 } from "#src/contracts/notifications/schemas";
 import {
   NotificationFiltersResponse,
@@ -399,7 +399,7 @@ export const makeNotificationWatchedItems = (
   const create = (
     discordId: string,
     userId: string,
-    data: CreateWatchedItemDto,
+    data: CreateWatchedItemRequest,
   ) =>
     Effect.flatMap(
       resolveGuildIds(discordId, userId, data.guildIds),
@@ -410,7 +410,7 @@ export const makeNotificationWatchedItems = (
   const quickAdd = (
     discordId: string,
     userId: string,
-    data: CreateWatchedItemQuickAddDto,
+    data: QuickAddWatchedItemRequest,
   ) =>
     Effect.flatMap(
       resolveGuildIds(discordId, userId, [data.guildId]),

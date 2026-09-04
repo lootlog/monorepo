@@ -7,29 +7,18 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  PartyReadyRoomControllerApply201,
-  PartyReadyRoomControllerApplyPathParams,
-  PartyReadyRoomControllerApplyRequestJson,
-  PartyReadyRoomControllerCancel201,
-  PartyReadyRoomControllerCancelPathParams,
-  PartyReadyRoomControllerCancelRequestJson,
-  PartyReadyRoomControllerCreate201,
-  PartyReadyRoomControllerCreateRequestJson,
-  PartyReadyRoomControllerGet200,
-  PartyReadyRoomControllerGetPathParams,
-  PartyReadyRoomControllerList200,
-  PartyReadyRoomControllerObserveParty201,
-  PartyReadyRoomControllerObservePartyPathParams,
-  PartyReadyRoomControllerObservePartyRequestJson,
-  PartyReadyRoomControllerRemove200,
-  PartyReadyRoomControllerRemovePathParams,
-  PartyReadyRoomControllerRemoveRequestJson,
-  PartyReadyRoomControllerResolveInvitationTargets201,
-  PartyReadyRoomControllerResolveInvitationTargetsPathParams,
-  PartyReadyRoomControllerResolveInvitationTargetsRequestJson,
-  PartyReadyRoomControllerWithdraw200,
-  PartyReadyRoomControllerWithdrawPathParams,
-  PartyReadyRoomControllerWithdrawRequestJson,
+  PartyReadyRoomResponse,
+  PartyReadyRoomParams,
+  ApplyToPartyReadyRoomRequest,
+  PartyReadyRoomUpdateResponse,
+  PartyRevisionRequest,
+  CreatePartyGatheringRequest,
+  PartyReadyRoomsResponse,
+  ObservePartyRequest,
+  PartyParticipantActionRequest,
+  PartyInvitationTargetsResponse,
+  ResolvePartyInvitationsRequest,
+  PartyParticipantIdentity,
 } from "#src/contracts/party-ready-room/schemas";
 
 export class PartyReadyRoomGroup extends HttpApiGroup.make(
@@ -38,7 +27,7 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
   HttpApiEndpoint.get(
     "PartyReadyRoomControllerList",
     "/messaging/party-gathering",
-    { success: PartyReadyRoomControllerList200 },
+    { success: PartyReadyRoomsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "PartyReadyRoomController_list"),
@@ -46,10 +35,8 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerCreate",
     "/messaging/party-gathering",
     {
-      payload: PartyReadyRoomControllerCreateRequestJson,
-      success: PartyReadyRoomControllerCreate201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      payload: CreatePartyGatheringRequest,
+      success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -59,8 +46,8 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerGet",
     "/messaging/party-gathering/:notificationId",
     {
-      params: PartyReadyRoomControllerGetPathParams,
-      success: PartyReadyRoomControllerGet200,
+      params: PartyReadyRoomParams,
+      success: PartyReadyRoomResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -69,9 +56,9 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerApply",
     "/messaging/party-gathering/:notificationId/applications",
     {
-      params: PartyReadyRoomControllerApplyPathParams,
-      payload: PartyReadyRoomControllerApplyRequestJson,
-      success: PartyReadyRoomControllerApply201.pipe(HttpApiSchema.status(201)),
+      params: PartyReadyRoomParams,
+      payload: ApplyToPartyReadyRoomRequest,
+      success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -80,9 +67,9 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerWithdraw",
     "/messaging/party-gathering/:notificationId/applications/me",
     {
-      params: PartyReadyRoomControllerWithdrawPathParams,
-      payload: PartyReadyRoomControllerWithdrawRequestJson,
-      success: PartyReadyRoomControllerWithdraw200,
+      params: PartyReadyRoomParams,
+      payload: PartyParticipantIdentity,
+      success: PartyReadyRoomUpdateResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -91,9 +78,9 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerRemove",
     "/messaging/party-gathering/:notificationId/participants",
     {
-      params: PartyReadyRoomControllerRemovePathParams,
-      payload: PartyReadyRoomControllerRemoveRequestJson,
-      success: PartyReadyRoomControllerRemove200,
+      params: PartyReadyRoomParams,
+      payload: PartyParticipantActionRequest,
+      success: PartyReadyRoomUpdateResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -102,11 +89,9 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerResolveInvitationTargets",
     "/messaging/party-gathering/:notificationId/invitations/targets",
     {
-      params: PartyReadyRoomControllerResolveInvitationTargetsPathParams,
-      payload: PartyReadyRoomControllerResolveInvitationTargetsRequestJson,
-      success: PartyReadyRoomControllerResolveInvitationTargets201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: PartyReadyRoomParams,
+      payload: ResolvePartyInvitationsRequest,
+      success: PartyInvitationTargetsResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -118,11 +103,9 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerObserveParty",
     "/messaging/party-gathering/:notificationId/party-observation",
     {
-      params: PartyReadyRoomControllerObservePartyPathParams,
-      payload: PartyReadyRoomControllerObservePartyRequestJson,
-      success: PartyReadyRoomControllerObserveParty201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: PartyReadyRoomParams,
+      payload: ObservePartyRequest,
+      success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -131,11 +114,9 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerCancel",
     "/messaging/party-gathering/:notificationId/cancel",
     {
-      params: PartyReadyRoomControllerCancelPathParams,
-      payload: PartyReadyRoomControllerCancelRequestJson,
-      success: PartyReadyRoomControllerCancel201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: PartyReadyRoomParams,
+      payload: PartyRevisionRequest,
+      success: PartyReadyRoomUpdateResponse.pipe(HttpApiSchema.status(201)),
     },
   )
     .middleware(BearerSecurityMiddleware)

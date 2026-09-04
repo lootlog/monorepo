@@ -20,7 +20,7 @@ import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
-import type { ResetTimerDto } from "#src/contracts/timers/schemas";
+import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
 import { mapTimerResponse } from "#src/timers/timer-projection";
@@ -47,7 +47,7 @@ const npcField = (npc: unknown, key: string) =>
 const upsertActorCharacter = (
   database: Pick<typeof ApiDatabase.Service, "insert" | "select">,
   world: string,
-  actor: ResetTimerDto["actorCharacter"],
+  actor: ResetTimerRequest["actorCharacter"],
 ) =>
   Effect.gen(function* () {
     if (!actor) return null;
@@ -94,7 +94,7 @@ export const makeResetTimer = (
   const operation = Effect.fn("resetTimerData")(function* (
     access: TimersGuildAccess,
     timerIdentifier: string,
-    payload: ResetTimerDto,
+    payload: ResetTimerRequest,
   ) {
     const timerCondition = isLegacyNpcIdIdentifier(timerIdentifier)
       ? and(
@@ -306,7 +306,7 @@ export const makeResetTimer = (
   return (
     access: TimersGuildAccess,
     timerIdentifier: string,
-    payload: ResetTimerDto,
+    payload: ResetTimerRequest,
   ) =>
     operation(access, timerIdentifier, payload).pipe(
       Effect.mapError(toTimersDataFailure),

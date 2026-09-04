@@ -1,304 +1,94 @@
 /** Shared input and output schemas for the timers feature. */
 import * as Schema from "effect/Schema";
-import { DateTimeString, FiniteNumber } from "#src/contracts/scalars";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { ProfessionSchema } from "@lootlog/schema/loot";
+import {
+  NonEmptyString,
+  PositiveSafeInteger,
+  JsonValue,
+  DateTimeString,
+  FiniteNumber,
+} from "#src/contracts/scalars";
+import { MemberProfile } from "#src/contracts/members/schemas";
 
-export type TimerResponseDto = typeof TimerResponseDto.Type;
+const TimerNpc = Schema.Struct({
+  id: FiniteNumber,
+  name: Schema.String,
+  prof: Schema.String,
+  location: Schema.String,
+  wt: Schema.String,
+  lvl: FiniteNumber,
+  type: NpcTypeSchema,
+  icon: Schema.Union([Schema.String, Schema.Null]),
+  margonemType: Schema.String,
+});
 
-export const TimerResponseDto = Schema.Struct({
+const TimerActorCharacter = Schema.Struct({
+  name: Schema.String,
+  prof: Schema.Union([ProfessionSchema, Schema.Null]),
+  icon: Schema.Union([Schema.String, Schema.Null]),
+  lvl: Schema.Union([FiniteNumber, Schema.Null]),
+  characterId: FiniteNumber,
+  accountId: FiniteNumber,
+});
+
+const TimerActorCharacterInput = Schema.Struct({
+  accountId: NonEmptyString,
+  characterId: NonEmptyString,
+  name: NonEmptyString.check(
+    Schema.isMaxLength(50).annotate({
+      expected: "a value with a length of at most 50",
+    }),
+  ),
+  prof: Schema.optionalKey(Schema.String),
+  icon: Schema.optionalKey(Schema.String),
+  lvl: Schema.optionalKey(PositiveSafeInteger),
+});
+
+export type TimerResponse = typeof TimerResponse.Type;
+
+export const TimerResponse = Schema.Struct({
   guildId: Schema.String,
   npcId: FiniteNumber,
   timerKey: Schema.String,
   world: Schema.String,
   minSpawnTime: DateTimeString,
   maxSpawnTime: DateTimeString,
-  npc: Schema.Struct({
-    id: FiniteNumber,
-    name: Schema.String,
-    prof: Schema.String,
-    location: Schema.String,
-    wt: Schema.String,
-    lvl: FiniteNumber,
-    type: Schema.Literals([
-      "COMMON",
-      "ELITE",
-      "ELITE2",
-      "ELITE3",
-      "HERO",
-      "EVENT_HERO",
-      "TITAN",
-      "COLOSSUS",
-      "NPC",
-    ]),
-    icon: Schema.Union([Schema.String, Schema.Null]),
-    margonemType: Schema.String,
-  }),
+  npc: TimerNpc,
   wasReset: Schema.Boolean,
-  member: Schema.optionalKey(
-    Schema.Struct({
-      id: FiniteNumber,
-      userId: Schema.String,
-      guildId: Schema.String,
-      type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
-      name: Schema.String,
-      avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-      banner: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-      active: Schema.Boolean,
-      roles: Schema.Array(
-        Schema.Struct({
-          id: Schema.String,
-          guildId: Schema.String,
-          name: Schema.String,
-          color: Schema.Union([FiniteNumber, Schema.Null]),
-          position: Schema.optionalKey(
-            Schema.Union([FiniteNumber, Schema.Null]),
-          ),
-          permissions: Schema.Array(
-            Schema.Literals([
-              "OWNER",
-              "ADMIN",
-              "LOOTLOG_MANAGE",
-              "LOOTLOG_ACCESS",
-              "LOOTLOG_LOOTS_READ",
-              "LOOTLOG_LOOTS_WRITE",
-              "LOOTLOG_LOOTS_ARCHIVE",
-              "LOOTLOG_LOOTS_TITANS_READ",
-              "LOOTLOG_LOOTS_HEROES_READ",
-              "LOOTLOG_TIMERS_READ",
-              "LOOTLOG_TIMERS_WRITE",
-              "LOOTLOG_TIMERS_RESET",
-              "LOOTLOG_TIMERS_DELETE",
-              "LOOTLOG_TIMERS_TITANS_READ",
-              "LOOTLOG_TIMERS_HEROES_READ",
-              "LOOTLOG_RESERVATIONS_READ",
-              "LOOTLOG_RESERVATIONS_WRITE",
-              "LOOTLOG_MEMBERS_READ",
-              "LOOTLOG_ONLINE_PLAYERS_READ",
-              "LOOTLOG_PRESENCE_LOCATION_READ",
-              "LOOTLOG_CHAT_READ",
-              "LOOTLOG_CHAT_WRITE",
-              "LOOTLOG_CHAT_TITANS_READ",
-              "LOOTLOG_CHAT_HEROES_READ",
-              "LOOTLOG_NOTIFICATIONS_READ",
-              "LOOTLOG_NOTIFICATIONS_SEND",
-              "LOOTLOG_NOTIFICATIONS_TITANS_READ",
-              "LOOTLOG_NOTIFICATIONS_HEROES_READ",
-              "LOOTLOG_EVENTS_MANAGE",
-              "LOOTLOG_EVENTS_READ",
-              "LOOTLOG_EVENTS_WRITE",
-              "LOOTLOG_DOCS_READ",
-              "LOOTLOG_DOCS_WRITE",
-            ]),
-          ),
-          lvlRangeFrom: Schema.optionalKey(
-            Schema.Union([FiniteNumber, Schema.Null]),
-          ),
-          lvlRangeTo: Schema.optionalKey(
-            Schema.Union([FiniteNumber, Schema.Null]),
-          ),
-        }),
-      ),
-      globalUserId: Schema.optionalKey(
-        Schema.Union([Schema.String, Schema.Null]),
-      ),
-      lastDiscordSyncAt: Schema.optionalKey(
-        Schema.Union([DateTimeString, Schema.Null]),
-      ),
-      lastDiscordAttemptAt: Schema.optionalKey(
-        Schema.Union([DateTimeString, Schema.Null]),
-      ),
-      lastDiscordStatus: Schema.optionalKey(
-        Schema.Union([Schema.String, Schema.Null]),
-      ),
-      isStale: Schema.optionalKey(Schema.Boolean),
-      staleWarning: Schema.optionalKey(Schema.String),
-      refreshQueued: Schema.optionalKey(Schema.Boolean),
-      nextRefreshAt: Schema.optionalKey(
-        Schema.Union([DateTimeString, Schema.Null]),
-      ),
-      updatedAt: DateTimeString,
-    }),
-  ),
-  actorCharacter: Schema.optionalKey(
-    Schema.Struct({
-      name: Schema.String,
-      prof: Schema.Union([
-        Schema.Literals([
-          "WARRIOR",
-          "PALADIN",
-          "HUNTER",
-          "MAGE",
-          "BLADE_DANCER",
-          "TRACKER",
-        ]),
-        Schema.Null,
-      ]),
-      icon: Schema.Union([Schema.String, Schema.Null]),
-      lvl: Schema.Union([FiniteNumber, Schema.Null]),
-      characterId: FiniteNumber,
-      accountId: FiniteNumber,
-    }),
-  ),
+  member: Schema.optionalKey(MemberProfile),
+  actorCharacter: Schema.optionalKey(TimerActorCharacter),
   deletedAt: Schema.optionalKey(Schema.Union([DateTimeString, Schema.Null])),
   updatedAt: DateTimeString,
 }).annotate({ identifier: "TimerResponseDto" });
 
-export type TimerHistoryResponseDto = typeof TimerHistoryResponseDto.Type;
+export type TimerHistoryResponse = typeof TimerHistoryResponse.Type;
 
-export const TimerHistoryResponseDto = Schema.Struct({
+export const TimerHistoryResponse = Schema.Struct({
   id: FiniteNumber,
   guildId: Schema.String,
   guildName: Schema.String,
   world: Schema.String,
   timerKey: Schema.String,
   npcId: FiniteNumber,
-  npc: Schema.Struct({
-    id: FiniteNumber,
-    name: Schema.String,
-    prof: Schema.String,
-    location: Schema.String,
-    wt: Schema.String,
-    lvl: FiniteNumber,
-    type: Schema.Literals([
-      "COMMON",
-      "ELITE",
-      "ELITE2",
-      "ELITE3",
-      "HERO",
-      "EVENT_HERO",
-      "TITAN",
-      "COLOSSUS",
-      "NPC",
-    ]),
-    icon: Schema.Union([Schema.String, Schema.Null]),
-    margonemType: Schema.String,
-  }),
+  npc: TimerNpc,
   action: Schema.Literals(["CREATE", "RESET", "DELETE", "RESTORE"]),
-  member: Schema.Struct({
-    id: FiniteNumber,
-    userId: Schema.String,
-    guildId: Schema.String,
-    type: Schema.Literals(["OWNER", "ADMIN", "USER", "BOT"]),
-    name: Schema.String,
-    avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-    banner: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-    active: Schema.Boolean,
-    roles: Schema.Array(
-      Schema.Struct({
-        id: Schema.String,
-        guildId: Schema.String,
-        name: Schema.String,
-        color: Schema.Union([FiniteNumber, Schema.Null]),
-        position: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
-        permissions: Schema.Array(
-          Schema.Literals([
-            "OWNER",
-            "ADMIN",
-            "LOOTLOG_MANAGE",
-            "LOOTLOG_ACCESS",
-            "LOOTLOG_LOOTS_READ",
-            "LOOTLOG_LOOTS_WRITE",
-            "LOOTLOG_LOOTS_ARCHIVE",
-            "LOOTLOG_LOOTS_TITANS_READ",
-            "LOOTLOG_LOOTS_HEROES_READ",
-            "LOOTLOG_TIMERS_READ",
-            "LOOTLOG_TIMERS_WRITE",
-            "LOOTLOG_TIMERS_RESET",
-            "LOOTLOG_TIMERS_DELETE",
-            "LOOTLOG_TIMERS_TITANS_READ",
-            "LOOTLOG_TIMERS_HEROES_READ",
-            "LOOTLOG_RESERVATIONS_READ",
-            "LOOTLOG_RESERVATIONS_WRITE",
-            "LOOTLOG_MEMBERS_READ",
-            "LOOTLOG_ONLINE_PLAYERS_READ",
-            "LOOTLOG_PRESENCE_LOCATION_READ",
-            "LOOTLOG_CHAT_READ",
-            "LOOTLOG_CHAT_WRITE",
-            "LOOTLOG_CHAT_TITANS_READ",
-            "LOOTLOG_CHAT_HEROES_READ",
-            "LOOTLOG_NOTIFICATIONS_READ",
-            "LOOTLOG_NOTIFICATIONS_SEND",
-            "LOOTLOG_NOTIFICATIONS_TITANS_READ",
-            "LOOTLOG_NOTIFICATIONS_HEROES_READ",
-            "LOOTLOG_EVENTS_MANAGE",
-            "LOOTLOG_EVENTS_READ",
-            "LOOTLOG_EVENTS_WRITE",
-            "LOOTLOG_DOCS_READ",
-            "LOOTLOG_DOCS_WRITE",
-          ]),
-        ),
-        lvlRangeFrom: Schema.optionalKey(
-          Schema.Union([FiniteNumber, Schema.Null]),
-        ),
-        lvlRangeTo: Schema.optionalKey(
-          Schema.Union([FiniteNumber, Schema.Null]),
-        ),
-      }),
-    ),
-    globalUserId: Schema.optionalKey(
-      Schema.Union([Schema.String, Schema.Null]),
-    ),
-    lastDiscordSyncAt: Schema.optionalKey(
-      Schema.Union([DateTimeString, Schema.Null]),
-    ),
-    lastDiscordAttemptAt: Schema.optionalKey(
-      Schema.Union([DateTimeString, Schema.Null]),
-    ),
-    lastDiscordStatus: Schema.optionalKey(
-      Schema.Union([Schema.String, Schema.Null]),
-    ),
-    isStale: Schema.optionalKey(Schema.Boolean),
-    staleWarning: Schema.optionalKey(Schema.String),
-    refreshQueued: Schema.optionalKey(Schema.Boolean),
-    nextRefreshAt: Schema.optionalKey(
-      Schema.Union([DateTimeString, Schema.Null]),
-    ),
-    updatedAt: DateTimeString,
-  }),
-  actorCharacter: Schema.optionalKey(
-    Schema.Struct({
-      name: Schema.String,
-      prof: Schema.Union([
-        Schema.Literals([
-          "WARRIOR",
-          "PALADIN",
-          "HUNTER",
-          "MAGE",
-          "BLADE_DANCER",
-          "TRACKER",
-        ]),
-        Schema.Null,
-      ]),
-      icon: Schema.Union([Schema.String, Schema.Null]),
-      lvl: Schema.Union([FiniteNumber, Schema.Null]),
-      characterId: FiniteNumber,
-      accountId: FiniteNumber,
-    }),
-  ),
+  member: MemberProfile,
+  actorCharacter: Schema.optionalKey(TimerActorCharacter),
   minSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
   maxSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
   canRestore: Schema.Boolean,
   createdAt: DateTimeString,
 }).annotate({ identifier: "TimerHistoryResponseDto" });
 
-export type SearchTimersNpcResponseDto_Output =
-  typeof SearchTimersNpcResponseDto_Output.Type;
+export type TimerNpcSearchResult = typeof TimerNpcSearchResult.Type;
 
-export const SearchTimersNpcResponseDto_Output = Schema.Struct({
+export const TimerNpcSearchResult = Schema.Struct({
   npcId: FiniteNumber,
   timerKey: Schema.String,
   name: Schema.String,
   lvl: FiniteNumber,
-  type: Schema.Literals([
-    "COMMON",
-    "ELITE",
-    "ELITE2",
-    "ELITE3",
-    "HERO",
-    "EVENT_HERO",
-    "TITAN",
-    "COLOSSUS",
-    "NPC",
-  ]),
+  type: NpcTypeSchema,
   prof: Schema.String,
   location: Schema.String,
   wt: Schema.Union([Schema.String, FiniteNumber]),
@@ -307,10 +97,9 @@ export const SearchTimersNpcResponseDto_Output = Schema.Struct({
   latestRespawnRandomness: Schema.Union([FiniteNumber, Schema.Null]),
 }).annotate({ identifier: "SearchTimersNpcResponseDto_Output" });
 
-export type CreateTimerFromGameClientDto =
-  typeof CreateTimerFromGameClientDto.Type;
+export type CreateAutoTimerRequest = typeof CreateAutoTimerRequest.Type;
 
-export const CreateTimerFromGameClientDto = Schema.Struct({
+export const CreateAutoTimerRequest = Schema.Struct({
   respBaseSeconds: FiniteNumber.check(
     Schema.isGreaterThanOrEqualTo(2).annotate({
       expected: "a value greater than or equal to 2",
@@ -319,11 +108,7 @@ export const CreateTimerFromGameClientDto = Schema.Struct({
   respawnRandomness: Schema.optionalKey(FiniteNumber),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
-  world: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
+  world: NonEmptyString,
   npc: Schema.Struct({
     id: FiniteNumber,
     name: Schema.String,
@@ -337,60 +122,14 @@ export const CreateTimerFromGameClientDto = Schema.Struct({
     x: Schema.optionalKey(FiniteNumber),
     y: Schema.optionalKey(FiniteNumber),
   }),
-  characterId: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
-  accountId: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
-  actorCharacter: Schema.optionalKey(
-    Schema.Struct({
-      accountId: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ),
-      characterId: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ),
-      name: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ).check(
-        Schema.isMaxLength(50).annotate({
-          expected: "a value with a length of at most 50",
-        }),
-      ),
-      prof: Schema.optionalKey(Schema.String),
-      icon: Schema.optionalKey(Schema.String),
-      lvl: Schema.optionalKey(
-        Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-          .check(
-            Schema.isGreaterThanOrEqualTo(1).annotate({
-              expected: "a value greater than or equal to 1",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          ),
-      ),
-    }),
-  ),
+  characterId: NonEmptyString,
+  accountId: NonEmptyString,
+  actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "CreateTimerFromGameClientDto" });
 
-export type CreateAutoTimerResponseDto_Output =
-  typeof CreateAutoTimerResponseDto_Output.Type;
+export type CreateAutoTimerResponse = typeof CreateAutoTimerResponse.Type;
 
-export const CreateAutoTimerResponseDto_Output = Schema.Struct({
+export const CreateAutoTimerResponse = Schema.Struct({
   submittedGuilds: Schema.Array(
     Schema.Struct({ guildId: Schema.String, guildName: Schema.String }),
   ),
@@ -406,62 +145,17 @@ export const CreateAutoTimerResponseDto_Output = Schema.Struct({
   ),
 }).annotate({ identifier: "CreateAutoTimerResponseDto_Output" });
 
-export type ResetTimerDto = typeof ResetTimerDto.Type;
+export type ResetTimerRequest = typeof ResetTimerRequest.Type;
 
-export const ResetTimerDto = Schema.Struct({
-  world: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
-  actorCharacter: Schema.optionalKey(
-    Schema.Struct({
-      accountId: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ),
-      characterId: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ),
-      name: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ).check(
-        Schema.isMaxLength(50).annotate({
-          expected: "a value with a length of at most 50",
-        }),
-      ),
-      prof: Schema.optionalKey(Schema.String),
-      icon: Schema.optionalKey(Schema.String),
-      lvl: Schema.optionalKey(
-        Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-          .check(
-            Schema.isGreaterThanOrEqualTo(1).annotate({
-              expected: "a value greater than or equal to 1",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          ),
-      ),
-    }),
-  ),
+export const ResetTimerRequest = Schema.Struct({
+  world: NonEmptyString,
+  actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "ResetTimerDto" });
 
-export type CreateManualTimerDto = typeof CreateManualTimerDto.Type;
+export type CreateManualTimerRequest = typeof CreateManualTimerRequest.Type;
 
-export const CreateManualTimerDto = Schema.Struct({
-  name: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ).check(
+export const CreateManualTimerRequest = Schema.Struct({
+  name: NonEmptyString.check(
     Schema.isMaxLength(50).annotate({
       expected: "a value with a length of at most 50",
     }),
@@ -487,119 +181,49 @@ export const CreateManualTimerDto = Schema.Struct({
   ),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
-  world: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
-  actorCharacter: Schema.optionalKey(
-    Schema.Struct({
-      accountId: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ),
-      characterId: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ),
-      name: Schema.String.check(
-        Schema.isMinLength(1).annotate({
-          expected: "a value with a length of at least 1",
-        }),
-      ).check(
-        Schema.isMaxLength(50).annotate({
-          expected: "a value with a length of at most 50",
-        }),
-      ),
-      prof: Schema.optionalKey(Schema.String),
-      icon: Schema.optionalKey(Schema.String),
-      lvl: Schema.optionalKey(
-        Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-          .check(
-            Schema.isGreaterThanOrEqualTo(1).annotate({
-              expected: "a value greater than or equal to 1",
-            }),
-          )
-          .check(
-            Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-              expected: "a value less than or equal to 9007199254740991",
-            }),
-          ),
-      ),
-    }),
-  ),
+  world: NonEmptyString,
+  actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "CreateManualTimerDto" });
 
-export type TimersControllerGetAllTimersQuery =
-  typeof TimersControllerGetAllTimersQuery.Type;
+export type TimersQuery = typeof TimersQuery.Type;
 
-export const TimersControllerGetAllTimersQuery = Schema.Struct({
+export const TimersQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
 });
 
-export type TimersControllerGetAllTimers200 =
-  typeof TimersControllerGetAllTimers200.Type;
+export type TimersResponse = typeof TimersResponse.Type;
 
-export const TimersControllerGetAllTimers200 = Schema.Array(TimerResponseDto);
+export const TimersResponse = Schema.Array(TimerResponse);
 
-export type TimersControllerGetRecentTimerHistoryQuery =
-  typeof TimersControllerGetRecentTimerHistoryQuery.Type;
+export type RecentTimerHistoryQuery = typeof RecentTimerHistoryQuery.Type;
 
-export const TimersControllerGetRecentTimerHistoryQuery = Schema.Struct({
+export const RecentTimerHistoryQuery = Schema.Struct({
   guildId: Schema.String,
   world: Schema.String,
-  limit: Schema.optionalKey(Schema.Json.annotate({ expected: "JSON value" })),
+  limit: Schema.optionalKey(JsonValue),
 });
 
-export type TimersControllerGetRecentTimerHistory200 =
-  typeof TimersControllerGetRecentTimerHistory200.Type;
+export type TimerHistoryListResponse = typeof TimerHistoryListResponse.Type;
 
-export const TimersControllerGetRecentTimerHistory200 = Schema.Array(
-  TimerHistoryResponseDto,
-);
+export const TimerHistoryListResponse = Schema.Array(TimerHistoryResponse);
 
-export type TimersControllerGetTimersPathParams =
-  typeof TimersControllerGetTimersPathParams.Type;
+export type TimerListOrganizationPath = typeof TimerListOrganizationPath.Type;
 
-export const TimersControllerGetTimersPathParams = Schema.Struct({
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
+export const TimerListOrganizationPath = Schema.Struct({
+  guildId: JsonValue,
 });
 
-export type TimersControllerGetTimersQuery =
-  typeof TimersControllerGetTimersQuery.Type;
+export type TimerOrganizationPath = typeof TimerOrganizationPath.Type;
 
-export const TimersControllerGetTimersQuery = Schema.Struct({
-  world: Schema.optionalKey(Schema.String),
-});
-
-export type TimersControllerGetTimers200 =
-  typeof TimersControllerGetTimers200.Type;
-
-export const TimersControllerGetTimers200 = Schema.Array(TimerResponseDto);
-
-export type TimersControllerSearchNpcsWithTimerDataPathParams =
-  typeof TimersControllerSearchNpcsWithTimerDataPathParams.Type;
-
-export const TimersControllerSearchNpcsWithTimerDataPathParams = Schema.Struct({
+export const TimerOrganizationPath = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
-export type TimersControllerSearchNpcsWithTimerDataQuery =
-  typeof TimersControllerSearchNpcsWithTimerDataQuery.Type;
+export type TimerNpcSearchQuery = typeof TimerNpcSearchQuery.Type;
 
-export const TimersControllerSearchNpcsWithTimerDataQuery = Schema.Struct({
-  search: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
-  world: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ),
+export const TimerNpcSearchQuery = Schema.Struct({
+  search: NonEmptyString,
+  world: NonEmptyString,
   limit: Schema.optionalKey(
     Schema.Number.annotate({ default: 10 })
       .check(Schema.isFinite().annotate({ expected: "a finite number" }))
@@ -616,108 +240,27 @@ export const TimersControllerSearchNpcsWithTimerDataQuery = Schema.Struct({
   ),
 });
 
-export type TimersControllerSearchNpcsWithTimerData200 =
-  typeof TimersControllerSearchNpcsWithTimerData200.Type;
+export type TimerNpcSearchResponse = typeof TimerNpcSearchResponse.Type;
 
-export const TimersControllerSearchNpcsWithTimerData200 = Schema.Array(
-  SearchTimersNpcResponseDto_Output,
-);
+export const TimerNpcSearchResponse = Schema.Array(TimerNpcSearchResult);
 
-export type TimersControllerCreateAutoTimerRequestJson =
-  typeof TimersControllerCreateAutoTimerRequestJson.Type;
+export type TimerPath = typeof TimerPath.Type;
 
-export const TimersControllerCreateAutoTimerRequestJson =
-  CreateTimerFromGameClientDto;
-
-export type TimersControllerCreateAutoTimer201 =
-  typeof TimersControllerCreateAutoTimer201.Type;
-
-export const TimersControllerCreateAutoTimer201 =
-  CreateAutoTimerResponseDto_Output;
-
-export type TimersControllerResetTimerPathParams =
-  typeof TimersControllerResetTimerPathParams.Type;
-
-export const TimersControllerResetTimerPathParams = Schema.Struct({
+export const TimerPath = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
   timerIdentifier: Schema.String.annotate({ examples: ["12345:test boss"] }),
 });
 
-export type TimersControllerResetTimerRequestJson =
-  typeof TimersControllerResetTimerRequestJson.Type;
+export type TimerHistoryQuery = typeof TimerHistoryQuery.Type;
 
-export const TimersControllerResetTimerRequestJson = ResetTimerDto;
-
-export type TimersControllerResetTimer200 =
-  typeof TimersControllerResetTimer200.Type;
-
-export const TimersControllerResetTimer200 = TimerResponseDto;
-
-export type TimersControllerDeleteTimerPathParams =
-  typeof TimersControllerDeleteTimerPathParams.Type;
-
-export const TimersControllerDeleteTimerPathParams = Schema.Struct({
-  guildId: Schema.String.annotate({ examples: ["guild_123"] }),
-  timerIdentifier: Schema.String.annotate({ examples: ["12345:test boss"] }),
-});
-
-export type TimersControllerDeleteTimerQuery =
-  typeof TimersControllerDeleteTimerQuery.Type;
-
-export const TimersControllerDeleteTimerQuery = Schema.Struct({
-  world: Schema.optionalKey(Schema.String),
-});
-
-export type TimersControllerGetTimerHistoryPathParams =
-  typeof TimersControllerGetTimerHistoryPathParams.Type;
-
-export const TimersControllerGetTimerHistoryPathParams = Schema.Struct({
-  guildId: Schema.String.annotate({ examples: ["guild_123"] }),
-  timerIdentifier: Schema.String.annotate({ examples: ["12345:test boss"] }),
-});
-
-export type TimersControllerGetTimerHistoryQuery =
-  typeof TimersControllerGetTimerHistoryQuery.Type;
-
-export const TimersControllerGetTimerHistoryQuery = Schema.Struct({
+export const TimerHistoryQuery = Schema.Struct({
   world: Schema.String,
-  limit: Schema.optionalKey(Schema.Json.annotate({ expected: "JSON value" })),
+  limit: Schema.optionalKey(JsonValue),
 });
 
-export type TimersControllerGetTimerHistory200 =
-  typeof TimersControllerGetTimerHistory200.Type;
+export type TimerHistoryEntryPath = typeof TimerHistoryEntryPath.Type;
 
-export const TimersControllerGetTimerHistory200 = Schema.Array(
-  TimerHistoryResponseDto,
-);
-
-export type TimersControllerRestoreTimerFromHistoryPathParams =
-  typeof TimersControllerRestoreTimerFromHistoryPathParams.Type;
-
-export const TimersControllerRestoreTimerFromHistoryPathParams = Schema.Struct({
+export const TimerHistoryEntryPath = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
   historyEntryId: Schema.String,
 });
-
-export type TimersControllerRestoreTimerFromHistory201 =
-  typeof TimersControllerRestoreTimerFromHistory201.Type;
-
-export const TimersControllerRestoreTimerFromHistory201 = TimerResponseDto;
-
-export type TimersControllerCreateManualTimerPathParams =
-  typeof TimersControllerCreateManualTimerPathParams.Type;
-
-export const TimersControllerCreateManualTimerPathParams = Schema.Struct({
-  guildId: Schema.String.annotate({ examples: ["guild_123"] }),
-});
-
-export type TimersControllerCreateManualTimerRequestJson =
-  typeof TimersControllerCreateManualTimerRequestJson.Type;
-
-export const TimersControllerCreateManualTimerRequestJson =
-  CreateManualTimerDto;
-
-export type TimersControllerCreateManualTimer201 =
-  typeof TimersControllerCreateManualTimer201.Type;
-
-export const TimersControllerCreateManualTimer201 = TimerResponseDto;

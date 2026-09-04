@@ -1,6 +1,6 @@
 import type {
-  CreateNotificationRuleDto,
-  UpdateNotificationRuleDto,
+  CreateNotificationRuleRequest,
+  UpdateNotificationRuleRequest,
 } from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
 import type {
@@ -29,7 +29,7 @@ import { InvalidRequestError } from "#src/shared/http/http-errors";
 
 const MAX_NPCS_PER_RULE = 5;
 
-type RuleInput = CreateNotificationRuleDto | UpdateNotificationRuleDto;
+type RuleInput = CreateNotificationRuleRequest | UpdateNotificationRuleRequest;
 type ExistingRule = {
   readonly triggerType: NotificationTriggerTypeValue;
   readonly world: string | null;
@@ -272,7 +272,7 @@ const scheduledMessageFields = (
 export const createNotificationRuleValues = (
   ownerType: NotificationOwnerTypeValue,
   ownerId: string,
-  data: CreateNotificationRuleDto,
+  data: CreateNotificationRuleRequest,
 ) => {
   const triggerType = data.triggerType as NotificationTriggerTypeValue;
   const scheduled = isScheduledMessage(triggerType);
@@ -296,7 +296,7 @@ export const createNotificationRuleValues = (
 export const updateNotificationRuleValues = (
   ownerType: NotificationOwnerTypeValue,
   existing: ExistingRule,
-  data: UpdateNotificationRuleDto,
+  data: UpdateNotificationRuleRequest,
 ) => {
   const triggerType =
     (data.triggerType as NotificationTriggerTypeValue | undefined) ??

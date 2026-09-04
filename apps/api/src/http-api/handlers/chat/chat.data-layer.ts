@@ -22,7 +22,7 @@ import {
 } from "#src/chat/chat-message-permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
-import { SendMessageDto } from "#src/contracts/chat/schemas";
+import { SendChatMessageRequest } from "#src/contracts/chat/schemas";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 import { canViewChatMessage } from "#src/chat/chat-message-visibility";
 import {
@@ -70,7 +70,7 @@ const messageKey = (guildId: string) => `guild:${guildId}:messages`;
 
 const ChatStoredMessageJson = Schema.fromJsonString(
   Schema.Struct({
-    ...SendMessageDto.fields,
+    ...SendChatMessageRequest.fields,
     id: Schema.String,
     senderId: Schema.String,
     timestamp: Schema.String,

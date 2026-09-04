@@ -255,7 +255,7 @@ describe("adoptExistingApiDatabase", () => {
   });
 });
 
-describe("generated API database evidence", () => {
+describe("immutable API database adoption evidence", () => {
   it("matches the captured deployed legacy catalog differences", () => {
     const nullableColumns = [
       "DiscordGuildChannelSnapshot.grantedPermissions",

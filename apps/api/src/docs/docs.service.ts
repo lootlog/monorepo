@@ -9,8 +9,8 @@ import {
   GUILD_DOCUMENT_TITLE_MAX_LENGTH,
 } from "./docs-limits.js";
 import type {
-  CreateGuildDocumentDto,
-  UpdateGuildDocumentDto,
+  CreateDocumentRequest,
+  UpdateDocumentRequest,
 } from "#src/contracts/docs/schemas";
 import {
   GuildDocumentContentSchema,
@@ -79,14 +79,14 @@ export interface DocsService {
   readonly createDocument: (
     guildId: string,
     memberId: string,
-    data: CreateGuildDocumentDto,
+    data: CreateDocumentRequest,
   ) => DocsEffect;
   readonly getDocument: (guildId: string, documentId: string) => DocsEffect;
   readonly updateDocument: (
     guildId: string,
     documentId: string,
     memberId: string,
-    data: UpdateGuildDocumentDto,
+    data: UpdateDocumentRequest,
   ) => DocsEffect;
   readonly listHistory: (guildId: string, documentId: string) => DocsEffect;
   readonly getHistorySnapshot: (

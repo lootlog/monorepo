@@ -31,7 +31,7 @@
     "test:debug": "bun --conditions=development test --inspect-brk src",
     "test:e2e": "bun --conditions=development test --preload ./test/bun.e2e.setup.ts --max-concurrency 1 ./test/http-boundary.e2e-spec.ts",
     "test:watch": "bun --conditions=development test --watch src",
-    "openapi:generate": "bun src/openapi/generate-effect-openapi.ts",
+    "openapi:generate": "bun --conditions=development src/openapi/generate-effect-openapi.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate:dev": "bun src/database/drizzle/migrate.ts",
     "db:migrate:deploy": "bun src/database/drizzle/migrate.ts",

@@ -6,8 +6,8 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
-import { AuthenticatedGuildStatsCardControllerRefreshStatsCard200 } from "#src/contracts/guild-stats-card/schemas";
-import { MapsControllerGetMaps200 } from "#src/contracts/maps/schemas";
+import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
+import { GameMapsResponse } from "#src/contracts/maps/schemas";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 const LOCAL_CACHE_CONTROL = "no-store";
@@ -98,7 +98,7 @@ export const healthCheck = Effect.fn("HealthzControllerHealthCheck")(
 
 export const getMaps = Effect.fn("MapsControllerGetMaps")(function* () {
   const data = yield* PublicSystemData;
-  return yield* decode(MapsControllerGetMaps200, yield* data.getMaps);
+  return yield* decode(GameMapsResponse, yield* data.getMaps);
 });
 
 export const refreshStatsCard = Effect.fn(
@@ -112,7 +112,7 @@ export const refreshStatsCard = Effect.fn(
 
   const data = yield* PublicSystemData;
   return yield* decode(
-    AuthenticatedGuildStatsCardControllerRefreshStatsCard200,
+    RefreshStatsCardResponse,
     yield* data.refreshStatsCard(access.guildId),
   );
 });

@@ -5,9 +5,9 @@ import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  MessagingControllerSendNotification201,
-  type CreateNotificationDto,
-  type CreateVolunteerDto,
+  SentNotificationResponse,
+  type SendNotificationRequest,
+  type VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
 
 export type MessagingCaller = {
@@ -35,34 +35,32 @@ export class MessagingData extends Context.Service<
   {
     readonly sendNotification: (
       caller: MessagingCaller,
-      payload: CreateNotificationDto,
+      payload: SendNotificationRequest,
     ) => Effect.Effect<unknown, MessagingOperationError>;
     readonly volunteer: (
       discordId: string,
       notificationId: string,
-      payload: CreateVolunteerDto,
+      payload: VolunteerForPartyRequest,
     ) => Effect.Effect<void, MessagingOperationError>;
   }
 >()("@lootlog/api/http-api/messaging/data") {}
 
 const caller = Effect.flatMap(MessagingIdentity, (identity) => identity.caller);
 
-export const sendNotification = (payload: CreateNotificationDto) =>
+export const sendNotification = (payload: SendNotificationRequest) =>
   Effect.gen(function* () {
     const authenticated = yield* caller;
     const data = yield* MessagingData;
     const result = yield* data.sendNotification(authenticated, payload);
     return yield* encodeDomainJson(result).pipe(
-      Effect.flatMap(
-        Schema.decodeUnknownEffect(MessagingControllerSendNotification201),
-      ),
+      Effect.flatMap(Schema.decodeUnknownEffect(SentNotificationResponse)),
       Effect.mapError((cause) => new MessagingOperationError({ cause })),
     );
   });
 
 export const volunteerForNotification = (
   notificationId: string,
-  payload: CreateVolunteerDto,
+  payload: VolunteerForPartyRequest,
 ) =>
   Effect.gen(function* () {
     const authenticated = yield* caller;

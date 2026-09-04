@@ -1,3 +1,4 @@
+// Hand-maintained Battlelog database schema; Drizzle generates SQL migrations from it.
 import {
   boolean,
   doublePrecision,

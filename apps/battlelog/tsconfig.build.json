@@ -9,7 +9,6 @@
     "dist",
     "**/*spec.ts",
     "drizzle",
-    "generated",
     "scripts",
     "drizzle.config.ts",
     "**/*.test.ts"

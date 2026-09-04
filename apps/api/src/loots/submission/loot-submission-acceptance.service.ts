@@ -23,8 +23,8 @@ import type {
   lootlogConfigNpcTable,
 } from "#src/database/drizzle/schema";
 import type {
-  CreateLootDto,
-  LootsControllerCreateLoot201 as CreateLootResponse,
+  CreateLootRequest,
+  CreateLootResponse,
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "#src/shared/margonem/item-type";
@@ -94,7 +94,7 @@ const LOOT_LOCK_RETRY_OPTIONS = {
 export interface LootSubmissionAcceptance {
   readonly accept: (options: {
     discordId: string;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
   }) => Effect.Effect<CreateLootResponse, unknown>;
 }
 
@@ -106,7 +106,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   accept(options: {
     discordId: string;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
   }): Effect.Effect<CreateLootResponse, unknown> {
     const uniqueId = this.createUniqueLootId(
       options.submission.loots,
@@ -128,7 +128,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   private acceptWithLock(options: {
     discordId: string;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
     uniqueId: string;
   }): Effect.Effect<CreateLootResponse, unknown> {
     const self = this;
@@ -258,7 +258,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     lootlogConfigs: Array<{ id: string; npcs: LootlogConfigNpc[] }>;
     members: Array<{ id: number; guildId: string }>;
     primaryNpcType: NpcType;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
     whitelistedGuildIds: Set<string>;
   }): AcceptanceOutcome {
     const lootlogConfigByGuildId = new Map(
@@ -354,10 +354,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private createNewLoot(options: {
-    npcData: { primary: CreateLootDto["npcs"][number] };
+    npcData: { primary: CreateLootRequest["npcs"][number] };
     outcome: AcceptanceOutcome;
     primaryNpcType: NpcType;
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
     uniqueId: string;
     publications: (lootId: number) => LootPublication[];
   }): Effect.Effect<number, unknown> {
@@ -394,7 +394,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     npcs: ProcessedNpc[];
     outcome: AcceptanceOutcome;
     socketNpcs: LootEventNpc[];
-    submission: CreateLootDto;
+    submission: CreateLootRequest;
   }): LootPublication[] {
     const organizationIds = this.getUniqueOrganizationIds(
       options.outcome.submissionData,
@@ -462,7 +462,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private createUniqueLootId(
-    loots: CreateLootDto["loots"],
+    loots: CreateLootRequest["loots"],
     world: string,
   ): string {
     const source =
@@ -474,8 +474,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private inferInitialAllocation(
-    submission: CreateLootDto,
-    primaryNpc: CreateLootDto["npcs"][number],
+    submission: CreateLootRequest,
+    primaryNpc: CreateLootRequest["npcs"][number],
     primaryNpcType: NpcType,
   ) {
     if (primaryNpcType !== NpcType.COLOSSUS) {
@@ -507,8 +507,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private mapItemOwnerAllocation(
-    loots: CreateLootDto["loots"],
-    players: CreateLootDto["players"],
+    loots: CreateLootRequest["loots"],
+    players: CreateLootRequest["players"],
   ): LootShare | null {
     if (loots.length === 0 || loots.length !== players.length) return null;
     const shareByCharacter = new Map<number, string>();
@@ -535,8 +535,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return assigned.size === players.length ? share : null;
   }
 
-  private processNpcs(npcs: CreateLootDto["npcs"]): {
-    primary: CreateLootDto["npcs"][number];
+  private processNpcs(npcs: CreateLootRequest["npcs"]): {
+    primary: CreateLootRequest["npcs"][number];
     mapped: ProcessedNpc[];
   } {
     const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
@@ -561,7 +561,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private isAcceptedByConfig(
-    loots: CreateLootDto["loots"],
+    loots: CreateLootRequest["loots"],
     npcs: LootlogConfigNpc[],
     primaryNpcType: NpcType,
   ): boolean {
@@ -574,7 +574,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     );
   }
 
-  private getItemStats(item: CreateLootDto["loots"][number]) {
+  private getItemStats(item: CreateLootRequest["loots"][number]) {
     const parsedStats = this.parseItemStats(item.stat);
     const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
     const rarity = parsedStats["rarity"]?.toUpperCase() as ItemRarity;
@@ -598,11 +598,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     }, {});
   }
 
-  private mapItems(items: CreateLootDto["loots"]) {
+  private mapItems(items: CreateLootRequest["loots"]) {
     return items.map((item) => ({ ...item, ...this.getItemStats(item) }));
   }
 
-  private mapPlayers(players: CreateLootDto["players"]) {
+  private mapPlayers(players: CreateLootRequest["players"]) {
     return players.map((player) => {
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
         player.id,
@@ -620,7 +620,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     });
   }
 
-  private mapLootItemsToPersistence(items: CreateLootDto["loots"]) {
+  private mapLootItemsToPersistence(items: CreateLootRequest["loots"]) {
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);
       const statsHash = this.generateStatsHash(item.stat);
@@ -640,7 +640,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private mapLootPlayersToPersistence(
-    players: CreateLootDto["players"],
+    players: CreateLootRequest["players"],
     world: string,
   ) {
     return players.map((player) => {
@@ -684,7 +684,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return { characterId: Number(character), accountId: Number(account) };
   }
 
-  private mapLootNpcsToPersistence(npcs: CreateLootDto["npcs"]) {
+  private mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {
     return npcs.map((npc) => ({
       npcId: npc.id,
       name: npc.name,

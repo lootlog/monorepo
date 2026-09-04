@@ -7,30 +7,19 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
-  MembersControllerDeactivateMember200,
-  MembersControllerDeactivateMemberPathParams,
-  MembersControllerGetGuildMemberReferences200,
-  MembersControllerGetGuildMemberReferencesPathParams,
-  MembersControllerGetGuildMemberReferencesQuery,
-  MembersControllerGetGuildMembers200,
-  MembersControllerGetGuildMembersPathParams,
-  MembersControllerGetGuildMembersQuery,
-  MembersControllerGetGuildMembersSummary200,
-  MembersControllerGetGuildMembersSummaryPathParams,
-  MembersControllerGetLatestRefreshJob200,
-  MembersControllerGetLatestRefreshJobPathParams,
-  MembersControllerGetMe200,
-  MembersControllerGetMePathParams,
-  MembersControllerGetMemberLootlogConfigSummary200,
-  MembersControllerGetMemberLootlogConfigSummaryPathParams,
-  MembersControllerGetRefreshJobStatus200,
-  MembersControllerGetRefreshJobStatusPathParams,
-  MembersControllerRefreshAllMembers201,
-  MembersControllerRefreshAllMembersPathParams,
-  MembersControllerRefreshMe200,
-  MembersControllerRefreshMePathParams,
-  MembersControllerRefreshMember200,
-  MembersControllerRefreshMemberPathParams,
+  MemberResponse,
+  MemberPath,
+  MemberReferencesResponse,
+  MemberOrganizationPath,
+  MembersQuery,
+  MembersResponse,
+  MemberSummariesResponse,
+  NullableMemberRefreshJobResponse,
+  NullableMemberResponse,
+  CurrentMemberOrganizationPath,
+  MemberLootlogConfigSummaryResponse,
+  MemberRefreshJobResponse,
+  MemberRefreshJobPath,
 } from "#src/contracts/members/schemas";
 
 export class MembersGroup extends HttpApiGroup.make("members").add(
@@ -38,8 +27,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetMe",
     "/guilds/:guildId/members/@me",
     {
-      params: MembersControllerGetMePathParams,
-      success: MembersControllerGetMe200,
+      params: CurrentMemberOrganizationPath,
+      success: NullableMemberResponse,
       error: HttpApiSchema.Empty(404),
     },
   )
@@ -54,8 +43,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerRefreshMe",
     "/guilds/:guildId/members/@me/refresh",
     {
-      params: MembersControllerRefreshMePathParams,
-      success: MembersControllerRefreshMe200,
+      params: CurrentMemberOrganizationPath,
+      success: NullableMemberResponse,
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -69,8 +58,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerRefreshMember",
     "/guilds/:guildId/members/:discordId/refresh",
     {
-      params: MembersControllerRefreshMemberPathParams,
-      success: MembersControllerRefreshMember200,
+      params: MemberPath,
+      success: NullableMemberResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -85,8 +74,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerDeactivateMember",
     "/guilds/:guildId/members/:discordId/deactivate",
     {
-      params: MembersControllerDeactivateMemberPathParams,
-      success: MembersControllerDeactivateMember200,
+      params: MemberPath,
+      success: MemberResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -98,8 +87,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetMemberLootlogConfigSummary",
     "/guilds/:guildId/members/:discordId/lootlog-config-summary",
     {
-      params: MembersControllerGetMemberLootlogConfigSummaryPathParams,
-      success: MembersControllerGetMemberLootlogConfigSummary200,
+      params: MemberPath,
+      success: MemberLootlogConfigSummaryResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -117,9 +106,9 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetGuildMembers",
     "/guilds/:guildId/members",
     {
-      params: MembersControllerGetGuildMembersPathParams,
-      query: MembersControllerGetGuildMembersQuery,
-      success: MembersControllerGetGuildMembers200,
+      params: MemberOrganizationPath,
+      query: MembersQuery,
+      success: MembersResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -131,9 +120,9 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetGuildMemberReferences",
     "/guilds/:guildId/members/references",
     {
-      params: MembersControllerGetGuildMemberReferencesPathParams,
-      query: MembersControllerGetGuildMemberReferencesQuery,
-      success: MembersControllerGetGuildMemberReferences200,
+      params: MemberOrganizationPath,
+      query: MembersQuery,
+      success: MemberReferencesResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -148,8 +137,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetGuildMembersSummary",
     "/guilds/:guildId/members/summary",
     {
-      params: MembersControllerGetGuildMembersSummaryPathParams,
-      success: MembersControllerGetGuildMembersSummary200,
+      params: MemberOrganizationPath,
+      success: MemberSummariesResponse,
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -164,10 +153,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerRefreshAllMembers",
     "/guilds/:guildId/members/refresh-all",
     {
-      params: MembersControllerRefreshAllMembersPathParams,
-      success: MembersControllerRefreshAllMembers201.pipe(
-        HttpApiSchema.status(201),
-      ),
+      params: MemberOrganizationPath,
+      success: MemberRefreshJobResponse.pipe(HttpApiSchema.status(201)),
       error: HttpApiSchema.Empty(403),
     },
   )
@@ -182,8 +169,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetLatestRefreshJob",
     "/guilds/:guildId/members/refresh-jobs/latest",
     {
-      params: MembersControllerGetLatestRefreshJobPathParams,
-      success: MembersControllerGetLatestRefreshJob200,
+      params: MemberOrganizationPath,
+      success: NullableMemberRefreshJobResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )
@@ -198,8 +185,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     "MembersControllerGetRefreshJobStatus",
     "/guilds/:guildId/members/refresh-jobs/:jobId",
     {
-      params: MembersControllerGetRefreshJobStatusPathParams,
-      success: MembersControllerGetRefreshJobStatus200,
+      params: MemberRefreshJobPath,
+      success: MemberRefreshJobResponse,
       error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
     },
   )

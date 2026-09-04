@@ -39,8 +39,8 @@ import {
 } from "#src/database/drizzle/schema";
 import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
 import type {
-  UpdateUserGameAccountPreferencesDto,
-  UpdateUserPreferencesDto,
+  UpdateUserGameAccountPreferencesRequest,
+  UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 import { AccountOrganizationOperationError } from "./account-organization.operations.js";
 
@@ -449,7 +449,7 @@ export const makeUserPreferencesData = (
 
   const updateUserPreferences = Effect.fn("updateUserPreferences")(function* (
     userId: string,
-    payload: UpdateUserPreferencesDto,
+    payload: UpdateUserPreferencesRequest,
   ) {
     const current = yield* readPreferences(database, userId);
     const legacyAppearance = (
@@ -593,7 +593,7 @@ export const makeUserPreferencesData = (
   )(function* (
     userId: string,
     accountId: string,
-    payload: UpdateUserGameAccountPreferencesDto,
+    payload: UpdateUserGameAccountPreferencesRequest,
   ) {
     const stored = yield* readGamePreferences(userId, accountId);
     const current = gamePreferencesResponse(accountId, stored);
@@ -693,12 +693,12 @@ export const makeUserPreferencesData = (
       mapError(getUserGameAccountPreferences(userId, accountId)),
     updateUserPreferences: (
       userId: string,
-      payload: UpdateUserPreferencesDto,
+      payload: UpdateUserPreferencesRequest,
     ) => mapError(updateUserPreferences(userId, payload)),
     updateUserGameAccountPreferences: (
       userId: string,
       accountId: string,
-      payload: UpdateUserGameAccountPreferencesDto,
+      payload: UpdateUserGameAccountPreferencesRequest,
     ) => mapError(updateUserGameAccountPreferences(userId, accountId, payload)),
   };
 };

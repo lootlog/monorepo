@@ -8,40 +8,39 @@ import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type {
-  KillsControllerCreateKill201,
-  KillsControllerCreateKillRequestJson,
-  KillsControllerGetGuildKillStats200,
-  KillsControllerGetGuildKillStatsQuery,
-  KillsControllerGetGuildTopKillersByType200,
-  KillsControllerGetGuildTopKillersByTypeQuery,
-  KillsControllerGetGuildTopNpcs200,
-  KillsControllerGetGuildTopNpcsQuery,
-  KillsControllerGetMemberKills200,
-  KillsControllerGetMemberKillsQuery,
-  KillsControllerGetNpcKillers200,
-  KillsControllerGetNpcKillersQuery,
-  KillsControllerGetUserKillStats200,
-  KillsControllerGetUserKillStatsQuery,
-  KillsControllerGetUserNpcKills200,
-  KillsControllerGetUserNpcKillsQuery,
+  CreateKillResponse,
+  CreateKillRequest,
+  GuildKillStatsResponse,
+  GuildKillStatsQuery,
+  GuildTopKillersByTypeResponse,
+  GuildTopKillersQuery,
+  GuildTopNpcsResponse,
+  GuildTopNpcsQuery,
+  MemberKillsResponse,
+  MemberKillsQuery,
+  NpcKillersResponse,
+  NpcKillersQuery,
+  UserKillStatsResponse,
+  UserKillStatsQuery,
+  UserNpcKillsResponse,
+  UserNpcKillsQuery,
 } from "#src/contracts/kills/schemas";
 import type {
-  LootsControllerCountLootsByGuildId200,
-  LootsControllerCountLootsByGuildIdQuery,
-  LootsControllerCreateComment201,
-  LootsControllerCreateCommentRequestJson,
-  LootsControllerCreateLoot201,
-  LootsControllerCreateLootRequestJson,
-  LootsControllerFetchLootById200,
-  LootsControllerFetchLootsByGuildId200,
-  LootsControllerFetchLootsByGuildIdQuery,
-  LootsControllerGetComments200,
-  LootsControllerGetLootStats200,
-  LootsControllerGetLootStatsQuery,
-  LootsControllerResolveLootItemByHid200,
-  LootsControllerResolveLootItemByHidQuery,
-  LootsControllerUpdateLoot200,
-  LootsControllerUpdateLootRequestJson,
+  LootCountResponse,
+  LootsQuery,
+  LootCommentResponse,
+  CreateLootCommentRequest,
+  CreateLootResponse,
+  CreateLootRequest,
+  LootDetailResponse,
+  LootListResponse,
+  LootCommentsResponse,
+  LootStatsResponse,
+  LootStatsQuery,
+  ResolvedLootItemResponse,
+  ResolveLootItemQuery,
+  LootShareResponse,
+  UpdateLootShareRequest,
 } from "#src/contracts/loots/schemas";
 
 type Guild = typeof guildTable.$inferSelect;
@@ -111,80 +110,80 @@ export class RecordsData extends Context.Service<
   {
     readonly createKill: (
       caller: AuthenticatedCaller,
-      payload: KillsControllerCreateKillRequestJson,
-    ) => DataEffect<KillsControllerCreateKill201>;
+      payload: CreateKillRequest,
+    ) => DataEffect<CreateKillResponse>;
     readonly getGuildKillStats: (
       caller: AuthorizedGuildCaller,
-      query: KillsControllerGetGuildKillStatsQuery,
-    ) => DataEffect<KillsControllerGetGuildKillStats200>;
+      query: GuildKillStatsQuery,
+    ) => DataEffect<GuildKillStatsResponse>;
     readonly getUserKillStats: (
       caller: AuthenticatedCaller,
-      query: KillsControllerGetUserKillStatsQuery,
-    ) => DataEffect<KillsControllerGetUserKillStats200>;
+      query: UserKillStatsQuery,
+    ) => DataEffect<UserKillStatsResponse>;
     readonly getUserNpcKills: (
       caller: AuthenticatedCaller,
-      query: KillsControllerGetUserNpcKillsQuery,
-    ) => DataEffect<KillsControllerGetUserNpcKills200>;
+      query: UserNpcKillsQuery,
+    ) => DataEffect<UserNpcKillsResponse>;
     readonly getGuildTopNpcs: (
       caller: AuthorizedGuildCaller,
-      query: KillsControllerGetGuildTopNpcsQuery,
-    ) => DataEffect<KillsControllerGetGuildTopNpcs200>;
+      query: GuildTopNpcsQuery,
+    ) => DataEffect<GuildTopNpcsResponse>;
     readonly getGuildTopKillersByType: (
       caller: AuthorizedGuildCaller,
-      query: KillsControllerGetGuildTopKillersByTypeQuery,
-    ) => DataEffect<KillsControllerGetGuildTopKillersByType200>;
+      query: GuildTopKillersQuery,
+    ) => DataEffect<GuildTopKillersByTypeResponse>;
     readonly getNpcKillers: (
       caller: AuthorizedGuildCaller,
       npcId: number,
-      query: KillsControllerGetNpcKillersQuery,
-    ) => DataEffect<KillsControllerGetNpcKillers200 | null>;
+      query: NpcKillersQuery,
+    ) => DataEffect<NpcKillersResponse | null>;
     readonly getMemberKills: (
       caller: AuthorizedGuildCaller,
       memberId: number,
-      query: KillsControllerGetMemberKillsQuery,
-    ) => DataEffect<KillsControllerGetMemberKills200 | null>;
+      query: MemberKillsQuery,
+    ) => DataEffect<MemberKillsResponse | null>;
     readonly fetchLoots: (
       caller: AuthorizedGuildCaller,
-      query: LootsControllerFetchLootsByGuildIdQuery,
-    ) => DataEffect<LootsControllerFetchLootsByGuildId200>;
+      query: LootsQuery,
+    ) => DataEffect<LootListResponse>;
     readonly getLootStats: (
       caller: AuthorizedGuildCaller,
-      query: LootsControllerGetLootStatsQuery,
-    ) => DataEffect<LootsControllerGetLootStats200>;
+      query: LootStatsQuery,
+    ) => DataEffect<LootStatsResponse>;
     readonly countLoots: (
       caller: AuthorizedGuildCaller,
-      query: LootsControllerCountLootsByGuildIdQuery,
+      query: LootsQuery,
     ) => DataEffect<number>;
     readonly resolveLootItem: (
       caller: AuthorizedGuildCaller,
-      query: LootsControllerResolveLootItemByHidQuery,
-    ) => DataEffect<LootsControllerResolveLootItemByHid200>;
+      query: ResolveLootItemQuery,
+    ) => DataEffect<ResolvedLootItemResponse>;
     readonly fetchLoot: (
       caller: AuthorizedGuildCaller,
       lootId: number,
-    ) => DataEffect<LootsControllerFetchLootById200>;
+    ) => DataEffect<LootDetailResponse>;
     readonly archiveLoot: (
       caller: AuthorizedGuildCaller,
       lootId: number,
     ) => DataEffect<boolean>;
     readonly createLoot: (
       caller: AuthenticatedCaller,
-      payload: LootsControllerCreateLootRequestJson,
-    ) => DataEffect<LootsControllerCreateLoot201>;
+      payload: CreateLootRequest,
+    ) => DataEffect<CreateLootResponse>;
     readonly getComments: (
       caller: AuthorizedGuildCaller,
       lootId: number,
-    ) => DataEffect<LootsControllerGetComments200 | null>;
+    ) => DataEffect<LootCommentsResponse | null>;
     readonly createComment: (
       caller: AuthorizedGuildCaller,
       lootId: number,
-      payload: LootsControllerCreateCommentRequestJson,
-    ) => DataEffect<LootsControllerCreateComment201 | null>;
+      payload: CreateLootCommentRequest,
+    ) => DataEffect<LootCommentResponse | null>;
     readonly updateLoot: (
       caller: AuthenticatedCaller,
       lootId: number,
-      payload: LootsControllerUpdateLootRequestJson,
-    ) => DataEffect<LootsControllerUpdateLoot200 | null>;
+      payload: UpdateLootShareRequest,
+    ) => DataEffect<LootShareResponse | null>;
   }
 >()("@lootlog/api/http-api/records/data") {
   static layer(service: RecordsData["Service"]) {
@@ -223,28 +222,28 @@ const parseIdentifier = (value: string, code: string) => {
 };
 
 export const createKill = Effect.fn("kills.createKill")(function* (
-  payload: KillsControllerCreateKillRequestJson,
+  payload: CreateKillRequest,
 ) {
   const caller = yield* requireCaller;
   return yield* data((service) => service.createKill(caller, payload));
 });
 
 export const getGuildKillStats = Effect.fn("kills.getGuildKillStats")(
-  function* (guildId: unknown, query: KillsControllerGetGuildKillStatsQuery) {
+  function* (guildId: unknown, query: GuildKillStatsQuery) {
     const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
     return yield* data((service) => service.getGuildKillStats(caller, query));
   },
 );
 
 export const getUserKillStats = Effect.fn("kills.getUserKillStats")(function* (
-  query: KillsControllerGetUserKillStatsQuery,
+  query: UserKillStatsQuery,
 ) {
   const caller = yield* requireCaller;
   return yield* data((service) => service.getUserKillStats(caller, query));
 });
 
 export const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
-  query: KillsControllerGetUserNpcKillsQuery,
+  query: UserNpcKillsQuery,
 ) {
   const caller = yield* requireCaller;
   return yield* data((service) => service.getUserNpcKills(caller, query));
@@ -252,7 +251,7 @@ export const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
 
 export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
   guildId: unknown,
-  query: KillsControllerGetGuildTopNpcsQuery,
+  query: GuildTopNpcsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   return yield* data((service) => service.getGuildTopNpcs(caller, query));
@@ -260,10 +259,7 @@ export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
 
 export const getGuildTopKillersByType = Effect.fn(
   "kills.getGuildTopKillersByType",
-)(function* (
-  guildId: unknown,
-  query: KillsControllerGetGuildTopKillersByTypeQuery,
-) {
+)(function* (guildId: unknown, query: GuildTopKillersQuery) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   return yield* data((service) =>
     service.getGuildTopKillersByType(caller, query),
@@ -273,7 +269,7 @@ export const getGuildTopKillersByType = Effect.fn(
 export const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
   guildId: unknown,
   npcId: string,
-  query: KillsControllerGetNpcKillersQuery,
+  query: NpcKillersQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   const parsedNpcId = yield* parseIdentifier(npcId, "INVALID_NPC_ID");
@@ -291,7 +287,7 @@ export const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
 export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
   guildId: unknown,
   memberId: string,
-  query: KillsControllerGetMemberKillsQuery,
+  query: MemberKillsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   const parsedMemberId = yield* parseIdentifier(memberId, "INVALID_MEMBER_ID");
@@ -310,7 +306,7 @@ export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
 
 export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
   guildId: unknown,
-  query: LootsControllerFetchLootsByGuildIdQuery,
+  query: LootsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   return yield* data((service) => service.fetchLoots(caller, query));
@@ -318,7 +314,7 @@ export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
 
 export const getLootStats = Effect.fn("loots.getLootStats")(function* (
   guildId: unknown,
-  query: LootsControllerGetLootStatsQuery,
+  query: LootStatsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   return yield* data((service) => service.getLootStats(caller, query));
@@ -326,16 +322,16 @@ export const getLootStats = Effect.fn("loots.getLootStats")(function* (
 
 export const countLoots = Effect.fn("loots.countLoots")(function* (
   guildId: unknown,
-  query: LootsControllerCountLootsByGuildIdQuery,
+  query: LootsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   const count = yield* data((service) => service.countLoots(caller, query));
-  return { count } satisfies LootsControllerCountLootsByGuildId200;
+  return { count } satisfies LootCountResponse;
 });
 
 export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
   guildId: unknown,
-  query: LootsControllerResolveLootItemByHidQuery,
+  query: ResolveLootItemQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   return yield* data((service) => service.resolveLootItem(caller, query));
@@ -374,7 +370,7 @@ export const archiveLoot = Effect.fn("loots.archiveLoot")(function* (
 });
 
 export const createLoot = Effect.fn("loots.createLoot")(function* (
-  payload: LootsControllerCreateLootRequestJson,
+  payload: CreateLootRequest,
 ) {
   const caller = yield* requireCaller;
   return yield* data((service) => service.createLoot(caller, payload));
@@ -400,7 +396,7 @@ export const getComments = Effect.fn("loots.getComments")(function* (
 export const createComment = Effect.fn("loots.createComment")(function* (
   guildId: unknown,
   lootId: number,
-  payload: LootsControllerCreateCommentRequestJson,
+  payload: CreateLootCommentRequest,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_WRITE);
   const comment = yield* data((service) =>
@@ -417,7 +413,7 @@ export const createComment = Effect.fn("loots.createComment")(function* (
 
 export const updateLoot = Effect.fn("loots.updateLoot")(function* (
   lootId: number,
-  payload: LootsControllerUpdateLootRequestJson,
+  payload: UpdateLootShareRequest,
 ) {
   const caller = yield* requireCaller;
   const loot = yield* data((service) =>

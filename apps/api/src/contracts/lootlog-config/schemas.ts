@@ -1,56 +1,8 @@
 /** Shared input and output schemas for the lootlog-config feature. */
 import * as Schema from "effect/Schema";
-import { FiniteNumber } from "#src/contracts/scalars";
+import { JsonValue, FiniteNumber } from "#src/contracts/scalars";
 
-export type NullableLootlogConfigResponseDto_Output =
-  typeof NullableLootlogConfigResponseDto_Output.Type;
-
-export const NullableLootlogConfigResponseDto_Output = Schema.Union([
-  Schema.StructWithRest(
-    Schema.Struct({
-      id: Schema.String,
-      npcs: Schema.Array(
-        Schema.Struct({
-          id: FiniteNumber,
-          npcType: Schema.Literals([
-            "COMMON",
-            "ELITE",
-            "ELITE2",
-            "ELITE3",
-            "HERO",
-            "EVENT_HERO",
-            "TITAN",
-            "COLOSSUS",
-            "NPC",
-          ]),
-          allowedRarities: Schema.Array(
-            Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
-          ),
-        }),
-      ),
-    }),
-    [
-      Schema.Record(
-        Schema.String,
-        Schema.Json.annotate({ expected: "JSON value" }),
-      ),
-    ],
-  ),
-  Schema.Null,
-]).annotate({ identifier: "NullableLootlogConfigResponseDto_Output" });
-
-export type UpdateLootlogConfigNpcDto = typeof UpdateLootlogConfigNpcDto.Type;
-
-export const UpdateLootlogConfigNpcDto = Schema.Struct({
-  allowedRarities: Schema.Array(
-    Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
-  ),
-}).annotate({ identifier: "UpdateLootlogConfigNpcDto" });
-
-export type LootlogConfigNpcResponseDto_Output =
-  typeof LootlogConfigNpcResponseDto_Output.Type;
-
-export const LootlogConfigNpcResponseDto_Output = Schema.Struct({
+const npcLootlogConfigFields = {
   id: FiniteNumber,
   npcType: Schema.Literals([
     "COMMON",
@@ -66,37 +18,46 @@ export const LootlogConfigNpcResponseDto_Output = Schema.Struct({
   allowedRarities: Schema.Array(
     Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
   ),
-}).annotate({ identifier: "LootlogConfigNpcResponseDto_Output" });
+};
 
-export type LootlogConfigControllerGetLootlogConfigPathParams =
-  typeof LootlogConfigControllerGetLootlogConfigPathParams.Type;
+export type LootlogConfigResponse = typeof LootlogConfigResponse.Type;
 
-export const LootlogConfigControllerGetLootlogConfigPathParams = Schema.Struct({
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
+export const LootlogConfigResponse = Schema.Union([
+  Schema.StructWithRest(
+    Schema.Struct({
+      id: Schema.String,
+      npcs: Schema.Array(Schema.Struct(npcLootlogConfigFields)),
+    }),
+    [Schema.Record(Schema.String, JsonValue)],
+  ),
+  Schema.Null,
+]).annotate({ identifier: "NullableLootlogConfigResponseDto_Output" });
+
+export type UpdateNpcLootlogConfigRequest =
+  typeof UpdateNpcLootlogConfigRequest.Type;
+
+export const UpdateNpcLootlogConfigRequest = Schema.Struct({
+  allowedRarities: Schema.Array(
+    Schema.Literals(["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]),
+  ),
+}).annotate({ identifier: "UpdateLootlogConfigNpcDto" });
+
+export type NpcLootlogConfigResponse = typeof NpcLootlogConfigResponse.Type;
+
+export const NpcLootlogConfigResponse = Schema.Struct(
+  npcLootlogConfigFields,
+).annotate({ identifier: "LootlogConfigNpcResponseDto_Output" });
+
+export type LootlogConfigOrganizationPath =
+  typeof LootlogConfigOrganizationPath.Type;
+
+export const LootlogConfigOrganizationPath = Schema.Struct({
+  guildId: JsonValue,
 });
 
-export type LootlogConfigControllerGetLootlogConfig200 =
-  typeof LootlogConfigControllerGetLootlogConfig200.Type;
+export type NpcLootlogConfigPath = typeof NpcLootlogConfigPath.Type;
 
-export const LootlogConfigControllerGetLootlogConfig200 =
-  NullableLootlogConfigResponseDto_Output;
-
-export type LootlogConfigControllerUpdateNpcPathParams =
-  typeof LootlogConfigControllerUpdateNpcPathParams.Type;
-
-export const LootlogConfigControllerUpdateNpcPathParams = Schema.Struct({
+export const NpcLootlogConfigPath = Schema.Struct({
   npcId: Schema.String.annotate({ examples: ["1"] }),
-  guildId: Schema.Json.annotate({ expected: "JSON value" }),
+  guildId: JsonValue,
 });
-
-export type LootlogConfigControllerUpdateNpcRequestJson =
-  typeof LootlogConfigControllerUpdateNpcRequestJson.Type;
-
-export const LootlogConfigControllerUpdateNpcRequestJson =
-  UpdateLootlogConfigNpcDto;
-
-export type LootlogConfigControllerUpdateNpc200 =
-  typeof LootlogConfigControllerUpdateNpc200.Type;
-
-export const LootlogConfigControllerUpdateNpc200 =
-  LootlogConfigNpcResponseDto_Output;

@@ -112,7 +112,6 @@
     "db:battlelog:generate": "turbo run db:generate --filter=@lootlog/battlelog",
     "db:battlelog:migrate:deploy": "turbo run db:migrate:deploy --filter=@lootlog/battlelog",
     "db:battlelog:migrate:init": "turbo run db:migrate:init --filter=@lootlog/battlelog",
-    "db:battlelog:pull": "turbo run db:pull --filter=@lootlog/battlelog",
     "db:battlelog:push": "turbo run db:push --filter=@lootlog/battlelog",
     "db:battlelog:studio": "turbo run db:studio --filter=@lootlog/battlelog",
     "env:generate": "turbo run env:generate",

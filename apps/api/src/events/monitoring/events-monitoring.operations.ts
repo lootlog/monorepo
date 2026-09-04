@@ -3,8 +3,8 @@ import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
 import {
-  CloseRespawnWindowDto,
-  OpenRespawnWindowDto,
+  CloseRespawnWindowRequest,
+  OpenRespawnWindowRequest,
 } from "#src/contracts/events/schemas";
 import type { EventCoordination } from "#src/events/coordination/event-coordination.service";
 import type { EventKills } from "#src/events/kills/event-kill.service";
@@ -154,7 +154,7 @@ export const makeEventsMonitoring = (
     guildData: { id: string },
     eventId: string,
     heroId: string,
-    data: CloseRespawnWindowDto,
+    data: CloseRespawnWindowRequest,
   ) {
     return respawnCommands.close(guildData, eventId, heroId, data);
   },
@@ -163,7 +163,7 @@ export const makeEventsMonitoring = (
     guildData: { id: string },
     eventId: string,
     heroId: string,
-    data: OpenRespawnWindowDto,
+    data: OpenRespawnWindowRequest,
   ) {
     return respawnCommands.open(guildData, eventId, heroId, data);
   },

@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "openapi:generate": "bun src/openapi/generate-openapi.ts",
+    "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
     "seed": "bun src/scripts/seed.ts"
   },
   "dependencies": {

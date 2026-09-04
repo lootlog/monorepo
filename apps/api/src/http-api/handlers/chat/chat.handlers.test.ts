@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import { ChatMessageResponseDto_Output } from "#src/contracts/chat/schemas";
+import { ChatMessageResponse } from "#src/contracts/chat/schemas";
 import {
   ChatAccessDenied,
   ChatAuthorization,
@@ -93,7 +93,7 @@ describe("Chat HttpApi handlers", () => {
       { discordId: "discord-a", guildId: "guild-canonical" },
     ]);
     expect(response).toHaveLength(1);
-    expect(Schema.is(ChatMessageResponseDto_Output)(response[0])).toBe(true);
+    expect(Schema.is(ChatMessageResponse)(response[0])).toBe(true);
   });
 
   it("fails closed before reading data when authentication or capability checks fail", async () => {

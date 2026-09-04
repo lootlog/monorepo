@@ -21,7 +21,7 @@ import {
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
-import type { CreateKillDto } from "#src/contracts/kills/schemas";
+import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
@@ -276,7 +276,7 @@ export const makeKillCreation = (
 
   return Effect.fn("KillsController_createKill")(function* (
     discordId: string,
-    data: CreateKillDto,
+    data: CreateKillRequest,
   ) {
     const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);

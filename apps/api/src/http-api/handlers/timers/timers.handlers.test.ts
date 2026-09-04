@@ -4,11 +4,12 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { Guild, Role } from "#src/timers/timers.types";
 import {
-  TimersControllerGetTimers200,
-  TimersControllerResetTimer200,
-  type CreateManualTimerDto,
-  type ResetTimerDto,
+  TimersResponse,
+  TimerResponse,
+  type CreateManualTimerRequest,
+  type ResetTimerRequest,
 } from "#src/contracts/timers/schemas";
+
 import {
   createManualGuildTimer,
   deleteGuildTimer,
@@ -158,7 +159,7 @@ describe("Timers HttpApi handlers", () => {
     expect(calls[0]?.accessPolicy).toBe(accessPolicy);
     expect(calls[0]?.roles).toBe(access.roles);
     expect(response[0]?.updatedAt).toBe("2026-09-02T12:00:00.000Z");
-    expect(Schema.is(TimersControllerGetTimers200)(response)).toBe(true);
+    expect(Schema.is(TimersResponse)(response)).toBe(true);
   });
 
   it("keeps hidden timer history filtered by forwarding the exact scoped policy", async () => {
@@ -213,7 +214,7 @@ describe("Timers HttpApi handlers", () => {
       }),
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
     );
-    const payload: CreateManualTimerDto = {
+    const payload: CreateManualTimerRequest = {
       name: "Test boss",
       minSeconds: 60,
       maxSeconds: 120,
@@ -307,8 +308,8 @@ describe("Timers HttpApi handlers", () => {
         },
       }),
     );
-    const resetPayload: ResetTimerDto = { world: "Aldous" };
-    const manualPayload: CreateManualTimerDto = {
+    const resetPayload: ResetTimerRequest = { world: "Aldous" };
+    const manualPayload: CreateManualTimerRequest = {
       name: "Test boss",
       minSeconds: 60,
       maxSeconds: 120,
@@ -337,8 +338,8 @@ describe("Timers HttpApi handlers", () => {
       ["manual", "discord-a", guild.id, manualPayload],
     ]);
     expect(deleted).toBeUndefined();
-    expect(Schema.is(TimersControllerResetTimer200)(reset)).toBe(true);
-    expect(Schema.is(TimersControllerResetTimer200)(restored)).toBe(true);
-    expect(Schema.is(TimersControllerResetTimer200)(manual)).toBe(true);
+    expect(Schema.is(TimerResponse)(reset)).toBe(true);
+    expect(Schema.is(TimerResponse)(restored)).toBe(true);
+    expect(Schema.is(TimerResponse)(manual)).toBe(true);
   });
 });

@@ -22,25 +22,22 @@ import { generateSlug } from "#src/shared/generate-slug";
 import { RESTRICTED_VANITY_URLS } from "#src/guilds/restricted-vanity-urls";
 import { ErrorKey } from "#src/guilds/error-key";
 import {
-  DiscordGuildSyncStateResponseDto as DiscordGuildSyncStateSchema,
-  GuildsControllerGetGuildPermissions200,
-  GuildsControllerGetManageableUserGuilds200,
-  GuildsControllerGetUserGuilds200,
-  GuildsControllerGetUserGuildsWithPermissions200,
-  GuildsControllerGetWorldsByGuildId200,
-  type UpdateGuildConfigDto,
+  DiscordGuildSyncStateResponse as DiscordGuildSyncStateSchema,
+  OrganizationCapabilitiesResponse,
+  ManageableOrganizationsResponse,
+  UserOrganizationsResponse,
+  UserOrganizationPermissionsResponse,
+  OrganizationWorldsResponse,
+  type UpdateOrganizationConfigRequest,
 } from "#src/contracts/guilds/schemas";
+
+import { OrganizationSummary, StatusOk } from "#src/contracts/shared";
 import {
-  GuildResponseDto_Output,
-  StatusOkResponseDto_Output,
-} from "#src/contracts/shared";
-import {
-  UserGameAccountPreferencesResponseDto_Output,
-  UserPreferencesResponseDto_Output,
-  UsersControllerGetCurrentUserAccessibleGuilds200,
-  UsersControllerGetCurrentUserGuilds200,
-  type UpdateUserGameAccountPreferencesDto,
-  type UpdateUserPreferencesDto,
+  UserGameAccountPreferencesResponse,
+  UserPreferencesResponse,
+  CurrentOrganizationsResponse,
+  type UpdateUserGameAccountPreferencesRequest,
+  type UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 
 export type AuthenticatedIdentity = {
@@ -101,7 +98,7 @@ export class AccountOrganizationData extends Context.Service<
     readonly getUserPreferences: (userId: string) => DataEffect;
     readonly updateUserPreferences: (
       userId: string,
-      payload: UpdateUserPreferencesDto,
+      payload: UpdateUserPreferencesRequest,
     ) => DataEffect;
     readonly getCurrentUserGuilds: (
       identity: AuthenticatedIdentity,
@@ -116,7 +113,7 @@ export class AccountOrganizationData extends Context.Service<
     readonly updateUserGameAccountPreferences: (
       userId: string,
       accountId: string,
-      payload: UpdateUserGameAccountPreferencesDto,
+      payload: UpdateUserGameAccountPreferencesRequest,
     ) => DataEffect;
     readonly getUserGuilds: (
       identity: AuthenticatedIdentity,
@@ -138,7 +135,9 @@ const invalidReservationRange = () =>
     message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
   });
 
-const validateGuildConfiguration = (payload: UpdateGuildConfigDto) => {
+const validateGuildConfiguration = (
+  payload: UpdateOrganizationConfigRequest,
+) => {
   if (
     payload.reservationMinDurationMinutes !== undefined &&
     payload.reservationMaxDurationMinutes !== undefined &&
@@ -155,7 +154,7 @@ const validateGuildConfiguration = (payload: UpdateGuildConfigDto) => {
 };
 
 const validateGuildConfigurationAgainstStored = (
-  payload: UpdateGuildConfigDto,
+  payload: UpdateOrganizationConfigRequest,
   stored: typeof guildTable.$inferSelect | undefined,
 ) => {
   if (!stored) return;
@@ -173,7 +172,9 @@ const validateGuildConfigurationAgainstStored = (
   }
 };
 
-const buildGuildConfigurationUpdate = (payload: UpdateGuildConfigDto) => ({
+const buildGuildConfigurationUpdate = (
+  payload: UpdateOrganizationConfigRequest,
+) => ({
   ...(Object.hasOwn(payload, "vanityUrl")
     ? { vanityUrl: generateSlug(payload.vanityUrl ?? undefined) }
     : {}),
@@ -213,7 +214,7 @@ export class GuildConfigurationData extends Context.Service<
     readonly getGuildById: (guildId: string) => DataEffect;
     readonly updateGuildConfig: (
       guildId: string,
-      payload: UpdateGuildConfigDto,
+      payload: UpdateOrganizationConfigRequest,
     ) => DataEffect;
     readonly getWorldsByGuildId: (guildId: string) => DataEffect;
   }
@@ -439,7 +440,7 @@ export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
   function* () {
     const current = yield* identity;
     yield* data((service) => service.deleteAccount(current));
-    return yield* decode(StatusOkResponseDto_Output, { status: "OK" });
+    return yield* decode(StatusOk, { status: "OK" });
   },
 );
 
@@ -449,18 +450,18 @@ export const getCurrentUserPreferences = Effect.fn("getCurrentUserPreferences")(
     const value = yield* data((service) =>
       service.getUserPreferences(current.userId),
     );
-    return yield* decode(UserPreferencesResponseDto_Output, value);
+    return yield* decode(UserPreferencesResponse, value);
   },
 );
 
 export const updateCurrentUserPreferences = Effect.fn(
   "updateCurrentUserPreferences",
-)(function* (payload: UpdateUserPreferencesDto) {
+)(function* (payload: UpdateUserPreferencesRequest) {
   const current = yield* identity;
   const value = yield* data((service) =>
     service.updateUserPreferences(current.userId, payload),
   );
-  return yield* decode(UserPreferencesResponseDto_Output, value);
+  return yield* decode(UserPreferencesResponse, value);
 });
 
 export const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(
@@ -473,8 +474,8 @@ export const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(
     );
     return yield* decode(
       accessibleOnly
-        ? UsersControllerGetCurrentUserAccessibleGuilds200
-        : UsersControllerGetCurrentUserGuilds200,
+        ? CurrentOrganizationsResponse
+        : CurrentOrganizationsResponse,
       value,
     );
   },
@@ -487,12 +488,15 @@ export const getCurrentUserGamePreferences = Effect.fn(
   const value = yield* data((service) =>
     service.getUserGameAccountPreferences(current.userId, accountId),
   );
-  return yield* decode(UserGameAccountPreferencesResponseDto_Output, value);
+  return yield* decode(UserGameAccountPreferencesResponse, value);
 });
 
 export const updateCurrentUserGamePreferences = Effect.fn(
   "updateCurrentUserGamePreferences",
-)(function* (accountId: string, payload: UpdateUserGameAccountPreferencesDto) {
+)(function* (
+  accountId: string,
+  payload: UpdateUserGameAccountPreferencesRequest,
+) {
   const current = yield* identity;
   const value = yield* data((service) =>
     service.updateUserGameAccountPreferences(
@@ -501,7 +505,7 @@ export const updateCurrentUserGamePreferences = Effect.fn(
       payload,
     ),
   );
-  return yield* decode(UserGameAccountPreferencesResponseDto_Output, value);
+  return yield* decode(UserGameAccountPreferencesResponse, value);
 });
 
 export const legacyCurrentGuildList = Effect.fn("legacyCurrentGuildList")(
@@ -510,7 +514,7 @@ export const legacyCurrentGuildList = Effect.fn("legacyCurrentGuildList")(
     const value = yield* data((service) =>
       service.getUserGuilds(current, source),
     );
-    return yield* decode(GuildsControllerGetUserGuilds200, value);
+    return yield* decode(UserOrganizationsResponse, value);
   },
 );
 
@@ -521,7 +525,7 @@ export const currentGuildPermissionsList = Effect.fn(
   const value = yield* data((service) =>
     service.getUserGuildsWithPermissions(current),
   );
-  return yield* decode(GuildsControllerGetUserGuildsWithPermissions200, value);
+  return yield* decode(UserOrganizationPermissionsResponse, value);
 });
 
 export const manageableCurrentGuildList = Effect.fn(
@@ -531,7 +535,7 @@ export const manageableCurrentGuildList = Effect.fn(
   const value = yield* data((service) =>
     service.getManageableUserGuilds(current),
   );
-  return yield* decode(GuildsControllerGetManageableUserGuilds200, value);
+  return yield* decode(ManageableOrganizationsResponse, value);
 });
 
 export const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
@@ -541,12 +545,12 @@ export const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
   const value = yield* guildConfigurationData((service) =>
     service.getGuildById(authorized.guildId),
   );
-  return yield* decode(GuildResponseDto_Output, value);
+  return yield* decode(OrganizationSummary, value);
 });
 
 export const updateGuildConfiguration = Effect.fn(
   "GuildsControllerUpdateGuildConfig",
-)(function* (guildId: string, payload: UpdateGuildConfigDto) {
+)(function* (guildId: string, payload: UpdateOrganizationConfigRequest) {
   const authorized = yield* authorizeGuild(guildId, [
     Permission.OWNER,
     Permission.ADMIN,
@@ -554,7 +558,7 @@ export const updateGuildConfiguration = Effect.fn(
   const value = yield* guildConfigurationData((service) =>
     service.updateGuildConfig(authorized.guildId, payload),
   );
-  return yield* decode(GuildResponseDto_Output, value);
+  return yield* decode(OrganizationSummary, value);
 });
 
 export const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(
@@ -565,7 +569,7 @@ export const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(
     const value = yield* guildConfigurationData((service) =>
       service.getWorldsByGuildId(authorized.guildId),
     );
-    return yield* decode(GuildsControllerGetWorldsByGuildId200, value);
+    return yield* decode(OrganizationWorldsResponse, value);
   },
 );
 
@@ -576,7 +580,7 @@ export const guildPermissions = Effect.fn("guildPermissions")(function* (
     Permission.LOOTLOG_ACCESS,
   ]);
   return yield* decode(
-    GuildsControllerGetGuildPermissions200,
+    OrganizationCapabilitiesResponse,
     authorized.permissions,
   );
 });

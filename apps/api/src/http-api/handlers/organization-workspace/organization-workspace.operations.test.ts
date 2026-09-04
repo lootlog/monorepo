@@ -5,9 +5,10 @@ import {
   PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { ReservationResponseDto } from "#src/contracts/reservations/schemas";
-import { ReservationSharesResponseDto } from "#src/contracts/reservation-sharing/schemas";
-import { RoleResponseDto_Output } from "#src/contracts/roles/schemas";
+import { ReservationResponse } from "#src/contracts/reservations/schemas";
+import { ReservationSharesResponse } from "#src/contracts/reservation-sharing/schemas";
+import { RoleResponse } from "#src/contracts/roles/schemas";
+
 import {
   acceptReservationShareInvitation,
   createReservation,
@@ -208,7 +209,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       },
     ]);
     expect(response.startsAt).toBe("2026-09-03T10:00:00.000Z");
-    expect(Schema.is(ReservationResponseDto)(response)).toBe(true);
+    expect(Schema.is(ReservationResponse)(response)).toBe(true);
   });
 
   it("fails closed before reservation data access when authorization fails", async () => {
@@ -308,7 +309,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
         roleId: role.id,
       },
     ]);
-    expect(Schema.is(RoleResponseDto_Output)(response)).toBe(true);
+    expect(Schema.is(RoleResponse)(response)).toBe(true);
   });
 
   it("preserves the role service rejection for non-owner admin-bit changes", async () => {
@@ -375,7 +376,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       },
     ]);
     expect(guildIds).toEqual(["guild-a"]);
-    expect(Schema.is(ReservationSharesResponseDto)(response)).toBe(true);
+    expect(Schema.is(ReservationSharesResponse)(response)).toBe(true);
   });
 
   it("does not reveal sharing state for a hidden Organization", async () => {

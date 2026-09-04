@@ -13,9 +13,9 @@ import { mapTemplateTable } from "#src/database/drizzle/schema";
 import {
   MapTemplateResponseSchema,
   type MapTemplateResponse,
+  type CreateMapTemplate,
 } from "#src/map-templates/map-template.schema";
 import { LootlogApi } from "../../lootlog-api.js";
-import type { CreateMapTemplateDto } from "#src/contracts/map-templates/schemas";
 
 type StoredMapTemplate = {
   readonly id: string;
@@ -69,12 +69,12 @@ export class MapTemplatesData extends Context.Service<
     >;
     readonly create: (
       guildId: string,
-      payload: CreateMapTemplateDto,
+      payload: CreateMapTemplate,
     ) => Effect.Effect<StoredMapTemplate, MapTemplatesPersistenceError>;
     readonly update: (
       guildId: string,
       templateId: string,
-      payload: CreateMapTemplateDto,
+      payload: CreateMapTemplate,
     ) => Effect.Effect<StoredMapTemplate | null, MapTemplatesPersistenceError>;
     readonly delete: (
       guildId: string,
@@ -173,7 +173,7 @@ export const getMapTemplates = Effect.fn("getMapTemplates")(function* (
 
 export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
   guildId: string,
-  payload: CreateMapTemplateDto,
+  payload: CreateMapTemplate,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
@@ -185,7 +185,7 @@ export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
 export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
   guildId: string,
   templateId: string,
-  payload: CreateMapTemplateDto,
+  payload: CreateMapTemplate,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>

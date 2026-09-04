@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { ErrorKey } from "#src/guilds/error-key";
-import { UpdateGuildConfigDto } from "#src/contracts/guilds/schemas";
+import { UpdateOrganizationConfigRequest } from "#src/contracts/guilds/schemas";
 import { Result, Schema } from "effect";
 
-describe("UpdateGuildConfigDto", () => {
+describe("UpdateOrganizationConfigRequest", () => {
   it("returns a translation key instead of localized backend copy", () => {
-    const result = Schema.decodeUnknownResult(UpdateGuildConfigDto)({
+    const result = Schema.decodeUnknownResult(UpdateOrganizationConfigRequest)({
       reservationTimeGranularityMinutes: 7,
     });
 
