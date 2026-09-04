@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
 export type GameItem = {

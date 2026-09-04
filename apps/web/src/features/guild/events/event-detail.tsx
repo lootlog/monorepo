@@ -70,7 +70,7 @@ import {
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { useToggleEventPin } from "./hooks/mutations/use-toggle-event-pin";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];

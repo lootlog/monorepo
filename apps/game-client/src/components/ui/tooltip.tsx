@@ -1,6 +1,6 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
 const TooltipProviderContext = React.createContext(false);

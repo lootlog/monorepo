@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 

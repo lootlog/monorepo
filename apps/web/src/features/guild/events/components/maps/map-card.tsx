@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { UserPlus, X, AlertTriangle, Users, ChevronDown } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";

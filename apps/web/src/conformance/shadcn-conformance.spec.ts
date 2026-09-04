@@ -36,7 +36,7 @@ describe("shadcn conformance", () => {
     expect(config.style).toBe(uiConfig.style);
     expect(config.rsc).toBe(false);
     expect(config.aliases?.ui).toBe("@lootlog/ui/components");
-    expect(config.aliases?.utils).toBe("@lootlog/ui/lib/utils");
+    expect(config.aliases?.utils).toBe("cn");
     expect(config.aliases?.ui).toBe(uiConfig.aliases?.ui);
     expect(config.aliases?.utils).toBe(uiConfig.aliases?.utils);
   });
@@ -45,6 +45,7 @@ describe("shadcn conformance", () => {
     expect(existsSync(join(sourceRoot, "utils/cn.ts"))).toBe(false);
 
     const forbiddenImports = [
+      "@lootlog/ui/lib/utils",
       "@/utils/cn",
       "@/components/layout/page-header",
       "battle-panel-mobile-filters-drawer",

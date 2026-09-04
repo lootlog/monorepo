@@ -12,7 +12,7 @@ import {
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { formatTimeShort } from "../../utils/format-date";
 import { formatDurationHuman } from "../../utils/format-duration";
 import type { GroupedMapAssignment } from "../../utils/kill-map-timeline-data";

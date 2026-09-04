@@ -15,7 +15,7 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,

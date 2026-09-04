@@ -37,7 +37,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Card } from "@lootlog/ui/components/card";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";

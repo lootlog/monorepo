@@ -1,7 +1,7 @@
 import { createContext, useContext, type FC } from "react";
 import { Loader2 } from "lucide-react";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface SpinnerProps {
   className?: string;

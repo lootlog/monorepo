@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Clock, Pencil, RotateCcw, Settings2, Trash2 } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface EventActionsCardProps {
   canManage: boolean;

@@ -35,7 +35,7 @@ import {
   DrawerTrigger,
 } from "@lootlog/ui/components/drawer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { PlayerTile } from "@/components/battle";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { Badge } from "@lootlog/ui/components/badge";

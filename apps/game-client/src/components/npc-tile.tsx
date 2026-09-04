@@ -1,5 +1,5 @@
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { FC } from "react";
 

@@ -9,7 +9,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Switch } from "@lootlog/ui/components/switch";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

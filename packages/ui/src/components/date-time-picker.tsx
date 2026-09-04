@@ -4,7 +4,7 @@ import * as React from "react";
 import { format, type Locale } from "date-fns";
 import { pl } from "date-fns/locale";
 import { CalendarIcon, X } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import { Calendar } from "@lootlog/ui/components/calendar";
 import {

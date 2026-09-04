@@ -1,4 +1,4 @@
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 type BattlePanelChartFrameProps = {

@@ -6,7 +6,7 @@ import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 import { getBattleTeamPresentation } from "./utils/battle-team-presentation";
 

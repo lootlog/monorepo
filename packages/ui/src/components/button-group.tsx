@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 const buttonGroupVariants = cva(
   "flex w-fit items-stretch [&>*]:focus-visible:relative [&>*]:focus-visible:z-10",

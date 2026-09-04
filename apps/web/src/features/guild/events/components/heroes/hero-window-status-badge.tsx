@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useEventsMonitoringControllerGetHeroRespawnConfig } from "@lootlog/client/main";
 import type { WindowStatus } from "../../types/api";

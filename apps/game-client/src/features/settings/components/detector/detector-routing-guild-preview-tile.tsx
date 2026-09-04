@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 
 type DetectorRoutingGuildPreviewTileProps = {

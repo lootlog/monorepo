@@ -16,7 +16,7 @@ import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyStore } from "@/store/party.store";
 import { useGameStore } from "@/store/game.store";

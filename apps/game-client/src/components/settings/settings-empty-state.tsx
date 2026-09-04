@@ -1,5 +1,5 @@
 import { SettingsPanel } from "@/components/settings/settings-panel";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
 type SettingsEmptyStateProps = {

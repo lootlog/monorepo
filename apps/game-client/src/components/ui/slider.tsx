@@ -1,6 +1,6 @@
 import { Slider as BaseSlider } from "@base-ui/react/slider";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 interface SliderProps extends Omit<
   BaseSlider.Root.Props<number>,

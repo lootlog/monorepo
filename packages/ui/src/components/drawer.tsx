@@ -3,7 +3,7 @@
 import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer";
 import * as React from "react";
 
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type DrawerContextValue = {
   modal: DrawerPrimitive.Root.Props["modal"];

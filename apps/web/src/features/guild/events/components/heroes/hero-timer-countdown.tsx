@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import {
   Tooltip,
   TooltipContent,

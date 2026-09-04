@@ -14,7 +14,7 @@ import {
   CommandList,
 } from "@lootlog/ui/components/command";
 import { Button } from "@lootlog/ui/components/button";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface ActorNameSelectorProps {
   value: string;

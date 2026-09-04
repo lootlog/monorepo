@@ -10,7 +10,7 @@ import { DetectorRoutingGuildPreviewTile } from "@/features/settings/components/
 import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import type { DetectorRoutingSettingsTranslations } from "@/features/settings/components/detector/detector-routing-settings-translations";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { ChevronDown, Trash2 } from "lucide-react";
 import type { FC, KeyboardEvent, ReactNode } from "react";
 

@@ -4,7 +4,7 @@ import {
   getChatMentionSuggestionDisplayLabel,
   type ChatMentionSuggestion,
 } from "@/features/chat/chat-mention-suggestions.helpers";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";

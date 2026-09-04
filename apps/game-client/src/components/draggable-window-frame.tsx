@@ -1,6 +1,6 @@
 import { useDrag } from "@/hooks/ui/use-drag";
 import type { WindowAnimationPhase } from "@/hooks/ui/use-window-presence";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import {
   useWindowsStore,
   type WindowId,

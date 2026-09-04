@@ -15,7 +15,7 @@ import {
 } from "@lootlog/client/main";
 import type { Event } from "@/features/guild/events/types/api";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface EventTimersListProps {
   event: Event;

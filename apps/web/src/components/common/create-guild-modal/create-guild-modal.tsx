@@ -17,7 +17,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 import { useTranslation } from "react-i18next";
 import {

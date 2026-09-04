@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useTimersStore } from "@/store/timers.store";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";

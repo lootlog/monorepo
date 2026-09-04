@@ -1,5 +1,5 @@
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type { FC } from "react";
 
 type NpcSearchTileProps = {

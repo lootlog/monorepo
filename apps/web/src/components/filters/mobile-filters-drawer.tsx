@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Filter } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 type MobileFiltersDrawerProps = {
   title: string;

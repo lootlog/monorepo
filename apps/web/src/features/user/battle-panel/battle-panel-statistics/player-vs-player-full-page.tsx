@@ -32,7 +32,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Table } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";

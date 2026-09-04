@@ -5,7 +5,7 @@ import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useState, type ReactNode } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import type {

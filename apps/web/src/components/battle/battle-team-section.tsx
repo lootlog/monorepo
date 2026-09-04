@@ -1,4 +1,4 @@
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Sword } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

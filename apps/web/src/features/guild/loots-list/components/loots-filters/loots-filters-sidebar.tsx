@@ -25,7 +25,7 @@ import { useState, type FC } from "react";
 import { FilterCombobox } from "./filter-combobox";
 import { useLootFilterOptions } from "./use-loot-filter-options";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {

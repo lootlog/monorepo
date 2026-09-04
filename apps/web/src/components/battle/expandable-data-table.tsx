@@ -15,7 +15,7 @@ import {
   type Row,
   type SortingState,
 } from "@tanstack/react-table";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { Fragment, type ReactNode, useState } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

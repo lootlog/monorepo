@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import type { FC } from "react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { ActorNameSelector } from "./actor-name-selector";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import type { ActivitiesControllerFindByGuildSourceItem } from "@lootlog/client/activity";

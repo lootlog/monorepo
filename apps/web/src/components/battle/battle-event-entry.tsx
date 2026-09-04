@@ -6,7 +6,7 @@ import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
 import { BattlePassiveActions } from "./actions/battle-passive-actions";
 import { BattleSpellActions } from "./actions/battle-spell-actions";
 import { BattleSystemActions } from "./actions/battle-system-actions";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,

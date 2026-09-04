@@ -18,7 +18,7 @@ import {
   ChevronsUpDown,
   ArrowRight,
 } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { useBattlesControllerGetUserWorlds } from "@lootlog/client/battlelog";

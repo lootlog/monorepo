@@ -3,7 +3,7 @@ import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
 } from "@lootlog/client/main";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { type FC, useEffect, useMemo } from "react";

@@ -3,7 +3,7 @@ import { Flame, Snowflake, TrendingUp, TrendingDown } from "lucide-react";
 import type { Streak } from "@/lib/api/battlelog-types";
 import { StatCard } from "./stat-card";
 import { useTranslation } from "react-i18next";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface CurrentStreakCardProps {
   data: Streak;

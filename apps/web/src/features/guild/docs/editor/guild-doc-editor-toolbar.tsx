@@ -83,7 +83,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Separator } from "@lootlog/ui/components/separator";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { GuildDocLinkDialog } from "./guild-doc-link-dialog";
 import { GuildDocTableDialog } from "./guild-doc-table-dialog";

@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useLottie } from "lottie-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 
 interface CatPawLottieProps {
   animationData: object;

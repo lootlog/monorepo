@@ -6,7 +6,7 @@ import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { NpcSearchTile } from "@/components/tiles";
 
 type ReservationCardProps = {

@@ -13,7 +13,7 @@ import {
   Package,
   Dot,
 } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
+import { cn } from "cn";
 import { ItemStack } from "@/features/guild/loots-list/components/loots-list/item-stack";
 import { WatchableItemTile } from "@/components/tiles";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
