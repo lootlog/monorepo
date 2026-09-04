@@ -261,6 +261,7 @@ export const makeGuildKillQueries = (
                   npcType,
                   stats
                     .filter((stat) => stat.npcType === npcType)
+                    .slice(0, limit)
                     .map(
                       ({ npcType: _type, rank: _rank, ...member }) => member,
                     ),

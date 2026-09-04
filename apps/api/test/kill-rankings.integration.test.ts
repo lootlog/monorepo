@@ -364,3 +364,36 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
     }),
   );
 });
+
+test("finite ranking limits retain slice semantics for negative, fractional and huge inputs", async () => {
+  await runtime.runPromise(
+    Effect.gen(function* () {
+      const service = yield* queries;
+      for (const [limit, expectedNpcIds, expectedMembers] of [
+        [-1, [2], ["first"]],
+        [-1.9, [2], ["first"]],
+        [-0.5, [], []],
+        [0, [], []],
+        [1.9, [2], ["first"]],
+        [Number.MAX_SAFE_INTEGER + 1, [2, 1], ["first", "second"]],
+        [Number.MAX_VALUE, [2, 1], ["first", "second"]],
+        [-Number.MAX_VALUE, [], []],
+      ] as const) {
+        const npcs = yield* service.getGuildTopNpcs(guildId, policy, [], limit);
+        expect(npcs.topNpcs.map((npc) => npc.npcId)).toEqual([
+          ...expectedNpcIds,
+        ]);
+        const members = yield* service.getGuildTopKillersByType(
+          guildId,
+          policy,
+          [],
+          [NpcType.ELITE2],
+          limit,
+        );
+        expect(
+          members[NpcType.ELITE2]?.map((member) => member.memberName),
+        ).toEqual([...expectedMembers]);
+      }
+    }),
+  );
+});
