@@ -119,15 +119,8 @@ export const makeNotificationWatchedItems = (
         .limit(1);
       const row = rows[0];
       if (!row) return null;
-      const targets = row.rule
-        ? yield* targetsForRules([row.rule.id])
-        : new Map<number, unknown[]>();
-      return {
-        ...row.watchedItem,
-        notificationRule: row.rule
-          ? mapRule(row.rule, targets.get(row.rule.id) ?? [])
-          : null,
-      };
+      const items = yield* hydrate([row]);
+      return items[0] ?? null;
     }).pipe(
       Effect.mapError(databaseFailure("notifications.watchedItems.find")),
     );
@@ -147,6 +140,15 @@ export const makeNotificationWatchedItems = (
       .pipe(
         Effect.mapError(databaseFailure("notifications.watchedItems.list")),
       );
+    return yield* hydrate(rows);
+  });
+
+  const hydrate = Effect.fn("notifications.watchedItems.hydrate")(function* (
+    rows: ReadonlyArray<{
+      watchedItem: typeof watchedItemTable.$inferSelect;
+      rule: typeof notificationRuleTable.$inferSelect | null;
+    }>,
+  ) {
     const ruleIds = rows.flatMap(({ rule }) => (rule ? [rule.id] : []));
     const targets = yield* targetsForRules(ruleIds);
     const pairs = [
