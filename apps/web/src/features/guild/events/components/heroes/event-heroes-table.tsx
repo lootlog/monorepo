@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import { Plus, Swords } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
@@ -12,6 +12,7 @@ import {
   createEventHeroesTableColumns,
   type EventHeroTableRow,
 } from "./event-heroes-table-columns";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type EventHeroesTableProps = {
   canManage: boolean;
@@ -54,10 +55,10 @@ export const EventHeroesTable = ({
     onManageMaps,
     t,
   });
-  const table = useReactTable({
+  const table = useTable({
+    features: coreTableFeatures,
     columns,
     data: rows,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (

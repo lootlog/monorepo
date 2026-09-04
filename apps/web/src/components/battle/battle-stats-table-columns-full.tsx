@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight, Flag, Skull } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 import type { TFunction } from "i18next";
+import { sortedTableFeatures } from "@/lib/tanstack-table-features";
 
 export const getBattleStatsTableColumns = (
   t: TFunction,
@@ -18,7 +19,7 @@ export const getBattleStatsTableColumns = (
   toggleBlocksExpansion: (warriorId: string) => void,
   toggleDetailsExpansion: (warriorId: string) => void,
   toggleDamageDealtExpansion: (warriorId: string) => void,
-): ColumnDef<Warrior>[] => [
+): ColumnDef<typeof sortedTableFeatures, Warrior>[] => [
   {
     accessorKey: "name",
     header: t("battleUi.statsTable.columns.nick"),

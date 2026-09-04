@@ -33,18 +33,14 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
-import {
-  getCoreRowModel,
-  useReactTable,
-  type Cell,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { type Cell, type ColumnDef, useTable } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Shield } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { BattleTableActionsMenu } from "./battle-table-actions-menu";
 import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";
 import {
@@ -206,7 +202,7 @@ export const BattlesTable = ({
   };
 
   const renderBattleLinkCellContent = (
-    cell: Cell<Battle, unknown>,
+    cell: Cell<typeof coreTableFeatures, Battle, unknown>,
     content: ReactNode,
   ) => {
     if (!BATTLE_TABLE_LINK_COLUMN_IDS.has(cell.column.id)) {
@@ -246,7 +242,7 @@ export const BattlesTable = ({
     );
   };
 
-  const columns: ColumnDef<Battle>[] = [
+  const columns: ColumnDef<typeof coreTableFeatures, Battle>[] = [
     {
       id: "select",
       header: () => (
@@ -384,10 +380,10 @@ export const BattlesTable = ({
     },
   ];
 
-  const table = useReactTable({
+  const table = useTable({
+    features: coreTableFeatures,
     data: battles,
     columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   const selectionBar = hasSelectedBattles ? (

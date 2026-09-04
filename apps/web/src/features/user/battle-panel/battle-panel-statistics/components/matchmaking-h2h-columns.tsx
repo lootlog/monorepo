@@ -9,8 +9,12 @@ import {
   headToHeadBaseColumns,
   headToHeadLastBattleColumn,
 } from "./head-to-head-columns";
+import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
-const matchmakingRatingColumns: ColumnDef<HeadToHeadRecord>[] = [
+const matchmakingRatingColumns: ColumnDef<
+  typeof sortingTableFeatures,
+  HeadToHeadRecord
+>[] = [
   {
     accessorKey: "totalRatingDelta",
     header: ({ column }) => (
@@ -83,7 +87,10 @@ const matchmakingRatingColumns: ColumnDef<HeadToHeadRecord>[] = [
   },
 ];
 
-export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
+export const matchmakingH2HColumns: ColumnDef<
+  typeof sortingTableFeatures,
+  HeadToHeadRecord
+>[] = [
   ...headToHeadBaseColumns,
   ...matchmakingRatingColumns,
   headToHeadLastBattleColumn,

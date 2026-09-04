@@ -46,18 +46,17 @@ describe("createFailOpenSecondaryStorage", () => {
   it("falls back when Redis storage operations fail", async () => {
     const error = new Error("redis unavailable");
     const storage = {
-      get: mock(
-        (_key: string): Promise<string | null> => Promise.reject(error),
+      get: mock((_key: string): Promise<string | null> =>
+        Promise.reject(error),
       ),
-      getAndDelete: mock(
-        (_key: string): Promise<string | null> => Promise.reject(error),
+      getAndDelete: mock((_key: string): Promise<string | null> =>
+        Promise.reject(error),
       ),
-      increment: mock(
-        (_key: string, _ttl?: number): Promise<number> => Promise.reject(error),
+      increment: mock((_key: string, _ttl?: number): Promise<number> =>
+        Promise.reject(error),
       ),
-      set: mock(
-        (_key: string, _value: string, _ttl?: number): Promise<void> =>
-          Promise.reject(error),
+      set: mock((_key: string, _value: string, _ttl?: number): Promise<void> =>
+        Promise.reject(error),
       ),
       delete: mock((_key: string): Promise<void> => Promise.reject(error)),
     } satisfies SecondaryStorage;

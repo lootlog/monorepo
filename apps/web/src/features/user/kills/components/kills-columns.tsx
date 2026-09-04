@@ -6,10 +6,13 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { NPC_TYPE_NAMES } from "@/constants/npc";
 import i18n from "@/i18n/config";
 import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
+import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
 type NpcKill = UserNpcKillsResponseDtoOutputNpcsItem;
 
-export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
+export const createKillsColumns = (
+  startRank: number,
+): ColumnDef<typeof sortingTableFeatures, NpcKill>[] => [
   {
     id: "rank",
     header: () => <div className="text-center w-8">#</div>,
