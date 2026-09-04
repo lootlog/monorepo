@@ -5,9 +5,6 @@ import {
 } from "@/features/guild/settings/members/member-web-presence.utils";
 
 export type MemberGamePresenceByDiscordId = Map<string, PlayerPresence[]>;
-export type MemberGamePresenceGuild = {
-  id?: string | null;
-};
 
 export type MemberGamePresenceUpdatePayload = {
   guildId: string;
@@ -31,10 +28,6 @@ export const mapMemberGamePresenceByDiscordId = (
 
   return presenceByDiscordId;
 };
-
-export const resolveMemberPresenceGuildId = (
-  guild: MemberGamePresenceGuild | undefined,
-) => guild?.id ?? undefined;
 
 export const applyMemberGamePresenceUpdate = (
   presenceByDiscordId: MemberGamePresenceByDiscordId | undefined,

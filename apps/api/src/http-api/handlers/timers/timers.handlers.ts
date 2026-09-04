@@ -27,19 +27,6 @@ import {
   type TimersNotFound,
 } from "./timer-errors.js";
 
-export const TIMERS_ENDPOINTS = [
-  "TimersControllerGetAllTimers",
-  "TimersControllerGetRecentTimerHistory",
-  "TimersControllerGetTimers",
-  "TimersControllerSearchNpcsWithTimerData",
-  "TimersControllerCreateAutoTimer",
-  "TimersControllerResetTimer",
-  "TimersControllerDeleteTimer",
-  "TimersControllerGetTimerHistory",
-  "TimersControllerRestoreTimerFromHistory",
-  "TimersControllerCreateManualTimer",
-] as const;
-
 export type TimersIdentity = {
   readonly userId: string;
   readonly discordId: string;

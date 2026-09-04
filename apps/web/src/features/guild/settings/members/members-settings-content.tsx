@@ -7,10 +7,7 @@ import {
 } from "@/features/guild/settings/members/members.constants";
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
-import {
-  isMemberOnlineInGame,
-  resolveMemberPresenceGuildId,
-} from "@/features/guild/settings/members/member-game-presence.utils";
+import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
 import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-web-presence.utils";
 import {
   compareMemberListSortValues,
@@ -61,7 +58,7 @@ export const MembersSettingsContent = () => {
     guildId: routeGuildId ?? "",
   });
   const { data: accessPolicy } = useGuildPermissions();
-  const resolvedGuildId = resolveMemberPresenceGuildId(guild);
+  const resolvedGuildId = guild?.id ?? undefined;
   const { data: memberActivityStats } = useQuery(
     memberActivityStatsQueryOptions(resolvedGuildId),
   );

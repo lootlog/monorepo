@@ -6,7 +6,6 @@ import {
   getMemberOnlineSources,
   isMemberOnlineInGame,
   mapMemberGamePresenceByDiscordId,
-  resolveMemberPresenceGuildId,
 } from "./member-game-presence.utils";
 import { mapMemberWebPresenceByDiscordId } from "./member-web-presence.utils";
 import type { PlayerPresence } from "@/features/guild/events/hooks/socket/use-event-presence";
@@ -26,12 +25,6 @@ const buildPresence = (overrides: Partial<PlayerPresence>): PlayerPresence => ({
 });
 
 describe("member game presence utils", () => {
-  it("resolves presence guild id from the loaded guild", () => {
-    expect(resolveMemberPresenceGuildId({ id: "guild-1" })).toBe("guild-1");
-    expect(resolveMemberPresenceGuildId({ id: null })).toBeUndefined();
-    expect(resolveMemberPresenceGuildId(undefined)).toBeUndefined();
-  });
-
   it("maps presence by Discord ID and skips empty entries", () => {
     const mapped = mapMemberGamePresenceByDiscordId({
       "discord-1": [buildPresence({ sessionId: "session-1" })],

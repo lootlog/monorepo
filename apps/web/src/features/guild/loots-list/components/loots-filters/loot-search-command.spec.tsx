@@ -10,6 +10,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import { getAllControllerSearchAllQueryKey } from "@lootlog/client/search";
+import { MotionGlobalConfig } from "framer-motion";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LootSearchCommand } from "./loot-search-command";
 
@@ -69,7 +70,9 @@ describe("LootSearchCommand search failures", () => {
           },
         );
       }
+      const previousSkipAnimations = MotionGlobalConfig.skipAnimations;
       try {
+        MotionGlobalConfig.skipAnimations = true;
         render(
           <QueryClientProvider client={client}>
             <LootSearchCommand open onOpenChange={() => {}} />
@@ -78,6 +81,16 @@ describe("LootSearchCommand search failures", () => {
         fireEvent.change(
           screen.getByPlaceholderText("loots.searchCommand.placeholder"),
           { target: { value: "smok" } },
+        );
+        await waitFor(() =>
+          expect(
+            client.getQueryState(
+              getAllControllerSearchAllQueryKey({
+                search: "smok",
+                world: "test-world",
+              }),
+            )?.status,
+          ).toBe("error"),
         );
         await waitFor(
           () =>
@@ -93,6 +106,7 @@ describe("LootSearchCommand search failures", () => {
         cleanup();
         client.clear();
         restore();
+        MotionGlobalConfig.skipAnimations = previousSkipAnimations;
       }
     },
   );

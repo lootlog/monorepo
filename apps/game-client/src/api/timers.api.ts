@@ -1,9 +1,7 @@
 import {
   timersControllerCreateManualTimer,
   timersControllerCreateAutoTimer,
-  timersControllerDeleteTimer,
   timersControllerGetAllTimers,
-  timersControllerResetTimer,
   type CreateAutoTimerResponseDtoOutput,
   type CreateManualTimerDto,
   type CreateTimerFromGameClientDto,
@@ -230,68 +228,4 @@ export async function fetchTimers(world: string): Promise<Timer[]> {
   const timers = await timersControllerGetAllTimers({ world });
 
   return timers.map(normalizeTimer);
-}
-
-export type DeleteTimerOptions = {
-  timerKey: string;
-  guildId: string;
-  world?: string;
-};
-
-export async function deleteTimer({
-  guildId,
-  timerKey,
-  world,
-}: DeleteTimerOptions): Promise<void> {
-  const endpoint = `/guilds/${guildId}/timers/${timerKey}?world=${world}`;
-
-  await runSingleLoggedAction({
-    actionType: "delete_timer",
-    actionPayload: { guildId, timerKey, world },
-    request: {
-      method: "DELETE",
-      endpoint,
-      payload: { guildId, timerKey, world },
-    },
-    execute: () =>
-      timersControllerDeleteTimer(
-        { guildId, timerIdentifier: timerKey },
-        world ? { world } : undefined,
-      ),
-  });
-}
-
-export type ResetTimerOptions = {
-  world: string;
-  timerKey: string;
-  guildId: string;
-};
-
-export function resetTimer({
-  guildId,
-  timerKey,
-  ...rest
-}: ResetTimerOptions): Promise<Timer> {
-  const endpoint = `/guilds/${guildId}/timers/${timerKey}/reset`;
-  const payload = {
-    ...rest,
-    actorCharacter: buildCurrentTimerActorCharacterPayload(),
-  };
-
-  return runSingleLoggedAction({
-    actionType: "reset_timer",
-    actionPayload: { guildId, timerKey, ...payload },
-    request: {
-      method: "PATCH",
-      endpoint,
-      payload,
-    },
-    execute: async () =>
-      normalizeTimer(
-        await timersControllerResetTimer(
-          { guildId, timerIdentifier: timerKey },
-          payload,
-        ),
-      ),
-  });
 }

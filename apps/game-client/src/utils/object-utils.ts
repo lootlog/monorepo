@@ -6,21 +6,6 @@ export const isEmpty = (value: unknown): boolean => {
   return false;
 };
 
-export const pick = <T extends Record<string, unknown>, K extends keyof T>(
-  obj: T | undefined,
-  keys: readonly K[],
-): Partial<Pick<T, K>> => {
-  const result: Record<string, unknown> = {};
-  if (!obj) return result as Partial<Pick<T, K>>;
-
-  for (const key of keys) {
-    if (key in obj) {
-      result[key as string] = obj[key];
-    }
-  }
-  return result as Partial<Pick<T, K>>;
-};
-
 export const get = <T>(
   obj: Record<string, unknown>,
   path: string,

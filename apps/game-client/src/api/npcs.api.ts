@@ -1,4 +1,3 @@
-import { createApiClient } from "@lootlog/client/transport";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 export { NpcType };
@@ -14,35 +13,3 @@ export type Npc = {
   location?: string;
   margonemType: number;
 };
-
-export type NpcSearchResult = {
-  npcId: number;
-  name: string;
-  lvl: number;
-  type: NpcType;
-  prof: string;
-  location: string;
-  wt: string | number;
-  icon: string;
-  latestRespBaseSeconds: number;
-  latestRespawnRandomness: number;
-};
-
-export function searchNpcs(
-  guildId: string,
-  world: string,
-  search: string,
-  limit = 10,
-): Promise<NpcSearchResult[]> {
-  const client = createApiClient("main");
-  return client.get<NpcSearchResult[]>(
-    `/guilds/${guildId}/timers/npcs/search`,
-    {
-      params: {
-        world,
-        search,
-        limit,
-      },
-    },
-  );
-}
