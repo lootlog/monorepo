@@ -72,6 +72,68 @@ describe("game realtime verification and presence selection", () => {
     });
   });
 
+  it("preserves Discord member identity across presence fetch, snapshot and deltas", async () => {
+    const socket = new AppSocket();
+    const listener = vi.fn();
+    socket.on(GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE, listener);
+    const presence = {
+      userId: "internal-user-1",
+      discordId: "discord-1",
+      sessionId: "session-1",
+      platform: "game",
+      status: "online",
+      confidence: "reported",
+      isAfk: false,
+      lastSeen: 1,
+      organizationIds: ["organization-1"],
+    };
+    mocks.request.mockResolvedValueOnce({ presences: [presence] });
+    await expect(
+      socket.emitWithAck(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
+        guildId: "organization-1",
+      }),
+    ).resolves.toMatchObject({
+      players: { "discord-1": [{ discordId: "discord-1" }] },
+    });
+    for (const event of [
+      {
+        type: "presence.snapshot",
+        data: { organizationId: "organization-1", presences: [presence] },
+      },
+      {
+        type: "presence.delta",
+        data: {
+          organizationId: "organization-1",
+          changes: [{ action: "upsert", presence }],
+        },
+      },
+      {
+        type: "presence.delta",
+        data: {
+          organizationId: "organization-1",
+          changes: [
+            {
+              action: "remove",
+              userId: presence.userId,
+              discordId: presence.discordId,
+              sessionId: presence.sessionId,
+            },
+          ],
+        },
+      },
+    ])
+      mocks.serverListeners[0]?.(event);
+    expect(listener).toHaveBeenCalledTimes(3);
+    for (const [payload] of listener.mock.calls)
+      expect(payload).toMatchObject({
+        discordId: "discord-1",
+        sessionId: "session-1",
+      });
+    expect(listener).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "offline" }),
+    );
+  });
+
   it("joins as reported before upgrading the session with a connection-bound proof", async () => {
     const socket = new AppSocket();
     await socket.join(joinData);
