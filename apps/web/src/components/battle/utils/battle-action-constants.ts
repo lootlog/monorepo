@@ -1,58 +1,3 @@
-export const ATTACK_ACTIONS_SORT_ORDER = [
-  "+dmgd",
-  "+crit",
-  "+legbon_verycrit",
-  "+legbon_frenzy_main",
-  "+legbon_frenzy_off",
-  "+of_crit",
-  "+critslow_per",
-  "+critsa_per",
-  "+actdmg",
-  "+legbon_curse",
-  "+engback",
-  "+pierce",
-  "+wound",
-  "+of_wound",
-  "+of_woundpoison",
-  "+fastarrow",
-  "+acdmg",
-  "+stun",
-  "-legbon_holytouch",
-  "-legbon_facade",
-  "+legbon_puncture",
-  "-redacdmg_per",
-  "+resdmg",
-  "-manadest",
-  "-endest",
-  "+oth_dmg",
-  "+injure",
-  "+critpoison_per",
-  "+taken_dmg",
-  "+crush",
-  "+vulture",
-  "+rage",
-  "+legbon_anguish",
-  "+acdmg_destroyed",
-  "legbon_lastheal",
-  "-absorb",
-  "-absorbm",
-  "-blok",
-  "-evade",
-  "-parry",
-  "-pierceb",
-  "-arrowblock",
-  "-dmg",
-  "-dmga",
-  "-contra",
-  "-legbon_glare",
-  "-legbon_retaliation",
-  "-legbon_critred",
-  "-legbon_cleanse",
-  "-immunity_to_dmg",
-  "vamp_time",
-  "-dmgd",
-] as const;
-
 const SYSTEM_ACTION_TYPES = ["txt", "step", "+ph"] as const;
 
 const SPELL_ACTION_TYPES = [
@@ -207,25 +152,12 @@ const ATTACK_ACTION_TYPES = [
 
 const OUTCOME_ACTION_TYPES = ["winner", "loser", "flee"] as const;
 
-const IGNORED_ACTION_TYPES = ["skillId", "+exp"] as const;
-
 export type SystemActionType = (typeof SYSTEM_ACTION_TYPES)[number];
 export type SpellActionType = (typeof SPELL_ACTION_TYPES)[number];
 export type BuffActionType = (typeof BUFF_ACTION_TYPES)[number];
 export type PassiveActionType = (typeof PASSIVE_ACTION_TYPES)[number];
 export type AttackActionType = (typeof ATTACK_ACTION_TYPES)[number];
 export type OutcomeActionType = (typeof OUTCOME_ACTION_TYPES)[number];
-export type IgnoredActionType = (typeof IGNORED_ACTION_TYPES)[number];
-
-export type KnownActionType =
-  | SystemActionType
-  | SpellActionType
-  | BuffActionType
-  | PassiveActionType
-  | AttackActionType
-  | OutcomeActionType
-  | IgnoredActionType;
-
 export const isSystemAction = (
   actionType: string,
 ): actionType is SystemActionType =>

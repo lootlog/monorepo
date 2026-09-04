@@ -1,7 +1,6 @@
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import {
   createLoader,
-  createSerializer,
   createStandardSchemaV1,
   parseAsArrayOf,
   parseAsBoolean,
@@ -337,10 +336,6 @@ export const loadBattlePanelAbyssSearch = createLoader(
 
 export const loadBattlePanelSingleBattleSearch = createLoader(
   battlePanelSingleBattleSearchParsers,
-);
-
-export const serializeBattlePanelBattlesSearch = createSerializer(
-  battlePanelBattlesSearchParsers,
 );
 
 export const getBattlePanelPageIndex = (page: number): number =>

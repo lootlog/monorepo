@@ -23,10 +23,3 @@ export const getEventStatusAtTimestamp = (
 
   return "active";
 };
-
-export const isEventActiveAtTimestamp = (
-  event: EventActivityInput,
-  currentTimestamp = Date.now(),
-): boolean => {
-  return getEventStatusAtTimestamp(event, currentTimestamp) === "active";
-};

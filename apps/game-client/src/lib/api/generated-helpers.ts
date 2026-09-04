@@ -9,7 +9,6 @@ import type {
   TimerResponseDto,
 } from "@lootlog/client/main";
 
-import type { Guild } from "@/api/guilds.api";
 import type { Npc } from "@/api/npcs.api";
 import type { GuildMember } from "@/types/guild-member";
 import type {
@@ -60,19 +59,6 @@ export const getGuildIds = (guilds?: GuildIdentity[]) => {
   const guildIds = guilds.map((guild) => guild.id);
   guildIdsCache.set(guilds, guildIds);
   return guildIds;
-};
-
-export const normalizeGuild = (guild: GuildIdentity): Guild => {
-  return {
-    id: guild.id,
-    name: guild.name,
-    icon: guild.icon ?? null,
-    ...(guild.vanityUrl ? { vanityUrl: guild.vanityUrl } : {}),
-  };
-};
-
-export const normalizeGuilds = (guilds: GuildIdentity[] = []) => {
-  return guilds.map(normalizeGuild);
 };
 
 export const getGuildNamesById = (guilds?: GuildIdentity[]) => {
