@@ -87,13 +87,9 @@ export class PresenceStore {
   ): Effect.Effect<Basic | Precise | undefined, PresenceFailure> {
     const self = this;
     return Effect.gen(function* () {
-      const allowedOrganizationIds = new Set(
-        socket.data.guilds.map(({ guild }) => guild.id),
-      );
+      // Publication opt-out is temporarily disabled; keep the wire field for compatibility.
       const selectedOrganizationIds = [
-        ...new Set(
-          data.organizationIds.filter((id) => allowedOrganizationIds.has(id)),
-        ),
+        ...new Set(socket.data.guilds.map(({ guild }) => guild.id)),
       ];
       const previousPresence = socket.data.presence;
       if (selectedOrganizationIds.length === 0) {
