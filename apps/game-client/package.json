@@ -11,13 +11,24 @@
     "build:fast": "tsc && FAST_BUILD=1 vite build && bun ./src/scripts/copy-entrypoint.mjs",
     "build:local-prod": "tsc && vite build --mode production-local && bun ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "lint": "oxlint src --deny-warnings",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "lint": "oxlint src extension wxt.config.ts vite.shared.ts --deny-warnings",
     "doctor": "react-doctor .",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
-    "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts"
+    "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts",
+    "dev:extension": "wxt -b chrome --mv3",
+    "dev:extension:firefox": "wxt -b firefox --mv3",
+    "build:extension": "bun extension/build.ts build local chrome",
+    "build:extension:firefox": "bun extension/build.ts build local firefox",
+    "zip:extension": "bun extension/build.ts zip local chrome",
+    "zip:extension:firefox": "bun extension/build.ts zip local firefox",
+    "zip:extension:sources": "bun ./extension/package-sources.ts",
+    "build:extension:production": "bun extension/build.ts build production chrome",
+    "zip:extension:production": "bun extension/build.ts zip production chrome",
+    "build:extension:production:firefox": "bun extension/build.ts build production firefox",
+    "zip:extension:production:firefox": "bun extension/build.ts zip production firefox"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -28,6 +39,7 @@
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/margonem": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
@@ -48,6 +60,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@aklinker1/zero-zip": "1.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/vite": "catalog:",
@@ -69,6 +82,7 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-monkey": "^8.1.0",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "wxt": "^0.21.0"
   }
 }

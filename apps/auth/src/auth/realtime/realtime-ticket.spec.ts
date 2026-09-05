@@ -22,6 +22,25 @@ class FakeRedis implements RealtimeTicketRedis {
 }
 
 describe("realtime tickets", () => {
+  it.each([
+    "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc",
+  ])("binds an extension ticket to its exact origin: %s", async (origin) => {
+    const redis = new FakeRedis();
+    const identity = { userId: "user-1", discordId: "discord-1" };
+    const issued = await issueRealtimeTicket(redis, identity, origin);
+    await expect(
+      consumeRealtimeTicket(redis, issued.ticket, origin),
+    ).resolves.toEqual(identity);
+    await expect(
+      consumeRealtimeTicket(redis, issued.ticket, origin),
+    ).resolves.toBeNull();
+    const other = await issueRealtimeTicket(redis, identity, origin);
+    await expect(
+      consumeRealtimeTicket(redis, other.ticket, "https://classic.margonem.pl"),
+    ).resolves.toBeNull();
+  });
+
   it("stores only a SHA-256 lookup key and consumes the ticket exactly once", async () => {
     const redis = new FakeRedis();
     const issued = await issueRealtimeTicket(

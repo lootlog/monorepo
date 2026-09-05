@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "Lootlog"
+  },
+  "extensionDescription": {
+    "message": "Łupy, timery i współpraca klanu bezpośrednio w Margonem."
+  },
+  "openLootlog": {
+    "message": "Otwórz Lootlog"
+  }
+}

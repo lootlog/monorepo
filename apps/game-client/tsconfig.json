@@ -19,6 +19,11 @@
     },
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "src",
+    "extension",
+    "wxt.config.ts",
+    "vite.shared.ts",
+    ".wxt/wxt.d.ts"
+  ]
 }

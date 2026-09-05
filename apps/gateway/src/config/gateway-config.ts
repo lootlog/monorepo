@@ -1,4 +1,6 @@
-import { Config, Context, Effect, Layer, Redacted } from "effect";
+import { Config, Context, Effect, Layer, Redacted, Schema } from "effect";
+
+import { ChromeExtensionOrigin } from "@lootlog/schema/browser-extension";
 
 export interface GatewayConfiguration {
   readonly environment: string;
@@ -19,6 +21,7 @@ export interface GatewayConfiguration {
   };
   readonly websocketPath: string;
   readonly allowedWebOrigins: ReadonlySet<string>;
+  readonly allowedExtensionOrigins: ReadonlySet<string>;
   readonly maxBackpressureBytes: number;
   readonly maxBackpressureStrikes: number;
 }
@@ -72,6 +75,18 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
       yield* Config.string("ALLOWED_WEB_ORIGINS").pipe(
         Config.withDefault("http://localhost,http://localhost:3000"),
       ),
+    ),
+    allowedExtensionOrigins: splitOrigins(
+      yield* Config.schema(
+        Schema.String.check(
+          Schema.makeFilter(
+            (value) =>
+              [...splitOrigins(value)].every(Schema.is(ChromeExtensionOrigin)),
+            { expected: "comma-separated exact Chrome extension origins" },
+          ),
+        ),
+        "ALLOWED_EXTENSION_ORIGINS",
+      ).pipe(Config.withDefault("")),
     ),
     maxBackpressureBytes: yield* Config.number(
       "WEBSOCKET_MAX_BACKPRESSURE_BYTES",

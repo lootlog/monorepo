@@ -11,7 +11,7 @@ import { resolveBetterAuthBaseURL } from "#src/auth/provider/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
 
-const makeRuntime = () => {
+const makeRuntime = (authenticated = true) => {
   const ticketValues = new Map<string, string>();
   const realtimeTicketRedis = {
     set: (key: string, value: string) => {
@@ -33,10 +33,14 @@ const makeRuntime = () => {
     ),
   );
   const getSession = mock((_context: { headers: Headers }) =>
-    Promise.resolve({
-      session: {},
-      user: { id: "user-1", discordId: "discord-1" },
-    }),
+    Promise.resolve(
+      authenticated
+        ? {
+            session: {},
+            user: { id: "user-1", discordId: "discord-1" },
+          }
+        : null,
+    ),
   );
   const auth = {
     api: {
@@ -129,6 +133,88 @@ describe("Auth HttpApi contract", () => {
     expect([...runtime.ticketValues.keys()][0]).toMatch(
       /^auth:realtime-ticket:[a-f0-9]{64}$/,
     );
+  });
+
+  it.each([undefined, "null"])(
+    "binds Firefox tickets to the explicit origin when HTTP Origin is %s",
+    async (origin) => {
+      const extensionOrigin =
+        "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc";
+      const headers = new Headers({
+        "x-lootlog-extension-origin": extensionOrigin,
+      });
+      if (origin) headers.set("origin", origin);
+      const response = await runtime.run(
+        new Request("http://localhost/auth/realtime-ticket", {
+          method: "POST",
+          headers,
+        }),
+      );
+      expect(response.status).toBe(201);
+      expect(
+        [...runtime.ticketValues.values()].map((value) => JSON.parse(value)),
+      ).toContainEqual({
+        userId: "user-1",
+        discordId: "discord-1",
+        origin: extensionOrigin,
+      });
+    },
+  );
+
+  it("never lets an extension hint override a browser Origin", async () => {
+    const origin = "https://classic.margonem.pl";
+    const response = await runtime.run(
+      new Request("http://localhost/auth/realtime-ticket", {
+        method: "POST",
+        headers: {
+          origin,
+          "x-lootlog-extension-origin":
+            "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc",
+        },
+      }),
+    );
+    expect(response.status).toBe(201);
+    const stored = [...runtime.ticketValues.values()].at(-1);
+    expect(JSON.parse(stored ?? "null")).toMatchObject({ origin });
+  });
+
+  it.each([
+    "https://attacker.example",
+    "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "moz-extension://*",
+    "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc/path",
+  ])(
+    "rejects invalid Firefox origin hints without issuing tickets: %s",
+    async (origin) => {
+      const before = runtime.ticketValues.size;
+      const response = await runtime.run(
+        new Request("http://localhost/auth/realtime-ticket", {
+          method: "POST",
+          headers: { "x-lootlog-extension-origin": origin },
+        }),
+      );
+      expect(response.status).toBe(401);
+      expect(runtime.ticketValues.size).toBe(before);
+    },
+  );
+
+  it("requires a valid session even with a Firefox origin hint", async () => {
+    const anonymous = makeRuntime(false);
+    try {
+      const response = await anonymous.run(
+        new Request("http://localhost/auth/realtime-ticket", {
+          method: "POST",
+          headers: {
+            "x-lootlog-extension-origin":
+              "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc",
+          },
+        }),
+      );
+      expect(response.status).toBe(401);
+      expect(anonymous.ticketValues.size).toBe(0);
+    } finally {
+      await anonymous.dispose();
+    }
   });
 
   it("delegates /idp and /idp/* as raw Web requests", async () => {

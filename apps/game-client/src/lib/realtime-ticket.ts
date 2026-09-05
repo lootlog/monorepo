@@ -18,11 +18,18 @@ const isRealtimeTicketResponse = (
     typeof value.expiresAt === "number",
   );
 
-export const requestRealtimeTicket = async (): Promise<string> => {
+export const requestRealtimeTicket = async (
+  extensionOrigin?: string,
+): Promise<string> => {
   const response = await fetch(`${AUTH_API_URL}/auth/realtime-ticket`, {
     method: "POST",
     credentials: "include",
-    headers: { accept: "application/json" },
+    headers: {
+      accept: "application/json",
+      ...(extensionOrigin
+        ? { "x-lootlog-extension-origin": extensionOrigin }
+        : {}),
+    },
   });
   if (!response.ok) throw new Error("Failed to issue realtime ticket");
   const payload: unknown = await response.json();
