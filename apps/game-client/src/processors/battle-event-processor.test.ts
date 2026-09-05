@@ -1,3 +1,4 @@
+import type * as OriginalModule from "@/hooks/game-events/helpers/battle.helpers";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { BattleEventProcessor } from "./battle-event-processor";
 import { useBattleStore } from "@/store/game-store/battle.store";
@@ -49,9 +50,15 @@ vi.mock("@/helpers/mappers/battlelog.mappers", () => ({
   mapBattleEventsToPayload: vi.fn().mockReturnValue({ mapped: true }),
 }));
 
-vi.mock("@/hooks/game-events/helpers/battle.helpers", () => ({
-  mergeBattleWarriorPatches: vi.fn().mockImplementation((warriors) => warriors),
-}));
+vi.mock(
+  "@/hooks/game-events/helpers/battle.helpers",
+  async (importOriginal) => ({
+    ...(await importOriginal<typeof OriginalModule>()),
+    mergeBattleWarriorPatches: vi
+      .fn()
+      .mockImplementation((warriors) => warriors),
+  }),
+);
 
 const mockBattlePanelStore = {
   isBattleCollectionEnabled: true,

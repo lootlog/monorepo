@@ -189,3 +189,32 @@ export const removeGuildNotificationJobFromCache = (
         : currentJobs,
   );
 };
+
+export const prepareGuildNotificationMutation = async (
+  queryClient: QueryClient,
+  guildId: string,
+) => {
+  await cancelGuildNotificationQueries(queryClient, guildId);
+  return getGuildNotificationCacheSnapshot(queryClient, guildId);
+};
+
+export const getGuildNotificationMutationCallbacks = (
+  queryClient: QueryClient,
+  guildId: string | undefined,
+) => ({
+  onSuccess: async () => {
+    if (guildId) await invalidateGuildNotificationQueries(queryClient, guildId);
+  },
+  onError: (
+    _error: unknown,
+    _variables: unknown,
+    previousNotifications: GuildNotificationCacheSnapshot | undefined,
+  ) => {
+    if (guildId)
+      restoreGuildNotificationCacheSnapshot(
+        queryClient,
+        guildId,
+        previousNotifications,
+      );
+  },
+});

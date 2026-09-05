@@ -1,3 +1,4 @@
+import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -197,27 +198,15 @@ export const makeEventUpdate =
         );
 
       const updated = yield* catalogRead.hydrateMutation(eventId);
-      yield* Effect.forEach(
+      yield* invalidateEventCachePatterns(
+        redis,
+        logger,
         [
           getEventWrappedCachePattern(guild.id, eventId),
           `event-read:v2:${guild.id}:guild:*`,
           `event-read:v2:${guild.id}:${eventId}:*`,
         ],
-        (pattern) =>
-          Effect.tryPromise({
-            try: () => redis.deleteByPattern(pattern),
-            catch: (cause) => cause,
-          }).pipe(
-            Effect.catch((error) =>
-              Effect.sync(() =>
-                logger.warn("Failed to invalidate event cache", {
-                  error,
-                  pattern,
-                }),
-              ),
-            ),
-          ),
-        { concurrency: "unbounded", discard: true },
+        "Failed to invalidate event cache",
       );
       return attachComputedEventActive(updated, referenceTime);
     }).pipe(Effect.withSpan("EventsController_updateEvent"));

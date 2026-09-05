@@ -1,22 +1,20 @@
+import { useRestoreTimer } from "../hooks/use-restore-timer";
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   Popover,
+  preservePopoverOnMenuPress,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   getTimersControllerGetTimerHistoryQueryKey,
   useTimersControllerGetTimerHistory,
-  useTimersControllerRestoreTimerFromHistory,
-  type TimerHistoryResponseDto,
 } from "@lootlog/client/main";
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { History } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { normalizeTimerResponse } from "@/api/timers.api";
-import { useTimersCache } from "@/hooks/api/use-timers-cache";
 import { TimerHistoryList } from "./timer-history-list";
 
 type TimerHistoryPopoverProps = {
@@ -28,9 +26,8 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
-  const { upsertTimer } = useTimersCache();
-  const { mutate: restoreTimer, isPending: restorePending } =
-    useTimersControllerRestoreTimerFromHistory();
+  const { restoreTimer: handleRestore, isPending: restorePending } =
+    useRestoreTimer(() => setOpen(false));
   const { data: history = [], isLoading } = useTimersControllerGetTimerHistory(
     {
       guildId: timer.guildId,
@@ -57,44 +54,8 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
     },
   );
 
-  const handleRestore = (entry: TimerHistoryResponseDto) => {
-    restoreTimer(
-      {
-        pathParams: {
-          guildId: entry.guildId,
-          historyEntryId: entry.id.toString(),
-        },
-      },
-      {
-        onSuccess: (restoredTimer) => {
-          upsertTimer(normalizeTimerResponse(restoredTimer));
-          showRuntimeMessage(t("history.restoreSuccess"));
-          setOpen(false);
-        },
-        onError: () => {
-          showRuntimeMessage(t("history.restoreFailed"));
-        },
-      },
-    );
-  };
-
   return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen, eventDetails) => {
-        if (
-          !nextOpen &&
-          eventDetails.reason === "outside-press" &&
-          eventDetails.event.target instanceof Element &&
-          eventDetails.event.target.closest('[role="menu"]')
-        ) {
-          eventDetails.cancel();
-          return;
-        }
-
-        setOpen(nextOpen);
-      }}
-    >
+    <Popover open={open} onOpenChange={preservePopoverOnMenuPress(setOpen)}>
       <PopoverTrigger asChild>
         <ContextMenuItem
           onSelect={(event) => {
@@ -118,4 +79,3 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
     </Popover>
   );
 };
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

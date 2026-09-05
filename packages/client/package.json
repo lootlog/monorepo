@@ -15,7 +15,8 @@
     "./auth": "./src/generated/auth.ts",
     "./battlelog": "./src/generated/battlelog.ts",
     "./main": "./src/generated/main.ts",
-    "./search": "./src/generated/search.ts"
+    "./search": "./src/generated/search.ts",
+    "./realtime/event-listeners": "./src/realtime/event-listeners.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -26,7 +27,8 @@
     "openapi:parity": "bun ./scripts/check-openapi-parity.ts"
   },
   "dependencies": {
-    "@lootlog/protocol": "workspace:*"
+    "@lootlog/protocol": "workspace:*",
+    "@lootlog/schema": "workspace:*"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

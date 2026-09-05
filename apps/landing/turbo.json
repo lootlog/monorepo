@@ -2,7 +2,8 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "env": ["$TURBO_EXTENDS$", "VITE_ADDON_URL", "VITE_AUTH_SERVICE_URL"]
+      "env": ["$TURBO_EXTENDS$", "VITE_ADDON_URL", "VITE_AUTH_SERVICE_URL"],
+      "inputs": ["$TURBO_EXTENDS$", "$TURBO_ROOT$/scripts/static-assets.mjs"]
     }
   }
 }

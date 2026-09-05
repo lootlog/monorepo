@@ -1,3 +1,4 @@
+import { isObjectRecord as isRecord } from "@lootlog/schema/records";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 
 export interface DiscordIdentity {
@@ -93,8 +94,4 @@ export function isApiGuildMember(value: unknown): value is APIGuildMember {
 
 function isApiGuild(value: unknown): value is APIGuild {
   return isRecord(value) && typeof value.id === "string";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }

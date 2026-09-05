@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
@@ -19,9 +20,6 @@ interface ApplySettingsPatchInput {
   set: JsonRecord;
   unset: ReadonlyArray<string>;
 }
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const cloneValue = <TValue>(value: TValue): TValue => structuredClone(value);
 

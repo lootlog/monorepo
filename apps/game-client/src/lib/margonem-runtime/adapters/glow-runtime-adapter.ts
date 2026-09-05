@@ -1,3 +1,4 @@
+import { isObjectRecord as isObject } from "@lootlog/schema/records";
 import type { Other } from "@lootlog/margonem/others";
 import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
 
@@ -77,10 +78,6 @@ const MASK_PATH = "/img/mask.png";
 
 function getRuntimeWindow(): RuntimeWindow {
   return window as RuntimeWindow;
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
 
 function isNativeOtherGlowDrawable(drawable: unknown): boolean {

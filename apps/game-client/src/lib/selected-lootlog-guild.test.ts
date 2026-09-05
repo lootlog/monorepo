@@ -1,9 +1,7 @@
+import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { describe, expect, it } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import {
-  getVisibleLootlogGuilds,
-  orderLootlogGuilds,
-} from "./selected-lootlog-guild";
+import { getVisibleLootlogGuilds } from "./selected-lootlog-guild";
 
 const guilds: GuildIdentity[] = [
   { id: "guild-1", name: "Alpha", icon: null },

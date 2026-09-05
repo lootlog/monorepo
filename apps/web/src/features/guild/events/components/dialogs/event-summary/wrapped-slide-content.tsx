@@ -1,23 +1,6 @@
 import { useTranslation } from "react-i18next";
-import type { WrappedFactSlide, WrappedSlide } from "./build-wrapped-slides";
-import { formatDurationHuman } from "../../../utils/format-duration";
-import { formatHourLabel, formatMetric } from "./utils";
-
-const getFactValue = (fact: WrappedFactSlide): string => {
-  if (fact.id === "tracked-time" || fact.id === "longest-duty") {
-    return formatDurationHuman(fact.value);
-  }
-
-  if (fact.id === "busiest-hour") {
-    return formatHourLabel(fact.value);
-  }
-
-  if (fact.id === "coverage") {
-    return `${formatMetric(fact.value)}%`;
-  }
-
-  return formatMetric(fact.value);
-};
+import type { WrappedSlide } from "./build-wrapped-slides";
+import { getFactValue } from "./utils";
 
 interface WrappedSlideContentProps {
   slide: WrappedSlide;

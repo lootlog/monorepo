@@ -1,6 +1,7 @@
+import { updateSettingsField } from "./update-settings-field";
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import type { NpcType } from "@lootlog/client/main";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
@@ -41,31 +42,21 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
   const debouncedMaxLvl = useDebounce(settings.maxLvl, 500);
 
   const setWorld = (world: string | null) => {
-    setSettings((prev) => {
-      if (prev.world === world) return prev;
-      return { ...prev, world };
-    });
+    setSettings((previous) => updateSettingsField(previous, "world", world));
   };
 
   const setMinLvl = (minLvl: string) => {
-    setSettings((prev) => {
-      if (prev.minLvl === minLvl) return prev;
-      return { ...prev, minLvl };
-    });
+    setSettings((previous) => updateSettingsField(previous, "minLvl", minLvl));
   };
 
   const setMaxLvl = (maxLvl: string) => {
-    setSettings((prev) => {
-      if (prev.maxLvl === maxLvl) return prev;
-      return { ...prev, maxLvl };
-    });
+    setSettings((previous) => updateSettingsField(previous, "maxLvl", maxLvl));
   };
 
   const setNpcType = (npcType: NpcType | "ALL") => {
-    setSettings((prev) => {
-      if (prev.npcType === npcType) return prev;
-      return { ...prev, npcType };
-    });
+    setSettings((previous) =>
+      updateSettingsField(previous, "npcType", npcType),
+    );
   };
 
   const setPeriod = (period: KillStatsPeriod) => {

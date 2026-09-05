@@ -1,3 +1,4 @@
+import { getOffsetPagination } from "./utils/offset-pagination";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
@@ -140,24 +141,12 @@ export const NpcKillersPage: React.FC = () => {
     cursor,
     cursor + ITEMS_PER_PAGE,
   );
-  const hasNext = cursor + ITEMS_PER_PAGE < total;
-  const hasPrev = cursor > 0;
+  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
+    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setCursor(0);
-  };
-
-  const handleNextPage = () => {
-    if (hasNext) {
-      setCursor(cursor + ITEMS_PER_PAGE);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (hasPrev) {
-      setCursor(Math.max(0, cursor - ITEMS_PER_PAGE));
-    }
   };
 
   if (isLoading) {

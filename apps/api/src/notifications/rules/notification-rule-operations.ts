@@ -1,11 +1,11 @@
+import { readNotificationTestUsage } from "../jobs/notification-test-usage.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, asc, count, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   guildTable,
-  notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
@@ -146,33 +146,7 @@ export const makeNotificationRuleOperations = (
     );
 
   const testUsage = (targetIds: number[]) =>
-    Effect.gen(function* () {
-      if (targetIds.length === 0) return new Map<number, Date[]>();
-      const rows = yield* database
-        .select({
-          targetId: notificationJobTable.targetId,
-          createdAt: notificationJobTable.createdAt,
-        })
-        .from(notificationJobTable)
-        .where(
-          and(
-            inArray(notificationJobTable.targetId, targetIds),
-            eq(notificationJobTable.jobKind, NotificationJobKind.TEST),
-            gte(
-              notificationJobTable.createdAt,
-              new Date((yield* Clock.currentTimeMillis) - TEST_WINDOW_MS),
-            ),
-          ),
-        )
-        .orderBy(asc(notificationJobTable.createdAt));
-      const usage = new Map<number, Date[]>();
-      for (const row of rows) {
-        const values = usage.get(row.targetId) ?? [];
-        values.push(row.createdAt);
-        usage.set(row.targetId, values);
-      }
-      return usage;
-    }).pipe(
+    readNotificationTestUsage(database, targetIds, TEST_WINDOW_MS).pipe(
       Effect.mapError(
         (cause) =>
           new NotificationRuleOperationFailure({

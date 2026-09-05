@@ -5,7 +5,9 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/instrumentation.ts"
+    ".": "./src/instrumentation.ts",
+    "./bounded-http-get": "./src/bounded-http-get.ts",
+    "./observability": "./src/observability.ts"
   },
   "scripts": {
     "lint": "oxlint src test",

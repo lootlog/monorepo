@@ -45,10 +45,6 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
     }
   };
 
-  const getGuildInitial = (name: string) => {
-    return name.charAt(0).toUpperCase();
-  };
-
   return (
     <TooltipProvider>
       <ScrollArea
@@ -105,7 +101,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
                         className="ll:object-cover ll:size-full ll:rounded-sm"
                       />
                       <AvatarFallback className="ll:text-xs ll:font-semibold">
-                        {getGuildInitial(guild.name)}
+                        {guild.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>

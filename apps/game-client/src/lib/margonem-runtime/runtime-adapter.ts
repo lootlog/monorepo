@@ -67,19 +67,25 @@ export function normalizeNpc(npc: GameNpc): RuntimeNpc {
   });
 }
 
-function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
-  const data = other.d ?? other;
-  const characterId = String(data.id ?? "");
-  const accountId = String(data.account ?? "");
-  if (!characterId || !accountId) return null;
+export function normalizeRuntimeOtherData(
+  data: RuntimeOtherData,
+): RuntimeOther {
   return Object.freeze({
-    accountId,
-    characterId,
+    accountId: String(data.account ?? ""),
+    characterId: String(data.id ?? ""),
     icon: data.icon ?? "",
     level: data.lvl ?? 0,
     name: data.nick ?? "",
     profession: data.prof ?? "",
   });
+}
+
+function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
+  const data = other.d ?? other;
+  const characterId = String(data.id ?? "");
+  const accountId = String(data.account ?? "");
+  if (!characterId || !accountId) return null;
+  return normalizeRuntimeOtherData(data);
 }
 
 abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {

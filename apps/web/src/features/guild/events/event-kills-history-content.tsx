@@ -13,7 +13,7 @@ import {
 } from "@lootlog/client/main";
 import type { EventHeroStatsResponseDto } from "@lootlog/client/main";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { EventKillsFilter } from "./components/kills/event-kills-filter";
+import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
 import { EventKillsSummary } from "./components/kills/event-kills-summary";
 import { EventKillsTable } from "./components/kills/event-kills-table";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
@@ -160,7 +160,7 @@ export const EventKillsHistoryContent = ({
             isKillCountLoading={heroStatsLoading}
           />
 
-          <EventKillsFilter
+          <HeroKillsFilter
             heroes={heroes}
             selectedHeroId={selectedHeroId}
             onSelectedHeroChange={setSelectedHeroId}

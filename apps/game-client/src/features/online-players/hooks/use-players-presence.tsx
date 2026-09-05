@@ -239,24 +239,25 @@ export const usePlayersPresence = (
     };
   }, [socket, joined, connected, scopeKey]);
 
+  const retry = () => {
+    setPresenceResource((currentResource) => {
+      const scopedResource =
+        currentResource.scopeKey === scopeKey
+          ? currentResource
+          : createEmptyPresenceResource(scopeKey);
+      return {
+        ...scopedResource,
+        accessState: "allowed",
+        error: null,
+        loading: true,
+      };
+    });
+    setRequestVersion((version) => version + 1);
+  };
+  const handlePermissionsUpdated = useEffectEvent(retry);
+
   useEffect(() => {
     if (!socket || !connected || !joined) return;
-
-    const handlePermissionsUpdated = () => {
-      setPresenceResource((currentResource) => {
-        const scopedResource =
-          currentResource.scopeKey === scopeKey
-            ? currentResource
-            : createEmptyPresenceResource(scopeKey);
-        return {
-          ...scopedResource,
-          accessState: "allowed",
-          error: null,
-          loading: true,
-        };
-      });
-      setRequestVersion((version) => version + 1);
-    };
 
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 
@@ -278,21 +279,7 @@ export const usePlayersPresence = (
     onlinePlayers: visiblePresenceResource.onlinePlayers,
     refreshing:
       visiblePresenceResource.loading && visiblePresenceResource.loaded,
-    retry: () => {
-      setPresenceResource((currentResource) => {
-        const scopedResource =
-          currentResource.scopeKey === scopeKey
-            ? currentResource
-            : createEmptyPresenceResource(scopeKey);
-        return {
-          ...scopedResource,
-          accessState: "allowed",
-          error: null,
-          loading: true,
-        };
-      });
-      setRequestVersion((version) => version + 1);
-    },
+    retry,
     setOnlinePlayers,
     stale:
       hasScope && visiblePresenceResource.loaded && (!connected || !joined),

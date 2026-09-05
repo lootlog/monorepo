@@ -1,8 +1,7 @@
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
-  RabbitExchange,
   RabbitRoutingKey,
-  type RabbitQueueDefinition,
+  makeQueue as queue,
 } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer, Redacted } from "effect";
 import { SearchConfig } from "#src/config/search-config";
@@ -13,15 +12,6 @@ import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 import { effectLogger } from "#src/shared/logger";
 
-const queue = (
-  name: string,
-  routingKey: RabbitQueueDefinition["routingKey"],
-): RabbitQueueDefinition => ({
-  name,
-  exchange: RabbitExchange.DEFAULT,
-  routingKey,
-  durable: true,
-});
 export const searchQueues = [
   queue("search.items.index", RabbitRoutingKey.SEARCH_ITEMS_INDEX),
   queue("search-npcs-index", RabbitRoutingKey.SEARCH_NPCS_INDEX),

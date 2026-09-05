@@ -32,7 +32,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { Switch } from "@lootlog/ui/components/switch";
 import { useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey,

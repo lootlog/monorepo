@@ -2,23 +2,12 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import {
   RabbitExchange,
   RabbitRoutingKey,
+  makeQueue as queue,
   makeRetryQueue,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer, Redacted } from "effect";
 import { Queue } from "#src/rabbitmq/queue";
-
-const queue = (
-  name: string,
-  routingKey: RabbitQueueDefinition["routingKey"],
-  options: Partial<RabbitQueueDefinition> = {},
-): RabbitQueueDefinition => ({
-  name,
-  exchange: RabbitExchange.DEFAULT,
-  routingKey,
-  durable: true,
-  ...options,
-});
 
 const retried = (
   name: string,

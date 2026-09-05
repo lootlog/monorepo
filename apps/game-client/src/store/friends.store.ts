@@ -1,3 +1,4 @@
+import { reconcileRuntimeArray } from "@/lib/margonem-runtime/reconcile-runtime-array";
 import type {
   RuntimeFriend,
   RuntimeStatus,
@@ -27,27 +28,6 @@ const FRIEND_FIELDS = [
   "status",
 ] as const satisfies readonly (keyof RuntimeFriend)[];
 
-function reconcileFriends(
-  current: readonly RuntimeFriend[],
-  incoming: readonly RuntimeFriend[],
-): readonly RuntimeFriend[] {
-  let changed = current.length !== incoming.length;
-  const reconciled = incoming.map((friend, index) => {
-    const currentFriend = current[index];
-    if (
-      currentFriend &&
-      FRIEND_FIELDS.every((field) => currentFriend[field] === friend[field])
-    ) {
-      return currentFriend;
-    }
-
-    changed = true;
-    return Object.freeze({ ...friend });
-  });
-
-  return changed ? Object.freeze(reconciled) : current;
-}
-
 export const useFriendsStore = create<FriendsState>()((set, get) => ({
   friends: [],
   friendsMax: 0,
@@ -73,7 +53,11 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     get().friends.some((friend) => friend.characterId === characterId),
   replaceFriends: (friends, friendsMax) =>
     set((state) => {
-      const reconciled = reconcileFriends(state.friends, friends);
+      const reconciled = reconcileRuntimeArray(
+        state.friends,
+        friends,
+        FRIEND_FIELDS,
+      );
       if (
         state.status === "ready" &&
         state.friendsMax === friendsMax &&

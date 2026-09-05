@@ -1,6 +1,6 @@
 /** Shared input and output schemas for the lootlog-config feature. */
 import * as Schema from "effect/Schema";
-import { JsonValue, FiniteNumber } from "#src/contracts/scalars";
+import { JsonValue, FiniteNumber } from "@lootlog/schema/http-scalars";
 
 const npcLootlogConfigFields = {
   id: FiniteNumber,

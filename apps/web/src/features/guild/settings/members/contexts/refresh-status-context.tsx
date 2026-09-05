@@ -3,15 +3,15 @@ import {
   useContext,
   useState,
   useCallback,
-  useEffect,
   type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGateway } from "@/hooks/utils/use-gateway";
+import { useRefreshJobUpdates } from "@/hooks/utils/use-refresh-job-updates";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { GatewayEvent } from "@/config/gateway";
-import type { RefreshJobUpdate } from "@/types/refresh-job";
-import { getMembersControllerGetGuildMembersQueryKey } from "@lootlog/client/main";
+import {
+  getMembersControllerGetGuildMembersQueryKey,
+  useGuildsControllerGetGuildById,
+} from "@lootlog/client/main";
 
 interface RefreshStatusContextValue {
   refreshedIds: Set<string>;
@@ -46,66 +46,10 @@ export const RefreshStatusProvider = ({
   const [refreshedIds, setRefreshedIds] = useState<Set<string>>(new Set());
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
-  const { socket, connected } = useGateway();
-  const guildId = useGuildId();
-
-  useEffect(() => {
-    if (!guildId || !connected) {
-      return;
-    }
-
-    const handleRefreshJobUpdate = (data: RefreshJobUpdate) => {
-      const changedIds = [
-        ...(data.refreshedIds ?? []),
-        ...(data.skippedIds ?? []),
-        ...(data.failedIds ?? []),
-      ];
-
-      if (changedIds.length > 0) {
-        // Skipped and failed attempts can still update Discord sync diagnostics.
-        void queryClient.invalidateQueries({
-          queryKey: getMembersControllerGetGuildMembersQueryKey({ guildId }),
-        });
-      }
-
-      if (data.refreshedIds && data.refreshedIds.length > 0) {
-        setRefreshedIds((prev) => {
-          const newSet = new Set(prev);
-          data.refreshedIds?.forEach((id) => newSet.add(id));
-          return newSet;
-        });
-
-        setFailedIds((prev) => {
-          const newSet = new Set(prev);
-          data.refreshedIds?.forEach((id) => newSet.delete(id));
-          return newSet;
-        });
-      }
-
-      if (data.failedIds && data.failedIds.length > 0) {
-        setFailedIds((prev) => {
-          const newSet = new Set(prev);
-          data.failedIds?.forEach((id) => newSet.add(id));
-          return newSet;
-        });
-
-        setRefreshedIds((prev) => {
-          const newSet = new Set(prev);
-          data.failedIds?.forEach((id) => newSet.delete(id));
-          return newSet;
-        });
-      }
-    };
-
-    socket.on(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
-
-    return () => {
-      socket.off(
-        GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
-        handleRefreshJobUpdate,
-      );
-    };
-  }, [guildId, socket, connected, queryClient]);
+  const routeGuildId = useGuildId();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: routeGuildId ?? "",
+  });
 
   const markAsRefreshed = useCallback((ids: string[]) => {
     setRefreshedIds((prev) => {
@@ -145,6 +89,23 @@ export const RefreshStatusProvider = ({
     setRefreshedIds(new Set());
     setFailedIds(new Set());
   }, []);
+
+  useRefreshJobUpdates(guild?.id, (data) => {
+    if (
+      data.refreshedIds?.length ||
+      data.skippedIds?.length ||
+      data.failedIds?.length
+    ) {
+      // Skipped and failed attempts can update Discord sync diagnostics.
+      void queryClient.invalidateQueries({
+        queryKey: getMembersControllerGetGuildMembersQueryKey({
+          guildId: routeGuildId ?? data.guildId,
+        }),
+      });
+    }
+    if (data.refreshedIds?.length) markAsRefreshed(data.refreshedIds);
+    if (data.failedIds?.length) markAsFailed(data.failedIds);
+  });
 
   return (
     <RefreshStatusContext.Provider

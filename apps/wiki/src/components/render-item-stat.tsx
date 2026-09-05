@@ -1,4 +1,8 @@
-import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
+import {
+  formatNumericText,
+  getItemStatTemplateValues,
+  type ItemDisplayValue,
+} from "@lootlog/ui/components/item-stat-utils";
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import type { ReactNode } from "react";
 
@@ -48,45 +52,6 @@ function formatValue(
   }
 
   return String(rawValue ?? "");
-}
-
-const numericTextPattern =
-  /^[+-]?\d+(?:[.,]\d+)?(?:\s+-\s+[+-]?\d+(?:[.,]\d+)?)*$/;
-
-function formatNumericText(rawValue: string) {
-  return numericTextPattern.test(rawValue)
-    ? rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-    : rawValue;
-}
-
-function getTemplateValues(displayValue: ItemDisplayValue) {
-  if (Array.isArray(displayValue.value) && !displayValue.translateKey) {
-    return displayValue.value.reduce<Record<string, string>>(
-      (values, rawValue, valueIndex) => {
-        values[`value${valueIndex + 1}`] = formatValue(rawValue);
-
-        return values;
-      },
-      {},
-    );
-  }
-
-  if (displayValue.translateKey && Array.isArray(displayValue.value)) {
-    return {
-      value: displayValue.value
-        .map(
-          (translationKey) =>
-            resolveTranslation(
-              `${displayValue.translateKey}.${translationKey}`,
-            ) ?? translationKey,
-        )
-        .join(",\u00A0"),
-    };
-  }
-
-  return {
-    value: formatValue(displayValue.value),
-  };
 }
 
 function interpolateTemplate(template: string, values: Record<string, string>) {
@@ -146,7 +111,14 @@ export function renderItemStat(displayValue: ItemDisplayValue) {
 
   const interpolatedTemplate = interpolateTemplate(
     template,
-    getTemplateValues(displayValue),
+    Object.fromEntries(
+      Object.entries(
+        getItemStatTemplateValues(
+          displayValue,
+          (key, fallback) => resolveTranslation(key) ?? fallback,
+        ),
+      ).map(([key, value]) => [key, String(value ?? "")]),
+    ),
   );
 
   return <>{renderTaggedTemplate(interpolatedTemplate)}</>;

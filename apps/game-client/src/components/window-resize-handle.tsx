@@ -1,5 +1,5 @@
 import { type FC, useRef } from "react";
-import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { getRuntimeUiScale } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
   cancelWindowResizeSession,
   createWindowResizeSession,
@@ -7,10 +7,6 @@ import {
   isWindowResizeSessionActive,
   registerWindowResizeSessionCancellation,
 } from "./window-resize-session";
-
-const getScale = () => {
-  return getRuntimeZoomFactor() ?? window.visualViewport?.scale ?? 1;
-};
 
 const getResizeCursor = ({
   allowHorizontalResize,
@@ -92,7 +88,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
-      const scale = getScale();
+      const scale = getRuntimeUiScale();
       const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
       const viewportHeight =
         window.visualViewport?.height ?? window.innerHeight;
@@ -166,7 +162,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
           : getTouchByIdentifier(e.touches, activeTouchId);
       if (!touch) return;
       e.preventDefault();
-      const scale = getScale();
+      const scale = getRuntimeUiScale();
       const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
       const viewportHeight =
         window.visualViewport?.height ?? window.innerHeight;

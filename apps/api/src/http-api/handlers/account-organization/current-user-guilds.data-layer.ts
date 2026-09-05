@@ -1,4 +1,5 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { APIGuild } from "discord-api-types/v10";
 import { Permission } from "@lootlog/schema/permissions";
@@ -7,8 +8,6 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
   memberTable,
-  memberToRoleTable,
-  roleTable,
   userSettingsTable,
 } from "#src/database/drizzle/schema";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
@@ -103,24 +102,7 @@ export const makeCurrentUserGuilds = (
             inArray(memberTable.guildId, [...guildIds]),
           ),
         );
-      if (members.length === 0) return [];
-      const roles = yield* database
-        .select({ memberId: memberToRoleTable.A, role: roleTable })
-        .from(memberToRoleTable)
-        .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-        .where(
-          inArray(
-            memberToRoleTable.A,
-            members.map(({ id }) => id),
-          ),
-        )
-        .orderBy(desc(roleTable.position));
-      return members.map((member) => ({
-        ...member,
-        roles: roles
-          .filter(({ memberId }) => memberId === member.id)
-          .map(({ role }) => role),
-      }));
+      return yield* hydrateMemberRoles(database, members);
     });
 
   const sort = (userId: string, summaries: GuildSummary[]) =>

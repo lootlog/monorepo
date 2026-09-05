@@ -1,18 +1,13 @@
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-} from "drizzle-orm";
+  mapNotificationTarget,
+  updateNotificationTarget,
+} from "#src/notifications/targets/notification-target-store";
+import { readNotificationTestUsage } from "../jobs/notification-test-usage.js";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { and, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
-  notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
@@ -32,10 +27,7 @@ import type {
   UpdateNotificationTargetRequest,
 } from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
-import type {
-  JsonObject,
-  JsonValue,
-} from "#src/notifications/notification-database.types";
+import type { JsonObject } from "#src/notifications/notification-database.types";
 import {
   NotificationJobKind,
   NotificationOwnerType,
@@ -80,11 +72,6 @@ export class NotificationUserTargetFailure extends TaggedErrorClass<Notification
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-const mapTarget = (target: Target) => ({
-  ...target,
-  metadata: target.metadata as JsonValue | null,
-});
-
 export const makeNotificationUserTargets = (
   database: ApiDatabaseValue,
   jobs: NotificationUserTargetJobs,
@@ -118,38 +105,9 @@ export const makeNotificationUserTargets = (
       );
 
   const recentUsage = (targetIds: number[]) =>
-    Effect.gen(function* () {
-      if (targetIds.length === 0) return new Map<number, Date[]>();
-      const threshold = new Date(
-        (yield* Clock.currentTimeMillis) - TEST_WINDOW_MS,
-      );
-      const rows = yield* database
-        .select({
-          targetId: notificationJobTable.targetId,
-          createdAt: notificationJobTable.createdAt,
-        })
-        .from(notificationJobTable)
-        .where(
-          and(
-            inArray(notificationJobTable.targetId, targetIds),
-            eq(notificationJobTable.jobKind, NotificationJobKind.TEST),
-            gte(notificationJobTable.createdAt, threshold),
-          ),
-        )
-        .orderBy(asc(notificationJobTable.createdAt))
-        .pipe(
-          Effect.mapError(
-            databaseFailure("notifications.userTargets.testUsage"),
-          ),
-        );
-      const usage = new Map<number, Date[]>();
-      for (const row of rows) {
-        const values = usage.get(row.targetId) ?? [];
-        values.push(row.createdAt);
-        usage.set(row.targetId, values);
-      }
-      return usage;
-    });
+    readNotificationTestUsage(database, targetIds, TEST_WINDOW_MS).pipe(
+      Effect.mapError(databaseFailure("notifications.userTargets.testUsage")),
+    );
 
   const usageResponse = (usage: readonly Date[]) => ({
     limit: TEST_LIMIT,
@@ -181,7 +139,7 @@ export const makeNotificationUserTargets = (
       .pipe(Effect.mapError(databaseFailure("notifications.userTargets.list")));
     const usage = yield* recentUsage(targets.map(({ id }) => id));
     return targets.map((target) => ({
-      ...mapTarget(target),
+      ...mapNotificationTarget(target),
       testTrigger: usageResponse(usage.get(target.id) ?? []),
     }));
   });
@@ -269,7 +227,7 @@ export const makeNotificationUserTargets = (
           attributes: { adapter: "notifications.drizzle", retryCount: 0 },
         }),
       );
-    return mapTarget(target);
+    return mapNotificationTarget(target);
   });
 
   const update = Effect.fn("notifications.userTargets.update")(function* (
@@ -278,28 +236,16 @@ export const makeNotificationUserTargets = (
     data: UpdateNotificationTargetRequest,
   ) {
     yield* find(discordId, targetId);
-    const displayName = Object.hasOwn(data, "displayName")
-      ? { displayName: data.displayName ?? null }
-      : {};
-    const rows = yield* database
-      .update(notificationTargetTable)
-      .set({
-        ...displayName,
-        active: data.active,
-        updatedAt: new Date(yield* Clock.currentTimeMillis),
-      })
-      .where(
-        and(
-          eq(notificationTargetTable.id, targetId),
-          eq(notificationTargetTable.ownerType, NotificationOwnerType.USER),
-          eq(notificationTargetTable.ownerId, discordId),
-        ),
-      )
-      .returning()
-      .pipe(
-        Effect.mapError(databaseFailure("notifications.userTargets.update")),
-      );
-    return rows[0] ? mapTarget(rows[0]) : null;
+    const rows = yield* updateNotificationTarget(
+      database,
+      targetId,
+      NotificationOwnerType.USER,
+      discordId,
+      data,
+    ).pipe(
+      Effect.mapError(databaseFailure("notifications.userTargets.update")),
+    );
+    return rows[0] ? mapNotificationTarget(rows[0]) : null;
   });
 
   const orphanedRules = (targetId: number) =>

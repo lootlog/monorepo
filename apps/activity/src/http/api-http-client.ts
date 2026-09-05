@@ -1,8 +1,7 @@
+import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpClient } from "effect/unstable/http";
-
-const RESPONSE_LIMIT_BYTES = 1024 * 1024;
 
 export class ApiHttpClientFailure extends TaggedErrorClass<ApiHttpClientFailure>()(
   "ApiHttpClientFailure",
@@ -53,56 +52,22 @@ export class ApiHttpClient extends Context.Service<
         operationId: string,
         url: URL | string,
       ) {
-        let retryCount = 0;
-        const attempt = Effect.suspend(() => {
-          const currentRetryCount = retryCount;
-          retryCount += 1;
-          return httpClient.get(String(url)).pipe(
-            Effect.timeout("3 seconds"),
-            Effect.mapError((error) =>
-              failure(
-                operationId,
-                error._tag === "TimeoutError" ? "timeout" : "transport",
-                { retryable: true },
-              ),
+        return yield* boundedHttpGet({
+          client: httpClient,
+          url,
+          timeoutMilliseconds: 3000,
+          retries: 2,
+          operationId,
+          adapter: "api-http-client",
+          response: "raw",
+          failure: (reason, retryable, status) =>
+            failure(
+              operationId,
+              reason === "status" ? "invalid-response" : reason,
+              { retryable, status },
             ),
-            Effect.flatMap((response) =>
-              response.arrayBuffer.pipe(
-                Effect.mapError(() =>
-                  failure(operationId, "invalid-response", {
-                    retryable: response.status >= 500,
-                    status: response.status,
-                  }),
-                ),
-                Effect.flatMap((body) =>
-                  body.byteLength <= RESPONSE_LIMIT_BYTES
-                    ? Effect.succeed({
-                        status: response.status,
-                        body: new Uint8Array(body),
-                      })
-                    : Effect.fail(
-                        failure(operationId, "response-too-large", {
-                          status: response.status,
-                        }),
-                      ),
-                ),
-              ),
-            ),
-            Effect.withSpan(`${operationId}.attempt`, {
-              attributes: {
-                adapter: "api-http-client",
-                retryCount: currentRetryCount,
-              },
-            }),
-          );
+          decode: (body, status) => ({ status, body: new Uint8Array(body) }),
         });
-
-        return yield* attempt.pipe(
-          Effect.retry({
-            times: 2,
-            while: (error) => error.retryable,
-          }),
-        );
       });
       return ApiHttpClient.of({ get });
     }),

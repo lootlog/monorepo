@@ -8,7 +8,7 @@ import {
   JsonValue,
   DateTimeString,
   FiniteNumber,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 import { MemberProfile } from "#src/contracts/members/schemas";
 
 const TimerNpc = Schema.Struct({

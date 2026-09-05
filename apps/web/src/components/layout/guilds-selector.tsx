@@ -1,3 +1,4 @@
+import { orderGuilds } from "@lootlog/domain/guild-preferences";
 import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { GuildNavItem } from "@/components/layout/guild-nav-item";
 import { InstallButton } from "@/components/layout/install-button";
@@ -14,7 +15,7 @@ import {
   useUpdateUserPreferences,
   useUserPreferences,
 } from "@/hooks/api/user/use-user-preferences";
-import { orderGuilds } from "@/features/user/settings/servers/server-visibility";
+
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";

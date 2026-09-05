@@ -1,3 +1,5 @@
+import { selectEventKillPoints } from "#src/events/kills/event-point-query";
+import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import { randomUUID } from "node:crypto";
 
 import {
@@ -93,10 +95,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
         member: {
           id: member.id,
           name: member.name,
-          roles: roles
-            .filter(({ memberId }) => memberId === member.id)
-            .slice(0, 1)
-            .map(({ position, color }) => ({ position, color })),
+          roles: topMemberDisplayRoles(roles, member.id),
         },
       }));
     });
@@ -202,22 +201,9 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   function findKillPointsForEvent(eventId: string) {
     return Effect.gen(function* () {
       const rows = yield* run((database) =>
-        database
-          .select({
-            point: eventKillPointTable,
-            kill: eventHeroKillTable,
-            hero: eventHeroNpcTable,
-          })
-          .from(eventKillPointTable)
-          .innerJoin(
-            eventHeroKillTable,
-            eq(eventHeroKillTable.id, eventKillPointTable.killId),
-          )
-          .innerJoin(
-            eventHeroNpcTable,
-            eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-          )
-          .where(eq(eventHeroNpcTable.eventId, eventId)),
+        selectEventKillPoints(database).where(
+          eq(eventHeroNpcTable.eventId, eventId),
+        ),
       );
       const heroIds = [...new Set(rows.map(({ hero }) => hero.id))];
       const maps =
@@ -413,21 +399,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   ) {
     return Effect.map(
       run((database) =>
-        database
-          .select({
-            point: eventKillPointTable,
-            kill: eventHeroKillTable,
-            hero: eventHeroNpcTable,
-          })
-          .from(eventKillPointTable)
-          .innerJoin(
-            eventHeroKillTable,
-            eq(eventHeroKillTable.id, eventKillPointTable.killId),
-          )
-          .innerJoin(
-            eventHeroNpcTable,
-            eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-          )
+        selectEventKillPoints(database)
           .where(
             and(
               eq(eventKillPointTable.memberId, memberId),
@@ -494,21 +466,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     memberId: number,
   ) {
     return run((database) =>
-      database
-        .select({
-          point: eventKillPointTable,
-          kill: eventHeroKillTable,
-          hero: eventHeroNpcTable,
-        })
-        .from(eventKillPointTable)
-        .innerJoin(
-          eventHeroKillTable,
-          eq(eventHeroKillTable.id, eventKillPointTable.killId),
-        )
-        .innerJoin(
-          eventHeroNpcTable,
-          eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-        )
+      selectEventKillPoints(database)
         .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
         .where(
           and(
@@ -557,21 +515,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     pointId: string,
   ) {
     return run((database) =>
-      database
-        .select({
-          point: eventKillPointTable,
-          kill: eventHeroKillTable,
-          hero: eventHeroNpcTable,
-        })
-        .from(eventKillPointTable)
-        .innerJoin(
-          eventHeroKillTable,
-          eq(eventHeroKillTable.id, eventKillPointTable.killId),
-        )
-        .innerJoin(
-          eventHeroNpcTable,
-          eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-        )
+      selectEventKillPoints(database)
         .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
         .where(
           and(

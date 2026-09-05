@@ -82,7 +82,7 @@ export const GuildDocEditorPage = () => {
   const draftSignature = createDraftSignature(title, content);
   const isDirty = canWrite && savedSignature !== draftSignature;
 
-  useEffect(() => {
+  const resetDraft = () => {
     if (!document) {
       return;
     }
@@ -93,7 +93,9 @@ export const GuildDocEditorPage = () => {
     setContent(normalizedContent);
     setSavedSignature(createDraftSignature(document.title, normalizedContent));
     setEditorSeed((seed) => seed + 1);
-  }, [document?.id, document?.version]);
+  };
+
+  useEffect(resetDraft, [document?.id, document?.version]);
 
   useEffect(() => {
     if (!isDirty) {
@@ -115,19 +117,6 @@ export const GuildDocEditorPage = () => {
   if (documentQuery.isLoading) {
     return <GuildDocEditorSkeleton />;
   }
-
-  const resetDraft = () => {
-    if (!document) {
-      return;
-    }
-
-    const normalizedContent = normalizeGuildDocEditorContent(document.content);
-
-    setTitle(document.title);
-    setContent(normalizedContent);
-    setSavedSignature(createDraftSignature(document.title, normalizedContent));
-    setEditorSeed((seed) => seed + 1);
-  };
 
   const validateDraft = () => {
     if (title.trim().length > TITLE_MAX_LENGTH) {

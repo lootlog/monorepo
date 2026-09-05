@@ -1,3 +1,4 @@
+import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
@@ -78,12 +79,6 @@ interface LootSubmissionLock {
   ) => Effect.Effect<A, unknown>;
 }
 
-const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
-  "created",
-  "gold",
-  "amount",
-  "opis",
-]);
 const LOOT_LOCK_TTL_MS = 30_000;
 const LOOT_LOCK_RETRY_OPTIONS = {
   retryCount: 100,
@@ -623,7 +618,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private mapLootItemsToPersistence(items: CreateLootRequest["loots"]) {
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);
-      const statsHash = this.generateStatsHash(item.stat);
+      const statsHash = createItemStatsHash(item.stat);
       return {
         itemId: item.id,
         statsHash,
@@ -695,18 +690,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       margonemType: npc.type,
       prof: npc.prof ? getProfByShortname(npc.prof) : null,
     }));
-  }
-
-  private generateStatsHash(stats: string): string {
-    const normalized = stats
-      .split(";")
-      .filter((entry) => {
-        const [key] = entry.split("=");
-        return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key);
-      })
-      .sort()
-      .join(";");
-    return createHash("sha256").update(normalized).digest("hex");
   }
 
   private createRejectedGuild(

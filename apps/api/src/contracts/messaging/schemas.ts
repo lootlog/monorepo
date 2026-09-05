@@ -1,47 +1,7 @@
+import { GameCharacter } from "../game-character.schema.js";
 /** Shared input and output schemas for the messaging feature. */
 import * as Schema from "effect/Schema";
-import { NonEmptyString, FiniteNumber } from "#src/contracts/scalars";
-
-const NotificationCharacter = Schema.Struct({
-  lvl: FiniteNumber,
-  nick: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  accountId: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  characterId: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  prof: NonEmptyString.check(
-    Schema.isMaxLength(100).annotate({
-      expected: "a value with a length of at most 100",
-    }),
-  ),
-  icon: NonEmptyString.check(
-    Schema.isMaxLength(2048).annotate({
-      expected: "a value with a length of at most 2048",
-    }),
-  ),
-  clan: Schema.optionalKey(
-    Schema.Struct({
-      id: Schema.optionalKey(FiniteNumber),
-      name: Schema.optionalKey(
-        Schema.String.check(
-          Schema.isMaxLength(255).annotate({
-            expected: "a value with a length of at most 255",
-          }),
-        ),
-      ),
-    }),
-  ),
-});
+import { NonEmptyString, FiniteNumber } from "@lootlog/schema/http-scalars";
 
 export type SendNotificationRequest = typeof SendNotificationRequest.Type;
 
@@ -91,7 +51,7 @@ export const SendNotificationRequest = Schema.Struct({
     }),
   ),
   isGatheringParty: Schema.optionalKey(Schema.Boolean),
-  character: Schema.optionalKey(NotificationCharacter),
+  character: Schema.optionalKey(GameCharacter),
 })
   .check(
     Schema.makeFilter((notification) => {
@@ -153,7 +113,7 @@ export const VolunteerForPartyRequest = Schema.Struct({
       expected: "a value with a length of at most 20",
     }),
   ),
-  character: NotificationCharacter,
+  character: GameCharacter,
 }).annotate({ identifier: "CreateVolunteerDto" });
 
 export type NotificationPath = typeof NotificationPath.Type;

@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { BattleFilters } from "./battles-list-filters";
+import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 
 type BattlesListFilterToolbarProps = {
   characters: Array<{ id: string; name: string; world: string }>;

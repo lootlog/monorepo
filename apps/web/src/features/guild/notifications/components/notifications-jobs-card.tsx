@@ -8,7 +8,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import {
   getGuildNotificationTargetLabel,
   getJobKindLabel,
@@ -18,11 +18,9 @@ import {
 import { NotificationJobCountdown } from "./notification-job-countdown";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  cancelGuildNotificationQueries,
-  getGuildNotificationCacheSnapshot,
-  invalidateGuildNotificationQueries,
+  prepareGuildNotificationMutation,
+  getGuildNotificationMutationCallbacks,
   removeGuildNotificationJobFromCache,
-  restoreGuildNotificationCacheSnapshot,
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
 import { useNotificationsGuildControllerCancelGuildJob } from "@lootlog/client/main";
@@ -48,8 +46,7 @@ export const NotificationsPendingJobsCard = ({
           return undefined;
         }
 
-        await cancelGuildNotificationQueries(queryClient, guildId);
-        const previousNotifications = getGuildNotificationCacheSnapshot(
+        const previousNotifications = await prepareGuildNotificationMutation(
           queryClient,
           guildId,
         );
@@ -62,24 +59,7 @@ export const NotificationsPendingJobsCard = ({
 
         return previousNotifications;
       },
-      onSuccess: async () => {
-        if (!guildId) {
-          return;
-        }
-
-        await invalidateGuildNotificationQueries(queryClient, guildId);
-      },
-      onError: (_error, _variables, previousNotifications) => {
-        if (!guildId) {
-          return;
-        }
-
-        restoreGuildNotificationCacheSnapshot(
-          queryClient,
-          guildId,
-          previousNotifications,
-        );
-      },
+      ...getGuildNotificationMutationCallbacks(queryClient, guildId),
     },
   });
 

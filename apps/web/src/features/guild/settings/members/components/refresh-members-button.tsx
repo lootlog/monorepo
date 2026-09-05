@@ -4,7 +4,7 @@ import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   getMembersControllerGetLatestRefreshJobQueryKey,

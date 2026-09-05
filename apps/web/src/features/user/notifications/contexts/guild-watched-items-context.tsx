@@ -1,8 +1,7 @@
+import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import {
   getNotificationsUserControllerGetUserTargetsQueryKey,
   getNotificationsUserControllerGetWatchedItemsQueryKey,
-  invalidateNotificationsUserControllerGetUserTargets,
-  invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerQuickAddWatchedItem,
@@ -51,10 +50,7 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
     useNotificationsUserControllerQuickAddWatchedItem({
       mutation: {
         onSuccess: async () => {
-          await Promise.all([
-            invalidateNotificationsUserControllerGetUserTargets(queryClient),
-            invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-          ]);
+          await invalidateUserNotificationQueries(queryClient);
         },
       },
     });

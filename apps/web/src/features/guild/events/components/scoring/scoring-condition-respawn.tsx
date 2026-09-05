@@ -1,3 +1,5 @@
+import { ScoringOperatorSelect } from "./scoring-operator-select";
+import { ScoringConditionTimeWindow } from "./scoring-condition-time-window";
 import {
   Controller,
   type Control,
@@ -6,15 +8,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import { ArrowRight } from "lucide-react";
-import { EVENT_SCORING_NUMERIC_OPERATORS } from "@lootlog/domain/scoring";
 
 type ScoringRulesFormValues = {
   scoringRules: { rules: { conditions: unknown[] }[] };
@@ -38,33 +31,11 @@ export const ScoringConditionRespawn = ({
   return (
     <div className="space-y-2">
       {/* Time range row */}
-      <div className="flex items-end gap-1.5">
-        <div className="space-y-0.5 flex-1">
-          <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
-            {t("events.scoring.conditionLabel.from")}
-          </Label>
-          <Input
-            type="time"
-            className="h-8 text-[12px] font-mono"
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.from` as `scoringRules.rules.${number}.conditions.${number}`,
-            )}
-          />
-        </div>
-        <ArrowRight className="size-3.5 text-muted-foreground/30 mb-2 shrink-0" />
-        <div className="space-y-0.5 flex-1">
-          <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
-            {t("events.scoring.conditionLabel.to")}
-          </Label>
-          <Input
-            type="time"
-            className="h-8 text-[12px] font-mono"
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.to` as `scoringRules.rules.${number}.conditions.${number}`,
-            )}
-          />
-        </div>
-      </div>
+      <ScoringConditionTimeWindow
+        register={register}
+        ruleIndex={ruleIndex}
+        conditionIndex={conditionIndex}
+      />
       {/* Coverage threshold row */}
       <div className="grid grid-cols-2 gap-1.5">
         <div className="space-y-0.5">
@@ -77,31 +48,10 @@ export const ScoringConditionRespawn = ({
               `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator` as `scoringRules.rules.${number}.conditions.${number}`
             }
             render={({ field }) => (
-              <Select
+              <ScoringOperatorSelect
                 value={field.value as string}
-                onValueChange={field.onChange}
-                items={[
-                  ...EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => ({
-                    value: operator,
-                    label: <>{operator}</>,
-                  })),
-                ]}
-              >
-                <SelectTrigger size="sm" className="h-8 text-[12px] font-mono">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
-                    <SelectItem
-                      key={operator}
-                      value={operator}
-                      className="font-mono"
-                    >
-                      {operator}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={field.onChange}
+              />
             )}
           />
         </div>

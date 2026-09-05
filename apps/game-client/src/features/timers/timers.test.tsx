@@ -130,16 +130,13 @@ vi.mock("@/features/timers/under-bag-timers", () => ({
 }));
 
 vi.mock("@/features/timers/components/timers-actions", () => ({
-  TimersActions: (props: unknown) => {
+  TimersActions: (props: { underBag?: boolean }) => {
+    if (props.underBag) {
+      timersUnderBagActionsSpy(props);
+      return <div>TimersUnderBagActions</div>;
+    }
     timersActionsSpy(props);
     return <div>TimersActions</div>;
-  },
-}));
-
-vi.mock("@/features/timers/components/timers-under-bag-actions", () => ({
-  TimersUnderBagActions: (props: unknown) => {
-    timersUnderBagActionsSpy(props);
-    return <div>TimersUnderBagActions</div>;
   },
 }));
 

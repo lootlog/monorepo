@@ -8,6 +8,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type TimersActionsProps = {
+  underBag?: boolean;
   timerFiltersEnabled?: boolean;
   toggleTimerFiltersEnabled: () => void;
   colorFiltersEnabled?: boolean;
@@ -19,6 +20,7 @@ type TimersActionsProps = {
 };
 
 export const TimersActions: FC<TimersActionsProps> = ({
+  underBag = false,
   timerFiltersEnabled,
   toggleTimerFiltersEnabled,
   colorFiltersEnabled,
@@ -29,12 +31,15 @@ export const TimersActions: FC<TimersActionsProps> = ({
   setShowHiddenTimers,
 }) => {
   const { t } = useTranslation("timers");
+  const leadingIconClassName = underBag
+    ? "ll:-mt-0.5 ll:h-5 ll:mb-1"
+    : "ll:mt-0.5";
   return [
     <Tooltip key="filters-tooltip">
       <TooltipTrigger asChild>
         <Filter
           key="filters"
-          className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+          className={`ll-custom-cursor-pointer ${leadingIconClassName} ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors`}
           size="14"
           onClick={toggleTimerFiltersEnabled}
         />
@@ -50,7 +55,7 @@ export const TimersActions: FC<TimersActionsProps> = ({
       <TooltipTrigger asChild>
         <Palette
           key="color-filters"
-          className={`ll-custom-cursor-pointer ll:mt-0.5 ll:hover:stroke-gray-100 ll:transition-colors ${
+          className={`ll-custom-cursor-pointer ${leadingIconClassName} ll:hover:stroke-gray-100 ll:transition-colors ${
             colorFiltersEnabled
               ? "ll:stroke-blue-400 ll:fill-blue-400/20"
               : "ll:stroke-gray-300"

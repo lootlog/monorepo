@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
@@ -19,9 +20,6 @@ export type ReservationSpot = {
 const unique = (values: string[]): string[] => [
   ...new Set(values.filter(Boolean)),
 ];
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const parseCard = (value: unknown): ReservationCatalogCard => {
   if (!isRecord(value)) throw new Error("Invalid reservation catalog card");

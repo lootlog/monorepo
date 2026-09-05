@@ -34,6 +34,21 @@ type GuildMembersSummaryQueryOptions<
 export const getGuildMembersSummaryQueryKey =
   getMembersControllerGetGuildMembersSummaryQueryKey;
 
+const withGuildMembersSummaryDefaults = <TData, TError>(
+  options?: GuildMembersSummaryQueryOptions<TData, TError>,
+) => ({
+  ...options,
+  query: {
+    gcTime: GUILD_MEMBERS_SUMMARY_GC_TIME,
+    staleTime: GUILD_MEMBERS_SUMMARY_STALE_TIME,
+    ...options?.query,
+  } as UseQueryOptions<
+    MembersControllerGetGuildMembersSummaryQueryResult,
+    TError,
+    TData
+  >,
+});
+
 export const getGuildMembersSummaryQueryOptions = <
   TData = MembersControllerGetGuildMembersSummaryQueryResult,
   TError = MembersControllerGetGuildMembersSummaryQueryError,
@@ -41,18 +56,10 @@ export const getGuildMembersSummaryQueryOptions = <
   pathParameters: MembersControllerGetGuildMembersSummaryPathParameters,
   options?: GuildMembersSummaryQueryOptions<TData, TError>,
 ) => {
-  return getGeneratedGuildMembersSummaryQueryOptions(pathParameters, {
-    ...options,
-    query: {
-      gcTime: GUILD_MEMBERS_SUMMARY_GC_TIME,
-      staleTime: GUILD_MEMBERS_SUMMARY_STALE_TIME,
-      ...options?.query,
-    } as UseQueryOptions<
-      MembersControllerGetGuildMembersSummaryQueryResult,
-      TError,
-      TData
-    >,
-  });
+  return getGeneratedGuildMembersSummaryQueryOptions(
+    pathParameters,
+    withGuildMembersSummaryDefaults(options),
+  );
 };
 
 export const useGuildMembersSummary = <
@@ -62,16 +69,8 @@ export const useGuildMembersSummary = <
   pathParameters: MembersControllerGetGuildMembersSummaryPathParameters,
   options?: GuildMembersSummaryQueryOptions<TData, TError>,
 ) => {
-  return useMembersControllerGetGuildMembersSummary(pathParameters, {
-    ...options,
-    query: {
-      gcTime: GUILD_MEMBERS_SUMMARY_GC_TIME,
-      staleTime: GUILD_MEMBERS_SUMMARY_STALE_TIME,
-      ...options?.query,
-    } as UseQueryOptions<
-      MembersControllerGetGuildMembersSummaryQueryResult,
-      TError,
-      TData
-    >,
-  });
+  return useMembersControllerGetGuildMembersSummary(
+    pathParameters,
+    withGuildMembersSummaryDefaults(options),
+  );
 };

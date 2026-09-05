@@ -596,16 +596,21 @@ const addTeamMetric = (
   metrics[team] = (metrics[team] ?? 0) + value;
 };
 
-const incrementAttackerStat =
-  (stat: keyof Warrior): WarriorActionHandler =>
-  ({ attacker }) => {
-    (attacker[stat] as number)++;
+type NumericWarriorStat = {
+  [Key in keyof Warrior]: Warrior[Key] extends number ? Key : never;
+}[keyof Warrior];
+
+const addWarriorStat =
+  (
+    side: "attacker" | "defender",
+    stat: NumericWarriorStat,
+    increment?: number,
+  ): WarriorActionHandler =>
+  (context) => {
+    const warrior = context[side];
+    if (warrior) warrior[stat] += increment ?? context.value;
   };
-const addToAttackerStat =
-  (stat: keyof Warrior): WarriorActionHandler =>
-  ({ attacker, value }) => {
-    (attacker[stat] as number) += value;
-  };
+
 const addDamageTaken =
   (stat: keyof Warrior): WarriorActionHandler =>
   ({ attacker, value }) => {
@@ -614,19 +619,19 @@ const addDamageTaken =
   };
 
 const ATTACKER_ACTION_HANDLERS: Record<string, WarriorActionHandler> = {
-  "+rage": addToAttackerStat("rageDamageDealt"),
+  "+rage": addWarriorStat("attacker", "rageDamageDealt"),
   "+taken_dmg": ({ attacker, defender, value }) => {
     attacker.stigmaDamageDealt += value;
     if (defender) defender.stigmaDamageTaken += value;
   },
-  "+pierce": incrementAttackerStat("armorPierces"),
-  "+crit": incrementAttackerStat("criticalHits"),
-  heal: addToAttackerStat("passiveHealing"),
-  bandage: addToAttackerStat("activeHealing"),
+  "+pierce": addWarriorStat("attacker", "armorPierces", 1),
+  "+crit": addWarriorStat("attacker", "criticalHits", 1),
+  heal: addWarriorStat("attacker", "passiveHealing"),
+  bandage: addWarriorStat("attacker", "activeHealing"),
   heal_target: ({ defender, value }) => {
     if (defender) defender.activeHealing += value;
   },
-  "+acdmg": addToAttackerStat("reducedArmor"),
+  "+acdmg": addWarriorStat("attacker", "reducedArmor"),
   wound: addDamageTaken("woundDamageTaken"),
   critwound: addDamageTaken("critWoundDamageTaken"),
   anguish: addDamageTaken("legbonAnguishDamageTaken"),
@@ -635,20 +640,20 @@ const ATTACKER_ACTION_HANDLERS: Record<string, WarriorActionHandler> = {
   "+injure": ({ defender }) => {
     if (defender) defender.injures++;
   },
-  "+fastarrow": incrementAttackerStat("fastArrows"),
+  "+fastarrow": addWarriorStat("attacker", "fastArrows", 1),
   fire: addDamageTaken("firePassiveDamageTaken"),
   light: addDamageTaken("lightningPassiveDamageTaken"),
   energy: ({ attacker, value }) => {
     attacker.regeneratedEnergy -= value;
   },
-  "en-regen": addToAttackerStat("regeneratedEnergy"),
-  "+energy": addToAttackerStat("regeneratedEnergy"),
-  "+engback": addToAttackerStat("regeneratedEnergy"),
-  "+legbon_curse": incrementAttackerStat("legbonCurse"),
-  "+legbon_holytouch": incrementAttackerStat("legbonHolytouch"),
-  legbon_holytouch_heal: addToAttackerStat("legbonHolytouchValue"),
-  "+legbon_verycrit": incrementAttackerStat("legbonVerycrit"),
-  "+legbon_anguish": incrementAttackerStat("legbonAnguish"),
+  "en-regen": addWarriorStat("attacker", "regeneratedEnergy"),
+  "+energy": addWarriorStat("attacker", "regeneratedEnergy"),
+  "+engback": addWarriorStat("attacker", "regeneratedEnergy"),
+  "+legbon_curse": addWarriorStat("attacker", "legbonCurse", 1),
+  "+legbon_holytouch": addWarriorStat("attacker", "legbonHolytouch", 1),
+  legbon_holytouch_heal: addWarriorStat("attacker", "legbonHolytouchValue"),
+  "+legbon_verycrit": addWarriorStat("attacker", "legbonVerycrit", 1),
+  "+legbon_anguish": addWarriorStat("attacker", "legbonAnguish", 1),
   legbon_lastheal: ({ attacker, defender, value }) => {
     const healedWarrior = defender ?? attacker;
     healedWarrior.legbonLastheal++;
@@ -656,16 +661,6 @@ const ATTACKER_ACTION_HANDLERS: Record<string, WarriorActionHandler> = {
   },
 };
 
-const incrementDefenderStat =
-  (stat: keyof Warrior): DefenderActionHandler =>
-  ({ defender }) => {
-    (defender[stat] as number)++;
-  };
-const addToDefenderStat =
-  (stat: keyof Warrior): DefenderActionHandler =>
-  ({ defender, value }) => {
-    (defender[stat] as number) += value;
-  };
 const blockAttack: DefenderActionHandler = ({ attacker, defender, value }) => {
   defender.blocks++;
   defender.blockedDamage += value;
@@ -677,15 +672,15 @@ const DEFENDER_ACTION_HANDLERS: Record<string, DefenderActionHandler> = {
     defender.evasions++;
     attacker.attacksEvaded++;
   },
-  "-contra": incrementDefenderStat("counters"),
+  "-contra": addWarriorStat("defender", "counters", 1),
   "-blok": blockAttack,
   "-block": blockAttack,
   "-parry": blockAttack,
   "-arrowblock": blockAttack,
   "-pierceb": blockAttack,
-  "-endest": addToDefenderStat("destroyedEnergy"),
-  "-manadest": addToDefenderStat("destroyedMana"),
-  "en-regen": addToDefenderStat("regeneratedEnergy"),
+  "-endest": addWarriorStat("defender", "destroyedEnergy"),
+  "-manadest": addWarriorStat("defender", "destroyedMana"),
+  "en-regen": addWarriorStat("defender", "regeneratedEnergy"),
   mana: ({ attacker, value }) => {
     attacker.regeneratedMana -= value;
   },
@@ -693,8 +688,8 @@ const DEFENDER_ACTION_HANDLERS: Record<string, DefenderActionHandler> = {
     defender.destroyedMana += value;
     attacker.regeneratedMana += value;
   },
-  "-legbon_cleanse": incrementDefenderStat("legbonCleanse"),
-  "-legbon_glare": incrementDefenderStat("legbonGlare"),
+  "-legbon_cleanse": addWarriorStat("defender", "legbonCleanse", 1),
+  "-legbon_glare": addWarriorStat("defender", "legbonGlare", 1),
   "-legbon_critred": ({ defender, value }) => {
     defender.legbonCritredValue = value;
   },
@@ -1136,7 +1131,11 @@ export class BattleProcessor {
         context.value,
       );
       if (context.actionType === "-dmga" || context.actionType === "-dmgo") {
-        this.trackAuxiliaryDamageTaken(context.targetId, context.value);
+        this.addMechanic(
+          context.targetId,
+          "auxiliaryDamageTaken",
+          context.value,
+        );
       }
     }
     accumulator.damage += context.value;
@@ -1183,7 +1182,7 @@ export class BattleProcessor {
         "damageTaken",
         context.value,
       );
-      this.trackEffectDamage(context.actorId, context.value);
+      this.addMechanic(context.actorId, "effectDamageTaken", context.value);
     }
     accumulator.damage += context.value;
     accumulator.flags.add("effectDamage");
@@ -1209,7 +1208,7 @@ export class BattleProcessor {
         context.value,
       );
       if (context.actionType === "heal_target") {
-        this.trackTargetHealing(context.actorId, context.value);
+        this.addMechanic(context.actorId, "targetHealing", context.value);
       }
     }
     if (healedWarriorId) {
@@ -1238,7 +1237,7 @@ export class BattleProcessor {
         "mitigation",
         context.value,
       );
-      this.trackMitigationEvent(defenderId);
+      this.addMechanic(defenderId, "mitigationEvents", 1);
     }
     accumulator.mitigation += context.value;
     accumulator.flags.add(this.getMitigationFlag(context.actionType));
@@ -1315,7 +1314,13 @@ export class BattleProcessor {
       | "absorptionGained"
       | "magicAbsorptionGained"
       | "absorptionSpent"
-      | "magicAbsorptionSpent",
+      | "magicAbsorptionSpent"
+      | "targetHealing"
+      | "auxiliaryDamageTaken"
+      | "effectDamageTaken"
+      | "mitigationEvents"
+      | "controlApplied"
+      | "controlTaken",
     accumulator: TimelineActionAccumulator,
   ): void {
     if (warriorId) {
@@ -1325,7 +1330,7 @@ export class BattleProcessor {
         deltaField,
         value,
       );
-      this.trackAbsorb(warriorId, mechanicsField, value);
+      this.addMechanic(warriorId, mechanicsField, value);
     }
     accumulator.flags.add("absorb");
   }
@@ -1342,7 +1347,7 @@ export class BattleProcessor {
         "controlApplied",
         1,
       );
-      this.trackControl(context.actorId, "controlApplied");
+      this.addMechanic(context.actorId, "controlApplied", 1);
     }
     if (context.targetId) {
       this.addTimelineDelta(
@@ -1351,7 +1356,7 @@ export class BattleProcessor {
         "controlTaken",
         1,
       );
-      this.trackControl(context.targetId, "controlTaken");
+      this.addMechanic(context.targetId, "controlTaken", 1);
     }
     accumulator.flags.add(
       context.actionType.includes("freeze") ? "freeze" : "stun",
@@ -1960,40 +1965,19 @@ export class BattleProcessor {
     mechanics.maxCombo = Math.max(mechanics.maxCombo, value);
   }
 
-  private trackTargetHealing(warriorId: string, value: number): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics.targetHealing += value;
-  }
-
-  private trackAuxiliaryDamageTaken(warriorId: string, value: number): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics.auxiliaryDamageTaken += value;
-  }
-
-  private trackMitigationEvent(warriorId: string): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics.mitigationEvents++;
-  }
-
-  private trackAbsorb(
+  private addMechanic(
     warriorId: string,
     field:
       | "absorptionGained"
       | "absorptionSpent"
       | "magicAbsorptionGained"
-      | "magicAbsorptionSpent",
+      | "magicAbsorptionSpent"
+      | "targetHealing"
+      | "auxiliaryDamageTaken"
+      | "effectDamageTaken"
+      | "mitigationEvents"
+      | "controlApplied"
+      | "controlTaken",
     value: number,
   ): void {
     const mechanics = this.warriorMechanics.get(warriorId);
@@ -2002,27 +1986,6 @@ export class BattleProcessor {
     }
 
     mechanics[field] += value;
-  }
-
-  private trackControl(
-    warriorId: string,
-    field: "controlApplied" | "controlTaken",
-  ): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics[field]++;
-  }
-
-  private trackEffectDamage(warriorId: string, value: number): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics.effectDamageTaken += value;
   }
 
   private getResourcePressureField(

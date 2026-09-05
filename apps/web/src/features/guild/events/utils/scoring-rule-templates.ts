@@ -1,6 +1,9 @@
-import type { EventScoringRule } from "@lootlog/domain/scoring";
+import {
+  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  type EventScoringRule,
+} from "@lootlog/domain/scoring";
 
-const makeRuleId = () =>
+export const makeRuleId = () =>
   `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 export interface ScoringRuleTemplate {
@@ -10,117 +13,44 @@ export interface ScoringRuleTemplate {
   createRule: () => EventScoringRule;
 }
 
+const createPresetRule = (presetId: string, name: string): EventScoringRule => {
+  const preset = DEFAULT_ADVANCED_EVENT_SCORING_RULES.rules.find(
+    (rule) => rule.id === presetId,
+  );
+  if (!preset) throw new Error(`Unknown scoring preset: ${presetId}`);
+  return { ...structuredClone(preset), id: makeRuleId(), name };
+};
+
 export const SCORING_RULE_TEMPLATES: ScoringRuleTemplate[] = [
   {
     id: "baseThreshold",
     i18nKey: "events.scoring.template.baseThreshold",
     i18nDescriptionKey: "events.scoring.template.baseThresholdDesc",
-    createRule: () => ({
-      id: makeRuleId(),
-      name: "Base threshold",
-      enabled: true,
-      conditions: [
-        {
-          type: "NUMERIC",
-          factor: "trackingDurationPercentage",
-          operator: ">=",
-          value: 75,
-        },
-      ],
-      action: { type: "SET_BASE", points: 1.0 },
-    }),
+    createRule: () => createPresetRule("base-75", "Base threshold"),
   },
   {
     id: "smallGroupBonus",
     i18nKey: "events.scoring.template.smallGroupBonus",
     i18nDescriptionKey: "events.scoring.template.smallGroupBonusDesc",
-    createRule: () => ({
-      id: makeRuleId(),
-      name: "Small group bonus",
-      enabled: true,
-      conditions: [
-        {
-          type: "NUMERIC",
-          factor: "assignedMembersCount",
-          operator: ">=",
-          value: 1,
-        },
-        {
-          type: "NUMERIC",
-          factor: "assignedMembersCount",
-          operator: "<=",
-          value: 4,
-        },
-      ],
-      action: { type: "ADD_BONUS", points: 0.5 },
-    }),
+    createRule: () =>
+      createPresetRule("bonus-small-group", "Small group bonus"),
   },
   {
     id: "nightBonus",
     i18nKey: "events.scoring.template.nightBonus",
     i18nDescriptionKey: "events.scoring.template.nightBonusDesc",
-    createRule: () => ({
-      id: makeRuleId(),
-      name: "Night bonus",
-      enabled: true,
-      conditions: [
-        {
-          type: "RESPAWN_WINDOW_COVERAGE",
-          from: "03:00",
-          to: "08:00",
-          operator: ">=",
-          value: 75,
-        },
-      ],
-      action: { type: "ADD_BONUS", points: 0.5 },
-    }),
+    createRule: () => createPresetRule("bonus-night", "Night bonus"),
   },
   {
     id: "killTimeBonus",
     i18nKey: "events.scoring.template.killTimeBonus",
     i18nDescriptionKey: "events.scoring.template.killTimeBonusDesc",
-    createRule: () => ({
-      id: makeRuleId(),
-      name: "Kill time bonus",
-      enabled: true,
-      conditions: [
-        {
-          type: "KILL_TIME_IN_WINDOW",
-          from: "08:00",
-          to: "11:00",
-        },
-      ],
-      action: { type: "ADD_BONUS", points: 0.5 },
-    }),
+    createRule: () => createPresetRule("bonus-pvp", "Kill time bonus"),
   },
   {
     id: "leaveGrace",
     i18nKey: "events.scoring.template.leaveGrace",
     i18nDescriptionKey: "events.scoring.template.leaveGraceDesc",
-    createRule: () => ({
-      id: makeRuleId(),
-      name: "Leave grace",
-      enabled: true,
-      conditions: [
-        {
-          type: "NUMERIC",
-          factor: "trackingDurationPercentage",
-          operator: ">=",
-          value: 75,
-        },
-        {
-          type: "BOOLEAN",
-          factor: "memberPresentAtKill",
-          value: false,
-        },
-        {
-          type: "NUMERIC",
-          factor: "minutesSinceLeaveToKill",
-          operator: ">",
-          value: 10,
-        },
-      ],
-      action: { type: "ZERO_BASE" },
-    }),
+    createRule: () => createPresetRule("leave-grace", "Leave grace"),
   },
 ];

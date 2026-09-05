@@ -1,4 +1,8 @@
 import {
+  RealtimeEventListeners,
+  unwrapOrganizationEvent,
+} from "@lootlog/client/realtime/event-listeners";
+import {
   GATEWAY_SOCKET_PATH,
   GATEWAY_URL,
   GatewayEvent,
@@ -13,11 +17,6 @@ import {
 } from "@lootlog/client/realtime";
 
 type Listener = (...arguments_: never[]) => void;
-
-const unwrapOrganizationEvent = (event: ServerEvent): unknown => {
-  if (!event.data || typeof event.data !== "object") return event.data;
-  return "payload" in event.data ? event.data.payload : event.data;
-};
 
 const toLegacyPlayer = (presence: BasicPresence) => {
   if (!presence.character) return undefined;
@@ -80,7 +79,7 @@ export class GatewayClient {
     ticketProvider: async () =>
       (await authControllerIssueRealtimeTicket()).ticket,
   });
-  private readonly listeners = new Map<GatewayEvent, Set<Listener>>();
+  private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;
 
   constructor() {
@@ -90,7 +89,9 @@ export class GatewayClient {
         state === "connected" || state === "joining" || state === "ready";
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
-      this.dispatch(connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT);
+      this.listeners.emit(
+        connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
+      );
     });
   }
 
@@ -107,14 +108,12 @@ export class GatewayClient {
   }
 
   on(event: GatewayEvent, listener: Listener): this {
-    const listeners = this.listeners.get(event) ?? new Set();
-    listeners.add(listener);
-    this.listeners.set(event, listeners);
+    this.listeners.add(event, listener);
     return this;
   }
 
   off(event: GatewayEvent, listener: Listener): this {
-    this.listeners.get(event)?.delete(listener);
+    this.listeners.delete(event, listener);
     return this;
   }
 
@@ -180,7 +179,7 @@ export class GatewayClient {
           })
           .catch(() => undefined);
       }
-      this.dispatch(GatewayEvent.JOIN, {
+      this.listeners.emit(GatewayEvent.JOIN, {
         status: "success",
         guildsCount: event.data.organizationIds.length,
         guildIds: [...event.data.organizationIds],
@@ -196,7 +195,7 @@ export class GatewayClient {
           })
           .catch(() => undefined);
       }
-      this.dispatch(GatewayEvent.PERMISSIONS_UPDATED, {
+      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
         guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
         featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
       });
@@ -227,7 +226,8 @@ export class GatewayClient {
       return;
     }
     const legacyEvent = serverEventNames[event.type];
-    if (legacyEvent) this.dispatch(legacyEvent, unwrapOrganizationEvent(event));
+    if (legacyEvent)
+      this.listeners.emit(legacyEvent, unwrapOrganizationEvent(event));
   }
 
   private dispatchPresence(
@@ -243,10 +243,10 @@ export class GatewayClient {
       disconnected,
     };
     if (presence.platform === "web-app") {
-      this.dispatch(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, base);
+      this.listeners.emit(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, base);
       return;
     }
-    this.dispatch(GatewayEvent.EVENT_PRESENCE_UPDATE, {
+    this.listeners.emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
       ...base,
       player: toLegacyPlayer(presence),
     });
@@ -264,14 +264,8 @@ export class GatewayClient {
       status: "offline",
       disconnected: true,
     };
-    this.dispatch(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, payload);
-    this.dispatch(GatewayEvent.EVENT_PRESENCE_UPDATE, payload);
-  }
-
-  private dispatch(event: GatewayEvent, payload?: unknown): void {
-    for (const listener of this.listeners.get(event) ?? []) {
-      (listener as (value?: unknown) => void)(payload);
-    }
+    this.listeners.emit(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, payload);
+    this.listeners.emit(GatewayEvent.EVENT_PRESENCE_UPDATE, payload);
   }
 }
 

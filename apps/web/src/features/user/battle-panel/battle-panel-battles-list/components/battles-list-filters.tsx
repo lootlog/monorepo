@@ -1,20 +1,13 @@
+import {
+  toggleBattleSearchWarrior,
+  createBattleFilterHandlers,
+  type BattleFilters,
+} from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { useState, useRef } from "react";
 import { useBattlesControllerGetUserWorlds } from "@lootlog/client/battlelog";
 import { BattlesListFiltersMobile } from "./battles-list-filters-mobile";
 import { BattlesListFiltersDesktop } from "./battles-list-filters-desktop";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
-
-export type BattleFilters = {
-  world?: string;
-  type?: Array<"solo" | "group">;
-  search?: string;
-  result?: Array<"won" | "lost" | "flee">;
-  ph?: boolean;
-  matchmaking?: boolean;
-  characterId?: Array<string>;
-  minLevel?: number;
-  maxLevel?: number;
-};
 
 type BattlesListFiltersProps = {
   filters: BattleFilters;
@@ -27,6 +20,15 @@ export const BattlesListFilters = ({
   onFiltersChange,
   characters = [],
 }: BattlesListFiltersProps) => {
+  const {
+    handleCharacterChange,
+    handleTypeChange,
+    handleResultChange,
+    handlePhToggle,
+    handleMinLevelChange,
+    handleMaxLevelChange,
+    handleMatchmakingToggle,
+  } = createBattleFilterHandlers(filters, onFiltersChange);
   const [typeOpenMobile, setTypeOpenMobile] = useState(false);
   const [resultOpenMobile, setResultOpenMobile] = useState(false);
   const [characterOpenMobile, setCharacterOpenMobile] = useState(false);
@@ -41,53 +43,11 @@ export const BattlesListFilters = ({
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
   const worlds = worldsResponse?.worlds ?? [];
 
-  const handleCharacterChange = (value: string) => {
-    const currentCharacters = filters.characterId ?? [];
-    const newCharacters = currentCharacters.includes(value)
-      ? currentCharacters.filter((id) => id !== value)
-      : [...currentCharacters, value];
-
-    onFiltersChange({
-      ...filters,
-      characterId: newCharacters.length > 0 ? newCharacters : undefined,
-    });
-  };
-
-  const handleTypeChange = (value: "solo" | "group") => {
-    const currentTypes = filters.type ?? [];
-    const newTypes = currentTypes.includes(value)
-      ? currentTypes.filter((t) => t !== value)
-      : [...currentTypes, value];
-
-    onFiltersChange({
-      ...filters,
-      type: newTypes.length > 0 ? newTypes : undefined,
-    });
-  };
-
-  const handleResultChange = (value: "won" | "lost" | "flee") => {
-    const currentResults = filters.result ?? [];
-    const newResults = currentResults.includes(value)
-      ? currentResults.filter((r) => r !== value)
-      : [...currentResults, value];
-
-    onFiltersChange({
-      ...filters,
-      result: newResults.length > 0 ? newResults : undefined,
-    });
-  };
-
   const handleWarriorToggle = (warrior: SearchWarrior) => {
-    const isSelected = selectedWarriors.some((w) => w.name === warrior.name);
-    let newSelectedWarriors;
-
-    if (isSelected) {
-      newSelectedWarriors = selectedWarriors.filter(
-        (w) => w.name !== warrior.name,
-      );
-    } else {
-      newSelectedWarriors = [...selectedWarriors, warrior];
-    }
+    const newSelectedWarriors = toggleBattleSearchWarrior(
+      selectedWarriors,
+      warrior,
+    );
 
     setSelectedWarriors(newSelectedWarriors);
 
@@ -98,40 +58,11 @@ export const BattlesListFilters = ({
     });
   };
 
-  const handlePhToggle = (checked: boolean) => {
-    onFiltersChange({
-      ...filters,
-      ph: checked ? true : undefined,
-    });
-  };
-
-  const handleMatchmakingToggle = (checked: boolean) => {
-    onFiltersChange({
-      ...filters,
-      matchmaking: checked ? true : undefined,
-    });
-  };
-
   const handleWorldChange = (value: string) => {
-    onFiltersChange({
-      ...filters,
-      world: filters.world === value ? undefined : value,
-    });
+    createBattleFilterHandlers(filters, onFiltersChange).handleWorldChange(
+      value,
+    );
     setWorldOpenMobile(false);
-  };
-
-  const handleMinLevelChange = (value: number | undefined) => {
-    onFiltersChange({
-      ...filters,
-      minLevel: value,
-    });
-  };
-
-  const handleMaxLevelChange = (value: number | undefined) => {
-    onFiltersChange({
-      ...filters,
-      maxLevel: value,
-    });
   };
 
   const activeFiltersCount =

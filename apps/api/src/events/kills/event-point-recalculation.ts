@@ -1,3 +1,4 @@
+import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -53,27 +54,15 @@ export const makeEventPointRecalculation =
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
       yield* points.recalculate(event.id, event.basePointsPerKill);
-      yield* Effect.forEach(
+      yield* invalidateEventCachePatterns(
+        redis,
+        logger,
         [
           getEventWrappedCachePattern(guild.id, eventId),
           `event-read:v2:${guild.id}:guild:*`,
           `event-read:v2:${guild.id}:${eventId}:*`,
         ],
-        (pattern) =>
-          Effect.tryPromise({
-            try: () => redis.deleteByPattern(pattern),
-            catch: (cause) => cause,
-          }).pipe(
-            Effect.catch((error) =>
-              Effect.sync(() =>
-                logger.warn("Failed to invalidate event cache", {
-                  error,
-                  pattern,
-                }),
-              ),
-            ),
-          ),
-        { concurrency: "unbounded", discard: true },
+        "Failed to invalidate event cache",
       );
       return { success: true };
     }).pipe(Effect.withSpan("EventsController_recalculateEventPoints"));

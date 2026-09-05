@@ -1,3 +1,4 @@
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
 export type PublicUser = {
@@ -64,36 +65,19 @@ export type PublicSocketState = {
   joinedGuilds: string[];
 };
 
-export type PublicOnlinePlayerPresence = {
-  discordId: string;
-  sessionId?: string;
-  platform?: "game" | "web-app";
-  status?: "online" | "offline";
-  guildId?: string;
-  mapName?: string;
-  isAfk: boolean;
-  margonemAccountVerified?: boolean;
-  updatedAt?: number;
-  player?: {
-    world: string;
-    name: string;
-    lvl: number;
-    icon: string;
-    characterId: string;
-    accountId: string;
-    prof: string;
-    clan?: {
-      id?: number;
-      name?: string;
-      rank?: number;
-    };
-    location?: {
-      x?: number;
-      y?: number;
-      map: string;
-    };
-  };
-};
+export type PublicOnlinePlayerPresence = Pick<
+  PlayerPresence,
+  | "discordId"
+  | "sessionId"
+  | "platform"
+  | "status"
+  | "guildId"
+  | "mapName"
+  | "isAfk"
+  | "margonemAccountVerified"
+  | "updatedAt"
+  | "player"
+>;
 
 export type PublicOnlinePlayers = Record<string, PublicOnlinePlayerPresence[]>;
 

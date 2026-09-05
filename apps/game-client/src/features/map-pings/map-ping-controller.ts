@@ -1,6 +1,8 @@
 import type { MapPingEvent, MapPingType } from "@lootlog/schema/map-ping";
 import {
   rendererRuntimeAdapter,
+  getMapCanvasCoordinate,
+  getMiniMapCanvasCoordinate,
   type RendererRuntimeAdapter,
   type RuntimeDrawable,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
@@ -287,14 +289,13 @@ export class MapPingController {
     }
 
     const tileSize = geometry.tileSize;
-    const halfTileSize = tileSize / 2;
     for (const ping of this.activePings.values()) {
       if (ping.mapId !== currentMapId) {
         continue;
       }
 
-      const x = ping.x * tileSize + halfTileSize - offset[0];
-      const y = ping.y * tileSize + halfTileSize - offset[1];
+      const x = getMapCanvasCoordinate(ping.x, tileSize, offset[0]);
+      const y = getMapCanvasCoordinate(ping.y, tileSize, offset[1]);
       this.drawMarker(context, ping, x, y, 13, true);
     }
   }
@@ -321,8 +322,8 @@ export class MapPingController {
         continue;
       }
 
-      const x = margin.left + (ping.x + 0.5) * normalSize;
-      const y = margin.top + (ping.y + 0.5) * normalSize;
+      const x = getMiniMapCanvasCoordinate(ping.x, normalSize, margin.left);
+      const y = getMiniMapCanvasCoordinate(ping.y, normalSize, margin.top);
       this.drawMarker(context, ping, x, y, radius, false);
     }
   }

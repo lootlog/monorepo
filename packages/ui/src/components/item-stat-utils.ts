@@ -1028,3 +1028,37 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]): StatBlocks => {
 
   return blocks;
 };
+
+const numericTextPattern =
+  /^[+-]?\d+(?:[.,]\d+)?(?:\s+-\s+[+-]?\d+(?:[.,]\d+)?)*$/;
+
+export function formatNumericText(rawValue: string): string {
+  return numericTextPattern.test(rawValue)
+    ? rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+    : rawValue;
+}
+
+export function getItemStatTemplateValues(
+  displayValue: ItemDisplayValue,
+  translate: (key: string, fallback: string) => string,
+): Record<string, string | number | boolean | undefined> {
+  const { value, translateKey } = displayValue;
+  if (!Array.isArray(value)) {
+    return {
+      value: typeof value === "string" ? formatNumericText(value) : value,
+    };
+  }
+  if (translateKey) {
+    return {
+      value: value
+        .map((key) => translate(translateKey + "." + key, key))
+        .join(",\u00A0"),
+    };
+  }
+  return Object.fromEntries(
+    value.map((entry, index) => [
+      "value" + (index + 1),
+      formatNumericText(entry),
+    ]),
+  );
+}

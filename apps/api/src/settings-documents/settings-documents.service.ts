@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getCharacterSettingsScopeId,
@@ -18,8 +19,6 @@ import {
   SettingsPersistenceError,
 } from "./settings-documents.repository.js";
 import { resolveSettingsDomain } from "./settings-resolver.js";
-
-type JsonRecord = Record<string, unknown>;
 
 export interface SettingsContext {
   domains: SettingsDomain[];
@@ -50,9 +49,6 @@ export interface SettingsDocuments {
     domainsValue: string,
   ) => Effect.Effect<SettingsDomain[], SettingsRequestError>;
 }
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const requestError = (status: 400 | 403, message: string) =>
   new SettingsRequestError({ status, message });

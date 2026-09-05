@@ -1,3 +1,4 @@
+import { filterAvailableGameMaps } from "@/utils/filter-available-game-maps";
 import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
@@ -132,14 +133,7 @@ export const MapTemplateFormDialog = ({
   const filteredGameMaps = useMemo(() => {
     if (!gameMaps) return [];
     const addedMapIds = new Set(maps.map((m) => m.id));
-    return gameMaps
-      .filter(
-        (map) =>
-          !addedMapIds.has(map.id) &&
-          (map.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            map.id.toString().includes(searchQuery)),
-      )
-      .slice(0, 50);
+    return filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery);
   }, [gameMaps, maps, searchQuery]);
 
   const handleClose = (isOpen: boolean) => {

@@ -1,3 +1,4 @@
+import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Logger } from "#src/shared/application-logger";
@@ -95,9 +96,6 @@ const createEmptyRarityTotals = (): EventWrappedRarityTotalsDto => ({
   heroic: 0,
   legendary: 0,
 });
-
-const roundToTwo = (value: number): number =>
-  Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
 
 const getRarityKey = (
   rarity: ItemRarity | null | undefined,
@@ -245,8 +243,8 @@ export const makeEventWrapped = (
             npcIcon: hero.npcIcon,
             mapCount: hero.maps.length,
             totalKills,
-            totalPoints: roundToTwo(totalPoints),
-            coveragePercentage: roundToTwo(
+            totalPoints: roundEventDisplayValue(totalPoints),
+            coveragePercentage: roundEventDisplayValue(
               coverage.heroCoverageById.get(hero.id)?.coveragePercentage ?? 0,
             ),
             rarityTotals:
@@ -314,11 +312,13 @@ export const makeEventWrapped = (
         overview: {
           totalKills: kills.length,
           participantCount: memberList.length,
-          totalPoints: roundToTwo(totalPoints),
+          totalPoints: roundEventDisplayValue(totalPoints),
           totalTrackedSeconds,
           totalAfkSeconds,
-          coveragePercentage: roundToTwo(coverage.coveragePercentage),
-          avgMapsPerSpawnWindow: roundToTwo(avgMapsPerSpawnWindow),
+          coveragePercentage: roundEventDisplayValue(
+            coverage.coveragePercentage,
+          ),
+          avgMapsPerSpawnWindow: roundEventDisplayValue(avgMapsPerSpawnWindow),
           busiestHour,
           busiestHourKills,
           totalLoots,
@@ -358,8 +358,10 @@ export const makeEventWrapped = (
           totalCoverageSeconds: coverage.totalCoverageSeconds,
           totalUncoveredSeconds: coverage.totalUncoveredSeconds,
           totalUnassignedSeconds: coverage.totalUnassignedSeconds,
-          coveragePercentage: roundToTwo(coverage.coveragePercentage),
-          avgMapsPerSpawnWindow: roundToTwo(avgMapsPerSpawnWindow),
+          coveragePercentage: roundEventDisplayValue(
+            coverage.coveragePercentage,
+          ),
+          avgMapsPerSpawnWindow: roundEventDisplayValue(avgMapsPerSpawnWindow),
           bestHeroCoverage: coverage.bestHeroCoverage,
           roughestHeroCoverage: coverage.roughestHeroCoverage,
         },
@@ -600,7 +602,9 @@ export const makeEventWrapped = (
           {
             maxMapsPerRespawn: Math.max(...counts, 0),
             avgMapsPerRespawn:
-              counts.length > 0 ? roundToTwo(totalMaps / counts.length) : 0,
+              counts.length > 0
+                ? roundEventDisplayValue(totalMaps / counts.length)
+                : 0,
           },
         ];
       }),
@@ -722,7 +726,7 @@ export const makeEventWrapped = (
       heroCoverage.totalKills = heroTotals.totalKills;
       heroCoverage.coveragePercentage =
         heroTotals.possibleSeconds > 0
-          ? roundToTwo(
+          ? roundEventDisplayValue(
               (heroTotals.coveredSeconds / heroTotals.possibleSeconds) * 100,
             )
           : 0;
@@ -742,7 +746,7 @@ export const makeEventWrapped = (
       totalUnassignedSeconds,
       coveragePercentage:
         totalPossibleCoverageSeconds > 0
-          ? roundToTwo(
+          ? roundEventDisplayValue(
               (totalCoverageSeconds / totalPossibleCoverageSeconds) * 100,
             )
           : 0,

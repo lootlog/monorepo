@@ -5,7 +5,7 @@ import {
   DateTimeString,
   FiniteNumber,
   JsonValue,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 
 const DocumentContent = JsonValue.annotate({
   identifier: "GuildDocumentResponseDto__schema0",

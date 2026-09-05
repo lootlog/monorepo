@@ -1,14 +1,18 @@
+import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  readGuildConfigurationCache,
+  writeGuildConfigurationCache,
+} from "#src/guilds/guild-configuration-cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Cause, Context, Effect, Layer, Predicate, Schema } from "effect";
+import { Cause, Context, Effect, Layer, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { SqlError } from "effect/unstable/sql/SqlError";
-import { HttpServerResponse } from "effect/unstable/http";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
+
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { and, eq, or } from "drizzle-orm";
-import { resolveReservationSettings } from "@lootlog/domain/reservations";
+
 import {
   Permission,
   type Permission as PermissionValue,
@@ -20,7 +24,7 @@ import {
   ResourceNotFoundError,
   ResourceConflictError,
 } from "#src/shared/http/http-errors";
-import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
+import { getGuildCacheKey } from "#src/shared/cache";
 import { generateSlug } from "#src/shared/generate-slug";
 import { RESTRICTED_VANITY_URLS } from "#src/guilds/restricted-vanity-urls";
 import { ErrorKey } from "#src/guilds/error-key";
@@ -236,19 +240,11 @@ export class GuildConfigurationData extends Context.Service<
           getGuildById: (idOrVanityUrl) =>
             operation(
               Effect.gen(function* () {
-                const cacheKey = getGuildCacheKey(idOrVanityUrl);
-                const cached = yield* cache.get(cacheKey);
-                if (cached) {
-                  try {
-                    const decoded = decodeJsonUnknown(cached);
-                    if (!Predicate.isObject(decoded) || Array.isArray(decoded))
-                      throw new Error("Invalid guild cache");
-                    const guild = decoded;
-                    return { ...guild, ...resolveReservationSettings(guild) };
-                  } catch {
-                    yield* cache.del(cacheKey);
-                  }
-                }
+                const cached = yield* readGuildConfigurationCache(
+                  cache,
+                  idOrVanityUrl,
+                );
+                if (cached) return cached;
 
                 const rows = yield* database
                   .select()
@@ -272,23 +268,7 @@ export class GuildConfigurationData extends Context.Service<
                   );
                 }
 
-                const serialized = JSON.stringify(guild);
-                yield* Effect.all([
-                  cache.set(
-                    getGuildCacheKey(guild.id),
-                    serialized,
-                    GUILD_CACHE_TTL_SECONDS,
-                  ),
-                  ...(guild.vanityUrl
-                    ? [
-                        cache.set(
-                          getGuildCacheKey(guild.vanityUrl),
-                          serialized,
-                          GUILD_CACHE_TTL_SECONDS,
-                        ),
-                      ]
-                    : []),
-                ]);
+                yield* writeGuildConfigurationCache(cache, guild);
                 return guild;
               }),
             ),
@@ -402,20 +382,8 @@ export const toAccountOrganizationHttpResponse = <A, R>(
   effect: Effect.Effect<A, AccountOrganizationFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    AccountOrganizationAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
-    AccountOrganizationNotFound: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    AccountOrganizationAccessDenied: statusCodeResponse,
+    AccountOrganizationNotFound: statusCodeResponse,
     AccountOrganizationOperationError: (error) => {
       const cause = error.cause;
       let databaseCause: unknown;

@@ -1,3 +1,7 @@
+import {
+  discordPermissionFields,
+  DiscordGuildSyncStatus,
+} from "@lootlog/schema/discord";
 /** Transport schemas owned by the internal HTTP module. */
 import { Schema } from "effect";
 import { HttpApiSchema } from "effect/unstable/httpapi";
@@ -14,26 +18,14 @@ export const DiscordGuildChannel = Schema.Struct({
   active: Schema.Boolean,
   canView: Schema.Boolean,
   canSend: Schema.Boolean,
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.Array(Schema.String),
-  grantedPermissions: Schema.Array(Schema.String),
-  missingPermissions: Schema.Array(Schema.String),
+  ...discordPermissionFields,
   lastSyncedAt: Schema.String,
 }).annotate({ identifier: "DiscordGuildChannel" });
 
 export const DiscordGuildSyncState = Schema.Struct({
   guildId: Schema.String,
-  status: Schema.Literals([
-    "SYNCED",
-    "SYNCING",
-    "FAILED",
-    "STALE",
-    "NOT_FOUND",
-  ]),
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.Array(Schema.String),
-  grantedPermissions: Schema.Array(Schema.String),
-  missingPermissions: Schema.Array(Schema.String),
+  status: DiscordGuildSyncStatus,
+  ...discordPermissionFields,
   channelCount: Schema.Int,
   selectableChannelCount: Schema.Int,
   lastAttemptAt: Schema.NullOr(Schema.String),

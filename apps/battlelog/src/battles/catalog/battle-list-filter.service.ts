@@ -1,7 +1,7 @@
+import { makeWarriorExists } from "#src/battles/battle-warrior-query";
 import {
   and,
   eq,
-  exists,
   gt,
   gte,
   ilike,
@@ -22,16 +22,7 @@ export type BattleListWhereBuilder = (
 ) => SQL | undefined;
 
 export const makeBattleListFilter = (drizzle: DrizzleDatabase) => {
-  const warriorExists = (
-    battlesRef: typeof battles,
-    ...conditions: (SQL | undefined)[]
-  ) =>
-    exists(
-      drizzle
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
+  const warriorExists = makeWarriorExists(drizzle);
 
   const appendTeamResultConditions = (
     resultConditions: (SQL | undefined)[],

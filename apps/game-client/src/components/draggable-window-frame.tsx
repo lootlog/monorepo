@@ -3,6 +3,7 @@ import type { WindowAnimationPhase } from "@/hooks/ui/use-window-presence";
 import { cn } from "cn";
 import {
   useWindowsStore,
+  sanitizeMaxContentHeight,
   type WindowId,
   type WindowOpacity,
 } from "@/store/windows.store";
@@ -53,6 +54,20 @@ const TRANSFORMED_MEASUREMENT_TOLERANCE = 4;
 
 const observeElementResize = (observer: ResizeObserver, element: Element) => {
   observer.observe(element);
+};
+
+const reconcileObservedElements = (
+  observer: ResizeObserver,
+  current: Set<HTMLElement>,
+  next: Set<HTMLElement>,
+) => {
+  for (const element of current) {
+    if (!next.has(element)) observer.unobserve(element);
+  }
+  for (const element of next) {
+    if (!current.has(element)) observeElementResize(observer, element);
+  }
+  return next;
 };
 
 const observeElementMutations = (observer: MutationObserver, element: Node) => {
@@ -232,14 +247,6 @@ const getWindowChromeHeight = ({
   }
 
   return Math.max(0, windowBody.offsetHeight - fallbackContentHeight);
-};
-
-const sanitizeMaxContentHeight = (height: number | undefined) => {
-  if (!Number.isFinite(height ?? Number.NaN)) {
-    return undefined;
-  }
-
-  return Math.max(1, Math.round(height as number));
 };
 
 const getWindowCursor = ({
@@ -839,19 +846,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
         getContentMeasurementElements(contentElement),
       );
 
-      observedContentElements.forEach((element) => {
-        if (!nextObservedContentElements.has(element)) {
-          resizeObserver.unobserve(element);
-        }
-      });
-
-      nextObservedContentElements.forEach((element) => {
-        if (!observedContentElements.has(element)) {
-          observeElementResize(resizeObserver, element);
-        }
-      });
-
-      observedContentElements = nextObservedContentElements;
+      observedContentElements = reconcileObservedElements(
+        resizeObserver,
+        observedContentElements,
+        nextObservedContentElements,
+      );
     };
     const mutationObserver = new MutationObserver(() => {
       updateObservedContentElements();
@@ -981,19 +980,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
         ),
       );
 
-      observedContentElements.forEach((element) => {
-        if (!nextObservedContentElements.has(element)) {
-          resizeObserver.unobserve(element);
-        }
-      });
-
-      nextObservedContentElements.forEach((element) => {
-        if (!observedContentElements.has(element)) {
-          observeElementResize(resizeObserver, element);
-        }
-      });
-
-      observedContentElements = nextObservedContentElements;
+      observedContentElements = reconcileObservedElements(
+        resizeObserver,
+        observedContentElements,
+        nextObservedContentElements,
+      );
     };
 
     if (titleBarRef.current) {

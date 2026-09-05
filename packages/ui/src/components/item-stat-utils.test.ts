@@ -1,6 +1,7 @@
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import { describe, expect, it } from "vitest";
 import {
+  getItemStatTemplateValues,
   mapStatsToDisplaySections,
   mapStatsToDisplayValues,
   parseItemStats,
@@ -300,5 +301,41 @@ describe("item stat utilities", () => {
     )) {
       expect(resolveTranslation(translationPath)).toBeDefined();
     }
+  });
+});
+
+describe("item stat template values", () => {
+  const translate = (key: string, fallback: string) =>
+    key === "prof.w" ? "Wojownik" : fallback;
+
+  it("formats numeric ranges without altering descriptions or scalar types", () => {
+    for (const [value, expected] of [
+      ["1000 - 2500", "1 000 - 2 500"],
+      ["Map 1000", "Map 1000"],
+      [false, false],
+      [12, 12],
+      [undefined, undefined],
+    ] as const) {
+      expect(
+        getItemStatTemplateValues({ key: "hp", value }, translate),
+      ).toEqual({
+        value: expected,
+      });
+    }
+  });
+
+  it("retains positional placeholders and translation fallback", () => {
+    expect(
+      getItemStatTemplateValues(
+        { key: "teleport", value: ["1000", "Town"] },
+        translate,
+      ),
+    ).toEqual({ value1: "1 000", value2: "Town" });
+    expect(
+      getItemStatTemplateValues(
+        { key: "reqp", value: ["w", "unknown"], translateKey: "prof" },
+        translate,
+      ),
+    ).toEqual({ value: "Wojownik,\u00a0unknown" });
   });
 });

@@ -1,3 +1,4 @@
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -439,26 +440,8 @@ export const toRecordsHttpResponse = <A, R>(
   effect: Effect.Effect<A, HttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    RecordsAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
-    RecordsBadRequest: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
-    RecordsNotFound: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    RecordsAccessDenied: statusCodeResponse,
+    RecordsBadRequest: statusCodeResponse,
+    RecordsNotFound: statusCodeResponse,
     RecordsDataError: (error) => applicationErrorResponse(error.cause),
   });

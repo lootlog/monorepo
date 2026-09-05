@@ -1,3 +1,5 @@
+import { operationIdentifiers } from "../../operation-identifiers.js";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -5,8 +7,8 @@ import {
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { HttpServerResponse } from "effect/unstable/http";
-import { HttpApiBuilder, OpenApi } from "effect/unstable/httpapi";
+
+import { HttpApiBuilder } from "effect/unstable/httpapi";
 import type {
   guildTable,
   memberTable,
@@ -123,14 +125,8 @@ const timers = {
   mode: "all",
 } as const;
 
-const operationIds = Object.fromEntries(
-  Object.entries(LootlogApi.groups.events.endpoints).map(
-    ([identifier, endpoint]) => [
-      identifier,
-      Context.getOrUndefined(endpoint.annotations, OpenApi.Identifier) ??
-        identifier,
-    ],
-  ),
+const operationIds = operationIdentifiers(
+  LootlogApi.groups.events.endpoints,
 ) as Record<EventEndpointIdentifier, string>;
 
 const operationFailure = (cause: unknown): EventsHttpFailure => {
@@ -171,24 +167,13 @@ const stringParameter = (value: unknown, key: string) =>
 const optionalString = (value: unknown) =>
   typeof value === "string" ? value : undefined;
 
-const statusResponse = (error: {
-  readonly status: number;
-  readonly code: string;
-}) =>
-  Effect.succeed(
-    HttpServerResponse.jsonUnsafe(
-      { code: error.code },
-      { status: error.status },
-    ),
-  );
-
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, EventsHttpFailure, R>) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
-    EventsAccessDenied: statusResponse,
-    EventsBadRequest: statusResponse,
+    EventsAccessDenied: statusCodeResponse,
+    EventsBadRequest: statusCodeResponse,
     EventsDataError: (error) => Effect.die(error.cause),
-    EventsNotFound: statusResponse,
+    EventsNotFound: statusCodeResponse,
   });
 
 export const EventsHandlers = HttpApiBuilder.group(

@@ -8,7 +8,7 @@ import {
   PositiveSafeInteger,
   NonNegativeSafeInteger,
   FiniteNumber,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 const KillCountsByNpcType = Schema.Struct({

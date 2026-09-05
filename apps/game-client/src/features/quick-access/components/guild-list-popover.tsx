@@ -42,10 +42,6 @@ export const GuildListPopover = () => {
     setOpen(false);
   };
 
-  const getGuildInitial = (name: string) => {
-    return name.charAt(0).toUpperCase();
-  };
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <Tooltip>
@@ -99,7 +95,7 @@ export const GuildListPopover = () => {
                             className="ll:object-cover ll:size-full ll:rounded-full"
                           />
                           <AvatarFallback className="ll:text-xs ll:font-semibold ll:bg-gray-700 ll:text-gray-200 ll:size-full ll:flex ll:items-center ll:justify-center ll:rounded-full">
-                            {getGuildInitial(guild.name)}
+                            {guild.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="ll:text-xs ll:truncate">

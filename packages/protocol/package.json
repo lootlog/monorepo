@@ -10,7 +10,8 @@
     "./rabbit/events": "./src/rabbit/events.ts",
     "./rabbit/topology": "./src/rabbit/topology.ts",
     "./realtime": "./src/realtime/protocol.ts",
-    "./realtime/codec": "./src/realtime/codec.ts"
+    "./realtime/codec": "./src/realtime/codec.ts",
+    "./rabbit/activity-signature": "./src/rabbit/activity-signature.ts"
   },
   "scripts": {
     "lint": "oxlint src test",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

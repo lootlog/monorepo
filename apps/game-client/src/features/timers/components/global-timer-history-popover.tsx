@@ -1,15 +1,12 @@
+import { useRestoreTimer } from "../hooks/use-restore-timer";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { normalizeTimerResponse } from "@/api/timers.api";
-import { useTimersCache } from "@/hooks/api/use-timers-cache";
 import {
-  type TimerHistoryResponseDto,
   getTimersControllerGetRecentTimerHistoryQueryKey,
   useTimersControllerGetRecentTimerHistory,
-  useTimersControllerRestoreTimerFromHistory,
 } from "@lootlog/client/main";
 
 import { History } from "lucide-react";
@@ -30,9 +27,8 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
-  const { upsertTimer } = useTimersCache();
-  const { mutate: restoreTimer, isPending: restorePending } =
-    useTimersControllerRestoreTimerFromHistory();
+  const { restoreTimer: handleRestore, isPending: restorePending } =
+    useRestoreTimer(() => setOpen(false));
   const { data: history = [], isLoading } =
     useTimersControllerGetRecentTimerHistory(
       {
@@ -51,27 +47,6 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
         },
       },
     );
-
-  const handleRestore = (entry: TimerHistoryResponseDto) => {
-    restoreTimer(
-      {
-        pathParams: {
-          guildId: entry.guildId,
-          historyEntryId: entry.id.toString(),
-        },
-      },
-      {
-        onSuccess: (timer) => {
-          upsertTimer(normalizeTimerResponse(timer));
-          showRuntimeMessage(t("history.restoreSuccess"));
-          setOpen(false);
-        },
-        onError: () => {
-          showRuntimeMessage(t("history.restoreFailed"));
-        },
-      },
-    );
-  };
 
   const historyLabel = t("toolbar.history");
 
@@ -100,4 +75,3 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
     </Popover>
   );
 };
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

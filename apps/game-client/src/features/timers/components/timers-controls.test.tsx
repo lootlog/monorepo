@@ -106,7 +106,6 @@ vi.mock("./global-timer-history-popover", () => ({
 
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
-import { TimersUnderBagActions } from "./timers-under-bag-actions";
 
 describe("timers controls", () => {
   beforeEach(() => {
@@ -245,7 +244,8 @@ describe("timers controls", () => {
     expect(setShowHiddenTimers).toHaveBeenCalledWith(true);
 
     rerender(
-      <TimersUnderBagActions
+      <TimersActions
+        underBag
         timerFiltersEnabled={false}
         toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
         colorFiltersEnabled

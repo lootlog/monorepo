@@ -1,19 +1,17 @@
+import {
+  readGuildConfigurationCache,
+  writeGuildConfigurationCache,
+} from "#src/guilds/guild-configuration-cache";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Predicate, Schema } from "effect";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
+import { Context, Effect, Layer, Schema } from "effect";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { Permission } from "@lootlog/schema/permissions";
-import {
-  and,
-  arrayOverlaps,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  or,
-} from "drizzle-orm";
+import { and, arrayOverlaps, eq, inArray, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -21,7 +19,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
+
 import { OrganizationSummary } from "#src/contracts/shared";
 import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
@@ -81,43 +79,13 @@ export const makeInternalGuildsData = (
 
   const getGuild = (idOrVanityUrl: string) =>
     Effect.gen(function* () {
-      const cacheKey = getGuildCacheKey(idOrVanityUrl);
-      const cached = yield* cache.get(cacheKey);
-      if (cached) {
-        try {
-          const decoded = decodeJsonUnknown(cached);
-          if (!Predicate.isObject(decoded) || Array.isArray(decoded))
-            throw new Error("Invalid guild cache");
-          const guild = decoded;
-          return { ...guild, ...resolveReservationSettings(guild) };
-        } catch {
-          yield* cache.del(cacheKey);
-        }
-      }
+      const cached = yield* readGuildConfigurationCache(cache, idOrVanityUrl);
+      if (cached) return cached;
 
       const guild = yield* persistence.findActiveGuild(idOrVanityUrl);
       if (!guild) return yield* Effect.fail(new Error("Guild not found"));
 
-      const encoded = JSON.stringify(guild);
-      yield* Effect.all(
-        [
-          cache.set(
-            getGuildCacheKey(guild.id),
-            encoded,
-            GUILD_CACHE_TTL_SECONDS,
-          ),
-          ...(guild.vanityUrl
-            ? [
-                cache.set(
-                  getGuildCacheKey(guild.vanityUrl),
-                  encoded,
-                  GUILD_CACHE_TTL_SECONDS,
-                ),
-              ]
-            : []),
-        ],
-        { concurrency: "unbounded" },
-      );
+      yield* writeGuildConfigurationCache(cache, guild, "unbounded");
       return { ...guild, ...resolveReservationSettings(guild) };
     });
 
@@ -229,15 +197,7 @@ export class InternalGuildsData extends Context.Service<
             database
               .selectDistinct({ guild: guildTable })
               .from(guildTable)
-              .leftJoin(
-                memberTable,
-                and(
-                  eq(memberTable.guildId, guildTable.id),
-                  eq(memberTable.userId, discordId),
-                  eq(memberTable.active, true),
-                  isNotNull(memberTable.globalUserId),
-                ),
-              )
+              .leftJoin(memberTable, activeGuildMemberJoin(discordId))
               .leftJoin(
                 memberToRoleTable,
                 eq(memberToRoleTable.A, memberTable.id),
@@ -266,25 +226,7 @@ export class InternalGuildsData extends Context.Service<
                     inArray(memberTable.guildId, [...guildIds]),
                   ),
                 );
-              if (members.length === 0) return [];
-
-              const roleRows = yield* database
-                .select({ memberId: memberToRoleTable.A, role: roleTable })
-                .from(memberToRoleTable)
-                .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-                .where(
-                  inArray(
-                    memberToRoleTable.A,
-                    members.map(({ id }) => id),
-                  ),
-                )
-                .orderBy(desc(roleTable.position));
-              return members.map((member) => ({
-                ...member,
-                roles: roleRows
-                  .filter(({ memberId }) => memberId === member.id)
-                  .map(({ role }) => role),
-              }));
+              return yield* hydrateMemberRoles(database, members);
             }),
         };
 
@@ -295,8 +237,7 @@ export class InternalGuildsData extends Context.Service<
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new InternalGuildsOperationError({ cause })),
   );
 
