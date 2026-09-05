@@ -18,7 +18,7 @@ Make the smallest complete change that reaches the intended architecture.
 ## Change
 
 - Migrate every caller and delete the legacy internal API in the same change.
-- Do not add compatibility layers unless the user explicitly requests backward compatibility.
+- For internal APIs, migrate callers instead of adding compatibility layers unless the user requests them. Preserve deployed and persisted contracts required by `AGENTS.md`, including coordinated rollout where needed.
 - Delete re-export-only wrappers and import from the owning module.
 - Separate concurrent writers before adding locks. When shared state is necessary, make operations idempotent across retries and partial failures.
 - Break wide work into verifiable units. Keep every intermediate commit or phase coherent.
@@ -29,6 +29,5 @@ Make the smallest complete change that reaches the intended architecture.
 - Verify the real artifact, not only a proxy such as compilation.
 - Inspect the diff and generated output.
 - Run targeted tests, typecheck, lint, and broader checks in proportion to risk.
-- Add the required Changeset for every affected workspace, or an empty Changeset for workspace-only configuration.
 
 Use `blast-radius` when the main risk lies outside the edited symbols.
