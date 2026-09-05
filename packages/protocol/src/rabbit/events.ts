@@ -16,7 +16,7 @@ const GuildRole = Schema.Struct({
 export const GuildCreated = Schema.Struct({
   guildId: NonEmptyString,
   name: NonEmptyString,
-  icon: Schema.String,
+  icon: NullableString,
   ownerId: NonEmptyString,
   roles: Schema.Array(GuildRole),
 });
@@ -24,7 +24,7 @@ export const GuildCreated = Schema.Struct({
 export const GuildUpdated = Schema.Struct({
   guildId: NonEmptyString,
   name: NonEmptyString,
-  icon: Schema.String,
+  icon: NullableString,
   ownerId: NonEmptyString,
 });
 
@@ -264,7 +264,7 @@ export const DiscordNotificationDeliveryResult = Schema.Struct({
 export const DiscordGuildChannelDeleted = Schema.Struct({
   guildId: NonEmptyString,
   channelId: NonEmptyString,
-  syncState: Schema.Record(Schema.String, Schema.Unknown),
+  syncState: DiscordGuildSyncState,
 });
 
 export const canonicalRabbitEventSchemas = {
