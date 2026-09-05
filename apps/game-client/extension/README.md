@@ -61,7 +61,7 @@ Firefox 140 is the minimum because it provides Mozilla's built-in data consent. 
 
 ## Reviewer source archive
 
-Run `bun run zip:extension:sources` (Bun; no Python required) to create a local archive containing repository source and new, nonignored files. The script excludes local environment files, credential-named files, dependencies, vendored reference repositories, and build outputs. Inspect the archive before sharing; this command never uploads it. WXT's workspace-only source archive is disabled because the client imports other monorepo packages.
+Run `bun run zip:extension:sources` (Bun; no Python required) from a clean Git worktree to create a local archive containing tracked repository source. The command refuses untracked files and staged or unstaged changes. Build the release and its source archive from the same clean revision. The script excludes local environment files, credential-named files, dependencies, vendored reference repositories, and build outputs. Inspect the archive before sharing; this command never uploads it. WXT's workspace-only source archive is disabled because the client imports other monorepo packages.
 
 To reproduce the extension in an empty directory:
 

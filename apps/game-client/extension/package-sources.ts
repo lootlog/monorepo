@@ -81,11 +81,22 @@ async function isSource(file: string): Promise<boolean> {
   }
 }
 
-const files = execFileSync(
+const status = execFileSync(
   "git",
-  ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+  ["status", "--porcelain", "--untracked-files=all", "-z"],
   { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 },
 );
+if (status.length > 0) {
+  throw new Error(
+    "Source packaging requires a clean Git worktree. Commit or remove pending changes before building the release and its source archive.",
+  );
+}
+
+const files = execFileSync("git", ["ls-files", "--cached", "-z"], {
+  cwd: root,
+  encoding: "utf8",
+  maxBuffer: 16 * 1024 * 1024,
+});
 const candidates = [...new Set(files.split("\0").filter(Boolean))].sort();
 const selected = await Promise.all(
   candidates.map(async (file) => ((await isSource(file)) ? file : null)),
