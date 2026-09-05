@@ -1,13 +1,17 @@
+// @vitest-environment happy-dom
+
 import { describe, expect, it } from "vitest";
 import {
   CAT_THEME_VARIANTS,
   DEFAULT_THEME_ID,
   THEME_CATALOG,
+  THEME_CLASS_IDS,
   THEME_IDS,
 } from "./catalog";
 import {
   applyThemeClassToRoot,
   getThemeFamily,
+  getRootResolvedTheme,
   isCatTheme,
   isRukiaTheme,
   resolveThemeClass,
@@ -42,28 +46,25 @@ describe("theme registry", () => {
     expect(resolveThemeClass(DEFAULT_THEME_ID)).toBe(DEFAULT_THEME_ID);
   });
 
-  it("always applies the permanent dark theme invariant", () => {
-    const classes = new Set(["light", "cyberpunk"]);
-    const root = {
-      classList: {
-        add: (...classNames: string[]) => {
-          for (const className of classNames) classes.add(className);
-        },
-        contains: (className: string) => classes.has(className),
-        remove: (...classNames: string[]) => {
-          for (const className of classNames) classes.delete(className);
-        },
-      },
-      style: {},
-    } as unknown as HTMLElement;
+  it.each(THEME_CLASS_IDS)(
+    "switches default → %s → default without leaking theme classes",
+    (theme) => {
+      const root = document.createElement("html");
+      root.classList.add("light", "theme-ready");
+      const defaultTheme = resolveThemeClass(DEFAULT_THEME_ID);
 
-    applyThemeClassToRoot({
-      root,
-      resolvedTheme: "default",
-    });
+      for (const resolvedTheme of [defaultTheme, theme, defaultTheme]) {
+        applyThemeClassToRoot({ root, resolvedTheme });
 
-    expect(classes.has("dark")).toBe(true);
-    expect(classes.has("light")).toBe(false);
-    expect(classes.has("cyberpunk")).toBe(false);
-  });
+        expect(root.classList.contains("dark")).toBe(true);
+        expect(root.classList.contains("light")).toBe(false);
+        expect(root.classList.contains("theme-ready")).toBe(true);
+        expect(root.style.colorScheme).toBe("dark");
+        expect(getRootResolvedTheme(root)).toBe(resolvedTheme);
+        expect(
+          THEME_CLASS_IDS.filter((id) => root.classList.contains(id)),
+        ).toEqual([resolvedTheme]);
+      }
+    },
+  );
 });

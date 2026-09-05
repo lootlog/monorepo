@@ -36,7 +36,7 @@ export const RoleSettingsDetailPage = () => {
             {t("settings.roles.backToRoles")}
           </Button>
         </header>
-        <div className="flex flex-1 items-center justify-center p-6 text-center">
+        <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto p-6 text-center">
           <div className="max-w-sm text-muted-foreground">
             <ShieldX className="mx-auto mb-3 size-10 opacity-50" />
             <p className="text-sm font-medium text-foreground">
@@ -68,7 +68,7 @@ export const RoleSettingsDetailPage = () => {
       );
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
       <Card className="shrink-0 border-b border-t border-border px-4 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
@@ -134,7 +134,7 @@ export const RoleSettingsDetailPage = () => {
           </div>
         </div>
       </Card>
-      <ScrollArea className="min-h-0 flex-1">
+      <ScrollArea className="min-h-48 flex-1">
         <div className="mx-auto w-full">
           <RolesForm role={role} />
         </div>

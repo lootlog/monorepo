@@ -204,7 +204,7 @@ export const StatsNpcsList: React.FC = () => {
           </Card>
 
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
-            <ScrollArea className="relative flex-1 min-h-0 w-full">
+            <div className="relative min-w-0 w-full overflow-x-auto">
               {isLoading ? (
                 <StatsRankingRowsSkeleton />
               ) : !data || paginatedData.length === 0 ? (
@@ -337,7 +337,7 @@ export const StatsNpcsList: React.FC = () => {
                   </Table>
                 </>
               )}
-            </ScrollArea>
+            </div>
 
             <TablePaginationFooter
               totalLabel={t("kills.ranking.total", { count: total })}

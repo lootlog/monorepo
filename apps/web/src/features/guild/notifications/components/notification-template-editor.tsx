@@ -679,7 +679,7 @@ export const NotificationTemplateEditor = ({
                               value={suggestion.label}
                               className={cn(
                                 highlightedSuggestionIndex === index &&
-                                  "bg-primary/50 text-accent-foreground",
+                                  "bg-accent text-accent-foreground",
                               )}
                               onMouseEnter={() => {
                                 setHighlightedSuggestion({

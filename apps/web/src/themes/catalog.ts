@@ -67,9 +67,9 @@ export const THEME_CATALOG: ThemePreview[] = [
   {
     name: "default",
     family: "standard",
-    colors: ["#3157F6", "#35D3E4", "#C8F135"],
+    colors: ["#C8F135", "#273321", "#07111F"],
     backgroundImage:
-      "data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='300' fill='%2307111f'/%3E%3Cpath d='M-24 218h116c28 0 28-46 56-46h104c28 0 28-66 56-66h116' fill='none' stroke='%233157f6' stroke-width='12' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='218' r='18' fill='%2307111f' stroke='%23c8f135' stroke-width='8'/%3E%3Ccircle cx='252' cy='172' r='12' fill='%2335d3e4'/%3E%3Ccircle cx='308' cy='106' r='7' fill='%23ffbd3f'/%3E%3C/svg%3E",
+      "data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='300' fill='%2307111f'/%3E%3Cpath d='M-24 218h116c28 0 28-46 56-46h104c28 0 28-66 56-66h116' fill='none' stroke='%23c8f135' stroke-width='12' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='218' r='18' fill='%2307111f' stroke='%23f7f8f2' stroke-width='8'/%3E%3Ccircle cx='252' cy='172' r='12' fill='%23273321'/%3E%3Ccircle cx='308' cy='106' r='7' fill='%23ffbd3f'/%3E%3C/svg%3E",
   },
   {
     name: "cyberpunk",

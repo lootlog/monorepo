@@ -50,37 +50,32 @@ export const AppLayout = () => {
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>
-      <div className="h-full min-h-0 flex-1">
-        <div className="flex h-full max-h-full flex-row overflow-hidden">
-          <SidebarProvider
-            style={
-              isStandaloneRoute
-                ? ({ "--sidebar-width": "4rem" } as CSSProperties)
-                : undefined
-            }
-          >
-            <AppSidebar
-              compact={isStandaloneRoute}
-              navigation={sidebarNavigation}
-            />
-            {isStandaloneRoute ? (
-              <StandaloneShell>
-                <Outlet />
-              </StandaloneShell>
-            ) : isUserRoute ? (
-              <UserShell>
-                <Outlet />
-              </UserShell>
-            ) : (
-              <GuildShell
-                variant={hasResolvedGuildRoute ? "ready" : "fallback"}
-              >
-                <Outlet />
-              </GuildShell>
-            )}
-          </SidebarProvider>
-        </div>
-      </div>
+      <SidebarProvider
+        className="min-h-0 flex-1 overflow-hidden"
+        style={
+          isStandaloneRoute
+            ? ({ "--sidebar-width": "4rem" } as CSSProperties)
+            : undefined
+        }
+      >
+        <AppSidebar
+          compact={isStandaloneRoute}
+          navigation={sidebarNavigation}
+        />
+        {isStandaloneRoute ? (
+          <StandaloneShell>
+            <Outlet />
+          </StandaloneShell>
+        ) : isUserRoute ? (
+          <UserShell>
+            <Outlet />
+          </UserShell>
+        ) : (
+          <GuildShell variant={hasResolvedGuildRoute ? "ready" : "fallback"}>
+            <Outlet />
+          </GuildShell>
+        )}
+      </SidebarProvider>
       <Toaster />
       <GlobalModals />
     </div>

@@ -50,7 +50,7 @@ export const LootStats: React.FC = () => {
   if (!settings.world) {
     return (
       <>
-        <div className="flex flex-col items-center justify-center h-[400px] gap-4 bg-background">
+        <div className="flex flex-col items-center justify-center h-[400px] max-h-full overflow-y-auto [justify-content:safe_center] gap-4 bg-background">
           <Globe className="h-12 w-12 text-muted-foreground" />
           <p className="text-muted-foreground">
             {t("loots.stats.selectWorldRequired")}

@@ -209,7 +209,7 @@ export const GuildDocEditorPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex min-h-[calc(100vh-3.5rem)] flex-col gap-4 px-3 py-3">
+        <div className="flex min-h-full flex-col gap-4 px-3 py-3">
           <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 items-center gap-3">
