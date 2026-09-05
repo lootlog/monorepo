@@ -68,7 +68,17 @@ paths:
       tags:
         - auth
       operationId: AuthController_issueRealtimeTicket
-      parameters: []
+      parameters:
+        - name: origin
+          in: header
+          schema:
+            type: string
+          required: false
+        - name: x-lootlog-extension-origin
+          in: header
+          schema:
+            type: string
+          required: false
       responses:
         "201":
           description: Short-lived single-use websocket ticket

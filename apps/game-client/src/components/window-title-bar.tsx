@@ -52,12 +52,15 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       >
         <Tooltip>
           <TooltipTrigger asChild>
-            <Blend
+            <button
+              type="button"
               data-ll-draggable="false"
-              className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-              size="14"
+              aria-label={t("windowControls.changeOpacity")}
+              className="ll-custom-cursor-pointer ll:mt-0.5 ll:text-gray-300 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:inline-flex ll:items-center ll:justify-center ll:bg-transparent ll:border-0 ll:p-0"
               onClick={handleOpacityChange}
-            />
+            >
+              <Blend size="14" aria-hidden="true" />
+            </button>
           </TooltipTrigger>
           <TooltipContent>{t("windowControls.changeOpacity")}</TooltipContent>
         </Tooltip>
@@ -70,21 +73,23 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            {isLocked ? (
-              <Lock
-                data-ll-draggable="false"
-                className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
-                size="14"
-                onClick={onLockToggle}
-              />
-            ) : (
-              <Unlock
-                data-ll-draggable="false"
-                className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
-                size="14"
-                onClick={onLockToggle}
-              />
-            )}
+            <button
+              type="button"
+              data-ll-draggable="false"
+              aria-label={
+                isLocked
+                  ? t("windowControls.unlockWindow")
+                  : t("windowControls.lockWindow")
+              }
+              className="ll:absolute ll:-right-5 ll:text-gray-300 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:inline-flex ll:items-center ll:justify-center ll:bg-transparent ll:border-0 ll:p-0"
+              onClick={onLockToggle}
+            >
+              {isLocked ? (
+                <Lock size="14" aria-hidden="true" />
+              ) : (
+                <Unlock size="14" aria-hidden="true" />
+              )}
+            </button>
           </TooltipTrigger>
           <TooltipContent>
             {isLocked
@@ -96,13 +101,15 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       {closable && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <XIcon
-              data-ll-draggable="false"
-              size="18"
+            <button
               type="button"
-              className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+              data-ll-draggable="false"
+              aria-label={t("windowControls.closeWindow")}
+              className="ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:inline-flex ll:items-center ll:justify-center ll:bg-transparent ll:border-0 ll:p-0"
               onClick={onClose}
-            />
+            >
+              <XIcon size="18" aria-hidden="true" />
+            </button>
           </TooltipTrigger>
           <TooltipContent>{t("windowControls.closeWindow")}</TooltipContent>
         </Tooltip>
