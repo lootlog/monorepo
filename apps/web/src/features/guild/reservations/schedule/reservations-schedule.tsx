@@ -1,3 +1,4 @@
+import { invalidateReservationQueries } from "./invalidate-reservation-queries";
 import { useEffect, useRef, useState } from "react";
 import { addDays, differenceInCalendarDays, startOfWeek } from "date-fns";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -7,8 +8,6 @@ import { toast } from "sonner";
 import { Permission } from "@lootlog/schema/permissions";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
-  getListReservationSpotsQueryKey,
-  getListSpotReservationsQueryKey,
   getListSpotReservationsQueryOptions,
   useDeleteReservation,
   useListSpotReservations,
@@ -107,14 +106,7 @@ export function ReservationsSchedule() {
   const cancelMutation = useDeleteReservation({
     mutation: {
       onSuccess: async (_data, variables) => {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: getListReservationSpotsQueryKey({ guildId }),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: getListSpotReservationsQueryKey({ guildId, spotId }),
-          }),
-        ]);
+        await invalidateReservationQueries(queryClient, guildId, spotId);
         if (selectedReservationId === variables.pathParams.reservationId) {
           setSelectedReservationId(null);
         }
@@ -131,14 +123,7 @@ export function ReservationsSchedule() {
     if (!connected || !guildId) return;
     const refresh = (payload: ReservationChangedPayload) => {
       if (payload.spotId && payload.spotId !== spotId) return;
-      void Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: getListReservationSpotsQueryKey({ guildId }),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: getListSpotReservationsQueryKey({ guildId, spotId }),
-        }),
-      ]);
+      void invalidateReservationQueries(queryClient, guildId, spotId);
     };
     socket.on(GatewayEvent.RESERVATIONS_CHANGED, refresh);
     socket.on(GatewayEvent.RESERVATIONS_CREATE, refresh);

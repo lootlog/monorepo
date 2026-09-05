@@ -1,7 +1,8 @@
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { LootlogApi } from "../../lootlog-api.js";
@@ -75,13 +76,7 @@ const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, MessagingHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    MessagingAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    MessagingAccessDenied: statusCodeResponse,
     MessagingOperationError: (error) => applicationErrorResponse(error.cause),
   });
 

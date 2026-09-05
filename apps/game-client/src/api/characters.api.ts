@@ -1,3 +1,5 @@
+import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
+import { isRecord } from "@lootlog/schema/records";
 import { LanguageVersion } from "@/store/global.store";
 import { createApiClient } from "@lootlog/client/transport";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
@@ -27,22 +29,6 @@ export type MargonemCharacter = {
   world?: string;
 };
 
-const toNumberOrNull = (value: unknown) => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === "string" && value.trim() !== "") {
-    const parsedValue = Number(value);
-
-    if (Number.isFinite(parsedValue)) {
-      return parsedValue;
-    }
-  }
-
-  return null;
-};
-
 const toStringOrNull = (value: unknown) => {
   if (typeof value === "string") {
     return value;
@@ -53,10 +39,6 @@ const toStringOrNull = (value: unknown) => {
   }
 
   return null;
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 };
 
 const findValueByAliases = (

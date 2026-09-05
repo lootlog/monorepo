@@ -1,3 +1,4 @@
+import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, ne } from "drizzle-orm";
@@ -205,21 +206,7 @@ export const makeEventPointEdits = (
       Effect.gen(function* () {
         const scoped = yield* query(
           "events.points.updateKillPoint.find",
-          database
-            .select({
-              point: eventKillPointTable,
-              kill: eventHeroKillTable,
-              hero: eventHeroNpcTable,
-            })
-            .from(eventKillPointTable)
-            .innerJoin(
-              eventHeroKillTable,
-              eq(eventHeroKillTable.id, eventKillPointTable.killId),
-            )
-            .innerJoin(
-              eventHeroNpcTable,
-              eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-            )
+          selectEventKillPoints(database)
             .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
             .where(
               and(

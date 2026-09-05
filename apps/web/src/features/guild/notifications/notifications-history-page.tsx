@@ -1,16 +1,9 @@
+import { NotificationHistoryRow } from "./components/notification-history-row";
 import { useState } from "react";
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import {
-  getJobKindLabel,
-  getJobStatusBadgeProps,
-  getJobStatusLabel,
-  getNotificationTriggerTranslationKey,
-} from "./utils/notification-settings.utils";
 import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
 import { History } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
@@ -79,49 +72,11 @@ export const NotificationsHistoryPage = () => {
           ) : historyJobs.length > 0 ? (
             <div className="flex flex-col gap-3">
               {historyJobs.map((job) => (
-                <Card
+                <NotificationHistoryRow
                   key={job.id}
-                  variant="interactive"
-                  role="button"
-                  tabIndex={0}
-                  className="gap-2 border-border/70 bg-background p-3 text-left  hover:bg-background"
-                  onClick={() => openJobDetails(job)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === "") {
-                      event.preventDefault();
-                      openJobDetails(job);
-                    }
-                  }}
-                >
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="min-w-0 truncate text-sm font-medium">
-                        {job.rule.name ??
-                          t(
-                            getNotificationTriggerTranslationKey(
-                              job.rule.triggerType,
-                            ),
-                          )}
-                      </p>
-                      <div className="flex shrink-0 gap-1.5">
-                        <Badge {...getJobStatusBadgeProps(job.status)}>
-                          {getJobStatusLabel(job.status, t)}
-                        </Badge>
-                        <Badge variant="secondary">
-                          {getJobKindLabel(job.jobKind, t)}
-                        </Badge>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(job.updatedAt), "dd.MM.yyyy HH:mm:ss")}
-                    </p>
-                    {job.lastError ? (
-                      <p className="text-xs text-destructive">
-                        {job.lastError}
-                      </p>
-                    ) : null}
-                  </div>
-                </Card>
+                  job={job}
+                  openJobDetails={openJobDetails}
+                />
               ))}
             </div>
           ) : (

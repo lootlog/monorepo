@@ -1,55 +1,12 @@
-import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { loadGuildSettings } from "@/lib/router/guild-settings-loader";
 import { createFileRoute } from "@tanstack/react-router";
 import { ReservationsSettings } from "@/features/guild/settings/reservations/reservations-settings";
 import { ReservationsSettingsSkeleton } from "@/features/guild/settings/reservations/reservations-skeleton";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@lootlog/client/main";
-import { canManageGuild } from "@/lib/guild-permissions";
-import {
-  throwForbiddenRouteError,
-  withRouteLoaderCancellation,
-} from "@/lib/router/route-errors";
-import {
-  ensureRouteQueryData,
-  prefetchRouteQuery,
-} from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/settings/reservations",
 )({
-  loader: ({ abortController, context, params, preload }) =>
-    withRouteLoaderCancellation(abortController, async () => {
-      const permissionsQueryOptions =
-        getGuildsControllerGetGuildPermissionsQueryOptions(
-          { guildId: params.guildId },
-          {
-            query: {
-              queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-                guildId: params.guildId,
-              }),
-              staleTime: 30_000,
-            },
-          },
-        );
-
-      if (preload) {
-        void prefetchRouteQuery(context.queryClient, permissionsQueryOptions);
-        return null;
-      }
-
-      const permissions = await ensureRouteQueryData(
-        context.queryClient,
-        permissionsQueryOptions,
-      );
-
-      if (!canManageGuild(createAccessPolicy({ capabilities: permissions }))) {
-        throwForbiddenRouteError();
-      }
-
-      return null;
-    }),
+  loader: loadGuildSettings,
   component: ReservationsSettings,
   pendingComponent: ReservationsSettingsSkeleton,
 });

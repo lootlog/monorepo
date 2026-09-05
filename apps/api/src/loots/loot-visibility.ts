@@ -8,7 +8,10 @@ import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
 
 export function toLootVisibilityRoles(
-  roles: readonly Role[],
+  roles: readonly Pick<
+    Role,
+    "id" | "lvlRangeFrom" | "lvlRangeTo" | "permissions"
+  >[],
 ): LootVisibilityRole[] {
   return roles.map((role) => ({
     id: role.id,
@@ -20,7 +23,10 @@ export function toLootVisibilityRoles(
 
 export function buildLootNpcVisibilitySql(
   permissions: readonly Permission[],
-  roles: readonly Role[],
+  roles: readonly Pick<
+    Role,
+    "id" | "lvlRangeFrom" | "lvlRangeTo" | "permissions"
+  >[],
 ): string {
   if (permissions.includes(Permission.OWNER)) {
     return "";

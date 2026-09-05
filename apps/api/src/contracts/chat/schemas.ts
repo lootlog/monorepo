@@ -5,7 +5,7 @@ import {
   JsonValue,
   DateTimeString,
   FiniteNumber,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 
 const ChatCharacter = Schema.Struct({
   nick: NonEmptyString,

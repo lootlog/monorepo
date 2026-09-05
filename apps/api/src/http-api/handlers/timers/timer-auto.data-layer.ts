@@ -1,4 +1,6 @@
-import { createHash, randomUUID } from "node:crypto";
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { upsertActorCharacter } from "./timer-actor-snapshot.js";
+import { randomUUID } from "node:crypto";
 import {
   and,
   arrayOverlaps,
@@ -7,7 +9,6 @@ import {
   gt,
   gte,
   inArray,
-  isNotNull,
   isNull,
   lte,
   or,
@@ -26,7 +27,6 @@ import {
   guildTable,
   memberTable,
   memberToRoleTable,
-  playerSnapshotTable,
   roleTable,
   timerHistoryEntryTable,
   timerTable,
@@ -170,49 +170,6 @@ const makeNpc = (payload: CreateAutoTimerRequest) => ({
   margonemType: String(payload.npc.type),
 });
 
-const upsertActor = (
-  database: Pick<typeof ApiDatabase.Service, "insert" | "select">,
-  payload: CreateAutoTimerRequest,
-) =>
-  Effect.gen(function* () {
-    const actor = payload.actorCharacter;
-    if (!actor) return null;
-    const characterId = Number.parseInt(actor.characterId, 10);
-    const accountId = Number.parseInt(actor.accountId, 10);
-    if (Number.isNaN(characterId) || Number.isNaN(accountId)) return null;
-    const icon = actor.icon ?? "";
-    const snapshotHash = createHash("sha256")
-      .update(`${actor.name}${actor.prof ?? ""}${icon}`)
-      .digest("hex");
-    const inserted = yield* database
-      .insert(playerSnapshotTable)
-      .values({
-        world: payload.world,
-        accountId,
-        characterId,
-        snapshotHash,
-        name: actor.name,
-        prof: getProfByShortname(actor.prof ?? ""),
-        icon,
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (inserted[0]) return inserted[0];
-    const existing = yield* database
-      .select()
-      .from(playerSnapshotTable)
-      .where(
-        and(
-          eq(playerSnapshotTable.world, payload.world),
-          eq(playerSnapshotTable.accountId, accountId),
-          eq(playerSnapshotTable.characterId, characterId),
-          eq(playerSnapshotTable.snapshotHash, snapshotHash),
-        ),
-      )
-      .limit(1);
-    return existing[0] ?? null;
-  });
-
 const migrateSyntheticTimer = (
   database: Pick<typeof ApiDatabase.Service, "delete" | "select">,
   options: {
@@ -332,7 +289,11 @@ export const makeAutoTimer = (
                 discordId: identity.discordId,
               }),
             );
-          const actorCharacter = yield* upsertActor(transaction, payload);
+          const actorCharacter = yield* upsertActorCharacter(
+            transaction,
+            payload.world,
+            payload.actorCharacter,
+          );
           const existingRows = yield* transaction
             .select()
             .from(timerTable)
@@ -591,15 +552,7 @@ export const makeAutoTimer = (
     const guildRows = yield* database
       .selectDistinct({ guild: guildTable })
       .from(guildTable)
-      .leftJoin(
-        memberTable,
-        and(
-          eq(memberTable.guildId, guildTable.id),
-          eq(memberTable.userId, identity.discordId),
-          eq(memberTable.active, true),
-          isNotNull(memberTable.globalUserId),
-        ),
-      )
+      .leftJoin(memberTable, activeGuildMemberJoin(identity.discordId))
       .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
       .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
       .where(

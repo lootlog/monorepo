@@ -1,121 +1,14 @@
+import { StatsPodiumSlot } from "./stats-podium-slot";
 import { useTranslation } from "react-i18next";
-import { Crown, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
-import { cn } from "cn";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
 } from "@lootlog/client/main";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
-
-type PodiumSlotProps = {
-  contributor?: LootStatsResponseDtoOutputTopContributorsItem;
-  position: 1 | 2 | 3;
-  guildMember?: GuildMember;
-};
-
-const PodiumSlot: React.FC<PodiumSlotProps> = ({
-  contributor,
-  position,
-  guildMember,
-}) => {
-  const { t } = useTranslation();
-  const adaptedMember = guildMember
-    ? {
-        roles: [{ position: 0, color: guildMember.color }],
-      }
-    : undefined;
-  const memberColor = useMemberColor(adaptedMember);
-  const heights = {
-    1: "h-44",
-    2: "h-36",
-    3: "h-32",
-  };
-
-  const podiumColors = {
-    1: "bg-yellow-500/20",
-    2: "bg-gray-400/20",
-    3: "bg-amber-700/20",
-  };
-
-  const textColors = {
-    1: "text-yellow-500",
-    2: "text-gray-400",
-    3: "text-amber-600",
-  };
-
-  if (!contributor) {
-    return (
-      <div className={cn("flex flex-col items-center w-28", heights[position])}>
-        <div className="h-14 w-14 rounded-full bg-muted" />
-        <span className="text-sm text-muted-foreground mt-1">-</span>
-        <div
-          className={cn(
-            "w-full flex-1 rounded-t-md flex items-center justify-center mt-2",
-            podiumColors[position],
-          )}
-        >
-          <span className={cn("text-xl font-bold", textColors[position])}>
-            {position}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("flex flex-col items-center w-28", heights[position])}>
-      <div className="relative">
-        {position === 1 && (
-          <Crown className="absolute -top-7 left-1/2 -translate-x-1/2 h-6 w-6 text-yellow-500 animate-pulse drop-shadow-lg" />
-        )}
-        <Avatar className="h-14 w-14 border-2 border-background shadow-lg">
-          <AvatarImage
-            src={getDiscordAvatarUrl(
-              contributor.userId,
-              contributor.avatar,
-              80,
-            )}
-          />
-          <AvatarFallback>{contributor.name[0]}</AvatarFallback>
-        </Avatar>
-      </div>
-
-      <span
-        className="text-sm font-medium truncate max-w-full mt-1"
-        style={{ color: memberColor }}
-      >
-        {contributor.name}
-      </span>
-
-      <span className="text-xs text-muted-foreground">
-        {contributor.count.toLocaleString()}{" "}
-        {t("loots.stats.topContributors.submissions")}
-      </span>
-
-      <div
-        className={cn(
-          "w-full flex-1 rounded-t-md flex items-center justify-center mt-2",
-          podiumColors[position],
-        )}
-      >
-        <span className={cn("text-xl font-bold", textColors[position])}>
-          {position}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 type LootTopContributorsProps = {
   data?: LootStatsResponseDtoOutputTopContributorsItem[];
@@ -178,27 +71,28 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
             </p>
           ) : (
             <div className="flex items-end justify-center gap-2">
-              <PodiumSlot
-                contributor={topThree[1]}
-                position={2}
-                guildMember={
-                  topThree[1] ? membersMap.get(topThree[1].userId) : undefined
-                }
-              />
-              <PodiumSlot
-                contributor={topThree[0]}
-                position={1}
-                guildMember={
-                  topThree[0] ? membersMap.get(topThree[0].userId) : undefined
-                }
-              />
-              <PodiumSlot
-                contributor={topThree[2]}
-                position={3}
-                guildMember={
-                  topThree[2] ? membersMap.get(topThree[2].userId) : undefined
-                }
-              />
+              {([2, 1, 3] as const).map((position) => {
+                const member = topThree[position - 1];
+                return (
+                  <StatsPodiumSlot
+                    key={position}
+                    position={position}
+                    member={
+                      member
+                        ? {
+                            userId: member.userId,
+                            avatar: member.avatar,
+                            name: member.name,
+                            detail: `${member.count.toLocaleString()} ${t("loots.stats.topContributors.submissions")}`,
+                          }
+                        : undefined
+                    }
+                    guildMember={
+                      member ? membersMap.get(member.userId) : undefined
+                    }
+                  />
+                );
+              })}
             </div>
           )}
         </div>

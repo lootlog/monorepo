@@ -1,11 +1,15 @@
-import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import {
+  findTimerMatches,
+  findActiveTimerEventHeroes,
+  timerNpcField,
+  timerIdentifierCondition,
+} from "./timer-selection.js";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  eventHeroNpcTable,
-  eventTable,
   memberTable,
   timerHistoryEntryTable,
   timerTable,
@@ -17,7 +21,7 @@ import {
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
+
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
   TimersInvariantViolation,
@@ -35,11 +39,6 @@ export interface DeleteTimerPorts {
   ) => Effect.Effect<unknown, unknown>;
 }
 
-const npcField = (npc: unknown, key: string) =>
-  npc && typeof npc === "object" && !Array.isArray(npc)
-    ? (npc as Record<string, unknown>)[key]
-    : undefined;
-
 export const makeDeleteTimer = (
   database: typeof ApiDatabase.Service,
   ports: DeleteTimerPorts,
@@ -51,21 +50,17 @@ export const makeDeleteTimer = (
   ) {
     const resolved = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
-        const timerCondition = isLegacyNpcIdIdentifier(timerIdentifier)
-          ? and(
-              eq(timerTable.guildId, access.guild.id),
-              eq(timerTable.world, world),
-              eq(timerTable.npcId, Number.parseInt(timerIdentifier, 10)),
-            )
-          : and(
-              eq(timerTable.guildId, access.guild.id),
-              eq(timerTable.world, world),
-              eq(timerTable.timerKey, timerIdentifier),
-            );
-        const timers = yield* transaction
-          .select()
-          .from(timerTable)
-          .where(timerCondition);
+        const timerCondition = timerIdentifierCondition(
+          access.guild.id,
+          world,
+          timerIdentifier,
+        );
+        const timers = yield* findTimerMatches(
+          transaction,
+          access.guild.id,
+          world,
+          timerIdentifier,
+        );
         if (timers.length > 1) {
           return yield* Effect.fail(
             new InvalidRequestError({
@@ -82,26 +77,13 @@ export const makeDeleteTimer = (
           );
         }
         const now = new Date(yield* Clock.currentTimeMillis);
-        const activeEventHero = yield* transaction
-          .select({ id: eventHeroNpcTable.id })
-          .from(eventHeroNpcTable)
-          .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-          .where(
-            and(
-              eq(eventTable.guildId, access.guild.id),
-              eq(eventTable.world, world),
-              or(
-                eq(eventHeroNpcTable.npcId, timer.npcId),
-                eq(
-                  eventHeroNpcTable.npcName,
-                  String(npcField(timer.npc, "name") ?? ""),
-                ),
-              ),
-              or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
-              or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
-            ),
-          )
-          .limit(1);
+        const activeEventHero = yield* findActiveTimerEventHeroes(
+          transaction,
+          access.guild.id,
+          world,
+          timer,
+          now,
+        );
         if (activeEventHero.length > 0) {
           return yield* Effect.fail(
             new InvalidRequestError({
@@ -110,7 +92,7 @@ export const makeDeleteTimer = (
           );
         }
         const manual =
-          Number(npcField(timer.npc, "margonemType")) ===
+          Number(timerNpcField(timer.npc, "margonemType")) ===
           TIMER_TYPES.CUSTOM_MANUAL;
         if (!manual) {
           const actors = yield* transaction
@@ -198,7 +180,7 @@ export const makeDeleteTimer = (
         return timer;
       }),
     );
-    const npcLevel = npcField(resolved.npc, "lvl");
+    const npcLevel = timerNpcField(resolved.npc, "lvl");
     const payload = {
       npcId: resolved.npcId,
       timerKey: resolved.timerKey,

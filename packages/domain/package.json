@@ -15,7 +15,9 @@
     "./npc-type": "./src/npc-type.ts",
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
-    "./settings-documents": "./src/settings-documents.ts"
+    "./settings-documents": "./src/settings-documents.ts",
+    "./guild-preferences": "./src/guild-preferences.ts",
+    "./guild-documents": "./src/guild-documents.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

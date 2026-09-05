@@ -1,3 +1,4 @@
+import { GameCharacter } from "../game-character.schema.js";
 /** Shared input and output schemas for the party-ready-room feature. */
 import * as Schema from "effect/Schema";
 import { PARTY_READY_ROOM_PARTY_PRESENCE_STATES } from "@lootlog/schema/party-ready-room";
@@ -6,51 +7,12 @@ import {
   FiniteNumber,
   NonEmptyString,
   PositiveSafeInteger,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 
-const ReadyRoomClan = Schema.Struct({
-  id: Schema.optionalKey(FiniteNumber),
-  name: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(255).annotate({
-        expected: "a value with a length of at most 255",
-      }),
-    ),
-  ),
-});
-const ReadyRoomCharacter = Schema.Struct({
-  lvl: FiniteNumber,
-  nick: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  accountId: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  characterId: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  prof: NonEmptyString.check(
-    Schema.isMaxLength(100).annotate({
-      expected: "a value with a length of at most 100",
-    }),
-  ),
-  icon: NonEmptyString.check(
-    Schema.isMaxLength(2048).annotate({
-      expected: "a value with a length of at most 2048",
-    }),
-  ),
-  clan: Schema.optionalKey(ReadyRoomClan),
-});
 const ReadyRoomParticipant = Schema.Struct({
   participantId: Schema.String,
   discordId: Schema.String,
-  character: ReadyRoomCharacter,
+  character: GameCharacter,
   partyPresence: Schema.Literals(PARTY_READY_ROOM_PARTY_PRESENCE_STATES),
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
@@ -59,7 +21,7 @@ const readyRoomFields = {
   schemaVersion: Schema.Literal(3),
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
-  organizerCharacter: ReadyRoomCharacter,
+  organizerCharacter: GameCharacter,
   guildIds: Schema.Array(Schema.String),
   world: Schema.String,
   description: Schema.optionalKey(Schema.String),
@@ -103,7 +65,7 @@ export const CreatePartyGatheringRequest = Schema.Struct({
       expected: "a value with a length of at most 50",
     }),
   ),
-  character: ReadyRoomCharacter,
+  character: GameCharacter,
   description: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(200).annotate({
@@ -143,7 +105,7 @@ export const ApplyToPartyReadyRoomRequest = Schema.Struct({
       expected: "a value with a length of at most 50",
     }),
   ),
-  character: ReadyRoomCharacter,
+  character: GameCharacter,
 }).annotate({ identifier: "PartyReadyRoomApplicationDto" });
 export type ApplyToPartyReadyRoomRequest =
   typeof ApplyToPartyReadyRoomRequest.Type;

@@ -1,4 +1,8 @@
-import type { GameEvent } from "@lootlog/margonem/game-events";
+import type {
+  GameEvent,
+  OtherCreate,
+  OtherEntry,
+} from "@lootlog/margonem/game-events";
 import type { RuntimeFact } from "./runtime.types";
 
 export function parseRuntimeFacts(event: GameEvent): readonly RuntimeFact[] {
@@ -23,4 +27,8 @@ export function parseRuntimeFacts(event: GameEvent): readonly RuntimeFact[] {
   add("party", event.party !== undefined);
 
   return Object.freeze(facts);
+}
+
+export function createsOther(entry: OtherEntry): entry is OtherCreate {
+  return "action" in entry && entry.action === "CREATE";
 }

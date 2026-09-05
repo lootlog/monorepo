@@ -1,3 +1,4 @@
+import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { type ItemTileProps, ItemTile } from "@/components/tiles/item-tile";
 import { ROUTES } from "@/config/routes";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
@@ -13,11 +14,7 @@ import {
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateNotificationsUserControllerGetUserTargets,
-  invalidateNotificationsUserControllerGetWatchedItems,
-  useNotificationsUserControllerDeleteWatchedItem,
-} from "@lootlog/client/main";
+import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
@@ -113,10 +110,7 @@ export const WatchableItemTile = ({
   const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          invalidateNotificationsUserControllerGetUserTargets(queryClient),
-          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-        ]);
+        await invalidateUserNotificationQueries(queryClient);
       },
     },
   });

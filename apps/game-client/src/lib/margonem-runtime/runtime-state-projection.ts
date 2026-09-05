@@ -1,3 +1,4 @@
+import { createsOther } from "./runtime-event-parser";
 import { useFriendsStore } from "@/store/friends.store";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -61,10 +62,6 @@ const EMPTY_NPCS = Object.freeze({}) as Readonly<Record<number, RuntimeNpc>>;
 const EMPTY_OTHERS = Object.freeze({}) as Readonly<
   Record<string, RuntimeOther>
 >;
-
-function createsOther(entry: OtherEntry): entry is OtherCreate {
-  return "action" in entry && entry.action === "CREATE";
-}
 
 function deletesOther(entry: OtherEntry): boolean {
   return "del" in entry && entry.del === 1;

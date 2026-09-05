@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -8,9 +9,6 @@ import {
   type ChatAppearancePreset,
   type ChatAppearanceSettings,
 } from "@lootlog/schema/chat-appearance";
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const normalizeNumber = (
   value: unknown,

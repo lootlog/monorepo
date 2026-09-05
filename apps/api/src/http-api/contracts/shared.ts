@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { JsonValue } from "#src/contracts/scalars";
+import { JsonValue } from "@lootlog/schema/http-scalars";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   HttpApiMiddleware,

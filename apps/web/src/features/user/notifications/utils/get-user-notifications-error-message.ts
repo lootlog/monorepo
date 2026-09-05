@@ -1,4 +1,4 @@
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 
 type TranslateFunction = (

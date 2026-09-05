@@ -1,3 +1,7 @@
+import {
+  mapNotificationTarget,
+  updateNotificationTarget,
+} from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -17,7 +21,7 @@ import {
   NotificationProvider,
   NotificationTargetType,
 } from "#src/notifications/notification-enums";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+
 import {
   InvalidRequestError,
   ResourceNotFoundError,
@@ -55,11 +59,6 @@ export class NotificationGuildTargetFailure extends TaggedErrorClass<Notificatio
   "NotificationGuildTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const mapTarget = (target: typeof notificationTargetTable.$inferSelect) => ({
-  ...target,
-  metadata: target.metadata as JsonValue | null,
-});
 
 const targetMetadata = (
   channel: Pick<
@@ -128,7 +127,7 @@ export const makeNotificationGuildTargets = (
         desc(notificationTargetTable.updatedAt),
       )
       .pipe(Effect.mapError(databaseFailure("notifications.targets.list")));
-    return rows.map(mapTarget);
+    return rows.map(mapNotificationTarget);
   });
 
   const create = Effect.fn("notifications.guildTargets.create")(function* (
@@ -206,7 +205,7 @@ export const makeNotificationGuildTargets = (
         }),
       );
     }
-    return mapTarget(target);
+    return mapNotificationTarget(target);
   });
 
   const update = Effect.fn("notifications.guildTargets.update")(function* (
@@ -215,27 +214,15 @@ export const makeNotificationGuildTargets = (
     data: UpdateNotificationTargetRequest,
   ) {
     yield* find(guildId, targetId);
-    const displayName = Object.hasOwn(data, "displayName")
-      ? { displayName: data.displayName ?? null }
-      : {};
-    const rows = yield* database
-      .update(notificationTargetTable)
-      .set({
-        ...displayName,
-        active: data.active,
-        updatedAt: new Date(yield* Clock.currentTimeMillis),
-      })
-      .where(
-        and(
-          eq(notificationTargetTable.id, targetId),
-          eq(notificationTargetTable.ownerType, NotificationOwnerType.GUILD),
-          eq(notificationTargetTable.ownerId, guildId),
-        ),
-      )
-      .returning()
-      .pipe(Effect.mapError(databaseFailure("notifications.targets.update")));
+    const rows = yield* updateNotificationTarget(
+      database,
+      targetId,
+      NotificationOwnerType.GUILD,
+      guildId,
+      data,
+    ).pipe(Effect.mapError(databaseFailure("notifications.targets.update")));
     if (data.active === false) yield* jobs.cancel({ targetId });
-    return rows[0] ? mapTarget(rows[0]) : null;
+    return rows[0] ? mapNotificationTarget(rows[0]) : null;
   });
 
   const removeById = Effect.fn("notifications.guildTargets.deleteById")(

@@ -1,12 +1,12 @@
-import { createHmac } from "node:crypto";
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  signActivityEvent,
+} from "@lootlog/protocol/rabbit/activity-signature";
 import type { RabbitMessagingService } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Clock, Effect, Redacted } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { SessionData } from "#src/realtime/session";
-
-const SIGNATURE_HEADER = "x-lootlog-activity-signature";
 
 export class ActivityPublisher {
   constructor(
@@ -53,17 +53,15 @@ export class ActivityPublisher {
               : undefined,
             idempotencyKey: `${type.toLowerCase()}_${session.connectionId}_${guildId}_${timestamp}`,
           };
-          const signature = createHmac(
-            "sha256",
+          const signature = signActivityEvent(
+            payload,
             Redacted.value(config.activityEventSignatureSecret),
-          )
-            .update(stableJsonStringify(payload))
-            .digest("hex");
+          );
           return messaging
             .publish({
               routingKey: RabbitRoutingKey.ACTIVITY_LOG_CREATE,
               content: new TextEncoder().encode(JSON.stringify(payload)),
-              headers: { [SIGNATURE_HEADER]: signature },
+              headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
             })
             .pipe(
               Effect.catch((cause) =>

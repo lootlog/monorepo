@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import type {
@@ -25,9 +26,6 @@ export interface SoundSettings {
     dto: UpdateSoundSettingsRequest,
   ) => SoundEffect;
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const getDefaultSettingsData = () => {
   const defaultNpcConfig = {

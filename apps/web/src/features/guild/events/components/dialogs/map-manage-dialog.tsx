@@ -1,3 +1,4 @@
+import { filterAvailableGameMaps } from "@/utils/filter-available-game-maps";
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -196,14 +197,7 @@ export const MapManageDialog = ({
 
   const filteredGameMaps = useMemo(() => {
     if (!gameMaps) return [];
-    return gameMaps
-      .filter(
-        (map) =>
-          !addedMapIds.has(map.id) &&
-          (map.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            map.id.toString().includes(searchQuery)),
-      )
-      .slice(0, 50);
+    return filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery);
   }, [gameMaps, addedMapIds, searchQuery]);
 
   const handleAddMapFromGame = async (gameMap: GameMapResponseDtoOutput) => {

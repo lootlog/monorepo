@@ -1,3 +1,4 @@
+import { parseArgs } from "node:util";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
@@ -10,35 +11,16 @@ const SERVED_FILES = new Map([
 ]);
 
 const parseArguments = (arguments_) => {
-  let distDirectory = path.resolve(process.cwd(), "dist");
-  let port = DEFAULT_PORT;
-
-  for (let index = 0; index < arguments_.length; index += 2) {
-    const option = arguments_[index];
-    const value = arguments_[index + 1];
-
-    if (!value) {
-      throw new Error(
-        "Usage: serve-local-build.mjs [--dist <path>] [--port <port>]",
-      );
-    }
-
-    if (option === "--dist") {
-      distDirectory = path.resolve(value);
-      continue;
-    }
-
-    if (option === "--port") {
-      port = Number.parseInt(value, 10);
-      if (!Number.isInteger(port) || port < 0 || port > 65_535) {
-        throw new Error(`Invalid port: ${value}`);
-      }
-      continue;
-    }
-
-    throw new Error(`Unknown option: ${option}`);
+  const { values } = parseArgs({
+    args: arguments_,
+    options: { dist: { type: "string" }, port: { type: "string" } },
+  });
+  const distDirectory = path.resolve(values.dist ?? "dist");
+  const port =
+    values.port === undefined ? DEFAULT_PORT : Number.parseInt(values.port, 10);
+  if (!Number.isInteger(port) || port < 0 || port > 65_535) {
+    throw new Error(`Invalid port: ${values.port}`);
   }
-
   return { distDirectory, port };
 };
 

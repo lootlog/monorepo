@@ -1,3 +1,4 @@
+import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { AsyncContent } from "@/components/async-content";
 import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
@@ -11,7 +12,7 @@ import {
   useUserPreferences,
   useUpdateUserPreferences,
 } from "@/hooks/api/use-user-preferences";
-import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
+
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";

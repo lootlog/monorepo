@@ -1,3 +1,4 @@
+import { isObjectRecord as isRecord } from "@lootlog/schema/records";
 import {
   useLogsStore,
   type LogActionType,
@@ -5,8 +6,6 @@ import {
   type SerializableValue,
 } from "@/store/logs.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
-
-type RecordValue = Record<string, unknown>;
 
 export const LOG_VALUE_BYTE_CAP = 256 * 1024;
 export const LOG_VALUE_MAX_DEPTH = 10;
@@ -75,10 +74,6 @@ type RunSingleLoggedActionInput<TResponse> = {
   getSuccessDetails?: (response: TResponse) => unknown;
   getErrorDetails?: (error: unknown) => unknown;
   retry?: LoggedActionRetryOptions;
-};
-
-const isRecord = (value: unknown): value is RecordValue => {
-  return typeof value === "object" && value !== null;
 };
 
 const getUtf8ByteLength = (value: string): number =>

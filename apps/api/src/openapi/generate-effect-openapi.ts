@@ -1,3 +1,8 @@
+import {
+  normalizeSchemaAnnotations,
+  normalizeNullableSchema,
+} from "@lootlog/schema/openapi-compatibility";
+import { isRecord as isJsonObject } from "@lootlog/schema/records";
 import { rename, unlink } from "node:fs/promises";
 import { OpenApi } from "effect/unstable/httpapi";
 import { stringify } from "yaml";
@@ -96,9 +101,6 @@ const queryParameterSchemas: Readonly<Record<string, JsonObject>> = {
   ),
 };
 
-const isJsonObject = (value: unknown): value is JsonObject =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
-
 const replaceReferences = (
   value: unknown,
   replacements: ReadonlyMap<string, string>,
@@ -123,39 +125,8 @@ const normalizeNullableSchemas = (value: unknown): void => {
   }
   if (!isJsonObject(value)) return;
 
-  if (Array.isArray(value["examples"]) && value["example"] === undefined) {
-    value["example"] = value["examples"][0];
-    delete value["examples"];
-  }
-  if (typeof value["exclusiveMinimum"] === "number") {
-    value["minimum"] = value["exclusiveMinimum"];
-    value["exclusiveMinimum"] = true;
-  }
-  if (typeof value["exclusiveMaximum"] === "number") {
-    value["maximum"] = value["exclusiveMaximum"];
-    value["exclusiveMaximum"] = true;
-  }
-  if (value["const"] !== undefined && value["enum"] === undefined) {
-    value["enum"] = [value["const"]];
-    delete value["const"];
-  }
-
-  for (const unionKey of ["anyOf", "oneOf"] as const) {
-    const variants = value[unionKey];
-    if (!Array.isArray(variants)) continue;
-    const nonNullVariants = variants.filter(
-      (variant) => !isJsonObject(variant) || variant["type"] !== "null",
-    );
-    if (nonNullVariants.length === variants.length) continue;
-
-    delete value[unionKey];
-    value["nullable"] = true;
-    if (nonNullVariants.length === 1 && isJsonObject(nonNullVariants[0])) {
-      Object.assign(value, nonNullVariants[0]);
-    } else {
-      value[unionKey] = nonNullVariants;
-    }
-  }
+  normalizeSchemaAnnotations(value);
+  normalizeNullableSchema(value);
 
   for (const item of Object.values(value)) normalizeNullableSchemas(item);
 };

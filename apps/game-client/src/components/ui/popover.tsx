@@ -85,3 +85,20 @@ function PopoverContent({
 }
 
 export { Popover, PopoverTrigger, PopoverContent };
+
+export const preservePopoverOnMenuPress =
+  (
+    onOpenChange: NonNullable<BasePopover.Root.Props["onOpenChange"]>,
+  ): NonNullable<BasePopover.Root.Props["onOpenChange"]> =>
+  (open, details) => {
+    if (
+      !open &&
+      details.reason === "outside-press" &&
+      details.event.target instanceof Element &&
+      details.event.target.closest('[role="menu"]')
+    ) {
+      details.cancel();
+      return;
+    }
+    onOpenChange(open, details);
+  };

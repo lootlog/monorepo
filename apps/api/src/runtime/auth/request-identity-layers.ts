@@ -3,12 +3,7 @@ import { MessagingIdentity } from "#src/http-api/handlers/messaging/messaging.ha
 import { ReadyRoomAuthorization } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { SettingsIdentity } from "#src/http-api/handlers/settings/settings.operations";
 import { UserLootlogConfigIdentity } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
-import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-
-const requestScopedIdentity = Effect.map(
-  ForwardAuthIdentity,
-  ({ discordId, userId }) => ({ discordId, userId }),
-) as Effect.Effect<{ readonly discordId: string; readonly userId: string }>;
+import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const SettingsIdentityLive = Layer.succeed(
   SettingsIdentity,

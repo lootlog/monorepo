@@ -1,3 +1,4 @@
+import { emptyStatusResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -5,7 +6,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { makeDocsService, type DocsService } from "#src/docs/docs.service";
@@ -406,16 +407,13 @@ export const purgeDocument = (guildId: string, documentId: string) =>
     Schema.decodeUnknownSync(DocumentMutationResponse),
   );
 
-const statusResponse = (error: { readonly status: number }) =>
-  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
-
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, DocsHttpFailure, R>) =>
   Effect.catchTags(effect, {
-    DocsAccessDenied: statusResponse,
-    DocsConflict: statusResponse,
+    DocsAccessDenied: emptyStatusResponse,
+    DocsConflict: emptyStatusResponse,
     DocsDataError: (error) => Effect.die(error.cause),
-    DocsInvalidInput: statusResponse,
-    DocsNotFound: statusResponse,
+    DocsInvalidInput: emptyStatusResponse,
+    DocsNotFound: emptyStatusResponse,
   });
 
 export const DocsHandlers = HttpApiBuilder.group(

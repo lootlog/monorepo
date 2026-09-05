@@ -5,19 +5,15 @@ import {
   SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
   SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
 } from "@/components/settings/settings-styles";
-import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
+import { useGameAccountPreferencesSyncIndicator } from "@/hooks/use-game-account-preferences-sync-status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationCategoryForm } from "@/features/settings/components/notifications/notification-category-form";
 import { NpcType } from "@/api/npcs.api";
 import type { NotificationType } from "@lootlog/schema/account-preferences";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const SYNC_INDICATOR_DELAY_MS = 100;
-
 export const NotificationsSettingsTab = () => {
-  const syncStatus = useGameAccountPreferencesSyncStatus();
-  const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
+  const resolvedVisibleStatus = useGameAccountPreferencesSyncIndicator();
   const { t } = useTranslation(["settings", "common"]);
   const categoryTabs: { label: string; key: NotificationType }[] = [
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
@@ -30,25 +26,6 @@ export const NotificationsSettingsTab = () => {
       key: "party-gathering",
     },
   ];
-
-  useEffect(() => {
-    if (syncStatus.status === "error" || syncStatus.status === "idle") {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setVisibleStatus(syncStatus.status);
-    }, SYNC_INDICATOR_DELAY_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [syncStatus.status]);
-
-  const resolvedVisibleStatus =
-    syncStatus.status === "error" || syncStatus.status === "idle"
-      ? syncStatus.status
-      : visibleStatus;
 
   return (
     <SettingsTabLayout

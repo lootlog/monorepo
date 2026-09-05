@@ -1,4 +1,8 @@
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { LogsApiRequestCard } from "@/features/settings/components/logs/logs-api-request-card";
 import {
@@ -16,7 +20,7 @@ import {
 import { cn } from "cn";
 import { ChevronDown, Copy } from "lucide-react";
 import type { LoggedAction, LoggedApiRequest } from "@/store/logs.store";
-import { useState, type FC, type KeyboardEvent } from "react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type LogsActionCardProps = {
@@ -42,14 +46,6 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
   const toggleOpen = () => {
     setIsOpen((currentIsOpen) => !currentIsOpen);
   };
-  const handleHeaderKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    toggleOpen();
-  };
 
   return (
     <Collapsible
@@ -57,14 +53,11 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
       onOpenChange={setIsOpen}
       className="ll:group ll:rounded-md ll:border ll:border-gray-600 ll:bg-gray-900/70 ll:transition-colors"
     >
-      <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={isOpen}
+      <CollapsibleTrigger
+        render={(props) => <div {...props} />}
+        nativeButton={false}
         aria-label={getActionLabel(action.actionType)}
         className="ll:flex ll:items-center ll:gap-2.5 ll:p-2 ll:transition-colors group-hover:ll:bg-white/4 ll:cursor-pointer"
-        onClick={toggleOpen}
-        onKeyDown={handleHeaderKeyDown}
       >
         <div className="ll:min-w-0 ll:flex-1 ll:px-2 ll:py-2">
           <div className="ll:min-w-0 ll:flex-1 ll:text-left">
@@ -142,7 +135,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
             />
           </Button>
         </div>
-      </div>
+      </CollapsibleTrigger>
 
       <CollapsibleContent className="ll:border-t ll:border-gray-700/80">
         <div className="ll:flex ll:flex-col ll:gap-3">

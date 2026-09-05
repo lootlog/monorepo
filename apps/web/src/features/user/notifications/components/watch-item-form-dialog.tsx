@@ -1,3 +1,4 @@
+import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Info } from "lucide-react";
@@ -29,11 +30,7 @@ import { WatchedItemSelector } from "@/features/user/notifications/components/wa
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@lootlog/client/main";
-import {
-  invalidateNotificationsUserControllerGetUserTargets,
-  invalidateNotificationsUserControllerGetWatchedItems,
-  useNotificationsUserControllerCreateWatchedItem,
-} from "@lootlog/client/main";
+import { useNotificationsUserControllerCreateWatchedItem } from "@lootlog/client/main";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
@@ -115,10 +112,7 @@ export const WatchFormDialog = ({
   const createWatchedItem = useNotificationsUserControllerCreateWatchedItem({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          invalidateNotificationsUserControllerGetUserTargets(queryClient),
-          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-        ]);
+        await invalidateUserNotificationQueries(queryClient);
       },
     },
   });

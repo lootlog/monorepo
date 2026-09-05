@@ -1,5 +1,5 @@
 import type { Timer } from "@/api/timers.api";
-import { parseMsToTime } from "@/utils/parse-ms-to-time";
+import { parseMsToTime } from "@lootlog/datetime";
 import { calculateTimeLeft } from "../utils/timer-helpers";
 import { getTimerTimeLeft } from "../utils/timers-utils";
 import { useTimerClockEpoch } from "./timer-clock-provider";

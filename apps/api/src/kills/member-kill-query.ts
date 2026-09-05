@@ -1,3 +1,4 @@
+import { addNpcKills } from "./npc-kill-aggregation.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
@@ -95,26 +96,7 @@ export const makeMemberKillQuery =
           participationsByType[stat.npcType] =
             (participationsByType[stat.npcType] ?? 0) + stat.memberKills;
           totalParticipations += stat.memberKills;
-          const existing = npcMap.get(stat.npcId);
-          if (existing) {
-            existing.totalKills += stat.memberKills;
-            if (stat.npcLvl > existing.npcLvl) {
-              existing.npcLvl = stat.npcLvl;
-              existing.npcName = stat.npcName;
-              existing.npcProf = stat.npcProf;
-              existing.npcIcon = stat.npcIcon;
-            }
-          } else {
-            npcMap.set(stat.npcId, {
-              npcId: stat.npcId,
-              npcName: stat.npcName,
-              npcType: stat.npcType,
-              npcLvl: stat.npcLvl,
-              npcProf: stat.npcProf,
-              npcIcon: stat.npcIcon,
-              totalKills: stat.memberKills,
-            });
-          }
+          addNpcKills(npcMap, stat, stat.memberKills);
         }
 
         const allNpcs = Array.from(npcMap.values()).sort(

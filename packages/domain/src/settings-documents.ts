@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   CHAT_FONT_SCALE_MAX_PERCENT,
@@ -81,8 +82,7 @@ const isBoolean = (value: unknown) => typeof value === "boolean";
 const isString = (value: unknown) => typeof value === "string";
 const isStringArray = (value: unknown) =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
-const isRecord = (value: unknown) =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 const isNumberInRange =

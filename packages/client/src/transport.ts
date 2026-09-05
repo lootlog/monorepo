@@ -1,3 +1,4 @@
+import { isObjectRecord as isObject } from "@lootlog/schema/records";
 export type ApiService = "activity" | "auth" | "battlelog" | "main" | "search";
 
 type FetchImplementation = (
@@ -123,10 +124,6 @@ export const configureApiClients = (
       rebuildServiceConfigurations();
     }
   };
-};
-
-const isObject = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === "object" && value !== null;
 };
 
 const getApiMessageFromData = (data: unknown): string | undefined => {

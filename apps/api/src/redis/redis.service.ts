@@ -1,3 +1,4 @@
+import { RedisScriptCache } from "@lootlog/database/redis-script";
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import { type Cause, Effect, Exit, Schema } from "effect";
@@ -107,7 +108,7 @@ return versions
 
 export class RedisService {
   private readonly prefix: string;
-  private readonly scripts = new Map<string, Redis.Script<any>>();
+  private readonly scripts = new RedisScriptCache();
 
   constructor(
     private readonly redis: Redis.Redis["Service"],
@@ -444,18 +445,10 @@ export class RedisService {
     args: Array<string | number> = [],
   ): Promise<TResult> {
     const prefixedKeys = keys.map((k) => this.prefixKey(k));
-    const cacheKey = `${prefixedKeys.length}:${script}`;
-    let descriptor = this.scripts.get(cacheKey);
-    if (descriptor === undefined) {
-      descriptor = Redis.script(
-        (...parameters: ReadonlyArray<unknown>) => parameters,
-        { lua: script, numberOfKeys: prefixedKeys.length },
-      ).withReturnType<TResult>();
-      this.scripts.set(cacheKey, descriptor);
-    }
+    const descriptor = this.scripts.get<TResult>(script, prefixedKeys.length);
     return this.run(
       this.redis.eval(descriptor)(...prefixedKeys, ...args.map(String)),
-    ) as Promise<TResult>;
+    );
   }
 
   async hset(key: string, field: string, value: string): Promise<number> {

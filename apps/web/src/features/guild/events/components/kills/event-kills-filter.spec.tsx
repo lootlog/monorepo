@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { EventKillsFilter } from "./event-kills-filter";
+import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -12,7 +12,7 @@ vi.mock("react-i18next", () => ({
 
 afterEach(cleanup);
 
-describe("EventKillsFilter", () => {
+describe("HeroKillsFilter", () => {
   const heroes = [
     {
       id: "hero-1",
@@ -34,7 +34,7 @@ describe("EventKillsFilter", () => {
     const onSelectedHeroChange = vi.fn();
 
     render(
-      <EventKillsFilter
+      <HeroKillsFilter
         heroes={heroes}
         selectedHeroId="hero-1"
         onSelectedHeroChange={onSelectedHeroChange}
@@ -51,7 +51,7 @@ describe("EventKillsFilter", () => {
     const onSelectedHeroChange = vi.fn();
 
     render(
-      <EventKillsFilter
+      <HeroKillsFilter
         heroes={heroes}
         selectedHeroId="hero-1"
         onSelectedHeroChange={onSelectedHeroChange}
@@ -69,7 +69,7 @@ describe("EventKillsFilter", () => {
 
   it("does not render when there is only one hero", () => {
     const { container } = render(
-      <EventKillsFilter heroes={[heroes[0]!]} onSelectedHeroChange={vi.fn()} />,
+      <HeroKillsFilter heroes={[heroes[0]!]} onSelectedHeroChange={vi.fn()} />,
     );
 
     expect(container.firstChild).toBeNull();

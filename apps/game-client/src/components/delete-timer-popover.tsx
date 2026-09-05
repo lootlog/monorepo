@@ -3,6 +3,7 @@ import { useState, type FC } from "react";
 import { useQueries } from "@tanstack/react-query";
 import {
   Popover,
+  preservePopoverOnMenuPress,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -97,22 +98,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   }
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen, eventDetails) => {
-        if (
-          !nextOpen &&
-          eventDetails.reason === "outside-press" &&
-          eventDetails.event.target instanceof Element &&
-          eventDetails.event.target.closest('[role="menu"]')
-        ) {
-          eventDetails.cancel();
-          return;
-        }
-
-        setOpen(nextOpen);
-      }}
-    >
+    <Popover open={open} onOpenChange={preservePopoverOnMenuPress(setOpen)}>
       <PopoverTrigger asChild>
         <ContextMenuItem
           onSelect={(e) => {

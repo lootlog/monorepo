@@ -1,29 +1,12 @@
+import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
+export const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent =
+  createEmptyGuildDocumentContent();
 import type { GuildDocumentResponseDto } from "@lootlog/client/main";
 
 export type GuildDocEditorContent = Exclude<
   GuildDocumentResponseDto["content"],
   null
 >;
-
-export const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent = {
-  root: {
-    children: [
-      {
-        children: [],
-        direction: null,
-        format: "",
-        indent: 0,
-        type: "paragraph",
-        version: 1,
-      },
-    ],
-    direction: null,
-    format: "",
-    indent: 0,
-    type: "root",
-    version: 1,
-  },
-};
 
 export const normalizeGuildDocEditorContent = (
   content: GuildDocumentResponseDto["content"] | GuildDocEditorContent,

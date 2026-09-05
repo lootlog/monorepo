@@ -972,6 +972,39 @@ export const makeEventKills = (
       .pipe(Effect.withSpan("events.kills.heroHistory"));
   }
 
+  const listKillHistory = Effect.fnUntraced(function* (
+    eventId: string,
+    heroId: string | undefined,
+    limit: number,
+    cursor: string | undefined,
+  ) {
+    const kills = yield* repository.findKills({
+      eventId,
+      heroId,
+      cursor,
+      limit: limit + 1,
+    });
+
+    const hasMore = kills.length > limit;
+    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+    const windowStartByKillId =
+      yield* getEffectiveWindowStartByKillId(paginatedKills);
+    const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
+      paginatedKills,
+      windowStartByKillId,
+    );
+    const data = paginatedKills.map((kill) => ({
+      ...kill,
+      points: kill.points.map((point) => ({
+        ...point,
+        mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
+      })),
+    }));
+    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+
+    return { data, nextCursor };
+  });
+
   function getHeroKillHistoryUncached(
     guildId: string,
     eventId: string,
@@ -986,32 +1019,7 @@ export const makeEventKills = (
         return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
 
-      const kills = yield* repository.findKills({
-        eventId,
-        heroId,
-        cursor,
-        limit: limit + 1,
-      });
-
-      const hasMore = kills.length > limit;
-      const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-      const windowStartByKillId =
-        yield* getEffectiveWindowStartByKillId(paginatedKills);
-      const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
-        paginatedKills,
-        windowStartByKillId,
-      );
-      const data = paginatedKills.map((kill) => ({
-        ...kill,
-        points: kill.points.map((point) => ({
-          ...point,
-          mapData:
-            mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
-        })),
-      }));
-      const nextCursor = hasMore ? data[data.length - 1]?.id : null;
-
-      return { data, nextCursor };
+      return yield* listKillHistory(eventId, heroId, limit, cursor);
     });
   }
 
@@ -1050,32 +1058,7 @@ export const makeEventKills = (
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
-      const kills = yield* repository.findKills({
-        eventId,
-        heroId,
-        cursor,
-        limit: limit + 1,
-      });
-
-      const hasMore = kills.length > limit;
-      const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-      const windowStartByKillId =
-        yield* getEffectiveWindowStartByKillId(paginatedKills);
-      const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
-        paginatedKills,
-        windowStartByKillId,
-      );
-      const data = paginatedKills.map((kill) => ({
-        ...kill,
-        points: kill.points.map((point) => ({
-          ...point,
-          mapData:
-            mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
-        })),
-      }));
-      const nextCursor = hasMore ? data[data.length - 1]?.id : null;
-
-      return { data, nextCursor };
+      return yield* listKillHistory(eventId, heroId, limit, cursor);
     });
   }
 

@@ -59,7 +59,7 @@ import {
   AccountOrganizationAuthorization,
   AccountOrganizationNotFound,
 } from "#src/http-api/handlers/account-organization/account-organization.operations";
-import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
+import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,
@@ -75,11 +75,6 @@ type PermissionRequirements = {
   readonly allOf?: ReadonlyArray<PermissionValue>;
   readonly anyOf?: ReadonlyArray<PermissionValue>;
 };
-
-const requestScopedIdentity = Effect.map(
-  ForwardAuthIdentity,
-  ({ discordId, userId }) => ({ discordId, userId }),
-) as Effect.Effect<{ readonly discordId: string; readonly userId: string }>;
 
 const hasPermissions = (
   permissions: ReadonlyArray<PermissionValue>,

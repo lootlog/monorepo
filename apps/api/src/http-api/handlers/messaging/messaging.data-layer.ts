@@ -1,6 +1,7 @@
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 import { v4 as uuid } from "uuid";
-import { and, arrayOverlaps, eq, isNotNull, or } from "drizzle-orm";
+import { and, arrayOverlaps, eq, or } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import {
@@ -168,15 +169,7 @@ export const makeMessagingDataLayer = (
         database
           .selectDistinct({ id: guildTable.id })
           .from(guildTable)
-          .leftJoin(
-            memberTable,
-            and(
-              eq(memberTable.guildId, guildTable.id),
-              eq(memberTable.userId, discordId),
-              eq(memberTable.active, true),
-              isNotNull(memberTable.globalUserId),
-            ),
-          )
+          .leftJoin(memberTable, activeGuildMemberJoin(discordId))
           .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
           .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
           .where(

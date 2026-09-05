@@ -1,9 +1,9 @@
-import { and, asc, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
+import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
+import { and, asc, eq, gt, inArray, lt } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
-  reservationShareTable,
   reservationTable,
   userPinnedReservationSpotTable,
 } from "#src/database/drizzle/schema";
@@ -29,32 +29,6 @@ export const makeReservationReadDataLayer = (
             (cause) => new OrganizationWorkspaceOperationError({ cause }),
           ),
         );
-      const visibleGuildIds = (guildId: string) =>
-        database
-          .select({
-            firstGuildId: reservationShareTable.firstGuildId,
-            secondGuildId: reservationShareTable.secondGuildId,
-          })
-          .from(reservationShareTable)
-          .where(
-            and(
-              isNull(reservationShareTable.revokedAt),
-              or(
-                eq(reservationShareTable.firstGuildId, guildId),
-                eq(reservationShareTable.secondGuildId, guildId),
-              ),
-            ),
-          )
-          .pipe(
-            Effect.map((shares) => [
-              guildId,
-              ...shares.map((share) =>
-                share.firstGuildId === guildId
-                  ? share.secondGuildId
-                  : share.firstGuildId,
-              ),
-            ]),
-          );
       const findReservations = (
         guildIds: ReadonlyArray<string>,
         condition: Exclude<ReturnType<typeof and>, undefined>,
@@ -92,7 +66,7 @@ export const makeReservationReadDataLayer = (
               const [spots, guildIds, pinnedSpots] = yield* Effect.all(
                 [
                   catalog.getSpots,
-                  visibleGuildIds(context.guildId),
+                  visibleReservationGuildIds(database, context.guildId),
                   database
                     .select({ spotId: userPinnedReservationSpotTable.spotId })
                     .from(userPinnedReservationSpotTable)
@@ -171,7 +145,10 @@ export const makeReservationReadDataLayer = (
                 try: () => parseReservationWindow(fromValue, toValue),
                 catch: (cause) => cause,
               });
-              const guildIds = yield* visibleGuildIds(context.guildId);
+              const guildIds = yield* visibleReservationGuildIds(
+                database,
+                context.guildId,
+              );
               const windowCondition = and(
                 eq(reservationTable.spotId, spotId),
                 lt(reservationTable.startsAt, to),

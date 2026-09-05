@@ -1,17 +1,20 @@
-import { createHash } from "node:crypto";
-import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import {
+  findTimerMatches,
+  findActiveTimerEventHeroes,
+  timerNpcField,
+} from "./timer-selection.js";
+import { upsertActorCharacter } from "./timer-actor-snapshot.js";
+
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  eventHeroNpcTable,
-  eventTable,
   memberTable,
-  playerSnapshotTable,
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/schema";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+
 import {
   InvalidRequestError,
   ResourceNotFoundError,
@@ -19,7 +22,7 @@ import {
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
+
 import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
@@ -39,54 +42,6 @@ export interface ResetTimerPorts {
   ) => Effect.Effect<A, E | unknown>;
 }
 
-const npcField = (npc: unknown, key: string) =>
-  npc && typeof npc === "object" && !Array.isArray(npc)
-    ? (npc as Record<string, unknown>)[key]
-    : undefined;
-
-const upsertActorCharacter = (
-  database: Pick<typeof ApiDatabase.Service, "insert" | "select">,
-  world: string,
-  actor: ResetTimerRequest["actorCharacter"],
-) =>
-  Effect.gen(function* () {
-    if (!actor) return null;
-    const characterId = Number.parseInt(actor.characterId, 10);
-    const accountId = Number.parseInt(actor.accountId, 10);
-    if (Number.isNaN(characterId) || Number.isNaN(accountId)) return null;
-    const icon = actor.icon ?? "";
-    const snapshotHash = createHash("sha256")
-      .update(`${actor.name}${actor.prof ?? ""}${icon}`)
-      .digest("hex");
-    const inserted = yield* database
-      .insert(playerSnapshotTable)
-      .values({
-        world,
-        accountId,
-        characterId,
-        snapshotHash,
-        name: actor.name,
-        prof: getProfByShortname(actor.prof ?? ""),
-        icon,
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (inserted[0]) return inserted[0];
-    const existing = yield* database
-      .select()
-      .from(playerSnapshotTable)
-      .where(
-        and(
-          eq(playerSnapshotTable.world, world),
-          eq(playerSnapshotTable.accountId, accountId),
-          eq(playerSnapshotTable.characterId, characterId),
-          eq(playerSnapshotTable.snapshotHash, snapshotHash),
-        ),
-      )
-      .limit(1);
-    return existing[0] ?? null;
-  });
-
 export const makeResetTimer = (
   database: typeof ApiDatabase.Service,
   ports: ResetTimerPorts,
@@ -96,21 +51,12 @@ export const makeResetTimer = (
     timerIdentifier: string,
     payload: ResetTimerRequest,
   ) {
-    const timerCondition = isLegacyNpcIdIdentifier(timerIdentifier)
-      ? and(
-          eq(timerTable.guildId, access.guild.id),
-          eq(timerTable.world, payload.world),
-          eq(timerTable.npcId, Number.parseInt(timerIdentifier, 10)),
-        )
-      : and(
-          eq(timerTable.guildId, access.guild.id),
-          eq(timerTable.world, payload.world),
-          eq(timerTable.timerKey, timerIdentifier),
-        );
-    const matches = yield* database
-      .select()
-      .from(timerTable)
-      .where(timerCondition);
+    const matches = yield* findTimerMatches(
+      database,
+      access.guild.id,
+      payload.world,
+      timerIdentifier,
+    );
     if (matches.length > 1) {
       return yield* Effect.fail(
         new InvalidRequestError({
@@ -125,26 +71,13 @@ export const makeResetTimer = (
       );
     }
     const now = new Date(yield* Clock.currentTimeMillis);
-    const activeEventHero = yield* database
-      .select({ id: eventHeroNpcTable.id })
-      .from(eventHeroNpcTable)
-      .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-      .where(
-        and(
-          eq(eventTable.guildId, access.guild.id),
-          eq(eventTable.world, payload.world),
-          or(
-            eq(eventHeroNpcTable.npcId, resolved.npcId),
-            eq(
-              eventHeroNpcTable.npcName,
-              String(npcField(resolved.npc, "name") ?? ""),
-            ),
-          ),
-          or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
-          or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
-        ),
-      )
-      .limit(1);
+    const activeEventHero = yield* findActiveTimerEventHeroes(
+      database,
+      access.guild.id,
+      payload.world,
+      resolved,
+      now,
+    );
     if (activeEventHero.length > 0) {
       return yield* Effect.fail(
         new InvalidRequestError({
@@ -243,7 +176,7 @@ export const makeResetTimer = (
             );
           }
           const manual =
-            Number(npcField(updated.npc, "margonemType")) ===
+            Number(timerNpcField(updated.npc, "margonemType")) ===
             TIMER_TYPES.CUSTOM_MANUAL;
           if (!manual) {
             yield* transaction.insert(timerHistoryEntryTable).values({

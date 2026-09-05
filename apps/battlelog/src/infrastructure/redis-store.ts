@@ -1,3 +1,4 @@
+import { RedisScriptCache } from "@lootlog/database/redis-script";
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Effect, Schema } from "effect";
@@ -62,7 +63,7 @@ export const makeRedisStore = (
   const { prefix } = options;
   const keyPrefix = prefix ?? "";
   const run = runEffect;
-  const scripts = new Map<string, Redis.Script<any>>();
+  const scripts = new RedisScriptCache();
   const prefixKey = (key: string): string =>
     keyPrefix ? `${keyPrefix}:${key}` : key;
 
@@ -242,18 +243,8 @@ export const makeRedisStore = (
       args: ReadonlyArray<string | number> = [],
     ): Promise<TResult> {
       const prefixedKeys = keys.map((key) => prefixKey(key));
-      const cacheKey = `${prefixedKeys.length}:${script}`;
-      let descriptor = scripts.get(cacheKey);
-      if (descriptor === undefined) {
-        descriptor = Redis.script(
-          (...parameters: ReadonlyArray<unknown>) => parameters,
-          { lua: script, numberOfKeys: prefixedKeys.length },
-        ).withReturnType<TResult>();
-        scripts.set(cacheKey, descriptor);
-      }
-      return run(
-        redis.eval(descriptor)(...prefixedKeys, ...args.map(String)),
-      ) as Promise<TResult>;
+      const descriptor = scripts.get<TResult>(script, prefixedKeys.length);
+      return run(redis.eval(descriptor)(...prefixedKeys, ...args.map(String)));
     },
 
     del(...keys: string[]): Promise<number> {

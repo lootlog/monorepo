@@ -1,3 +1,5 @@
+import { operationIdentifiers } from "../../operation-identifiers.js";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -5,8 +7,8 @@ import {
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { HttpServerResponse } from "effect/unstable/http";
-import { HttpApiBuilder, OpenApi } from "effect/unstable/httpapi";
+
+import { HttpApiBuilder } from "effect/unstable/httpapi";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import {
   GuildAvailableNotificationTargetsResponse,
@@ -84,14 +86,8 @@ export class NotificationsAuthorization extends Context.Service<
   }
 >()("@lootlog/api/http-api/notifications/authorization") {}
 
-const operationIds = Object.fromEntries(
-  Object.entries(LootlogApi.groups.notifications.endpoints).map(
-    ([identifier, endpoint]) => [
-      identifier,
-      Context.getOrUndefined(endpoint.annotations, OpenApi.Identifier) ??
-        identifier,
-    ],
-  ),
+const operationIds = operationIdentifiers(
+  LootlogApi.groups.notifications.endpoints,
 ) as Record<NotificationEndpointIdentifier, string>;
 
 const operationFailure = (cause: unknown): NotificationsHttpFailure => {
@@ -118,26 +114,15 @@ const operation = <A>(
     }),
   );
 
-const statusResponse = (error: {
-  readonly status: number;
-  readonly code: string;
-}) =>
-  Effect.succeed(
-    HttpServerResponse.jsonUnsafe(
-      { code: error.code },
-      { status: error.status },
-    ),
-  );
-
 const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, NotificationsHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
-    NotificationsAccessDenied: statusResponse,
-    NotificationsBadRequest: statusResponse,
+    NotificationsAccessDenied: statusCodeResponse,
+    NotificationsBadRequest: statusCodeResponse,
     NotificationsDataError: (error) => Effect.die(error.cause),
-    NotificationsNotFound: statusResponse,
+    NotificationsNotFound: statusCodeResponse,
   });
 
 const integerParameter = (value: unknown, key: string) => {

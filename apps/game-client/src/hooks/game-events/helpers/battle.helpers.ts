@@ -10,7 +10,7 @@ type ModernBattleHp = {
   max?: unknown;
 };
 
-const parseNumericHpValue = (value: unknown) => {
+export const parseNumericHpValue = (value: unknown) => {
   if (typeof value === "number") return value;
   if (typeof value === "string") {
     const parsedValue = Number.parseFloat(value);

@@ -10,16 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/detector/detector-routing-settings-tab-form";
 import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
 import { NpcType } from "@/api/npcs.api";
-import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
+import { useGameAccountPreferencesSyncIndicator } from "@/hooks/use-game-account-preferences-sync-status";
 import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-const SYNC_INDICATOR_DELAY_MS = 100;
-
 export const DetectorSettingsTab = () => {
-  const syncStatus = useGameAccountPreferencesSyncStatus();
-  const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
+  const resolvedVisibleStatus = useGameAccountPreferencesSyncIndicator();
   const { t } = useTranslation(["settings", "common"]);
   const categoryTabs: Array<{
     label: string;
@@ -47,25 +44,6 @@ export const DetectorSettingsTab = () => {
       content: <DetectorSettingsTabForm categoryKey={NpcType.TITAN} />,
     },
   ];
-
-  useEffect(() => {
-    if (syncStatus.status === "error" || syncStatus.status === "idle") {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setVisibleStatus(syncStatus.status);
-    }, SYNC_INDICATOR_DELAY_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [syncStatus.status]);
-
-  const resolvedVisibleStatus =
-    syncStatus.status === "error" || syncStatus.status === "idle"
-      ? syncStatus.status
-      : visibleStatus;
 
   return (
     <SettingsTabLayout

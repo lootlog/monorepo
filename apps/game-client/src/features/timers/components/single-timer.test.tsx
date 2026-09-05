@@ -117,7 +117,7 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-vi.mock("@/utils/parse-ms-to-time", () => ({
+vi.mock("@lootlog/datetime", () => ({
   parseMsToTime: (timeLeft: number) => `time:${timeLeft}`,
 }));
 

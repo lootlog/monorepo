@@ -1,3 +1,4 @@
+import { ScoringFactorSelect } from "./scoring-factor-select";
 import { Controller, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Label } from "@lootlog/ui/components/label";
@@ -8,17 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { HelpCircle } from "lucide-react";
 import { EVENT_SCORING_BOOLEAN_FACTORS } from "@lootlog/domain/scoring";
-import {
-  getScoringFactorDescription,
-  getScoringFactorLabel,
-} from "../../utils/scoring-rule-labels";
 
 type ScoringRulesFormValues = {
   scoringRules: { rules: { conditions: unknown[] }[] };
@@ -49,44 +40,13 @@ export const ScoringConditionBoolean = ({
             `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor` as `scoringRules.rules.${number}.conditions.${number}`
           }
           render={({ field }) => (
-            <div className="flex items-center gap-1">
-              <Select
-                value={field.value as string}
-                onValueChange={field.onChange}
-                items={[
-                  ...EVENT_SCORING_BOOLEAN_FACTORS.map((factor) => ({
-                    value: factor,
-                    label: <>{getScoringFactorLabel(factor, t)}</>,
-                  })),
-                ]}
-              >
-                <SelectTrigger size="sm" className="h-8 text-[12px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_SCORING_BOOLEAN_FACTORS.map((factor) => (
-                    <SelectItem key={factor} value={factor}>
-                      {getScoringFactorLabel(factor, t)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
-                  }
-                />
-                <TooltipContent side="top" className="max-w-[220px]">
-                  <p className="text-xs">
-                    {getScoringFactorDescription(
-                      field.value as (typeof EVENT_SCORING_BOOLEAN_FACTORS)[number],
-                      t,
-                    )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            <ScoringFactorSelect
+              factors={EVENT_SCORING_BOOLEAN_FACTORS}
+              value={
+                field.value as (typeof EVENT_SCORING_BOOLEAN_FACTORS)[number]
+              }
+              onChange={field.onChange}
+            />
           )}
         />
       </div>

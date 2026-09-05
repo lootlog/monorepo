@@ -1,3 +1,4 @@
+import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { format } from "date-fns";
 import {
   BellOff,
@@ -13,8 +14,6 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import {
-  invalidateNotificationsUserControllerGetUserTargets,
-  invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerCreateUserTarget,
   useNotificationsUserControllerTriggerUserTargetTest,
   useNotificationsUserControllerUpdateUserTarget,
@@ -59,20 +58,14 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
   const createUserTarget = useNotificationsUserControllerCreateUserTarget({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          invalidateNotificationsUserControllerGetUserTargets(queryClient),
-          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-        ]);
+        await invalidateUserNotificationQueries(queryClient);
       },
     },
   });
   const updateUserTarget = useNotificationsUserControllerUpdateUserTarget({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          invalidateNotificationsUserControllerGetUserTargets(queryClient),
-          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-        ]);
+        await invalidateUserNotificationQueries(queryClient);
       },
     },
   });
@@ -80,10 +73,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
     useNotificationsUserControllerTriggerUserTargetTest({
       mutation: {
         onSuccess: async () => {
-          await Promise.all([
-            invalidateNotificationsUserControllerGetUserTargets(queryClient),
-            invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-          ]);
+          await invalidateUserNotificationQueries(queryClient);
         },
       },
     });

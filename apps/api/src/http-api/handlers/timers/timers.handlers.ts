@@ -1,9 +1,13 @@
+import {
+  pathString,
+  statusCodeResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -153,39 +157,22 @@ const data = <A>(
 ) => Effect.flatMap(TimersData, operation);
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new TimersInfrastructureError({ cause })),
   );
 
 type TimersHttpFailure = TimersAccessDenied | TimersDataFailure;
 
-const statusResponse = (error: {
-  readonly status: number;
-  readonly code: string;
-}) =>
-  Effect.succeed(
-    HttpServerResponse.jsonUnsafe(
-      { code: error.code },
-      { status: error.status },
-    ),
-  );
-
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, TimersHttpFailure, R>) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
-    TimersAccessDenied: statusResponse,
-    TimersConflict: statusResponse,
-    TimersForbidden: statusResponse,
+    TimersAccessDenied: statusCodeResponse,
+    TimersConflict: statusCodeResponse,
+    TimersForbidden: statusCodeResponse,
     TimersInfrastructureError: (error) => Effect.die(error.cause),
-    TimersInvalidRequest: statusResponse,
-    TimersNotFound: statusResponse,
+    TimersInvalidRequest: statusCodeResponse,
+    TimersNotFound: statusCodeResponse,
   });
-
-const pathString = (value: unknown, name: string) =>
-  typeof value === "string"
-    ? Effect.succeed(value)
-    : Effect.die(new TypeError(`${name} path parameter must be a string`));
 
 const parsedLimit = (value: unknown): number | undefined =>
   value ? Number.parseInt(String(value), 10) : undefined;

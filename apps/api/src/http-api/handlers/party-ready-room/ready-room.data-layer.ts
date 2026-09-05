@@ -1,6 +1,7 @@
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 
-import { and, arrayOverlaps, eq, isNotNull, or } from "drizzle-orm";
+import { and, arrayOverlaps, eq, or } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
@@ -221,15 +222,7 @@ export const makeReadyRoomDataLayer = (
         database
           .selectDistinct({ id: guildTable.id })
           .from(guildTable)
-          .leftJoin(
-            memberTable,
-            and(
-              eq(memberTable.guildId, guildTable.id),
-              eq(memberTable.userId, discordId),
-              eq(memberTable.active, true),
-              isNotNull(memberTable.globalUserId),
-            ),
-          )
+          .leftJoin(memberTable, activeGuildMemberJoin(discordId))
           .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
           .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
           .where(

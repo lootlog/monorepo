@@ -3,7 +3,10 @@ import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
-import { mergeBattleWarriorPatches } from "@/hooks/game-events/helpers/battle.helpers";
+import {
+  mergeBattleWarriorPatches,
+  parseNumericHpValue,
+} from "@/hooks/game-events/helpers/battle.helpers";
 import { useGameStore } from "@/store/game.store";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
@@ -55,25 +58,15 @@ const showBattleCreatedToast = (battleId: string) => {
   });
 };
 
-const parseNumericValue = (value: unknown) => {
-  if (typeof value === "number") return value;
-  if (typeof value === "string") {
-    const parsedValue = Number.parseFloat(value);
-    return Number.isFinite(parsedValue) ? parsedValue : null;
-  }
-
-  return null;
-};
-
 const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
-  const legacyHpp = parseNumericValue((warrior as { hpp?: unknown }).hpp);
+  const legacyHpp = parseNumericHpValue((warrior as { hpp?: unknown }).hpp);
   if (legacyHpp !== null) return legacyHpp <= 0;
 
   const hpData = (warrior as { hp?: { hpp?: unknown; cur?: unknown } }).hp;
-  const nestedHpp = parseNumericValue(hpData?.hpp);
+  const nestedHpp = parseNumericHpValue(hpData?.hpp);
   if (nestedHpp !== null) return nestedHpp <= 0;
 
-  const currentHp = parseNumericValue(hpData?.cur);
+  const currentHp = parseNumericHpValue(hpData?.cur);
   if (currentHp !== null) return currentHp <= 0;
 
   return false;

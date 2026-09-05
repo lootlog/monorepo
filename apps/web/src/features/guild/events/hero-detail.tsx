@@ -1,3 +1,5 @@
+import { canManageEvent } from "./utils/event-access";
+import { getWindowStatusConfig } from "./utils/window-status-presentation";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,7 +22,6 @@ import {
   X,
   Timer,
 } from "lucide-react";
-import { Permission } from "@lootlog/schema/permissions";
 import { useState } from "react";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { MemberAssignmentModal } from "./components/dialogs/member-assignment-modal";
@@ -80,35 +81,6 @@ import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-q
 import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import type { EventMapsResponse } from "./types/api";
 
-const getWindowStatusConfig = (
-  status: WindowStatus,
-  t: (key: string) => string,
-) => {
-  switch (status) {
-    case "OPEN":
-      return {
-        label: t("events.respawn.status.open"),
-        className: "bg-green-500/10 text-green-500 border-green-500/20",
-      };
-    case "WAITING":
-      return {
-        label: t("events.respawn.status.waiting"),
-        className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-      };
-    case "OVERDUE":
-      return {
-        label: t("events.respawn.status.overdue"),
-        className: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-      };
-    case "NONE":
-    default:
-      return {
-        label: t("events.respawn.status.none"),
-        className: "bg-muted text-muted-foreground border-border",
-      };
-  }
-};
-
 const getMapCoverageCountClassName = (
   canShowCoverageCount: boolean,
   coveredMapsCount: number,
@@ -121,16 +93,6 @@ const getMapCoverageCountClassName = (
 };
 
 type EventOverview = EventOverviewResponseDto;
-
-const canManageEvent = (
-  accessPolicy: ReturnType<typeof useGuildPermissions>["data"],
-) =>
-  Boolean(
-    accessPolicy?.allows(Permission.LOOTLOG_MANAGE) ||
-    accessPolicy?.allows(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER),
-  );
 
 const getEventHero = (
   event: EventOverview | undefined,

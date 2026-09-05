@@ -1,3 +1,4 @@
+import { makeRuleId } from "../../utils/scoring-rule-templates";
 import { useState } from "react";
 import {
   useFieldArray,
@@ -30,9 +31,6 @@ interface ScoringRulesEditorProps<TFieldValues extends ScoringRulesFormValues> {
   register: UseFormRegister<TFieldValues>;
   setValue: UseFormSetValue<TFieldValues>;
 }
-
-const makeRuleId = () =>
-  `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 const defaultRule = () => ({
   id: makeRuleId(),

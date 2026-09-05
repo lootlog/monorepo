@@ -126,8 +126,8 @@ const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_QUICK_ACCESS_WIDTH = 250;
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
-const sanitizeMaxContentHeight = (height: number) => {
-  if (!Number.isFinite(height)) {
+export const sanitizeMaxContentHeight = (height: number | undefined) => {
+  if (height === undefined || !Number.isFinite(height)) {
     return undefined;
   }
 

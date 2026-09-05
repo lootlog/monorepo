@@ -1,6 +1,8 @@
+import { canManageEvent } from "./utils/event-access";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
@@ -118,12 +120,7 @@ const getEventDateRangeLabel = (
 const getEventAccess = (
   accessPolicy: ReturnType<typeof useGuildPermissions>["data"],
 ) => ({
-  canManage: Boolean(
-    accessPolicy?.allows(Permission.LOOTLOG_MANAGE) ||
-    accessPolicy?.allows(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER),
-  ),
+  canManage: canManageEvent(accessPolicy),
   canDeleteEvent: Boolean(
     accessPolicy?.allows(Permission.ADMIN) ||
     accessPolicy?.allows(Permission.OWNER),
@@ -222,7 +219,7 @@ export const EventDetail = () => {
     isPinned,
     isPending: isPinPending,
   } = useToggleEventPin(queryGuildId);
-  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  const currentTimestamp = useMinuteTimestamp();
   const hasEventRouteParams = Boolean(guildId && eventId);
   const eventIsPinned = getEventPinnedState(eventId, isPinned);
 
@@ -363,14 +360,6 @@ export const EventDetail = () => {
   const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
     null,
   );
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setCurrentTimestamp(Date.now());
-    }, 60_000);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
 
   const heroes = getEventHeroes(event, eventMaps);
   const { scoringMode, scoringRules } = getEventScoring(event);

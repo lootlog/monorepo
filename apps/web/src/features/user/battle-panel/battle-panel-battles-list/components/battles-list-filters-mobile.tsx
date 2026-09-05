@@ -1,3 +1,4 @@
+import { BattleCharacterOption } from "./battle-character-option";
 import {
   Users,
   Medal,
@@ -36,11 +37,9 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
-import { PlayerTile } from "@/components/battle";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { Badge } from "@lootlog/ui/components/badge";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
-import type { BattleFilters } from "./battles-list-filters";
+import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
@@ -308,27 +307,14 @@ export const BattlesListFiltersMobile = ({
                       </CommandEmpty>
                       <CommandGroup>
                         {characters.map((char) => (
-                          <CommandItem
+                          <BattleCharacterOption
                             key={char.id}
-                            value={`${char.name} ${char.world}`}
-                            onSelect={() => onCharacterChange(char.id)}
-                            className="p-0 px-2 gap-0"
-                          >
-                            <PlayerTile
-                              player={char}
-                              cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                              className="scale-70 mr-2"
-                            />
-                            {char.name} ({char.world})
-                            <Check
-                              className={cn(
-                                "ml-auto h-4 w-4",
-                                filters.characterId?.includes(char.id)
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                          </CommandItem>
+                            character={char}
+                            selected={
+                              filters.characterId?.includes(char.id) ?? false
+                            }
+                            onSelect={onCharacterChange}
+                          />
                         ))}
                       </CommandGroup>
                     </CommandList>

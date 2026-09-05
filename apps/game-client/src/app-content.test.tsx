@@ -34,7 +34,7 @@ vi.mock("@/hooks/use-timer-settings-sync", () => ({
 vi.mock("@/components/animation-effects-root-class", () => ({
   AnimationEffectsRootClass: () => null,
 }));
-vi.mock("@/components/ui/toaster", () => ({ Toaster: () => null }));
+vi.mock("@lootlog/ui/components/sonner", () => ({ Toaster: () => null }));
 vi.mock(
   "@/features/backend-preferences-warning/backend-preferences-warning",
   () => ({ BackendPreferencesWarning: () => null }),

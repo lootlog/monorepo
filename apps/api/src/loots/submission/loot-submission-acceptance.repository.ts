@@ -1,3 +1,4 @@
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import {
   and,
@@ -5,7 +6,6 @@ import {
   desc,
   eq,
   inArray,
-  isNotNull,
   isNull,
   ne,
   or,
@@ -154,15 +154,7 @@ export const makeLootSubmissionAcceptancePersistence = (
     database
       .selectDistinct({ guild: guildTable })
       .from(guildTable)
-      .leftJoin(
-        memberTable,
-        and(
-          eq(memberTable.guildId, guildTable.id),
-          eq(memberTable.userId, discordId),
-          eq(memberTable.active, true),
-          isNotNull(memberTable.globalUserId),
-        ),
-      )
+      .leftJoin(memberTable, activeGuildMemberJoin(discordId))
       .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
       .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
       .where(

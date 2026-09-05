@@ -1,5 +1,4 @@
-import { Card, CardContent } from "@lootlog/ui/components/card";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { StatsOverviewCard } from "./stats-overview-card";
 import { useTranslation } from "react-i18next";
 import { Flame, Mountain, Shield, Sword } from "lucide-react";
 import { cn } from "cn";
@@ -58,17 +57,7 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
     return (
       <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
         {NPC_TYPES_TO_DISPLAY.map((type) => (
-          <Card key={type} className="gap-0 py-0">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-3 w-14" />
-                  <Skeleton className="h-6 w-10" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatsOverviewCard key={type} loading className="gap-0 py-0" />
         ))}
       </div>
     );
@@ -80,32 +69,15 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
         const config = NPC_TYPE_CONFIG[type];
         if (!config) return null;
         return (
-          <Card
+          <StatsOverviewCard
             key={type}
-            className={cn("gap-0 border-border/80 py-0", config.gradient)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-lg",
-                    config.iconBg,
-                    config.iconColor,
-                  )}
-                >
-                  {config.icon}
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    {t(`npcType.${type}`)}
-                  </p>
-                  <p className="text-xl font-bold tabular-nums">
-                    {(data?.killsByType[type] ?? 0).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            icon={config.icon}
+            iconBg={config.iconBg}
+            iconColor={config.iconColor}
+            className={cn("gap-0 py-0", config.gradient)}
+            label={t(`npcType.${type}`)}
+            value={data?.killsByType[type] ?? 0}
+          />
         );
       })}
     </div>

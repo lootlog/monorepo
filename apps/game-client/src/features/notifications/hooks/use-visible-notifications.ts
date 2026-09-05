@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import { useShallow } from "zustand/react/shallow";
 import {
-  type MentionNotification,
+  isMentionNotification,
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -31,12 +31,6 @@ type NotificationAutoHideStates = Record<
     durationMs: number;
   }
 >;
-
-const isMentionNotification = (
-  notification: StoredNotification,
-): notification is StoredNotification & MentionNotification => {
-  return "type" in notification && notification.type === "chat-mention";
-};
 
 const getExpirationTimeMs = (
   notification: StoredNotification,

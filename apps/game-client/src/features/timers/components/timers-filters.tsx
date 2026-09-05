@@ -50,28 +50,15 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     setTimerFiltersSearchText(e.target.value);
   };
 
-  const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numericValue = Number(e.target.value);
-
+  const handleLevelChange = (
+    field: "minLvl" | "maxLvl",
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const numericValue = Number(event.target.value);
     if (Number.isNaN(numericValue)) return;
-
-    const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
-
     setTimersFilters(filtersKey, {
       ...filters,
-      minLvl: clampedValue,
-    });
-  };
-
-  const handleMaxLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numericValue = Number(e.target.value);
-
-    if (Number.isNaN(numericValue)) return;
-
-    const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
-    setTimersFilters(filtersKey, {
-      ...filters,
-      maxLvl: clampedValue,
+      [field]: clampValue(numericValue, MIN_LVL, MAX_LVL),
     });
   };
 
@@ -116,7 +103,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           <Input
             placeholder={t("filters.minPlaceholder")}
             value={filters.minLvl.toString()}
-            onChange={handleMinLvlChange}
+            onChange={(event) => handleLevelChange("minLvl", event)}
             className="ll:w-8 input-no-spinner"
             max={MAX_LVL}
             min={MIN_LVL}
@@ -128,7 +115,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           <Input
             placeholder={t("filters.maxPlaceholder")}
             value={filters.maxLvl.toString()}
-            onChange={handleMaxLvlChange}
+            onChange={(event) => handleLevelChange("maxLvl", event)}
             className="ll:w-8 input-no-spinner"
             min={MIN_LVL}
             max={MAX_LVL}

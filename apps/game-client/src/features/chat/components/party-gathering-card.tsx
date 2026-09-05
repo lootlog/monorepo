@@ -131,6 +131,40 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
     props.showTimestamp,
   );
 
+  const messageAuthor = (
+    <>
+      {showTimestamp ? (
+        <span
+          className={cn(
+            "ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:select-text",
+            {
+              "ll:opacity-50": isMsgYesterday,
+            },
+          )}
+        >
+          [{format(new Date(message.timestamp), "HH:mm")}]
+        </span>
+      ) : null}{" "}
+      {all && showGuildLabel && (
+        <span
+          className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+            "ll:opacity-50": isMsgYesterday,
+          })}
+        >
+          [{guildName}]{" "}
+        </span>
+      )}
+      <ChatCharacterTooltip character={message.characterData}>
+        <span
+          className="ll:font-bold ll:select-text"
+          style={{ color: `#${memberColor}` }}
+        >
+          {senderName}:
+        </span>
+      </ChatCharacterTooltip>{" "}
+    </>
+  );
+
   if (!partyGathering) {
     return (
       <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-[var(--ll-chat-space-sm)] ll:text-white ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:select-text ll:cursor-text">
@@ -138,35 +172,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
           className="ll:inline-block ll:max-w-full ll:select-text"
           style={{ overflowWrap: "anywhere" }}
         >
-          {showTimestamp ? (
-            <span
-              className={cn(
-                "ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:select-text",
-                {
-                  "ll:opacity-50": isMsgYesterday,
-                },
-              )}
-            >
-              [{format(new Date(message.timestamp), "HH:mm")}]
-            </span>
-          ) : null}{" "}
-          {all && showGuildLabel && (
-            <span
-              className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-                "ll:opacity-50": isMsgYesterday,
-              })}
-            >
-              [{guildName}]{" "}
-            </span>
-          )}
-          <ChatCharacterTooltip character={message.characterData}>
-            <span
-              className="ll:font-bold ll:select-text"
-              style={{ color: `#${memberColor}` }}
-            >
-              {senderName}:
-            </span>
-          </ChatCharacterTooltip>{" "}
+          {messageAuthor}
           <span
             className="ll:font-bold ll:select-text"
             style={{ color: "#9CA3AF" }}
@@ -221,35 +227,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
         className="ll:mb-[var(--ll-chat-space-xs)] ll:min-w-0 ll:max-w-full"
         style={{ overflowWrap: "anywhere" }}
       >
-        {showTimestamp ? (
-          <span
-            className={cn(
-              "ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:select-text",
-              {
-                "ll:opacity-50": isMsgYesterday,
-              },
-            )}
-          >
-            [{format(new Date(message.timestamp), "HH:mm")}]
-          </span>
-        ) : null}{" "}
-        {all && showGuildLabel && (
-          <span
-            className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-              "ll:opacity-50": isMsgYesterday,
-            })}
-          >
-            [{guildName}]{" "}
-          </span>
-        )}
-        <ChatCharacterTooltip character={message.characterData}>
-          <span
-            className="ll:font-bold ll:select-text"
-            style={{ color: `#${memberColor}` }}
-          >
-            {senderName}:
-          </span>
-        </ChatCharacterTooltip>{" "}
+        {messageAuthor}
         <span
           className="ll:font-bold ll:select-text"
           style={{ color: "#FF8C00" }}

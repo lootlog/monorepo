@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { cn } from "cn";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
-import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
+import { parseMsToTime } from "@lootlog/datetime";
 
 export const TimerCountdown = ({
   minSpawnTime,

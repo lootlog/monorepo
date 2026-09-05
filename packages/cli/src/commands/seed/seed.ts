@@ -1,3 +1,4 @@
+import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { buildTimerKey } from "@lootlog/api/timers/timer-key";
 import {
   guildTable,
@@ -253,13 +254,6 @@ async function seedGuilds(count: number) {
   return createdGuilds;
 }
 
-const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
-  "created",
-  "gold",
-  "amount",
-  "opis",
-]);
-
 const parseItemStats = (stats: string): Record<string, string> =>
   Object.fromEntries(
     stats
@@ -269,18 +263,6 @@ const parseItemStats = (stats: string): Record<string, string> =>
         Boolean(entry[0] && entry[1]),
       ),
   );
-
-const createItemStatsHash = (stats: string): string => {
-  const normalized = stats
-    .split(";")
-    .filter((entry) => {
-      const [key] = entry.split("=");
-      return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key ?? "");
-    })
-    .sort()
-    .join(";");
-  return createHash("sha256").update(normalized).digest("hex");
-};
 
 type MainTransaction = Parameters<
   Parameters<typeof mainDatabase.transaction>[0]

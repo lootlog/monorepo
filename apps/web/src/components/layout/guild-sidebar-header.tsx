@@ -1,3 +1,4 @@
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Avatar,
@@ -12,7 +13,6 @@ import {
 import { cn } from "cn";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMeta } from "@/themes";
 import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@lootlog/client/main";
@@ -80,15 +80,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
     },
   });
   const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setCurrentTimestamp(Date.now());
-    }, 60_000);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
+  const currentTimestamp = useMinuteTimestamp();
 
   const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
     member?.updatedAt,

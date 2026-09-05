@@ -1,3 +1,4 @@
+import { StatsTableSkeleton } from "./components/stats-table-skeleton";
 import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
@@ -23,23 +24,7 @@ export const NpcDetailPageSkeleton = () => {
       </div>
 
       <div className="flex-1 px-3 pb-3">
-        <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-          <div className="flex gap-4 border-b border-border px-4 py-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-4 flex-1" />
-            ))}
-          </div>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex h-14 items-center gap-4 border-b border-border px-4"
-            >
-              {Array.from({ length: 4 }).map((_, j) => (
-                <Skeleton key={j} className="h-4 flex-1" />
-              ))}
-            </div>
-          ))}
-        </Card>
+        <StatsTableSkeleton columns={4} rows={8} />
       </div>
     </div>
   );

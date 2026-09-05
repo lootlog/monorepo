@@ -4,7 +4,7 @@ import {
   DateTimeString,
   FiniteNumber,
   JsonValue,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 const SoundConfiguration = JsonValue.annotate({
   identifier: "SoundSettingsResponseDto__schema0",
 });

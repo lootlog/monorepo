@@ -1,3 +1,4 @@
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, arrayOverlaps, desc, eq, isNotNull, or, sql } from "drizzle-orm";
@@ -343,15 +344,7 @@ export const makeKillCreation = (
           database
             .selectDistinct({ id: guildTable.id })
             .from(guildTable)
-            .leftJoin(
-              memberTable,
-              and(
-                eq(memberTable.guildId, guildTable.id),
-                eq(memberTable.userId, discordId),
-                eq(memberTable.active, true),
-                isNotNull(memberTable.globalUserId),
-              ),
-            )
+            .leftJoin(memberTable, activeGuildMemberJoin(discordId))
             .leftJoin(
               memberToRoleTable,
               eq(memberToRoleTable.A, memberTable.id),
