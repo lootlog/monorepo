@@ -196,6 +196,13 @@ describe("PresenceStore", () => {
       }),
     );
 
+    // Simulate an unexpired presence written by the previous gateway version.
+    const presenceKey = "presence:organization-1:session-1";
+    const stored = JSON.parse(redis.values.get(presenceKey) ?? "{}");
+    expect(stored).toMatchObject({ userId: "user-1", discordId: "discord-1" });
+    delete stored.discordId;
+    redis.values.set(presenceKey, JSON.stringify(stored));
+
     const basic = await Effect.runPromise(
       store.snapshot(
         session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
@@ -211,6 +218,10 @@ describe("PresenceStore", () => {
         "organization-1",
       ),
     );
+    expect(basic.presences[0]).toMatchObject({
+      userId: "user-1",
+      discordId: "discord-1",
+    });
     expect(basic.presences[0]?.lastSeen).toBe(10_000);
     expect("location" in (basic.presences[0] ?? {})).toBe(false);
     expect(precise.presences[0]).toHaveProperty("location.mapId", 42);
@@ -243,6 +254,13 @@ describe("PresenceStore", () => {
     expect(snapshot.presences).toEqual([]);
     expect(snapshot.revision).toBe(2);
     expect(hub.events).toHaveLength(1);
+    expect(hub.events[0]).toMatchObject({
+      data: {
+        changes: [
+          { action: "remove", userId: "user-1", discordId: "discord-1" },
+        ],
+      },
+    });
   });
 
   test("clears published presence and coverage when the selected scope becomes empty", async () => {

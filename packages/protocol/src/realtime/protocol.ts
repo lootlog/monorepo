@@ -81,6 +81,7 @@ export const PrecisePresenceLocation = Schema.Struct({
 
 export const BasicPresence = Schema.Struct({
   userId: NonEmptyString,
+  discordId: Schema.optional(NonEmptyString),
   sessionId: NonEmptyString,
   organizationIds: Schema.Array(NonEmptyString),
   platform: PresencePlatform,
@@ -125,6 +126,7 @@ export const PresenceDelta = Schema.Struct({
       Schema.Struct({
         action: Schema.Literal("remove"),
         userId: NonEmptyString,
+        discordId: Schema.optional(NonEmptyString),
         sessionId: NonEmptyString,
       }),
     ]),

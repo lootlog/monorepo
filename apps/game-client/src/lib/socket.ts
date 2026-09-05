@@ -70,7 +70,7 @@ const toLegacyPresence = (guildId: string, presence: BasicPresence) => {
       ? (presence as PresenceWithLocation).location
       : undefined;
   return {
-    discordId: presence.userId,
+    discordId: presence.discordId ?? presence.userId,
     guildId,
     sessionId: presence.sessionId,
     platform: presence.platform,
@@ -322,7 +322,7 @@ export class AppSocket {
         const players: Record<string, unknown[]> = {};
         for (const presence of response.presences ?? []) {
           if (presence.platform !== "game") continue;
-          (players[presence.userId] ??= []).push(
+          (players[presence.discordId ?? presence.userId] ??= []).push(
             toLegacyPresence(data.guildId, presence),
           );
         }
@@ -386,7 +386,7 @@ export class AppSocket {
           change.action === "upsert"
             ? toLegacyPresence(event.data.organizationId, change.presence)
             : {
-                discordId: change.userId,
+                discordId: change.discordId ?? change.userId,
                 guildId: event.data.organizationId,
                 sessionId: change.sessionId,
                 status: "offline",

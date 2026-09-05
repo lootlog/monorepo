@@ -46,8 +46,14 @@ const authorizedGuildId = "guild-authorized";
 const forbiddenGuildId = "guild-forbidden";
 const world = "Aldous";
 
+const publishedMessages: Parameters<RabbitMessagingService["publish"]>[0][] =
+  [];
+
 const rabbitBoundary: RabbitMessagingService = {
-  publish: () => Effect.void,
+  publish: (message) =>
+    Effect.sync(() => {
+      publishedMessages.push(message);
+    }),
   consume: () => Effect.never,
   ack: () => Effect.void,
   nack: () => Effect.void,
@@ -112,6 +118,7 @@ describe("API HTTP boundary", () => {
   });
 
   beforeEach(async () => {
+    publishedMessages.length = 0;
     await redis.flushall();
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
@@ -183,6 +190,44 @@ describe("API HTTP boundary", () => {
     await redisRuntime.dispose();
     await databaseRuntime.dispose();
     await boundary.dispose();
+  });
+
+  it("resolves notification senders from member summaries using Discord IDs", async () => {
+    const notification = await request("/messaging", {
+      method: "POST",
+      body: JSON.stringify({
+        guildIds: [authorizedGuildId],
+        world,
+        message: "Hej",
+      }),
+    });
+    expect(notification.status).toBe(201);
+    const event = publishedMessages.find(
+      ({ routingKey }) => routingKey === "guilds.notifications.send",
+    );
+    expect(event).toBeDefined();
+    if (!event) throw new Error("Notification was not published");
+    const payload: unknown = JSON.parse(
+      new TextDecoder().decode(event.content),
+    );
+    expect(payload).toEqual(
+      expect.objectContaining({ discordId: caller.discordId }),
+    );
+    const expectSenderSummary = async () => {
+      const response = await request(
+        `/guilds/${authorizedGuildId}/members/summary`,
+      );
+      expect(response.status).toBe(200);
+      const members = await response.json();
+      expect(members).toEqual([
+        expect.objectContaining({
+          userId: caller.discordId,
+          name: "Authorized member",
+        }),
+      ]);
+    };
+    await expectSenderSummary();
+    await expectSenderSummary();
   });
 
   it.each([
