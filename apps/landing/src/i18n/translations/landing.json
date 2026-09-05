@@ -18,6 +18,8 @@
     "github": "GitHub",
     "support": "Wesprzyj",
     "install": "Zainstaluj",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
     "navigationLabel": "Główna nawigacja",
     "product": "Możliwości",
     "workflow": "Jak działa",
@@ -30,9 +32,10 @@
     "loginError": "Nie udało się rozpocząć logowania przez Discord. Spróbuj ponownie."
   },
   "hero": {
+    "eyebrow": "Dodatek do Margonem",
     "recordLabel": "Rejestr operacyjny gildii",
-    "title": "Resp, loot, wynik. Cały klan widzi to samo.",
-    "description": "Lootlog zbiera obsługiwane zdarzenia z gry i porządkuje je w jednym panelu: timery respów, historię łupów i statystyki walk. Bez przeklejania informacji na Discordzie i ręcznego liczenia.",
+    "title": "Mniej pilnowania. Więcej grania.",
+    "description": "Wspólne timery, historia łupów i statystyki walk. Wszystko pod ręką — w grze i w panelu klanu.",
     "installAddon": "Zainstaluj dodatek",
     "openDashboard": "Otwórz Lootloga",
     "trustLine": "Darmowy · open source · tworzony przez społeczność",
@@ -298,6 +301,11 @@
   },
   "footer": {
     "navigationLabel": "Linki w stopce",
+    "project": "Projekt",
+    "community": "Społeczność",
+    "information": "Informacje",
+    "communityTitle": "Tworzymy go razem.",
+    "communityDescription": "Masz pomysł albo coś nie działa? Porozmawiajmy na Discordzie.",
     "docs": "Dokumentacja",
     "discord": "Discord",
     "github": "GitHub",
@@ -321,5 +329,41 @@
     "faqLabel": "FAQ",
     "faqTitle": "Najważniejsze pytania przed instalacją.",
     "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu - bez ogólników."
+  },
+  "illustrations": {
+    "example": "Ilustracja działania · przykładowe dane",
+    "timer": "Wspólny timer",
+    "opponent": "Piekielny Kościej",
+    "shared": "Ten sam resp. Cały klan.",
+    "loot": "Nowy łup w zapisie",
+    "saved": "Łupy zapisane dla klanu",
+    "ranking": "Aktywność klanu",
+    "kills": "{{count}} bić",
+    "items": {
+      "sword": "Miecz",
+      "shield": "Tarcza",
+      "gem": "Legendarny łup"
+    },
+    "players": {
+      "first": "Gracz 01",
+      "second": "Gracz 02",
+      "third": "Gracz 03"
+    },
+    "timers": "Timery klanu",
+    "pause": "Wstrzymaj animację timerów",
+    "resume": "Wznów animację timerów",
+    "spawned": "Resp!",
+    "opponents": {
+      "kostej": "Piekielny Kościej",
+      "braciszek": "Święty Braciszek",
+      "wladca": "Władca rzek",
+      "lowczyni": "Mroczna łowczyni",
+      "mamlambo": "Mamlambo",
+      "tanroth": "Tanroth"
+    },
+    "world": "Luvia · wspólne timery",
+    "active": "3 aktywne",
+    "untilSpawn": "do respu",
+    "available": "możliwy resp"
   }
 }

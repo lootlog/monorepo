@@ -37,9 +37,9 @@ export function CookieConsent() {
         role="dialog"
         aria-labelledby="cookie-consent-title"
         aria-describedby="cookie-consent-description"
-        className="rounded-2xl bg-[#f4f1e8] p-4 text-[#0a1830] shadow-[16px_22px_56px_rgba(0,0,0,0.34)] sm:p-5"
+        className="rounded-2xl bg-[#0d1a2c] p-4 text-[#f7f8f2] ring-1 ring-inset ring-[#22334c] shadow-[16px_22px_56px_rgba(0,0,0,0.5)] sm:p-5"
       >
-        <div className="flex items-center justify-between gap-4 border-b-2 border-[#0a1830] pb-3">
+        <div className="flex items-center justify-between gap-4 border-b-2 border-[#22334c] pb-3">
           <h2
             id="cookie-consent-title"
             className="text-base font-black tracking-[-0.02em]"
@@ -53,7 +53,7 @@ export function CookieConsent() {
         </div>
         <p
           id="cookie-consent-description"
-          className="mt-3 text-sm leading-6 text-[#4c5869]"
+          className="mt-3 text-sm leading-6 text-[#aebed4]"
         >
           {t("landing.cookieConsent.description")}
         </p>
@@ -67,7 +67,7 @@ export function CookieConsent() {
           <Button
             onClick={rejectCookies}
             variant="outline"
-            className="h-11 flex-1 rounded-xl border-2 border-[#0a1830] bg-transparent px-5 font-bold text-[#0a1830] hover:bg-[#0a1830] hover:text-white sm:flex-none"
+            className="h-11 flex-1 rounded-xl border-2 border-[#3b4d67] bg-transparent px-5 font-bold text-[#f7f8f2] hover:bg-[#192b45] hover:text-white sm:flex-none"
           >
             {t("landing.cookieConsent.reject")}
           </Button>

@@ -13,26 +13,23 @@ export function FaqPanel() {
 
   return (
     <div className="w-full">
-      <Accordion
-        defaultValue={["item-0"]}
-        className="w-full border-t border-[#31425b]"
-      >
+      <Accordion defaultValue={["item-0"]} className="w-full space-y-3">
         {faqKeys.map((key, index) => (
           <AccordionItem
             key={key}
             value={`item-${index}`}
-            className="border-b border-[#31425b] px-0"
+            className="border-0 rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-ink-soft)] px-5 sm:px-6"
           >
-            <AccordionTrigger className="min-h-20 gap-5 rounded-md px-0 py-5 text-left text-lg font-bold text-[#f7f8f2] hover:text-[#c8f135] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0d1a2c]">
+            <AccordionTrigger className="min-h-20 gap-5 rounded-[var(--broadcast-radius-control)] px-0 py-5 text-left text-base font-bold text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]">
               <span className="flex items-start gap-4">
-                <span className="mt-1 text-xs font-bold text-[#7f93ae]">
+                <span className="mt-1 font-mono text-xs font-bold text-[var(--broadcast-cyan)]">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span>{t(`landing.faq.q${key}`)}</span>
               </span>
             </AccordionTrigger>
-            <AccordionContent className="pb-7 pl-9 pr-6">
-              <p className="max-w-[68ch] text-base leading-7 text-[#aebed4]">
+            <AccordionContent className="pb-6 pl-0 pr-4 sm:pl-9">
+              <p className="max-w-[68ch] text-base leading-7 text-[var(--broadcast-text-muted)]">
                 {t(`landing.faq.a${key}`)}
               </p>
             </AccordionContent>

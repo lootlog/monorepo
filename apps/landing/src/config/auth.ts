@@ -1,4 +1,4 @@
-const DEFAULT_AUTH_SERVICE_URL = "http://localhost:4000";
+const DEFAULT_AUTH_SERVICE_URL = "http://localhost/api/auth";
 
 export function resolveAuthServiceUrl(configuredUrl?: string): string {
   return configuredUrl || DEFAULT_AUTH_SERVICE_URL;

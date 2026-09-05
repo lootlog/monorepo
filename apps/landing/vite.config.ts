@@ -4,7 +4,8 @@ import viteReact from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command, isPreview }) => ({
+  base: command === "serve" && !isPreview ? "/landing-dev/" : "/",
   build: {
     assetsDir: "landing-assets",
   },
@@ -23,6 +24,7 @@ export default defineConfig({
     { ...mdx(), enforce: "pre" },
     tailwindcss(),
     tanstackStart({
+      router: { basepath: "/" },
       pages: [
         { path: "/" },
         { path: "/privacy-policy" },
@@ -39,4 +41,4 @@ export default defineConfig({
     }),
     viteReact({ include: /\.(js|jsx|mdx|ts|tsx)$/ }),
   ],
-});
+}));
