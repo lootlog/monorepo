@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 
-import { BroadcastSpine } from "@/src/components/landing/broadcast-spine";
 import { ClosingCta } from "@/src/components/landing/closing-cta";
 import { FaqPanel } from "@/src/components/landing/faq-panel";
 import { LandingFooter } from "@/src/components/landing/footer";
@@ -14,8 +13,7 @@ export function HomeContent() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-[#07111f] text-[#f7f8f2] selection:bg-[#c8f135] selection:text-[#07111f]">
-      <BroadcastSpine />
+    <div className="relative min-h-screen overflow-x-clip bg-[var(--broadcast-ink)] text-[var(--broadcast-white)] selection:bg-[var(--broadcast-lime)] selection:text-[var(--broadcast-ink)]">
       <LandingHeader />
 
       <main>
@@ -27,17 +25,17 @@ export function HomeContent() {
         <section
           id="faq"
           aria-labelledby="faq-title"
-          className="bg-[#0d1a2c] px-5 py-16 sm:px-8 lg:py-28"
+          className="bg-[var(--broadcast-ink)] py-16 lg:py-28"
         >
-          <div className="mx-auto grid max-w-[90rem] gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
+          <div className="landing-container grid items-start gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-10 lg:gap-20">
             <div>
               <h2
                 id="faq-title"
-                className="broadcast-display max-w-xl text-balance text-4xl font-black leading-[0.98] tracking-[-0.035em] text-[#f7f8f2] sm:text-6xl"
+                className="landing-heading-section max-w-xl text-balance text-[var(--broadcast-white)]"
               >
                 {t("landing.page.faqTitle")}
               </h2>
-              <p className="mt-6 max-w-[58ch] text-lg leading-8 text-[#aebed4]">
+              <p className="mt-6 max-w-[58ch] text-base leading-7 sm:text-lg sm:leading-8 text-[var(--broadcast-text-muted)]">
                 {t("landing.page.faqDescription")}
               </p>
             </div>
