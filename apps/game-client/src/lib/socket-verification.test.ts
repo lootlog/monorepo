@@ -168,7 +168,7 @@ describe("game realtime verification and presence selection", () => {
     });
   });
 
-  it("publishes by default to the active character's preferred organization", async () => {
+  it("publishes to the joined organization by default", async () => {
     useGameStore.getState().replaceGame({
       hero: {
         accountId: "20",
@@ -201,38 +201,51 @@ describe("game realtime verification and presence selection", () => {
     );
   });
 
-  it("publishes an empty organization selection to clear server presence", async () => {
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "20",
-        characterId: "10",
-        currentHp: 100,
-        icon: "hero.gif",
-        level: 100,
-        maxHp: 100,
-        name: "Hero",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 100, name: "Karka-han", visibility: 0 },
-      world: "alpha",
-    });
-    useSettingsStore.setState({
-      presenceOrganizationIdsByCharId: { "10": [] },
-    });
-    const socket = new AppSocket();
-    const { clan: _clan, ...clanlessJoinData } = joinData;
-    await socket.join(clanlessJoinData);
-    socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
-    await Promise.resolve();
+  it.each([
+    { selectedIds: [] },
+    { selectedIds: ["organization-2"] },
+    { selectedIds: ["removed-organization"] },
+  ])(
+    "publishes to all joined organizations despite stored selection $selectedIds",
+    async ({ selectedIds }) => {
+      useGameStore.getState().replaceGame({
+        hero: {
+          accountId: "20",
+          characterId: "10",
+          currentHp: 100,
+          icon: "hero.gif",
+          level: 100,
+          maxHp: 100,
+          name: "Hero",
+          profession: "w",
+          x: 1,
+          y: 2,
+        },
+        interface: "ni",
+        map: { id: 100, name: "Karka-han", visibility: 0 },
+        world: "alpha",
+      });
+      useSettingsStore.setState({
+        presenceOrganizationIdsByCharId: { "10": selectedIds },
+      });
+      const socket = new AppSocket();
+      mocks.join.mockResolvedValue({
+        connectionId: "connection-1",
+        organizationIds: ["organization-1", "organization-2"],
+      });
+      const { clan: _clan, ...clanlessJoinData } = joinData;
+      await socket.join(clanlessJoinData);
+      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
+      await Promise.resolve();
 
-    expect(mocks.request).toHaveBeenCalledWith(
-      "presence.publish",
-      expect.objectContaining({ organizationIds: [] }),
-    );
-  });
+      expect(mocks.request).toHaveBeenCalledWith(
+        "presence.publish",
+        expect.objectContaining({
+          organizationIds: ["organization-1", "organization-2"],
+        }),
+      );
+    },
+  );
 
   it("passes exact map-ping and air-tag acknowledgements through unchanged", async () => {
     const mapAck = { status: "accepted", pingId: "ping-1" };

@@ -263,7 +263,7 @@ describe("PresenceStore", () => {
     });
   });
 
-  test("clears published presence and coverage when the selected scope becomes empty", async () => {
+  test("clears published presence and coverage when all organization access is revoked", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
     const coverage = new RecordingCoverage();
@@ -281,6 +281,7 @@ describe("PresenceStore", () => {
       }),
     );
 
+    publisher.data.guilds = [];
     await expect(
       Effect.runPromise(store.publish(publisher, { organizationIds: [] })),
     ).resolves.toBeUndefined();
@@ -301,6 +302,62 @@ describe("PresenceStore", () => {
       isAfk: false,
     });
   });
+
+  test.each([
+    { organizationIds: [] },
+    { organizationIds: ["organization-1"] },
+    { organizationIds: ["unauthorized-organization"] },
+  ])(
+    "publishes to every authorized organization despite client selection %j",
+    async ({ organizationIds }) => {
+      const redis = new MemoryRedis();
+      const hub = new RecordingHub();
+      const coverage = new RecordingCoverage();
+      const publisher = socket(
+        session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      );
+      publisher.data.guilds.push(
+        secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      );
+      const store = new PresenceStore(
+        { command: redis },
+        hub,
+        () => 10_000,
+        coverage as unknown as CoveragePublisher,
+      );
+
+      await Effect.runPromise(
+        store.publish(publisher, {
+          organizationIds,
+          location: { map: "Kwieciste Przejście" },
+        }),
+      );
+
+      expect(publisher.data.presence?.organizationIds).toEqual([
+        "organization-1",
+        "organization-2",
+      ]);
+      for (const organizationId of ["organization-1", "organization-2"]) {
+        const snapshot = await Effect.runPromise(
+          store.snapshot(publisher.data, organizationId),
+        );
+        expect(snapshot.presences).toHaveLength(1);
+        expect(coverage.events).toContainEqual({
+          guildId: organizationId,
+          mapName: "Kwieciste Przejście",
+          discordId: "discord-1",
+          hasPlayer: true,
+          isAfk: false,
+        });
+      }
+      expect(hub.presenceEvents).toHaveLength(2);
+      expect(
+        await Effect.runPromise(
+          store.snapshot(publisher.data, "unauthorized-organization"),
+        ),
+      ).toMatchObject({ presences: [] });
+    },
+  );
 
   test("heartbeat removes revoked organizations and never recreates their presence", async () => {
     const redis = new MemoryRedis();
