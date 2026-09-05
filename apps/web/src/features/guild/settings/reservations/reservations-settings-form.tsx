@@ -1,3 +1,4 @@
+import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -89,8 +90,11 @@ export const ReservationsSettingsForm = ({
           toast.success(t("settings.reservations.toasts.updateSuccess"));
           form.reset(values);
         },
-        onError: () => {
-          toast.error(t("settings.reservations.toasts.updateError"));
+        onError: (error) => {
+          toast.error(
+            getGuildSettingsErrorMessage(error, t) ??
+              t("settings.reservations.toasts.updateError"),
+          );
         },
       },
     );

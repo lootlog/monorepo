@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import { OrganizationSummary } from "#src/contracts/shared";
 import {
   OrganizationPath,
@@ -63,7 +63,10 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   HttpApiEndpoint.get("GuildsControllerGetGuildById", "/guilds/:guildId", {
     params: OrganizationPath,
     success: OrganizationSummary,
-    error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+    error: [
+      HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+    ],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getGuildById")
@@ -75,6 +78,9 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: OrganizationPath,
       success: OrganizationSummary,
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -86,6 +92,9 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
       params: OrganizationPath,
       payload: UpdateOrganizationConfigRequest,
       success: OrganizationSummary,
+      error: [400, 403, 404, 409].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -96,6 +105,9 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: OrganizationPath,
       success: OrganizationWorldsResponse,
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -111,7 +123,10 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: OrganizationPath,
       success: OrganizationCapabilitiesResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -127,6 +142,9 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: OrganizationPath,
       success: DiscordGuildSyncStateResponse,
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -142,6 +160,9 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     {
       params: OrganizationPath,
       success: DiscordGuildSyncStateResponse.pipe(HttpApiSchema.status(201)),
+      error: [403, 404, 429].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)

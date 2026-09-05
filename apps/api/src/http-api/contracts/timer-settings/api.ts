@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   TimerSettingsResponse,
   OrganizationTimerSettingsResponse,
@@ -31,6 +31,7 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     {
       payload: UpdateTimerSettingsRequest,
       success: TimerSettingsResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(400)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -46,6 +47,9 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     {
       params: OrganizationTimerSettingsParams,
       success: OrganizationTimerSettingsResponse,
+      error: [400, 403].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -62,6 +66,9 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
       params: OrganizationTimerSettingsParams,
       payload: UpdateOrganizationTimerSettingsRequest,
       success: OrganizationTimerSettingsResponse,
+      error: [400, 403].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -77,6 +84,9 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     {
       payload: MigrateTimerSettingsRequest,
       success: HttpApiSchema.Empty(200),
+      error: [400, 403].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)

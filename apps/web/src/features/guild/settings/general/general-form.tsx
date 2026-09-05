@@ -1,3 +1,4 @@
+import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -102,8 +103,11 @@ export const GeneralForm = () => {
             publicStatsCardEnabled: data.publicStatsCardEnabled,
           });
         },
-        onError: () => {
-          toast.error(t("settings.general.toasts.updateError"));
+        onError: (error) => {
+          toast.error(
+            getGuildSettingsErrorMessage(error, t) ??
+              t("settings.general.toasts.updateError"),
+          );
         },
       },
     );

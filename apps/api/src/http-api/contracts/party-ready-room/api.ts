@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   PartyReadyRoomResponse,
   PartyReadyRoomParams,
@@ -27,7 +27,10 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
   HttpApiEndpoint.get(
     "PartyReadyRoomControllerList",
     "/messaging/party-gathering",
-    { success: PartyReadyRoomsResponse },
+    {
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(401))],
+      success: PartyReadyRoomsResponse,
+    },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "PartyReadyRoomController_list"),
@@ -35,6 +38,11 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerCreate",
     "/messaging/party-gathering",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
       payload: CreatePartyGatheringRequest,
       success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
     },
@@ -46,6 +54,12 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerGet",
     "/messaging/party-gathering/:notificationId",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       success: PartyReadyRoomResponse,
     },
@@ -56,6 +70,13 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerApply",
     "/messaging/party-gathering/:notificationId/applications",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       payload: ApplyToPartyReadyRoomRequest,
       success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
@@ -67,6 +88,13 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerWithdraw",
     "/messaging/party-gathering/:notificationId/applications/me",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       payload: PartyParticipantIdentity,
       success: PartyReadyRoomUpdateResponse,
@@ -78,6 +106,13 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerRemove",
     "/messaging/party-gathering/:notificationId/participants",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       payload: PartyParticipantActionRequest,
       success: PartyReadyRoomUpdateResponse,
@@ -89,6 +124,12 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerResolveInvitationTargets",
     "/messaging/party-gathering/:notificationId/invitations/targets",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       payload: ResolvePartyInvitationsRequest,
       success: PartyInvitationTargetsResponse.pipe(HttpApiSchema.status(201)),
@@ -103,6 +144,13 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerObserveParty",
     "/messaging/party-gathering/:notificationId/party-observation",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       payload: ObservePartyRequest,
       success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
@@ -114,6 +162,13 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
     "PartyReadyRoomControllerCancel",
     "/messaging/party-gathering/:notificationId/cancel",
     {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
       params: PartyReadyRoomParams,
       payload: PartyRevisionRequest,
       success: PartyReadyRoomUpdateResponse.pipe(HttpApiSchema.status(201)),

@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   CreateAutoTimerResponse,
   CreateAutoTimerRequest,
@@ -56,7 +56,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     params: TimerListOrganizationPath,
     query: TimersQuery,
     success: TimersResponse,
-    error: HttpApiSchema.Empty(403),
+    error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_getTimers")
@@ -69,7 +69,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       params: TimerOrganizationPath,
       query: TimerNpcSearchQuery,
       success: TimerNpcSearchResponse,
-      error: HttpApiSchema.Empty(403),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -82,7 +82,11 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   HttpApiEndpoint.post("TimersControllerCreateAutoTimer", "/timers/auto", {
     payload: CreateAutoTimerRequest,
     success: CreateAutoTimerResponse.pipe(HttpApiSchema.status(201)),
-    error: [HttpApiSchema.Empty(400), HttpApiSchema.Empty(403)],
+    error: [
+      HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+    ],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_createAutoTimer")
@@ -98,7 +102,11 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       params: TimerPath,
       payload: ResetTimerRequest,
       success: TimerResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -115,7 +123,11 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       params: TimerPath,
       query: TimersQuery,
       success: HttpApiSchema.Empty(200),
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -132,6 +144,11 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       params: TimerPath,
       query: TimerHistoryQuery,
       success: TimerHistoryListResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -147,6 +164,12 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     {
       params: TimerHistoryEntryPath,
       success: TimerResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -163,7 +186,11 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
       params: TimerOrganizationPath,
       payload: CreateManualTimerRequest,
       success: TimerResponse.pipe(HttpApiSchema.status(201)),
-      error: HttpApiSchema.Empty(403),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

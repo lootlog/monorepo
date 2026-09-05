@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer, Schema } from "effect";
+import { Cause, Effect, Exit, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import {
+  InvalidEntityError,
+  ResourceConflictError,
   PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
@@ -25,7 +27,15 @@ import {
   ReservationReadData,
   RolesData,
   updateGuildRole,
+  toOrganizationWorkspaceHttpResponse,
 } from "./organization-workspace.operations.js";
+
+import { Etag, HttpPlatform } from "effect/unstable/http";
+import { HttpApiTest } from "effect/unstable/httpapi";
+import { LootlogApi } from "../../lootlog-api.js";
+import { ReservationsHandlers } from "../reservations/reservations.handlers.js";
+import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const identity = { userId: "user-a", discordId: "discord-owner" };
 const guildAccess = {
@@ -472,4 +482,98 @@ describe("Reservations and Roles HttpApi handlers", () => {
       },
     ]);
   });
+});
+
+describe("reservation HTTP error responses", () => {
+  it.each([
+    {
+      cause: new InvalidEntityError({ code: "ACTIVE_LIMIT_REACHED", limit: 1 }),
+      status: 422,
+      body: { code: "ACTIVE_LIMIT_REACHED", limit: 1 },
+    },
+    {
+      cause: new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
+      status: 409,
+      body: { code: "RESERVATION_OVERLAP" },
+    },
+    {
+      cause: new PermissionDeniedError({ code: "RESERVATION_MEMBER_REQUIRED" }),
+      status: 403,
+      body: { code: "RESERVATION_MEMBER_REQUIRED" },
+    },
+  ])("returns $status with a safe reason", async ({ cause, status, body }) => {
+    const services = provideServices(
+      makeAuthorization(),
+      makeData({
+        create: () =>
+          Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
+      }),
+    );
+    const bearer = BearerSecurityMiddleware.of({
+      bearer: (effect) =>
+        Effect.provideService(effect, ForwardAuthIdentity, identity),
+    });
+    const platform = Layer.mergeAll(
+      Path.layer,
+      Etag.layerWeak,
+      HttpPlatform.layer,
+    ).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
+    const request = Effect.scoped(
+      Effect.gen(function* () {
+        const client = yield* HttpApiTest.groups(LootlogApi, [
+          "reservations",
+        ]).pipe(
+          Effect.provide(ReservationsHandlers),
+          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+        );
+        const response = yield* client.reservations.createReservation({
+          params: { guildId: "guild-a", spotId: "driady" },
+          payload: {
+            startsAt: "2026-09-06T10:00:00.000Z",
+            endsAt: "2026-09-06T10:30:00.000Z",
+          },
+          responseMode: "response-only",
+        });
+        return { status: response.status, text: yield* response.text };
+      }),
+    ).pipe(Effect.provide(services), Effect.provide(platform));
+    // HttpApiBuilder retains phantom handler requirements after concrete layers are provided.
+    const response = await Effect.runPromise(
+      request as unknown as Effect.Effect<
+        { status: number; text: string },
+        unknown
+      >,
+    );
+    expect(response.status).toBe(status);
+    expect(JSON.parse(response.text)).toEqual(body);
+  });
+});
+
+it("keeps unknown infrastructure failures out of domain error responses", async () => {
+  const cause = new Error("private database detail");
+  const exit = await Effect.runPromiseExit(
+    toOrganizationWorkspaceHttpResponse(
+      Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
+    ),
+  );
+  expect(Exit.isFailure(exit)).toBe(true);
+  if (Exit.isFailure(exit)) {
+    expect(Cause.squash(exit.cause)).toBe(cause);
+  }
+});
+
+it.each([
+  new OrganizationWorkspaceAccessDenied({ status: 403, code: "FORBIDDEN" }),
+  new OrganizationWorkspaceNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
+])("preserves access denial status and code", async (error) => {
+  const response = await Effect.runPromise(
+    toOrganizationWorkspaceHttpResponse(Effect.fail(error)),
+  );
+  expect(response.status).toBe(error.status);
+  expect(response.body._tag).toBe("Uint8Array");
+  if (response.body._tag === "Uint8Array") {
+    expect(JSON.parse(new TextDecoder().decode(response.body.body))).toEqual({
+      code: error.code,
+    });
+  }
 });
