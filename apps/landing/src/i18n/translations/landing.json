@@ -292,7 +292,7 @@
   "closingCta": {
     "label": "Następny ruch",
     "title": "Zacznij zbierać dane, których potrzebuje Twój klan.",
-    "description": "Zainstaluj dodatek, połącz konto Discord i przejdź przez krótką konfigurację. Potem graj jak zwykle — Lootlog zacznie porządkować obsługiwane zdarzenia w panelu.",
+    "description": "Zainstaluj dodatek, połącz konto Discord i przejdź przez krótką konfigurację. Potem graj jak zwykle - Lootlog zacznie porządkować obsługiwane zdarzenia w panelu.",
     "install": "Zainstaluj dodatek",
     "guide": "Zobacz instrukcję"
   },
@@ -320,6 +320,6 @@
   "page": {
     "faqLabel": "FAQ",
     "faqTitle": "Najważniejsze pytania przed instalacją.",
-    "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu — bez ogólników."
+    "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu - bez ogólników."
   }
 }

@@ -372,7 +372,7 @@ const getFrostPatchPlacement = (
   };
 };
 
-// Randomly generated frost patches along screen edges — irregular positions and sizes
+// Randomly generated frost patches along screen edges - irregular positions and sizes
 const generateFrostPatches = () => {
   const patches: {
     x: string;
@@ -669,7 +669,7 @@ const FloatingSnowflakes = () => {
   );
 };
 
-// Generate random crystal positions around a circle — stable per mount
+// Generate random crystal positions around a circle - stable per mount
 // Crystals stay within the avatar bounds to avoid overflow issues in narrow containers
 const generateCircleCrystals = (count: number, circleSize: number) =>
   Array.from({ length: count }, (_, i) => {
@@ -754,7 +754,7 @@ export const FrozenCircle = ({
         />
       </motion.div>
 
-      {/* Ice crystals — randomly scattered, continuously animated */}
+      {/* Ice crystals - randomly scattered, continuously animated */}
       {frozenCircleCrystals.map((crystal, i) => (
         <motion.div
           key={i}
@@ -810,7 +810,7 @@ export const FrozenCircle = ({
   );
 };
 
-// Frozen wrapper for rectangular buttons — matches RukiaBorderGlow visual style
+// Frozen wrapper for rectangular buttons - matches RukiaBorderGlow visual style
 // but keeps button text readable by not covering it with opaque overlays
 export const FrozenButton = ({
   children,
@@ -837,7 +837,7 @@ export const FrozenButton = ({
         <>
           <FrostFilter />
 
-          {/* Frost texture + edge frost — only on hover, skipped on active to keep text readable */}
+          {/* Frost texture + edge frost - only on hover, skipped on active to keep text readable */}
           {!isActive && (
             <>
               <motion.div
@@ -906,7 +906,7 @@ export const FrozenButton = ({
             />
           ))}
 
-          {/* Ice glow border — outer glow only, no inset */}
+          {/* Ice glow border - outer glow only, no inset */}
           <motion.div
             className={`absolute inset-0 ${rounded} pointer-events-none`}
             initial={{ opacity: 0 }}

@@ -123,7 +123,7 @@ describe("EventRankingTable", () => {
       screen.getByRole("columnheader", { name: "events.ranking.points" }),
     ).toBeTruthy();
     expect(screen.getByText("1m")).toBeTruthy();
-    expect(screen.getByText("—")).toBeTruthy();
+    expect(screen.getByText("-")).toBeTruthy();
 
     const primaryLink = screen.getByRole("link", {
       name: "events.ranking.openMemberStats",

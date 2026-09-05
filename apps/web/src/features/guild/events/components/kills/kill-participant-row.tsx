@@ -119,11 +119,11 @@ const buildParticipantScoringView = (
     trackingDuration:
       typeof participant.trackingDurationSeconds === "number"
         ? formatDurationHuman(participant.trackingDurationSeconds)
-        : "—",
+        : "-",
     trackingPercentage:
       typeof participant.trackingDurationPercentage === "number"
         ? `${Math.round(participant.trackingDurationPercentage)}%`
-        : "—",
+        : "-",
   };
 };
 
@@ -232,7 +232,7 @@ export const KillParticipantRow = ({
               {formatDurationHuman(totalAfkSeconds)}
             </span>
           ) : (
-            "—"
+            "-"
           )}
         </span>
 
