@@ -206,7 +206,7 @@ export const EventRankingTable = ({
 
         if (afkPercentage === 0) {
           return (
-            <span className="block text-right text-muted-foreground">—</span>
+            <span className="block text-right text-muted-foreground">-</span>
           );
         }
 

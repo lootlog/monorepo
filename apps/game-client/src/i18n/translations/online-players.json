@@ -53,6 +53,6 @@
     "loadError": "Nie udało się załadować graczy online",
     "refreshError": "Nie udało się odświeżyć graczy online",
     "refreshing": "Odświeżanie graczy online",
-    "offline": "Połączenie przerwane — dane mogą być nieaktualne"
+    "offline": "Połączenie przerwane - dane mogą być nieaktualne"
   }
 }

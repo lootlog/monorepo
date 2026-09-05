@@ -429,7 +429,7 @@ describe("BattleEventProcessor", () => {
         battleWarriors: {},
       });
 
-      // Simulate warrior event — same team
+      // Simulate warrior event - same team
       const warriorEvent: GameEvent = {
         f: {
           w: {

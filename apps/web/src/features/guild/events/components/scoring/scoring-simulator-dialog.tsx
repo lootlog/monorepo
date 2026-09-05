@@ -172,7 +172,7 @@ export const ScoringSimulatorDialog = ({
 
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-4">
-            {/* Results — prominent at the top */}
+            {/* Results - prominent at the top */}
             <div className="rounded-lg border bg-card p-3">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="size-3.5 text-amber-500" />
