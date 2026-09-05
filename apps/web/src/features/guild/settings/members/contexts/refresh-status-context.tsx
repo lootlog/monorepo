@@ -8,7 +8,10 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useRefreshJobUpdates } from "@/hooks/utils/use-refresh-job-updates";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { getMembersControllerGetGuildMembersQueryKey } from "@lootlog/client/main";
+import {
+  getMembersControllerGetGuildMembersQueryKey,
+  useGuildsControllerGetGuildById,
+} from "@lootlog/client/main";
 
 interface RefreshStatusContextValue {
   refreshedIds: Set<string>;
@@ -43,7 +46,10 @@ export const RefreshStatusProvider = ({
   const [refreshedIds, setRefreshedIds] = useState<Set<string>>(new Set());
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
-  const guildId = useGuildId();
+  const routeGuildId = useGuildId();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: routeGuildId ?? "",
+  });
 
   const markAsRefreshed = useCallback((ids: string[]) => {
     setRefreshedIds((prev) => {
@@ -84,7 +90,7 @@ export const RefreshStatusProvider = ({
     setFailedIds(new Set());
   }, []);
 
-  useRefreshJobUpdates(guildId, (data) => {
+  useRefreshJobUpdates(guild?.id, (data) => {
     if (
       data.refreshedIds?.length ||
       data.skippedIds?.length ||
@@ -93,7 +99,7 @@ export const RefreshStatusProvider = ({
       // Skipped and failed attempts can update Discord sync diagnostics.
       void queryClient.invalidateQueries({
         queryKey: getMembersControllerGetGuildMembersQueryKey({
-          guildId: data.guildId,
+          guildId: routeGuildId ?? data.guildId,
         }),
       });
     }
