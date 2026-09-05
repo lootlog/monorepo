@@ -7,9 +7,9 @@
   "scripts": {
     "dev": "vite",
     "dev:local-prod": "bun run build:local-prod && bun ./src/scripts/serve-local-build.mjs",
-    "build": "tsc && vite build && bun ./src/scripts/copy-entrypoint.mjs",
-    "build:fast": "tsc && FAST_BUILD=1 vite build && bun ./src/scripts/copy-entrypoint.mjs",
-    "build:local-prod": "tsc && vite build --mode production-local && bun ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
+    "build": "bun run typecheck && vite build && bun ./src/scripts/copy-entrypoint.mjs",
+    "build:fast": "bun run typecheck && FAST_BUILD=1 vite build && bun ./src/scripts/copy-entrypoint.mjs",
+    "build:local-prod": "bun run typecheck && vite build --mode production-local && bun ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
     "preview": "vite preview",
     "typecheck": "wxt prepare && tsc --noEmit",
     "lint": "oxlint src extension wxt.config.ts vite.shared.ts --deny-warnings",
