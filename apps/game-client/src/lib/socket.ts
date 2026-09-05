@@ -3,9 +3,7 @@ import {
   GATEWAY_URL,
   GatewayEvent,
 } from "@/config/gateway";
-import { resolvePresenceOrganizationIds } from "@/lib/presence-organization-selection";
 import { useGameStore } from "@/store/game.store";
-import { useSettingsStore } from "@/store/settings.store";
 import {
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
@@ -278,15 +276,9 @@ export class AppSocket {
   private async publishPresence(): Promise<void> {
     const game = useGameStore.getState().game;
     if (!game) return;
-    const settings = useSettingsStore.getState();
-    const configured =
-      settings.presenceOrganizationIdsByCharId[game.hero.characterId];
-    const organizationIds = resolvePresenceOrganizationIds({
-      accessibleOrganizations: this.joinedOrganizationIds.map((id) => ({ id })),
-      explicitlySelectedIds: configured,
-    });
+    // Presence publication opt-out is temporarily disabled; keep stored preferences intact.
     await this.realtime.request("presence.publish", {
-      organizationIds,
+      organizationIds: this.joinedOrganizationIds,
       isAfk: this.lastIsAfk,
       character: {
         world: game.world,

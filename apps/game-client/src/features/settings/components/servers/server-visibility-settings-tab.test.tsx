@@ -73,9 +73,6 @@ describe("ServerVisibilitySettingsTab", () => {
       "Pokaż Beta w grze",
       "Pokaż Alpha w grze",
       "Pokaż Gamma w grze",
-      "Publikuj obecność w organizacji Beta",
-      "Publikuj obecność w organizacji Alpha",
-      "Publikuj obecność w organizacji Gamma",
     ]);
   });
 
@@ -124,7 +121,7 @@ describe("ServerVisibilitySettingsTab", () => {
     });
   });
 
-  it("shows the active character's explicit presence organization as enabled", () => {
+  it("hides presence publication controls while preserving stored preferences", () => {
     useGameStore.getState().replaceGame({
       hero: {
         accountId: "20",
@@ -151,9 +148,14 @@ describe("ServerVisibilitySettingsTab", () => {
     render(<ServerVisibilitySettingsTab />);
 
     expect(
-      screen.getByRole("switch", {
+      screen.queryByRole("switch", {
         name: "Publikuj obecność w organizacji Alpha",
       }),
-    ).toBeChecked();
+    ).not.toBeInTheDocument();
+    expect(useSettingsStore.getState().presenceOrganizationIdsByCharId).toEqual(
+      {
+        "10": ["guild-1"],
+      },
+    );
   });
 });
