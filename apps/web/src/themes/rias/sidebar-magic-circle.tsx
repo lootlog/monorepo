@@ -38,7 +38,7 @@ export const SidebarMagicCircle = () => (
         strokeWidth="0.8"
       />
 
-      {/* Pentagram star — 5 points evenly on r=75 circle */}
+      {/* Pentagram star - 5 points evenly on r=75 circle */}
       <polygon
         points="100,25 144.1,160.7 28.7,76.8 171.3,76.8 55.9,160.7"
         stroke="rgba(200, 30, 60, 0.18)"
@@ -47,7 +47,7 @@ export const SidebarMagicCircle = () => (
         strokeLinejoin="round"
       />
 
-      {/* Inner hexagon — 6 points evenly on r=35 circle */}
+      {/* Inner hexagon - 6 points evenly on r=35 circle */}
       <polygon
         points="100,65 130.3,82.5 130.3,117.5 100,135 69.7,117.5 69.7,82.5"
         stroke="rgba(200, 30, 60, 0.14)"

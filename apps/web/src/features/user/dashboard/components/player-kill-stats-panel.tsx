@@ -187,7 +187,7 @@ export const PlayerKillStatsPanel: React.FC<PlayerKillStatsPanelProps> = ({
             {isLoading && totalKills === undefined ? (
               <Skeleton className="h-6 w-20" />
             ) : (
-              (totalKills?.toLocaleString() ?? "—")
+              (totalKills?.toLocaleString() ?? "-")
             )}
           </dd>
         </dl>

@@ -17,7 +17,7 @@
     "loadError": "Nie udało się załadować wiadomości",
     "refreshing": "Odświeżanie wiadomości",
     "refreshError": "Nie udało się odświeżyć danych czatu",
-    "offline": "Połączenie przerwane — wiadomości mogą być nieaktualne",
+    "offline": "Połączenie przerwane - wiadomości mogą być nieaktualne",
     "partialError_one": "Nie udało się załadować wiadomości z jednego serwera",
     "partialError_few": "Nie udało się załadować wiadomości z {{count}} serwerów",
     "partialError_many": "Nie udało się załadować wiadomości z {{count}} serwerów",

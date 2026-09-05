@@ -162,7 +162,7 @@ export const ScoringRuleCard = ({
               {...register(`scoringRules.rules.${ruleIndex}.id`)}
             />
 
-            {/* IF section — blue accent */}
+            {/* IF section - blue accent */}
             <div className="mx-3 mb-2 rounded-lg border border-blue-500/15 bg-blue-500/[0.03] overflow-hidden">
               <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-blue-500/10 bg-blue-500/[0.04]">
                 <div className="size-1.5 rounded-full bg-blue-500/60" />
@@ -201,7 +201,7 @@ export const ScoringRuleCard = ({
               </div>
             </div>
 
-            {/* THEN section — green accent */}
+            {/* THEN section - green accent */}
             <div className="mx-3 mt-0 mb-2 rounded-lg border border-green-500/15 bg-green-500/[0.03] overflow-hidden">
               <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-green-500/10 bg-green-500/[0.04]">
                 <div className="size-1.5 rounded-full bg-green-500/60" />

@@ -51,7 +51,7 @@ export const EventKillsSummary = ({
                 aria-label={t("events.kills.statsUnavailable")}
                 title={t("events.kills.statsUnavailable")}
               >
-                —
+                -
               </span>
             )}
           </dd>
