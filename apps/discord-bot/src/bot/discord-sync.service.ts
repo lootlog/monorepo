@@ -1,4 +1,11 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import type {
+  GuildCreated,
+  GuildDeleted,
+  GuildRoleChanged,
+  GuildRoleDeleted,
+  GuildUpdated,
+} from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   DiscordGuildSyncStatus,
@@ -365,7 +372,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
           admin: (role.permissions.bitfield & 0x8n) === 0x8n,
           position: role.position,
         })),
-      });
+      } satisfies GuildCreated);
     }).pipe(
       Effect.mapError((cause) =>
         cause instanceof DiscordSyncFailure
@@ -384,14 +391,16 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
           name: newGuild.name,
           icon: newGuild.iconURL(),
           ownerId: newGuild.ownerId,
-        }),
+        } satisfies GuildUpdated),
       ),
     );
 
   const handleGuildDelete = (guild: Guild) =>
     Effect.gen(function* () {
       logger.log(`Bot has been removed from guild ${guild.name}`);
-      yield* publish(RoutingKey.GUILDS_DELETE, { guildId: guild.id });
+      yield* publish(RoutingKey.GUILDS_DELETE, {
+        guildId: guild.id,
+      } satisfies GuildDeleted);
       const state = unavailableSyncState(guild.id, {
         status: DiscordGuildSyncStatus.NOT_FOUND,
         lastError: "Bot no longer has access to this guild",
@@ -417,7 +426,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       ),
     );
 
-  const rolePayload = (role: Role) => ({
+  const rolePayload = (role: Role): GuildRoleChanged => ({
     guildId: role.guild.id,
     id: role.id,
     name: role.name,
@@ -446,7 +455,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       yield* publish(RoutingKey.GUILDS_DELETE_ROLE, {
         guildId: role.guild.id,
         id: role.id,
-      });
+      } satisfies GuildRoleDeleted);
       yield* publishStaleGuildSyncState(role.guild);
     });
 
