@@ -359,6 +359,106 @@ describe("PresenceStore", () => {
     },
   );
 
+  test("scopes snapshots, legacy records and deltas to the receiving organization", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const store = new PresenceStore({ command: redis }, hub, () => 10_000);
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    publisher.data.guilds.push(
+      secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+    );
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: [],
+        location: { map: "Target" },
+      }),
+    );
+    await Effect.runPromise(store.heartbeat(publisher, "session-1"));
+    expect(publisher.data.presence?.organizationIds).toEqual([
+      "organization-1",
+      "organization-2",
+    ]);
+    for (const [index, organizationId] of [
+      "organization-1",
+      "organization-2",
+    ].entries()) {
+      for (const audience of ["basic", "precise"]) {
+        expect(hub.presenceEvents[index]).toHaveProperty(
+          `${audience}.data.changes.0.presence.organizationIds`,
+          [organizationId],
+        );
+      }
+      // A rolling deployment can leave records from the previous gateway in Redis.
+      await redis.set(
+        `presence:${organizationId}:session-1`,
+        JSON.stringify(publisher.data.presence),
+      );
+      for (const permissions of [
+        [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+        [
+          Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+          Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+        ],
+      ]) {
+        const viewer = session(permissions);
+        if (organizationId === "organization-2")
+          viewer.guilds = [secondGuild(permissions)];
+        const snapshot = await Effect.runPromise(
+          store.snapshot(viewer, organizationId),
+        );
+        expect(snapshot.presences[0]?.organizationIds).toEqual([
+          organizationId,
+        ]);
+      }
+    }
+  });
+
+  test.each(["Target", "Other"])(
+    "publishes coverage for a newly added organization on map %s",
+    async (map) => {
+      const coverage = new RecordingCoverage();
+      const store = new PresenceStore(
+        { command: new MemoryRedis() },
+        new RecordingHub(),
+        () => 10_000,
+        coverage as unknown as CoveragePublisher,
+      );
+      const publisher = socket(
+        session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      );
+      await Effect.runPromise(
+        store.publish(publisher, {
+          organizationIds: [],
+          location: { map: "Target" },
+        }),
+      );
+      coverage.events.length = 0;
+      publisher.data.guilds.push(
+        secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      );
+      await Effect.runPromise(store.reconcileAccess(publisher));
+      await Effect.runPromise(
+        store.publish(publisher, { organizationIds: [], location: { map } }),
+      );
+      expect(
+        coverage.events.filter((event) => event.guildId === "organization-2"),
+      ).toEqual([
+        {
+          guildId: "organization-2",
+          mapName: map,
+          discordId: "discord-1",
+          hasPlayer: true,
+          isAfk: false,
+        },
+      ]);
+      coverage.events.length = 0;
+      await Effect.runPromise(
+        store.publish(publisher, { organizationIds: [], location: { map } }),
+      );
+      expect(coverage.events).toEqual([]);
+    },
+  );
+
   test("heartbeat removes revoked organizations and never recreates their presence", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
