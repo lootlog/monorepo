@@ -125,7 +125,7 @@ export const KillMapsTimelineTable = ({
 
         if (!diagnostics.isValidWindow) {
           return (
-            <span className="block text-right text-muted-foreground">—</span>
+            <span className="block text-right text-muted-foreground">-</span>
           );
         }
 

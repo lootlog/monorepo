@@ -223,7 +223,7 @@ class NotificationContent {
   /**
    * Builds Discord allowedMentions based on rendered template content.
    * Role mentions (<@&roleId>), @everyone, and @here found in templates are
-   * intentionally forwarded — guild admins control templates and are trusted
+   * intentionally forwarded - guild admins control templates and are trusted
    * to configure mentions. DM targets skip mentions entirely.
    */
   buildAllowedMentionsForTarget(

@@ -127,12 +127,12 @@ export const getMemberKillScoringViewModel = (
     trackingPercentage:
       typeof point?.trackingDurationPercentage === "number"
         ? `${Math.round(point.trackingDurationPercentage)}%`
-        : "—",
+        : "-",
     trackingTime:
       typeof point?.trackingDurationSeconds === "number" &&
       point.trackingDurationSeconds >= 0
         ? formatDurationHuman(point.trackingDurationSeconds)
-        : "—",
+        : "-",
     scoringItems: getScoringItems({
       basePoints,
       bonusBreakdown,

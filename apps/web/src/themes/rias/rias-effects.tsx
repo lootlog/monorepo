@@ -382,7 +382,7 @@ const AmbientMagicCircleTopLeft = () => (
   </motion.div>
 );
 
-// Pulsating Power of Destruction vignette — breathing crimson edges
+// Pulsating Power of Destruction vignette - breathing crimson edges
 const DestructionVignette = () => (
   <motion.div
     className="absolute inset-0 pointer-events-none"
@@ -395,7 +395,7 @@ const DestructionVignette = () => (
   />
 );
 
-// Drifting destruction energy blobs — dark crimson masses flowing across the screen
+// Drifting destruction energy blobs - dark crimson masses flowing across the screen
 const DestructionFlow = () => (
   <>
     {[
@@ -583,7 +583,7 @@ export const GremoryButton = ({
         <>
           <DestructionFilter />
 
-          {/* Destruction energy texture — hover only */}
+          {/* Destruction energy texture - hover only */}
           {!isActive && (
             <>
               <motion.div

@@ -578,7 +578,7 @@
       "CHANNEL": "Kanał",
       "DM": "Wiadomość prywatna"
     },
-    "inactiveTargetsWarning": "Niektóre kanały docelowe są nieaktywne — powiadomienia nie będą na nie wysyłane.",
+    "inactiveTargetsWarning": "Niektóre kanały docelowe są nieaktywne - powiadomienia nie będą na nie wysyłane.",
     "allWorlds": "Wszystkie światy",
     "allNpcs": "Wszystkie NPC",
     "jobs": {
@@ -805,7 +805,7 @@
       "configure": "Włącz powiadomienia",
       "test": "Testuj powiadomienie",
       "deactivate": "Deaktywuj",
-      "deactivateHint": "Wstrzymuje wszystkie powiadomienia. Obserwowane itemy pozostaną zapisane — możesz je włączyć ponownie w dowolnym momencie.",
+      "deactivateHint": "Wstrzymuje wszystkie powiadomienia. Obserwowane itemy pozostaną zapisane - możesz je włączyć ponownie w dowolnym momencie.",
       "requiredHint": "Włącz powiadomienia, aby otrzymywać informacje o obserwowanych itemach.",
       "reactivateHint": "Powiadomienia są obecnie wyłączone. Aktywuj je ponownie, aby odbierać informacje o obserwowanych itemach.",
       "cannotSendHint": "Nie udało się dostarczyć wiadomości. Sprawdź ustawienia prywatności na Discordzie lub połączenie konta.",
@@ -831,7 +831,7 @@
       },
       "limits": {
         "title": "Limity",
-        "description": "Możesz obserwować maksymalnie {{limit}} itemów. Jedna obserwacja to jeden item na jednym świecie — ten sam item na różnych światach to osobne obserwacje. Każda obserwacja może obejmować wiele lootlogów."
+        "description": "Możesz obserwować maksymalnie {{limit}} itemów. Jedna obserwacja to jeden item na jednym świecie - ten sam item na różnych światach to osobne obserwacje. Każda obserwacja może obejmować wiele lootlogów."
       },
       "scope": {
         "title": "Zakres i bezpieczeństwo",
@@ -889,7 +889,7 @@
     },
     "manualEntry": {
       "checkbox": "Mój przedmiot nie pojawia się w wyszukiwarce",
-      "hint": "Nazwa musi być dokładnie taka sama jak w grze. ID znajdziesz w pasku adresu na margoworld.pl — np. dla margoworld.pl/item/view/34772/klejnot-wielkich-jezior ID to 34772.",
+      "hint": "Nazwa musi być dokładnie taka sama jak w grze. ID znajdziesz w pasku adresu na margoworld.pl - np. dla margoworld.pl/item/view/34772/klejnot-wielkich-jezior ID to 34772.",
       "itemId": "ID przedmiotu",
       "itemName": "Nazwa przedmiotu",
       "itemIdPlaceholder": "np. 34772",
@@ -1030,10 +1030,10 @@
     },
     "dangerZone": {
       "title": "Usuwanie konta",
-      "description": "Trwale usuwa Twoje dane — ustawienia, statystyki killi i zapisane walki. Looty, timery i dane klanu pozostaną nienaruszone, bo są częścią wspólnej historii klanu.",
+      "description": "Trwale usuwa Twoje dane - ustawienia, statystyki killi i zapisane walki. Looty, timery i dane klanu pozostaną nienaruszone, bo są częścią wspólnej historii klanu.",
       "deleteAccount": "Usuń konto",
       "deleteConfirmTitle": "Na pewno chcesz usunąć konto?",
-      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki killi i walki zostaną trwale usunięte. Dane klanu (looty, timery) nie zostaną ruszone — są powiązane z klanem, nie z Twoim kontem.",
+      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki killi i walki zostaną trwale usunięte. Dane klanu (looty, timery) nie zostaną ruszone - są powiązane z klanem, nie z Twoim kontem.",
       "deleteConfirmLabel": "Wpisz \"{{name}}\" żeby potwierdzić",
       "deleteConfirmButton": "Tak, usuń moje konto"
     }
@@ -1104,7 +1104,7 @@
     },
     "announcement": {
       "newTheme": "Nowy motyw!",
-      "catThemeDescription": "Wypróbuj koci motyw — Różowy Kociak! 🐾",
+      "catThemeDescription": "Wypróbuj koci motyw - Różowy Kociak! 🐾",
       "tryIt": "Wypróbuj"
     }
   }

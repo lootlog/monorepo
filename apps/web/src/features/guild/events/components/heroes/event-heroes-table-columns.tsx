@@ -117,7 +117,7 @@ export const createEventHeroesTableColumns = ({
               <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-none text-muted-foreground">
                 <span>
                   {t("events.heroes.columns.idValue", {
-                    id: hero.npcId ?? "—",
+                    id: hero.npcId ?? "-",
                   })}
                 </span>
                 <span className="lg:hidden" aria-hidden="true">

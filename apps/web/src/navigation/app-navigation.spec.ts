@@ -51,7 +51,7 @@ describe("resolveAppNavigation", () => {
       { label: "Alicja", path: null },
     ]);
     expect(navigation.parentPath).toBe("/guild-1/settings/members");
-    expect(navigation.documentTitle).toBe("Alicja — Nocna Straż — Lootlog.pl");
+    expect(navigation.documentTitle).toBe("Alicja - Nocna Straż - Lootlog.pl");
     expect(
       navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
     ).toMatchObject({ active: true, visible: true });
@@ -82,7 +82,7 @@ describe("resolveAppNavigation", () => {
       { label: "Ustawienia", path: null },
     ]);
     expect(navigation.parentPath).toBe("/guild-1");
-    expect(navigation.documentTitle).toBe("Wystąpił błąd — Lootlog.pl");
+    expect(navigation.documentTitle).toBe("Wystąpił błąd - Lootlog.pl");
     expect(
       navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
     ).toMatchObject({ active: true, visible: true });
@@ -137,7 +137,7 @@ describe("resolveAppNavigation", () => {
       { label: "Strona", path: null },
     ]);
     expect(navigation.parentPath).toBe("/guild-1/settings");
-    expect(navigation.documentTitle).toBe("Strona — Nocna Straż — Lootlog.pl");
+    expect(navigation.documentTitle).toBe("Strona - Nocna Straż - Lootlog.pl");
   });
 
   it.each([
@@ -146,7 +146,7 @@ describe("resolveAppNavigation", () => {
       parentPath: "/guild-1",
       pathname: "/guild-1/notifications",
       routeId: "/_authenticated/$guildId/notifications/",
-      title: "Powiadomienia — Nocna Straż — Lootlog.pl",
+      title: "Powiadomienia - Nocna Straż - Lootlog.pl",
     },
     {
       breadcrumbs: [
@@ -156,7 +156,7 @@ describe("resolveAppNavigation", () => {
       parentPath: "/guild-1/notifications",
       pathname: "/guild-1/notifications/create",
       routeId: "/_authenticated/$guildId/notifications/create",
-      title: "Nowa reguła — Nocna Straż — Lootlog.pl",
+      title: "Nowa reguła - Nocna Straż - Lootlog.pl",
     },
     {
       breadcrumbs: [
@@ -166,7 +166,7 @@ describe("resolveAppNavigation", () => {
       parentPath: "/guild-1/notifications",
       pathname: "/guild-1/notifications/history",
       routeId: "/_authenticated/$guildId/notifications/history",
-      title: "Historia — Nocna Straż — Lootlog.pl",
+      title: "Historia - Nocna Straż - Lootlog.pl",
     },
     {
       breadcrumbs: [
@@ -176,7 +176,7 @@ describe("resolveAppNavigation", () => {
       parentPath: "/guild-1/notifications",
       pathname: "/guild-1/notifications/rule-1",
       routeId: "/_authenticated/$guildId/notifications/$ruleId",
-      title: "Edycja reguły — Nocna Straż — Lootlog.pl",
+      title: "Edycja reguły - Nocna Straż - Lootlog.pl",
     },
   ])(
     "resolves the Organization notification hierarchy for $pathname",
@@ -230,7 +230,7 @@ describe("resolveAppNavigation", () => {
     ]);
     expect(navigation.parentPath).toBe("/@me/battle-panel/statistics");
     expect(navigation.documentTitle).toBe(
-      "Bilans H2H — Panel walk — Lootlog.pl",
+      "Bilans H2H - Panel walk - Lootlog.pl",
     );
     expect(
       navigation.sidebarItems.find(({ id }) => id === "user-battles"),
