@@ -644,9 +644,10 @@ export const makeReservationMutationsDataLayer = (
             startsAt: new Date(data.startsAt),
             endsAt: new Date(data.endsAt),
           };
-          yield* Effect.try(() =>
-            validateReservationTime({ ...range, settings }),
-          );
+          yield* Effect.try({
+            try: () => validateReservationTime({ ...range, settings }),
+            catch: (cause) => cause,
+          });
           const reminderMinutesBefore = data.reminderMinutesBefore ?? null;
           const reminderContext = yield* prepareReminder(database, {
             discordId: context.discordId,
@@ -811,14 +812,16 @@ export const makeReservationMutationsDataLayer = (
             reservation.guildId,
           );
           if (timeChanged) {
-            yield* Effect.try(() =>
-              validateReservationTime({
-                ...range,
-                settings: resolveReservationSettings(reservation.guild),
-                allowPastStart:
-                  range.startsAt.getTime() === reservation.startsAt.getTime(),
-              }),
-            );
+            yield* Effect.try({
+              try: () =>
+                validateReservationTime({
+                  ...range,
+                  settings: resolveReservationSettings(reservation.guild),
+                  allowPastStart:
+                    range.startsAt.getTime() === reservation.startsAt.getTime(),
+                }),
+              catch: (cause) => cause,
+            });
           }
           const reminderContext = reminderNeedsReschedule
             ? yield* prepareReminder(database, {

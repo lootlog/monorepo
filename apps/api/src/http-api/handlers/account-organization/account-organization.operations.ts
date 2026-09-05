@@ -1,5 +1,8 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Context, Effect, Layer, Predicate, Schema } from "effect";
+import { Cause, Context, Effect, Layer, Predicate, Schema } from "effect";
+import { applicationErrorResponse } from "../../application-error-response.js";
+import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
+import { SqlError } from "effect/unstable/sql/SqlError";
 import { HttpServerResponse } from "effect/unstable/http";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
@@ -13,9 +16,9 @@ import {
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable, timerTable } from "#src/database/drizzle/schema";
 import {
-  applicationErrorStatusOrUndefined,
   InvalidRequestError,
   ResourceNotFoundError,
+  ResourceConflictError,
 } from "#src/shared/http/http-errors";
 import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
 import { generateSlug } from "#src/shared/generate-slug";
@@ -395,45 +398,45 @@ type AccountOrganizationFailure =
   | AccountOrganizationNotFound
   | AccountOrganizationOperationError;
 
-const taggedHttpStatus = (error: unknown): number | undefined => {
-  if (Schema.is(AccountOrganizationAccessDenied)(error)) return error.status;
-  if (Schema.is(AccountOrganizationNotFound)(error)) return error.status;
-  return applicationErrorStatusOrUndefined(error);
-};
-
 export const toAccountOrganizationHttpResponse = <A, R>(
   effect: Effect.Effect<A, AccountOrganizationFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     AccountOrganizationAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
     AccountOrganizationNotFound: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
     AccountOrganizationOperationError: (error) => {
-      const status = taggedHttpStatus(error.cause);
-      return status === undefined
-        ? Effect.die(error.cause)
-        : Effect.succeed(HttpServerResponse.empty({ status }));
+      const cause = error.cause;
+      let databaseCause: unknown;
+      if (cause instanceof EffectDrizzleQueryError) {
+        databaseCause = Cause.isCause(cause.cause)
+          ? Cause.squash(cause.cause)
+          : cause.cause;
+      }
+      if (
+        databaseCause instanceof SqlError &&
+        databaseCause.reason._tag === "UniqueViolation" &&
+        databaseCause.reason.constraint === "Guild_vanityUrl_key"
+      ) {
+        return applicationErrorResponse(
+          new ResourceConflictError({
+            message: "errors.guilds.vanityUrlTaken",
+          }),
+        );
+      }
+      return applicationErrorResponse(cause);
     },
-  });
-
-export const toDeclaredAccountOrganizationError = <A, R>(
-  effect: Effect.Effect<A, AccountOrganizationFailure, R>,
-  statuses: ReadonlyArray<number>,
-) =>
-  Effect.catchTags(effect, {
-    AccountOrganizationAccessDenied: (error) =>
-      statuses.includes(error.status)
-        ? Effect.fail(undefined)
-        : Effect.die(error),
-    AccountOrganizationNotFound: (error) =>
-      statuses.includes(error.status)
-        ? Effect.fail(undefined)
-        : Effect.die(error),
-    AccountOrganizationOperationError: (error) =>
-      statuses.includes(taggedHttpStatus(error.cause) ?? 0)
-        ? Effect.fail(undefined)
-        : Effect.die(error.cause),
   });
 
 export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
@@ -603,4 +606,4 @@ export const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
 });
 
 export const deleteCurrentAccountHttpResponse = () =>
-  toDeclaredAccountOrganizationError(deleteCurrentAccount(), [503]);
+  toAccountOrganizationHttpResponse(deleteCurrentAccount());

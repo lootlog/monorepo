@@ -2,7 +2,6 @@ import { BunRedis } from "@effect/platform-bun";
 import {
   Permission,
   UserGuildPermissionsDtoSchema,
-  type UserGuildPermissionsDto,
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { Redis } from "effect/unstable/persistence";
@@ -15,7 +14,7 @@ export interface PermissionsValue {
     discordId: string,
     userId: string,
     guildId: string,
-  ) => Effect.Effect<Permission[]>;
+  ) => Effect.Effect<Permission[], Error>;
 }
 
 export class Permissions extends Context.Service<
@@ -160,11 +159,6 @@ export class Permissions extends Context.Service<
                     new Error("Permissions response was invalid", { cause }),
                 });
               }),
-            )
-            .pipe(
-              Effect.catch(() =>
-                Effect.succeed([] as UserGuildPermissionsDto[]),
-              ),
             );
           yield* set(key, permissions).pipe(Effect.ignore);
           return permissions;

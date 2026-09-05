@@ -36,7 +36,9 @@ import {
   NullableCoverageGapResponse,
 } from "#src/events/monitoring/event-monitoring-response.schema";
 import { PinnedEventResponse } from "#src/events/pins/pinned-event-response.schema";
-import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
+import { EventTimersError } from "#src/events/respawn/event-timers.port";
+import { ApplicationError } from "#src/shared/http/http-errors";
+import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";
 import { EventOperations } from "./events.data-layer.js";
@@ -70,20 +72,15 @@ class EventsBadRequest extends TaggedErrorClass<EventsBadRequest>()(
   { status: Schema.Literal(400), code: Schema.String },
 ) {}
 
-class EventsConflict extends TaggedErrorClass<EventsConflict>()(
-  "EventsConflict",
-  { status: Schema.Literal(409), code: Schema.String },
-) {}
-
 class EventsDataError extends TaggedErrorClass<EventsDataError>()(
   "EventsDataError",
   { cause: Schema.Defect() },
 ) {}
 
 type EventsHttpFailure =
+  | ApplicationError
   | EventsAccessDenied
   | EventsBadRequest
-  | EventsConflict
   | EventsDataError
   | EventsNotFound;
 
@@ -137,22 +134,16 @@ const operationIds = Object.fromEntries(
 ) as Record<EventEndpointIdentifier, string>;
 
 const operationFailure = (cause: unknown): EventsHttpFailure => {
+  if (cause instanceof EventTimersError) return operationFailure(cause.cause);
   if (
     cause instanceof EventsAccessDenied ||
     cause instanceof EventsBadRequest ||
-    cause instanceof EventsConflict ||
     cause instanceof EventsDataError ||
     cause instanceof EventsNotFound
   ) {
     return cause;
   }
-  const status = applicationErrorStatusOrUndefined(cause);
-  if (status === 400)
-    return new EventsBadRequest({ status, code: "BAD_REQUEST" });
-  if (status === 403)
-    return new EventsAccessDenied({ status, code: "FORBIDDEN" });
-  if (status === 404) return new EventsNotFound({ status, code: "NOT_FOUND" });
-  if (status === 409) return new EventsConflict({ status, code: "CONFLICT" });
+  if (cause instanceof ApplicationError) return cause;
   return new EventsDataError({ cause });
 };
 
@@ -180,14 +171,22 @@ const stringParameter = (value: unknown, key: string) =>
 const optionalString = (value: unknown) =>
   typeof value === "string" ? value : undefined;
 
-const statusResponse = (error: { readonly status: number }) =>
-  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+const statusResponse = (error: {
+  readonly status: number;
+  readonly code: string;
+}) =>
+  Effect.succeed(
+    HttpServerResponse.jsonUnsafe(
+      { code: error.code },
+      { status: error.status },
+    ),
+  );
 
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, EventsHttpFailure, R>) =>
   Effect.catchTags(effect, {
+    ApplicationError: applicationErrorResponse,
     EventsAccessDenied: statusResponse,
     EventsBadRequest: statusResponse,
-    EventsConflict: statusResponse,
     EventsDataError: (error) => Effect.die(error.cause),
     EventsNotFound: statusResponse,
   });

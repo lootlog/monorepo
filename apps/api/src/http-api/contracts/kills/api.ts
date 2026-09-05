@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   CreateKillResponse,
   CreateKillRequest,
@@ -32,7 +32,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
   HttpApiEndpoint.post("KillsControllerCreateKill", "/kills", {
     payload: CreateKillRequest,
     success: CreateKillResponse.pipe(HttpApiSchema.status(201)),
-    error: HttpApiSchema.Empty(400),
+    error: HttpErrorResponse.pipe(HttpApiSchema.status(400)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "KillsController_createKill")
@@ -48,7 +48,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
       params: KillOrganizationPath,
       query: GuildKillStatsQuery,
       success: GuildKillStatsResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -95,7 +97,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
       params: KillOrganizationPath,
       query: GuildTopNpcsQuery,
       success: GuildTopNpcsResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -112,7 +116,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
       params: KillOrganizationPath,
       query: GuildTopKillersQuery,
       success: GuildTopKillersByTypeResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -129,7 +135,10 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
       params: NpcKillersPath,
       query: NpcKillersQuery,
       success: NpcKillersResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -146,7 +155,10 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
       params: MemberKillsPath,
       query: MemberKillsQuery,
       success: MemberKillsResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

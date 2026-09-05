@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
+import { applicationErrorResponse } from "../../application-error-response.js";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
@@ -159,11 +160,20 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
 
 type TimersHttpFailure = TimersAccessDenied | TimersDataFailure;
 
-const statusResponse = (error: { readonly status: number }) =>
-  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+const statusResponse = (error: {
+  readonly status: number;
+  readonly code: string;
+}) =>
+  Effect.succeed(
+    HttpServerResponse.jsonUnsafe(
+      { code: error.code },
+      { status: error.status },
+    ),
+  );
 
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, TimersHttpFailure, R>) =>
   Effect.catchTags(effect, {
+    ApplicationError: applicationErrorResponse,
     TimersAccessDenied: statusResponse,
     TimersConflict: statusResponse,
     TimersForbidden: statusResponse,

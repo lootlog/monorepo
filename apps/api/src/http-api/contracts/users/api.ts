@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import { StatusOk } from "#src/contracts/shared";
 import {
   CurrentOrganizationsResponse,
@@ -19,7 +19,7 @@ import {
 export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.delete("UsersControllerDeleteAccount", "/users/@me", {
     success: StatusOk,
-    error: HttpApiSchema.Empty(503),
+    error: HttpErrorResponse.pipe(HttpApiSchema.status(503)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UsersController_deleteAccount")
