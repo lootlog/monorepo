@@ -1,24 +1,21 @@
 import {
   useState,
-  startTransition,
   useEffect,
+  useEffectEvent,
+  useLayoutEffect,
   useRef,
   type FC,
   type RefObject,
 } from "react";
+import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
+import { useMediaQuery } from "usehooks-ts";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
-import {
-  buildBattleLogRawSearchText,
-  findBattleLogSearchMatches,
-  normalizeBattleLogSearchText,
-} from "./utils/battle-log-search";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
 } from "@/lib/api/battlelog-types";
 
-const INITIAL_RENDER_COUNT = 30;
 const BATTLE_LOG_SCROLL_OFFSET_PX = 8;
 
 export type BattleLogListProps = {
@@ -28,12 +25,15 @@ export type BattleLogListProps = {
   userTeam?: number;
   selectedTurn?: number | null;
   scrollToSelectedTurnRequestId?: number;
-  scrollViewportRef?: RefObject<HTMLDivElement | null>;
-  searchQuery?: string;
+  scrollViewportRef: RefObject<HTMLDivElement | null>;
+  outerScrollViewportRef: RefObject<HTMLDivElement | null>;
+  stickyContentRef?: RefObject<HTMLDivElement | null>;
+  searchMatchedTurns?: number[];
   activeSearchTurn?: number | null;
-  onSearchMatchesChange?: (turns: number[]) => void;
   onSelectedTurnScrollComplete?: (turn: number) => void;
+  onSelectedTurnScrollCancel?: (turn: number) => void;
   onTurnSelect?: (turn: number) => void;
+  onVisibleTurnsChange?: () => void;
 };
 
 export const BattleLogList: FC<BattleLogListProps> = ({
@@ -44,279 +44,240 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   selectedTurn,
   scrollToSelectedTurnRequestId = 0,
   scrollViewportRef,
-  searchQuery = "",
+  outerScrollViewportRef,
+  stickyContentRef,
+  searchMatchedTurns = [],
   activeSearchTurn,
-  onSearchMatchesChange,
   onSelectedTurnScrollComplete,
+  onSelectedTurnScrollCancel,
   onTurnSelect,
+  onVisibleTurnsChange,
 }) => {
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const listRef = useRef<HTMLUListElement>(null);
-  const previousSearchMatchKeyRef = useRef("");
-  const scrollCompletionFrameRef = useRef<number | null>(null);
-  const [searchMatchedTurns, setSearchMatchedTurns] = useState<number[]>([]);
-  const [showAll, setShowAll] = useState(
-    () => !events || events.length <= INITIAL_RENDER_COUNT,
+  const [scrollMargin, setScrollMargin] = useState(0);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [resizedTurn, setResizedTurn] = useState<number | null>(null);
+  const previousDesktop = useRef(isDesktop);
+  const rememberSelectedTurn = useEffectEvent(() =>
+    setResizedTurn(selectedTurn ?? null),
   );
-
-  const clearScrollCompletionFrame = () => {
-    if (scrollCompletionFrameRef.current == null) {
-      return;
-    }
-
-    window.cancelAnimationFrame(scrollCompletionFrameRef.current);
-    scrollCompletionFrameRef.current = null;
-  };
-
-  const notifyWhenScrollSettles = ({
-    scrollViewport,
-    targetScrollTop,
-    turn,
-  }: {
-    scrollViewport: HTMLElement;
-    targetScrollTop: number;
-    turn: number;
-  }) => {
-    clearScrollCompletionFrame();
-
-    let previousScrollTop = scrollViewport.scrollTop;
-    let stableFrameCount = 0;
-    let frameCount = 0;
-
-    const checkScrollPosition = () => {
-      const distanceFromTarget = Math.abs(
-        scrollViewport.scrollTop - targetScrollTop,
-      );
-      const scrollDelta = Math.abs(
-        scrollViewport.scrollTop - previousScrollTop,
-      );
-
+  useEffect(() => {
+    if (previousDesktop.current !== isDesktop) rememberSelectedTurn();
+    previousDesktop.current = isDesktop;
+  }, [isDesktop]);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
+  );
+  useEffect(() => {
+    setScrollElement(
+      isDesktop ? scrollViewportRef.current : outerScrollViewportRef.current,
+    );
+  }, [isDesktop, scrollViewportRef, outerScrollViewportRef]);
+  const virtualizer = useVirtualizer({
+    count: events?.length ?? 0,
+    getScrollElement: () => scrollElement,
+    estimateSize: () => 72,
+    overscan: 8,
+    scrollMargin,
+    useAnimationFrameWithResizeObserver: true,
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range);
       if (
-        distanceFromTarget <= 2 ||
-        (frameCount > 8 && stableFrameCount >= 4) ||
-        frameCount >= 75
+        focusedIndex !== null &&
+        focusedIndex < range.count &&
+        !indexes.includes(focusedIndex)
       ) {
-        scrollCompletionFrameRef.current = null;
-        onSelectedTurnScrollComplete?.(turn);
-        return;
+        indexes.push(focusedIndex);
+        indexes.sort((a, b) => a - b);
       }
-
-      if (scrollDelta <= 0.5) {
-        stableFrameCount += 1;
-      } else {
-        stableFrameCount = 0;
-      }
-
-      previousScrollTop = scrollViewport.scrollTop;
-      frameCount += 1;
-      scrollCompletionFrameRef.current =
-        window.requestAnimationFrame(checkScrollPosition);
-    };
-
-    scrollCompletionFrameRef.current =
-      window.requestAnimationFrame(checkScrollPosition);
-  };
-
-  const scrollTurnElementToTop = (turnElement: HTMLElement | null) => {
-    if (!turnElement) {
-      return;
-    }
-
-    const scrollViewport =
-      scrollViewportRef?.current ?? listRef.current?.parentElement;
-
-    if (!scrollViewport) {
-      turnElement.scrollIntoView({
-        block: "start",
-        behavior: "smooth",
-      });
-      return;
-    }
-
-    const viewportRect = scrollViewport.getBoundingClientRect();
-    const turnRect = turnElement.getBoundingClientRect();
-    const scrollTop =
-      scrollViewport.scrollTop +
-      turnRect.top -
-      viewportRect.top -
-      BATTLE_LOG_SCROLL_OFFSET_PX;
-
-    const targetScrollTop = Math.max(0, scrollTop);
-
-    scrollViewport.scrollTo({
-      top: targetScrollTop,
-      behavior: "smooth",
-    });
-
-    const turn = Number.parseInt(turnElement.dataset.battleTurn ?? "", 10);
-
-    if (!Number.isNaN(turn)) {
-      notifyWhenScrollSettles({
-        scrollViewport,
-        targetScrollTop,
-        turn,
-      });
-    }
-  };
-
-  useEffect(
-    () => () => {
-      clearScrollCompletionFrame();
+      return indexes;
     },
-    [],
-  );
+  });
 
-  useEffect(() => {
-    if (!showAll) {
-      startTransition(() => {
-        setShowAll(true);
-      });
-    }
-  }, [showAll]);
-
-  useEffect(() => {
-    const normalizedSearchQuery = normalizeBattleLogSearchText(searchQuery);
-
-    if (normalizedSearchQuery.length > 0 && !showAll) {
-      startTransition(() => {
-        setShowAll(true);
-      });
-    }
-  }, [searchQuery, showAll]);
-
-  useEffect(() => {
-    const normalizedSearchQuery = normalizeBattleLogSearchText(searchQuery);
-
-    const notifySearchMatches = (turns: number[]) => {
-      const searchMatchKey = `${searchQuery}:${turns.join(",")}`;
-
-      if (searchMatchKey === previousSearchMatchKeyRef.current) {
-        return;
-      }
-
-      previousSearchMatchKeyRef.current = searchMatchKey;
-      setSearchMatchedTurns(turns);
-      onSearchMatchesChange?.(turns);
+  useLayoutEffect(() => {
+    const viewport = scrollElement;
+    const list = listRef.current;
+    if (!viewport || !list) return;
+    const updateMargin = () => {
+      setScrollMargin(
+        list.getBoundingClientRect().top -
+          viewport.getBoundingClientRect().top +
+          viewport.scrollTop,
+      );
     };
-
-    if (normalizedSearchQuery.length === 0) {
-      notifySearchMatches([]);
-      return;
-    }
-
-    if (!showAll) {
-      return;
-    }
-
-    const warriorsMapForSearch = new Map(
-      warriors.map((warrior) => [warrior.originalId, warrior]),
-    );
-    const visibleTextByTurn = new Map<number, string>();
-    listRef.current
-      ?.querySelectorAll<HTMLElement>("[data-battle-turn]")
-      .forEach((turnElement) => {
-        const turn = Number.parseInt(turnElement.dataset.battleTurn ?? "", 10);
-
-        if (Number.isNaN(turn)) {
-          return;
-        }
-
-        visibleTextByTurn.set(turn, turnElement.textContent ?? "");
-      });
-    const searchEntries =
-      events?.map((event, eventIndex) => {
-        const turn = eventIndex + 1;
-        const attacker =
-          event.attackerId == null
-            ? undefined
-            : warriorsMapForSearch.get(event.attackerId);
-        const defender =
-          event.defenderId == null
-            ? undefined
-            : warriorsMapForSearch.get(event.defenderId);
-
-        return {
-          turn,
-          rawText: buildBattleLogRawSearchText({
-            event,
-            attacker,
-            defender,
-            turn,
-          }),
-          visibleText: visibleTextByTurn.get(turn) ?? "",
-        };
-      }) ?? [];
-    const matches = findBattleLogSearchMatches({
-      query: searchQuery,
-      entries: searchEntries,
-    });
-
-    notifySearchMatches(matches.map((match) => match.turn));
-  }, [events, onSearchMatchesChange, searchQuery, showAll, warriors]);
-
-  useEffect(() => {
-    if (
-      scrollToSelectedTurnRequestId <= 0 ||
-      selectedTurn == null ||
-      !showAll
-    ) {
-      return;
-    }
-
-    const turnElement = listRef.current?.querySelector<HTMLElement>(
-      `[data-battle-turn="${selectedTurn}"]`,
-    );
-    scrollTurnElementToTop(turnElement ?? null);
-  }, [scrollToSelectedTurnRequestId, selectedTurn, showAll]);
-
-  useEffect(() => {
-    if (activeSearchTurn == null || !showAll) {
-      return;
-    }
-
-    const turnElement = listRef.current?.querySelector<HTMLElement>(
-      `[data-battle-turn="${activeSearchTurn}"]`,
-    );
-    scrollTurnElementToTop(turnElement ?? null);
-  }, [activeSearchTurn, showAll]);
+    updateMargin();
+    const observer = new ResizeObserver(updateMargin);
+    observer.observe(viewport);
+    // The wrapping detail content also changes when a timeline or overview loads.
+    if (list.parentElement) observer.observe(list.parentElement);
+    if (outerScrollViewportRef.current?.firstElementChild)
+      observer.observe(outerScrollViewportRef.current.firstElementChild);
+    window.addEventListener("resize", updateMargin);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateMargin);
+    };
+  }, [scrollElement, outerScrollViewportRef]);
 
   const warriorsMap = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
-  const visibleEvents = showAll
-    ? events
-    : events?.slice(0, INITIAL_RENDER_COUNT);
   const searchMatchedTurnsSet = new Set(searchMatchedTurns);
 
-  return (
-    <ul ref={listRef} className="text-[13px] leading-[1.35]">
-      <BattleHeader warriors={warriors} characterId={characterId} />
-      {visibleEvents?.map((event, eventIndex) => {
-        const turn = eventIndex + 1;
-        const attacker =
-          event.attackerId == null
-            ? undefined
-            : warriorsMap.get(event.attackerId);
-        const defender =
-          event.defenderId == null
-            ? undefined
-            : warriorsMap.get(event.defenderId);
+  const virtualItems = virtualizer.getVirtualItems();
+  const visibleRangeKey = virtualItems
+    .map((item) => `${item.index}:${item.size}`)
+    .join(",");
+  const notifyVisibleTurns = useEffectEvent(() => onVisibleTurnsChange?.());
+  useEffect(() => {
+    notifyVisibleTurns();
+  }, [visibleRangeKey, isDesktop]);
 
-        return (
-          <BattleEventEntry
-            key={eventIndex}
-            event={event}
-            attacker={attacker}
-            defender={defender}
-            eventIndex={eventIndex}
-            turn={turn}
-            userTeam={userTeam}
-            selected={selectedTurn === turn}
-            searchMatched={searchMatchedTurnsSet.has(turn)}
-            activeSearchMatch={activeSearchTurn === turn}
-            onSelect={onTurnSelect ? () => onTurnSelect(turn) : undefined}
-          />
+  let requestedTurn: number | null | undefined = resizedTurn;
+  if (activeSearchTurn != null) requestedTurn = activeSearchTurn;
+  else if (scrollToSelectedTurnRequestId > 0) requestedTurn = selectedTurn;
+  const notifyScrollComplete = useEffectEvent((turn: number) => {
+    setResizedTurn(null);
+    onSelectedTurnScrollComplete?.(turn);
+  });
+  const notifyScrollCancel = useEffectEvent((turn: number) => {
+    setResizedTurn(null);
+    onSelectedTurnScrollCancel?.(turn);
+  });
+  useEffect(() => {
+    if (requestedTurn == null) return;
+    if (requestedTurn < 1 || requestedTurn > (events?.length ?? 0)) {
+      notifyScrollCancel(requestedTurn);
+      return;
+    }
+    const viewport = scrollElement;
+    if (!viewport) return;
+    let frame = 0;
+    let stableFrames = 0;
+    let attempts = 0;
+    let finished = false;
+    // Estimated heights make smooth jumps unreliable. Measure the destination first.
+    virtualizer.scrollToIndex(requestedTurn - 1, {
+      align: "start",
+      behavior: "auto",
+    });
+    const alignMeasuredRow = () => {
+      const row = listRef.current?.querySelector<HTMLElement>(
+        `[data-battle-turn="${requestedTurn}"]`,
+      );
+      if (row) {
+        const viewportRect = viewport.getBoundingClientRect();
+        const stickyRect = stickyContentRef?.current?.getBoundingClientRect();
+        const stickyBottom =
+          isDesktop &&
+          stickyRect &&
+          stickyRect.bottom > viewportRect.top &&
+          stickyRect.top < viewportRect.bottom
+            ? stickyRect.bottom
+            : viewportRect.top;
+        const target = Math.max(
+          0,
+          Math.min(
+            viewport.scrollHeight - viewport.clientHeight,
+            viewport.scrollTop +
+              row.getBoundingClientRect().top -
+              Math.max(viewportRect.top, stickyBottom) -
+              BATTLE_LOG_SCROLL_OFFSET_PX,
+          ),
         );
-      })}
-    </ul>
+        const settled = Math.abs(viewport.scrollTop - target) <= 1;
+        stableFrames = settled ? stableFrames + 1 : 0;
+        if (!settled) viewport.scrollTo({ top: target, behavior: "instant" });
+        if (stableFrames >= 3) {
+          finished = true;
+          notifyScrollComplete(requestedTurn);
+          return;
+        }
+      }
+      attempts += 1;
+      if (attempts < 75) frame = requestAnimationFrame(alignMeasuredRow);
+      else {
+        finished = true;
+        notifyScrollCancel(requestedTurn);
+      }
+    };
+    frame = requestAnimationFrame(alignMeasuredRow);
+    const cancelFromUserInput = () => {
+      if (finished) return;
+      finished = true;
+      cancelAnimationFrame(frame);
+      notifyScrollCancel(requestedTurn);
+    };
+    viewport.addEventListener("wheel", cancelFromUserInput, { passive: true });
+    viewport.addEventListener("touchstart", cancelFromUserInput, {
+      passive: true,
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener("wheel", cancelFromUserInput);
+      viewport.removeEventListener("touchstart", cancelFromUserInput);
+    };
+  }, [
+    requestedTurn,
+    scrollToSelectedTurnRequestId,
+    isDesktop,
+    scrollElement,
+    scrollMargin,
+    events?.length,
+    virtualizer,
+    stickyContentRef,
+  ]);
+
+  return (
+    <div className="text-[13px] leading-[1.35]">
+      <ul>
+        <BattleHeader warriors={warriors} characterId={characterId} />
+      </ul>
+      <ul
+        ref={listRef}
+        className="relative"
+        style={{ height: virtualizer.getTotalSize() }}
+      >
+        {virtualItems.map((item) => {
+          const event = events?.[item.index];
+          if (!event) return null;
+          const turn = item.index + 1;
+          return (
+            <BattleEventEntry
+              key={item.key}
+              rowRef={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${item.start - scrollMargin}px)`,
+              }}
+              onFocus={() => setFocusedIndex(item.index)}
+              onBlur={() => setFocusedIndex(null)}
+              event={event}
+              attacker={
+                event.attackerId == null
+                  ? undefined
+                  : warriorsMap.get(event.attackerId)
+              }
+              defender={
+                event.defenderId == null
+                  ? undefined
+                  : warriorsMap.get(event.defenderId)
+              }
+              eventIndex={item.index}
+              turn={turn}
+              userTeam={userTeam}
+              selected={selectedTurn === turn}
+              searchMatched={searchMatchedTurnsSet.has(turn)}
+              activeSearchMatch={activeSearchTurn === turn}
+              onSelect={onTurnSelect ? () => onTurnSelect(turn) : undefined}
+            />
+          );
+        })}
+      </ul>
+    </div>
   );
 };

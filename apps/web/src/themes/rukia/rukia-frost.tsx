@@ -1,3 +1,4 @@
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 
@@ -96,40 +97,48 @@ const Snowflake = ({
   size: number;
   isVisible: boolean;
   delay: number;
-}) => (
-  <motion.div
-    className="absolute pointer-events-none"
-    style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
-    initial={{ opacity: 0, scale: 0, rotate: 0 }}
-    animate={{
-      opacity: isVisible ? 0.5 : 0,
-      scale: isVisible ? 1 : 0,
-      rotate: isVisible ? 360 : 0,
-    }}
-    transition={{
-      opacity: { duration: 0.3, delay: isVisible ? delay : 0 },
-      scale: { duration: 0.3, delay: isVisible ? delay : 0 },
-      rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-    }}
-  >
-    <svg width={size} height={size} viewBox="0 0 24 24">
-      <g fill="none" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="1">
-        <line x1="12" y1="2" x2="12" y2="22" />
-        <line x1="2" y1="12" x2="22" y2="12" />
-        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-        <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
-        <line x1="12" y1="2" x2="10" y2="5" />
-        <line x1="12" y1="2" x2="14" y2="5" />
-        <line x1="12" y1="22" x2="10" y2="19" />
-        <line x1="12" y1="22" x2="14" y2="19" />
-        <line x1="2" y1="12" x2="5" y2="10" />
-        <line x1="2" y1="12" x2="5" y2="14" />
-        <line x1="22" y1="12" x2="19" y2="10" />
-        <line x1="22" y1="12" x2="19" y2="14" />
-      </g>
-    </svg>
-  </motion.div>
-);
+}) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  return (
+    <motion.div
+      key={String(prefersReducedMotion)}
+      className="absolute pointer-events-none"
+      style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
+      initial={{ opacity: 0, scale: 0, rotate: 0 }}
+      animate={{
+        opacity: isVisible ? 0.5 : 0,
+        scale: isVisible ? 1 : 0,
+        rotate: isVisible ? 360 : 0,
+      }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : {
+              opacity: { duration: 0.3, delay: isVisible ? delay : 0 },
+              scale: { duration: 0.3, delay: isVisible ? delay : 0 },
+              rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+            }
+      }
+    >
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <g fill="none" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="1">
+          <line x1="12" y1="2" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+          <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
+          <line x1="12" y1="2" x2="10" y2="5" />
+          <line x1="12" y1="2" x2="14" y2="5" />
+          <line x1="12" y1="22" x2="10" y2="19" />
+          <line x1="12" y1="22" x2="14" y2="19" />
+          <line x1="2" y1="12" x2="5" y2="10" />
+          <line x1="2" y1="12" x2="5" y2="14" />
+          <line x1="22" y1="12" x2="19" y2="10" />
+          <line x1="22" y1="12" x2="19" y2="14" />
+        </g>
+      </svg>
+    </motion.div>
+  );
+};
 
 // Ice crack lines
 const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
@@ -208,6 +217,7 @@ const buttonSnowflakePositions = [
 
 // Wind streaks that sweep across the screen
 const WindStreaks = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const streaks = [
     { y: "15%", duration: 8, delay: 0, width: 200, opacity: 0.06 },
     { y: "35%", duration: 12, delay: 3, width: 300, opacity: 0.045 },
@@ -222,7 +232,7 @@ const WindStreaks = () => {
     <>
       {streaks.map((streak, i) => (
         <motion.div
-          key={i}
+          key={`${i}-${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
             top: streak.y,
@@ -236,20 +246,24 @@ const WindStreaks = () => {
             x: ["0vw", "140vw"],
             opacity: [0, streak.opacity, streak.opacity, 0],
           }}
-          transition={{
-            x: {
-              duration: streak.duration,
-              repeat: Infinity,
-              ease: "linear",
-              delay: streak.delay,
-            },
-            opacity: {
-              duration: streak.duration,
-              repeat: Infinity,
-              ease: "linear",
-              delay: streak.delay,
-            },
-          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : {
+                  x: {
+                    duration: streak.duration,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: streak.delay,
+                  },
+                  opacity: {
+                    duration: streak.duration,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: streak.delay,
+                  },
+                }
+          }
         />
       ))}
     </>
@@ -258,6 +272,7 @@ const WindStreaks = () => {
 
 // Frost mist that drifts across the bottom
 const FrostMist = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const mistLayers = [
     { y: "92%", duration: 40, delay: 0, opacity: 0.03 },
     { y: "95%", duration: 35, delay: 10, opacity: 0.045 },
@@ -268,7 +283,7 @@ const FrostMist = () => {
     <>
       {mistLayers.map((mist, i) => (
         <motion.div
-          key={i}
+          key={`${i}-${prefersReducedMotion}`}
           className="absolute w-full h-24 pointer-events-none"
           style={{
             top: mist.y,
@@ -285,20 +300,24 @@ const FrostMist = () => {
               mist.opacity * 0.5,
             ],
           }}
-          transition={{
-            x: {
-              duration: mist.duration,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: mist.delay,
-            },
-            opacity: {
-              duration: mist.duration * 0.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: mist.delay,
-            },
-          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : {
+                  x: {
+                    duration: mist.duration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: mist.delay,
+                  },
+                  opacity: {
+                    duration: mist.duration * 0.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: mist.delay,
+                  },
+                }
+          }
         />
       ))}
     </>
@@ -319,11 +338,12 @@ const generateIceSparkles = () =>
 const iceSparkleConfigs = generateIceSparkles();
 
 const IceSparkles = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   return (
     <>
       {iceSparkleConfigs.map((sparkle) => (
         <motion.div
-          key={sparkle.id}
+          key={`${sparkle.id}-${prefersReducedMotion}`}
           className="absolute pointer-events-none rounded-full"
           style={{
             left: `${sparkle.x}%`,
@@ -338,12 +358,16 @@ const IceSparkles = () => {
             opacity: [0, 0.6, 0],
             scale: [0.5, 1.2, 0.5],
           }}
-          transition={{
-            duration: sparkle.duration,
-            repeat: Infinity,
-            delay: sparkle.delay,
-            ease: "easeInOut",
-          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : {
+                  duration: sparkle.duration,
+                  repeat: Infinity,
+                  delay: sparkle.delay,
+                  ease: "easeInOut",
+                }
+          }
         />
       ))}
     </>
@@ -506,8 +530,10 @@ const FallingSnowflake = ({
   opacity: number;
   type: FallingSnowflakeType;
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   return (
     <motion.div
+      key={String(prefersReducedMotion)}
       className="absolute pointer-events-none"
       style={{ left: `${initialX}%`, top: "-5%" }}
       animate={{
@@ -524,38 +550,42 @@ const FallingSnowflake = ({
         opacity: [opacity, opacity * 0.6, opacity, opacity * 0.8, opacity],
         scale: [1, 1.1, 0.95, 1.05, 1],
       }}
-      transition={{
-        y: {
-          duration: fallDuration,
-          repeat: Infinity,
-          ease: "linear",
-          delay,
-        },
-        x: {
-          duration: fallDuration * 0.8,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay,
-        },
-        rotate: {
-          duration: rotationSpeed,
-          repeat: Infinity,
-          ease: "linear",
-          delay,
-        },
-        opacity: {
-          duration: fallDuration * 0.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay,
-        },
-        scale: {
-          duration: fallDuration * 0.6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay,
-        },
-      }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : {
+              y: {
+                duration: fallDuration,
+                repeat: Infinity,
+                ease: "linear",
+                delay,
+              },
+              x: {
+                duration: fallDuration * 0.8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              },
+              rotate: {
+                duration: rotationSpeed,
+                repeat: Infinity,
+                ease: "linear",
+                delay,
+              },
+              opacity: {
+                duration: fallDuration * 0.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              },
+              scale: {
+                duration: fallDuration * 0.6,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              },
+            }
+      }
     >
       {type === "dot" ? (
         <div
@@ -698,6 +728,7 @@ export const FrozenCircle = ({
   children: ReactNode;
   isActive: boolean;
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [isHovered, setIsHovered] = useState(false);
   const isAnimating = isActive || isHovered;
 
@@ -709,6 +740,7 @@ export const FrozenCircle = ({
     >
       {/* Pulsing ice glow */}
       <motion.div
+        key={String(prefersReducedMotion)}
         className="absolute inset-0 rounded-xl pointer-events-none"
         animate={
           isAnimating
@@ -726,16 +758,18 @@ export const FrozenCircle = ({
               }
         }
         transition={
-          isAnimating
-            ? {
-                opacity: { duration: 0.3 },
-                boxShadow: {
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-              }
-            : { opacity: { duration: 0.3 } }
+          prefersReducedMotion
+            ? { duration: 0 }
+            : isAnimating
+              ? {
+                  opacity: { duration: 0.3 },
+                  boxShadow: {
+                    duration: 2.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                }
+              : { opacity: { duration: 0.3 } }
         }
       />
 
@@ -757,7 +791,7 @@ export const FrozenCircle = ({
       {/* Ice crystals - randomly scattered, continuously animated */}
       {frozenCircleCrystals.map((crystal, i) => (
         <motion.div
-          key={i}
+          key={`${i}-${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
             left: `${crystal.x}%`,
@@ -777,14 +811,16 @@ export const FrozenCircle = ({
               : { opacity: 0, scale: 0.75 }
           }
           transition={
-            isAnimating
-              ? {
-                  duration: crystal.animDuration,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: crystal.animDelay,
-                }
-              : { duration: 0.3 }
+            prefersReducedMotion
+              ? { duration: 0 }
+              : isAnimating
+                ? {
+                    duration: crystal.animDuration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: crystal.animDelay,
+                  }
+                : { duration: 0.3 }
           }
         >
           <svg
@@ -827,6 +863,7 @@ export const FrozenButton = ({
   subtle?: boolean;
   rounded?: string;
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const isFrozen = isHovered || isActive;
 
   return (
@@ -926,18 +963,23 @@ export const FrozenButton = ({
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
               >
                 <motion.div
+                  key={String(prefersReducedMotion)}
                   className="absolute inset-0"
                   style={{
                     background:
                       "linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%)",
                   }}
                   animate={{ x: ["-200%", "200%"] }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    repeatDelay: 1.5,
-                    ease: "easeInOut",
-                  }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : {
+                          duration: 2.5,
+                          repeat: Infinity,
+                          repeatDelay: 1.5,
+                          ease: "easeInOut",
+                        }
+                  }
                 />
               </motion.div>
               <motion.div

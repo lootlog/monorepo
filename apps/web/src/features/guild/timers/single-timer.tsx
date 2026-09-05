@@ -5,29 +5,19 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
-import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "cn";
-import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import type { TimerResponseDto } from "@lootlog/client/main";
+import { TimerCountdown } from "./timer-countdown";
 
 type SingleTimerProps = {
   timer: TimerResponseDto;
-  now: number;
 };
 
-const THRESHOLD = 30000;
-
-export const SingleTimer: FC<SingleTimerProps> = ({ timer, now }) => {
+export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const { t } = useTranslation();
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-  const timeLeft = Math.max(0, maxSpawnTime - now);
-  const minTimeLeft = minSpawnTime - now;
-
-  const isMinSpawnTime = minSpawnTime < maxSpawnTime && minTimeLeft <= 0;
-  const hasPassedRedThreshold = timeLeft < THRESHOLD;
   const npcName = timer.npc?.name ?? "";
   const npcIcon = timer.npc?.icon ?? null;
   const npcDetails =
@@ -66,26 +56,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer, now }) => {
                 {timer.member?.name ?? ""}
               </span>
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-0.5">
-              {!isMinSpawnTime && (
-                <span className="flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
-                  <ClockArrowDown size="14px" />
-                  {parseMsToTime(minTimeLeft)}
-                </span>
-              )}
-              <span
-                className={cn(
-                  "flex items-center gap-1 text-xs font-medium tabular-nums",
-                  {
-                    "text-orange-400": isMinSpawnTime,
-                    "text-red-500": hasPassedRedThreshold,
-                  },
-                )}
-              >
-                <ClockArrowUp size="14px" />
-                {parseMsToTime(timeLeft)}
-              </span>
-            </div>
+            <TimerCountdown
+              minSpawnTime={minSpawnTime}
+              maxSpawnTime={maxSpawnTime}
+            />
           </div>
         }
       />

@@ -36,7 +36,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 
 const STICKY_TOP_OFFSET_PX = 12;
 const STICKY_CONTENT_GAP_PX = 12;
@@ -125,6 +125,7 @@ export function BattleDetailView({
   const [scrollTargetRequestId, setScrollTargetRequestId] = useState(0);
   const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT_PX);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const sideCardsGridRef = useRef<HTMLDivElement>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
@@ -324,7 +325,9 @@ export function BattleDetailView({
     const logViewport = battleLogWrapperRef.current.querySelector<HTMLElement>(
       '[data-slot="scroll-area-viewport"]',
     );
-    const viewportElement = logViewport ?? scrollViewportRef.current;
+    const viewportElement = isDesktop
+      ? (logViewport ?? scrollViewportRef.current)
+      : scrollViewportRef.current;
     const viewportRect = viewportElement.getBoundingClientRect();
     const pageViewportRect = scrollViewportRef.current.getBoundingClientRect();
     const chartRect = chartWrapperRef.current?.getBoundingClientRect();
@@ -570,6 +573,9 @@ export function BattleDetailView({
             >
               {rawBattle && battle ? (
                 <BattleLog
+                  key={battleId}
+                  outerScrollViewportRef={scrollViewportRef}
+                  stickyContentRef={chartWrapperRef}
                   rawBattle={rawBattle}
                   warriors={battle.warriors}
                   showHeader={false}
@@ -582,6 +588,7 @@ export function BattleDetailView({
                     scrollTargetRequestId,
                   )}
                   onListScroll={handleBattleScroll}
+                  onSelectedTurnScrollCancel={handleSelectedTurnScrollComplete}
                   onSelectedTurnScrollComplete={
                     handleSelectedTurnScrollComplete
                   }

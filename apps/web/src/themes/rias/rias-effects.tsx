@@ -1,3 +1,4 @@
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 
@@ -109,53 +110,61 @@ const MagicCircle = ({
   size: number;
   isVisible: boolean;
   delay: number;
-}) => (
-  <motion.div
-    className="absolute pointer-events-none"
-    style={{
-      left: x,
-      top: y,
-      transform: "translate(-50%, -50%)",
-    }}
-    initial={{ opacity: 0, scale: 0, rotate: 0 }}
-    animate={{
-      opacity: isVisible ? 0.5 : 0,
-      scale: isVisible ? 1 : 0,
-      rotate: isVisible ? 360 : 0,
-    }}
-    transition={{
-      opacity: { duration: 0.5, delay: isVisible ? delay : 0 },
-      scale: { duration: 0.5, delay: isVisible ? delay : 0 },
-      rotate: { duration: 12, repeat: Infinity, ease: "linear" },
-    }}
-  >
-    <svg width={size} height={size} viewBox="0 0 24 24">
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        fill="none"
-        stroke="rgba(200, 30, 60, 0.6)"
-        strokeWidth="0.8"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="7"
-        fill="none"
-        stroke="rgba(200, 30, 60, 0.4)"
-        strokeWidth="0.5"
-      />
-      <polygon
-        points="12,3 14.5,9 21,9.5 16,14 17.5,21 12,17.5 6.5,21 8,14 3,9.5 9.5,9"
-        fill="none"
-        stroke="rgba(200, 30, 60, 0.35)"
-        strokeWidth="0.5"
-      />
-      <circle cx="12" cy="12" r="2" fill="rgba(200, 30, 60, 0.3)" />
-    </svg>
-  </motion.div>
-);
+}) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  return (
+    <motion.div
+      key={String(prefersReducedMotion)}
+      className="absolute pointer-events-none"
+      style={{
+        left: x,
+        top: y,
+        transform: "translate(-50%, -50%)",
+      }}
+      initial={{ opacity: 0, scale: 0, rotate: 0 }}
+      animate={{
+        opacity: isVisible ? 0.5 : 0,
+        scale: isVisible ? 1 : 0,
+        rotate: isVisible ? 360 : 0,
+      }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : {
+              opacity: { duration: 0.5, delay: isVisible ? delay : 0 },
+              scale: { duration: 0.5, delay: isVisible ? delay : 0 },
+              rotate: { duration: 12, repeat: Infinity, ease: "linear" },
+            }
+      }
+    >
+      <svg width={size} height={size} viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+          fill="none"
+          stroke="rgba(200, 30, 60, 0.6)"
+          strokeWidth="0.8"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="7"
+          fill="none"
+          stroke="rgba(200, 30, 60, 0.4)"
+          strokeWidth="0.5"
+        />
+        <polygon
+          points="12,3 14.5,9 21,9.5 16,14 17.5,21 12,17.5 6.5,21 8,14 3,9.5 9.5,9"
+          fill="none"
+          stroke="rgba(200, 30, 60, 0.35)"
+          strokeWidth="0.5"
+        />
+        <circle cx="12" cy="12" r="2" fill="rgba(200, 30, 60, 0.3)" />
+      </svg>
+    </motion.div>
+  );
+};
 
 // Demonic runes that fade in on hover/active
 const DestructionRunes = ({ isVisible }: { isVisible: boolean }) => (
@@ -226,11 +235,12 @@ const floatingParticles = Array.from({ length: 12 }, (_, index) => ({
 
 // Floating destruction particles for global overlay
 const FloatingParticles = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   return (
     <>
       {floatingParticles.map((p) => (
         <motion.div
-          key={p.id}
+          key={`${p.id}-${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
             left: `${p.x}%`,
@@ -247,12 +257,16 @@ const FloatingParticles = () => {
             opacity: [0, 0.7, 0.5, 0],
             x: [0, p.drift],
           }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: "linear",
-          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : {
+                  duration: p.duration,
+                  delay: p.delay,
+                  repeat: Infinity,
+                  ease: "linear",
+                }
+          }
         />
       ))}
     </>
@@ -260,65 +274,73 @@ const FloatingParticles = () => {
 };
 
 // Ambient magic circle watermark
-const AmbientMagicCircle = () => (
-  <motion.div
-    className="absolute pointer-events-none"
-    style={{
-      right: "-5%",
-      bottom: "-5%",
-      width: 300,
-      height: 300,
-      opacity: 0.03,
-    }}
-    animate={{ rotate: 360 }}
-    transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-  >
-    <svg viewBox="0 0 200 200" fill="none">
-      <circle
-        cx="100"
-        cy="100"
-        r="90"
-        stroke="rgba(200, 30, 60, 1)"
-        strokeWidth="1"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="75"
-        stroke="rgba(200, 30, 60, 1)"
-        strokeWidth="0.5"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="60"
-        stroke="rgba(200, 30, 60, 0.8)"
-        strokeWidth="0.5"
-      />
-      <polygon
-        points="100,15 118,60 170,60 128,90 142,140 100,110 58,140 72,90 30,60 82,60"
-        stroke="rgba(200, 30, 60, 0.6)"
-        strokeWidth="0.8"
-        fill="none"
-      />
-      {/* Inner hexagon */}
-      <polygon
-        points="100,45 130,65 130,95 100,115 70,95 70,65"
-        stroke="rgba(200, 30, 60, 0.4)"
-        strokeWidth="0.5"
-        fill="none"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="15"
-        stroke="rgba(200, 30, 60, 0.6)"
-        strokeWidth="0.5"
-        fill="rgba(200, 30, 60, 0.1)"
-      />
-    </svg>
-  </motion.div>
-);
+const AmbientMagicCircle = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  return (
+    <motion.div
+      key={String(prefersReducedMotion)}
+      className="absolute pointer-events-none"
+      style={{
+        right: "-5%",
+        bottom: "-5%",
+        width: 300,
+        height: 300,
+        opacity: 0.03,
+      }}
+      animate={{ rotate: 360 }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { duration: 60, repeat: Infinity, ease: "linear" }
+      }
+    >
+      <svg viewBox="0 0 200 200" fill="none">
+        <circle
+          cx="100"
+          cy="100"
+          r="90"
+          stroke="rgba(200, 30, 60, 1)"
+          strokeWidth="1"
+        />
+        <circle
+          cx="100"
+          cy="100"
+          r="75"
+          stroke="rgba(200, 30, 60, 1)"
+          strokeWidth="0.5"
+        />
+        <circle
+          cx="100"
+          cy="100"
+          r="60"
+          stroke="rgba(200, 30, 60, 0.8)"
+          strokeWidth="0.5"
+        />
+        <polygon
+          points="100,15 118,60 170,60 128,90 142,140 100,110 58,140 72,90 30,60 82,60"
+          stroke="rgba(200, 30, 60, 0.6)"
+          strokeWidth="0.8"
+          fill="none"
+        />
+        {/* Inner hexagon */}
+        <polygon
+          points="100,45 130,65 130,95 100,115 70,95 70,65"
+          stroke="rgba(200, 30, 60, 0.4)"
+          strokeWidth="0.5"
+          fill="none"
+        />
+        <circle
+          cx="100"
+          cy="100"
+          r="15"
+          stroke="rgba(200, 30, 60, 0.6)"
+          strokeWidth="0.5"
+          fill="rgba(200, 30, 60, 0.1)"
+        />
+      </svg>
+    </motion.div>
+  );
+};
 
 // Edge energy glow for the global overlay
 const DestructionEdgeGlow = () => (
@@ -335,134 +357,157 @@ const DestructionEdgeGlow = () => (
 );
 
 // Second ambient magic circle - top left, counter-rotating
-const AmbientMagicCircleTopLeft = () => (
-  <motion.div
-    className="absolute pointer-events-none"
-    style={{
-      left: "-8%",
-      top: "-8%",
-      width: 220,
-      height: 220,
-      opacity: 0.025,
-    }}
-    animate={{ rotate: -360 }}
-    transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-  >
-    <svg viewBox="0 0 200 200" fill="none">
-      <circle
-        cx="100"
-        cy="100"
-        r="90"
-        stroke="rgba(200, 30, 60, 1)"
-        strokeWidth="1"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="70"
-        stroke="rgba(200, 30, 60, 0.8)"
-        strokeWidth="0.5"
-        strokeDasharray="8 4"
-      />
-      <polygon
-        points="100,20 115,55 155,55 125,80 135,120 100,95 65,120 75,80 45,55 85,55"
-        stroke="rgba(200, 30, 60, 0.5)"
-        strokeWidth="0.6"
-        fill="none"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="20"
-        stroke="rgba(200, 30, 60, 0.5)"
-        strokeWidth="0.5"
-        fill="rgba(200, 30, 60, 0.05)"
-      />
-    </svg>
-  </motion.div>
-);
+const AmbientMagicCircleTopLeft = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  return (
+    <motion.div
+      key={String(prefersReducedMotion)}
+      className="absolute pointer-events-none"
+      style={{
+        left: "-8%",
+        top: "-8%",
+        width: 220,
+        height: 220,
+        opacity: 0.025,
+      }}
+      animate={{ rotate: -360 }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { duration: 45, repeat: Infinity, ease: "linear" }
+      }
+    >
+      <svg viewBox="0 0 200 200" fill="none">
+        <circle
+          cx="100"
+          cy="100"
+          r="90"
+          stroke="rgba(200, 30, 60, 1)"
+          strokeWidth="1"
+        />
+        <circle
+          cx="100"
+          cy="100"
+          r="70"
+          stroke="rgba(200, 30, 60, 0.8)"
+          strokeWidth="0.5"
+          strokeDasharray="8 4"
+        />
+        <polygon
+          points="100,20 115,55 155,55 125,80 135,120 100,95 65,120 75,80 45,55 85,55"
+          stroke="rgba(200, 30, 60, 0.5)"
+          strokeWidth="0.6"
+          fill="none"
+        />
+        <circle
+          cx="100"
+          cy="100"
+          r="20"
+          stroke="rgba(200, 30, 60, 0.5)"
+          strokeWidth="0.5"
+          fill="rgba(200, 30, 60, 0.05)"
+        />
+      </svg>
+    </motion.div>
+  );
+};
 
 // Pulsating Power of Destruction vignette - breathing crimson edges
-const DestructionVignette = () => (
-  <motion.div
-    className="absolute inset-0 pointer-events-none"
-    animate={{ opacity: [0.3, 0.55, 0.3] }}
-    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-    style={{
-      background:
-        "radial-gradient(ellipse at center, transparent 50%, rgba(200, 30, 60, 0.06) 75%, rgba(120, 15, 35, 0.1) 90%, rgba(40, 5, 15, 0.14) 100%)",
-    }}
-  />
-);
+const DestructionVignette = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  return (
+    <motion.div
+      key={String(prefersReducedMotion)}
+      className="absolute inset-0 pointer-events-none"
+      animate={{ opacity: [0.3, 0.55, 0.3] }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { duration: 6, repeat: Infinity, ease: "easeInOut" }
+      }
+      style={{
+        background:
+          "radial-gradient(ellipse at center, transparent 50%, rgba(200, 30, 60, 0.06) 75%, rgba(120, 15, 35, 0.1) 90%, rgba(40, 5, 15, 0.14) 100%)",
+      }}
+    />
+  );
+};
 
 // Drifting destruction energy blobs - dark crimson masses flowing across the screen
-const DestructionFlow = () => (
-  <>
-    {[
-      {
-        size: 350,
-        x: ["-10%", "40%", "110%"],
-        y: ["20%", "60%", "30%"],
-        duration: 35,
-        delay: 0,
-      },
-      {
-        size: 280,
-        x: ["110%", "55%", "-10%"],
-        y: ["70%", "25%", "80%"],
-        duration: 40,
-        delay: 5,
-      },
-      {
-        size: 220,
-        x: ["50%", "-10%", "60%"],
-        y: ["-10%", "50%", "110%"],
-        duration: 45,
-        delay: 12,
-      },
-    ].map((blob, i) => (
-      <motion.div
-        key={i}
-        className="absolute pointer-events-none"
-        style={{
-          left: 0,
-          top: 0,
-          width: blob.size,
-          height: blob.size,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(200, 30, 60, 0.22) 0%, rgba(120, 15, 35, 0.12) 40%, transparent 70%)",
-          filter: "blur(60px)",
-        }}
-        animate={{
-          x: blob.x,
-          y: blob.y,
-          scale: [1, 1.3, 0.9, 1.1, 1],
-        }}
-        transition={{
-          x: {
-            duration: blob.duration,
-            delay: blob.delay,
-            repeat: Infinity,
-            ease: "linear",
-          },
-          y: {
-            duration: blob.duration,
-            delay: blob.delay,
-            repeat: Infinity,
-            ease: "linear",
-          },
-          scale: {
-            duration: blob.duration * 0.6,
-            delay: blob.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          },
-        }}
-      />
-    ))}
-  </>
-);
+const DestructionFlow = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  return (
+    <>
+      {[
+        {
+          size: 350,
+          x: ["-10%", "40%", "110%"],
+          y: ["20%", "60%", "30%"],
+          duration: 35,
+          delay: 0,
+        },
+        {
+          size: 280,
+          x: ["110%", "55%", "-10%"],
+          y: ["70%", "25%", "80%"],
+          duration: 40,
+          delay: 5,
+        },
+        {
+          size: 220,
+          x: ["50%", "-10%", "60%"],
+          y: ["-10%", "50%", "110%"],
+          duration: 45,
+          delay: 12,
+        },
+      ].map((blob, i) => (
+        <motion.div
+          key={`${i}-${prefersReducedMotion}`}
+          className="absolute pointer-events-none"
+          style={{
+            left: 0,
+            top: 0,
+            width: blob.size,
+            height: blob.size,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(200, 30, 60, 0.22) 0%, rgba(120, 15, 35, 0.12) 40%, transparent 70%)",
+            filter: "blur(60px)",
+          }}
+          animate={{
+            x: blob.x,
+            y: blob.y,
+            scale: [1, 1.3, 0.9, 1.1, 1],
+          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : {
+                  x: {
+                    duration: blob.duration,
+                    delay: blob.delay,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                  y: {
+                    duration: blob.duration,
+                    delay: blob.delay,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                  scale: {
+                    duration: blob.duration * 0.6,
+                    delay: blob.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                }
+          }
+        />
+      ))}
+    </>
+  );
+};
 
 // Global ambient destruction overlay for the entire app
 export const GlobalDestructionOverlay = () => (
@@ -490,6 +535,7 @@ export const GremoryCircle = ({
   children: ReactNode;
   isActive: boolean;
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [isHovered, setIsHovered] = useState(false);
   const isAnimating = isActive || isHovered;
 
@@ -499,44 +545,38 @@ export const GremoryCircle = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Pulsing crimson glow */}
+      {/* Static shadows crossfade without repainting the shadow geometry. */}
       <motion.div
         className="absolute inset-0 rounded-xl pointer-events-none"
-        animate={
-          isAnimating
-            ? {
-                opacity: 1,
-                boxShadow: [
-                  "0 0 8px 2px rgba(200, 30, 60, 0.25)",
-                  "0 0 16px 4px rgba(200, 30, 60, 0.45)",
-                  "0 0 8px 2px rgba(200, 30, 60, 0.25)",
-                ],
-              }
-            : {
-                opacity: 0,
-                boxShadow: "0 0 0px 0px rgba(200, 30, 60, 0)",
-              }
-        }
+        style={{ boxShadow: "0 0 8px 2px rgba(200, 30, 60, 0.25)" }}
+        animate={{ opacity: isAnimating ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+      />
+      <motion.div
+        key={`glow-${prefersReducedMotion}`}
+        className="absolute inset-0 rounded-xl pointer-events-none"
+        style={{ boxShadow: "0 0 16px 4px rgba(200, 30, 60, 0.45)" }}
+        animate={{ opacity: isAnimating ? [0, 1, 0] : 0 }}
         transition={
-          isAnimating
-            ? {
-                opacity: { duration: 0.3 },
-                boxShadow: {
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-              }
-            : { opacity: { duration: 0.3 } }
+          prefersReducedMotion
+            ? { duration: 0 }
+            : isAnimating
+              ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 0.3 }
         }
       />
 
       {/* Rotating mini magic circle on hover */}
       {isAnimating && (
         <motion.div
+          key={`rotation-${prefersReducedMotion}`}
           className="absolute -inset-1 pointer-events-none"
           animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 8, repeat: Infinity, ease: "linear" }
+          }
         >
           <svg viewBox="0 0 44 44" className="w-full h-full">
             <circle
@@ -573,6 +613,7 @@ export const GremoryButton = ({
   subtle?: boolean;
   rounded?: string;
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const isEnergized = isHovered || isActive;
 
   return (
@@ -671,18 +712,23 @@ export const GremoryButton = ({
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
               >
                 <motion.div
+                  key={String(prefersReducedMotion)}
                   className="absolute inset-0"
                   style={{
                     background:
                       "linear-gradient(105deg, transparent 40%, rgba(200, 30, 60, 0.2) 50%, transparent 60%)",
                   }}
                   animate={{ x: ["-200%", "200%"] }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    repeatDelay: 1.5,
-                    ease: "easeInOut",
-                  }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : {
+                          duration: 2.5,
+                          repeat: Infinity,
+                          repeatDelay: 1.5,
+                          ease: "easeInOut",
+                        }
+                  }
                 />
               </motion.div>
               <motion.div

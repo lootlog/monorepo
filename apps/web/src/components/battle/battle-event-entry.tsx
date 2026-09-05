@@ -1,5 +1,5 @@
 import { BattleLogAttackActions } from "./actions/battle-log-attack-action";
-import type { KeyboardEvent, FC } from "react";
+import type { KeyboardEvent, FC, CSSProperties, Ref } from "react";
 import { parseActions } from "./utils/battle-actions-parser";
 import { BattleBuffActions } from "./actions/battle-buff-actions";
 import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
@@ -13,6 +13,10 @@ import type {
 } from "@/lib/api/battlelog-types";
 
 export type BattleEventEntryProps = {
+  rowRef?: Ref<HTMLLIElement>;
+  style?: CSSProperties;
+  onFocus?: () => void;
+  onBlur?: () => void;
   event: RawBattleParsedEvent;
   attacker?: Warrior;
   defender?: Warrior;
@@ -26,6 +30,10 @@ export type BattleEventEntryProps = {
 };
 
 export const BattleEventEntry: FC<BattleEventEntryProps> = ({
+  rowRef,
+  style,
+  onFocus,
+  onBlur,
   event,
   attacker,
   defender,
@@ -52,6 +60,11 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
 
   return (
     <li
+      ref={rowRef}
+      style={style}
+      data-index={eventIndex}
+      onFocus={onFocus}
+      onBlur={onBlur}
       className={cn(
         "relative border-b border-transparent pr-11 outline-none transition-colors",
         onSelect && "cursor-pointer hover:bg-muted/40",

@@ -2,25 +2,6 @@ import * as React from "react";
 
 import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
 
-const RIAS_CLASS = "rias";
-
-export function useRiasTheme() {
-  const [isRias, setIsRias] = React.useState(() => {
-    if (typeof document === "undefined") return false;
-    return document.documentElement.classList.contains(RIAS_CLASS);
-  });
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const check = () => setIsRias(root.classList.contains(RIAS_CLASS));
-    const observer = new MutationObserver(check);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  return isRias;
-}
-
 // Magic circle SVG as data URI
 const MAGIC_CIRCLE_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='white' stroke-width='0.6'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='white' stroke-width='0.4'/%3E%3Cpolygon points='12,3 14,9 20,9.5 15.5,13 17,20 12,16.5 7,20 8.5,13 4,9.5 10,9' fill='none' stroke='white' stroke-width='0.35'/%3E%3Ccircle cx='12' cy='12' r='2' fill='white' opacity='0.4'/%3E%3C/svg%3E";
@@ -64,11 +45,8 @@ function createRiasOverlayElements(id: string) {
 }
 
 export function RiasMagicCardOverlay() {
-  const isRiasTheme = useRiasTheme();
   const id = React.useId();
   const elements = createRiasOverlayElements(id);
-
-  if (!isRiasTheme) return null;
 
   return (
     <div
