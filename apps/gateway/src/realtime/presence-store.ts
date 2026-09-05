@@ -125,7 +125,9 @@ export class PresenceStore {
         yield* self.publishCoverageChange(
           socket.data.discordId,
           organizationId,
-          previousPresence,
+          previousPresence?.organizationIds.includes(organizationId)
+            ? previousPresence
+            : undefined,
           presence,
         );
       }
@@ -227,9 +229,10 @@ export class PresenceStore {
           (presence) =>
             world === undefined || presence.character?.world === world,
         )
-        .map((presence) =>
-          includeLocation ? presence : withoutLocation(presence),
-        );
+        .map((presence) => ({
+          ...(includeLocation ? presence : withoutLocation(presence)),
+          organizationIds: [organizationId],
+        }));
       return {
         organizationId,
         world,
@@ -484,7 +487,12 @@ export class PresenceStore {
           data: {
             organizationId,
             revision,
-            changes: [{ action: "upsert", presence: value }],
+            changes: [
+              {
+                action: "upsert",
+                presence: { ...value, organizationIds: [organizationId] },
+              },
+            ],
           },
         }) satisfies Event;
       yield* fromPromise("presence.publish-upsert", () =>
