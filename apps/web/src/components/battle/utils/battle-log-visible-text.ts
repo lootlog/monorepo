@@ -22,18 +22,37 @@ const interpolationEntities: Record<string, string> = {
   "&#x3D;": "=",
 };
 
-// Strip only translation markup before decoding interpolated character names.
+// Read translation markup before decoding names; the result is text, never HTML.
+const readTranslationText = (translation: string): string => {
+  let text = "";
+  let insideTag = false;
+  let quote = "";
+  for (const character of translation) {
+    if (!insideTag) {
+      if (character === "<") insideTag = true;
+      else text += character;
+    } else if (quote) {
+      if (character === quote) quote = "";
+    } else if (character === '"' || character === "'") {
+      quote = character;
+    } else if (character === ">") {
+      insideTag = false;
+    }
+  }
+  return text;
+};
+
 const translateText = (
   t: TFunction,
   key: string,
   values: Record<string, unknown>,
 ) =>
-  t(key, { ...values, interpolation: { escapeValue: true } })
-    .replace(/<[^>]*>/g, "")
-    .replace(
-      /&(?:amp|lt|gt|quot|#39|#x2F|#x60|#x3D);/g,
-      (entity) => interpolationEntities[entity] ?? entity,
-    );
+  readTranslationText(
+    t(key, { ...values, interpolation: { escapeValue: true } }),
+  ).replace(
+    /&(?:amp|lt|gt|quot|#39|#x2F|#x60|#x3D);/g,
+    (entity) => interpolationEntities[entity] ?? entity,
+  );
 
 export function buildBattleLogVisibleText({
   event,

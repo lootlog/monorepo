@@ -30,9 +30,13 @@ const ModalControls = () => {
   );
 };
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
 
 it("opens deferred modals, restores focus and preserves create form state after closing", async () => {
+  vi.stubEnv("VITE_ADDON_INSTALL_URL", "https://lootlog.test/addon.user.js");
   const fetchGuilds = vi.fn(async () => Response.json([]));
   const restore = configureApiClients({
     main: { baseUrl: "https://lootlog.test", fetch: fetchGuilds },
@@ -85,10 +89,12 @@ it("opens deferred modals, restores focus and preserves create form state after 
         name: i18n.t("ui.modals.installAddon.title"),
       });
       expect(
-        within(installer).getByRole("link", {
-          name: i18n.t("ui.actions.installAddon"),
-        }),
-      ).toBeTruthy();
+        within(installer)
+          .getByRole("link", {
+            name: i18n.t("ui.actions.installAddon"),
+          })
+          .getAttribute("href"),
+      ).toBe("https://lootlog.test/addon.user.js");
       fireEvent.click(within(installer).getByRole("button", { name: "Close" }));
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       await waitFor(() => expect(document.activeElement).toBe(install));
