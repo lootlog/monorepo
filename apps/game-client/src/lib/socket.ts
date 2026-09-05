@@ -2,26 +2,18 @@ import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
-import {
-  GATEWAY_SOCKET_PATH,
-  GATEWAY_URL,
-  GatewayEvent,
-} from "@/config/gateway";
+import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
-import {
-  REALTIME_JSON_SUBPROTOCOL,
-  REALTIME_SUBPROTOCOL,
-  RealtimeClient,
-  type BasicPresence,
-  type PresenceWithLocation,
-  type ServerEvent,
+import type {
+  BasicPresence,
+  PresenceWithLocation,
+  ServerEvent,
 } from "@lootlog/client/realtime";
-import { APP_ENVIRONMENT } from "@/config/app";
 import {
   requestMargonemAccountProof,
   type MargonemAccountProof,
 } from "@/lib/margonem-account-proof";
-import { requestRealtimeTicket } from "@/lib/realtime-ticket";
+import { getGameClientPlatform } from "@/lib/game-client-platform";
 
 type Listener = (...arguments_: never[]) => void;
 
@@ -108,21 +100,11 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
 };
 
 export class AppSocket {
-  private static readonly useReadableLocalFrames =
-    APP_ENVIRONMENT === "development" || APP_ENVIRONMENT === "production-local";
-
-  private readonly realtime = new RealtimeClient({
-    url: GATEWAY_URL,
-    path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [
-      AppSocket.useReadableLocalFrames
-        ? REALTIME_JSON_SUBPROTOCOL
-        : REALTIME_SUBPROTOCOL,
-    ],
-    ticketProvider: requestRealtimeTicket,
-    frameEncoding: AppSocket.useReadableLocalFrames ? "json" : "messagepack",
-  });
+  private readonly realtime = getGameClientPlatform().createRealtime();
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
+  private readonly unsubscribeEvents: () => void;
+  private readonly unsubscribeState: () => void;
+  private disposed = false;
   private joinedOrganizationIds: string[] = [];
   private lastIsAfk = false;
   private wasConnected = false;
@@ -133,8 +115,10 @@ export class AppSocket {
     this.realtime.setReconnectHandler(async () => {
       if (this.lastJoinData) await this.join(this.lastJoinData);
     });
-    this.realtime.subscribe((event) => this.handleServerEvent(event));
-    this.realtime.subscribeState((state) => {
+    this.unsubscribeEvents = this.realtime.subscribe((event) =>
+      this.handleServerEvent(event),
+    );
+    this.unsubscribeState = this.realtime.subscribeState((state) => {
       const connected =
         state === "connected" || state === "joining" || state === "ready";
       if (connected === this.wasConnected) return;
@@ -156,6 +140,19 @@ export class AppSocket {
 
   disconnect(): void {
     this.realtime.disconnect();
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    try {
+      this.disconnect();
+    } finally {
+      this.unsubscribeEvents();
+      this.unsubscribeState();
+      this.realtime.setReconnectHandler(null);
+      this.removeAllListeners();
+    }
   }
 
   removeAllListeners(): void {
@@ -419,6 +416,5 @@ export const disposeSocket = (): void => {
   const activeSocket = socket;
   if (!activeSocket) return;
   socket = null;
-  activeSocket.disconnect();
-  activeSocket.removeAllListeners();
+  activeSocket.dispose();
 };

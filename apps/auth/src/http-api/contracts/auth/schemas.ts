@@ -21,6 +21,11 @@ export const AuthControllerVerify200 = Schema.Struct({
   status: Schema.Literal("OK"),
 });
 
+export const AuthControllerIssueRealtimeTicketHeaders = Schema.Struct({
+  origin: Schema.optionalKey(Schema.String),
+  "x-lootlog-extension-origin": Schema.optionalKey(Schema.String),
+});
+
 export type AuthControllerIssueRealtimeTicket201 =
   typeof AuthControllerIssueRealtimeTicket201.Type;
 

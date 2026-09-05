@@ -81,3 +81,7 @@ playground/**
 !/docs/rewrite/
 !/docs/rewrite/**
 .superpowers/
+
+# Browser extension build artifacts
+/apps/game-client/.wxt/
+/apps/game-client/.output/

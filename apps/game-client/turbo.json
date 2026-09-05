@@ -3,6 +3,54 @@
   "tasks": {
     "build": {
       "env": ["GAME_CLIENT_URL"]
+    },
+    "build:extension": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".output/**"],
+      "cache": false
+    },
+    "build:extension:firefox": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".output/**"],
+      "cache": false
+    },
+    "zip:extension": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".output/**"],
+      "cache": false
+    },
+    "zip:extension:firefox": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".output/**"],
+      "cache": false
+    },
+    "dev:extension": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:extension:firefox": {
+      "cache": false,
+      "persistent": true
+    },
+    "build:extension:production": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "build:extension:production:firefox": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "zip:extension:production": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "zip:extension:production:firefox": {
+      "dependsOn": ["^build"],
+      "cache": false
     }
   }
 }

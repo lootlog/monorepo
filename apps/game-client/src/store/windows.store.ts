@@ -46,6 +46,7 @@ type AddTimerWindowState = {
 };
 
 export type WindowId =
+  | "extension-login"
   | "app-error"
   | "settings"
   | "timers"
@@ -87,6 +88,7 @@ interface WindowData {
 }
 
 interface WindowsState {
+  "extension-login": WindowData;
   "app-error": WindowData;
   settings: WindowData & { state: SettingsWindowState };
   timers: WindowData;
@@ -303,6 +305,14 @@ export const migrateWindowsState = (
 export const useWindowsStore = create<WindowsState>()(
   persist(
     (set, get) => ({
+      "extension-login": {
+        open: true,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: { width: 360, height: 180 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       "app-error": {
         open: false,
         position: DEFAULT_POSITION,
@@ -680,3 +690,32 @@ export const useWindowsStore = create<WindowsState>()(
     },
   ),
 );
+
+// This prompt belongs to the current runtime, never to persisted player preferences.
+export const resetExtensionLoginWindow = () => {
+  const width = Math.min(
+    360,
+    window.visualViewport?.width ?? window.innerWidth,
+  );
+  const height = Math.min(
+    180,
+    window.visualViewport?.height ?? window.innerHeight,
+  );
+  useWindowsStore.setState({
+    "extension-login": {
+      ...useWindowsStore.getInitialState()["extension-login"],
+      position: {
+        x: Math.max(
+          0,
+          ((window.visualViewport?.width ?? window.innerWidth) - width) / 2,
+        ),
+        y: Math.max(
+          0,
+          ((window.visualViewport?.height ?? window.innerHeight) - height) / 2,
+        ),
+      },
+      size: { width, height },
+      hasDefinedPosition: true,
+    },
+  });
+};

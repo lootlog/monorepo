@@ -28,6 +28,12 @@
     "retry": "Spróbuj ponownie"
   },
   "auth": {
+    "extensionChecking": "Sprawdzanie sesji…",
+    "extensionDescription": "Zaloguj się na stronie Lootloga, a następnie sprawdź sesję, aby uruchomić dodatek.",
+    "extensionCheck": "Sprawdź sesję",
+    "extensionTitle": "Logowanie do Lootloga",
+    "extensionError": "Nie udało się sprawdzić sesji Lootloga. Spróbuj ponownie.",
+    "signIn": "Zaloguj się w Lootlogu",
     "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
   },
   "errors": {

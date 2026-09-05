@@ -23,7 +23,12 @@ class TestWebSocket implements RealtimeWebSocket {
     this.sent.push(data);
   }
 
-  close(): void {
+  close(code?: number): void {
+    if (code !== undefined && code !== 1000 && (code < 3000 || code > 4999))
+      throw new DOMException(
+        "Invalid WebSocket close code",
+        "InvalidAccessError",
+      );
     if (this.readyState === 3) return;
     this.readyState = 3;
     this.dispatch("close");
@@ -268,6 +273,22 @@ describe("RealtimeClient", () => {
     expect(protocolsSeen[1]).toEqual([
       `lootlog.ticket.v1.${btoa("ticket-2").replace(/=/g, "")}`,
     ]);
+    client.disconnect();
+  });
+
+  it("closes malformed frames with a browser-permitted code and reconnects", async () => {
+    vi.useFakeTimers();
+    const socket = new TestWebSocket();
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      webSocketFactory: () => socket,
+    });
+    client.connect();
+    socket.open();
+    socket.message("unexpected text instead of MessagePack");
+    await flushMessages();
+    expect(socket.readyState).toBe(3);
+    expect(client.state).toBe("reconnecting");
     client.disconnect();
   });
 
