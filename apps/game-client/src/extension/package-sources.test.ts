@@ -66,7 +66,7 @@ async function repository() {
     ".output/lootlog-game-client-1.0.0-sources.zip",
   );
   const run = () =>
-    spawnSync("bun", ["extension/package-sources.ts"], {
+    spawnSync("bun", [path.join(client, "extension/package-sources.ts")], {
       cwd: client,
       encoding: "utf8",
     });
