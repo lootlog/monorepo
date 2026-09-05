@@ -1,11 +1,15 @@
 import { describe, expect, it } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Redacted, Queue } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import {
   ActivityRepository,
   type ActivityRepositoryValue,
 } from "#src/activities/activity-repository";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { Redis } from "effect/unstable/persistence";
+import { ActivityConfig } from "#src/config/activity-config";
+import { ApiHttpClient, ApiHttpClientFailure } from "#src/http/api-http-client";
 import { Permissions } from "#src/activities/activity-permissions";
 import {
   ActivityHealth,
@@ -118,3 +122,110 @@ describe("Activity HttpApi contract", () => {
     await boundary.dispose();
   });
 });
+
+for (const failure of ["status", "transport", "invalid-body"] as const) {
+  it(`returns 503 on ${failure} authorization failure and recovers without caching the failure`, async () => {
+    const cache = new Map<string, string>();
+    const redis = Redis.Redis.of({
+      send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
+        Effect.sync(() => {
+          if (command === "GET")
+            return (cache.get(String(args[0])) ?? null) as A;
+          if (command === "SET") cache.set(String(args[0]), String(args[1]));
+          return "OK" as A;
+        }),
+      subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
+      eval:
+        <
+          Config extends {
+            readonly params: ReadonlyArray<unknown>;
+            readonly result: unknown;
+          },
+        >() =>
+        (..._params: Config["params"]) =>
+          Effect.die("unused"),
+    });
+    let unavailable = true;
+    let permissionRequests = 0;
+    const config = ActivityConfig.of({
+      environment: RuntimeEnvironment.LOCAL,
+      port: 0,
+      serviceName: "activity-test",
+      serviceNamespace: "test",
+      databaseUrl: Redacted.make("postgresql://unused"),
+      rabbitmqUri: Redacted.make("amqp://unused"),
+      redisUrl: Redacted.make("redis://configured"),
+      apiServiceUrl: "http://api.test",
+      signatureSecret: Redacted.make("a".repeat(32)),
+    });
+    const permissions = Permissions.layer.pipe(
+      Layer.provide(Layer.succeed(ActivityConfig, config)),
+      Layer.provide(Layer.succeed(Redis.Redis, redis)),
+      Layer.provide(
+        Layer.succeed(
+          ApiHttpClient,
+          ApiHttpClient.of({
+            get: (_operation, url) => {
+              if (!String(url).includes("user-permissions"))
+                return Effect.succeed({
+                  status: 200,
+                  body: new TextEncoder().encode(JSON.stringify({ id: "g" })),
+                });
+              permissionRequests++;
+              if (unavailable && failure === "transport")
+                return Effect.fail(
+                  new ApiHttpClientFailure({
+                    operationId: "permissions",
+                    reason: "transport",
+                    retryable: true,
+                  }),
+                );
+              const body = unavailable
+                ? "invalid"
+                : JSON.stringify([
+                    { guild: { id: "g", ownerId: "discord" }, roles: [] },
+                  ]);
+              return Effect.succeed({
+                status: unavailable && failure === "status" ? 503 : 200,
+                body: new TextEncoder().encode(body),
+              });
+            },
+          }),
+        ),
+      ),
+    );
+    const boundary = HttpRouter.toWebHandler(
+      ActivityRoutes.pipe(
+        Layer.provide(permissions),
+        Layer.provide(Layer.succeed(ActivityRepository, repository)),
+        Layer.provide(Layer.succeed(ActivityHealth, health)),
+        Layer.provide(HttpServer.layerServices),
+      ),
+      { disableLogger: true },
+    );
+    const handler = boundary.handler as (request: Request) => Promise<Response>;
+    try {
+      const response = await handler(
+        new Request("https://activity/guilds/g/activity-logs", { headers }),
+      );
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual({
+        message: "Authorization service unavailable",
+        statusCode: 503,
+      });
+      expect(cache.has("permissions:user:discord")).toBe(false);
+      unavailable = false;
+      const recovered = await handler(
+        new Request("https://activity/guilds/g/activity-logs", { headers }),
+      );
+      expect(recovered.status).toBe(200);
+      expect(await recovered.json()).toEqual({
+        data: [{ guildId: "g" }],
+        hasMore: false,
+      });
+      expect(permissionRequests).toBe(2);
+    } finally {
+      await boundary.dispose();
+    }
+  });
+}

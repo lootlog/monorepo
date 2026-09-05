@@ -2,9 +2,10 @@
 import {
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   SoundSettingsResponse,
   UpdateSoundSettingsRequest,
@@ -24,6 +25,7 @@ export class SoundSettingsGroup extends HttpApiGroup.make("sound-settings").add(
     {
       payload: UpdateSoundSettingsRequest,
       success: SoundSettingsResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(400)),
     },
   )
     .middleware(BearerSecurityMiddleware)

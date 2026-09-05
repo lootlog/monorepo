@@ -1,3 +1,4 @@
+import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
@@ -242,8 +243,13 @@ const orDieHttpFailure = <A, R>(
 ) =>
   Effect.catchTags(effect, {
     ReadyRoomAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
-    ReadyRoomOperationError: (error) => Effect.die(error.cause),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
+    ReadyRoomOperationError: (error) => applicationErrorResponse(error.cause),
   });
 
 export const PartyReadyRoomHandlers = HttpApiBuilder.group(

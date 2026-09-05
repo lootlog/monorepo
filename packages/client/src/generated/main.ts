@@ -39,6 +39,11 @@ export interface StatusOkResponseDtoOutput {
   status: StatusOkResponseDtoOutputStatus;
 }
 
+export type HttpErrorResponse = {[key: string]: unknown} & {
+  code?: string;
+  message?: unknown;
+};
+
 export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
 
 
@@ -3116,6 +3121,10 @@ export type ReservationSpotsResponseDtoItem = {
 };
 
 export type ReservationSpotsResponseDto = ReservationSpotsResponseDtoItem[];
+
+export type OrganizationWorkspaceErrorResponse = {[key: string]: unknown} & {
+  code: string;
+};
 
 export type ReservationWindowResponseDtoItemsItemAuthor = {
   displayName: string;
@@ -10268,7 +10277,7 @@ export const usersControllerDeleteAccount = async ( options?: Parameters<typeof 
 
 
 
-export const getUsersControllerDeleteAccountMutationOptions = <TError = ErrorType<void>,
+export const getUsersControllerDeleteAccountMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerDeleteAccount>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof usersControllerDeleteAccount>>, TError,void, TContext> => {
 
@@ -10297,13 +10306,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UsersControllerDeleteAccountMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerDeleteAccount>>>
 
-    export type UsersControllerDeleteAccountMutationError = ErrorType<void>
+    export type UsersControllerDeleteAccountMutationError = ErrorType<HttpErrorResponse>
 
 
     /**
  * @summary Delete user account
  */
-export const useUsersControllerDeleteAccount = <TError = ErrorType<void>,
+export const useUsersControllerDeleteAccount = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerDeleteAccount>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof usersControllerDeleteAccount>>,
@@ -12872,7 +12881,7 @@ export const getGuildsControllerGetGuildByIdQueryKey = ({ guildId }: GuildsContr
     }
 
 
-export const getGuildsControllerGetGuildByIdQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>({ guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetGuildByIdQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -12891,10 +12900,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetGuildByIdQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetGuildById>>>
-export type GuildsControllerGetGuildByIdQueryError = ErrorType<void>
+export type GuildsControllerGetGuildByIdQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildByIdPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildById>>,
@@ -12904,7 +12913,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildById>>,
@@ -12914,7 +12923,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -12922,7 +12931,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
  * @summary Get guild by ID
  */
 
-export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -12937,7 +12946,7 @@ export function useGuildsControllerGetGuildById<TData = Awaited<ReturnType<typeo
 /**
  * @summary Get guild by ID
  */
-export const prefetchGuildsControllerGetGuildByIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<void>>(
+export const prefetchGuildsControllerGetGuildByIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -13012,7 +13021,7 @@ export const getGuildsControllerGetGuildConfigQueryKey = ({ guildId }: GuildsCon
     }
 
 
-export const getGuildsControllerGetGuildConfigQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<unknown>>({ guildId }: GuildsControllerGetGuildConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetGuildConfigQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: GuildsControllerGetGuildConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -13031,10 +13040,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetGuildConfigQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>>
-export type GuildsControllerGetGuildConfigQueryError = ErrorType<unknown>
+export type GuildsControllerGetGuildConfigQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildConfigPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>,
@@ -13044,7 +13053,7 @@ export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>,
@@ -13054,12 +13063,12 @@ export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: GuildsControllerGetGuildConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -13071,7 +13080,7 @@ export function useGuildsControllerGetGuildConfig<TData = Awaited<ReturnType<typ
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const prefetchGuildsControllerGetGuildConfigQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<unknown>>(
+export const prefetchGuildsControllerGetGuildConfigQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -13137,7 +13146,7 @@ return mainFetch<GuildResponseDtoOutput>(getGuildsControllerUpdateGuildConfigUrl
 
 
 
-export const getGuildsControllerUpdateGuildConfigMutationOptions = <TError = ErrorType<unknown>,
+export const getGuildsControllerUpdateGuildConfigMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>, TError,GuildsControllerUpdateGuildConfigMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>, TError,GuildsControllerUpdateGuildConfigMutationVariables, TContext> => {
 
@@ -13166,10 +13175,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type GuildsControllerUpdateGuildConfigMutationResult = NonNullable<Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>>
     export type GuildsControllerUpdateGuildConfigMutationBody = BodyType<UpdateGuildConfigDto>
-    export type GuildsControllerUpdateGuildConfigMutationError = ErrorType<unknown>
+    export type GuildsControllerUpdateGuildConfigMutationError = ErrorType<HttpErrorResponse>
     export type GuildsControllerUpdateGuildConfigMutationVariables = {pathParams: GuildsControllerUpdateGuildConfigPathParameters;data: BodyType<UpdateGuildConfigDto>}
 
-    export const useGuildsControllerUpdateGuildConfig = <TError = ErrorType<unknown>,
+    export const useGuildsControllerUpdateGuildConfig = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>, TError,GuildsControllerUpdateGuildConfigMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>,
@@ -13214,7 +13223,7 @@ export const getGuildsControllerGetWorldsByGuildIdQueryKey = ({ guildId }: Guild
     }
 
 
-export const getGuildsControllerGetWorldsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetWorldsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -13233,10 +13242,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetWorldsByGuildIdQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>>
-export type GuildsControllerGetWorldsByGuildIdQueryError = ErrorType<unknown>
+export type GuildsControllerGetWorldsByGuildIdQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetWorldsByGuildIdPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>,
@@ -13246,7 +13255,7 @@ export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>,
@@ -13256,7 +13265,7 @@ export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -13264,7 +13273,7 @@ export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType
  * @summary Get guild worlds
  */
 
-export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -13279,7 +13288,7 @@ export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType
 /**
  * @summary Get guild worlds
  */
-export const prefetchGuildsControllerGetWorldsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
+export const prefetchGuildsControllerGetWorldsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -13358,7 +13367,7 @@ export const getGuildsControllerGetGuildPermissionsQueryKey = ({ guildId }: Guil
     }
 
 
-export const getGuildsControllerGetGuildPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>({ guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetGuildPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -13377,10 +13386,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetGuildPermissionsQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>>
-export type GuildsControllerGetGuildPermissionsQueryError = ErrorType<void>
+export type GuildsControllerGetGuildPermissionsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildPermissionsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>,
@@ -13390,7 +13399,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>,
@@ -13400,7 +13409,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -13408,7 +13417,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
  * @summary Get guild permissions
  */
 
-export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
+export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -13423,7 +13432,7 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
 /**
  * @summary Get guild permissions
  */
-export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<void>>(
+export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -13502,7 +13511,7 @@ export const getGuildsControllerGetGuildDiscordSyncStatusQueryKey = ({ guildId }
     }
 
 
-export const getGuildsControllerGetGuildDiscordSyncStatusQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getGuildsControllerGetGuildDiscordSyncStatusQueryOptions = <TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -13521,10 +13530,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GuildsControllerGetGuildDiscordSyncStatusQueryResult = NonNullable<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>>
-export type GuildsControllerGetGuildDiscordSyncStatusQueryError = ErrorType<unknown>
+export type GuildsControllerGetGuildDiscordSyncStatusQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>,
@@ -13534,7 +13543,7 @@ export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>,
@@ -13544,7 +13553,7 @@ export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -13552,7 +13561,7 @@ export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<Ret
  * @summary Get guild Discord sync status
  */
 
-export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
+export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -13567,7 +13576,7 @@ export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<Ret
 /**
  * @summary Get guild Discord sync status
  */
-export const prefetchGuildsControllerGetGuildDiscordSyncStatusQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
+export const prefetchGuildsControllerGetGuildDiscordSyncStatusQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -13639,7 +13648,7 @@ export const guildsControllerRefreshGuildDiscordSync = async ({ guildId }: Guild
 
 
 
-export const getGuildsControllerRefreshGuildDiscordSyncMutationOptions = <TError = ErrorType<unknown>,
+export const getGuildsControllerRefreshGuildDiscordSyncMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>, TError,GuildsControllerRefreshGuildDiscordSyncMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>, TError,GuildsControllerRefreshGuildDiscordSyncMutationVariables, TContext> => {
 
@@ -13668,13 +13677,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type GuildsControllerRefreshGuildDiscordSyncMutationResult = NonNullable<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>>
 
-    export type GuildsControllerRefreshGuildDiscordSyncMutationError = ErrorType<unknown>
+    export type GuildsControllerRefreshGuildDiscordSyncMutationError = ErrorType<HttpErrorResponse>
     export type GuildsControllerRefreshGuildDiscordSyncMutationVariables = {pathParams: GuildsControllerRefreshGuildDiscordSyncPathParameters}
 
     /**
  * @summary Refresh guild Discord sync
  */
-export const useGuildsControllerRefreshGuildDiscordSync = <TError = ErrorType<unknown>,
+export const useGuildsControllerRefreshGuildDiscordSync = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>, TError,GuildsControllerRefreshGuildDiscordSyncMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>,
@@ -14550,7 +14559,7 @@ export const getTimersControllerGetTimersQueryKey = ({ guildId }: TimersControll
     }
 
 
-export const getTimersControllerGetTimersQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<void>>({ guildId }: TimersControllerGetTimersPathParameters,
+export const getTimersControllerGetTimersQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: TimersControllerGetTimersPathParameters,
     params?: TimersControllerGetTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -14570,10 +14579,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type TimersControllerGetTimersQueryResult = NonNullable<Awaited<ReturnType<typeof timersControllerGetTimers>>>
-export type TimersControllerGetTimersQueryError = ErrorType<void>
+export type TimersControllerGetTimersQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<void>>(
+export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerGetTimersPathParameters,
     params: undefined |  TimersControllerGetTimersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -14584,7 +14593,7 @@ export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof t
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<void>>(
+export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerGetTimersPathParameters,
     params?: TimersControllerGetTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -14595,7 +14604,7 @@ export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof t
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<void>>(
+export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerGetTimersPathParameters,
     params?: TimersControllerGetTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -14604,7 +14613,7 @@ export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof t
  * @summary Get guild timers
  */
 
-export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<void>>(
+export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: TimersControllerGetTimersPathParameters,
     params?: TimersControllerGetTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -14620,7 +14629,7 @@ export function useTimersControllerGetTimers<TData = Awaited<ReturnType<typeof t
 /**
  * @summary Get guild timers
  */
-export const prefetchTimersControllerGetTimersQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<void>>(
+export const prefetchTimersControllerGetTimersQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetTimers>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: TimersControllerGetTimersPathParameters,
     params?: TimersControllerGetTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -14713,7 +14722,7 @@ export const getTimersControllerSearchNpcsWithTimerDataQueryKey = ({ guildId }: 
     }
 
 
-export const getTimersControllerSearchNpcsWithTimerDataQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<void>>({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
+export const getTimersControllerSearchNpcsWithTimerDataQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
     params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -14733,10 +14742,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type TimersControllerSearchNpcsWithTimerDataQueryResult = NonNullable<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>>
-export type TimersControllerSearchNpcsWithTimerDataQueryError = ErrorType<void>
+export type TimersControllerSearchNpcsWithTimerDataQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<void>>(
+export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerSearchNpcsWithTimerDataPathParameters,
     params: TimersControllerSearchNpcsWithTimerDataParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -14747,7 +14756,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<void>>(
+export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerSearchNpcsWithTimerDataPathParameters,
     params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -14758,7 +14767,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<void>>(
+export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerSearchNpcsWithTimerDataPathParameters,
     params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -14767,7 +14776,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
  * @summary Search NPCs with timer data
  */
 
-export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<void>>(
+export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
     params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -14783,7 +14792,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
 /**
  * @summary Search NPCs with timer data
  */
-export const prefetchTimersControllerSearchNpcsWithTimerDataQuery = async <TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<void>>(
+export const prefetchTimersControllerSearchNpcsWithTimerDataQuery = async <TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
     params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -14865,7 +14874,7 @@ return mainFetch<CreateAutoTimerResponseDtoOutput>(getTimersControllerCreateAuto
 
 
 
-export const getTimersControllerCreateAutoTimerMutationOptions = <TError = ErrorType<void>,
+export const getTimersControllerCreateAutoTimerMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,TimersControllerCreateAutoTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,TimersControllerCreateAutoTimerMutationVariables, TContext> => {
 
@@ -14894,13 +14903,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimersControllerCreateAutoTimerMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>>
     export type TimersControllerCreateAutoTimerMutationBody = BodyType<CreateTimerFromGameClientDto>
-    export type TimersControllerCreateAutoTimerMutationError = ErrorType<void>
+    export type TimersControllerCreateAutoTimerMutationError = ErrorType<HttpErrorResponse>
     export type TimersControllerCreateAutoTimerMutationVariables = {data: BodyType<CreateTimerFromGameClientDto>}
 
     /**
  * @summary Create automatic timers
  */
-export const useTimersControllerCreateAutoTimer = <TError = ErrorType<void>,
+export const useTimersControllerCreateAutoTimer = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,TimersControllerCreateAutoTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>,
@@ -14945,7 +14954,7 @@ return mainFetch<TimerResponseDto>(getTimersControllerResetTimerUrl({ guildId, t
 
 
 
-export const getTimersControllerResetTimerMutationOptions = <TError = ErrorType<void>,
+export const getTimersControllerResetTimerMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerResetTimer>>, TError,TimersControllerResetTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerResetTimer>>, TError,TimersControllerResetTimerMutationVariables, TContext> => {
 
@@ -14974,13 +14983,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimersControllerResetTimerMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerResetTimer>>>
     export type TimersControllerResetTimerMutationBody = BodyType<ResetTimerDto>
-    export type TimersControllerResetTimerMutationError = ErrorType<void>
+    export type TimersControllerResetTimerMutationError = ErrorType<HttpErrorResponse>
     export type TimersControllerResetTimerMutationVariables = {pathParams: TimersControllerResetTimerPathParameters;data: BodyType<ResetTimerDto>}
 
     /**
  * @summary Reset timer
  */
-export const useTimersControllerResetTimer = <TError = ErrorType<void>,
+export const useTimersControllerResetTimer = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerResetTimer>>, TError,TimersControllerResetTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timersControllerResetTimer>>,
@@ -15027,7 +15036,7 @@ export const timersControllerDeleteTimer = async ({ guildId, timerIdentifier }: 
 
 
 
-export const getTimersControllerDeleteTimerMutationOptions = <TError = ErrorType<void>,
+export const getTimersControllerDeleteTimerMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,TimersControllerDeleteTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,TimersControllerDeleteTimerMutationVariables, TContext> => {
 
@@ -15056,13 +15065,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimersControllerDeleteTimerMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerDeleteTimer>>>
 
-    export type TimersControllerDeleteTimerMutationError = ErrorType<void>
+    export type TimersControllerDeleteTimerMutationError = ErrorType<HttpErrorResponse>
     export type TimersControllerDeleteTimerMutationVariables = {pathParams: TimersControllerDeleteTimerPathParameters;params?: TimersControllerDeleteTimerParams}
 
     /**
  * @summary Delete timer
  */
-export const useTimersControllerDeleteTimer = <TError = ErrorType<void>,
+export const useTimersControllerDeleteTimer = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,TimersControllerDeleteTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timersControllerDeleteTimer>>,
@@ -15117,7 +15126,7 @@ export const getTimersControllerGetTimerHistoryQueryKey = ({ guildId, timerIdent
     }
 
 
-export const getTimersControllerGetTimerHistoryQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+export const getTimersControllerGetTimerHistoryQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<HttpErrorResponse>>({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
     params: TimersControllerGetTimerHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -15137,10 +15146,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type TimersControllerGetTimerHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>>
-export type TimersControllerGetTimerHistoryQueryError = ErrorType<unknown>
+export type TimersControllerGetTimerHistoryQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerGetTimerHistoryPathParameters,
     params: TimersControllerGetTimerHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -15151,7 +15160,7 @@ export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<ty
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerGetTimerHistoryPathParameters,
     params: TimersControllerGetTimerHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -15162,7 +15171,7 @@ export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<ty
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimersControllerGetTimerHistoryPathParameters,
     params: TimersControllerGetTimerHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -15171,7 +15180,7 @@ export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<ty
  * @summary Get timer action history
  */
 
-export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
     params: TimersControllerGetTimerHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -15187,7 +15196,7 @@ export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<ty
 /**
  * @summary Get timer action history
  */
-export const prefetchTimersControllerGetTimerHistoryQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+export const prefetchTimersControllerGetTimerHistoryQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
     params: TimersControllerGetTimerHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -15263,7 +15272,7 @@ export const timersControllerRestoreTimerFromHistory = async ({ guildId, history
 
 
 
-export const getTimersControllerRestoreTimerFromHistoryMutationOptions = <TError = ErrorType<unknown>,
+export const getTimersControllerRestoreTimerFromHistoryMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,TimersControllerRestoreTimerFromHistoryMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,TimersControllerRestoreTimerFromHistoryMutationVariables, TContext> => {
 
@@ -15292,13 +15301,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimersControllerRestoreTimerFromHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>>
 
-    export type TimersControllerRestoreTimerFromHistoryMutationError = ErrorType<unknown>
+    export type TimersControllerRestoreTimerFromHistoryMutationError = ErrorType<HttpErrorResponse>
     export type TimersControllerRestoreTimerFromHistoryMutationVariables = {pathParams: TimersControllerRestoreTimerFromHistoryPathParameters}
 
     /**
  * @summary Restore timer from history
  */
-export const useTimersControllerRestoreTimerFromHistory = <TError = ErrorType<unknown>,
+export const useTimersControllerRestoreTimerFromHistory = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,TimersControllerRestoreTimerFromHistoryMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>,
@@ -15343,7 +15352,7 @@ return mainFetch<TimerResponseDto>(getTimersControllerCreateManualTimerUrl({ gui
 
 
 
-export const getTimersControllerCreateManualTimerMutationOptions = <TError = ErrorType<void>,
+export const getTimersControllerCreateManualTimerMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateManualTimer>>, TError,TimersControllerCreateManualTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateManualTimer>>, TError,TimersControllerCreateManualTimerMutationVariables, TContext> => {
 
@@ -15372,13 +15381,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimersControllerCreateManualTimerMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerCreateManualTimer>>>
     export type TimersControllerCreateManualTimerMutationBody = BodyType<CreateManualTimerDto>
-    export type TimersControllerCreateManualTimerMutationError = ErrorType<void>
+    export type TimersControllerCreateManualTimerMutationError = ErrorType<HttpErrorResponse>
     export type TimersControllerCreateManualTimerMutationVariables = {pathParams: TimersControllerCreateManualTimerPathParameters;data: BodyType<CreateManualTimerDto>}
 
     /**
  * @summary Create manual timer
  */
-export const useTimersControllerCreateManualTimer = <TError = ErrorType<void>,
+export const useTimersControllerCreateManualTimer = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateManualTimer>>, TError,TimersControllerCreateManualTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timersControllerCreateManualTimer>>,
@@ -15869,7 +15878,7 @@ return mainFetch<TimerSettingsResponseDto>(getTimerSettingsControllerUpdateGloba
 
 
 
-export const getTimerSettingsControllerUpdateGlobalSettingsMutationOptions = <TError = ErrorType<unknown>,
+export const getTimerSettingsControllerUpdateGlobalSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>, TError,TimerSettingsControllerUpdateGlobalSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>, TError,TimerSettingsControllerUpdateGlobalSettingsMutationVariables, TContext> => {
 
@@ -15898,13 +15907,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimerSettingsControllerUpdateGlobalSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>>
     export type TimerSettingsControllerUpdateGlobalSettingsMutationBody = BodyType<UpdateTimerSettingsDto>
-    export type TimerSettingsControllerUpdateGlobalSettingsMutationError = ErrorType<unknown>
+    export type TimerSettingsControllerUpdateGlobalSettingsMutationError = ErrorType<HttpErrorResponse>
     export type TimerSettingsControllerUpdateGlobalSettingsMutationVariables = {data: BodyType<UpdateTimerSettingsDto>}
 
     /**
  * @summary Update global timer settings
  */
-export const useTimerSettingsControllerUpdateGlobalSettings = <TError = ErrorType<unknown>,
+export const useTimerSettingsControllerUpdateGlobalSettings = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>, TError,TimerSettingsControllerUpdateGlobalSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>,
@@ -15949,7 +15958,7 @@ export const getTimerSettingsControllerGetGuildSettingsQueryKey = ({ guildId }: 
     }
 
 
-export const getTimerSettingsControllerGetGuildSettingsQueryOptions = <TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<unknown>>({ guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getTimerSettingsControllerGetGuildSettingsQueryOptions = <TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -15968,10 +15977,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type TimerSettingsControllerGetGuildSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>>
-export type TimerSettingsControllerGetGuildSettingsQueryError = ErrorType<unknown>
+export type TimerSettingsControllerGetGuildSettingsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<unknown>>(
+export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimerSettingsControllerGetGuildSettingsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>,
@@ -15981,7 +15990,7 @@ export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<unknown>>(
+export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimerSettingsControllerGetGuildSettingsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>,
@@ -15991,7 +16000,7 @@ export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<unknown>>(
+export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: TimerSettingsControllerGetGuildSettingsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -15999,7 +16008,7 @@ export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<Retur
  * @summary Get guild-specific timer settings
  */
 
-export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<unknown>>(
+export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -16014,7 +16023,7 @@ export function useTimerSettingsControllerGetGuildSettings<TData = Awaited<Retur
 /**
  * @summary Get guild-specific timer settings
  */
-export const prefetchTimerSettingsControllerGetGuildSettingsQuery = async <TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<unknown>>(
+export const prefetchTimerSettingsControllerGetGuildSettingsQuery = async <TData = Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -16093,7 +16102,7 @@ return mainFetch<GuildTimerSettingsResponseDto>(getTimerSettingsControllerUpdate
 
 
 
-export const getTimerSettingsControllerUpdateGuildSettingsMutationOptions = <TError = ErrorType<unknown>,
+export const getTimerSettingsControllerUpdateGuildSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>, TError,TimerSettingsControllerUpdateGuildSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>, TError,TimerSettingsControllerUpdateGuildSettingsMutationVariables, TContext> => {
 
@@ -16122,13 +16131,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimerSettingsControllerUpdateGuildSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>>
     export type TimerSettingsControllerUpdateGuildSettingsMutationBody = BodyType<UpdateGuildTimerSettingsDto>
-    export type TimerSettingsControllerUpdateGuildSettingsMutationError = ErrorType<unknown>
+    export type TimerSettingsControllerUpdateGuildSettingsMutationError = ErrorType<HttpErrorResponse>
     export type TimerSettingsControllerUpdateGuildSettingsMutationVariables = {pathParams: TimerSettingsControllerUpdateGuildSettingsPathParameters;data: BodyType<UpdateGuildTimerSettingsDto>}
 
     /**
  * @summary Update guild-specific timer settings
  */
-export const useTimerSettingsControllerUpdateGuildSettings = <TError = ErrorType<unknown>,
+export const useTimerSettingsControllerUpdateGuildSettings = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>, TError,TimerSettingsControllerUpdateGuildSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>,
@@ -16172,7 +16181,7 @@ return mainFetch<void>(getTimerSettingsControllerMigrateSettingsUrl(),
 
 
 
-export const getTimerSettingsControllerMigrateSettingsMutationOptions = <TError = ErrorType<unknown>,
+export const getTimerSettingsControllerMigrateSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>, TError,TimerSettingsControllerMigrateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>, TError,TimerSettingsControllerMigrateSettingsMutationVariables, TContext> => {
 
@@ -16201,13 +16210,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TimerSettingsControllerMigrateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>>
     export type TimerSettingsControllerMigrateSettingsMutationBody = BodyType<MigrateTimerSettingsDto>
-    export type TimerSettingsControllerMigrateSettingsMutationError = ErrorType<unknown>
+    export type TimerSettingsControllerMigrateSettingsMutationError = ErrorType<HttpErrorResponse>
     export type TimerSettingsControllerMigrateSettingsMutationVariables = {data: BodyType<MigrateTimerSettingsDto>}
 
     /**
  * @summary Migrate localStorage settings to backend
  */
-export const useTimerSettingsControllerMigrateSettings = <TError = ErrorType<unknown>,
+export const useTimerSettingsControllerMigrateSettings = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>, TError,TimerSettingsControllerMigrateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>,
@@ -16258,7 +16267,7 @@ export const getSettingsDocumentsControllerGetPreferencesQueryKey = (params?: Se
     }
 
 
-export const getSettingsDocumentsControllerGetPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<unknown>>(params: SettingsDocumentsControllerGetPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getSettingsDocumentsControllerGetPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<HttpErrorResponse>>(params: SettingsDocumentsControllerGetPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -16277,10 +16286,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type SettingsDocumentsControllerGetPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>>
-export type SettingsDocumentsControllerGetPreferencesQueryError = ErrorType<unknown>
+export type SettingsDocumentsControllerGetPreferencesQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<unknown>>(
+export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<HttpErrorResponse>>(
  params: SettingsDocumentsControllerGetPreferencesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>,
@@ -16290,7 +16299,7 @@ export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<unknown>>(
+export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<HttpErrorResponse>>(
  params: SettingsDocumentsControllerGetPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>,
@@ -16300,7 +16309,7 @@ export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<unknown>>(
+export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<HttpErrorResponse>>(
  params: SettingsDocumentsControllerGetPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -16308,7 +16317,7 @@ export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<Ret
  * @summary Get effective settings for multiple domains
  */
 
-export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<unknown>>(
+export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<HttpErrorResponse>>(
  params: SettingsDocumentsControllerGetPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -16323,7 +16332,7 @@ export function useSettingsDocumentsControllerGetPreferences<TData = Awaited<Ret
 /**
  * @summary Get effective settings for multiple domains
  */
-export const prefetchSettingsDocumentsControllerGetPreferencesQuery = async <TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<unknown>>(
+export const prefetchSettingsDocumentsControllerGetPreferencesQuery = async <TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, params: SettingsDocumentsControllerGetPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -16400,7 +16409,7 @@ return mainFetch<SettingsDocumentsResponseDtoOutput>(getSettingsDocumentsControl
 
 
 
-export const getSettingsDocumentsControllerPatchPreferencesMutationOptions = <TError = ErrorType<unknown>,
+export const getSettingsDocumentsControllerPatchPreferencesMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>, TError,SettingsDocumentsControllerPatchPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>, TError,SettingsDocumentsControllerPatchPreferencesMutationVariables, TContext> => {
 
@@ -16429,13 +16438,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SettingsDocumentsControllerPatchPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>>
     export type SettingsDocumentsControllerPatchPreferencesMutationBody = BodyType<PatchSettingsDocumentsDto>
-    export type SettingsDocumentsControllerPatchPreferencesMutationError = ErrorType<unknown>
+    export type SettingsDocumentsControllerPatchPreferencesMutationError = ErrorType<HttpErrorResponse>
     export type SettingsDocumentsControllerPatchPreferencesMutationVariables = {data: BodyType<PatchSettingsDocumentsDto>}
 
     /**
  * @summary Atomically patch settings in multiple domains
  */
-export const useSettingsDocumentsControllerPatchPreferences = <TError = ErrorType<unknown>,
+export const useSettingsDocumentsControllerPatchPreferences = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>, TError,SettingsDocumentsControllerPatchPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>,
@@ -16498,7 +16507,7 @@ export const getLootsControllerFetchLootsByGuildIdQueryKey = ({ guildId }: Loots
     }
 
 
-export const getLootsControllerFetchLootsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
+export const getLootsControllerFetchLootsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
     params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -16518,10 +16527,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootsControllerFetchLootsByGuildIdQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>>
-export type LootsControllerFetchLootsByGuildIdQueryError = ErrorType<void>
+export type LootsControllerFetchLootsByGuildIdQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerFetchLootsByGuildIdPathParameters,
     params: undefined |  LootsControllerFetchLootsByGuildIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -16532,7 +16541,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerFetchLootsByGuildIdPathParameters,
     params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -16543,7 +16552,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerFetchLootsByGuildIdPathParameters,
     params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -16552,7 +16561,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
  * @summary Get guild loots
  */
 
-export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
     params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -16568,7 +16577,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
 /**
  * @summary Get guild loots
  */
-export const prefetchLootsControllerFetchLootsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
+export const prefetchLootsControllerFetchLootsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
     params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -16661,7 +16670,7 @@ export const getLootsControllerGetLootStatsQueryKey = ({ guildId }: LootsControl
     }
 
 
-export const getLootsControllerGetLootStatsQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<void>>({ guildId }: LootsControllerGetLootStatsPathParameters,
+export const getLootsControllerGetLootStatsQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: LootsControllerGetLootStatsPathParameters,
     params?: LootsControllerGetLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -16681,10 +16690,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootsControllerGetLootStatsQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerGetLootStats>>>
-export type LootsControllerGetLootStatsQueryError = ErrorType<void>
+export type LootsControllerGetLootStatsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<void>>(
+export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerGetLootStatsPathParameters,
     params: undefined |  LootsControllerGetLootStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -16695,7 +16704,7 @@ export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<void>>(
+export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerGetLootStatsPathParameters,
     params?: LootsControllerGetLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -16706,7 +16715,7 @@ export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<void>>(
+export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerGetLootStatsPathParameters,
     params?: LootsControllerGetLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -16715,7 +16724,7 @@ export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof
  * @summary Get guild loot statistics
  */
 
-export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<void>>(
+export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: LootsControllerGetLootStatsPathParameters,
     params?: LootsControllerGetLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -16731,7 +16740,7 @@ export function useLootsControllerGetLootStats<TData = Awaited<ReturnType<typeof
 /**
  * @summary Get guild loot statistics
  */
-export const prefetchLootsControllerGetLootStatsQuery = async <TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<void>>(
+export const prefetchLootsControllerGetLootStatsQuery = async <TData = Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: LootsControllerGetLootStatsPathParameters,
     params?: LootsControllerGetLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -16832,7 +16841,7 @@ export const getLootsControllerCountLootsByGuildIdQueryKey = ({ guildId }: Loots
     }
 
 
-export const getLootsControllerCountLootsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
+export const getLootsControllerCountLootsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
     params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -16852,10 +16861,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootsControllerCountLootsByGuildIdQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>>
-export type LootsControllerCountLootsByGuildIdQueryError = ErrorType<void>
+export type LootsControllerCountLootsByGuildIdQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerCountLootsByGuildIdPathParameters,
     params: undefined |  LootsControllerCountLootsByGuildIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -16866,7 +16875,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerCountLootsByGuildIdPathParameters,
     params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -16877,7 +16886,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerCountLootsByGuildIdPathParameters,
     params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -16886,7 +16895,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
  * @summary Get guild loots count
  */
 
-export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
+export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: LootsControllerCountLootsByGuildIdPathParameters,
     params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -16902,7 +16911,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
 /**
  * @summary Get guild loots count
  */
-export const prefetchLootsControllerCountLootsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
+export const prefetchLootsControllerCountLootsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: LootsControllerCountLootsByGuildIdPathParameters,
     params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -16995,7 +17004,7 @@ export const getLootsControllerResolveLootItemByHidQueryKey = ({ guildId }: Loot
     }
 
 
-export const getLootsControllerResolveLootItemByHidQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+export const getLootsControllerResolveLootItemByHidQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
     params: LootsControllerResolveLootItemByHidParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -17015,10 +17024,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootsControllerResolveLootItemByHidQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>>
-export type LootsControllerResolveLootItemByHidQueryError = ErrorType<void>
+export type LootsControllerResolveLootItemByHidQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerResolveLootItemByHidPathParameters,
     params: LootsControllerResolveLootItemByHidParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -17029,7 +17038,7 @@ export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnTyp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerResolveLootItemByHidPathParameters,
     params: LootsControllerResolveLootItemByHidParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -17040,7 +17049,7 @@ export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnTyp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerResolveLootItemByHidPathParameters,
     params: LootsControllerResolveLootItemByHidParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -17049,7 +17058,7 @@ export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnTyp
  * @summary Resolve loot item by HID
  */
 
-export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: LootsControllerResolveLootItemByHidPathParameters,
     params: LootsControllerResolveLootItemByHidParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -17065,7 +17074,7 @@ export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnTyp
 /**
  * @summary Resolve loot item by HID
  */
-export const prefetchLootsControllerResolveLootItemByHidQuery = async <TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+export const prefetchLootsControllerResolveLootItemByHidQuery = async <TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: LootsControllerResolveLootItemByHidPathParameters,
     params: LootsControllerResolveLootItemByHidParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -17148,7 +17157,7 @@ export const getLootsControllerFetchLootByIdQueryKey = ({ guildId, lootId }: Loo
     }
 
 
-export const getLootsControllerFetchLootByIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<void>>({ guildId, lootId }: LootsControllerFetchLootByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getLootsControllerFetchLootByIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<HttpErrorResponse>>({ guildId, lootId }: LootsControllerFetchLootByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -17167,10 +17176,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootsControllerFetchLootByIdQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerFetchLootById>>>
-export type LootsControllerFetchLootByIdQueryError = ErrorType<void>
+export type LootsControllerFetchLootByIdQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerFetchLootByIdPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerFetchLootById>>,
@@ -17180,7 +17189,7 @@ export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerFetchLootByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerFetchLootById>>,
@@ -17190,7 +17199,7 @@ export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerFetchLootByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -17198,7 +17207,7 @@ export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeo
  * @summary Get single loot
  */
 
-export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<void>>(
+export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, lootId }: LootsControllerFetchLootByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -17213,7 +17222,7 @@ export function useLootsControllerFetchLootById<TData = Awaited<ReturnType<typeo
 /**
  * @summary Get single loot
  */
-export const prefetchLootsControllerFetchLootByIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<void>>(
+export const prefetchLootsControllerFetchLootByIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, lootId }: LootsControllerFetchLootByIdPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootById>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -17285,7 +17294,7 @@ export const lootsControllerDeleteLoot = async ({ guildId, lootId }: LootsContro
 
 
 
-export const getLootsControllerDeleteLootMutationOptions = <TError = ErrorType<void>,
+export const getLootsControllerDeleteLootMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>, TError,LootsControllerDeleteLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>, TError,LootsControllerDeleteLootMutationVariables, TContext> => {
 
@@ -17314,13 +17323,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LootsControllerDeleteLootMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>>
 
-    export type LootsControllerDeleteLootMutationError = ErrorType<void>
+    export type LootsControllerDeleteLootMutationError = ErrorType<HttpErrorResponse>
     export type LootsControllerDeleteLootMutationVariables = {pathParams: LootsControllerDeleteLootPathParameters}
 
     /**
  * @summary Archive loot
  */
-export const useLootsControllerDeleteLoot = <TError = ErrorType<void>,
+export const useLootsControllerDeleteLoot = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>, TError,LootsControllerDeleteLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof lootsControllerDeleteLoot>>,
@@ -17364,7 +17373,7 @@ return mainFetch<CreateLootResponseDtoOutput>(getLootsControllerCreateLootUrl(),
 
 
 
-export const getLootsControllerCreateLootMutationOptions = <TError = ErrorType<unknown>,
+export const getLootsControllerCreateLootMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateLoot>>, TError,LootsControllerCreateLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateLoot>>, TError,LootsControllerCreateLootMutationVariables, TContext> => {
 
@@ -17393,13 +17402,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LootsControllerCreateLootMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerCreateLoot>>>
     export type LootsControllerCreateLootMutationBody = BodyType<CreateLootDto>
-    export type LootsControllerCreateLootMutationError = ErrorType<unknown>
+    export type LootsControllerCreateLootMutationError = ErrorType<HttpErrorResponse>
     export type LootsControllerCreateLootMutationVariables = {data: BodyType<CreateLootDto>}
 
     /**
  * @summary Create loot
  */
-export const useLootsControllerCreateLoot = <TError = ErrorType<unknown>,
+export const useLootsControllerCreateLoot = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateLoot>>, TError,LootsControllerCreateLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof lootsControllerCreateLoot>>,
@@ -17444,7 +17453,7 @@ export const getLootsControllerGetCommentsQueryKey = ({ guildId, lootId }: Loots
     }
 
 
-export const getLootsControllerGetCommentsQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<void>>({ guildId, lootId }: LootsControllerGetCommentsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getLootsControllerGetCommentsQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<HttpErrorResponse>>({ guildId, lootId }: LootsControllerGetCommentsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -17463,10 +17472,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootsControllerGetCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerGetComments>>>
-export type LootsControllerGetCommentsQueryError = ErrorType<void>
+export type LootsControllerGetCommentsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<void>>(
+export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerGetCommentsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerGetComments>>,
@@ -17476,7 +17485,7 @@ export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof 
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<void>>(
+export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerGetCommentsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerGetComments>>,
@@ -17486,7 +17495,7 @@ export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof 
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<void>>(
+export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootsControllerGetCommentsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -17494,7 +17503,7 @@ export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof 
  * @summary Get loot comments
  */
 
-export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<void>>(
+export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, lootId }: LootsControllerGetCommentsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -17509,7 +17518,7 @@ export function useLootsControllerGetComments<TData = Awaited<ReturnType<typeof 
 /**
  * @summary Get loot comments
  */
-export const prefetchLootsControllerGetCommentsQuery = async <TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<void>>(
+export const prefetchLootsControllerGetCommentsQuery = async <TData = Awaited<ReturnType<typeof lootsControllerGetComments>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, lootId }: LootsControllerGetCommentsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetComments>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -17588,7 +17597,7 @@ return mainFetch<LootCommentResponseDto>(getLootsControllerCreateCommentUrl({ gu
 
 
 
-export const getLootsControllerCreateCommentMutationOptions = <TError = ErrorType<void>,
+export const getLootsControllerCreateCommentMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateComment>>, TError,LootsControllerCreateCommentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateComment>>, TError,LootsControllerCreateCommentMutationVariables, TContext> => {
 
@@ -17617,13 +17626,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LootsControllerCreateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerCreateComment>>>
     export type LootsControllerCreateCommentMutationBody = BodyType<CreateCommentDto>
-    export type LootsControllerCreateCommentMutationError = ErrorType<void>
+    export type LootsControllerCreateCommentMutationError = ErrorType<HttpErrorResponse>
     export type LootsControllerCreateCommentMutationVariables = {pathParams: LootsControllerCreateCommentPathParameters;data: BodyType<CreateCommentDto>}
 
     /**
  * @summary Create loot comment
  */
-export const useLootsControllerCreateComment = <TError = ErrorType<void>,
+export const useLootsControllerCreateComment = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateComment>>, TError,LootsControllerCreateCommentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof lootsControllerCreateComment>>,
@@ -17668,7 +17677,7 @@ return mainFetch<LootShareResponseDto>(getLootsControllerUpdateLootUrl({ id }),
 
 
 
-export const getLootsControllerUpdateLootMutationOptions = <TError = ErrorType<void>,
+export const getLootsControllerUpdateLootMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUpdateLoot>>, TError,LootsControllerUpdateLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUpdateLoot>>, TError,LootsControllerUpdateLootMutationVariables, TContext> => {
 
@@ -17697,13 +17706,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LootsControllerUpdateLootMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerUpdateLoot>>>
     export type LootsControllerUpdateLootMutationBody = BodyType<UpdateLootDto>
-    export type LootsControllerUpdateLootMutationError = ErrorType<void>
+    export type LootsControllerUpdateLootMutationError = ErrorType<HttpErrorResponse>
     export type LootsControllerUpdateLootMutationVariables = {pathParams: LootsControllerUpdateLootPathParameters;data: BodyType<UpdateLootDto>}
 
     /**
  * @summary Update loot
  */
-export const useLootsControllerUpdateLoot = <TError = ErrorType<void>,
+export const useLootsControllerUpdateLoot = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUpdateLoot>>, TError,LootsControllerUpdateLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof lootsControllerUpdateLoot>>,
@@ -17748,7 +17757,7 @@ export const getLootlogConfigControllerGetLootlogConfigQueryKey = ({ guildId }: 
     }
 
 
-export const getLootlogConfigControllerGetLootlogConfigQueryOptions = <TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<void>>({ guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getLootlogConfigControllerGetLootlogConfigQueryOptions = <TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -17767,10 +17776,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type LootlogConfigControllerGetLootlogConfigQueryResult = NonNullable<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>>
-export type LootlogConfigControllerGetLootlogConfigQueryError = ErrorType<void>
+export type LootlogConfigControllerGetLootlogConfigQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<void>>(
+export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootlogConfigControllerGetLootlogConfigPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>,
@@ -17780,7 +17789,7 @@ export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<void>>(
+export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootlogConfigControllerGetLootlogConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>,
@@ -17790,7 +17799,7 @@ export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<void>>(
+export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: LootlogConfigControllerGetLootlogConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -17798,7 +17807,7 @@ export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<Retur
  * @summary Get lootlog configuration
  */
 
-export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<void>>(
+export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -17813,7 +17822,7 @@ export function useLootlogConfigControllerGetLootlogConfig<TData = Awaited<Retur
 /**
  * @summary Get lootlog configuration
  */
-export const prefetchLootlogConfigControllerGetLootlogConfigQuery = async <TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<void>>(
+export const prefetchLootlogConfigControllerGetLootlogConfigQuery = async <TData = Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -17892,7 +17901,7 @@ return mainFetch<LootlogConfigNpcResponseDtoOutput>(getLootlogConfigControllerUp
 
 
 
-export const getLootlogConfigControllerUpdateNpcMutationOptions = <TError = ErrorType<void>,
+export const getLootlogConfigControllerUpdateNpcMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>, TError,LootlogConfigControllerUpdateNpcMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>, TError,LootlogConfigControllerUpdateNpcMutationVariables, TContext> => {
 
@@ -17921,13 +17930,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LootlogConfigControllerUpdateNpcMutationResult = NonNullable<Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>>
     export type LootlogConfigControllerUpdateNpcMutationBody = BodyType<UpdateLootlogConfigNpcDto>
-    export type LootlogConfigControllerUpdateNpcMutationError = ErrorType<void>
+    export type LootlogConfigControllerUpdateNpcMutationError = ErrorType<HttpErrorResponse>
     export type LootlogConfigControllerUpdateNpcMutationVariables = {pathParams: LootlogConfigControllerUpdateNpcPathParameters;data: BodyType<UpdateLootlogConfigNpcDto>}
 
     /**
  * @summary Update NPC configuration
  */
-export const useLootlogConfigControllerUpdateNpc = <TError = ErrorType<void>,
+export const useLootlogConfigControllerUpdateNpc = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>, TError,LootlogConfigControllerUpdateNpcMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>,
@@ -18565,7 +18574,7 @@ export const getListReservationSpotsQueryKey = ({ guildId }: ListReservationSpot
     }
 
 
-export const getListReservationSpotsQueryOptions = <TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>({ guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListReservationSpotsQueryOptions = <TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>({ guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -18584,10 +18593,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListReservationSpotsQueryResult = NonNullable<Awaited<ReturnType<typeof listReservationSpots>>>
-export type ListReservationSpotsQueryError = ErrorType<unknown>
+export type ListReservationSpotsQueryError = ErrorType<OrganizationWorkspaceErrorResponse>
 
 
-export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListReservationSpotsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listReservationSpots>>,
@@ -18597,7 +18606,7 @@ export function useListReservationSpots<TData = Awaited<ReturnType<typeof listRe
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listReservationSpots>>,
@@ -18607,7 +18616,7 @@ export function useListReservationSpots<TData = Awaited<ReturnType<typeof listRe
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -18615,7 +18624,7 @@ export function useListReservationSpots<TData = Awaited<ReturnType<typeof listRe
  * @summary List reservation spots with current availability
  */
 
-export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  { guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -18630,7 +18639,7 @@ export function useListReservationSpots<TData = Awaited<ReturnType<typeof listRe
 /**
  * @summary List reservation spots with current availability
  */
-export const prefetchListReservationSpotsQuery = async <TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+export const prefetchListReservationSpotsQuery = async <TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  queryClient: QueryClient, { guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -18718,7 +18727,7 @@ export const getListSpotReservationsQueryKey = ({ guildId, spotId }: ListSpotRes
     }
 
 
-export const getListSpotReservationsQueryOptions = <TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>({ guildId, spotId }: ListSpotReservationsPathParameters,
+export const getListSpotReservationsQueryOptions = <TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>({ guildId, spotId }: ListSpotReservationsPathParameters,
     params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -18738,10 +18747,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListSpotReservationsQueryResult = NonNullable<Awaited<ReturnType<typeof listSpotReservations>>>
-export type ListSpotReservationsQueryError = ErrorType<unknown>
+export type ListSpotReservationsQueryError = ErrorType<OrganizationWorkspaceErrorResponse>
 
 
-export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListSpotReservationsPathParameters,
     params: ListSpotReservationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -18752,7 +18761,7 @@ export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListSpotReservationsPathParameters,
     params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -18763,7 +18772,7 @@ export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSp
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListSpotReservationsPathParameters,
     params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -18772,7 +18781,7 @@ export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSp
  * @summary List reservations for one spot and time window
  */
 
-export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  { guildId, spotId }: ListSpotReservationsPathParameters,
     params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -18788,7 +18797,7 @@ export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSp
 /**
  * @summary List reservations for one spot and time window
  */
-export const prefetchListSpotReservationsQuery = async <TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+export const prefetchListSpotReservationsQuery = async <TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  queryClient: QueryClient, { guildId, spotId }: ListSpotReservationsPathParameters,
     params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -18870,7 +18879,7 @@ return mainFetch<ReservationResponseDto>(getCreateReservationUrl({ guildId, spot
 
 
 
-export const getCreateReservationMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateReservationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,CreateReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,CreateReservationMutationVariables, TContext> => {
 
@@ -18899,13 +18908,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateReservationMutationResult = NonNullable<Awaited<ReturnType<typeof createReservation>>>
     export type CreateReservationMutationBody = BodyType<CreateReservationDto>
-    export type CreateReservationMutationError = ErrorType<unknown>
+    export type CreateReservationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type CreateReservationMutationVariables = {pathParams: CreateReservationPathParameters;data: BodyType<CreateReservationDto>}
 
     /**
  * @summary Create a reservation owned by the authenticated user
  */
-export const useCreateReservation = <TError = ErrorType<unknown>,
+export const useCreateReservation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,CreateReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createReservation>>,
@@ -18942,7 +18951,7 @@ export const deleteReservation = async ({ guildId, reservationId }: DeleteReserv
 
 
 
-export const getDeleteReservationMutationOptions = <TError = ErrorType<unknown>,
+export const getDeleteReservationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,DeleteReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,DeleteReservationMutationVariables, TContext> => {
 
@@ -18971,13 +18980,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteReservationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReservation>>>
 
-    export type DeleteReservationMutationError = ErrorType<unknown>
+    export type DeleteReservationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type DeleteReservationMutationVariables = {pathParams: DeleteReservationPathParameters}
 
     /**
  * @summary Cancel an owned or locally moderated reservation
  */
-export const useDeleteReservation = <TError = ErrorType<unknown>,
+export const useDeleteReservation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,DeleteReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteReservation>>,
@@ -19014,7 +19023,7 @@ export const pinReservationSpot = async ({ guildId, spotId }: PinReservationSpot
 
 
 
-export const getPinReservationSpotMutationOptions = <TError = ErrorType<unknown>,
+export const getPinReservationSpotMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,PinReservationSpotMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,PinReservationSpotMutationVariables, TContext> => {
 
@@ -19043,13 +19052,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PinReservationSpotMutationResult = NonNullable<Awaited<ReturnType<typeof pinReservationSpot>>>
 
-    export type PinReservationSpotMutationError = ErrorType<unknown>
+    export type PinReservationSpotMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type PinReservationSpotMutationVariables = {pathParams: PinReservationSpotPathParameters}
 
     /**
  * @summary Pin a reservation spot for the current user
  */
-export const usePinReservationSpot = <TError = ErrorType<unknown>,
+export const usePinReservationSpot = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,PinReservationSpotMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof pinReservationSpot>>,
@@ -19086,7 +19095,7 @@ export const unpinReservationSpot = async ({ guildId, spotId }: UnpinReservation
 
 
 
-export const getUnpinReservationSpotMutationOptions = <TError = ErrorType<unknown>,
+export const getUnpinReservationSpotMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,UnpinReservationSpotMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,UnpinReservationSpotMutationVariables, TContext> => {
 
@@ -19115,13 +19124,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UnpinReservationSpotMutationResult = NonNullable<Awaited<ReturnType<typeof unpinReservationSpot>>>
 
-    export type UnpinReservationSpotMutationError = ErrorType<unknown>
+    export type UnpinReservationSpotMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type UnpinReservationSpotMutationVariables = {pathParams: UnpinReservationSpotPathParameters}
 
     /**
  * @summary Unpin a reservation spot for the current user
  */
-export const useUnpinReservationSpot = <TError = ErrorType<unknown>,
+export const useUnpinReservationSpot = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,UnpinReservationSpotMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof unpinReservationSpot>>,
@@ -19172,7 +19181,7 @@ export const getListMyReservationsQueryKey = (params?: ListMyReservationsParams,
     }
 
 
-export const getListMyReservationsQueryOptions = <TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListMyReservationsQueryOptions = <TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -19191,10 +19200,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListMyReservationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyReservations>>>
-export type ListMyReservationsQueryError = ErrorType<unknown>
+export type ListMyReservationsQueryError = ErrorType<OrganizationWorkspaceErrorResponse>
 
 
-export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  params: undefined |  ListMyReservationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listMyReservations>>,
@@ -19204,7 +19213,7 @@ export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyRe
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listMyReservations>>,
@@ -19214,7 +19223,7 @@ export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyRe
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -19222,7 +19231,7 @@ export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyRe
  * @summary List the current user's reservations
  */
 
-export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -19237,7 +19246,7 @@ export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyRe
 /**
  * @summary List the current user's reservations
  */
-export const prefetchListMyReservationsQuery = async <TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+export const prefetchListMyReservationsQuery = async <TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  queryClient: QueryClient, params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -19308,7 +19317,7 @@ export const deleteMyReservation = async ({ reservationId }: DeleteMyReservation
 
 
 
-export const getDeleteMyReservationMutationOptions = <TError = ErrorType<unknown>,
+export const getDeleteMyReservationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,DeleteMyReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,DeleteMyReservationMutationVariables, TContext> => {
 
@@ -19337,13 +19346,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteMyReservationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMyReservation>>>
 
-    export type DeleteMyReservationMutationError = ErrorType<unknown>
+    export type DeleteMyReservationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type DeleteMyReservationMutationVariables = {pathParams: DeleteMyReservationPathParameters}
 
     /**
  * @summary Cancel one of the current user's reservations
  */
-export const useDeleteMyReservation = <TError = ErrorType<unknown>,
+export const useDeleteMyReservation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,DeleteMyReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteMyReservation>>,
@@ -19387,7 +19396,7 @@ return mainFetch<ReservationResponseDto>(getUpdateMyReservationUrl({ reservation
 
 
 
-export const getUpdateMyReservationMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateMyReservationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,UpdateMyReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,UpdateMyReservationMutationVariables, TContext> => {
 
@@ -19416,13 +19425,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateMyReservationMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyReservation>>>
     export type UpdateMyReservationMutationBody = BodyType<UpdateReservationDto>
-    export type UpdateMyReservationMutationError = ErrorType<unknown>
+    export type UpdateMyReservationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type UpdateMyReservationMutationVariables = {pathParams: UpdateMyReservationPathParameters;data: BodyType<UpdateReservationDto>}
 
     /**
  * @summary Update one of the current user's reservations
  */
-export const useUpdateMyReservation = <TError = ErrorType<unknown>,
+export const useUpdateMyReservation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,UpdateMyReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateMyReservation>>,
@@ -19466,7 +19475,7 @@ export const getListReservationSharesQueryKey = ({ guildId }: ListReservationSha
     }
 
 
-export const getListReservationSharesQueryOptions = <TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<unknown>>({ guildId }: ListReservationSharesPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListReservationSharesQueryOptions = <TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>({ guildId }: ListReservationSharesPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -19485,10 +19494,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListReservationSharesQueryResult = NonNullable<Awaited<ReturnType<typeof listReservationShares>>>
-export type ListReservationSharesQueryError = ErrorType<unknown>
+export type ListReservationSharesQueryError = ErrorType<OrganizationWorkspaceErrorResponse>
 
 
-export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<unknown>>(
+export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListReservationSharesPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listReservationShares>>,
@@ -19498,7 +19507,7 @@ export function useListReservationShares<TData = Awaited<ReturnType<typeof listR
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<unknown>>(
+export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListReservationSharesPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listReservationShares>>,
@@ -19508,7 +19517,7 @@ export function useListReservationShares<TData = Awaited<ReturnType<typeof listR
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<unknown>>(
+export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: ListReservationSharesPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -19516,7 +19525,7 @@ export function useListReservationShares<TData = Awaited<ReturnType<typeof listR
  * @summary List reservation calendar partners and pending invitations
  */
 
-export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<unknown>>(
+export function useListReservationShares<TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  { guildId }: ListReservationSharesPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -19531,7 +19540,7 @@ export function useListReservationShares<TData = Awaited<ReturnType<typeof listR
 /**
  * @summary List reservation calendar partners and pending invitations
  */
-export const prefetchListReservationSharesQuery = async <TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<unknown>>(
+export const prefetchListReservationSharesQuery = async <TData = Awaited<ReturnType<typeof listReservationShares>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  queryClient: QueryClient, { guildId }: ListReservationSharesPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationShares>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -19602,7 +19611,7 @@ export const createReservationShareInvitation = async ({ guildId }: CreateReserv
 
 
 
-export const getCreateReservationShareInvitationMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateReservationShareInvitationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservationShareInvitation>>, TError,CreateReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createReservationShareInvitation>>, TError,CreateReservationShareInvitationMutationVariables, TContext> => {
 
@@ -19631,13 +19640,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateReservationShareInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof createReservationShareInvitation>>>
 
-    export type CreateReservationShareInvitationMutationError = ErrorType<unknown>
+    export type CreateReservationShareInvitationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type CreateReservationShareInvitationMutationVariables = {pathParams: CreateReservationShareInvitationPathParameters}
 
     /**
  * @summary Create a single-use reservation sharing invitation
  */
-export const useCreateReservationShareInvitation = <TError = ErrorType<unknown>,
+export const useCreateReservationShareInvitation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservationShareInvitation>>, TError,CreateReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createReservationShareInvitation>>,
@@ -19674,7 +19683,7 @@ export const revokeReservationShareInvitation = async ({ guildId, invitationId }
 
 
 
-export const getRevokeReservationShareInvitationMutationOptions = <TError = ErrorType<unknown>,
+export const getRevokeReservationShareInvitationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShareInvitation>>, TError,RevokeReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShareInvitation>>, TError,RevokeReservationShareInvitationMutationVariables, TContext> => {
 
@@ -19703,13 +19712,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RevokeReservationShareInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeReservationShareInvitation>>>
 
-    export type RevokeReservationShareInvitationMutationError = ErrorType<unknown>
+    export type RevokeReservationShareInvitationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type RevokeReservationShareInvitationMutationVariables = {pathParams: RevokeReservationShareInvitationPathParameters}
 
     /**
  * @summary Revoke a pending reservation sharing invitation
  */
-export const useRevokeReservationShareInvitation = <TError = ErrorType<unknown>,
+export const useRevokeReservationShareInvitation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShareInvitation>>, TError,RevokeReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof revokeReservationShareInvitation>>,
@@ -19746,7 +19755,7 @@ export const revokeReservationShare = async ({ guildId, shareId }: RevokeReserva
 
 
 
-export const getRevokeReservationShareMutationOptions = <TError = ErrorType<unknown>,
+export const getRevokeReservationShareMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShare>>, TError,RevokeReservationShareMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShare>>, TError,RevokeReservationShareMutationVariables, TContext> => {
 
@@ -19775,13 +19784,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RevokeReservationShareMutationResult = NonNullable<Awaited<ReturnType<typeof revokeReservationShare>>>
 
-    export type RevokeReservationShareMutationError = ErrorType<unknown>
+    export type RevokeReservationShareMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type RevokeReservationShareMutationVariables = {pathParams: RevokeReservationSharePathParameters}
 
     /**
  * @summary Stop sharing reservation calendars
  */
-export const useRevokeReservationShare = <TError = ErrorType<unknown>,
+export const useRevokeReservationShare = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShare>>, TError,RevokeReservationShareMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof revokeReservationShare>>,
@@ -19825,7 +19834,7 @@ export const getPreviewReservationShareInvitationQueryKey = ({ token }: PreviewR
     }
 
 
-export const getPreviewReservationShareInvitationQueryOptions = <TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<unknown>>({ token }: PreviewReservationShareInvitationPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getPreviewReservationShareInvitationQueryOptions = <TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>({ token }: PreviewReservationShareInvitationPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -19844,10 +19853,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PreviewReservationShareInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof previewReservationShareInvitation>>>
-export type PreviewReservationShareInvitationQueryError = ErrorType<unknown>
+export type PreviewReservationShareInvitationQueryError = ErrorType<OrganizationWorkspaceErrorResponse>
 
 
-export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<unknown>>(
+export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: PreviewReservationShareInvitationPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof previewReservationShareInvitation>>,
@@ -19857,7 +19866,7 @@ export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<unknown>>(
+export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: PreviewReservationShareInvitationPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof previewReservationShareInvitation>>,
@@ -19867,7 +19876,7 @@ export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<unknown>>(
+export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  pathParams: PreviewReservationShareInvitationPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -19875,7 +19884,7 @@ export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<
  * @summary Preview a reservation sharing invitation
  */
 
-export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<unknown>>(
+export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  { token }: PreviewReservationShareInvitationPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -19890,7 +19899,7 @@ export function usePreviewReservationShareInvitation<TData = Awaited<ReturnType<
 /**
  * @summary Preview a reservation sharing invitation
  */
-export const prefetchPreviewReservationShareInvitationQuery = async <TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<unknown>>(
+export const prefetchPreviewReservationShareInvitationQuery = async <TData = Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError = ErrorType<OrganizationWorkspaceErrorResponse>>(
  queryClient: QueryClient, { token }: PreviewReservationShareInvitationPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewReservationShareInvitation>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -19968,7 +19977,7 @@ return mainFetch<AcceptReservationShareInvitationResponseDto>(getAcceptReservati
 
 
 
-export const getAcceptReservationShareInvitationMutationOptions = <TError = ErrorType<unknown>,
+export const getAcceptReservationShareInvitationMutationOptions = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptReservationShareInvitation>>, TError,AcceptReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof acceptReservationShareInvitation>>, TError,AcceptReservationShareInvitationMutationVariables, TContext> => {
 
@@ -19997,13 +20006,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AcceptReservationShareInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof acceptReservationShareInvitation>>>
     export type AcceptReservationShareInvitationMutationBody = BodyType<AcceptReservationShareInvitationDto>
-    export type AcceptReservationShareInvitationMutationError = ErrorType<unknown>
+    export type AcceptReservationShareInvitationMutationError = ErrorType<OrganizationWorkspaceErrorResponse>
     export type AcceptReservationShareInvitationMutationVariables = {pathParams: AcceptReservationShareInvitationPathParameters;data: BodyType<AcceptReservationShareInvitationDto>}
 
     /**
  * @summary Accept a reservation sharing invitation
  */
-export const useAcceptReservationShareInvitation = <TError = ErrorType<unknown>,
+export const useAcceptReservationShareInvitation = <TError = ErrorType<OrganizationWorkspaceErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptReservationShareInvitation>>, TError,AcceptReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof acceptReservationShareInvitation>>,
@@ -20192,7 +20201,7 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerC
 
 
 
-export const getNotificationsGuildControllerCreateGuildTargetMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerCreateGuildTargetMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>, TError,NotificationsGuildControllerCreateGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>, TError,NotificationsGuildControllerCreateGuildTargetMutationVariables, TContext> => {
 
@@ -20221,13 +20230,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerCreateGuildTargetMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>>
     export type NotificationsGuildControllerCreateGuildTargetMutationBody = BodyType<CreateNotificationTargetDto>
-    export type NotificationsGuildControllerCreateGuildTargetMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerCreateGuildTargetMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerCreateGuildTargetMutationVariables = {pathParams: NotificationsGuildControllerCreateGuildTargetPathParameters;data: BodyType<CreateNotificationTargetDto>}
 
     /**
  * @summary Create guild notification target
  */
-export const useNotificationsGuildControllerCreateGuildTarget = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerCreateGuildTarget = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>, TError,NotificationsGuildControllerCreateGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>,
@@ -20409,7 +20418,7 @@ export const notificationsGuildControllerDeleteGuildTarget = async ({ guildId, t
 
 
 
-export const getNotificationsGuildControllerDeleteGuildTargetMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerDeleteGuildTargetMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>, TError,NotificationsGuildControllerDeleteGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>, TError,NotificationsGuildControllerDeleteGuildTargetMutationVariables, TContext> => {
 
@@ -20438,13 +20447,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerDeleteGuildTargetMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>>
 
-    export type NotificationsGuildControllerDeleteGuildTargetMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerDeleteGuildTargetMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerDeleteGuildTargetMutationVariables = {pathParams: NotificationsGuildControllerDeleteGuildTargetPathParameters}
 
     /**
  * @summary Delete guild notification target
  */
-export const useNotificationsGuildControllerDeleteGuildTarget = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerDeleteGuildTarget = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>, TError,NotificationsGuildControllerDeleteGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>,
@@ -20489,7 +20498,7 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerU
 
 
 
-export const getNotificationsGuildControllerUpdateGuildTargetMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerUpdateGuildTargetMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>, TError,NotificationsGuildControllerUpdateGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>, TError,NotificationsGuildControllerUpdateGuildTargetMutationVariables, TContext> => {
 
@@ -20518,13 +20527,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerUpdateGuildTargetMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>>
     export type NotificationsGuildControllerUpdateGuildTargetMutationBody = BodyType<UpdateNotificationTargetDto>
-    export type NotificationsGuildControllerUpdateGuildTargetMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerUpdateGuildTargetMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerUpdateGuildTargetMutationVariables = {pathParams: NotificationsGuildControllerUpdateGuildTargetPathParameters;data: BodyType<UpdateNotificationTargetDto>}
 
     /**
  * @summary Update guild notification target
  */
-export const useNotificationsGuildControllerUpdateGuildTarget = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerUpdateGuildTarget = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>, TError,NotificationsGuildControllerUpdateGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>,
@@ -20713,7 +20722,7 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerCre
 
 
 
-export const getNotificationsGuildControllerCreateGuildRuleMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerCreateGuildRuleMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>, TError,NotificationsGuildControllerCreateGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>, TError,NotificationsGuildControllerCreateGuildRuleMutationVariables, TContext> => {
 
@@ -20742,13 +20751,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerCreateGuildRuleMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>>
     export type NotificationsGuildControllerCreateGuildRuleMutationBody = BodyType<CreateNotificationRuleDto>
-    export type NotificationsGuildControllerCreateGuildRuleMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerCreateGuildRuleMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerCreateGuildRuleMutationVariables = {pathParams: NotificationsGuildControllerCreateGuildRulePathParameters;data: BodyType<CreateNotificationRuleDto>}
 
     /**
  * @summary Create guild notification rule
  */
-export const useNotificationsGuildControllerCreateGuildRule = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerCreateGuildRule = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>, TError,NotificationsGuildControllerCreateGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>,
@@ -20786,7 +20795,7 @@ export const notificationsGuildControllerDeleteGuildRule = async ({ guildId, rul
 
 
 
-export const getNotificationsGuildControllerDeleteGuildRuleMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerDeleteGuildRuleMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>, TError,NotificationsGuildControllerDeleteGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>, TError,NotificationsGuildControllerDeleteGuildRuleMutationVariables, TContext> => {
 
@@ -20815,13 +20824,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerDeleteGuildRuleMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>>
 
-    export type NotificationsGuildControllerDeleteGuildRuleMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerDeleteGuildRuleMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerDeleteGuildRuleMutationVariables = {pathParams: NotificationsGuildControllerDeleteGuildRulePathParameters}
 
     /**
  * @summary Delete guild notification rule
  */
-export const useNotificationsGuildControllerDeleteGuildRule = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerDeleteGuildRule = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>, TError,NotificationsGuildControllerDeleteGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>,
@@ -20866,7 +20875,7 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerUpd
 
 
 
-export const getNotificationsGuildControllerUpdateGuildRuleMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerUpdateGuildRuleMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>, TError,NotificationsGuildControllerUpdateGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>, TError,NotificationsGuildControllerUpdateGuildRuleMutationVariables, TContext> => {
 
@@ -20895,13 +20904,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerUpdateGuildRuleMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>>
     export type NotificationsGuildControllerUpdateGuildRuleMutationBody = BodyType<UpdateNotificationRuleDto>
-    export type NotificationsGuildControllerUpdateGuildRuleMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerUpdateGuildRuleMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerUpdateGuildRuleMutationVariables = {pathParams: NotificationsGuildControllerUpdateGuildRulePathParameters;data: BodyType<UpdateNotificationRuleDto>}
 
     /**
  * @summary Update guild notification rule
  */
-export const useNotificationsGuildControllerUpdateGuildRule = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerUpdateGuildRule = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>, TError,NotificationsGuildControllerUpdateGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>,
@@ -20939,7 +20948,7 @@ export const notificationsGuildControllerRebuildGuildRuleJobs = async ({ guildId
 
 
 
-export const getNotificationsGuildControllerRebuildGuildRuleJobsMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerRebuildGuildRuleJobsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>, TError,NotificationsGuildControllerRebuildGuildRuleJobsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>, TError,NotificationsGuildControllerRebuildGuildRuleJobsMutationVariables, TContext> => {
 
@@ -20968,13 +20977,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerRebuildGuildRuleJobsMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>>
 
-    export type NotificationsGuildControllerRebuildGuildRuleJobsMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerRebuildGuildRuleJobsMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerRebuildGuildRuleJobsMutationVariables = {pathParams: NotificationsGuildControllerRebuildGuildRuleJobsPathParameters}
 
     /**
  * @summary Rebuild guild notification jobs
  */
-export const useNotificationsGuildControllerRebuildGuildRuleJobs = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerRebuildGuildRuleJobs = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>, TError,NotificationsGuildControllerRebuildGuildRuleJobsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>,
@@ -21012,7 +21021,7 @@ export const notificationsGuildControllerTriggerGuildRuleTest = async ({ guildId
 
 
 
-export const getNotificationsGuildControllerTriggerGuildRuleTestMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerTriggerGuildRuleTestMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>, TError,NotificationsGuildControllerTriggerGuildRuleTestMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>, TError,NotificationsGuildControllerTriggerGuildRuleTestMutationVariables, TContext> => {
 
@@ -21041,13 +21050,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerTriggerGuildRuleTestMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>>
 
-    export type NotificationsGuildControllerTriggerGuildRuleTestMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerTriggerGuildRuleTestMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerTriggerGuildRuleTestMutationVariables = {pathParams: NotificationsGuildControllerTriggerGuildRuleTestPathParameters}
 
     /**
  * @summary Trigger guild notification rule test
  */
-export const useNotificationsGuildControllerTriggerGuildRuleTest = <TError = ErrorType<unknown>,
+export const useNotificationsGuildControllerTriggerGuildRuleTest = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>, TError,NotificationsGuildControllerTriggerGuildRuleTestMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>,
@@ -21229,7 +21238,7 @@ export const notificationsGuildControllerCancelGuildJob = async ({ guildId, jobI
 
 
 
-export const getNotificationsGuildControllerCancelGuildJobMutationOptions = <TError = ErrorType<void>,
+export const getNotificationsGuildControllerCancelGuildJobMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,NotificationsGuildControllerCancelGuildJobMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,NotificationsGuildControllerCancelGuildJobMutationVariables, TContext> => {
 
@@ -21258,13 +21267,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerCancelGuildJobMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>>
 
-    export type NotificationsGuildControllerCancelGuildJobMutationError = ErrorType<void>
+    export type NotificationsGuildControllerCancelGuildJobMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsGuildControllerCancelGuildJobMutationVariables = {pathParams: NotificationsGuildControllerCancelGuildJobPathParameters}
 
     /**
  * @summary Cancel guild notification job
  */
-export const useNotificationsGuildControllerCancelGuildJob = <TError = ErrorType<void>,
+export const useNotificationsGuildControllerCancelGuildJob = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,NotificationsGuildControllerCancelGuildJobMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>,
@@ -21452,7 +21461,7 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsUserControllerCr
 
 
 
-export const getNotificationsUserControllerCreateUserTargetMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerCreateUserTargetMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>, TError,NotificationsUserControllerCreateUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>, TError,NotificationsUserControllerCreateUserTargetMutationVariables, TContext> => {
 
@@ -21481,13 +21490,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerCreateUserTargetMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>>
     export type NotificationsUserControllerCreateUserTargetMutationBody = BodyType<CreateNotificationTargetDto>
-    export type NotificationsUserControllerCreateUserTargetMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerCreateUserTargetMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerCreateUserTargetMutationVariables = {data: BodyType<CreateNotificationTargetDto>}
 
     /**
  * @summary Create user notification target
  */
-export const useNotificationsUserControllerCreateUserTarget = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerCreateUserTarget = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>, TError,NotificationsUserControllerCreateUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>,
@@ -21525,7 +21534,7 @@ export const notificationsUserControllerDeleteUserTarget = async ({ targetId }: 
 
 
 
-export const getNotificationsUserControllerDeleteUserTargetMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerDeleteUserTargetMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>, TError,NotificationsUserControllerDeleteUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>, TError,NotificationsUserControllerDeleteUserTargetMutationVariables, TContext> => {
 
@@ -21554,13 +21563,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerDeleteUserTargetMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>>
 
-    export type NotificationsUserControllerDeleteUserTargetMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerDeleteUserTargetMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerDeleteUserTargetMutationVariables = {pathParams: NotificationsUserControllerDeleteUserTargetPathParameters}
 
     /**
  * @summary Delete user notification target
  */
-export const useNotificationsUserControllerDeleteUserTarget = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerDeleteUserTarget = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>, TError,NotificationsUserControllerDeleteUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>,
@@ -21605,7 +21614,7 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsUserControllerUp
 
 
 
-export const getNotificationsUserControllerUpdateUserTargetMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerUpdateUserTargetMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>, TError,NotificationsUserControllerUpdateUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>, TError,NotificationsUserControllerUpdateUserTargetMutationVariables, TContext> => {
 
@@ -21634,13 +21643,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerUpdateUserTargetMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>>
     export type NotificationsUserControllerUpdateUserTargetMutationBody = BodyType<UpdateNotificationTargetDto>
-    export type NotificationsUserControllerUpdateUserTargetMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerUpdateUserTargetMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerUpdateUserTargetMutationVariables = {pathParams: NotificationsUserControllerUpdateUserTargetPathParameters;data: BodyType<UpdateNotificationTargetDto>}
 
     /**
  * @summary Update user notification target
  */
-export const useNotificationsUserControllerUpdateUserTarget = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerUpdateUserTarget = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>, TError,NotificationsUserControllerUpdateUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>,
@@ -21678,7 +21687,7 @@ export const notificationsUserControllerTriggerUserTargetTest = async ({ targetI
 
 
 
-export const getNotificationsUserControllerTriggerUserTargetTestMutationOptions = <TError = ErrorType<void>,
+export const getNotificationsUserControllerTriggerUserTargetTestMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,NotificationsUserControllerTriggerUserTargetTestMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,NotificationsUserControllerTriggerUserTargetTestMutationVariables, TContext> => {
 
@@ -21707,13 +21716,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerTriggerUserTargetTestMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>>
 
-    export type NotificationsUserControllerTriggerUserTargetTestMutationError = ErrorType<void>
+    export type NotificationsUserControllerTriggerUserTargetTestMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerTriggerUserTargetTestMutationVariables = {pathParams: NotificationsUserControllerTriggerUserTargetTestPathParameters}
 
     /**
  * @summary Trigger user notification target test
  */
-export const useNotificationsUserControllerTriggerUserTargetTest = <TError = ErrorType<void>,
+export const useNotificationsUserControllerTriggerUserTargetTest = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,NotificationsUserControllerTriggerUserTargetTestMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>,
@@ -21901,7 +21910,7 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsUserControllerCrea
 
 
 
-export const getNotificationsUserControllerCreateUserRuleMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerCreateUserRuleMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>, TError,NotificationsUserControllerCreateUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>, TError,NotificationsUserControllerCreateUserRuleMutationVariables, TContext> => {
 
@@ -21930,13 +21939,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerCreateUserRuleMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>>
     export type NotificationsUserControllerCreateUserRuleMutationBody = BodyType<CreateNotificationRuleDto>
-    export type NotificationsUserControllerCreateUserRuleMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerCreateUserRuleMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerCreateUserRuleMutationVariables = {data: BodyType<CreateNotificationRuleDto>}
 
     /**
  * @summary Create user notification rule
  */
-export const useNotificationsUserControllerCreateUserRule = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerCreateUserRule = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>, TError,NotificationsUserControllerCreateUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>,
@@ -21974,7 +21983,7 @@ export const notificationsUserControllerDeleteUserRule = async ({ ruleId }: Noti
 
 
 
-export const getNotificationsUserControllerDeleteUserRuleMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerDeleteUserRuleMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>, TError,NotificationsUserControllerDeleteUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>, TError,NotificationsUserControllerDeleteUserRuleMutationVariables, TContext> => {
 
@@ -22003,13 +22012,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerDeleteUserRuleMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>>
 
-    export type NotificationsUserControllerDeleteUserRuleMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerDeleteUserRuleMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerDeleteUserRuleMutationVariables = {pathParams: NotificationsUserControllerDeleteUserRulePathParameters}
 
     /**
  * @summary Delete user notification rule
  */
-export const useNotificationsUserControllerDeleteUserRule = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerDeleteUserRule = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>, TError,NotificationsUserControllerDeleteUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>,
@@ -22054,7 +22063,7 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsUserControllerUpda
 
 
 
-export const getNotificationsUserControllerUpdateUserRuleMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerUpdateUserRuleMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>, TError,NotificationsUserControllerUpdateUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>, TError,NotificationsUserControllerUpdateUserRuleMutationVariables, TContext> => {
 
@@ -22083,13 +22092,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerUpdateUserRuleMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>>
     export type NotificationsUserControllerUpdateUserRuleMutationBody = BodyType<UpdateNotificationRuleDto>
-    export type NotificationsUserControllerUpdateUserRuleMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerUpdateUserRuleMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerUpdateUserRuleMutationVariables = {pathParams: NotificationsUserControllerUpdateUserRulePathParameters;data: BodyType<UpdateNotificationRuleDto>}
 
     /**
  * @summary Update user notification rule
  */
-export const useNotificationsUserControllerUpdateUserRule = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerUpdateUserRule = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>, TError,NotificationsUserControllerUpdateUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>,
@@ -22421,7 +22430,7 @@ return mainFetch<WatchedItemResponseDto>(getNotificationsUserControllerCreateWat
 
 
 
-export const getNotificationsUserControllerCreateWatchedItemMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerCreateWatchedItemMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>, TError,NotificationsUserControllerCreateWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>, TError,NotificationsUserControllerCreateWatchedItemMutationVariables, TContext> => {
 
@@ -22450,13 +22459,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerCreateWatchedItemMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>>
     export type NotificationsUserControllerCreateWatchedItemMutationBody = BodyType<CreateWatchedItemDto>
-    export type NotificationsUserControllerCreateWatchedItemMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerCreateWatchedItemMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerCreateWatchedItemMutationVariables = {data: BodyType<CreateWatchedItemDto>}
 
     /**
  * @summary Create watched item
  */
-export const useNotificationsUserControllerCreateWatchedItem = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerCreateWatchedItem = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>, TError,NotificationsUserControllerCreateWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>,
@@ -22500,7 +22509,7 @@ return mainFetch<WatchedItemResponseDto>(getNotificationsUserControllerQuickAddW
 
 
 
-export const getNotificationsUserControllerQuickAddWatchedItemMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerQuickAddWatchedItemMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>, TError,NotificationsUserControllerQuickAddWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>, TError,NotificationsUserControllerQuickAddWatchedItemMutationVariables, TContext> => {
 
@@ -22529,13 +22538,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerQuickAddWatchedItemMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>>
     export type NotificationsUserControllerQuickAddWatchedItemMutationBody = BodyType<CreateWatchedItemQuickAddDto>
-    export type NotificationsUserControllerQuickAddWatchedItemMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerQuickAddWatchedItemMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerQuickAddWatchedItemMutationVariables = {data: BodyType<CreateWatchedItemQuickAddDto>}
 
     /**
  * @summary Quick add watched item
  */
-export const useNotificationsUserControllerQuickAddWatchedItem = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerQuickAddWatchedItem = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>, TError,NotificationsUserControllerQuickAddWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>,
@@ -22573,7 +22582,7 @@ export const notificationsUserControllerDeleteWatchedItem = async ({ watchedItem
 
 
 
-export const getNotificationsUserControllerDeleteWatchedItemMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerDeleteWatchedItemMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>, TError,NotificationsUserControllerDeleteWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>, TError,NotificationsUserControllerDeleteWatchedItemMutationVariables, TContext> => {
 
@@ -22602,13 +22611,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerDeleteWatchedItemMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>>
 
-    export type NotificationsUserControllerDeleteWatchedItemMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerDeleteWatchedItemMutationError = ErrorType<HttpErrorResponse>
     export type NotificationsUserControllerDeleteWatchedItemMutationVariables = {pathParams: NotificationsUserControllerDeleteWatchedItemPathParameters}
 
     /**
  * @summary Delete watched item
  */
-export const useNotificationsUserControllerDeleteWatchedItem = <TError = ErrorType<unknown>,
+export const useNotificationsUserControllerDeleteWatchedItem = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>, TError,NotificationsUserControllerDeleteWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>,
@@ -22652,7 +22661,7 @@ return mainFetch<NotificationResponseDtoOutput>(getMessagingControllerSendNotifi
 
 
 
-export const getMessagingControllerSendNotificationMutationOptions = <TError = ErrorType<NotificationRateLimitResponseDto>,
+export const getMessagingControllerSendNotificationMutationOptions = <TError = ErrorType<HttpErrorResponse | NotificationRateLimitResponseDto>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext> => {
 
@@ -22681,13 +22690,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type MessagingControllerSendNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof messagingControllerSendNotification>>>
     export type MessagingControllerSendNotificationMutationBody = BodyType<CreateNotificationDto>
-    export type MessagingControllerSendNotificationMutationError = ErrorType<NotificationRateLimitResponseDto>
+    export type MessagingControllerSendNotificationMutationError = ErrorType<HttpErrorResponse | NotificationRateLimitResponseDto>
     export type MessagingControllerSendNotificationMutationVariables = {data: BodyType<CreateNotificationDto>}
 
     /**
  * @summary Send notification
  */
-export const useMessagingControllerSendNotification = <TError = ErrorType<NotificationRateLimitResponseDto>,
+export const useMessagingControllerSendNotification = <TError = ErrorType<HttpErrorResponse | NotificationRateLimitResponseDto>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof messagingControllerSendNotification>>,
@@ -22732,7 +22741,7 @@ return mainFetch<void>(getMessagingControllerVolunteerUrl({ notificationId }),
 
 
 
-export const getMessagingControllerVolunteerMutationOptions = <TError = ErrorType<unknown>,
+export const getMessagingControllerVolunteerMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerVolunteer>>, TError,MessagingControllerVolunteerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof messagingControllerVolunteer>>, TError,MessagingControllerVolunteerMutationVariables, TContext> => {
 
@@ -22761,13 +22770,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type MessagingControllerVolunteerMutationResult = NonNullable<Awaited<ReturnType<typeof messagingControllerVolunteer>>>
     export type MessagingControllerVolunteerMutationBody = BodyType<CreateVolunteerDto>
-    export type MessagingControllerVolunteerMutationError = ErrorType<unknown>
+    export type MessagingControllerVolunteerMutationError = ErrorType<HttpErrorResponse>
     export type MessagingControllerVolunteerMutationVariables = {pathParams: MessagingControllerVolunteerPathParameters;data: BodyType<CreateVolunteerDto>}
 
     /**
  * @summary Volunteer for NPC notification
  */
-export const useMessagingControllerVolunteer = <TError = ErrorType<unknown>,
+export const useMessagingControllerVolunteer = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerVolunteer>>, TError,MessagingControllerVolunteerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof messagingControllerVolunteer>>,
@@ -22808,7 +22817,7 @@ export const getPartyReadyRoomControllerListQueryKey = () => {
     }
 
 
-export const getPartyReadyRoomControllerListQueryOptions = <TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getPartyReadyRoomControllerListQueryOptions = <TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -22827,10 +22836,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PartyReadyRoomControllerListQueryResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerList>>>
-export type PartyReadyRoomControllerListQueryError = ErrorType<unknown>
+export type PartyReadyRoomControllerListQueryError = ErrorType<HttpErrorResponse>
 
 
-export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<HttpErrorResponse>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof partyReadyRoomControllerList>>,
@@ -22840,7 +22849,7 @@ export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof partyReadyRoomControllerList>>,
@@ -22850,12 +22859,12 @@ export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<HttpErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -22867,7 +22876,7 @@ export function usePartyReadyRoomControllerList<TData = Awaited<ReturnType<typeo
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const prefetchPartyReadyRoomControllerListQuery = async <TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<unknown>>(
+export const prefetchPartyReadyRoomControllerListQuery = async <TData = Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerList>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -22935,7 +22944,7 @@ return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerC
 
 
 
-export const getPartyReadyRoomControllerCreateMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerCreateMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>, TError,PartyReadyRoomControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>, TError,PartyReadyRoomControllerCreateMutationVariables, TContext> => {
 
@@ -22964,13 +22973,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>>
     export type PartyReadyRoomControllerCreateMutationBody = BodyType<CreatePartyGatheringDto>
-    export type PartyReadyRoomControllerCreateMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerCreateMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerCreateMutationVariables = {data: BodyType<CreatePartyGatheringDto>}
 
     /**
  * @summary Create a party gathering Ready Room
  */
-export const usePartyReadyRoomControllerCreate = <TError = ErrorType<unknown>,
+export const usePartyReadyRoomControllerCreate = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>, TError,PartyReadyRoomControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>,
@@ -23011,7 +23020,7 @@ export const getPartyReadyRoomControllerGetQueryKey = ({ notificationId }: Party
     }
 
 
-export const getPartyReadyRoomControllerGetQueryOptions = <TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<unknown>>({ notificationId }: PartyReadyRoomControllerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getPartyReadyRoomControllerGetQueryOptions = <TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<HttpErrorResponse>>({ notificationId }: PartyReadyRoomControllerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -23030,10 +23039,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PartyReadyRoomControllerGetQueryResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>>
-export type PartyReadyRoomControllerGetQueryError = ErrorType<unknown>
+export type PartyReadyRoomControllerGetQueryError = ErrorType<HttpErrorResponse>
 
 
-export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: PartyReadyRoomControllerGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof partyReadyRoomControllerGet>>,
@@ -23043,7 +23052,7 @@ export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: PartyReadyRoomControllerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof partyReadyRoomControllerGet>>,
@@ -23053,12 +23062,12 @@ export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: PartyReadyRoomControllerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<unknown>>(
+export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<HttpErrorResponse>>(
  { notificationId }: PartyReadyRoomControllerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -23070,7 +23079,7 @@ export function usePartyReadyRoomControllerGet<TData = Awaited<ReturnType<typeof
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const prefetchPartyReadyRoomControllerGetQuery = async <TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<unknown>>(
+export const prefetchPartyReadyRoomControllerGetQuery = async <TData = Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { notificationId }: PartyReadyRoomControllerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -23136,7 +23145,7 @@ return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerA
 
 
 
-export const getPartyReadyRoomControllerApplyMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerApplyMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerApply>>, TError,PartyReadyRoomControllerApplyMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerApply>>, TError,PartyReadyRoomControllerApplyMutationVariables, TContext> => {
 
@@ -23165,10 +23174,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerApplyMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerApply>>>
     export type PartyReadyRoomControllerApplyMutationBody = BodyType<PartyReadyRoomApplicationDto>
-    export type PartyReadyRoomControllerApplyMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerApplyMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerApplyMutationVariables = {pathParams: PartyReadyRoomControllerApplyPathParameters;data: BodyType<PartyReadyRoomApplicationDto>}
 
-    export const usePartyReadyRoomControllerApply = <TError = ErrorType<unknown>,
+    export const usePartyReadyRoomControllerApply = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerApply>>, TError,PartyReadyRoomControllerApplyMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerApply>>,
@@ -23209,7 +23218,7 @@ return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControlle
 
 
 
-export const getPartyReadyRoomControllerWithdrawMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerWithdrawMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,PartyReadyRoomControllerWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,PartyReadyRoomControllerWithdrawMutationVariables, TContext> => {
 
@@ -23238,10 +23247,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerWithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>>
     export type PartyReadyRoomControllerWithdrawMutationBody = BodyType<PartyReadyRoomParticipantIdentityDto>
-    export type PartyReadyRoomControllerWithdrawMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerWithdrawMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerWithdrawMutationVariables = {pathParams: PartyReadyRoomControllerWithdrawPathParameters;data: BodyType<PartyReadyRoomParticipantIdentityDto>}
 
-    export const usePartyReadyRoomControllerWithdraw = <TError = ErrorType<unknown>,
+    export const usePartyReadyRoomControllerWithdraw = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,PartyReadyRoomControllerWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>,
@@ -23282,7 +23291,7 @@ return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControlle
 
 
 
-export const getPartyReadyRoomControllerRemoveMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerRemoveMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>, TError,PartyReadyRoomControllerRemoveMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>, TError,PartyReadyRoomControllerRemoveMutationVariables, TContext> => {
 
@@ -23311,10 +23320,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>>
     export type PartyReadyRoomControllerRemoveMutationBody = BodyType<PartyReadyRoomParticipantActionDto>
-    export type PartyReadyRoomControllerRemoveMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerRemoveMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerRemoveMutationVariables = {pathParams: PartyReadyRoomControllerRemovePathParameters;data: BodyType<PartyReadyRoomParticipantActionDto>}
 
-    export const usePartyReadyRoomControllerRemove = <TError = ErrorType<unknown>,
+    export const usePartyReadyRoomControllerRemove = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>, TError,PartyReadyRoomControllerRemoveMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>,
@@ -23355,7 +23364,7 @@ return mainFetch<PartyReadyRoomInvitationTargetsDtoOutput>(getPartyReadyRoomCont
 
 
 
-export const getPartyReadyRoomControllerResolveInvitationTargetsMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerResolveInvitationTargetsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>, TError,PartyReadyRoomControllerResolveInvitationTargetsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>, TError,PartyReadyRoomControllerResolveInvitationTargetsMutationVariables, TContext> => {
 
@@ -23384,10 +23393,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerResolveInvitationTargetsMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>>
     export type PartyReadyRoomControllerResolveInvitationTargetsMutationBody = BodyType<PartyReadyRoomResolveInvitationTargetsDto>
-    export type PartyReadyRoomControllerResolveInvitationTargetsMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerResolveInvitationTargetsMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerResolveInvitationTargetsMutationVariables = {pathParams: PartyReadyRoomControllerResolveInvitationTargetsPathParameters;data: BodyType<PartyReadyRoomResolveInvitationTargetsDto>}
 
-    export const usePartyReadyRoomControllerResolveInvitationTargets = <TError = ErrorType<unknown>,
+    export const usePartyReadyRoomControllerResolveInvitationTargets = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>, TError,PartyReadyRoomControllerResolveInvitationTargetsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>,
@@ -23428,7 +23437,7 @@ return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerO
 
 
 
-export const getPartyReadyRoomControllerObservePartyMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerObservePartyMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>, TError,PartyReadyRoomControllerObservePartyMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>, TError,PartyReadyRoomControllerObservePartyMutationVariables, TContext> => {
 
@@ -23457,10 +23466,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerObservePartyMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>>
     export type PartyReadyRoomControllerObservePartyMutationBody = BodyType<PartyReadyRoomObservationDto>
-    export type PartyReadyRoomControllerObservePartyMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerObservePartyMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerObservePartyMutationVariables = {pathParams: PartyReadyRoomControllerObservePartyPathParameters;data: BodyType<PartyReadyRoomObservationDto>}
 
-    export const usePartyReadyRoomControllerObserveParty = <TError = ErrorType<unknown>,
+    export const usePartyReadyRoomControllerObserveParty = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>, TError,PartyReadyRoomControllerObservePartyMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>,
@@ -23501,7 +23510,7 @@ return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControlle
 
 
 
-export const getPartyReadyRoomControllerCancelMutationOptions = <TError = ErrorType<unknown>,
+export const getPartyReadyRoomControllerCancelMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>, TError,PartyReadyRoomControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>, TError,PartyReadyRoomControllerCancelMutationVariables, TContext> => {
 
@@ -23530,10 +23539,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PartyReadyRoomControllerCancelMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>>
     export type PartyReadyRoomControllerCancelMutationBody = BodyType<PartyReadyRoomExpectedRevisionDto>
-    export type PartyReadyRoomControllerCancelMutationError = ErrorType<unknown>
+    export type PartyReadyRoomControllerCancelMutationError = ErrorType<HttpErrorResponse>
     export type PartyReadyRoomControllerCancelMutationVariables = {pathParams: PartyReadyRoomControllerCancelPathParameters;data: BodyType<PartyReadyRoomExpectedRevisionDto>}
 
-    export const usePartyReadyRoomControllerCancel = <TError = ErrorType<unknown>,
+    export const usePartyReadyRoomControllerCancel = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>, TError,PartyReadyRoomControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>,
@@ -23721,7 +23730,7 @@ return mainFetch<SoundSettingsResponseDto>(getSoundSettingsControllerUpdateSetti
 
 
 
-export const getSoundSettingsControllerUpdateSettingsMutationOptions = <TError = ErrorType<unknown>,
+export const getSoundSettingsControllerUpdateSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>, TError,SoundSettingsControllerUpdateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>, TError,SoundSettingsControllerUpdateSettingsMutationVariables, TContext> => {
 
@@ -23750,13 +23759,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SoundSettingsControllerUpdateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>>
     export type SoundSettingsControllerUpdateSettingsMutationBody = BodyType<UpdateSoundSettingsDto>
-    export type SoundSettingsControllerUpdateSettingsMutationError = ErrorType<unknown>
+    export type SoundSettingsControllerUpdateSettingsMutationError = ErrorType<HttpErrorResponse>
     export type SoundSettingsControllerUpdateSettingsMutationVariables = {data: BodyType<UpdateSoundSettingsDto>}
 
     /**
  * @summary Update sound settings
  */
-export const useSoundSettingsControllerUpdateSettings = <TError = ErrorType<unknown>,
+export const useSoundSettingsControllerUpdateSettings = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>, TError,SoundSettingsControllerUpdateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>,
@@ -23964,7 +23973,7 @@ return mainFetch<EventMutationResponseDto>(getCreateEventUrl({ guildId }),
 
 
 
-export const getCreateEventMutationOptions = <TError = ErrorType<void>,
+export const getCreateEventMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,CreateEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,CreateEventMutationVariables, TContext> => {
 
@@ -23993,13 +24002,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateEventMutationResult = NonNullable<Awaited<ReturnType<typeof createEvent>>>
     export type CreateEventMutationBody = BodyType<CreateEventDto>
-    export type CreateEventMutationError = ErrorType<void>
+    export type CreateEventMutationError = ErrorType<HttpErrorResponse>
     export type CreateEventMutationVariables = {pathParams: CreateEventPathParameters;data: BodyType<CreateEventDto>}
 
     /**
  * @summary Create event
  */
-export const useCreateEvent = <TError = ErrorType<void>,
+export const useCreateEvent = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,CreateEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createEvent>>,
@@ -24044,7 +24053,7 @@ export const getShowEventQueryKey = ({ guildId, eventId }: ShowEventPathParamete
     }
 
 
-export const getShowEventQueryOptions = <TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<void>>({ guildId, eventId }: ShowEventPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getShowEventQueryOptions = <TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: ShowEventPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -24063,10 +24072,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ShowEventQueryResult = NonNullable<Awaited<ReturnType<typeof showEvent>>>
-export type ShowEventQueryError = ErrorType<void>
+export type ShowEventQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<void>>(
+export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof showEvent>>,
@@ -24076,7 +24085,7 @@ export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TErr
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<void>>(
+export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof showEvent>>,
@@ -24086,7 +24095,7 @@ export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TErr
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<void>>(
+export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -24094,7 +24103,7 @@ export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TErr
  * @summary Get event details
  */
 
-export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<void>>(
+export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: ShowEventPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -24109,7 +24118,7 @@ export function useShowEvent<TData = Awaited<ReturnType<typeof showEvent>>, TErr
 /**
  * @summary Get event details
  */
-export const prefetchShowEventQuery = async <TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<void>>(
+export const prefetchShowEventQuery = async <TData = Awaited<ReturnType<typeof showEvent>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: ShowEventPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEvent>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -24181,7 +24190,7 @@ export const deleteEvent = async ({ guildId, eventId }: DeleteEventPathParameter
 
 
 
-export const getDeleteEventMutationOptions = <TError = ErrorType<void>,
+export const getDeleteEventMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEvent>>, TError,DeleteEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteEvent>>, TError,DeleteEventMutationVariables, TContext> => {
 
@@ -24210,13 +24219,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteEventMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEvent>>>
 
-    export type DeleteEventMutationError = ErrorType<void>
+    export type DeleteEventMutationError = ErrorType<HttpErrorResponse>
     export type DeleteEventMutationVariables = {pathParams: DeleteEventPathParameters}
 
     /**
  * @summary Delete event
  */
-export const useDeleteEvent = <TError = ErrorType<void>,
+export const useDeleteEvent = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEvent>>, TError,DeleteEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteEvent>>,
@@ -24261,7 +24270,7 @@ return mainFetch<EventMutationResponseDto>(getUpdateEventUrl({ guildId, eventId 
 
 
 
-export const getUpdateEventMutationOptions = <TError = ErrorType<void>,
+export const getUpdateEventMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext> => {
 
@@ -24290,13 +24299,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateEventMutationResult = NonNullable<Awaited<ReturnType<typeof updateEvent>>>
     export type UpdateEventMutationBody = BodyType<UpdateEventDto>
-    export type UpdateEventMutationError = ErrorType<void>
+    export type UpdateEventMutationError = ErrorType<HttpErrorResponse>
     export type UpdateEventMutationVariables = {pathParams: UpdateEventPathParameters;data: BodyType<UpdateEventDto>}
 
     /**
  * @summary Update event
  */
-export const useUpdateEvent = <TError = ErrorType<void>,
+export const useUpdateEvent = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateEvent>>,
@@ -24341,7 +24350,7 @@ export const getShowEventOverviewQueryKey = ({ guildId, eventId }: ShowEventOver
     }
 
 
-export const getShowEventOverviewQueryOptions = <TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<void>>({ guildId, eventId }: ShowEventOverviewPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getShowEventOverviewQueryOptions = <TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: ShowEventOverviewPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -24360,10 +24369,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ShowEventOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof showEventOverview>>>
-export type ShowEventOverviewQueryError = ErrorType<void>
+export type ShowEventOverviewQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<void>>(
+export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventOverviewPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof showEventOverview>>,
@@ -24373,7 +24382,7 @@ export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEvent
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<void>>(
+export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventOverviewPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof showEventOverview>>,
@@ -24383,7 +24392,7 @@ export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEvent
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<void>>(
+export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventOverviewPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -24391,7 +24400,7 @@ export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEvent
  * @summary Get event overview
  */
 
-export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<void>>(
+export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: ShowEventOverviewPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -24406,7 +24415,7 @@ export function useShowEventOverview<TData = Awaited<ReturnType<typeof showEvent
 /**
  * @summary Get event overview
  */
-export const prefetchShowEventOverviewQuery = async <TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<void>>(
+export const prefetchShowEventOverviewQuery = async <TData = Awaited<ReturnType<typeof showEventOverview>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: ShowEventOverviewPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventOverview>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -24485,7 +24494,7 @@ export const getShowEventWrappedQueryKey = ({ guildId, eventId }: ShowEventWrapp
     }
 
 
-export const getShowEventWrappedQueryOptions = <TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<void>>({ guildId, eventId }: ShowEventWrappedPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getShowEventWrappedQueryOptions = <TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: ShowEventWrappedPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -24504,10 +24513,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ShowEventWrappedQueryResult = NonNullable<Awaited<ReturnType<typeof showEventWrapped>>>
-export type ShowEventWrappedQueryError = ErrorType<void>
+export type ShowEventWrappedQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<void>>(
+export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventWrappedPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof showEventWrapped>>,
@@ -24517,7 +24526,7 @@ export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventW
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<void>>(
+export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventWrappedPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof showEventWrapped>>,
@@ -24527,7 +24536,7 @@ export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventW
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<void>>(
+export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ShowEventWrappedPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -24535,7 +24544,7 @@ export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventW
  * @summary Get event wrapped summary
  */
 
-export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<void>>(
+export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: ShowEventWrappedPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -24550,7 +24559,7 @@ export function useShowEventWrapped<TData = Awaited<ReturnType<typeof showEventW
 /**
  * @summary Get event wrapped summary
  */
-export const prefetchShowEventWrappedQuery = async <TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<void>>(
+export const prefetchShowEventWrappedQuery = async <TData = Awaited<ReturnType<typeof showEventWrapped>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: ShowEventWrappedPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof showEventWrapped>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -24629,7 +24638,7 @@ export const getListEventMapsQueryKey = ({ guildId, eventId }: ListEventMapsPath
     }
 
 
-export const getListEventMapsQueryOptions = <TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<void>>({ guildId, eventId }: ListEventMapsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListEventMapsQueryOptions = <TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: ListEventMapsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -24648,10 +24657,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListEventMapsQueryResult = NonNullable<Awaited<ReturnType<typeof listEventMaps>>>
-export type ListEventMapsQueryError = ErrorType<void>
+export type ListEventMapsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<void>>(
+export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventMapsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listEventMaps>>,
@@ -24661,7 +24670,7 @@ export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<void>>(
+export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventMapsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listEventMaps>>,
@@ -24671,7 +24680,7 @@ export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<void>>(
+export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventMapsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -24679,7 +24688,7 @@ export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps
  * @summary Get event maps
  */
 
-export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<void>>(
+export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: ListEventMapsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -24694,7 +24703,7 @@ export function useListEventMaps<TData = Awaited<ReturnType<typeof listEventMaps
 /**
  * @summary Get event maps
  */
-export const prefetchListEventMapsQuery = async <TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<void>>(
+export const prefetchListEventMapsQuery = async <TData = Awaited<ReturnType<typeof listEventMaps>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: ListEventMapsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventMaps>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -24766,7 +24775,7 @@ export const recalculateEventPoints = async ({ guildId, eventId }: RecalculateEv
 
 
 
-export const getRecalculateEventPointsMutationOptions = <TError = ErrorType<void>,
+export const getRecalculateEventPointsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recalculateEventPoints>>, TError,RecalculateEventPointsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof recalculateEventPoints>>, TError,RecalculateEventPointsMutationVariables, TContext> => {
 
@@ -24795,13 +24804,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RecalculateEventPointsMutationResult = NonNullable<Awaited<ReturnType<typeof recalculateEventPoints>>>
 
-    export type RecalculateEventPointsMutationError = ErrorType<void>
+    export type RecalculateEventPointsMutationError = ErrorType<HttpErrorResponse>
     export type RecalculateEventPointsMutationVariables = {pathParams: RecalculateEventPointsPathParameters}
 
     /**
  * @summary Recalculate event points
  */
-export const useRecalculateEventPoints = <TError = ErrorType<void>,
+export const useRecalculateEventPoints = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recalculateEventPoints>>, TError,RecalculateEventPointsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof recalculateEventPoints>>,
@@ -24846,7 +24855,7 @@ return mainFetch<void>(getEventsAssignmentControllerAssignMemberUrl({ guildId, e
 
 
 
-export const getEventsAssignmentControllerAssignMemberMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerAssignMemberMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>, TError,EventsAssignmentControllerAssignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>, TError,EventsAssignmentControllerAssignMemberMutationVariables, TContext> => {
 
@@ -24875,13 +24884,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerAssignMemberMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>>
     export type EventsAssignmentControllerAssignMemberMutationBody = BodyType<AssignMemberDto>
-    export type EventsAssignmentControllerAssignMemberMutationError = ErrorType<void>
+    export type EventsAssignmentControllerAssignMemberMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerAssignMemberMutationVariables = {pathParams: EventsAssignmentControllerAssignMemberPathParameters;data: BodyType<AssignMemberDto>}
 
     /**
  * @summary Assign member to map
  */
-export const useEventsAssignmentControllerAssignMember = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerAssignMember = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>, TError,EventsAssignmentControllerAssignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>,
@@ -24928,7 +24937,7 @@ export const eventsAssignmentControllerUnassignMember = async ({ guildId, eventI
 
 
 
-export const getEventsAssignmentControllerUnassignMemberMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerUnassignMemberMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>, TError,EventsAssignmentControllerUnassignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>, TError,EventsAssignmentControllerUnassignMemberMutationVariables, TContext> => {
 
@@ -24957,13 +24966,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerUnassignMemberMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>>
 
-    export type EventsAssignmentControllerUnassignMemberMutationError = ErrorType<void>
+    export type EventsAssignmentControllerUnassignMemberMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerUnassignMemberMutationVariables = {pathParams: EventsAssignmentControllerUnassignMemberPathParameters;params?: EventsAssignmentControllerUnassignMemberParams}
 
     /**
  * @summary Unassign member from map
  */
-export const useEventsAssignmentControllerUnassignMember = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerUnassignMember = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>, TError,EventsAssignmentControllerUnassignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>,
@@ -25001,7 +25010,7 @@ export const eventsAssignmentControllerSelfAssignMember = async ({ guildId, even
 
 
 
-export const getEventsAssignmentControllerSelfAssignMemberMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerSelfAssignMemberMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>, TError,EventsAssignmentControllerSelfAssignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>, TError,EventsAssignmentControllerSelfAssignMemberMutationVariables, TContext> => {
 
@@ -25030,13 +25039,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerSelfAssignMemberMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>>
 
-    export type EventsAssignmentControllerSelfAssignMemberMutationError = ErrorType<void>
+    export type EventsAssignmentControllerSelfAssignMemberMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerSelfAssignMemberMutationVariables = {pathParams: EventsAssignmentControllerSelfAssignMemberPathParameters}
 
     /**
  * @summary Self-assign to map
  */
-export const useEventsAssignmentControllerSelfAssignMember = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerSelfAssignMember = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>, TError,EventsAssignmentControllerSelfAssignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>,
@@ -25074,7 +25083,7 @@ export const eventsAssignmentControllerSelfUnassignMember = async ({ guildId, ev
 
 
 
-export const getEventsAssignmentControllerSelfUnassignMemberMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerSelfUnassignMemberMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>, TError,EventsAssignmentControllerSelfUnassignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>, TError,EventsAssignmentControllerSelfUnassignMemberMutationVariables, TContext> => {
 
@@ -25103,13 +25112,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerSelfUnassignMemberMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>>
 
-    export type EventsAssignmentControllerSelfUnassignMemberMutationError = ErrorType<void>
+    export type EventsAssignmentControllerSelfUnassignMemberMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerSelfUnassignMemberMutationVariables = {pathParams: EventsAssignmentControllerSelfUnassignMemberPathParameters}
 
     /**
  * @summary Self-unassign from map
  */
-export const useEventsAssignmentControllerSelfUnassignMember = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerSelfUnassignMember = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>, TError,EventsAssignmentControllerSelfUnassignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>,
@@ -25684,7 +25693,7 @@ return mainFetch<void>(getEventsAssignmentControllerCreateLocationUrl({ guildId,
 
 
 
-export const getEventsAssignmentControllerCreateLocationMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerCreateLocationMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>, TError,EventsAssignmentControllerCreateLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>, TError,EventsAssignmentControllerCreateLocationMutationVariables, TContext> => {
 
@@ -25713,13 +25722,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerCreateLocationMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>>
     export type EventsAssignmentControllerCreateLocationMutationBody = BodyType<CreateLocationDto>
-    export type EventsAssignmentControllerCreateLocationMutationError = ErrorType<void>
+    export type EventsAssignmentControllerCreateLocationMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerCreateLocationMutationVariables = {pathParams: EventsAssignmentControllerCreateLocationPathParameters;data: BodyType<CreateLocationDto>}
 
     /**
  * @summary Create location
  */
-export const useEventsAssignmentControllerCreateLocation = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerCreateLocation = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>, TError,EventsAssignmentControllerCreateLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>,
@@ -25757,7 +25766,7 @@ export const eventsAssignmentControllerDeleteLocation = async ({ guildId, eventI
 
 
 
-export const getEventsAssignmentControllerDeleteLocationMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerDeleteLocationMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>, TError,EventsAssignmentControllerDeleteLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>, TError,EventsAssignmentControllerDeleteLocationMutationVariables, TContext> => {
 
@@ -25786,13 +25795,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerDeleteLocationMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>>
 
-    export type EventsAssignmentControllerDeleteLocationMutationError = ErrorType<void>
+    export type EventsAssignmentControllerDeleteLocationMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerDeleteLocationMutationVariables = {pathParams: EventsAssignmentControllerDeleteLocationPathParameters}
 
     /**
  * @summary Delete location
  */
-export const useEventsAssignmentControllerDeleteLocation = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerDeleteLocation = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>, TError,EventsAssignmentControllerDeleteLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>,
@@ -25837,7 +25846,7 @@ return mainFetch<void>(getEventsAssignmentControllerUpdateLocationUrl({ guildId,
 
 
 
-export const getEventsAssignmentControllerUpdateLocationMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerUpdateLocationMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>, TError,EventsAssignmentControllerUpdateLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>, TError,EventsAssignmentControllerUpdateLocationMutationVariables, TContext> => {
 
@@ -25866,13 +25875,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerUpdateLocationMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>>
     export type EventsAssignmentControllerUpdateLocationMutationBody = BodyType<UpdateLocationDto>
-    export type EventsAssignmentControllerUpdateLocationMutationError = ErrorType<void>
+    export type EventsAssignmentControllerUpdateLocationMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerUpdateLocationMutationVariables = {pathParams: EventsAssignmentControllerUpdateLocationPathParameters;data: BodyType<UpdateLocationDto>}
 
     /**
  * @summary Update location
  */
-export const useEventsAssignmentControllerUpdateLocation = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerUpdateLocation = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>, TError,EventsAssignmentControllerUpdateLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>,
@@ -25997,7 +26006,7 @@ return mainFetch<void>(getEventsAssignmentControllerAssignMapToLocationUrl({ gui
 
 
 
-export const getEventsAssignmentControllerAssignMapToLocationMutationOptions = <TError = ErrorType<void>,
+export const getEventsAssignmentControllerAssignMapToLocationMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>, TError,EventsAssignmentControllerAssignMapToLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>, TError,EventsAssignmentControllerAssignMapToLocationMutationVariables, TContext> => {
 
@@ -26026,13 +26035,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerAssignMapToLocationMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>>
     export type EventsAssignmentControllerAssignMapToLocationMutationBody = BodyType<AssignMapLocationDto>
-    export type EventsAssignmentControllerAssignMapToLocationMutationError = ErrorType<void>
+    export type EventsAssignmentControllerAssignMapToLocationMutationError = ErrorType<HttpErrorResponse>
     export type EventsAssignmentControllerAssignMapToLocationMutationVariables = {pathParams: EventsAssignmentControllerAssignMapToLocationPathParameters;data: BodyType<AssignMapLocationDto>}
 
     /**
  * @summary Assign map to location
  */
-export const useEventsAssignmentControllerAssignMapToLocation = <TError = ErrorType<void>,
+export const useEventsAssignmentControllerAssignMapToLocation = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>, TError,EventsAssignmentControllerAssignMapToLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>,
@@ -26373,7 +26382,7 @@ export const getListEventRankingQueryKey = ({ guildId, eventId }: ListEventRanki
     }
 
 
-export const getListEventRankingQueryOptions = <TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<void>>({ guildId, eventId }: ListEventRankingPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListEventRankingQueryOptions = <TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: ListEventRankingPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -26392,10 +26401,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListEventRankingQueryResult = NonNullable<Awaited<ReturnType<typeof listEventRanking>>>
-export type ListEventRankingQueryError = ErrorType<void>
+export type ListEventRankingQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<void>>(
+export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventRankingPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listEventRanking>>,
@@ -26405,7 +26414,7 @@ export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventR
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<void>>(
+export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventRankingPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listEventRanking>>,
@@ -26415,7 +26424,7 @@ export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventR
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<void>>(
+export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventRankingPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -26423,7 +26432,7 @@ export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventR
  * @summary Get event ranking
  */
 
-export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<void>>(
+export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: ListEventRankingPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -26438,7 +26447,7 @@ export function useListEventRanking<TData = Awaited<ReturnType<typeof listEventR
 /**
  * @summary Get event ranking
  */
-export const prefetchListEventRankingQuery = async <TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<void>>(
+export const prefetchListEventRankingQuery = async <TData = Awaited<ReturnType<typeof listEventRanking>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: ListEventRankingPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -26517,7 +26526,7 @@ return mainFetch<void>(getUpdateRankingPointsUrl({ guildId, eventId, rankingId }
 
 
 
-export const getUpdateRankingPointsMutationOptions = <TError = ErrorType<void>,
+export const getUpdateRankingPointsMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,UpdateRankingPointsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,UpdateRankingPointsMutationVariables, TContext> => {
 
@@ -26546,13 +26555,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateRankingPointsMutationResult = NonNullable<Awaited<ReturnType<typeof updateRankingPoints>>>
     export type UpdateRankingPointsMutationBody = BodyType<UpdateRankingPointsDto>
-    export type UpdateRankingPointsMutationError = ErrorType<void>
+    export type UpdateRankingPointsMutationError = ErrorType<HttpErrorResponse>
     export type UpdateRankingPointsMutationVariables = {pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsDto>}
 
     /**
  * @summary Update ranking points
  */
-export const useUpdateRankingPoints = <TError = ErrorType<void>,
+export const useUpdateRankingPoints = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,UpdateRankingPointsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateRankingPoints>>,
@@ -26607,7 +26616,7 @@ export const getListEventHeroTimersQueryKey = ({ guildId, eventId }: ListEventHe
     }
 
 
-export const getListEventHeroTimersQueryOptions = <TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<void>>({ guildId, eventId }: ListEventHeroTimersPathParameters,
+export const getListEventHeroTimersQueryOptions = <TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -26627,10 +26636,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListEventHeroTimersQueryResult = NonNullable<Awaited<ReturnType<typeof listEventHeroTimers>>>
-export type ListEventHeroTimersQueryError = ErrorType<void>
+export type ListEventHeroTimersQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<void>>(
+export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventHeroTimers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -26641,7 +26650,7 @@ export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEve
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<void>>(
+export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventHeroTimers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -26652,7 +26661,7 @@ export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEve
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<void>>(
+export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -26661,7 +26670,7 @@ export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEve
  * @summary Get event hero timers
  */
 
-export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<void>>(
+export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -26677,7 +26686,7 @@ export function useListEventHeroTimers<TData = Awaited<ReturnType<typeof listEve
 /**
  * @summary Get event hero timers
  */
-export const prefetchListEventHeroTimersQuery = async <TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<void>>(
+export const prefetchListEventHeroTimersQuery = async <TData = Awaited<ReturnType<typeof listEventHeroTimers>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -26760,7 +26769,7 @@ export const getEventsRankingControllerGetEventHeroStatsQueryKey = ({ guildId, e
     }
 
 
-export const getEventsRankingControllerGetEventHeroStatsQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<void>>({ guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getEventsRankingControllerGetEventHeroStatsQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -26779,10 +26788,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetEventHeroStatsQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>>
-export type EventsRankingControllerGetEventHeroStatsQueryError = ErrorType<void>
+export type EventsRankingControllerGetEventHeroStatsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetEventHeroStatsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>,
@@ -26792,7 +26801,7 @@ export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<Retu
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetEventHeroStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>,
@@ -26802,7 +26811,7 @@ export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<Retu
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetEventHeroStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -26810,7 +26819,7 @@ export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<Retu
  * @summary Get event hero stats
  */
 
-export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -26825,7 +26834,7 @@ export function useEventsRankingControllerGetEventHeroStats<TData = Awaited<Retu
 /**
  * @summary Get event hero stats
  */
-export const prefetchEventsRankingControllerGetEventHeroStatsQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<void>>(
+export const prefetchEventsRankingControllerGetEventHeroStatsQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -26914,7 +26923,7 @@ export const getEventsRankingControllerGetEventKillHistoryQueryKey = ({ guildId,
     }
 
 
-export const getEventsRankingControllerGetEventKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<void>>({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
+export const getEventsRankingControllerGetEventKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -26934,10 +26943,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetEventKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>>
-export type EventsRankingControllerGetEventKillHistoryQueryError = ErrorType<void>
+export type EventsRankingControllerGetEventKillHistoryQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetEventKillHistoryPathParameters,
     params: undefined |  EventsRankingControllerGetEventKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -26948,7 +26957,7 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -26959,7 +26968,7 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -26968,7 +26977,7 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
  * @summary Get event kill history
  */
 
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -26984,7 +26993,7 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
 /**
  * @summary Get event kill history
  */
-export const prefetchEventsRankingControllerGetEventKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<void>>(
+export const prefetchEventsRankingControllerGetEventKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -27077,7 +27086,7 @@ export const getEventsRankingControllerGetMemberKillHistoryQueryKey = ({ guildId
     }
 
 
-export const getEventsRankingControllerGetMemberKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<void>>({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
+export const getEventsRankingControllerGetMemberKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -27097,10 +27106,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetMemberKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>>
-export type EventsRankingControllerGetMemberKillHistoryQueryError = ErrorType<void>
+export type EventsRankingControllerGetMemberKillHistoryQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params: undefined |  EventsRankingControllerGetMemberKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -27111,7 +27120,7 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -27122,7 +27131,7 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -27131,7 +27140,7 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
  * @summary Get member kill history
  */
 
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -27147,7 +27156,7 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
 /**
  * @summary Get member kill history
  */
-export const prefetchEventsRankingControllerGetMemberKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<void>>(
+export const prefetchEventsRankingControllerGetMemberKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -27240,7 +27249,7 @@ export const getEventsRankingControllerGetHeroKillHistoryQueryKey = ({ guildId, 
     }
 
 
-export const getEventsRankingControllerGetHeroKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<void>>({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
+export const getEventsRankingControllerGetHeroKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -27260,10 +27269,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetHeroKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>>
-export type EventsRankingControllerGetHeroKillHistoryQueryError = ErrorType<void>
+export type EventsRankingControllerGetHeroKillHistoryQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params: undefined |  EventsRankingControllerGetHeroKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -27274,7 +27283,7 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -27285,7 +27294,7 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -27294,7 +27303,7 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
  * @summary Get hero kill history
  */
 
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -27310,7 +27319,7 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
 /**
  * @summary Get hero kill history
  */
-export const prefetchEventsRankingControllerGetHeroKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<void>>(
+export const prefetchEventsRankingControllerGetHeroKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -27393,7 +27402,7 @@ export const getEventsRankingControllerGetKillDetailQueryKey = ({ guildId, event
     }
 
 
-export const getEventsRankingControllerGetKillDetailQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<void>>({ guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getEventsRankingControllerGetKillDetailQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -27412,10 +27421,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetKillDetailQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>>
-export type EventsRankingControllerGetKillDetailQueryError = ErrorType<void>
+export type EventsRankingControllerGetKillDetailQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetKillDetailPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>,
@@ -27425,7 +27434,7 @@ export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnTy
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetKillDetailPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>,
@@ -27435,7 +27444,7 @@ export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnTy
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsRankingControllerGetKillDetailPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -27443,7 +27452,7 @@ export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnTy
  * @summary Get kill details
  */
 
-export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<void>>(
+export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -27458,7 +27467,7 @@ export function useEventsRankingControllerGetKillDetail<TData = Awaited<ReturnTy
 /**
  * @summary Get kill details
  */
-export const prefetchEventsRankingControllerGetKillDetailQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<void>>(
+export const prefetchEventsRankingControllerGetKillDetailQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -27537,7 +27546,7 @@ return mainFetch<void>(getEventsRankingControllerUpdateKillPointUrl({ guildId, e
 
 
 
-export const getEventsRankingControllerUpdateKillPointMutationOptions = <TError = ErrorType<void>,
+export const getEventsRankingControllerUpdateKillPointMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,EventsRankingControllerUpdateKillPointMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,EventsRankingControllerUpdateKillPointMutationVariables, TContext> => {
 
@@ -27566,13 +27575,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsRankingControllerUpdateKillPointMutationResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>>
     export type EventsRankingControllerUpdateKillPointMutationBody = BodyType<UpdateKillPointDto>
-    export type EventsRankingControllerUpdateKillPointMutationError = ErrorType<void>
+    export type EventsRankingControllerUpdateKillPointMutationError = ErrorType<HttpErrorResponse>
     export type EventsRankingControllerUpdateKillPointMutationVariables = {pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<UpdateKillPointDto>}
 
     /**
  * @summary Update kill point
  */
-export const useEventsRankingControllerUpdateKillPoint = <TError = ErrorType<void>,
+export const useEventsRankingControllerUpdateKillPoint = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,EventsRankingControllerUpdateKillPointMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>,
@@ -27761,7 +27770,7 @@ export const getEventsMonitoringControllerGetKillTimelineDataQueryKey = ({ guild
     }
 
 
-export const getEventsMonitoringControllerGetKillTimelineDataQueryOptions = <TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<void>>({ guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getEventsMonitoringControllerGetKillTimelineDataQueryOptions = <TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<HttpErrorResponse>>({ guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -27780,10 +27789,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsMonitoringControllerGetKillTimelineDataQueryResult = NonNullable<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>>
-export type EventsMonitoringControllerGetKillTimelineDataQueryError = ErrorType<void>
+export type EventsMonitoringControllerGetKillTimelineDataQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<void>>(
+export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsMonitoringControllerGetKillTimelineDataPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>,
@@ -27793,7 +27802,7 @@ export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<void>>(
+export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>,
@@ -27803,7 +27812,7 @@ export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<void>>(
+export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -27811,7 +27820,7 @@ export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited
  * @summary Get kill timeline data
  */
 
-export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<void>>(
+export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -27826,7 +27835,7 @@ export function useEventsMonitoringControllerGetKillTimelineData<TData = Awaited
 /**
  * @summary Get kill timeline data
  */
-export const prefetchEventsMonitoringControllerGetKillTimelineDataQuery = async <TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<void>>(
+export const prefetchEventsMonitoringControllerGetKillTimelineDataQuery = async <TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
@@ -28769,7 +28778,7 @@ return mainFetch<void>(getEventsMonitoringControllerCloseRespawnWindowUrl({ guil
 
 
 
-export const getEventsMonitoringControllerCloseRespawnWindowMutationOptions = <TError = ErrorType<void>,
+export const getEventsMonitoringControllerCloseRespawnWindowMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>, TError,EventsMonitoringControllerCloseRespawnWindowMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>, TError,EventsMonitoringControllerCloseRespawnWindowMutationVariables, TContext> => {
 
@@ -28798,13 +28807,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsMonitoringControllerCloseRespawnWindowMutationResult = NonNullable<Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>>
     export type EventsMonitoringControllerCloseRespawnWindowMutationBody = BodyType<CloseRespawnWindowDto>
-    export type EventsMonitoringControllerCloseRespawnWindowMutationError = ErrorType<void>
+    export type EventsMonitoringControllerCloseRespawnWindowMutationError = ErrorType<HttpErrorResponse>
     export type EventsMonitoringControllerCloseRespawnWindowMutationVariables = {pathParams: EventsMonitoringControllerCloseRespawnWindowPathParameters;data: BodyType<CloseRespawnWindowDto>}
 
     /**
  * @summary Close hero respawn window
  */
-export const useEventsMonitoringControllerCloseRespawnWindow = <TError = ErrorType<void>,
+export const useEventsMonitoringControllerCloseRespawnWindow = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>, TError,EventsMonitoringControllerCloseRespawnWindowMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>,
@@ -28849,7 +28858,7 @@ return mainFetch<void>(getEventsMonitoringControllerOpenRespawnWindowUrl({ guild
 
 
 
-export const getEventsMonitoringControllerOpenRespawnWindowMutationOptions = <TError = ErrorType<void>,
+export const getEventsMonitoringControllerOpenRespawnWindowMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>, TError,EventsMonitoringControllerOpenRespawnWindowMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>, TError,EventsMonitoringControllerOpenRespawnWindowMutationVariables, TContext> => {
 
@@ -28878,13 +28887,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsMonitoringControllerOpenRespawnWindowMutationResult = NonNullable<Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>>
     export type EventsMonitoringControllerOpenRespawnWindowMutationBody = BodyType<OpenRespawnWindowDto>
-    export type EventsMonitoringControllerOpenRespawnWindowMutationError = ErrorType<void>
+    export type EventsMonitoringControllerOpenRespawnWindowMutationError = ErrorType<HttpErrorResponse>
     export type EventsMonitoringControllerOpenRespawnWindowMutationVariables = {pathParams: EventsMonitoringControllerOpenRespawnWindowPathParameters;data: BodyType<OpenRespawnWindowDto>}
 
     /**
  * @summary Open hero respawn window
  */
-export const useEventsMonitoringControllerOpenRespawnWindow = <TError = ErrorType<void>,
+export const useEventsMonitoringControllerOpenRespawnWindow = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>, TError,EventsMonitoringControllerOpenRespawnWindowMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>,
@@ -29064,7 +29073,7 @@ export const pinEvent = async ({ guildId, eventId }: PinEventPathParameters, opt
 
 
 
-export const getPinEventMutationOptions = <TError = ErrorType<void>,
+export const getPinEventMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,PinEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,PinEventMutationVariables, TContext> => {
 
@@ -29093,13 +29102,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PinEventMutationResult = NonNullable<Awaited<ReturnType<typeof pinEvent>>>
 
-    export type PinEventMutationError = ErrorType<void>
+    export type PinEventMutationError = ErrorType<HttpErrorResponse>
     export type PinEventMutationVariables = {pathParams: PinEventPathParameters}
 
     /**
  * @summary Pin an active event
  */
-export const usePinEvent = <TError = ErrorType<void>,
+export const usePinEvent = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,PinEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof pinEvent>>,
@@ -29736,7 +29745,7 @@ return mainFetch<CreateKillResponseDtoOutput>(getKillsControllerCreateKillUrl(),
 
 
 
-export const getKillsControllerCreateKillMutationOptions = <TError = ErrorType<void>,
+export const getKillsControllerCreateKillMutationOptions = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof killsControllerCreateKill>>, TError,KillsControllerCreateKillMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof killsControllerCreateKill>>, TError,KillsControllerCreateKillMutationVariables, TContext> => {
 
@@ -29765,13 +29774,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type KillsControllerCreateKillMutationResult = NonNullable<Awaited<ReturnType<typeof killsControllerCreateKill>>>
     export type KillsControllerCreateKillMutationBody = BodyType<CreateKillDto>
-    export type KillsControllerCreateKillMutationError = ErrorType<void>
+    export type KillsControllerCreateKillMutationError = ErrorType<HttpErrorResponse>
     export type KillsControllerCreateKillMutationVariables = {data: BodyType<CreateKillDto>}
 
     /**
  * @summary Record a kill
  */
-export const useKillsControllerCreateKill = <TError = ErrorType<void>,
+export const useKillsControllerCreateKill = <TError = ErrorType<HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof killsControllerCreateKill>>, TError,KillsControllerCreateKillMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof killsControllerCreateKill>>,
@@ -29834,7 +29843,7 @@ export const getKillsControllerGetGuildKillStatsQueryKey = ({ guildId }: KillsCo
     }
 
 
-export const getKillsControllerGetGuildKillStatsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<void>>({ guildId }: KillsControllerGetGuildKillStatsPathParameters,
+export const getKillsControllerGetGuildKillStatsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: KillsControllerGetGuildKillStatsPathParameters,
     params?: KillsControllerGetGuildKillStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -29854,10 +29863,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type KillsControllerGetGuildKillStatsQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>>
-export type KillsControllerGetGuildKillStatsQueryError = ErrorType<void>
+export type KillsControllerGetGuildKillStatsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildKillStatsPathParameters,
     params: undefined |  KillsControllerGetGuildKillStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -29868,7 +29877,7 @@ export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<t
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildKillStatsPathParameters,
     params?: KillsControllerGetGuildKillStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -29879,7 +29888,7 @@ export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<t
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildKillStatsPathParameters,
     params?: KillsControllerGetGuildKillStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -29888,7 +29897,7 @@ export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<t
  * @summary Get guild kill statistics
  */
 
-export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: KillsControllerGetGuildKillStatsPathParameters,
     params?: KillsControllerGetGuildKillStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -29904,7 +29913,7 @@ export function useKillsControllerGetGuildKillStats<TData = Awaited<ReturnType<t
 /**
  * @summary Get guild kill statistics
  */
-export const prefetchKillsControllerGetGuildKillStatsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<void>>(
+export const prefetchKillsControllerGetGuildKillStatsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: KillsControllerGetGuildKillStatsPathParameters,
     params?: KillsControllerGetGuildKillStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -30315,7 +30324,7 @@ export const getKillsControllerGetGuildTopNpcsQueryKey = ({ guildId }: KillsCont
     }
 
 
-export const getKillsControllerGetGuildTopNpcsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<void>>({ guildId }: KillsControllerGetGuildTopNpcsPathParameters,
+export const getKillsControllerGetGuildTopNpcsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: KillsControllerGetGuildTopNpcsPathParameters,
     params: KillsControllerGetGuildTopNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -30335,10 +30344,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type KillsControllerGetGuildTopNpcsQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>>
-export type KillsControllerGetGuildTopNpcsQueryError = ErrorType<void>
+export type KillsControllerGetGuildTopNpcsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildTopNpcsPathParameters,
     params: KillsControllerGetGuildTopNpcsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -30349,7 +30358,7 @@ export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildTopNpcsPathParameters,
     params: KillsControllerGetGuildTopNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -30360,7 +30369,7 @@ export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildTopNpcsPathParameters,
     params: KillsControllerGetGuildTopNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30369,7 +30378,7 @@ export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typ
  * @summary Get top killed NPCs in guild
  */
 
-export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: KillsControllerGetGuildTopNpcsPathParameters,
     params: KillsControllerGetGuildTopNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30385,7 +30394,7 @@ export function useKillsControllerGetGuildTopNpcs<TData = Awaited<ReturnType<typ
 /**
  * @summary Get top killed NPCs in guild
  */
-export const prefetchKillsControllerGetGuildTopNpcsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<void>>(
+export const prefetchKillsControllerGetGuildTopNpcsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: KillsControllerGetGuildTopNpcsPathParameters,
     params: KillsControllerGetGuildTopNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -30478,7 +30487,7 @@ export const getKillsControllerGetGuildTopKillersByTypeQueryKey = ({ guildId }: 
     }
 
 
-export const getKillsControllerGetGuildTopKillersByTypeQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<void>>({ guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
+export const getKillsControllerGetGuildTopKillersByTypeQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<HttpErrorResponse>>({ guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
     params: KillsControllerGetGuildTopKillersByTypeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -30498,10 +30507,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type KillsControllerGetGuildTopKillersByTypeQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>>
-export type KillsControllerGetGuildTopKillersByTypeQueryError = ErrorType<void>
+export type KillsControllerGetGuildTopKillersByTypeQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildTopKillersByTypePathParameters,
     params: KillsControllerGetGuildTopKillersByTypeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -30512,7 +30521,7 @@ export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildTopKillersByTypePathParameters,
     params: KillsControllerGetGuildTopKillersByTypeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -30523,7 +30532,7 @@ export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<Retur
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetGuildTopKillersByTypePathParameters,
     params: KillsControllerGetGuildTopKillersByTypeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30532,7 +30541,7 @@ export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<Retur
  * @summary Get top killers by NPC type in guild
  */
 
-export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<void>>(
+export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
     params: KillsControllerGetGuildTopKillersByTypeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30548,7 +30557,7 @@ export function useKillsControllerGetGuildTopKillersByType<TData = Awaited<Retur
 /**
  * @summary Get top killers by NPC type in guild
  */
-export const prefetchKillsControllerGetGuildTopKillersByTypeQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<void>>(
+export const prefetchKillsControllerGetGuildTopKillersByTypeQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
     params: KillsControllerGetGuildTopKillersByTypeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -30641,7 +30650,7 @@ export const getKillsControllerGetNpcKillersQueryKey = ({ guildId, npcId }: Kill
     }
 
 
-export const getKillsControllerGetNpcKillersQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<void>>({ guildId, npcId }: KillsControllerGetNpcKillersPathParameters,
+export const getKillsControllerGetNpcKillersQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<HttpErrorResponse>>({ guildId, npcId }: KillsControllerGetNpcKillersPathParameters,
     params?: KillsControllerGetNpcKillersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -30661,10 +30670,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type KillsControllerGetNpcKillersQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>>
-export type KillsControllerGetNpcKillersQueryError = ErrorType<void>
+export type KillsControllerGetNpcKillersQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<void>>(
+export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetNpcKillersPathParameters,
     params: undefined |  KillsControllerGetNpcKillersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -30675,7 +30684,7 @@ export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<void>>(
+export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetNpcKillersPathParameters,
     params?: KillsControllerGetNpcKillersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -30686,7 +30695,7 @@ export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeo
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<void>>(
+export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetNpcKillersPathParameters,
     params?: KillsControllerGetNpcKillersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30695,7 +30704,7 @@ export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeo
  * @summary Get killers ranking for a specific NPC
  */
 
-export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<void>>(
+export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, npcId }: KillsControllerGetNpcKillersPathParameters,
     params?: KillsControllerGetNpcKillersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30711,7 +30720,7 @@ export function useKillsControllerGetNpcKillers<TData = Awaited<ReturnType<typeo
 /**
  * @summary Get killers ranking for a specific NPC
  */
-export const prefetchKillsControllerGetNpcKillersQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<void>>(
+export const prefetchKillsControllerGetNpcKillersQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, npcId }: KillsControllerGetNpcKillersPathParameters,
     params?: KillsControllerGetNpcKillersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -30812,7 +30821,7 @@ export const getKillsControllerGetMemberKillsQueryKey = ({ guildId, memberId }: 
     }
 
 
-export const getKillsControllerGetMemberKillsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
+export const getKillsControllerGetMemberKillsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<HttpErrorResponse>>({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
     params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -30832,10 +30841,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type KillsControllerGetMemberKillsQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetMemberKills>>>
-export type KillsControllerGetMemberKillsQueryError = ErrorType<void>
+export type KillsControllerGetMemberKillsQueryError = ErrorType<HttpErrorResponse>
 
 
-export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
+export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetMemberKillsPathParameters,
     params: undefined |  KillsControllerGetMemberKillsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -30846,7 +30855,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
+export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetMemberKillsPathParameters,
     params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -30857,7 +30866,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
+export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<HttpErrorResponse>>(
  pathParams: KillsControllerGetMemberKillsPathParameters,
     params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30866,7 +30875,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
  * @summary Get kill statistics for a specific guild member
  */
 
-export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
+export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<HttpErrorResponse>>(
  { guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
     params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30882,7 +30891,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
 /**
  * @summary Get kill statistics for a specific guild member
  */
-export const prefetchKillsControllerGetMemberKillsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
+export const prefetchKillsControllerGetMemberKillsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<HttpErrorResponse>>(
  queryClient: QueryClient, { guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
     params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 

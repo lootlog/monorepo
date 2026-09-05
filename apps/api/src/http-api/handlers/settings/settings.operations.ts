@@ -8,7 +8,11 @@ import {
 import { Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
-import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
+import { applicationErrorResponse } from "../../application-error-response.js";
+import {
+  SettingsRequestError,
+  makeSettingsDocuments,
+} from "#src/settings-documents/settings-documents.service";
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
 import {
@@ -228,6 +232,19 @@ export const toSettingsHttpResponse = <A, R>(
 ) =>
   Effect.catchTags(effect, {
     SettingsAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
-    SettingsOperationError: (error) => Effect.die(error.cause),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
+    SettingsOperationError: (error) =>
+      error.cause instanceof SettingsRequestError
+        ? Effect.succeed(
+            HttpServerResponse.jsonUnsafe(
+              { message: error.cause.message },
+              { status: error.cause.status },
+            ),
+          )
+        : applicationErrorResponse(error.cause),
   });

@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { encodeDomainJson } from "../../domain-json.schema.js";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -30,6 +31,8 @@ import {
 } from "#src/database/drizzle/schema";
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import {
+  ApplicationError,
+  applicationErrorStatus,
   applicationErrorStatusOrUndefined,
   PermissionDeniedError,
   ResourceNotFoundError,
@@ -483,9 +486,31 @@ export const toOrganizationWorkspaceHttpResponse = <A, R>(
   effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    OrganizationWorkspaceAccessDenied: Effect.die,
-    OrganizationWorkspaceNotFound: Effect.die,
-    OrganizationWorkspaceOperationError: (error) => Effect.die(error.cause),
+    OrganizationWorkspaceAccessDenied: (error) =>
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
+    OrganizationWorkspaceNotFound: (error) =>
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
+    OrganizationWorkspaceOperationError: ({ cause }) => {
+      if (Schema.is(ApplicationError)(cause)) {
+        const status = applicationErrorStatus(cause);
+        if (status < 500) {
+          return Effect.succeed(
+            HttpServerResponse.jsonUnsafe(cause.getResponse(), { status }),
+          );
+        }
+      }
+      return Effect.die(cause);
+    },
   });
 
 export const toDeclaredOrganizationWorkspaceError = <A, R>(

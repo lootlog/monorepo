@@ -57,7 +57,8 @@
       "placeholder": "np. nazwa twojego klanu",
       "example": "Przykład:",
       "exampleSlug": "nazwa-klanu",
-      "restricted": "Ta nazwa jest zarezerwowana i nie może być użyta."
+      "restricted": "Ta nazwa jest zarezerwowana i nie może być użyta.",
+      "taken": "Ten skrócony link jest już zajęty. Wybierz inną nazwę."
     },
     "statsCard": {
       "title": "Publiczny obraz statystyk",
@@ -205,7 +206,8 @@
       "disconnectTitle": "Odłączyć współdzielone kalendarze?",
       "disconnectDescription": "Rezerwacje organizacji {{name}} natychmiast przestaną być widoczne. Żadne wpisy ani przypomnienia nie zostaną usunięte.",
       "disconnectOrganization": "Odłącz organizację {{name}}"
-    }
+    },
+    "durationRangeInvalid": "Minimalny czas rezerwacji nie może przekraczać maksymalnego."
   },
   "members": {
     "title": "Członkowie",

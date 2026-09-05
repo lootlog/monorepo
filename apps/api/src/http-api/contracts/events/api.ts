@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   AcknowledgeExpiredParticipationConfirmationsResponse,
   EventPath,
@@ -79,7 +79,10 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     params: EventOrganizationPath,
     payload: CreateEventRequest,
     success: EventMutationResponse.pipe(HttpApiSchema.status(201)),
-    error: HttpApiSchema.Empty(403),
+    error: [
+      HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+    ],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "createEvent")
@@ -91,7 +94,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   HttpApiEndpoint.get("showEvent", "/guilds/:guildId/events/:eventId", {
     params: EventPath,
     success: EventOverviewResponse,
-    error: HttpApiSchema.Empty(404),
+    error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "showEvent")
@@ -103,7 +106,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   HttpApiEndpoint.delete("deleteEvent", "/guilds/:guildId/events/:eventId", {
     params: EventPath,
     success: SuccessResponse,
-    error: HttpApiSchema.Empty(404),
+    error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "deleteEvent")
@@ -113,7 +116,10 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     params: EventPath,
     payload: UpdateEventRequest,
     success: EventMutationResponse,
-    error: HttpApiSchema.Empty(404),
+    error: [
+      HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+    ],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "updateEvent")
@@ -125,7 +131,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventPath,
       success: EventOverviewResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -141,7 +147,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventPath,
       success: EventWrappedResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -157,7 +163,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventPath,
       success: EventMapsResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -173,7 +179,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventPath,
       success: SuccessResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -190,7 +196,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventMapPath,
       payload: AssignEventMemberRequest,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -207,7 +213,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventMapPath,
       query: UnassignEventMemberQuery,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -223,7 +229,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventMapPath,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -236,7 +242,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventMapPath,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -331,7 +337,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventHeroPath,
       payload: CreateEventLocationRequest,
       success: HttpApiSchema.Empty(201),
-      error: HttpApiSchema.Empty(400),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(400)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -344,7 +350,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventLocationPath,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -361,7 +367,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventLocationPath,
       payload: UpdateEventLocationRequest,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -388,7 +394,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventHeroMapPath,
       payload: AssignEventMapLocationRequest,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -457,7 +463,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventPath,
       success: EventRankingResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -471,7 +477,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventRankingPath,
       payload: UpdateRankingPointsRequest,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -488,7 +494,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventPath,
       query: EventTimersQuery,
       success: EventTimersResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -504,7 +510,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventPath,
       success: EventHeroStatsListResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -521,7 +527,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventPath,
       query: EventKillHistoryQuery,
       success: EventKillHistoryResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -538,7 +544,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventMemberPath,
       query: EventKillHistoryQuery,
       success: EventMemberKillHistoryResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -558,7 +564,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventHeroPath,
       query: HeroKillHistoryQuery,
       success: EventKillHistoryResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -574,7 +580,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventHeroKillPath,
       success: EventKillDetailResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -591,7 +597,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventKillPointPath,
       payload: UpdateKillPointRequest,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -622,7 +628,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     {
       params: EventHeroKillPath,
       success: EventKillTimelineResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -750,7 +756,11 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventHeroPath,
       payload: CloseRespawnWindowRequest,
       success: HttpApiSchema.Empty(200),
-      error: [HttpApiSchema.Empty(400), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -770,7 +780,11 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventHeroPath,
       payload: OpenRespawnWindowRequest,
       success: HttpApiSchema.Empty(200),
-      error: [HttpApiSchema.Empty(400), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -793,7 +807,10 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   HttpApiEndpoint.put("pinEvent", "/guilds/:guildId/events/:eventId/pin", {
     params: EventPath,
     success: PinnedEventResponse,
-    error: [HttpApiSchema.Empty(404), HttpApiSchema.Empty(409)],
+    error: [
+      HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+    ],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "pinEvent")

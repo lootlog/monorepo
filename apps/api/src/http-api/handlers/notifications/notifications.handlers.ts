@@ -17,7 +17,8 @@ import {
   NotificationTargetWithTestTriggerResponse,
   WatchedItemResponse,
 } from "#src/notifications/notification-response.schema";
-import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
+import { ApplicationError } from "#src/shared/http/http-errors";
+import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";
 import { NotificationOperations } from "./notifications.data-layer.js";
@@ -53,20 +54,15 @@ export class NotificationsNotFound extends TaggedErrorClass<NotificationsNotFoun
   { status: Schema.Literal(404), code: Schema.String },
 ) {}
 
-class NotificationsConflict extends TaggedErrorClass<NotificationsConflict>()(
-  "NotificationsConflict",
-  { status: Schema.Literal(409), code: Schema.String },
-) {}
-
 class NotificationsDataError extends TaggedErrorClass<NotificationsDataError>()(
   "NotificationsDataError",
   { cause: Schema.Defect() },
 ) {}
 
 type NotificationsHttpFailure =
+  | ApplicationError
   | NotificationsAccessDenied
   | NotificationsBadRequest
-  | NotificationsConflict
   | NotificationsDataError
   | NotificationsNotFound;
 
@@ -102,25 +98,12 @@ const operationFailure = (cause: unknown): NotificationsHttpFailure => {
   if (
     cause instanceof NotificationsAccessDenied ||
     cause instanceof NotificationsBadRequest ||
-    cause instanceof NotificationsConflict ||
     cause instanceof NotificationsDataError ||
     cause instanceof NotificationsNotFound
   ) {
     return cause;
   }
-  const status = applicationErrorStatusOrUndefined(cause);
-  if (status === 400) {
-    return new NotificationsBadRequest({ status, code: "BAD_REQUEST" });
-  }
-  if (status === 403) {
-    return new NotificationsAccessDenied({ status, code: "FORBIDDEN" });
-  }
-  if (status === 404) {
-    return new NotificationsNotFound({ status, code: "NOT_FOUND" });
-  }
-  if (status === 409) {
-    return new NotificationsConflict({ status, code: "CONFLICT" });
-  }
+  if (cause instanceof ApplicationError) return cause;
   return new NotificationsDataError({ cause });
 };
 
@@ -135,16 +118,24 @@ const operation = <A>(
     }),
   );
 
-const statusResponse = (error: { readonly status: number }) =>
-  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+const statusResponse = (error: {
+  readonly status: number;
+  readonly code: string;
+}) =>
+  Effect.succeed(
+    HttpServerResponse.jsonUnsafe(
+      { code: error.code },
+      { status: error.status },
+    ),
+  );
 
 const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, NotificationsHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
+    ApplicationError: applicationErrorResponse,
     NotificationsAccessDenied: statusResponse,
     NotificationsBadRequest: statusResponse,
-    NotificationsConflict: statusResponse,
     NotificationsDataError: (error) => Effect.die(error.cause),
     NotificationsNotFound: statusResponse,
   });

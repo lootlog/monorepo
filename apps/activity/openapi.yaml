@@ -200,6 +200,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get activities for a specific guild
   /guilds/{guildId}/activity-logs/actor-name-suggestions:
     get:
@@ -235,6 +251,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActorNameSuggestionsResponseDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get actor name suggestions for a guild
   /guilds/{guildId}/activity-logs/world-suggestions:
     get:
@@ -270,6 +302,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorldSuggestionsResponseDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get world suggestions for a guild
   /guilds/{guildId}/activity-logs/clan-name-suggestions:
     get:
@@ -305,6 +353,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ClanNameSuggestionsResponseDto_Output"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get clan name suggestions for a guild
   /guilds/{guildId}/users/{userId}/activity-logs:
     get:
@@ -393,6 +457,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get activities for a specific user in a guild
   /guilds/{guildId}/member-activity-stats:
     get:
@@ -416,6 +496,22 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberActivityStatsResponseDto"
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get activity stats for guild members by source
   /guilds/{guildId}/activity-logs/{id}:
     get:
@@ -444,6 +540,22 @@ paths:
                 $ref: "#/components/schemas/ActivityResponseDto"
         "404":
           description: Activity not found
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Get a single activity by ID
     delete:
       tags:
@@ -471,6 +583,22 @@ paths:
                 $ref: "#/components/schemas/DeleteActivityResponseDto_Output"
         "404":
           description: Activity not found
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  statusCode:
+                    type: number
+                    enum:
+                      - 503
+                required:
+                  - message
+                  - statusCode
       summary: Delete a specific activity by ID
 components:
   schemas:

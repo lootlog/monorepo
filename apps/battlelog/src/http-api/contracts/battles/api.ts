@@ -1,4 +1,5 @@
 /** Endpoints owned by the battles HTTP module. */
+import { BadRequestResponse } from "../request-error.js";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
@@ -53,6 +54,7 @@ import { BearerSecurityMiddleware } from "./security.js";
 export class BattlesGroup extends HttpApiGroup.make("battles").add(
   HttpApiEndpoint.post("BattlesControllerCreateBattle", "/battles", {
     payload: BattlesControllerCreateBattleRequestJson,
+    error: BadRequestResponse,
     success: BattlesControllerCreateBattle201.pipe(HttpApiSchema.status(201)),
   })
     .middleware(BearerSecurityMiddleware)
@@ -247,7 +249,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     params: BattlesControllerUpdateBattlePathParams,
     payload: BattlesControllerUpdateBattleRequestJson,
     success: BattlesControllerUpdateBattle200,
-    error: HttpApiSchema.Empty(404),
+    error: [BadRequestResponse, HttpApiSchema.Empty(404)],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_updateBattle")

@@ -128,7 +128,7 @@ export class ActivityHealth extends Context.Service<
 export class ActivityHttpFailure extends TaggedErrorClass<ActivityHttpFailure>()(
   "ActivityHttpFailure",
   {
-    status: Schema.Literals([401, 403, 404, 500]),
+    status: Schema.Literals([401, 403, 404, 500, 503]),
     message: Schema.String,
   },
 ) {}
@@ -150,17 +150,23 @@ const authorize = Effect.fn("Activity.authorize")(function* (
     Effect.mapError(
       () =>
         new ActivityHttpFailure({
-          status: 500,
-          message: "Internal server error",
+          status: 503,
+          message: "Authorization service unavailable",
         }),
     ),
   );
   if (!guildId) return yield* fail(403, "Insufficient permissions");
-  const capabilities = yield* permissions.getUserGuildPermissions(
-    discordId,
-    userId,
-    guildId,
-  );
+  const capabilities = yield* permissions
+    .getUserGuildPermissions(discordId, userId, guildId)
+    .pipe(
+      Effect.mapError(
+        () =>
+          new ActivityHttpFailure({
+            status: 503,
+            message: "Authorization service unavailable",
+          }),
+      ),
+    );
   if (!createAccessPolicy({ capabilities }).allows(required)) {
     return yield* fail(403, "Insufficient permissions");
   }

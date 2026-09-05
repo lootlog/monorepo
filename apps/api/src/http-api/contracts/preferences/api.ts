@@ -2,9 +2,10 @@
 import {
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   SettingsDocumentsResponseSchema,
   SettingsDocumentsQuerySchema,
@@ -18,6 +19,9 @@ export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
     {
       query: SettingsDocumentsQuerySchema,
       success: SettingsDocumentsResponseSchema,
+      error: [400, 403].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -29,6 +33,9 @@ export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
     {
       payload: PatchSettingsDocumentsSchema,
       success: SettingsDocumentsResponseSchema,
+      error: [400, 403].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)

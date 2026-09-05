@@ -1,3 +1,4 @@
+import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
@@ -75,8 +76,13 @@ const orDieHttpFailure = <A, R>(
 ) =>
   Effect.catchTags(effect, {
     MessagingAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
-    MessagingOperationError: (error) => Effect.die(error.cause),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
+    MessagingOperationError: (error) => applicationErrorResponse(error.cause),
   });
 
 export const MessagingHandlers = HttpApiBuilder.group(

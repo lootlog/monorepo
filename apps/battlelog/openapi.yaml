@@ -31,6 +31,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleCreatedResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    anyOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: object
+                          properties:
+                            path:
+                              type: array
+                              items:
+                                anyOf:
+                                  - type: string
+                                  - anyOf:
+                                      - type: number
+                                      - type: string
+                                        enum:
+                                          - Infinity
+                                          - -Infinity
+                                          - NaN
+                            message:
+                              type: string
+                          required:
+                            - path
+                            - message
+                  statusCode:
+                    type: number
+                    enum:
+                      - 400
+                required:
+                  - error
+                  - message
+                  - statusCode
       summary: Create a battle
       requestBody:
         content:
@@ -1546,6 +1587,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    anyOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: object
+                          properties:
+                            path:
+                              type: array
+                              items:
+                                anyOf:
+                                  - type: string
+                                  - anyOf:
+                                      - type: number
+                                      - type: string
+                                        enum:
+                                          - Infinity
+                                          - -Infinity
+                                          - NaN
+                            message:
+                              type: string
+                          required:
+                            - path
+                            - message
+                  statusCode:
+                    type: number
+                    enum:
+                      - 400
+                required:
+                  - error
+                  - message
+                  - statusCode
         "404":
           description: Battle not found
       summary: Update battle visibility
@@ -1676,6 +1758,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleAcceptedResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    anyOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: object
+                          properties:
+                            path:
+                              type: array
+                              items:
+                                anyOf:
+                                  - type: string
+                                  - anyOf:
+                                      - type: number
+                                      - type: string
+                                        enum:
+                                          - Infinity
+                                          - -Infinity
+                                          - NaN
+                            message:
+                              type: string
+                          required:
+                            - path
+                            - message
+                  statusCode:
+                    type: number
+                    enum:
+                      - 400
+                required:
+                  - error
+                  - message
+                  - statusCode
       summary: Queue battle data deletion for a user
       requestBody:
         content:

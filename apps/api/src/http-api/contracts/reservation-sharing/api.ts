@@ -5,7 +5,10 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import {
+  BearerSecurityMiddleware,
+  OrganizationWorkspaceErrorResponse,
+} from "../shared.js";
 import {
   AcceptedReservationShareResponse,
   ReservationShareTokenPath,
@@ -26,6 +29,11 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "/guilds/:guildId/reservation-shares",
     {
       params: ReservationSharingOrganizationPath,
+      error: [
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
       success: ReservationSharesResponse,
     },
   )
@@ -40,6 +48,11 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "/guilds/:guildId/reservation-share-invitations",
     {
       params: ReservationSharingOrganizationPath,
+      error: [
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
       success: CreatedReservationShareInvitationResponse.pipe(
         HttpApiSchema.status(201),
       ),
@@ -56,6 +69,11 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "/guilds/:guildId/reservation-share-invitations/:invitationId",
     {
       params: ReservationShareInvitationPath,
+      error: [
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
       success: HttpApiSchema.Empty(204),
     },
   )
@@ -70,6 +88,11 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "/guilds/:guildId/reservation-shares/:shareId",
     {
       params: ReservationSharePath,
+      error: [
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
       success: HttpApiSchema.Empty(204),
     },
   )
@@ -81,6 +104,12 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     "/reservation-share-invitations/:token",
     {
       params: ReservationShareTokenPath,
+      error: [
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(409)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(410)),
+      ],
       success: ReservationShareInvitationPreviewResponse,
     },
   )
@@ -93,6 +122,12 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     {
       params: ReservationShareTokenPath,
       payload: AcceptReservationShareInvitationRequest,
+      error: [
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(409)),
+        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(410)),
+      ],
       success: AcceptedReservationShareResponse.pipe(HttpApiSchema.status(201)),
     },
   )

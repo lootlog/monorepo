@@ -20,7 +20,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusOkResponseDto_Output"
         "503":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Permanently delete user account and associated data
       summary: Delete user account
   /users/@me/preferences:
@@ -548,9 +552,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve guild information by guild ID
       summary: Get guild by ID
   /guilds/{guildId}/config:
@@ -573,6 +585,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
     patch:
       tags:
         - guilds
@@ -592,6 +616,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -620,6 +668,18 @@ paths:
                 type: array
                 items:
                   type: string
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve the list of worlds configured for a guild
       summary: Get guild worlds
   /guilds/{guildId}/permissions:
@@ -679,9 +739,17 @@ paths:
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve resolved permissions for the current member in a guild
       summary: Get guild permissions
   /guilds/{guildId}/discord-sync:
@@ -704,6 +772,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve the current Discord channel synchronization state for a guild
       summary: Get guild Discord sync status
   /guilds/{guildId}/discord-sync/refresh:
@@ -726,6 +806,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Trigger a refresh of the guild Discord channel synchronization state
       summary: Refresh guild Discord sync
   /internal/guilds/user-permissions:
@@ -923,7 +1021,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/TimerResponseDto"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve timers for a specific guild
       summary: Get guild timers
   /guilds/{guildId}/timers/npcs/search:
@@ -970,7 +1072,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/SearchTimersNpcResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
       summary: Search NPCs with timer data
   /timers/auto:
@@ -989,9 +1095,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateAutoTimerResponseDto_Output"
         "400":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Resolve target guilds from character catching settings and create timers for them
       summary: Create automatic timers
       requestBody:
@@ -1027,10 +1147,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TimerResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Reset a timer for a specific NPC in a guild
       summary: Reset timer
       requestBody:
@@ -1067,10 +1201,24 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a timer for a specific NPC in a guild
       summary: Delete timer
   /guilds/{guildId}/timers/{timerIdentifier}/history:
@@ -1111,6 +1259,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TimerHistoryResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve latest action history entries for a guild timer
       summary: Get timer action history
   /guilds/{guildId}/timers/history/{historyEntryId}/restore:
@@ -1139,6 +1305,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TimerResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Restore a deleted timer from a timer history entry
       summary: Restore timer from history
   /guilds/{guildId}/timers/manual:
@@ -1162,8 +1352,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TimerResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Manually create a timer for a guild
       summary: Create manual timer
       requestBody:
@@ -1279,6 +1485,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TimerSettingsResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update user global timer settings
       summary: Update global timer settings
       requestBody:
@@ -1308,6 +1520,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildTimerSettingsResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve user timer settings for a specific guild
       summary: Get guild-specific timer settings
     patch:
@@ -1330,6 +1554,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildTimerSettingsResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update user timer settings for a specific guild
       summary: Update guild-specific timer settings
       requestBody:
@@ -1349,6 +1585,18 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Migrate timer settings from localStorage to backend with conflict resolution
       summary: Migrate localStorage settings to backend
       requestBody:
@@ -1396,6 +1644,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get effective settings for multiple domains
     patch:
       tags:
@@ -1411,6 +1671,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Atomically patch settings in multiple domains
       requestBody:
         content:
@@ -1567,7 +1839,17 @@ paths:
                 items:
                   $ref: "#/components/schemas/LootResponseDto"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve paginated loots for a guild with optional filters
       summary: Get guild loots
   /guilds/{guildId}/loots/stats:
@@ -1620,7 +1902,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/LootStatsResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve aggregated loot statistics for a guild with optional time period and filters
       summary: Get guild loot statistics
   /guilds/{guildId}/loots/count:
@@ -1770,7 +2062,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/CountResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve the total count of loots for a guild with optional filters
       summary: Get guild loots count
   /guilds/{guildId}/loots/items/resolve:
@@ -1804,7 +2106,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/NullableLootItemResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Resolve a single visible loot item by HID without loading full loot payloads
       summary: Resolve loot item by HID
   /guilds/{guildId}/loots/{lootId}:
@@ -1832,9 +2144,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/NullableLootResponseDto"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve a single loot by ID
       summary: Get single loot
     delete:
@@ -1857,9 +2177,17 @@ paths:
         "200":
           description: <No Content>
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Archive an Organization Loot record
       summary: Archive loot
   /loots:
@@ -1877,6 +2205,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateLootResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Submit a loot from game client
       summary: Create loot
       requestBody:
@@ -1912,9 +2258,17 @@ paths:
                 items:
                   $ref: "#/components/schemas/LootCommentResponseDto"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve comments for a specific loot
       summary: Get loot comments
     post:
@@ -1941,9 +2295,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/LootCommentResponseDto"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Add a comment to a loot
       summary: Create loot comment
       requestBody:
@@ -1972,8 +2334,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LootShareResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "503":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update loot information
       summary: Update loot
       requestBody:
@@ -2001,10 +2391,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableLootlogConfigResponseDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieve lootlog configuration for a guild
       summary: Get lootlog configuration
   /guilds/{guildId}/lootlog-config/{npcId}:
@@ -2032,10 +2436,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LootlogConfigNpcResponseDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update allowed rarities for a specific NPC type in lootlog configuration
       summary: Update NPC configuration
       requestBody:
@@ -2224,6 +2642,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationSpotsResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: List reservation spots with current availability
   /guilds/{guildId}/reservation-spots/{spotId}/reservations:
     get:
@@ -2264,6 +2700,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationWindowResponseDto"
+        "400":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: List reservations for one spot and time window
     post:
       tags:
@@ -2289,6 +2749,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "409":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "422":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Create a reservation owned by the authenticated user
       requestBody:
         content:
@@ -2317,6 +2807,24 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Cancel an owned or locally moderated reservation
   /guilds/{guildId}/reservation-spot-pins/{spotId}:
     put:
@@ -2339,6 +2847,24 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Pin a reservation spot for the current user
     delete:
       tags:
@@ -2360,6 +2886,24 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Unpin a reservation spot for the current user
   /users/@me/reservations:
     get:
@@ -2385,6 +2929,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MyReservationsResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: List the current user's reservations
   /users/@me/reservations/{reservationId}:
     delete:
@@ -2402,6 +2952,18 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Cancel one of the current user's reservations
     patch:
       tags:
@@ -2422,6 +2984,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "409":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "422":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Update one of the current user's reservations
       requestBody:
         content:
@@ -2449,6 +3035,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationSharesResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: List reservation calendar partners and pending invitations
   /guilds/{guildId}/reservation-share-invitations:
     post:
@@ -2470,6 +3074,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateReservationShareInvitationResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Create a single-use reservation sharing invitation
   /guilds/{guildId}/reservation-share-invitations/{invitationId}:
     delete:
@@ -2492,6 +3114,24 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Revoke a pending reservation sharing invitation
   /guilds/{guildId}/reservation-shares/{shareId}:
     delete:
@@ -2514,6 +3154,24 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "403":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Stop sharing reservation calendars
   /reservation-share-invitations/{token}:
     get:
@@ -2535,6 +3193,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationShareInvitationPreviewResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "409":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "410":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Preview a reservation sharing invitation
     post:
       tags:
@@ -2555,6 +3237,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AcceptReservationShareInvitationResponseDto"
+        "401":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "404":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "409":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+        "410":
+          description: OrganizationWorkspaceErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
       summary: Accept a reservation sharing invitation
       requestBody:
         content:
@@ -2603,6 +3309,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create or reactivate a guild notification target
       summary: Create guild notification target
       requestBody:
@@ -2656,6 +3368,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a guild notification target
       summary: Delete guild notification target
     patch:
@@ -2681,6 +3399,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update a guild notification target
       summary: Update guild notification target
       requestBody:
@@ -2728,6 +3452,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create a guild notification rule
       summary: Create guild notification rule
       requestBody:
@@ -2760,6 +3502,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a guild notification rule
       summary: Delete guild notification rule
     patch:
@@ -2785,6 +3533,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update a guild notification rule
       summary: Update guild notification rule
       requestBody:
@@ -2817,6 +3577,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Rebuild pending jobs for a guild notification rule
       summary: Rebuild guild notification jobs
   /guilds/{guildId}/notifications/rules/{ruleId}/test:
@@ -2843,6 +3609,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Trigger a test notification for a guild rule
       summary: Trigger guild notification rule test
   /guilds/{guildId}/notifications/jobs:
@@ -2892,7 +3676,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
         "400":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Cancel a pending or blocked guild notification job
       summary: Cancel guild notification job
   /users/@me/notifications/targets:
@@ -2928,6 +3722,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create or reactivate a notification target for the authenticated user
       summary: Create user notification target
       requestBody:
@@ -2956,6 +3756,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a user notification target
       summary: Delete user notification target
     patch:
@@ -2977,6 +3783,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update a user notification target
       summary: Update user notification target
       requestBody:
@@ -3005,8 +3817,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Trigger a test notification for a user target
       summary: Trigger user notification target test
   /users/@me/notifications/rules:
@@ -3042,6 +3870,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create a user notification rule
       summary: Create user notification rule
       requestBody:
@@ -3070,6 +3910,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a user notification rule
       summary: Delete user notification rule
     patch:
@@ -3091,6 +3937,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update a user notification rule
       summary: Update user notification rule
       requestBody:
@@ -3149,6 +4007,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WatchedItemResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create or reactivate a watched item for the authenticated user
       summary: Create watched item
       requestBody:
@@ -3172,6 +4042,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WatchedItemResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Add a guild scope to a watched item for the authenticated user
       summary: Quick add watched item
       requestBody:
@@ -3200,6 +4082,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a watched item for the authenticated user
       summary: Delete watched item
   /messaging:
@@ -3217,12 +4105,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: NotificationRateLimitResponseDto
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationRateLimitResponseDto"
+        "503":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Send a notification to the user
       summary: Send notification
       requestBody:
@@ -3247,6 +4165,24 @@ paths:
       responses:
         "201":
           description: <No Content>
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Send a volunteer request to the notification creator
       summary: Volunteer for NPC notification
       requestBody:
@@ -3272,6 +4208,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
     post:
       tags:
         - party-ready-room
@@ -3286,6 +4228,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Create a party gathering Ready Room
       requestBody:
         content:
@@ -3313,6 +4273,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
   /messaging/party-gathering/{notificationId}/applications:
     post:
       tags:
@@ -3333,6 +4317,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -3359,6 +4373,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -3385,6 +4429,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -3411,6 +4485,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomInvitationTargetsDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -3437,6 +4535,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -3463,6 +4591,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       requestBody:
         content:
           application/json:
@@ -3500,6 +4658,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SoundSettingsResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update user sound settings
       summary: Update sound settings
       requestBody:
@@ -3561,8 +4725,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventMutationResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create a new guild event with maps and hero NPCs
       summary: Create event
       requestBody:
@@ -3597,7 +4771,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventOverviewResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get detailed information about a specific event
       summary: Get event details
     delete:
@@ -3625,7 +4803,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete an event
       summary: Delete event
     patch:
@@ -3652,8 +4834,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventMutationResponseDto"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update an existing event
       summary: Update event
       requestBody:
@@ -3688,7 +4880,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventOverviewResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get lightweight event overview for read-only views (without maps and rankings)
       summary: Get event overview
   /guilds/{guildId}/events/{eventId}/wrapped:
@@ -3717,7 +4913,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventWrappedApiResponseDto_Output"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get cached event wrapped summary with loot, coverage and member highlights
       summary: Get event wrapped summary
   /guilds/{guildId}/events/{eventId}/maps:
@@ -3746,7 +4946,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventMapsResponseDto_Output"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get map assignments grouped by hero for a specific event (read model for realtime map updates)
       summary: Get event maps
   /guilds/{guildId}/events/{eventId}/recalculate-points:
@@ -3775,7 +4979,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Manually recalculate all event kill points with current rules
       summary: Recalculate event points
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/assign:
@@ -3805,7 +5013,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Assign a guild member to monitor a specific map
       summary: Assign member to map
       requestBody:
@@ -3845,7 +5057,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Remove an assigned member from a map. If memberId is provided, removes specific member; otherwise removes all.
       summary: Unassign member from map
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/self-assign:
@@ -3875,7 +5091,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Assign yourself to monitor a specific map
       summary: Self-assign to map
     delete:
@@ -3904,7 +5124,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Remove yourself from a specific map
       summary: Self-unassign from map
   /guilds/{guildId}/events/{eventId}/heroes:
@@ -4122,7 +5346,11 @@ paths:
         "201":
           description: <No Content>
         "400":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Create a new location for grouping maps
       summary: Create location
       requestBody:
@@ -4163,7 +5391,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Delete a location. Maps in this location will become ungrouped.
       summary: Delete location
     patch:
@@ -4197,7 +5429,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Update a location name
       summary: Update location
       requestBody:
@@ -4272,7 +5508,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Assign a map to a location or remove it from a location (set to null)
       summary: Assign map to location
       requestBody:
@@ -4400,7 +5640,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/EventRankingEntryResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get the ranking for an event
       summary: Get event ranking
   /guilds/{guildId}/events/{eventId}/ranking/{rankingId}:
@@ -4430,7 +5674,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Apply a signed manual points delta to a ranking entry (OWNER/ADMIN only)
       summary: Update ranking points
       requestBody:
@@ -4472,7 +5720,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/EventTimerResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get timers for all hero NPCs in this event
       summary: Get event hero timers
   /guilds/{guildId}/events/{eventId}/hero-stats:
@@ -4503,7 +5755,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/EventHeroStatsResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get kill counts and stats for all heroes in an event
       summary: Get event hero stats
   /guilds/{guildId}/events/{eventId}/kills:
@@ -4547,7 +5803,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventKillHistoryResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get paginated kill history for all heroes in an event, with participant point details
       summary: Get event kill history
   /guilds/{guildId}/events/{eventId}/members/{memberId}/kills:
@@ -4596,7 +5856,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventMemberKillHistoryResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get paginated kill history for a specific member in an event, with detailed point breakdown per kill
       summary: Get member kill history
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills:
@@ -4640,7 +5904,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventKillHistoryResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get paginated kill history for a specific hero, with participant point details
       summary: Get hero kill history
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}:
@@ -4679,7 +5947,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/KillDetailResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get detailed information about a specific kill including participants, scoring breakdown, and matching loots
       summary: Get kill details
   /guilds/{guildId}/events/{eventId}/kills/{killId}/points/{killPointId}:
@@ -4714,7 +5986,11 @@ paths:
         "200":
           description: <No Content>
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Apply a signed manual points delta for a specific kill participant (OWNER/ADMIN only). Automatically recalculates ranking.
       summary: Update kill point
       requestBody:
@@ -4788,7 +6064,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/KillTimelineMapResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Get map timeline data with assignments and gaps for a specific kill
       summary: Get kill timeline data
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/coverage-gaps:
@@ -5016,9 +6296,23 @@ paths:
         "200":
           description: <No Content>
         "400":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Manually close a respawn window for a hero. Optionally creates a new window with specified or default times.
       summary: Close hero respawn window
       requestBody:
@@ -5054,9 +6348,23 @@ paths:
         "200":
           description: <No Content>
         "400":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Manually open a new respawn window for a hero with specified or default times.
       summary: Open hero respawn window
       requestBody:
@@ -5114,9 +6422,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/PinnedEventResponseDto"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       summary: Pin an active event
     delete:
       tags:
@@ -5283,7 +6599,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateKillResponseDto_Output"
         "400":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Records an NPC kill. Guilds are auto-detected from user lootlog config (loot/timer whitelists).
       summary: Record a kill
       requestBody:
@@ -5360,7 +6680,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildKillStatsResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieves kill statistics for a guild including overview and member ranking.
       summary: Get guild kill statistics
   /users/@me/stats/kills:
@@ -5591,7 +6921,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildTopNpcsResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieves the most frequently killed NPCs in a guild.
       summary: Get top killed NPCs in guild
   /guilds/{guildId}/stats/kills/top-killers:
@@ -5624,7 +6964,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildTopKillersByTypeResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieves top members by kill count for specific NPC types (TITAN, HERO).
       summary: Get top killers by NPC type in guild
   /guilds/{guildId}/stats/kills/npcs/{npcId}/killers:
@@ -5677,9 +7027,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/NpcKillersResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieves a ranking of members who killed a specific NPC, sorted by kill count.
       summary: Get killers ranking for a specific NPC
   /guilds/{guildId}/stats/kills/members/{memberId}:
@@ -5775,9 +7133,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/MemberKillsResponseDto_Output"
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Retrieves kill statistics for a specific member including overview and list of killed NPCs.
       summary: Get kill statistics for a specific guild member
   /guilds/{guildId}/stats-card/refresh:
@@ -6110,6 +7476,15 @@ components:
       required:
         - status
       additionalProperties: false
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message: {}
+      allOf:
+        - type: object
+          additionalProperties: {}
     UserPreferencesResponseDto_Output:
       type: object
       properties:
@@ -10781,6 +12156,16 @@ components:
           - currentReservation
           - nextReservation
         additionalProperties: false
+    OrganizationWorkspaceErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+        - code
+      allOf:
+        - type: object
+          additionalProperties: {}
     ReservationWindowResponseDto:
       type: object
       properties:

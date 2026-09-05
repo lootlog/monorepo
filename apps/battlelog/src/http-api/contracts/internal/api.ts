@@ -1,4 +1,5 @@
 /** Endpoints owned by the internal HTTP module. */
+import { BadRequestResponse } from "../request-error.js";
 import {
   HttpApiEndpoint,
   HttpApiGroup,
@@ -16,6 +17,7 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     "/internal/delete-user-data",
     {
       payload: InternalControllerDeleteUserDataRequestJson,
+      error: BadRequestResponse,
       success: InternalControllerDeleteUserData201.pipe(
         HttpApiSchema.status(201),
       ),

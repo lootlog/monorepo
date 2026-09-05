@@ -174,7 +174,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
           and(
             eq(timerTable.guildId, guildId),
             eq(timerTable.world, world),
-            sql`${timerTable.npc}->>'name' = ANY(${npcNames}::text[])`,
+            inArray(sql`${timerTable.npc}->>'name'`, npcNames),
           ),
         )
         .orderBy(desc(timerTable.maxSpawnTime)),
