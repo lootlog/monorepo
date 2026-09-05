@@ -197,7 +197,7 @@ export const EventCoordinationPage = () => {
 
   if (error || !coordination) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">
           {t("events.coordination.error")}

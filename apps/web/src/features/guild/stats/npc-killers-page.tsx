@@ -272,7 +272,7 @@ export const NpcKillersPage: React.FC = () => {
           </Card>
 
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
-            <ScrollArea className="relative flex-1 min-h-0 w-full">
+            <div className="relative min-w-0 w-full overflow-x-auto">
               {filteredKillers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">
@@ -416,7 +416,7 @@ export const NpcKillersPage: React.FC = () => {
                   </Table>
                 </>
               )}
-            </ScrollArea>
+            </div>
 
             <TablePaginationFooter
               totalLabel={t("kills.ranking.total", { count: total })}

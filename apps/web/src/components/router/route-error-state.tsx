@@ -29,7 +29,7 @@ export const RouteErrorState = ({
     description ?? t(`common.routeErrors.status.${status}.description`);
 
   return (
-    <div className="flex min-h-full flex-1 items-center justify-center px-3 py-3">
+    <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-3 py-3 [align-items:safe_center]">
       <Card className="w-full max-w-md border-border bg-card">
         <div className="flex flex-col items-center gap-4 p-6 text-center">
           <div className="flex items-center gap-2.5">

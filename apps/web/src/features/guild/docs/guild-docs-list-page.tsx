@@ -175,7 +175,7 @@ export const GuildDocsListPage = () => {
         {documentsQuery.isLoading ? (
           <GuildDocsListSkeleton />
         ) : documentsQuery.isError ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
               <FileX2 className="size-12 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
@@ -184,7 +184,7 @@ export const GuildDocsListPage = () => {
             </Card>
           </div>
         ) : !hasDocuments ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -206,7 +206,7 @@ export const GuildDocsListPage = () => {
             </Empty>
           </div>
         ) : !hasFilteredDocuments ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">

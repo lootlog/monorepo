@@ -156,7 +156,7 @@ export const EventMemberKillsPageContent = ({
 
   if (eventError || !event) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-4">
+      <div className="flex h-64 flex-col items-center justify-center gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         <AlertCircle className="size-12 text-destructive" />
         <p className="text-muted-foreground">
           {t("events.error", "Nie znaleziono eventu")}

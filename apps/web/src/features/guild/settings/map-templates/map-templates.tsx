@@ -84,9 +84,9 @@ export const MapTemplatesSettings = () => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 overflow-y-auto">
       <MapTemplatesHeader onAddClick={() => setCreateDialogOpen(true)} />
-      <ScrollArea className="flex-1 min-h-0 bg-background">
+      <ScrollArea className="flex-1 min-h-48 bg-background">
         <div className="p-3 flex flex-col gap-3">
           {isLoading ? (
             <div className="space-y-3">

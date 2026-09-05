@@ -11,11 +11,9 @@ vi.mock("@tanstack/react-router", () => ({
 afterEach(cleanup);
 
 describe("ReservationsLayout", () => {
-  it("tracks the dynamic viewport so the mobile action dock stays visible", () => {
+  it("fills the bounded application frame so the mobile action dock stays visible", () => {
     const { container } = render(<ReservationsLayout />);
 
-    expect(container.firstElementChild?.className).toContain(
-      "h-[calc(100dvh-3.5rem)]",
-    );
+    expect(container.firstElementChild?.className).toContain("h-full");
   });
 });

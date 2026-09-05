@@ -149,7 +149,7 @@ export function Reservations() {
             </div>
           </ScrollArea>
         ) : spotsQuery.isError ? (
-          <div className="flex flex-1 items-center justify-center px-3 pb-3">
+          <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-3 pb-3">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -173,7 +173,7 @@ export function Reservations() {
             </Empty>
           </div>
         ) : sortedSpots.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center px-3 pb-3">
+          <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-3 pb-3">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">

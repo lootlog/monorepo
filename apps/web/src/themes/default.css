@@ -1,0 +1,12 @@
+:root.default {
+  --primary: #c8f135;
+  --primary-foreground: #07111f;
+  --accent: #273321;
+  --accent-foreground: #f7f8f2;
+  --ring: #c8f135;
+  --sidebar-primary: #c8f135;
+  --sidebar-primary-foreground: #07111f;
+  --sidebar-accent: #273321;
+  --sidebar-accent-foreground: #f7f8f2;
+  --sidebar-ring: #c8f135;
+}
