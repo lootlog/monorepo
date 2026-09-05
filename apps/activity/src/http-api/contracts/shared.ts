@@ -1,6 +1,8 @@
 /** Shared transport definitions for the activity HTTP contract. */
+import { Schema } from "effect";
 import {
   HttpApiMiddleware,
+  HttpApiSchema,
   HttpApiSecurity,
   OpenApi,
 } from "effect/unstable/httpapi";
@@ -13,3 +15,8 @@ export class BearerSecurityMiddleware extends HttpApiMiddleware.Service<BearerSe
   "bearer security",
   { security: { bearer: BearerSecurity } },
 ) {}
+
+export const AuthorizationUnavailable = Schema.Struct({
+  message: Schema.String,
+  statusCode: Schema.Literal(503),
+}).pipe(HttpApiSchema.status(503));

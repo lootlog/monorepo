@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   SentNotificationResponse,
   NotificationRateLimitResponse,
@@ -18,7 +18,14 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
   HttpApiEndpoint.post("MessagingControllerSendNotification", "/messaging", {
     payload: SendNotificationRequest,
     success: SentNotificationResponse.pipe(HttpApiSchema.status(201)),
-    error: NotificationRateLimitResponse.pipe(HttpApiSchema.status(429)),
+    error: [
+      HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      NotificationRateLimitResponse.pipe(HttpApiSchema.status(429)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(503)),
+    ],
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MessagingController_sendNotification")
@@ -31,6 +38,11 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
       params: NotificationPath,
       payload: VolunteerForPartyRequest,
       success: HttpApiSchema.Empty(201),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

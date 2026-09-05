@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   LootlogConfigResponse,
   LootlogConfigOrganizationPath,
@@ -21,7 +21,11 @@ export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
     {
       params: LootlogConfigOrganizationPath,
       success: LootlogConfigResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -38,7 +42,11 @@ export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
       params: NpcLootlogConfigPath,
       payload: UpdateNpcLootlogConfigRequest,
       success: NpcLootlogConfigResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

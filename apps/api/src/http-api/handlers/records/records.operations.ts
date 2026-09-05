@@ -5,6 +5,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Schema } from "effect";
+import { applicationErrorResponse } from "../../application-error-response.js";
 import { HttpServerResponse } from "effect/unstable/http";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type {
@@ -439,10 +440,25 @@ export const toRecordsHttpResponse = <A, R>(
 ) =>
   Effect.catchTags(effect, {
     RecordsAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
     RecordsBadRequest: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
     RecordsNotFound: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
-    RecordsDataError: (error) => Effect.die(error.cause),
+      Effect.succeed(
+        HttpServerResponse.jsonUnsafe(
+          { code: error.code },
+          { status: error.status },
+        ),
+      ),
+    RecordsDataError: (error) => applicationErrorResponse(error.cause),
   });

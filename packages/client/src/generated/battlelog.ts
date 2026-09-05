@@ -1284,6 +1284,24 @@ export interface BattleAcceptedResponseDtoOutput {
   status: BattleAcceptedResponseDtoOutputStatus;
 }
 
+export type BattlesControllerCreateBattle400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type BattlesControllerCreateBattle400StatusCode = typeof BattlesControllerCreateBattle400StatusCode[keyof typeof BattlesControllerCreateBattle400StatusCode];
+
+
+export const BattlesControllerCreateBattle400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type BattlesControllerCreateBattle400 = {
+  error: string;
+  message: BattlesControllerCreateBattle400Message;
+  statusCode: BattlesControllerCreateBattle400StatusCode;
+};
+
 export type BattlesControllerGetDashboardBattlesParams = {
 cursor?: string;
 /**
@@ -2090,6 +2108,24 @@ export type BattlesControllerGetBattlePathParameters = {
 export type BattlesControllerUpdateBattlePathParameters = {
  battleId: string,
  }
+export type BattlesControllerUpdateBattle400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type BattlesControllerUpdateBattle400StatusCode = typeof BattlesControllerUpdateBattle400StatusCode[keyof typeof BattlesControllerUpdateBattle400StatusCode];
+
+
+export const BattlesControllerUpdateBattle400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type BattlesControllerUpdateBattle400 = {
+  error: string;
+  message: BattlesControllerUpdateBattle400Message;
+  statusCode: BattlesControllerUpdateBattle400StatusCode;
+};
+
 export type BattlesControllerDeleteBattlePathParameters = {
  battleId: string,
  }
@@ -2105,6 +2141,24 @@ export type PublicBattlesControllerGetPublicBattleRawPathParameters = {
 export type PublicBattlesControllerGetPublicBattleTimelinePathParameters = {
  battleId: string,
  }
+export type InternalControllerDeleteUserData400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type InternalControllerDeleteUserData400StatusCode = typeof InternalControllerDeleteUserData400StatusCode[keyof typeof InternalControllerDeleteUserData400StatusCode];
+
+
+export const InternalControllerDeleteUserData400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type InternalControllerDeleteUserData400 = {
+  error: string;
+  message: InternalControllerDeleteUserData400Message;
+  statusCode: InternalControllerDeleteUserData400StatusCode;
+};
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
@@ -2300,7 +2354,7 @@ return battlelogFetch<BattleCreatedResponseDtoOutput>(getBattlesControllerCreate
 
 
 
-export const getBattlesControllerCreateBattleMutationOptions = <TError = ErrorType<unknown>,
+export const getBattlesControllerCreateBattleMutationOptions = <TError = ErrorType<BattlesControllerCreateBattle400>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerCreateBattle>>, TError,BattlesControllerCreateBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerCreateBattle>>, TError,BattlesControllerCreateBattleMutationVariables, TContext> => {
 
@@ -2329,13 +2383,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type BattlesControllerCreateBattleMutationResult = NonNullable<Awaited<ReturnType<typeof battlesControllerCreateBattle>>>
     export type BattlesControllerCreateBattleMutationBody = BodyType<CreateBattleDto>
-    export type BattlesControllerCreateBattleMutationError = ErrorType<unknown>
+    export type BattlesControllerCreateBattleMutationError = ErrorType<BattlesControllerCreateBattle400>
     export type BattlesControllerCreateBattleMutationVariables = {data: BodyType<CreateBattleDto>}
 
     /**
  * @summary Create a battle
  */
-export const useBattlesControllerCreateBattle = <TError = ErrorType<unknown>,
+export const useBattlesControllerCreateBattle = <TError = ErrorType<BattlesControllerCreateBattle400>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerCreateBattle>>, TError,BattlesControllerCreateBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof battlesControllerCreateBattle>>,
@@ -4909,7 +4963,7 @@ return battlelogFetch<BattleResponseDtoOutput>(getBattlesControllerUpdateBattleU
 
 
 
-export const getBattlesControllerUpdateBattleMutationOptions = <TError = ErrorType<void>,
+export const getBattlesControllerUpdateBattleMutationOptions = <TError = ErrorType<BattlesControllerUpdateBattle400 | void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,BattlesControllerUpdateBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,BattlesControllerUpdateBattleMutationVariables, TContext> => {
 
@@ -4938,13 +4992,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type BattlesControllerUpdateBattleMutationResult = NonNullable<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>>
     export type BattlesControllerUpdateBattleMutationBody = BodyType<UpdateBattleDto>
-    export type BattlesControllerUpdateBattleMutationError = ErrorType<void>
+    export type BattlesControllerUpdateBattleMutationError = ErrorType<BattlesControllerUpdateBattle400 | void>
     export type BattlesControllerUpdateBattleMutationVariables = {pathParams: BattlesControllerUpdateBattlePathParameters;data: BodyType<UpdateBattleDto>}
 
     /**
  * @summary Update battle visibility
  */
-export const useBattlesControllerUpdateBattle = <TError = ErrorType<void>,
+export const useBattlesControllerUpdateBattle = <TError = ErrorType<BattlesControllerUpdateBattle400 | void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,BattlesControllerUpdateBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof battlesControllerUpdateBattle>>,
@@ -5631,7 +5685,7 @@ return battlelogFetch<BattleAcceptedResponseDtoOutput>(getInternalControllerDele
 
 
 
-export const getInternalControllerDeleteUserDataMutationOptions = <TError = ErrorType<unknown>,
+export const getInternalControllerDeleteUserDataMutationOptions = <TError = ErrorType<InternalControllerDeleteUserData400>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalControllerDeleteUserData>>, TError,InternalControllerDeleteUserDataMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof internalControllerDeleteUserData>>, TError,InternalControllerDeleteUserDataMutationVariables, TContext> => {
 
@@ -5660,13 +5714,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type InternalControllerDeleteUserDataMutationResult = NonNullable<Awaited<ReturnType<typeof internalControllerDeleteUserData>>>
     export type InternalControllerDeleteUserDataMutationBody = BodyType<DeleteUserDataDto>
-    export type InternalControllerDeleteUserDataMutationError = ErrorType<unknown>
+    export type InternalControllerDeleteUserDataMutationError = ErrorType<InternalControllerDeleteUserData400>
     export type InternalControllerDeleteUserDataMutationVariables = {data: BodyType<DeleteUserDataDto>}
 
     /**
  * @summary Queue battle data deletion for a user
  */
-export const useInternalControllerDeleteUserData = <TError = ErrorType<unknown>,
+export const useInternalControllerDeleteUserData = <TError = ErrorType<InternalControllerDeleteUserData400>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalControllerDeleteUserData>>, TError,InternalControllerDeleteUserDataMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof internalControllerDeleteUserData>>,

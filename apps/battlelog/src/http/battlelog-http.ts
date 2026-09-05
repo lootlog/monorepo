@@ -5,6 +5,7 @@ import {
   HttpRouter,
   HttpServer,
   HttpServerRequest,
+  HttpServerError,
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
@@ -65,6 +66,15 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
 });
 
 const errorResponse = (error: unknown) => {
+  if (
+    HttpServerError.isHttpServerError(error) &&
+    error.reason._tag === "RequestParseError"
+  ) {
+    return HttpServerResponse.jsonUnsafe(
+      { error: "Bad Request", message: "Invalid JSON body", statusCode: 400 },
+      { status: 400 },
+    );
+  }
   if (Schema.isSchemaError(error)) {
     return HttpServerResponse.jsonUnsafe(
       {

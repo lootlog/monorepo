@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   LootCountResponse,
   LootOrganizationPath,
@@ -35,7 +35,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
       params: LootOrganizationPath,
       query: LootsQuery,
       success: LootListResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -52,7 +54,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
       params: LootOrganizationPath,
       query: LootStatsQuery,
       success: LootStatsResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -69,7 +73,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
       params: LootOrganizationPath,
       query: LootsQuery,
       success: LootCountResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -86,7 +92,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
       params: LootOrganizationPath,
       query: ResolveLootItemQuery,
       success: ResolvedLootItemResponse,
-      error: HttpApiSchema.Empty(403),
+      error: [403, 404].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -102,7 +110,10 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     {
       params: LootPath,
       success: LootDetailResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -115,7 +126,10 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     {
       params: LootPath,
       success: HttpApiSchema.Empty(200),
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -125,6 +139,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   HttpApiEndpoint.post("LootsControllerCreateLoot", "/loots", {
     payload: CreateLootRequest,
     success: CreateLootResponse.pipe(HttpApiSchema.status(201)),
+    error: [400, 403, 503].map((status) =>
+      HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+    ),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_createLoot")
@@ -136,7 +153,10 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     {
       params: LootPath,
       success: LootCommentsResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -150,7 +170,10 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
       params: LootPath,
       payload: CreateLootCommentRequest,
       success: LootCommentResponse.pipe(HttpApiSchema.status(201)),
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -161,7 +184,9 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     params: LootSharePath,
     payload: UpdateLootShareRequest,
     success: LootShareResponse,
-    error: HttpApiSchema.Empty(404),
+    error: [400, 403, 404, 409, 503].map((status) =>
+      HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+    ),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_updateLoot")

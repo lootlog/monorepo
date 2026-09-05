@@ -1,9 +1,6 @@
 import { Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import {
-  ApplicationError,
-  ApplicationErrorKind,
-} from "#src/shared/http/http-errors";
+import { ApplicationError } from "#src/shared/http/http-errors";
 
 export class TimersInvalidRequest extends TaggedErrorClass<TimersInvalidRequest>()(
   "TimersInvalidRequest",
@@ -41,6 +38,7 @@ export class TimersInfrastructureError extends TaggedErrorClass<TimersInfrastruc
 ) {}
 
 export type TimersDataFailure =
+  | ApplicationError
   | TimersInvalidRequest
   | TimersForbidden
   | TimersNotFound
@@ -57,19 +55,6 @@ export const toTimersDataFailure = (cause: unknown): TimersDataFailure => {
   ) {
     return cause;
   }
-  if (cause instanceof ApplicationError) {
-    switch (cause.kind) {
-      case ApplicationErrorKind.INVALID_REQUEST:
-        return new TimersInvalidRequest({ status: 400, code: cause.kind });
-      case ApplicationErrorKind.FORBIDDEN:
-        return new TimersForbidden({ status: 403, code: cause.kind });
-      case ApplicationErrorKind.NOT_FOUND:
-        return new TimersNotFound({ status: 404, code: cause.kind });
-      case ApplicationErrorKind.CONFLICT:
-        return new TimersConflict({ status: 409, code: cause.kind });
-      default:
-        return new TimersInfrastructureError({ cause });
-    }
-  }
+  if (cause instanceof ApplicationError) return cause;
   return new TimersInfrastructureError({ cause });
 };

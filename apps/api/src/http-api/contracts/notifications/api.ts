@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import { SuccessResponse } from "#src/contracts/shared";
 import {
   OrganizationNotificationJobParams,
@@ -59,6 +59,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       params: OrganizationNotificationParams,
       payload: CreateNotificationTargetRequest,
       success: NotificationTargetResponse.pipe(HttpApiSchema.status(201)),
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(400))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -95,6 +96,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: OrganizationNotificationTargetParams,
       success: SuccessResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -111,6 +113,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       params: OrganizationNotificationTargetParams,
       payload: UpdateNotificationTargetRequest,
       success: NotificationTargetResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -142,6 +145,11 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       params: OrganizationNotificationParams,
       payload: CreateNotificationRuleRequest,
       success: NotificationRuleResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -157,6 +165,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: OrganizationNotificationRuleParams,
       success: SuccessResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -173,6 +182,10 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       params: OrganizationNotificationRuleParams,
       payload: UpdateNotificationRuleRequest,
       success: NotificationRuleResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -188,6 +201,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: OrganizationNotificationRuleParams,
       success: SuccessResponse.pipe(HttpApiSchema.status(201)),
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -206,6 +220,11 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: OrganizationNotificationRuleParams,
       success: SuccessResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -239,7 +258,10 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: OrganizationNotificationJobParams,
       success: SuccessResponse,
-      error: HttpApiSchema.Empty(400),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -267,6 +289,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       payload: CreateNotificationTargetRequest,
       success: NotificationTargetResponse.pipe(HttpApiSchema.status(201)),
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(400))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -285,6 +308,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: NotificationTargetParams,
       success: SuccessResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -301,6 +325,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       params: NotificationTargetParams,
       payload: UpdateNotificationTargetRequest,
       success: NotificationTargetResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -316,7 +341,11 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: NotificationTargetParams,
       success: SuccessResponse.pipe(HttpApiSchema.status(201)),
-      error: HttpApiSchema.Empty(409),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -347,6 +376,10 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       payload: CreateNotificationRuleRequest,
       success: NotificationRuleResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -359,6 +392,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: NotificationRuleParams,
       success: SuccessResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -372,6 +406,10 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       params: NotificationRuleParams,
       payload: UpdateNotificationRuleRequest,
       success: NotificationRuleResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -408,6 +446,10 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       payload: CreateWatchedItemRequest,
       success: WatchedItemResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -426,6 +468,10 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       payload: QuickAddWatchedItemRequest,
       success: WatchedItemResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -444,6 +490,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     {
       params: WatchedItemParams,
       success: SuccessResponse,
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(404))],
     },
   )
     .middleware(BearerSecurityMiddleware)
