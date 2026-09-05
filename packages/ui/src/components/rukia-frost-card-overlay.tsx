@@ -2,25 +2,6 @@ import * as React from "react";
 
 import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
 
-const RUKIA_CLASS = "rukia";
-
-export function useRukiaTheme() {
-  const [isRukia, setIsRukia] = React.useState(() => {
-    if (typeof document === "undefined") return false;
-    return document.documentElement.classList.contains(RUKIA_CLASS);
-  });
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const check = () => setIsRukia(root.classList.contains(RUKIA_CLASS));
-    const observer = new MutationObserver(check);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  return isRukia;
-}
-
 const SNOWFLAKE_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='white' stroke-width='1' stroke-linecap='round'%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='4.93' x2='19.07' y2='19.07'/%3E%3Cline x1='4.93' y1='19.07' x2='19.07' y2='4.93'/%3E%3Cline x1='12' y1='2' x2='10' y2='5'/%3E%3Cline x1='12' y1='2' x2='14' y2='5'/%3E%3Cline x1='12' y1='22' x2='10' y2='19'/%3E%3Cline x1='12' y1='22' x2='14' y2='19'/%3E%3C/g%3E%3C/svg%3E";
 
@@ -62,11 +43,8 @@ function createRukiaOverlayElements(id: string) {
 }
 
 export function RukiaFrostCardOverlay() {
-  const isRukiaTheme = useRukiaTheme();
   const id = React.useId();
   const elements = createRukiaOverlayElements(id);
-
-  if (!isRukiaTheme) return null;
 
   return (
     <div

@@ -1,3 +1,4 @@
+import { getBattleActionValues } from "../utils/battle-action-values";
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 import { Trans } from "react-i18next";
@@ -7,7 +8,7 @@ import {
 } from "../utils/dynamic-values-helper";
 import { getBattleActionPresentation } from "../utils/battle-action-presentation";
 import { BATTLE_SURFACE_COLORS } from "../utils/battle-color-palette";
-import { roundHpPercentage, roundValue } from "../utils/value-utils";
+import { roundValue } from "../utils/value-utils";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
@@ -58,12 +59,8 @@ export const BattleActionItem: FC<BattleActionItemProps> = ({
       <Trans
         i18nKey={actionPresentation.i18nKey}
         values={{
-          name: attacker?.name,
-          defenderName: defender?.name,
+          ...getBattleActionValues(action, event, attacker, defender),
           value: processedValue,
-          hp: roundHpPercentage(event.attackerHpPercentage),
-          defenderHp: roundHpPercentage(event.defenderHpPercentage),
-          v1: 0,
           ...actionPresentation.values,
           ...dynamicData.values,
         }}

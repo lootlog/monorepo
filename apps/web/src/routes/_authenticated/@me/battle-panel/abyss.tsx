@@ -25,8 +25,12 @@ import {
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
   validateSearch: battlePanelAbyssSearchSchema,
-  loader: ({ abortController, context, location }) =>
+  loader: ({ abortController, context, location, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {
+      if (preload) {
+        return null;
+      }
+
       const search = loadBattlePanelAbyssSearch(location.searchStr);
       const characterId = await ensureBattlePanelCharacterId({
         queryClient: context.queryClient,

@@ -5,31 +5,6 @@ import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
 export const PAW_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='21' rx='6.5' ry='5' fill='white'/%3E%3Ccircle cx='7' cy='11' r='3' fill='white'/%3E%3Ccircle cx='13' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='19' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='25' cy='11' r='3' fill='white'/%3E%3C/svg%3E";
 
-const CAT_CLASSES = ["cat-pink", "cat-purple", "cat-blue"];
-
-const getCatThemeSnapshot = () =>
-  CAT_CLASSES.some((className) =>
-    document.documentElement.classList.contains(className),
-  );
-
-const subscribeToCatTheme = (onStoreChange: () => void) => {
-  const observer = new MutationObserver(onStoreChange);
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-
-  return () => observer.disconnect();
-};
-
-export function useCatTheme() {
-  return React.useSyncExternalStore(
-    subscribeToCatTheme,
-    getCatThemeSnapshot,
-    () => false,
-  );
-}
-
 function createCatPaws(id: string) {
   const random = createSeededRandom(hashString(id));
 
@@ -97,11 +72,8 @@ function createCatPaws(id: string) {
 }
 
 export function CatPawOverlay() {
-  const isCatTheme = useCatTheme();
   const id = React.useId();
   const paws = createCatPaws(id);
-
-  if (!isCatTheme) return null;
 
   return (
     <div

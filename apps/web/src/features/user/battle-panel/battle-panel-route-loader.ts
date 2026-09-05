@@ -10,6 +10,10 @@ export const ensureBattlePanelCharacterId = async ({
   queryClient,
   characterId,
 }: EnsureBattlePanelCharacterIdOptions) => {
+  if (characterId) {
+    return characterId;
+  }
+
   const charactersResponse = await queryClient.ensureQueryData(
     getBattlesControllerGetUserCharactersQueryOptions(),
   );

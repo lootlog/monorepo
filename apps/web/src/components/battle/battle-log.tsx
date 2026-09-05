@@ -1,3 +1,4 @@
+import { buildBattleLogVisibleText } from "./utils/battle-log-visible-text";
 import type {
   BattleWarrior as Warrior,
   RawBattle,
@@ -8,15 +9,25 @@ import { cn } from "cn";
 import { BattleLogList } from "./battle-log-list";
 import { BattleLogSearchToolbar } from "./battle-log-search-toolbar";
 import { Sword } from "lucide-react";
-import { useEffect, useRef, useState, type FC } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+  type FC,
+  type RefObject,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   getNextBattleLogSearchIndex,
+  buildBattleLogRawSearchText,
   normalizeBattleLogSearchText,
 } from "./utils/battle-log-search";
 import { getDisplayBattleEvents } from "./utils/raw-battle-events";
 
 export type BattleLogProps = {
+  outerScrollViewportRef: RefObject<HTMLDivElement | null>;
+  stickyContentRef?: RefObject<HTMLDivElement | null>;
   rawBattle: RawBattle;
   warriors: Warrior[];
   showHeader?: boolean;
@@ -26,12 +37,15 @@ export type BattleLogProps = {
   scrollToSelectedTurnRequestId?: number;
   onListScroll?: () => void;
   onSelectedTurnScrollComplete?: (turn: number) => void;
+  onSelectedTurnScrollCancel?: (turn: number) => void;
   onTurnSelect?: (turn: number) => void;
   onTurnFocus?: (turn: number) => void;
 };
 
 export const BattleLog: FC<BattleLogProps> = ({
   rawBattle,
+  outerScrollViewportRef,
+  stickyContentRef,
   warriors,
   showHeader = true,
   className,
@@ -40,12 +54,13 @@ export const BattleLog: FC<BattleLogProps> = ({
   scrollToSelectedTurnRequestId = 0,
   onListScroll,
   onSelectedTurnScrollComplete,
+  onSelectedTurnScrollCancel,
   onTurnSelect,
   onTurnFocus,
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchMatchTurns, setSearchMatchTurns] = useState<number[]>([]);
+  const deferredQuery = useDeferredValue(searchQuery);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
   const listViewportRef = useRef<HTMLDivElement>(null);
   const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
@@ -53,35 +68,57 @@ export const BattleLog: FC<BattleLogProps> = ({
     (warrior) => warrior.originalId === rawBattle.characterId,
   )?.team;
   const events = getDisplayBattleEvents(rawBattle);
-  const activeSearchTurn =
-    activeSearchMatchIndex >= 0
-      ? (searchMatchTurns[activeSearchMatchIndex] ?? null)
-      : null;
+  // Keep the index outside the virtualizer component: its mutable API opts that
+  // component out of React Compiler caching.
+  const warriorsMap = new Map(
+    warriors.map((warrior) => [warrior.originalId, warrior]),
+  );
+  const normalizedQuery = normalizeBattleLogSearchText(deferredQuery);
+  const hasSearch = normalizedQuery.length > 0;
+  const searchEntries = hasSearch
+    ? events.map((event, eventIndex) => {
+        const turn = eventIndex + 1;
+        const attacker =
+          event.attackerId == null
+            ? undefined
+            : warriorsMap.get(event.attackerId);
+        const defender =
+          event.defenderId == null
+            ? undefined
+            : warriorsMap.get(event.defenderId);
+        return {
+          turn,
+          rawText: normalizeBattleLogSearchText(
+            buildBattleLogRawSearchText({ event, attacker, defender, turn }),
+          ),
+          visibleText: normalizeBattleLogSearchText(
+            buildBattleLogVisibleText({ event, attacker, defender, turn, t }),
+          ),
+        };
+      })
+    : [];
+  const deferredMatches = normalizedQuery
+    ? searchEntries
+        .filter(
+          (entry) =>
+            entry.rawText.includes(normalizedQuery) ||
+            entry.visibleText.includes(normalizedQuery),
+        )
+        .map((entry) => entry.turn)
+    : [];
+  const searchMatchTurns = deferredQuery === searchQuery ? deferredMatches : [];
+  const currentMatchIndex =
+    searchMatchTurns.length > 0
+      ? Math.max(
+          0,
+          Math.min(activeSearchMatchIndex, searchMatchTurns.length - 1),
+        )
+      : -1;
+  const activeSearchTurn = searchMatchTurns[currentMatchIndex] ?? null;
 
   useEffect(() => {
     turnFocusHandlerRef.current = onTurnFocus ?? onTurnSelect;
   }, [onTurnFocus, onTurnSelect]);
-
-  useEffect(() => {
-    const hasQuery = normalizeBattleLogSearchText(searchQuery).length > 0;
-
-    if (!hasQuery || searchMatchTurns.length === 0) {
-      if (activeSearchMatchIndex !== -1) {
-        setActiveSearchMatchIndex(-1);
-      }
-
-      return;
-    }
-
-    if (
-      activeSearchMatchIndex >= 0 &&
-      activeSearchMatchIndex < searchMatchTurns.length
-    ) {
-      return;
-    }
-
-    setActiveSearchMatchIndex(0);
-  }, [activeSearchMatchIndex, searchMatchTurns, searchQuery]);
 
   useEffect(() => {
     if (activeSearchTurn == null) {
@@ -93,14 +130,13 @@ export const BattleLog: FC<BattleLogProps> = ({
 
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
-    setSearchMatchTurns([]);
     setActiveSearchMatchIndex(-1);
   };
 
   const handlePreviousSearchMatch = () => {
-    setActiveSearchMatchIndex((currentIndex) =>
+    setActiveSearchMatchIndex(
       getNextBattleLogSearchIndex({
-        currentIndex,
+        currentIndex: currentMatchIndex,
         total: searchMatchTurns.length,
         direction: "previous",
       }),
@@ -108,9 +144,9 @@ export const BattleLog: FC<BattleLogProps> = ({
   };
 
   const handleNextSearchMatch = () => {
-    setActiveSearchMatchIndex((currentIndex) =>
+    setActiveSearchMatchIndex(
       getNextBattleLogSearchIndex({
-        currentIndex,
+        currentIndex: currentMatchIndex,
         total: searchMatchTurns.length,
         direction: "next",
       }),
@@ -125,10 +161,13 @@ export const BattleLog: FC<BattleLogProps> = ({
       selectedTurn={selectedTurn}
       scrollToSelectedTurnRequestId={scrollToSelectedTurnRequestId}
       scrollViewportRef={listViewportRef}
-      searchQuery={searchQuery}
+      outerScrollViewportRef={outerScrollViewportRef}
+      stickyContentRef={stickyContentRef}
+      onVisibleTurnsChange={onListScroll}
+      searchMatchedTurns={searchMatchTurns}
       activeSearchTurn={activeSearchTurn}
-      onSearchMatchesChange={setSearchMatchTurns}
       onSelectedTurnScrollComplete={onSelectedTurnScrollComplete}
+      onSelectedTurnScrollCancel={onSelectedTurnScrollCancel}
       onTurnSelect={onTurnSelect}
     />
   );
@@ -154,7 +193,7 @@ export const BattleLog: FC<BattleLogProps> = ({
       )}
       <BattleLogSearchToolbar
         query={searchQuery}
-        currentIndex={activeSearchMatchIndex}
+        currentIndex={currentMatchIndex}
         totalMatches={searchMatchTurns.length}
         onQueryChange={handleSearchQueryChange}
         onPrevious={handlePreviousSearchMatch}
