@@ -5,6 +5,10 @@ import { makeGatewayAuth } from "./auth-service.js";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 
 const config = {
+  allowedExtensionOrigins: new Set([
+    "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc",
+  ]),
   authUrl: "http://auth.local",
   allowedWebOrigins: new Set(["https://lootlog.example"]),
 } as unknown as GatewayConfiguration;
@@ -20,6 +24,48 @@ describe("AuthService websocket upgrade boundary", () => {
     expect(service.isAllowedOrigin("https://berufs.margonem.pl")).toBe(true);
     expect(service.isAllowedOrigin("https://attacker.example")).toBe(false);
     expect(service.isAllowedOrigin(null)).toBe(false);
+  });
+
+  test("allows configured Chrome origins and classifies extensions as game clients", () => {
+    for (const origin of config.allowedExtensionOrigins) {
+      expect(service.isAllowedOrigin(origin)).toBe(true);
+      expect(service.getPlatform(origin)).toBe("game");
+      expect(service.isAllowedOrigin(`${origin}.attacker.example`)).toBe(false);
+    }
+    expect(
+      service.isAllowedOrigin(
+        "chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      ),
+    ).toBe(false);
+    expect(service.isAllowedOrigin("moz-extension://not-a-uuid")).toBe(false);
+    expect(service.isAllowedOrigin("null")).toBe(false);
+    expect(service.getPlatform("https://lootlog.example")).toBe("web-app");
+    expect(service.getPlatform("https://berufs.margonem.pl")).toBe("game");
+  });
+
+  test("requires an origin-bound ticket instead of ambient cookies for Firefox installations", () => {
+    const origin = "moz-extension://a7e55f76-3efa-4d42-90c3-9800d48d882e";
+    expect(service.isAllowedOrigin(origin)).toBe(true);
+    expect(service.getPlatform(origin)).toBe("game");
+    expect(
+      service.readCredential(
+        new Request("https://gateway.example/ws", {
+          headers: { origin, cookie: "lootlog.session=abc" },
+        }),
+      ),
+    ).toBeNull();
+    const encoded = Buffer.from("firefox-ticket").toString("base64url");
+    expect(
+      service.readCredential(
+        new Request("https://gateway.example/ws", {
+          headers: {
+            origin,
+            cookie: "lootlog.session=abc",
+            "sec-websocket-protocol": `lootlog.realtime.v1, lootlog.ticket.v1.${encoded}`,
+          },
+        }),
+      ),
+    ).toEqual({ kind: "one-time-ticket", value: "firefox-ticket", origin });
   });
 
   test("prefers the first-party session cookie", () => {

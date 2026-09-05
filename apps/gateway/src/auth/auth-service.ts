@@ -2,8 +2,13 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { FirefoxExtensionOrigin } from "@lootlog/schema/browser-extension";
 import { GAME_URL_REGEX } from "#src/auth/game-url";
 import type { AuthenticatedIdentity } from "#src/realtime/session";
+
+// Firefox assigns a different extension UUID to each installation. Admission
+// requires an origin-bound ticket, never the ambient cookie for these origins.
+const isFirefoxExtensionOrigin = Schema.is(FirefoxExtensionOrigin);
 
 const ticketProtocolPrefix = "lootlog.ticket.v1.";
 
@@ -54,12 +59,18 @@ export const makeGatewayAuth = (
     const normalized = origin.replace(/\/$/, "");
     return (
       GAME_URL_REGEX.test(normalized) ||
-      config.allowedWebOrigins.has(normalized)
+      isFirefoxExtensionOrigin(normalized) ||
+      config.allowedWebOrigins.has(normalized) ||
+      config.allowedExtensionOrigins.has(normalized)
     );
   };
 
   const getPlatform = (origin: string): "game" | "web-app" =>
-    GAME_URL_REGEX.test(origin) ? "game" : "web-app";
+    GAME_URL_REGEX.test(origin) ||
+    isFirefoxExtensionOrigin(origin.replace(/\/$/, "")) ||
+    config.allowedExtensionOrigins.has(origin.replace(/\/$/, ""))
+      ? "game"
+      : "web-app";
 
   const readCredential = (request: Request): UpgradeCredential | null => {
     const protocolTicket = readTicketProtocol(
@@ -72,7 +83,14 @@ export const makeGatewayAuth = (
         : null;
     }
     const cookie = request.headers.get("cookie")?.trim();
-    if (cookie) return { kind: "session-cookie", value: cookie };
+    if (
+      cookie &&
+      !isFirefoxExtensionOrigin(
+        (request.headers.get("origin") ?? "").replace(/\/$/, ""),
+      )
+    ) {
+      return { kind: "session-cookie", value: cookie };
+    }
 
     const authorization = request.headers.get("authorization")?.trim();
     if (!authorization?.startsWith("Bearer ")) return null;

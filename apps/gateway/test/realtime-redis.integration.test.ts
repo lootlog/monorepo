@@ -236,6 +236,7 @@ describe("realtime Dragonfly integration", () => {
       activityEventSignatureSecret: Redacted.make("test"),
       websocketPath: "/ws",
       allowedWebOrigins: new Set<string>(),
+      allowedExtensionOrigins: new Set<string>(),
       redis: {
         host: dragonfly.getHost(),
         port: redisPort,

@@ -313,7 +313,7 @@ export class RealtimeClient {
     socket.addEventListener("message", (event) => {
       this.messageChain = this.messageChain
         .then(() => this.handleMessage(event.data))
-        .catch(() => socket.close(1007, "malformed realtime frame"));
+        .catch(() => socket.close(4007, "malformed realtime frame"));
     });
     socket.addEventListener("error", () => {
       if (this.socket === socket) socket.close();

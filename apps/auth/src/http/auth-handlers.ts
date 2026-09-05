@@ -2,6 +2,7 @@ import { Effect, Layer, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { AuthService, HttpResponseError } from "#src/auth/auth-service";
+import { FirefoxExtensionOrigin } from "@lootlog/schema/browser-extension";
 import { AuthApi } from "#src/http-api/auth-api";
 
 const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
@@ -55,10 +56,15 @@ const issueRealtimeTicket = Effect.fn("AuthController_issueRealtimeTicket")(
   function* () {
     const auth = yield* AuthService;
     const headers = yield* requestHeaders;
-    return yield* auth.createRealtimeTicket(
-      headers,
-      headers.get("origin") ?? undefined,
-    );
+    const origin = headers.get("origin");
+    const extensionOrigin = headers.get("x-lootlog-extension-origin");
+    // Firefox may omit Origin on privileged background fetches. This hint only
+    // binds the ticket; the session authenticates it and the socket must match.
+    let ticketOrigin = origin === "null" ? undefined : origin;
+    if (!ticketOrigin && Schema.is(FirefoxExtensionOrigin)(extensionOrigin)) {
+      ticketOrigin = extensionOrigin;
+    }
+    return yield* auth.createRealtimeTicket(headers, ticketOrigin ?? undefined);
   },
 );
 

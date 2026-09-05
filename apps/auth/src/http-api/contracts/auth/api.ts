@@ -10,6 +10,7 @@ import {
   AuthControllerGetIdpTokenRequestJson,
   AuthControllerGetScopes200,
   AuthControllerIssueRealtimeTicket201,
+  AuthControllerIssueRealtimeTicketHeaders,
   AuthControllerVerify200,
   AuthControllerVerifyHeaders,
 } from "./schemas.js";
@@ -25,6 +26,7 @@ export class AuthGroup extends HttpApiGroup.make("auth").add(
     "AuthControllerIssueRealtimeTicket",
     "/auth/realtime-ticket",
     {
+      headers: AuthControllerIssueRealtimeTicketHeaders,
       success: AuthControllerIssueRealtimeTicket201.pipe(
         HttpApiSchema.status(201),
       ),

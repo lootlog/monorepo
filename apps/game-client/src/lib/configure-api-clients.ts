@@ -1,9 +1,11 @@
+import { gameClientFetch } from "./game-client-platform";
 import { configureApiClients } from "@lootlog/client/transport";
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 
 export const configureGameApiClients = (): (() => void) => {
   const sharedConfiguration = {
     credentials: "include" as const,
+    fetch: gameClientFetch,
   };
 
   return configureApiClients({

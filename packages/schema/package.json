@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./account-preferences": "./src/account-preferences.ts",
+    "./browser-extension": "./src/browser-extension.ts",
     "./air-tag": "./src/air-tag.ts",
     "./chat": "./src/chat.ts",
     "./chat-appearance": "./src/chat-appearance.ts",

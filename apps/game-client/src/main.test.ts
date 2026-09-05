@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { RealtimeClient } from "@lootlog/client/realtime";
 
 const runtimeMocks = vi.hoisted(() => {
   const render = vi.fn();
@@ -175,6 +176,99 @@ describe("getLootlogRootZIndex", () => {
     expect(
       (window as RuntimeWindow).__lootlogGameClientRuntime?.version,
     ).not.toBe("older-version");
+  });
+
+  it("lets the extension replace the same-version userscript, then keeps userscript reloads from replacing it", async () => {
+    const { bootstrapGameClient } = await loadMain();
+    const userscript = bootstrapGameClient();
+    const realtime = new RealtimeClient({ url: "https://gateway.lootlog.pl" });
+    const extension = bootstrapGameClient({
+      fetch: globalThis.fetch,
+      createRealtime: () => realtime,
+    });
+    expect(extension.version).toBe(userscript.version);
+    expect(extension.installation).toBe("extension");
+    expect(userscript.state).toBe("disposed");
+    expect(extension.state).toBe("ready");
+    expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
+    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(2);
+
+    const reloadedUserscript = await loadMain();
+    expect(reloadedUserscript.bootstrapGameClient()).toBe(extension);
+    expect(extension.state).toBe("ready");
+    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(2);
+    expect(document.querySelectorAll("#lootlog-root")).toHaveLength(1);
+  });
+
+  it("finishes disposal after multiple failures and reports the first one only once", async () => {
+    const { bootstrapGameClient } = await loadMain();
+    const runtime = bootstrapGameClient();
+    const first = new Error("unmount failed");
+    runtimeMocks.unmount.mockImplementationOnce(() => {
+      throw first;
+    });
+    runtimeMocks.teardownPublicApi.mockImplementationOnce(() => {
+      throw new Error("public API teardown failed");
+    });
+
+    expect(() => runtime.dispose()).toThrow(first);
+    expect(runtimeMocks.disposeSoundPlayback).toHaveBeenCalledTimes(1);
+    expect(runtimeMocks.disposeSocket).toHaveBeenCalledTimes(1);
+    expect(runtimeMocks.resetTransientRuntimeState).toHaveBeenCalledTimes(1);
+    expect(runtimeMocks.clearQueryClient).toHaveBeenCalledTimes(1);
+    expect(document.getElementById("lootlog-root")).toBeNull();
+    expect(
+      (window as RuntimeWindow).__lootlogGameClientRuntime,
+    ).toBeUndefined();
+    expect(() => runtime.dispose()).not.toThrow();
+    expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves the startup error when disposal also fails", async () => {
+    const original = new Error("render failed");
+    runtimeMocks.render.mockImplementationOnce(() => {
+      throw original;
+    });
+    runtimeMocks.unmount.mockImplementationOnce(() => {
+      throw new Error("unmount failed");
+    });
+
+    await expect(loadMain()).rejects.toThrow(original);
+    expect(runtimeMocks.clearQueryClient).toHaveBeenCalledTimes(1);
+    expect(document.getElementById("lootlog-root")).toBeNull();
+    expect(
+      (window as RuntimeWindow).__lootlogGameClientRuntime,
+    ).toBeUndefined();
+  });
+
+  it("restores the platform when client configuration fails before creating a root", async () => {
+    const { bootstrapGameClient } = await loadMain();
+    bootstrapGameClient().dispose();
+    const platformModule = await import("@/lib/game-client-platform");
+    const apiModule = await import("@/lib/configure-api-clients");
+    const previous = platformModule.getGameClientPlatform();
+    const error = new Error("client configuration failed");
+    const configure = vi
+      .spyOn(apiModule, "configureGameApiClients")
+      .mockImplementationOnce(() => {
+        throw error;
+      });
+    const realtime = new RealtimeClient({ url: "https://gateway.lootlog.pl" });
+    try {
+      expect(() =>
+        bootstrapGameClient({
+          fetch: globalThis.fetch,
+          createRealtime: () => realtime,
+        }),
+      ).toThrow(error);
+      expect(platformModule.getGameClientPlatform()).toBe(previous);
+      expect(document.getElementById("lootlog-root")).toBeNull();
+      expect(
+        (window as RuntimeWindow).__lootlogGameClientRuntime,
+      ).toBeUndefined();
+    } finally {
+      configure.mockRestore();
+    }
   });
 
   it("removes the allocated root when public API bootstrap fails", async () => {
