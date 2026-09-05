@@ -1,6 +1,7 @@
 import * as React from "react";
 
-import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
+import { createCardOverlayElements } from "@lootlog/ui/lib/card-overlay-elements";
+import { CardParticleOverlay } from "./card-particle-overlay";
 
 // Magic circle SVG as data URI
 const MAGIC_CIRCLE_SVG =
@@ -10,75 +11,19 @@ const MAGIC_CIRCLE_SVG =
 const ENERGY_PARTICLE_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Ccircle cx='4' cy='4' r='3' fill='white' opacity='0.6'/%3E%3Ccircle cx='4' cy='4' r='1.5' fill='white' opacity='0.9'/%3E%3C/svg%3E";
 
-function createRiasOverlayElements(id: string) {
-  const random = createSeededRandom(hashString(id));
-
-  for (let i = 0; i < 20; i++) random();
-
-  const result: Array<{
-    id: string;
-    left: string;
-    top: string;
-    size: number;
-    rotation: number;
-    opacity: number;
-    type: "circle" | "particle";
-  }> = [];
-
-  const count = 5 + Math.floor(random() * 4);
-
-  for (let i = 0; i < count; i++) {
-    const type = random() > 0.5 ? "circle" : "particle";
-
-    result.push({
-      id: `rias-${i}`,
-      left: `${random() * 100}%`,
-      top: `${random() * 100}%`,
-      size: type === "circle" ? 20 + random() * 16 : 8 + random() * 6,
-      rotation: random() * 360,
-      opacity: 0.02 + random() * 0.02,
-      type,
-    });
-  }
-
-  return result;
-}
-
 export function RiasMagicCardOverlay() {
   const id = React.useId();
-  const elements = createRiasOverlayElements(id);
-
   return (
-    <div
-      data-slot="rias-magic-card-overlay"
-      className="rias-magic-card-overlay"
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        inset: 0,
-        overflow: "hidden",
-        pointerEvents: "none",
-        zIndex: 0,
-      }}
-    >
-      {elements.map((el) => (
-        <div
-          key={el.id}
-          style={{
-            position: "absolute",
-            left: el.left,
-            top: el.top,
-            width: el.size,
-            height: el.size,
-            transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
-            opacity: el.opacity,
-            backgroundImage: `url("${el.type === "circle" ? MAGIC_CIRCLE_SVG : ENERGY_PARTICLE_SVG}")`,
-            backgroundSize: "contain",
-            backgroundRepeat: "no-repeat",
-            pointerEvents: "none",
-          }}
-        />
-      ))}
-    </div>
+    <CardParticleOverlay
+      slot="rias-magic-card-overlay"
+      elements={createCardOverlayElements(id, {
+        prefix: "rias",
+        minimumCount: 5,
+        variantThreshold: 0.5,
+        opacity: 0.02,
+        first: { image: MAGIC_CIRCLE_SVG, minimumSize: 20, sizeSpread: 16 },
+        second: { image: ENERGY_PARTICLE_SVG, minimumSize: 8, sizeSpread: 6 },
+      })}
+    />
   );
 }

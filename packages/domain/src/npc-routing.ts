@@ -1,3 +1,4 @@
+import { parseFiniteNumber as normalizeNpcWeight } from "@lootlog/schema/numbers";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type {
   NpcRoutingData,
@@ -13,22 +14,6 @@ const HERO_ROUTING_NPC_TYPES = new Set<NpcTypeEnum>([
 
 function isNpcTypeEnum(value: string): value is NpcTypeEnum {
   return NPC_TYPE_VALUES.has(value as NpcTypeEnum);
-}
-
-function normalizeNpcWeight(weight?: number | string | null): number | null {
-  if (typeof weight === "number" && Number.isFinite(weight)) {
-    return weight;
-  }
-
-  if (typeof weight === "string" && weight.trim() !== "") {
-    const parsedWeight = Number(weight);
-
-    if (Number.isFinite(parsedWeight)) {
-      return parsedWeight;
-    }
-  }
-
-  return null;
 }
 
 export function resolveNpcType(

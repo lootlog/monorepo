@@ -17,6 +17,20 @@ describe("useOthersStore", () => {
     useOthersStore.getState().clearOthers();
   });
 
+  it("keeps compatibility defaults for incomplete wrapped character data", () => {
+    useOthersStore.getState().upsertOther("legacy", { d: {} });
+    const other = useOthersStore.getState().getOther("legacy");
+    expect(other).toEqual({
+      accountId: "",
+      characterId: "",
+      icon: "",
+      level: 0,
+      name: "",
+      profession: "",
+    });
+    expect(Object.isFrozen(other)).toBe(true);
+  });
+
   it("adds and updates other characters by id", () => {
     const first = createOther("first");
     const second = createOther("second");

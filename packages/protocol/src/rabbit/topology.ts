@@ -176,3 +176,15 @@ export const makeDeadLetterQueue = (options: {
   routingKey: options.routingKey,
   durable: true,
 });
+
+export const makeQueue = (
+  name: string,
+  routingKey: RabbitQueueDefinition["routingKey"],
+  options: Partial<RabbitQueueDefinition> = {},
+): RabbitQueueDefinition => ({
+  name,
+  exchange: RabbitExchange.DEFAULT,
+  routingKey,
+  durable: true,
+  ...options,
+});

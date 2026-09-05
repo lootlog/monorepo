@@ -1,5 +1,5 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
 
 export type DomainJsonValue =
   | string
@@ -31,3 +31,11 @@ export const DomainJsonValue: Schema.Codec<DomainJsonValue> = Schema.suspend(
 );
 
 export const encodeDomainJson = Schema.encodeUnknownEffect(DomainJsonValue);
+
+export const decodeDomainJson = <A, I, R>(
+  schema: Schema.Codec<A, I, R>,
+  value: unknown,
+) =>
+  encodeDomainJson(value).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  );

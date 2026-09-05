@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemberKillsFilter } from "./member-kills-filter";
+import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -12,12 +12,13 @@ vi.mock("react-i18next", () => ({
 
 afterEach(cleanup);
 
-describe("MemberKillsFilter", () => {
+describe("HeroKillsFilter", () => {
   it("lets the user filter the kill history by hero", () => {
     const onSelectedHeroChange = vi.fn();
 
     render(
-      <MemberKillsFilter
+      <HeroKillsFilter
+        variant="member"
         heroes={[
           {
             id: "hero-1",
@@ -44,7 +45,8 @@ describe("MemberKillsFilter", () => {
 
   it("does not render when there is only one hero", () => {
     const { container } = render(
-      <MemberKillsFilter
+      <HeroKillsFilter
+        variant="member"
         heroes={[
           {
             id: "hero-1",

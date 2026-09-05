@@ -1,3 +1,4 @@
+import { emptyStatusResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
@@ -138,7 +139,6 @@ export const toPublicSystemHttpResponse = <A, R>(
   >,
 ) =>
   Effect.catchTags(effect, {
-    PublicSystemAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    PublicSystemAccessDenied: emptyStatusResponse,
     PublicSystemOperationError: (error) => Effect.die(error.cause),
   });

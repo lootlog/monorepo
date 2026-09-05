@@ -1,5 +1,6 @@
+import { orderGuilds } from "@lootlog/domain/guild-preferences";
 import { describe, expect, it } from "vitest";
-import { filterGuildsByVisibility, orderGuilds } from "./server-visibility";
+import { filterGuildsByVisibility } from "./server-visibility";
 
 const guilds = [
   { id: "guild-1", name: "Alpha" },

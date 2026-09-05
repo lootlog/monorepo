@@ -10,12 +10,12 @@ import { NotificationMuteMenu } from "@/features/notifications/components/notifi
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { useGameStore } from "@/store/game.store";
 import { cn } from "cn";
-import type {
-  MentionNotification,
-  NotificationAutoHideState,
-  PartyGatheringNotification,
-  NotificationWithServers,
-  StoredNotification,
+import {
+  isMentionNotification,
+  type NotificationAutoHideState,
+  type PartyGatheringNotification,
+  type NotificationWithServers,
+  type StoredNotification,
 } from "@/store/notifications.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
@@ -70,12 +70,6 @@ const isPartyGatheringNotification = (
   notification: StoredNotification,
 ): notification is StoredNotification & PartyGatheringNotification => {
   return "type" in notification && notification.type === "party-gathering";
-};
-
-const isMentionNotification = (
-  notification: StoredNotification,
-): notification is StoredNotification & MentionNotification => {
-  return "type" in notification && notification.type === "chat-mention";
 };
 
 const isRegularNotification = (

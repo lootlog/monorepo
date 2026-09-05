@@ -1,3 +1,6 @@
+import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
+const EMPTY_DOCUMENT_CONTENT =
+  createEmptyGuildDocumentContent() satisfies GuildDocumentContent;
 import {
   InvalidRequestError,
   ResourceNotFoundError,
@@ -21,26 +24,6 @@ import type {
   DocsRepositoryFailure,
   DocsRepositoryService,
 } from "./docs.repository.js";
-
-const EMPTY_DOCUMENT_CONTENT = {
-  root: {
-    children: [
-      {
-        children: [],
-        direction: null,
-        format: "",
-        indent: 0,
-        type: "paragraph",
-        version: 1,
-      },
-    ],
-    direction: null,
-    format: "",
-    indent: 0,
-    type: "root",
-    version: 1,
-  },
-} satisfies GuildDocumentContent;
 
 type DocumentRecord = {
   id: string;

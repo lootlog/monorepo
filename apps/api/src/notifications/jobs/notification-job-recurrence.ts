@@ -1,8 +1,8 @@
+import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
 import { Effect } from "effect";
 import type { NotificationRuleWithTargets } from "#src/notifications/jobs/notification-job-store";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import {
-  NotificationJobKind,
   NotificationJobStatus,
   NotificationOwnerType,
   NotificationScheduleIntervalType,
@@ -86,36 +86,11 @@ export const makeNotificationJobRecurrence = (
       rule.ownerType === NotificationOwnerType.USER
         ? true
         : yield* hasRequiredGuildPermissions(rule.ownerId);
-    yield* Effect.forEach(
-      rule.targets,
-      ({ target }) => {
-        if (!target.active || !target.canSend) return Effect.void;
-        return scheduler
-          .create({
-            notificationRule: rule,
-            target,
-            jobKind: NotificationJobKind.SCHEDULED,
-            scheduledFor: next,
-            sourceEntityType: "scheduled-message",
-            sourceEntityId: String(rule.id),
-            payloadSnapshot: content.scheduledMessage({
-              notificationRule: rule,
-              target,
-              scheduledFor: next,
-            }),
-            forceBlocked: !permitted || !target.canSend || !target.active,
-          })
-          .pipe(
-            Effect.flatMap((job) =>
-              job?.status === NotificationJobStatus.PENDING
-                ? scheduler.enqueue(
-                    job.id,
-                    Math.max(0, next.getTime() - Date.now()),
-                  )
-                : Effect.void,
-            ),
-          );
-      },
-      { concurrency: "unbounded", discard: true },
+    yield* scheduleNotificationOccurrence(
+      rule,
+      next,
+      permitted,
+      content,
+      scheduler,
     );
   });

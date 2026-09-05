@@ -1,3 +1,6 @@
+import { topMemberDisplayRoles } from "#src/members/member-display-role";
+import { eventMapScope } from "#src/events/event-scope-query";
+import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
@@ -72,26 +75,14 @@ export const makeEventMapAssignments = (
     );
 
   const invalidate = (guildId: string, eventId: string) =>
-    Effect.forEach(
+    invalidateEventCachePatterns(
+      redis,
+      logger,
       [
         `event-read:v2:${guildId}:guild:*`,
         `event-read:v2:${guildId}:${eventId}:*`,
       ],
-      (pattern) =>
-        Effect.tryPromise({
-          try: () => redis.deleteByPattern(pattern),
-          catch: (cause) => cause,
-        }).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.warn("Failed to invalidate event read cache", {
-                error,
-                pattern,
-              }),
-            ),
-          ),
-        ),
-      { concurrency: "unbounded", discard: true },
+      "Failed to invalidate event read cache",
     );
 
   const scopedMap = (guildId: string, eventId: string, mapId: string) =>
@@ -109,13 +100,7 @@ export const makeEventMapAssignments = (
           eq(eventHeroNpcTable.id, eventMapTable.heroNpcId),
         )
         .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-        .where(
-          and(
-            eq(eventMapTable.id, mapId),
-            eq(eventTable.id, eventId),
-            eq(eventTable.guildId, guildId),
-          ),
-        )
+        .where(eventMapScope(guildId, eventId, mapId))
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0] ?? null));
 
@@ -151,10 +136,7 @@ export const makeEventMapAssignments = (
         name: member.name,
         avatar: member.avatar,
         userId: member.userId,
-        roles: roles
-          .filter(({ memberId }) => memberId === member.id)
-          .slice(0, 1)
-          .map(({ position, color }) => ({ position, color })),
+        roles: topMemberDisplayRoles(roles, member.id),
       }));
     });
 

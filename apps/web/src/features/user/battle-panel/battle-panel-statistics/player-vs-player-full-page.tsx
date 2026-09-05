@@ -1,3 +1,4 @@
+import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { PlayerTile } from "@/components/battle";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -19,8 +20,6 @@ import { getBattleResultRowClassName } from "@/features/user/battle-panel/compon
 import {
   battlePanelPlayerVsPlayerSearchParsers,
   getBattlePanelPageIndex,
-  getNextBattlePanelPage,
-  getPreviousBattlePanelPage,
   normalizeBattlePanelCharacterId,
   resetBattlePanelCursorPagination,
   type Period,
@@ -181,23 +180,11 @@ export function PlayerVsPlayerFullPage() {
       includeTotal: true,
     });
 
-  const handleNextPage = () => {
-    if (data?.pagination.nextCursor) {
-      void setQueryState({
-        cursor: data.pagination.nextCursor,
-        page: getNextBattlePanelPage(queryState.page),
-      });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (data?.pagination.previousCursor) {
-      void setQueryState({
-        cursor: data.pagination.previousCursor,
-        page: getPreviousBattlePanelPage(queryState.page),
-      });
-    }
-  };
+  const { handleNextPage, handlePreviousPage } = createBattlePanelCursorActions(
+    data?.pagination,
+    queryState.page,
+    setQueryState,
+  );
 
   const handleBattleOpen = (battleId: string) => {
     void navigate({

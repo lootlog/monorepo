@@ -1,3 +1,4 @@
+import { eventHeroScope } from "#src/events/event-scope-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
@@ -69,13 +70,7 @@ export const makeEventAccess = (database: typeof ApiDatabase.Service) => {
           .select({ hero: eventHeroNpcTable })
           .from(eventHeroNpcTable)
           .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-          .where(
-            and(
-              eq(eventHeroNpcTable.id, heroId),
-              eq(eventHeroNpcTable.eventId, eventId),
-              eq(eventTable.guildId, guildId),
-            ),
-          )
+          .where(eventHeroScope(guildId, eventId, heroId))
           .limit(1),
       ).pipe(
         Effect.flatMap((rows) => {

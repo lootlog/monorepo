@@ -1,3 +1,4 @@
+import type * as OriginalModule from "@/components/ui/popover";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
@@ -37,7 +38,8 @@ vi.mock("@lootlog/client/main", async () => ({
   guildsControllerGetGuildPermissions: vi.fn(),
 }));
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@/components/ui/popover", async (importOriginal) => ({
+  ...(await importOriginal<typeof OriginalModule>()),
   Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PopoverTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   PopoverContent: ({ children }: { children: ReactNode }) => (

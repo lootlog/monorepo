@@ -1,3 +1,4 @@
+import { createsOther } from "@/lib/margonem-runtime/runtime-event-parser";
 import { useEffect } from "react";
 import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
@@ -5,12 +6,7 @@ import { patchOtherCharacterTooltips } from "@/lib/margonem-tooltips/patcher";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
-import type { OtherEntry } from "@lootlog/margonem/game-events";
 import type { Other } from "@lootlog/margonem/others";
-
-function createsOther(entry: OtherEntry): boolean {
-  return "action" in entry && entry.action === "CREATE";
-}
 
 export function useCharacterTooltipGameEvents(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(

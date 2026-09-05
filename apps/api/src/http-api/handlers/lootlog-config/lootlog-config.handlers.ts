@@ -1,9 +1,10 @@
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
@@ -136,8 +137,7 @@ const authorize = (guildId: unknown) => {
 };
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),
   );
 
@@ -172,13 +172,7 @@ const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, LootlogConfigHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    LootlogConfigAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    LootlogConfigAccessDenied: statusCodeResponse,
     LootlogConfigOperationError: (error) =>
       applicationErrorResponse(error.cause),
   });

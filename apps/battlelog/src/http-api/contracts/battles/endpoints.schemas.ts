@@ -32,9 +32,90 @@ import {
   BattleDeletedResponseDto_Output,
   UpdateBattleDto,
 } from "./mutations.schemas.js";
-import { DateTimeString, FiniteNumber } from "../scalars.js";
+import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
 
 // schemas
+const BattleAnalyticsQueryFields = {
+  characterId: Schema.optionalKey(Schema.String),
+  world: Schema.optionalKey(Schema.String),
+  period: Schema.optionalKey(
+    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
+  ),
+  minLevel: Schema.optionalKey(
+    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
+      .check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
+      )
+      .check(
+        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
+          expected: "a value less than or equal to 9007199254740991",
+        }),
+      ),
+  ),
+  maxLevel: Schema.optionalKey(
+    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
+      .check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
+      )
+      .check(
+        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
+          expected: "a value less than or equal to 9007199254740991",
+        }),
+      ),
+  ),
+  startDate: Schema.optionalKey(DateTimeString),
+  endDate: Schema.optionalKey(DateTimeString),
+  cursor: Schema.optionalKey(Schema.String),
+  size: Schema.optionalKey(
+    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
+      .check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
+      )
+      .check(
+        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
+          expected: "a value less than or equal to 9007199254740991",
+        }),
+      ),
+  ),
+  sortBy: Schema.optionalKey(
+    Schema.Literals([
+      "wins",
+      "losses",
+      "totalBattles",
+      "winRate",
+      "lastBattleDate",
+      "totalRatingDelta",
+      "avgRatingDelta",
+    ]).annotate({ default: "totalBattles" }),
+  ),
+  sortOrder: Schema.optionalKey(
+    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
+  ),
+  includeTotal: Schema.optionalKey(Schema.Boolean),
+  search: Schema.optionalKey(Schema.String),
+  minBattles: Schema.optionalKey(
+    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
+      .check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
+      )
+      .check(
+        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
+          expected: "a value less than or equal to 9007199254740991",
+        }),
+      ),
+  ),
+  ph: Schema.optionalKey(Schema.Boolean),
+  matchmaking: Schema.optionalKey(Schema.Boolean),
+};
+
 export type BattlesControllerCreateBattleRequestJson =
   typeof BattlesControllerCreateBattleRequestJson.Type;
 
@@ -183,84 +264,7 @@ export type BattlesControllerGetCombatProfileQuery =
   typeof BattlesControllerGetCombatProfileQuery.Type;
 
 export const BattlesControllerGetCombatProfileQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetCombatProfile200 =
@@ -273,84 +277,7 @@ export type BattlesControllerGetProfessionWinRateQuery =
   typeof BattlesControllerGetProfessionWinRateQuery.Type;
 
 export const BattlesControllerGetProfessionWinRateQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetProfessionWinRate200 =
@@ -364,84 +291,7 @@ export type BattlesControllerGetHeadToHeadQuery =
   typeof BattlesControllerGetHeadToHeadQuery.Type;
 
 export const BattlesControllerGetHeadToHeadQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetHeadToHead200 =
@@ -454,84 +304,7 @@ export type BattlesControllerGetCurrentStreakQuery =
   typeof BattlesControllerGetCurrentStreakQuery.Type;
 
 export const BattlesControllerGetCurrentStreakQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetCurrentStreak200 =
@@ -543,84 +316,7 @@ export type BattlesControllerGetBattleDurationQuery =
   typeof BattlesControllerGetBattleDurationQuery.Type;
 
 export const BattlesControllerGetBattleDurationQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetBattleDuration200 =
@@ -633,84 +329,7 @@ export type BattlesControllerGetPhGrowthQuery =
   typeof BattlesControllerGetPhGrowthQuery.Type;
 
 export const BattlesControllerGetPhGrowthQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetPhGrowth200 =
@@ -724,84 +343,7 @@ export type BattlesControllerGetRatingGrowthQuery =
   typeof BattlesControllerGetRatingGrowthQuery.Type;
 
 export const BattlesControllerGetRatingGrowthQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetRatingGrowth200 =
@@ -815,84 +357,7 @@ export type BattlesControllerGetRatingDeltaByOpponentQuery =
   typeof BattlesControllerGetRatingDeltaByOpponentQuery.Type;
 
 export const BattlesControllerGetRatingDeltaByOpponentQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
 });
 
 export type BattlesControllerGetRatingDeltaByOpponent200 =
@@ -906,84 +371,7 @@ export type BattlesControllerGetPlayerVsPlayerBattlesQuery =
   typeof BattlesControllerGetPlayerVsPlayerBattlesQuery.Type;
 
 export const BattlesControllerGetPlayerVsPlayerBattlesQuery = Schema.Struct({
-  characterId: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
-  ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  startDate: Schema.optionalKey(DateTimeString),
-  endDate: Schema.optionalKey(DateTimeString),
-  cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  sortBy: Schema.optionalKey(
-    Schema.Literals([
-      "wins",
-      "losses",
-      "totalBattles",
-      "winRate",
-      "lastBattleDate",
-      "totalRatingDelta",
-      "avgRatingDelta",
-    ]).annotate({ default: "totalBattles" }),
-  ),
-  sortOrder: Schema.optionalKey(
-    Schema.Literals(["asc", "desc"]).annotate({ default: "desc" }),
-  ),
-  includeTotal: Schema.optionalKey(Schema.Boolean),
-  search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  ph: Schema.optionalKey(Schema.Boolean),
-  matchmaking: Schema.optionalKey(Schema.Boolean),
+  ...BattleAnalyticsQueryFields,
   opponentId: Schema.String,
   excludeBattleId: Schema.optionalKey(Schema.String),
 });

@@ -1,3 +1,5 @@
+import { SearchResultsHeader } from "@/components/search-results-header";
+import { SearchStatusCard } from "@/components/search-status-card";
 import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, startTransition, useEffect, useState } from "react";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -639,39 +641,17 @@ function ItemsRoute() {
       </Card>
 
       <section className="mt-4">
-        {status === "idle" ? (
-          <Card className="border-border bg-card/40 p-6 text-sm text-muted-foreground">
-            {t("search.idle")}
-          </Card>
-        ) : null}
-        {status === "loading" ? (
-          <Card className="border-border bg-card/40 p-6 text-sm text-muted-foreground">
-            {t("search.loading")}
-          </Card>
-        ) : null}
-        {status === "error" ? (
-          <Card className="border-destructive/40 bg-card/40 p-6 text-sm text-destructive">
-            {t("search.error")}
-          </Card>
-        ) : null}
-        {status === "ready" && data && data.hits.length === 0 ? (
-          <Card className="border-border bg-card/40 p-6 text-sm text-muted-foreground">
-            {t("search.noResults")}
-          </Card>
-        ) : null}
+        <SearchStatusCard
+          status={status}
+          empty={Boolean(data && data.hits.length === 0)}
+        />
         {status === "ready" && data && data.hits.length > 0 ? (
           <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
-            <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-semibold text-foreground">
-                {t("search.results", { count: data.estimatedTotalHits })}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("search.showingRange", {
-                  end: data.hits.length,
-                  start: 1,
-                })}
-              </p>
-            </div>
+            <SearchResultsHeader
+              count={data.estimatedTotalHits}
+              start={1}
+              end={data.hits.length}
+            />
             <div className="grid grid-flow-dense grid-cols-[repeat(auto-fill,minmax(42px,1fr))] gap-2">
               {data.hits.map((item) => (
                 <div

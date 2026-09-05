@@ -1,7 +1,7 @@
 /** Shared input and output schemas for the members feature. */
 import * as Schema from "effect/Schema";
 import { MemberRole } from "#src/contracts/roles/schemas";
-import { DateTimeString, FiniteNumber } from "#src/contracts/scalars";
+import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
 
 export const MemberProfile = Schema.Struct({
   id: FiniteNumber,

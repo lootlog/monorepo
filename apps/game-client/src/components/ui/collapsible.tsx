@@ -29,5 +29,6 @@ const CollapsibleContent = React.forwardRef<
 CollapsibleContent.displayName = "CollapsibleContent";
 
 const Collapsible = BaseCollapsible.Root;
+const CollapsibleTrigger = BaseCollapsible.Trigger;
 
-export { Collapsible, CollapsibleContent };
+export { Collapsible, CollapsibleContent, CollapsibleTrigger };

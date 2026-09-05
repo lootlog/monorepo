@@ -1,6 +1,6 @@
 /** Shared input and output schemas for the maps feature. */
 import * as Schema from "effect/Schema";
-import { FiniteNumber } from "#src/contracts/scalars";
+import { FiniteNumber } from "@lootlog/schema/http-scalars";
 
 export type GameMapResponse = typeof GameMapResponse.Type;
 

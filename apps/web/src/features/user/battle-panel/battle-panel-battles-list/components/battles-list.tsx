@@ -1,10 +1,11 @@
+import type { BattleFilters } from "../utils/battle-filter-handlers";
 import type {
   BattleCharacter,
   BattleListParams as UseBattlesParams,
   BattleListResponse as GetBattlesResponse,
 } from "@/lib/api/battlelog-types";
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
-import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
+import { BattlesListFilters } from "./battles-list-filters";
 import { cn } from "cn";
 import { useEffect, useRef, type ReactNode } from "react";
 import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";

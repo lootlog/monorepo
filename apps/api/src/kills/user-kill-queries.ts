@@ -1,3 +1,4 @@
+import { addNpcKills } from "./npc-kill-aggregation.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
@@ -228,26 +229,7 @@ export const makeUserKillQueries = (
             >();
 
             for (const stat of stats) {
-              const existing = npcMap.get(stat.npcId);
-              if (existing) {
-                existing.totalKills += stat.totalKills;
-                if (stat.npcLvl > existing.npcLvl) {
-                  existing.npcLvl = stat.npcLvl;
-                  existing.npcName = stat.npcName;
-                  existing.npcProf = stat.npcProf;
-                  existing.npcIcon = stat.npcIcon;
-                }
-              } else {
-                npcMap.set(stat.npcId, {
-                  npcId: stat.npcId,
-                  npcName: stat.npcName,
-                  npcType: stat.npcType,
-                  npcLvl: stat.npcLvl,
-                  npcProf: stat.npcProf,
-                  npcIcon: stat.npcIcon,
-                  totalKills: stat.totalKills,
-                });
-              }
+              addNpcKills(npcMap, stat, stat.totalKills);
             }
 
             const sortBy = query.sortBy ?? "kills";

@@ -1,3 +1,4 @@
+import { updateSettingsField } from "./update-settings-field";
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
@@ -24,24 +25,17 @@ export const useLootStatsSettings = () => {
   );
 
   const setPeriod = (period: LootsControllerGetLootStatsPeriod) => {
-    setSettings((prev) => {
-      if (prev.period === period) return prev;
-      return { ...prev, period };
-    });
+    setSettings((previous) => updateSettingsField(previous, "period", period));
   };
 
   const setWorld = (world: string | null) => {
-    setSettings((prev) => {
-      if (prev.world === world) return prev;
-      return { ...prev, world };
-    });
+    setSettings((previous) => updateSettingsField(previous, "world", world));
   };
 
   const setExcludeColossus = (excludeColossus: boolean) => {
-    setSettings((prev) => {
-      if (prev.excludeColossus === excludeColossus) return prev;
-      return { ...prev, excludeColossus };
-    });
+    setSettings((previous) =>
+      updateSettingsField(previous, "excludeColossus", excludeColossus),
+    );
   };
 
   return {

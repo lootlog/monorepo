@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -34,9 +35,6 @@ export const BATTLE_HP_TIMELINE_SETTINGS_STORAGE_KEY =
   "lootlog-battle-hp-timeline-settings-v1";
 export const LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY =
   "lootlog-battle-timeline-layers-v2";
-
-const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
 
 const isBattleHpTimelineHeightMode = (
   value: unknown,

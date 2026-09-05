@@ -1,11 +1,7 @@
+import { StatsWorldPeriodFields } from "./stats-world-period-fields";
 import { useTranslation } from "react-i18next";
-import { Label } from "@lootlog/ui/components/label";
-import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-import {
-  KillStatsPeriodSelect,
-  type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
+import { type KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 type NpcKillersFiltersMobileProps = {
   world: string | null;
@@ -27,24 +23,12 @@ export const NpcKillersFiltersMobile = ({
       title={t("kills.filters.title")}
       closeLabel={t("kills.filters.close")}
     >
-      <div className="space-y-2">
-        <Label>{t("kills.filters.world")}</Label>
-        <WorldSwitcher
-          value={world}
-          onValueChange={onWorldChange}
-          showAllOption
-          width="w-full"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>{t("kills.filters.period")}</Label>
-        <KillStatsPeriodSelect
-          value={period}
-          onValueChange={onPeriodChange}
-          className="w-full"
-        />
-      </div>
+      <StatsWorldPeriodFields
+        world={world}
+        period={period}
+        onWorldChange={onWorldChange}
+        onPeriodChange={onPeriodChange}
+      />
     </MobileFiltersDrawer>
   );
 };

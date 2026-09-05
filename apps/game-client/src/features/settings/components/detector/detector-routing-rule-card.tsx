@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +16,7 @@ import type { DetectorRoutingSettingsTranslations } from "@/features/settings/co
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
 import { ChevronDown, Trash2 } from "lucide-react";
-import type { FC, KeyboardEvent, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 
 const VISIBLE_PREVIEW_GUILDS_COUNT = 3;
 
@@ -68,14 +72,6 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
   const toggleOpen = () => {
     onOpenChange(!isOpen);
   };
-  const handleHeaderKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    toggleOpen();
-  };
 
   return (
     <TooltipProvider>
@@ -91,14 +87,11 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
       >
         {fieldIdInput}
 
-        <div
-          role="button"
-          tabIndex={0}
-          aria-expanded={isOpen}
+        <CollapsibleTrigger
+          render={(props) => <div {...props} />}
+          nativeButton={false}
           aria-label={translations.toggleRuleLabel(index + 1)}
           className="ll:flex ll:items-center ll:gap-3 ll:p-2.5 ll:transition-colors group-hover:ll:bg-white/4 ll:cursor-pointer"
-          onClick={toggleOpen}
-          onKeyDown={handleHeaderKeyDown}
         >
           <div className="ll:min-w-0 ll:flex-1">
             <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-4 ll:text-left">
@@ -198,7 +191,7 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
               />
             </Button>
           </div>
-        </div>
+        </CollapsibleTrigger>
 
         <CollapsibleContent className="ll:border-t ll:border-white/10">
           <div className="ll:flex ll:flex-col ll:gap-3">

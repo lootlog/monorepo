@@ -1,3 +1,4 @@
+import { parseArgs } from "node:util";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,30 +12,20 @@ const templatePath = resolve(
 const packageJsonPath = resolve(appDirectory, "package.json");
 
 const parseArguments = (arguments_) => {
-  const options = {};
+  const { values: options } = parseArgs({
+    args: arguments_,
+    options: { output: { type: "string" }, "bundle-url": { type: "string" } },
+  });
 
-  for (let index = 0; index < arguments_.length; index += 2) {
-    const option = arguments_[index];
-    const value = arguments_[index + 1];
-
-    if (!value || (option !== "--output" && option !== "--bundle-url")) {
-      throw new Error(
-        "Usage: generate-local-entrypoint.mjs --output <path> --bundle-url <url>",
-      );
-    }
-
-    options[option] = value;
-  }
-
-  if (!options["--output"] || !options["--bundle-url"]) {
+  if (!options.output || !options["bundle-url"]) {
     throw new Error(
       "Usage: generate-local-entrypoint.mjs --output <path> --bundle-url <url>",
     );
   }
 
   return {
-    bundleUrl: options["--bundle-url"],
-    outputPath: resolve(options["--output"]),
+    bundleUrl: options["bundle-url"],
+    outputPath: resolve(options.output),
   };
 };
 

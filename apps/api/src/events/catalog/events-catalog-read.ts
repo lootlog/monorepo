@@ -1,3 +1,4 @@
+import { makeEventMapHydration } from "./event-map-hydration.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
@@ -12,10 +13,7 @@ import {
   eventHeroNpcTable,
   eventMapLocationTable,
   eventMapTable,
-  eventMapToMemberTable,
   eventTable,
-  memberTable,
-  memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
@@ -107,57 +105,7 @@ export const makeEventsCatalogRead = (
             .where(inArray(eventHeroNpcTable.eventId, eventIds)),
         );
 
-  const hydrateMaps = (maps: Array<typeof eventMapTable.$inferSelect>) =>
-    Effect.gen(function* () {
-      if (maps.length === 0) return [];
-      const assignments = yield* query(
-        "events.catalog.mapAssignments",
-        database
-          .select({ mapId: eventMapToMemberTable.A, member: memberTable })
-          .from(eventMapToMemberTable)
-          .innerJoin(memberTable, eq(memberTable.id, eventMapToMemberTable.B))
-          .where(
-            inArray(
-              eventMapToMemberTable.A,
-              maps.map(({ id }) => id),
-            ),
-          ),
-      );
-      const memberIds = [
-        ...new Set(assignments.map(({ member }) => member.id)),
-      ];
-      const roles =
-        memberIds.length === 0
-          ? []
-          : yield* query(
-              "events.catalog.memberRoles",
-              database
-                .select({
-                  memberId: memberToRoleTable.A,
-                  position: roleTable.position,
-                  color: roleTable.color,
-                })
-                .from(memberToRoleTable)
-                .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
-                .where(inArray(memberToRoleTable.A, memberIds))
-                .orderBy(desc(roleTable.position)),
-            );
-      return maps.map((map) => ({
-        ...map,
-        assignedMembers: assignments
-          .filter(({ mapId }) => mapId === map.id)
-          .map(({ member }) => ({
-            id: member.id,
-            name: member.name,
-            avatar: member.avatar,
-            userId: member.userId,
-            roles: roles
-              .filter(({ memberId }) => memberId === member.id)
-              .slice(0, 1)
-              .map(({ position, color }) => ({ position, color })),
-          })),
-      }));
-    });
+  const hydrateMaps = makeEventMapHydration(database, query);
 
   const mapsWithMembers = (heroId: string, locationId?: string) =>
     query(

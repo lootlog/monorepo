@@ -1,3 +1,4 @@
+import { toLootVisibilityRoles } from "#src/loots/loot-visibility";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import {
@@ -84,12 +85,7 @@ export const notificationMatchingPolicy = {
       permissions: isGuildOwner
         ? [Permission.OWNER]
         : roles.flatMap((role) => role.permissions),
-      roles: roles.map((role) => ({
-        id: role.id,
-        levelFrom: role.lvlRangeFrom ?? 0,
-        levelTo: role.lvlRangeTo ?? 500,
-        permissions: role.permissions,
-      })),
+      roles: toLootVisibilityRoles(roles),
       npcs,
     }),
 };

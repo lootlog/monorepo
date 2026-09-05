@@ -1,7 +1,12 @@
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import {
+  pathString,
+  statusCodeResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -16,7 +21,6 @@ import {
   eq,
   gte,
   inArray,
-  isNotNull,
   lt,
   or,
 } from "drizzle-orm";
@@ -154,15 +158,7 @@ export class MyReservationsData extends Context.Service<
                 database
                   .selectDistinct({ id: guildTable.id })
                   .from(guildTable)
-                  .leftJoin(
-                    memberTable,
-                    and(
-                      eq(memberTable.guildId, guildTable.id),
-                      eq(memberTable.userId, discordId),
-                      eq(memberTable.active, true),
-                      isNotNull(memberTable.globalUserId),
-                    ),
-                  )
+                  .leftJoin(memberTable, activeGuildMemberJoin(discordId))
                   .leftJoin(
                     memberToRoleTable,
                     eq(memberToRoleTable.A, memberTable.id),
@@ -470,8 +466,7 @@ const toViewer = (
 });
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError(
       (cause) => new OrganizationWorkspaceOperationError({ cause }),
     ),
@@ -486,20 +481,8 @@ export const toOrganizationWorkspaceHttpResponse = <A, R>(
   effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    OrganizationWorkspaceAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
-    OrganizationWorkspaceNotFound: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    OrganizationWorkspaceAccessDenied: statusCodeResponse,
+    OrganizationWorkspaceNotFound: statusCodeResponse,
     OrganizationWorkspaceOperationError: ({ cause }) => {
       if (Schema.is(ApplicationError)(cause)) {
         const status = applicationErrorStatus(cause);
@@ -531,11 +514,6 @@ export const toDeclaredOrganizationWorkspaceError = <A, R>(
         ? Effect.fail(undefined)
         : Effect.die(error.cause),
   });
-
-const pathString = (value: unknown, name: string) =>
-  typeof value === "string"
-    ? Effect.succeed(value)
-    : Effect.die(new TypeError(`${name} path parameter must be a string`));
 
 export const listReservationSpots = Effect.fn("listReservationSpots")(
   function* (guildId: string) {

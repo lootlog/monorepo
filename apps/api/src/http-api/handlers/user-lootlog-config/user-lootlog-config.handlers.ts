@@ -1,9 +1,11 @@
+import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { encodeDomainJson } from "../../domain-json.schema.js";
-import { and, arrayOverlaps, desc, eq, isNotNull, or } from "drizzle-orm";
+import { decodeDomainJson } from "../../domain-json.schema.js";
+import { and, arrayOverlaps, desc, eq, or } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -93,15 +95,7 @@ export class UserLootlogConfigData extends Context.Service<
           database
             .selectDistinct({ id: guildTable.id, name: guildTable.name })
             .from(guildTable)
-            .leftJoin(
-              memberTable,
-              and(
-                eq(memberTable.guildId, guildTable.id),
-                eq(memberTable.userId, discordId),
-                eq(memberTable.active, true),
-                isNotNull(memberTable.globalUserId),
-              ),
-            )
+            .leftJoin(memberTable, activeGuildMemberJoin(discordId))
             .leftJoin(
               memberToRoleTable,
               eq(memberToRoleTable.A, memberTable.id),
@@ -303,8 +297,7 @@ export class UserLootlogConfigData extends Context.Service<
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new UserLootlogConfigOperationError({ cause })),
   );
 
@@ -382,8 +375,7 @@ const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, UserLootlogConfigHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    UserLootlogConfigAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    UserLootlogConfigAccessDenied: emptyStatusResponse,
     UserLootlogConfigOperationError: (error) => Effect.die(error.cause),
   });
 

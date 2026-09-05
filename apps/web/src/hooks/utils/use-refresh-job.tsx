@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { RefreshJobUpdate } from "@/types/refresh-job";
-import { GatewayEvent } from "@/config/gateway";
+import { useRefreshJobUpdates } from "./use-refresh-job-updates";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
@@ -17,44 +17,13 @@ export const useRefreshJob = (
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: currentRouteGuildId ?? "",
   });
-  const currentGuildIdRef = useRef<string | undefined>(null);
-
-  useEffect(() => {
-    currentGuildIdRef.current = guild?.id;
-  }, [guild?.id]);
-
-  useEffect(() => {
-    if (!guildId || !connected) {
-      return;
+  useRefreshJobUpdates(guildId ? guild?.id : undefined, (data) => {
+    if (!jobId || data.jobId === jobId) {
+      setJobStatus(data);
+      if (data.refreshedIds?.length) onRefreshedIds?.(data.refreshedIds);
+      if (data.failedIds?.length) onFailedIds?.(data.failedIds);
     }
-
-    const handleRefreshJobUpdate = (data: RefreshJobUpdate) => {
-      if (currentGuildIdRef.current !== data.guildId) {
-        return;
-      }
-
-      if (!jobId || data.jobId === jobId) {
-        setJobStatus(data);
-
-        if (data.refreshedIds && data.refreshedIds.length > 0) {
-          onRefreshedIds?.(data.refreshedIds);
-        }
-
-        if (data.failedIds && data.failedIds.length > 0) {
-          onFailedIds?.(data.failedIds);
-        }
-      }
-    };
-
-    socket.on(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
-
-    return () => {
-      socket.off(
-        GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
-        handleRefreshJobUpdate,
-      );
-    };
-  }, [guildId, jobId, socket, connected, onRefreshedIds, onFailedIds]);
+  });
 
   return {
     jobStatus,

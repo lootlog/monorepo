@@ -1,12 +1,9 @@
+import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import {
-  notificationJobTable,
-  notificationRuleTable,
-  notificationTargetTable,
-} from "#src/database/drizzle/schema";
+import { notificationJobTable } from "#src/database/drizzle/schema";
 import {
   InvalidRequestError,
   ResourceNotFoundError,
@@ -60,21 +57,7 @@ export const makeNotificationJobOperations = (
     statuses: readonly NotificationJobStatusValue[],
     history: boolean,
   ) => {
-    const query = database
-      .select({
-        job: notificationJobTable,
-        rule: notificationRuleTable,
-        target: notificationTargetTable,
-      })
-      .from(notificationJobTable)
-      .innerJoin(
-        notificationRuleTable,
-        eq(notificationJobTable.ruleId, notificationRuleTable.id),
-      )
-      .innerJoin(
-        notificationTargetTable,
-        eq(notificationJobTable.targetId, notificationTargetTable.id),
-      )
+    const query = selectNotificationJobsWithRelations(database)
       .where(
         and(
           eq(notificationJobTable.ownerType, ownerType),

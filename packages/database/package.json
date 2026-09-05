@@ -5,7 +5,9 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/postgres.ts"
+    ".": "./src/postgres.ts",
+    "./snapshot-hash": "./src/snapshot-hash.ts",
+    "./redis-script": "./src/redis-script.ts"
   },
   "scripts": {
     "lint": "oxlint src test",

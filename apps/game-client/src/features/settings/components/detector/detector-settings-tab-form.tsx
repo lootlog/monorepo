@@ -41,18 +41,6 @@ const cloneDetectorTypeSettings = (
   };
 };
 
-const getDetectorTypeSettingsFromFormData = (
-  settings: FormData,
-): DetectorTypeSettings => {
-  return {
-    detect: settings.detect,
-    autoSend: settings.autoSend,
-    notifyWindow: settings.notifyWindow,
-    highlight: settings.highlight,
-    notifySound: settings.notifySound,
-  };
-};
-
 const areDetectorTypeSettingsEqual = (
   left: DetectorTypeSettings,
   right: DetectorTypeSettings,
@@ -113,8 +101,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
 
   useEffect(() => {
     const nextFormValues = cloneDetectorTypeSettings(currentCategorySettings);
-    const currentFormSettings =
-      getDetectorTypeSettingsFromFormData(getValues());
+    const currentFormSettings = cloneDetectorTypeSettings(getValues());
 
     if (
       areDetectorTypeSettingsEqual(currentFormSettings, currentCategorySettings)
@@ -136,8 +123,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
       return;
     }
 
-    const nextCategorySettings =
-      getDetectorTypeSettingsFromFormData(watchedData);
+    const nextCategorySettings = cloneDetectorTypeSettings(watchedData);
 
     if (
       areDetectorTypeSettingsEqual(

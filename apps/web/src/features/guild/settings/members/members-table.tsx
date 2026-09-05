@@ -107,6 +107,41 @@ export const MembersTable = ({
       ? rowVirtualizer.getTotalSize() - (lastVirtualRow?.end ?? 0)
       : 0;
 
+  const getMemberDisplayData = (member: GuildMember) => {
+    const webActivityStats = activityStatsByDiscordIdAndSource.get(
+      member.userId,
+    )?.WEB_APP;
+    const gameActivityStats = activityStatsByDiscordIdAndSource.get(
+      member.userId,
+    )?.GAME;
+    const isOnlineOnWeb = isMemberOnlineOnWeb(
+      memberWebPresenceByDiscordId,
+      member.userId,
+    );
+    const isOnlineInGame = isMemberOnlineInGame(
+      memberGamePresenceByDiscordId,
+      member.userId,
+    );
+    const isGamePresenceVerified = isMemberGamePresenceVerified(
+      memberGamePresenceByDiscordId,
+      member.userId,
+    );
+    const onlineSources = getMemberOnlineSources({
+      isOnlineOnWeb,
+      isOnlineInGame,
+    });
+    const color = getColorFromRole(member.roles);
+    return {
+      webActivityStats,
+      gameActivityStats,
+      isOnlineOnWeb,
+      isOnlineInGame,
+      isGamePresenceVerified,
+      onlineSources,
+      color,
+    };
+  };
+
   if (isMobile) {
     return (
       <div className="divide-y divide-border">
@@ -117,29 +152,13 @@ export const MembersTable = ({
           const member = members[virtualRow.index];
           if (!member) return null;
 
-          const webActivityStats = activityStatsByDiscordIdAndSource.get(
-            member.userId,
-          )?.WEB_APP;
-          const gameActivityStats = activityStatsByDiscordIdAndSource.get(
-            member.userId,
-          )?.GAME;
-          const isOnlineOnWeb = isMemberOnlineOnWeb(
-            memberWebPresenceByDiscordId,
-            member.userId,
-          );
-          const isOnlineInGame = isMemberOnlineInGame(
-            memberGamePresenceByDiscordId,
-            member.userId,
-          );
-          const isGamePresenceVerified = isMemberGamePresenceVerified(
-            memberGamePresenceByDiscordId,
-            member.userId,
-          );
-          const onlineSources = getMemberOnlineSources({
-            isOnlineOnWeb,
-            isOnlineInGame,
-          });
-          const color = getColorFromRole(member.roles);
+          const {
+            webActivityStats,
+            gameActivityStats,
+            isGamePresenceVerified,
+            onlineSources,
+            color,
+          } = getMemberDisplayData(member);
 
           return (
             <button
@@ -285,30 +304,15 @@ export const MembersTable = ({
           const member = members[virtualRow.index];
           if (!member) return null;
 
-          const webActivityStats = activityStatsByDiscordIdAndSource.get(
-            member.userId,
-          )?.WEB_APP;
-          const gameActivityStats = activityStatsByDiscordIdAndSource.get(
-            member.userId,
-          )?.GAME;
-          const isOnlineOnWeb = isMemberOnlineOnWeb(
-            memberWebPresenceByDiscordId,
-            member.userId,
-          );
-          const isOnlineInGame = isMemberOnlineInGame(
-            memberGamePresenceByDiscordId,
-            member.userId,
-          );
-          const isGamePresenceVerified = isMemberGamePresenceVerified(
-            memberGamePresenceByDiscordId,
-            member.userId,
-          );
-          const onlineSources = getMemberOnlineSources({
+          const {
+            webActivityStats,
+            gameActivityStats,
             isOnlineOnWeb,
-            isOnlineInGame,
-          });
+            isGamePresenceVerified,
+            onlineSources,
+            color,
+          } = getMemberDisplayData(member);
           const isOnline = onlineSources.length > 0;
-          const color = getColorFromRole(member.roles);
           const memberPermissions = Array.from(
             new Set(
               member.roles.flatMap((role) => role.permissions as Permission[]),

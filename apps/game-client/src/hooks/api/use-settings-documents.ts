@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
   useSettingsDocumentsControllerGetPreferences,
@@ -12,11 +13,6 @@ import {
 import { normalizeChatAppearanceSettings } from "@lootlog/domain/chat-appearance";
 import { normalizeNpcTypeColors } from "@lootlog/domain/npc-appearance";
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
-
-type JsonRecord = Record<string, unknown>;
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 export const getChatAppearanceFromSettingsDocuments = (
   settingsDocuments: SettingsDocumentsResponseDtoOutput | undefined,

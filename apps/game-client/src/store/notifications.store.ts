@@ -490,3 +490,8 @@ export const useNotificationsStore = create<NotificationsState>()(
       }),
   }),
 );
+
+export const isMentionNotification = (
+  notification: StoredNotification,
+): notification is StoredNotification & MentionNotification =>
+  "type" in notification && notification.type === "chat-mention";

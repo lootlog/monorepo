@@ -1,3 +1,4 @@
+import { isRecord as isOpenApiDictionary } from "@lootlog/schema/records";
 type OpenApiDictionary = Record<string, unknown>;
 
 const httpMethods = new Set([
@@ -107,10 +108,6 @@ function visitOpenApiDictionaries(
     visitOpenApiDictionaries(entry, visitor),
   );
   visitor(value);
-}
-
-function isOpenApiDictionary(value: unknown): value is OpenApiDictionary {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function hasOpenApiProperty(value: OpenApiDictionary, propertyName: string) {

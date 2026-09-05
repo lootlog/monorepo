@@ -30,7 +30,7 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
-import { getApiErrorMessage } from "../../utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "../scoring/scoring-mode-selector";
 

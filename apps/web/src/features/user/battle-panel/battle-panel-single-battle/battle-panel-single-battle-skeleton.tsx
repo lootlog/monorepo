@@ -1,3 +1,4 @@
+import { BattleTeamMemberSkeleton } from "./components/battle-team-member-skeleton";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -30,20 +31,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {teamRows.map((_, index) => (
-                    <div
-                      key={index}
-                      className="flex min-w-0 max-w-full items-center gap-1.5 rounded-sm border border-border/70 bg-muted/35 py-1 pl-1 pr-2"
-                    >
-                      <Skeleton className="h-9 w-6 shrink-0 rounded-sm" />
-                      <div className="min-w-0 space-y-1.5">
-                        <Skeleton className="h-3 w-20" />
-                        <div className="flex items-center gap-1">
-                          <Skeleton className="h-3 w-8" />
-                          <Skeleton className="size-4 rounded-full" />
-                          <Skeleton className="size-4 rounded-full" />
-                        </div>
-                      </div>
-                    </div>
+                    <BattleTeamMemberSkeleton key={index} />
                   ))}
                 </div>
               </section>
@@ -59,20 +47,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
                   {teamRows.map((_, index) => (
-                    <div
-                      key={index}
-                      className="flex min-w-0 max-w-full items-center gap-1.5 rounded-sm border border-border/70 bg-muted/35 py-1 pl-1 pr-2"
-                    >
-                      <Skeleton className="h-9 w-6 shrink-0 rounded-sm" />
-                      <div className="min-w-0 space-y-1.5">
-                        <Skeleton className="h-3 w-20" />
-                        <div className="flex items-center gap-1">
-                          <Skeleton className="h-3 w-8" />
-                          <Skeleton className="size-4 rounded-full" />
-                          <Skeleton className="size-4 rounded-full" />
-                        </div>
-                      </div>
-                    </div>
+                    <BattleTeamMemberSkeleton key={index} />
                   ))}
                 </div>
               </section>
@@ -106,13 +81,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
                 </div>
                 <div className="min-h-0 flex-1 space-y-0 overflow-hidden">
                   {statsRows.map((_, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-[minmax(0,1fr)_72px] items-center gap-3 border-b border-border/70 px-3 py-2.5"
-                    >
-                      <Skeleton className="h-3.5 w-full" />
-                      <Skeleton className="h-3.5 w-full" />
-                    </div>
+                    <BattleTeamMemberSkeleton key={index} />
                   ))}
                 </div>
               </Card>
@@ -127,17 +96,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
                 </div>
                 <div className="min-h-0 flex-1 overflow-hidden">
                   {logTurns.map((_, index) => (
-                    <div
-                      key={index}
-                      className="space-y-2 border-b border-border/70 px-4 py-3"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-3.5 w-28" />
-                        <Skeleton className="h-3.5 w-16" />
-                      </div>
-                      <Skeleton className="h-3.5 w-11/12" />
-                      <Skeleton className="h-3.5 w-7/12" />
-                    </div>
+                    <BattleTeamMemberSkeleton key={index} />
                   ))}
                 </div>
               </Card>

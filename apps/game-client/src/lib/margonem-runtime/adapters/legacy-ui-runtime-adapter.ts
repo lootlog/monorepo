@@ -17,3 +17,6 @@ export const getRuntimeZoomFactor = (): number | null => {
 export const showRuntimeMessage = (message: string): void => {
   getRuntimeWindow().message?.(message);
 };
+
+export const getRuntimeUiScale = (): number =>
+  getRuntimeZoomFactor() ?? window.visualViewport?.scale ?? 1;

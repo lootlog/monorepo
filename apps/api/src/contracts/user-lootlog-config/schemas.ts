@@ -1,6 +1,6 @@
 /** Shared input and output schemas for the user-lootlog-config feature. */
 import * as Schema from "effect/Schema";
-import { NonEmptyString } from "#src/contracts/scalars";
+import { NonEmptyString } from "@lootlog/schema/http-scalars";
 
 const characterLootlogConfigFields = {
   userId: Schema.String,

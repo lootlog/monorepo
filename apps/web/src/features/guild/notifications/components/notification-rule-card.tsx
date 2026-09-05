@@ -18,7 +18,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
@@ -32,11 +32,10 @@ import {
 } from "../utils/notification-settings.utils";
 import { formatNotificationDateInTimeZone } from "../utils/notification-schedule-time.utils";
 import {
-  cancelGuildNotificationQueries,
-  getGuildNotificationCacheSnapshot,
+  prepareGuildNotificationMutation,
+  getGuildNotificationMutationCallbacks,
   invalidateGuildNotificationQueries,
   removeGuildNotificationRuleFromCache,
-  restoreGuildNotificationCacheSnapshot,
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
 import {
@@ -137,8 +136,7 @@ export const NotificationRuleCard = ({
           return undefined;
         }
 
-        await cancelGuildNotificationQueries(queryClient, guildId);
-        const previousNotifications = getGuildNotificationCacheSnapshot(
+        const previousNotifications = await prepareGuildNotificationMutation(
           queryClient,
           guildId,
         );
@@ -151,24 +149,7 @@ export const NotificationRuleCard = ({
 
         return previousNotifications;
       },
-      onSuccess: async () => {
-        if (!guildId) {
-          return;
-        }
-
-        await invalidateGuildNotificationQueries(queryClient, guildId);
-      },
-      onError: (_error, _variables, previousNotifications) => {
-        if (!guildId) {
-          return;
-        }
-
-        restoreGuildNotificationCacheSnapshot(
-          queryClient,
-          guildId,
-          previousNotifications,
-        );
-      },
+      ...getGuildNotificationMutationCallbacks(queryClient, guildId),
     },
   });
   const rebuildRuleJobs = useNotificationsGuildControllerRebuildGuildRuleJobs({

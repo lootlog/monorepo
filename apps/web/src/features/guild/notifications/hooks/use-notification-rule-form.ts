@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
 import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
 import { CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy } from "@lootlog/client/main";

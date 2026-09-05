@@ -1,3 +1,4 @@
+import { getOpponentSummaryColumns } from "./opponent-summary-columns";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
@@ -6,9 +7,7 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
-import { PlayerTile } from "@/components/battle";
 import { StatCard } from "./stat-card";
-import { getProfessionName } from "@/lib/utils/professions";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
 import { ROUTES } from "@/config/routes";
@@ -75,71 +74,7 @@ export function HeadToHeadTable({
   };
 
   const columns: ColumnDef<typeof coreTableFeatures, HeadToHeadRecord>[] = [
-    {
-      id: "avatar",
-      header: "",
-      cell: ({ row }) => (
-        <PlayerTile
-          player={{
-            name: row.original.opponentName,
-            lvl: row.original.opponentLvl,
-            prof: row.original.opponentProf,
-            icon: row.original.opponentIcon,
-          }}
-          className="scale-75"
-        />
-      ),
-    },
-    {
-      accessorKey: "opponentName",
-      header: t("battlePanel.statistics.columns.name"),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.opponentName}</span>
-      ),
-    },
-    {
-      accessorKey: "opponentLvl",
-      header: () => (
-        <div className="text-center">
-          {t("battlePanel.statistics.columns.level")}
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.opponentLvl}</div>
-      ),
-    },
-    {
-      accessorKey: "opponentProf",
-      header: () => (
-        <div className="text-center">
-          {t("battlePanel.statistics.columns.profession")}
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          {getProfessionName(row.original.opponentProf)}
-        </div>
-      ),
-    },
-    {
-      id: "record",
-      header: () => (
-        <div className="text-center">
-          {t("battlePanel.statistics.columns.winLoss")}
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span className={cn("font-medium", BATTLE_TEXT_COLORS.result.won)}>
-            {row.original.wins}
-          </span>
-          &nbsp;-&nbsp;
-          <span className={cn("font-medium", BATTLE_TEXT_COLORS.result.lost)}>
-            {row.original.losses}
-          </span>
-        </div>
-      ),
-    },
+    ...getOpponentSummaryColumns<HeadToHeadRecord>(t),
     {
       accessorKey: "winRate",
       header: () => (

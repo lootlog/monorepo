@@ -14,7 +14,7 @@ import {
   useListEventHeroTimers,
 } from "@lootlog/client/main";
 import type { Event } from "@/features/guild/events/types/api";
-import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
+import { parseMsToTime } from "@lootlog/datetime";
 import { cn } from "cn";
 
 interface EventTimersListProps {

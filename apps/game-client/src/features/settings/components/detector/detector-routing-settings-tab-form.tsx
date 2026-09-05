@@ -1,3 +1,4 @@
+import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/clien
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { Plus } from "lucide-react";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useEffectEvent, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
@@ -55,7 +56,7 @@ const createEmptyRoutingRule = (): DetectorRoutingRule => ({
   guildIds: [],
 });
 
-const normalizeRoutingRuleName = (name?: string) => {
+const normalizeRoutingRuleText = (name?: string) => {
   if (typeof name !== "string") {
     return undefined;
   }
@@ -63,16 +64,6 @@ const normalizeRoutingRuleName = (name?: string) => {
   const trimmedName = name.trim();
 
   return trimmedName.length > 0 ? trimmedName : undefined;
-};
-
-const normalizeRoutingRuleWorld = (world?: string) => {
-  if (typeof world !== "string") {
-    return undefined;
-  }
-
-  const trimmedWorld = world.trim();
-
-  return trimmedWorld.length > 0 ? trimmedWorld : undefined;
 };
 
 const cloneRoutingRules = (routingRules: DetectorRoutingRule[]) => {
@@ -89,12 +80,12 @@ const normalizeRoutingRules = (
   availableGuildIds: string[],
 ) => {
   return routingRules.map((rule) => {
-    const name = normalizeRoutingRuleName(rule.name);
+    const name = normalizeRoutingRuleText(rule.name);
     const normalizedMinLevel = clampLevel(Math.trunc(rule.minLevel));
     const normalizedMaxLevel = clampLevel(Math.trunc(rule.maxLevel));
     const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
     const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
-    const world = normalizeRoutingRuleWorld(rule.world);
+    const world = normalizeRoutingRuleText(rule.world);
     const normalizedGuildIds = availableGuildIds.filter(
       (guildId, index, ids) => {
         return (
@@ -125,12 +116,12 @@ const areRoutingRulesEqual = (
 
       return (
         rule.id === comparedRule.id &&
-        normalizeRoutingRuleName(rule.name) ===
-          normalizeRoutingRuleName(comparedRule.name) &&
+        normalizeRoutingRuleText(rule.name) ===
+          normalizeRoutingRuleText(comparedRule.name) &&
         rule.minLevel === comparedRule.minLevel &&
         rule.maxLevel === comparedRule.maxLevel &&
-        normalizeRoutingRuleWorld(rule.world) ===
-          normalizeRoutingRuleWorld(comparedRule.world) &&
+        normalizeRoutingRuleText(rule.world) ===
+          normalizeRoutingRuleText(comparedRule.world) &&
         rule.guildIds.length === comparedRule.guildIds.length &&
         rule.guildIds.every((guildId, guildIndex) => {
           return guildId === comparedRule.guildIds[guildIndex];
@@ -249,22 +240,14 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     });
   };
 
+  const syncFromEffect = useEffectEvent(syncCurrentValues);
+
   useEffect(() => {
     if (!formState.isDirty || isDeferredRoutingSyncField(deferredSyncField)) {
       return;
     }
 
-    if (!accountId || !guilds || !isFetched) return;
-    const nextRoutingRules = normalizeRoutingRules(
-      getValues().routingRules ?? [],
-      JSON.parse(availableGuildIdsJson) as string[],
-    );
-    if (areRoutingRulesEqual(nextRoutingRules, currentRoutingRules)) return;
-    debouncedUpdate({
-      detector: {
-        routingRules: nextRoutingRules,
-      },
-    });
+    syncFromEffect();
   }, [
     accountId,
     availableGuildIdsJson,
@@ -284,12 +267,11 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     }
 
     const selectedGuildIds = routingRules[ruleIndex]?.guildIds ?? [];
-    const nextGuildIds = selectedGuildIds.includes(guildId)
-      ? selectedGuildIds.filter((currentGuildId) => currentGuildId !== guildId)
-      : [...selectedGuildIds, guildId];
-    const normalizedGuildIds = guilds
-      .map((guild) => guild.id)
-      .filter((currentGuildId) => nextGuildIds.includes(currentGuildId));
+    const normalizedGuildIds = toggleAvailableGuild(
+      guilds,
+      selectedGuildIds,
+      guildId,
+    );
 
     setValue(`routingRules.${ruleIndex}.guildIds`, normalizedGuildIds, {
       shouldDirty: true,
@@ -334,8 +316,8 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
             const rule = routingRules[index];
             const ruleId = rule?.id ?? field.id;
             const selectedGuildIds = rule?.guildIds ?? [];
-            const normalizedName = normalizeRoutingRuleName(rule?.name);
-            const normalizedWorld = normalizeRoutingRuleWorld(rule?.world);
+            const normalizedName = normalizeRoutingRuleText(rule?.name);
+            const normalizedWorld = normalizeRoutingRuleText(rule?.world);
             const label = normalizedName ?? translations.ruleLabel(index + 1);
 
             return (

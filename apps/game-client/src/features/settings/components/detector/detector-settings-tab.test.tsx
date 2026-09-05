@@ -31,9 +31,7 @@ vi.mock("@/components/settings/settings-tab-layout", () => ({
 }));
 
 vi.mock("@/hooks/use-game-account-preferences-sync-status", () => ({
-  useGameAccountPreferencesSyncStatus: () => ({
-    status: "idle" as const,
-  }),
+  useGameAccountPreferencesSyncIndicator: () => "idle",
 }));
 
 vi.mock("./detector-routing-settings-tab-form", () => ({

@@ -1,3 +1,4 @@
+import { reconcileRuntimeArray } from "@/lib/margonem-runtime/reconcile-runtime-array";
 import type {
   RuntimePartyMember,
   RuntimeStatus,
@@ -25,29 +26,6 @@ const PARTY_MEMBER_FIELDS = [
   "profession",
 ] as const satisfies readonly (keyof RuntimePartyMember)[];
 
-function reconcileMembers(
-  current: readonly RuntimePartyMember[],
-  incoming: readonly RuntimePartyMember[],
-): readonly RuntimePartyMember[] {
-  let changed = current.length !== incoming.length;
-  const reconciled = incoming.map((member, index) => {
-    const currentMember = current[index];
-    if (
-      currentMember &&
-      PARTY_MEMBER_FIELDS.every(
-        (field) => currentMember[field] === member[field],
-      )
-    ) {
-      return currentMember;
-    }
-
-    changed = true;
-    return Object.freeze({ ...member });
-  });
-
-  return changed ? Object.freeze(reconciled) : current;
-}
-
 export const usePartyStore = create<PartyState>()((set, get) => ({
   members: [],
   revision: 0,
@@ -67,7 +45,11 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
     get().members.some((member) => member.characterId === String(characterId)),
   replaceParty: (members) =>
     set((state) => {
-      const reconciled = reconcileMembers(state.members, members);
+      const reconciled = reconcileRuntimeArray(
+        state.members,
+        members,
+        PARTY_MEMBER_FIELDS,
+      );
       if (state.status === "ready" && reconciled === state.members) {
         return state;
       }

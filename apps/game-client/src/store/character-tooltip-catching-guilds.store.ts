@@ -141,6 +141,36 @@ function withEntryRetention(
   ]);
 }
 
+function updateTargetEntry(
+  state: CharacterTooltipCatchingGuildsState,
+  target: CharacterTooltipCatchingGuildsTarget,
+  entry: Pick<
+    CharacterTooltipCatchingGuildsEntry,
+    "status" | "guilds" | "fetchedAt"
+  >,
+): Partial<CharacterTooltipCatchingGuildsState> {
+  if (
+    entry.status !== "idle" &&
+    !canApplyTargetEntry(state.entriesByKey[target.key], target)
+  ) {
+    return state;
+  }
+  return {
+    entriesByKey: withEntryRetention(
+      {
+        ...state.entriesByKey,
+        [target.key]: {
+          ...entry,
+          lastAccessedAt: Date.now(),
+          requestKey: target.requestKey,
+        },
+      },
+      Date.now(),
+      state.activeTarget?.key,
+    ),
+  };
+}
+
 export const useCharacterTooltipCatchingGuildsStore =
   create<CharacterTooltipCatchingGuildsState>()((set, get) => ({
     activeOther: null,
@@ -200,65 +230,20 @@ export const useCharacterTooltipCatchingGuildsStore =
         return { activeOther: other, activeTarget };
       }),
     setError: (target) =>
-      set((state) => {
-        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
-          return state;
-        }
-
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [target.key]: {
-                guilds: [],
-                lastAccessedAt: Date.now(),
-                requestKey: target.requestKey,
-                status: "error",
-              },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
-      }),
+      set((state) =>
+        updateTargetEntry(state, target, { guilds: [], status: "error" }),
+      ),
     setIdle: (target) =>
-      set((state) => ({
-        entriesByKey: withEntryRetention(
-          {
-            ...state.entriesByKey,
-            [target.key]: {
-              guilds: [],
-              lastAccessedAt: Date.now(),
-              requestKey: target.requestKey,
-              status: "idle",
-            },
-          },
-          Date.now(),
-          state.activeTarget?.key,
-        ),
-      })),
+      set((state) =>
+        updateTargetEntry(state, target, { guilds: [], status: "idle" }),
+      ),
     setLoading: (target) =>
-      set((state) => {
-        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
-          return state;
-        }
-
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [target.key]: {
-                guilds: state.entriesByKey[target.key]?.guilds ?? [],
-                lastAccessedAt: Date.now(),
-                requestKey: target.requestKey,
-                status: "loading",
-              },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
-      }),
+      set((state) =>
+        updateTargetEntry(state, target, {
+          guilds: state.entriesByKey[target.key]?.guilds ?? [],
+          status: "loading",
+        }),
+      ),
     setShiftPressed: (isShiftPressed) =>
       set((state) => {
         if (state.isShiftPressed === isShiftPressed) return state;
@@ -266,28 +251,13 @@ export const useCharacterTooltipCatchingGuildsStore =
         return { isShiftPressed };
       }),
     setSuccess: (target, guilds, fetchedAt) =>
-      set((state) => {
-        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
-          return state;
-        }
-
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [target.key]: {
-                fetchedAt,
-                guilds,
-                lastAccessedAt: Date.now(),
-                requestKey: target.requestKey,
-                status: "success",
-              },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
-      }),
+      set((state) =>
+        updateTargetEntry(state, target, {
+          fetchedAt,
+          guilds,
+          status: "success",
+        }),
+      ),
     setUnavailable: (key) =>
       set((state) => {
         if (state.entriesByKey[key]?.status === "unavailable") {

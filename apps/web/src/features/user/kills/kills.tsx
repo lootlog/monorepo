@@ -10,7 +10,7 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Skull } from "lucide-react";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   KillsFilters,
   type KillsFiltersState,

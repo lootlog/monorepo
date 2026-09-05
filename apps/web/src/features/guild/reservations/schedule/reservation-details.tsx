@@ -1,3 +1,4 @@
+import { invalidateReservationQueries } from "./invalidate-reservation-queries";
 import { useEffect, useState } from "react";
 import { format, isSameDay } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -5,11 +6,7 @@ import { Bell, CalendarClock, MessageSquareText, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-  getListReservationSpotsQueryKey,
-  getListSpotReservationsQueryKey,
-  useDeleteReservation,
-} from "@lootlog/client/main";
+import { useDeleteReservation } from "@lootlog/client/main";
 import {
   Avatar,
   AvatarFallback,
@@ -72,14 +69,7 @@ export function ReservationDetails({
   const deleteMutation = useDeleteReservation({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: getListReservationSpotsQueryKey({ guildId }),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: getListSpotReservationsQueryKey({ guildId, spotId }),
-          }),
-        ]);
+        await invalidateReservationQueries(queryClient, guildId, spotId);
         toast.success(t("reservations.details.cancelled"));
         onOpenChange(false);
       },

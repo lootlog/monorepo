@@ -12,14 +12,12 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  cancelGuildNotificationQueries,
-  getGuildNotificationCacheSnapshot,
-  invalidateGuildNotificationQueries,
+  prepareGuildNotificationMutation,
+  getGuildNotificationMutationCallbacks,
   removeGuildNotificationTargetFromCache,
-  restoreGuildNotificationCacheSnapshot,
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@lootlog/client/transport";
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
 import { useNotificationsGuildControllerDeleteGuildTarget } from "@lootlog/client/main";
 import type { NotificationTargetResponseDto } from "@lootlog/client/main";
@@ -52,8 +50,7 @@ export const NotificationTargetCard = ({
           return undefined;
         }
 
-        await cancelGuildNotificationQueries(queryClient, guildId);
-        const previousNotifications = getGuildNotificationCacheSnapshot(
+        const previousNotifications = await prepareGuildNotificationMutation(
           queryClient,
           guildId,
         );
@@ -66,24 +63,7 @@ export const NotificationTargetCard = ({
 
         return previousNotifications;
       },
-      onSuccess: async () => {
-        if (!guildId) {
-          return;
-        }
-
-        await invalidateGuildNotificationQueries(queryClient, guildId);
-      },
-      onError: (_error, _variables, previousNotifications) => {
-        if (!guildId) {
-          return;
-        }
-
-        restoreGuildNotificationCacheSnapshot(
-          queryClient,
-          guildId,
-          previousNotifications,
-        );
-      },
+      ...getGuildNotificationMutationCallbacks(queryClient, guildId),
     },
   });
   const isActionDisabled = actionsDisabled || deleteTarget.isPending;

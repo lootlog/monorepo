@@ -1,3 +1,7 @@
+import {
+  discordPermissionFields,
+  DiscordGuildSyncStatus,
+} from "@lootlog/schema/discord";
 import { Schema } from "effect";
 import {
   isoDatetimeCodec,
@@ -15,10 +19,7 @@ export const DiscordGuildChannelSnapshotResponse = Schema.Struct({
   active: Schema.Boolean,
   canView: Schema.Boolean,
   canSend: Schema.Boolean,
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.Array(Schema.String),
-  grantedPermissions: Schema.Array(Schema.String),
-  missingPermissions: Schema.Array(Schema.String),
+  ...discordPermissionFields,
   lastSyncedAt: isoDatetimeCodec,
   createdAt: isoDatetimeCodec,
   updatedAt: isoDatetimeCodec,
@@ -28,17 +29,8 @@ export type DiscordGuildChannelSnapshotResponse =
 
 export const DiscordGuildSyncStateResponse = Schema.Struct({
   guildId: Schema.String,
-  status: Schema.Literals([
-    "SYNCED",
-    "SYNCING",
-    "FAILED",
-    "STALE",
-    "NOT_FOUND",
-  ]),
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.Array(Schema.String),
-  grantedPermissions: Schema.Array(Schema.String),
-  missingPermissions: Schema.Array(Schema.String),
+  status: DiscordGuildSyncStatus,
+  ...discordPermissionFields,
   channelCount: Schema.Int,
   selectableChannelCount: Schema.Int,
   lastAttemptAt: nullableIsoDatetimeCodec,

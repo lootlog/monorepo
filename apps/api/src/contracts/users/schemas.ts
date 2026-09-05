@@ -6,7 +6,7 @@ import {
   NonEmptyString,
   SafeInteger,
   PositiveSafeInteger,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 
 const MutedPlayer = Schema.Struct({
   discordId: NonEmptyString,

@@ -28,6 +28,36 @@ import type {
 } from "#src/loots/query/loot-stats";
 import type { LootStatsQuery } from "#src/loots/query/loot-stats-query";
 
+const NPC_TIER_ORDER = `CASE ns.type
+                WHEN 'TITAN' THEN 1
+                WHEN 'COLOSSUS' THEN 2
+                WHEN 'HERO' THEN 3
+                WHEN 'EVENT_HERO' THEN 4
+                WHEN 'ELITE3' THEN 5
+                WHEN 'ELITE2' THEN 6
+                WHEN 'ELITE' THEN 7
+                ELSE 8
+              END`;
+
+const visibleNpcLootSource = (
+  visibilityCondition: string,
+  dateCondition: string,
+  worldCondition: string,
+  npcTypeCondition: string,
+  excludeColossusCondition: string,
+) => `FROM "Loot" l
+          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
+          INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
+          INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
+          WHERE olr."guildId" = $1
+            AND olr."archivedAt" IS NULL
+          ${visibilityCondition}
+            AND ns.type != 'COMMON'
+          ${dateCondition}
+          ${worldCondition}
+          ${npcTypeCondition}
+          ${excludeColossusCondition}`;
+
 type Role = typeof roleTable.$inferSelect;
 
 const CACHE_TTL_SECONDS = 60;
@@ -324,18 +354,7 @@ export class LootStatsService {
         ? `
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
-          FROM "Loot" l
-          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-          INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-          INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE olr."guildId" = $1
-            AND olr."archivedAt" IS NULL
-          ${visibilityCondition}
-            AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
         )
         SELECT
           COUNT(DISTINCT l.id) as total_loots,
@@ -410,18 +429,7 @@ export class LootStatsService {
         ? `
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
-          FROM "Loot" l
-          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-          INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-          INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE olr."guildId" = $1
-            AND olr."archivedAt" IS NULL
-          ${visibilityCondition}
-            AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
         )
         SELECT
           isnap.rarity,
@@ -498,18 +506,7 @@ export class LootStatsService {
         ? `
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id, l."createdAt"
-          FROM "Loot" l
-          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-          INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-          INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE olr."guildId" = $1
-            AND olr."archivedAt" IS NULL
-          ${visibilityCondition}
-            AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
         )
         SELECT
           date_trunc('${truncUnit}', vl."createdAt") as date,
@@ -628,29 +625,9 @@ export class LootStatsService {
           ROW_NUMBER() OVER (
             PARTITION BY l.id
             ORDER BY
-              CASE ns.type
-                WHEN 'TITAN' THEN 1
-                WHEN 'COLOSSUS' THEN 2
-                WHEN 'HERO' THEN 3
-                WHEN 'EVENT_HERO' THEN 4
-                WHEN 'ELITE3' THEN 5
-                WHEN 'ELITE2' THEN 6
-                WHEN 'ELITE' THEN 7
-                ELSE 8
-              END
+              ${NPC_TIER_ORDER}
           ) as rn
-        FROM "Loot" l
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-        INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-          AND ns.type != 'COMMON'
-        ${dateCondition}
-        ${worldCondition}
-        ${npcTypeCondition}
-        ${excludeColossusCondition}
+        ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
       )
       SELECT
         rn."npcId" as npc_id,
@@ -729,18 +706,7 @@ export class LootStatsService {
         ? `
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
-          FROM "Loot" l
-          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-          INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-          INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE olr."guildId" = $1
-            AND olr."archivedAt" IS NULL
-          ${visibilityCondition}
-            AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
         )
         SELECT
           m.id as member_id,
@@ -851,29 +817,9 @@ export class LootStatsService {
           ROW_NUMBER() OVER (
             PARTITION BY l.id
             ORDER BY
-              CASE ns.type
-                WHEN 'TITAN' THEN 1
-                WHEN 'COLOSSUS' THEN 2
-                WHEN 'HERO' THEN 3
-                WHEN 'EVENT_HERO' THEN 4
-                WHEN 'ELITE3' THEN 5
-                WHEN 'ELITE2' THEN 6
-                WHEN 'ELITE' THEN 7
-                ELSE 8
-              END
+              ${NPC_TIER_ORDER}
           ) as rn
-        FROM "Loot" l
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-        INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-          AND ns.type != 'COMMON'
-        ${dateCondition}
-        ${worldCondition}
-        ${npcTypeCondition}
-        ${excludeColossusCondition}
+        ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
       )
       SELECT
         isnap."itemId" as item_id,

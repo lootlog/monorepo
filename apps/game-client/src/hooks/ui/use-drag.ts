@@ -5,11 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
-
-const getScale = () => {
-  return getRuntimeZoomFactor() ?? window.visualViewport?.scale ?? 1;
-};
+import { getRuntimeUiScale } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 type Position = { x: number; y: number };
 
@@ -78,7 +74,7 @@ export const useDrag = ({
     x: number,
     y: number,
   ) => {
-    const scale = getScale();
+    const scale = getRuntimeUiScale();
     const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
     const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
     const scaledViewportWidth = viewportWidth * scale;
@@ -208,7 +204,7 @@ export const useDrag = ({
     if (evt.target.getAttribute("data-slot") === "hidden") return;
     if (evt.target.closest("[data-ll-draggable='false']")) return;
 
-    const scale = evt.pointerType === "touch" ? getScale() : 1;
+    const scale = evt.pointerType === "touch" ? getRuntimeUiScale() : 1;
     if (!startDrag(evt.clientX * scale, evt.clientY * scale)) return;
 
     activePointerIdRef.current = evt.pointerId;
@@ -307,7 +303,7 @@ export const useDrag = ({
       }
 
       evt.preventDefault();
-      const scale = evt.pointerType === "touch" ? getScale() : 1;
+      const scale = evt.pointerType === "touch" ? getRuntimeUiScale() : 1;
       const { offsetX, offsetY, width, height } = dragInfoRef.current;
       queuePositionRef.current(
         width,

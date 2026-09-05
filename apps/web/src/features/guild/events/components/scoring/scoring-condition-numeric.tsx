@@ -1,3 +1,5 @@
+import { ScoringFactorSelect } from "./scoring-factor-select";
+import { ScoringOperatorSelect } from "./scoring-operator-select";
 import {
   Controller,
   type Control,
@@ -6,27 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { HelpCircle } from "lucide-react";
-import {
-  EVENT_SCORING_NUMERIC_FACTORS,
-  EVENT_SCORING_NUMERIC_OPERATORS,
-} from "@lootlog/domain/scoring";
-import {
-  getScoringFactorDescription,
-  getScoringFactorLabel,
-} from "../../utils/scoring-rule-labels";
+import { EVENT_SCORING_NUMERIC_FACTORS } from "@lootlog/domain/scoring";
 
 type ScoringRulesFormValues = {
   scoringRules: { rules: { conditions: unknown[] }[] };
@@ -59,44 +41,13 @@ export const ScoringConditionNumeric = ({
             `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor` as `scoringRules.rules.${number}.conditions.${number}`
           }
           render={({ field }) => (
-            <div className="flex items-center gap-1">
-              <Select
-                value={field.value as string}
-                onValueChange={field.onChange}
-                items={[
-                  ...EVENT_SCORING_NUMERIC_FACTORS.map((factor) => ({
-                    value: factor,
-                    label: <>{getScoringFactorLabel(factor, t)}</>,
-                  })),
-                ]}
-              >
-                <SelectTrigger size="sm" className="h-8 text-[12px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_SCORING_NUMERIC_FACTORS.map((factor) => (
-                    <SelectItem key={factor} value={factor}>
-                      {getScoringFactorLabel(factor, t)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
-                  }
-                />
-                <TooltipContent side="top" className="max-w-[220px]">
-                  <p className="text-xs">
-                    {getScoringFactorDescription(
-                      field.value as (typeof EVENT_SCORING_NUMERIC_FACTORS)[number],
-                      t,
-                    )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            <ScoringFactorSelect
+              factors={EVENT_SCORING_NUMERIC_FACTORS}
+              value={
+                field.value as (typeof EVENT_SCORING_NUMERIC_FACTORS)[number]
+              }
+              onChange={field.onChange}
+            />
           )}
         />
       </div>
@@ -110,31 +61,10 @@ export const ScoringConditionNumeric = ({
             `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator` as `scoringRules.rules.${number}.conditions.${number}`
           }
           render={({ field }) => (
-            <Select
+            <ScoringOperatorSelect
               value={field.value as string}
-              onValueChange={field.onChange}
-              items={[
-                ...EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => ({
-                  value: operator,
-                  label: <>{operator}</>,
-                })),
-              ]}
-            >
-              <SelectTrigger size="sm" className="h-8 text-[12px] font-mono">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
-                  <SelectItem
-                    key={operator}
-                    value={operator}
-                    className="font-mono"
-                  >
-                    {operator}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={field.onChange}
+            />
           )}
         />
       </div>
