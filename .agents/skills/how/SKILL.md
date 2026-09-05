@@ -16,8 +16,6 @@ Build a working mental model from current code.
 5. Verify framework behavior against the pinned version and current primary documentation when it matters.
 6. Separate observed behavior from inferred intent.
 
-Do not spawn subagents unless the user explicitly asks for delegation or parallel analysis.
-
 ## Explain
 
 Lead with the subsystem's purpose and boundary. Then cover, as needed:
