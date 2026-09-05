@@ -8,7 +8,7 @@ import {
 import type { PropsWithChildren } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
-import { useTimerClock } from "./use-timer-clock";
+import { useTimerExpiry } from "./use-timer-expiry";
 
 afterEach(() => {
   cleanup();
@@ -42,8 +42,12 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
     timerKey: String(index),
     maxSpawnTime: "2026-09-05T12:00:01Z",
   }));
-  const { result, rerender, unmount } = renderHook(
-    ({ currentTimers }) => useTimerClock(currentTimers, "one", "tempest"),
+  const recordRender = vi.fn();
+  const { rerender, unmount } = renderHook(
+    ({ currentTimers }) => {
+      recordRender();
+      useTimerExpiry(currentTimers, "one", "tempest");
+    },
     {
       initialProps: { currentTimers: timers },
       wrapper: ({ children }: PropsWithChildren) => (
@@ -54,8 +58,8 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   await act(async () => {
     await vi.advanceTimersByTimeAsync(1000);
   });
-  expect(result.current).toBe(Date.parse("2026-09-05T12:00:01Z"));
   expect(fetchTimers).toHaveBeenCalledTimes(1);
+  expect(recordRender).toHaveBeenCalledTimes(1);
   expect(client.getQueryState(otherKey)?.isInvalidated).toBe(false);
   await act(async () => {
     await vi.advanceTimersByTimeAsync(1000);

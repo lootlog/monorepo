@@ -5,9 +5,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "cn";
-import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
-import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
-import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";
+import { ThemeDecoration } from "@lootlog/ui/components/theme-decoration";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -60,9 +58,7 @@ function DialogContent({
         )}
         {...props}
       >
-        <CatPawOverlay />
-        <RukiaFrostCardOverlay />
-        <RiasMagicCardOverlay />
+        <ThemeDecoration />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

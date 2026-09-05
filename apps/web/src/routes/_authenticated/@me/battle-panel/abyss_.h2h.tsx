@@ -14,8 +14,12 @@ export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/abyss_/h2h",
 )({
   validateSearch: battlePanelHeadToHeadSearchSchema,
-  loader: ({ abortController, context, location }) =>
+  loader: ({ abortController, context, location, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {
+      if (preload) {
+        return null;
+      }
+
       const search = loadBattlePanelHeadToHeadSearch(location.searchStr);
       const characterId = await ensureBattlePanelCharacterId({
         queryClient: context.queryClient,

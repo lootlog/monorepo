@@ -1,3 +1,4 @@
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { Lottie } from "lottie-react";
 
 export const CatLottiePlayer = ({
@@ -5,9 +6,17 @@ export const CatLottiePlayer = ({
 }: {
   animationData: object;
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <div className="mt-auto absolute -bottom-16 px-2 pb-2 pointer-events-none">
-      <Lottie src={animationData} loop autoplay segment={[0, 380]} />
+      <Lottie
+        key={String(prefersReducedMotion)}
+        src={animationData}
+        loop={!prefersReducedMotion}
+        autoplay={!prefersReducedMotion}
+        segment={[0, 380]}
+      />
     </div>
   );
 };
