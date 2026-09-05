@@ -108,6 +108,38 @@ describe("battle log visible search text", () => {
     },
   );
 
+  it("reads quoted and unfinished markup without stripping angle brackets from names", () => {
+    const translations = i18next.createInstance();
+    translations.init({
+      lng: "pl",
+      resources: {
+        pl: {
+          translation: {
+            battle: {
+              "+crit":
+                '<outer title="a > b"><inner>{{name}}</inner></outer><unfinished',
+            },
+          },
+        },
+      },
+    });
+    const event: RawBattleParsedEvent = {
+      attackerId: "1",
+      defenderId: "2",
+      attackerHpPercentage: 100,
+      defenderHpPercentage: 100,
+      actions: [{ actionType: "+crit", param: "" }],
+    };
+    expect(
+      buildBattleLogVisibleText({
+        event,
+        attacker,
+        turn: 1,
+        t: translations.t,
+      }),
+    ).toBe("#1Łucznik <A&B>");
+  });
+
   it("indexes reduced damage and signed rounded values without needing a mounted row", () => {
     const event: RawBattleParsedEvent = {
       attackerId: "1",
